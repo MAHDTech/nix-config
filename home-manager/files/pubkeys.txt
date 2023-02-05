@@ -1,0 +1,1 @@
+/nix/store/j39van49rsn9p2pci8bjyx058556zrk7-home-manager-files/.config/nixpkgs/files/pubkeys.txt

@@ -1,0 +1,28 @@
+name: Check Nix flake
+
+on:
+
+  push:
+    branches:
+      - "trunk"
+
+  pull_request:
+    branches:
+      - "trunk"
+
+jobs:
+
+  nix:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
+
+      - name: Check Nix flakes
+        run: nix flake check --no-build
