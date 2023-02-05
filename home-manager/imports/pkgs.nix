@@ -34,7 +34,8 @@
     bottom
     bzip2
     coreutils
-    curl
+    #curl
+    curlFull
     dos2unix
     edid-decode
     exa
@@ -48,6 +49,7 @@
     kubectl
     libcap
     lolcat
+    mkpasswd
     ncdu
     neofetch
     nushell
@@ -118,13 +120,15 @@
     font-manager
 
     # GUI
+    brave
     gtk3
     inkscape
     librsvg
     locale
     logseq
+    _1password
+    _1password-gui
 
   ];
 
 }
-

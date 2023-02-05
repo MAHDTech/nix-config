@@ -51,7 +51,7 @@ export NIX_CONFIG_INST_PARTSIZE_ROOT=0
 export NIX_CONFIG_INST_PARTSIZE_SWAP=64
 
 # Whether to use swap or not.
-export NIX_CONFIG_INST_ENABLE_SWAP=TRUE
+export NIX_CONFIG_INST_ENABLE_SWAP=FALSE
 
 # Whether to enable encryption or not.
 export NIX_CONFIG_INST_ENABLE_ENCRYPTION=TRUE

@@ -36,7 +36,7 @@
 
       logDriver = "journald" ;
 
-      storageDriver = "overlay2" ; 
+      storageDriver = "zfs" ; 
 
       autoPrune.enable = true ;
       autoPrune.dates = "weekly" ;

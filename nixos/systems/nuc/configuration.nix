@@ -4,9 +4,13 @@
 
   imports = [
 
-    ../common.nix
     ./hardware-configuration.nix
+
+    ../common.nix
+
     ./boot.nix
+    #./audio.nix
+    #./video.nix
     ./desktop-environment.nix
 
   ];
@@ -18,15 +22,10 @@
     hostId = "b63f2c0e";
   };
 
-  users.users.root.initialHashedPassword = "$6$q1P1PN/XZNsgfcWF$7rjEJj/M7w8R3q3m7z93VrZ5lWS8Kh8GTkA/TX.pnd4UtWqemLtuiFz34B35KPMaabTnL4YsYtIxR5TaM2veR/";
-
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  #powerManagement = {
-  #  powertop.enable = true;
-  #  cpuFreqGovernor = "performance";
-  #};
+  powerManagement = {
+    powertop.enable = true;
+    cpuFreqGovernor = "performance";
+  };
 
   # Taken from https://gitlab.com/xaverdh/my-nixos-config/-/blob/master/per-box/tux/default.nix
   #systemd.timers.suspend-on-low-battery = {
@@ -36,6 +35,10 @@
   #    OnBootSec= "120";
   #  };
   #};
+
+  systemd.extraConfig = ''
+    DefaultTimeoutStopSec=10s
+  '';
 
   #systemd.services.suspend-on-low-battery =
   #  let
@@ -73,13 +76,21 @@
   #  ];
   #};
 
-  #hardware.pulseaudio.enable = true;
-  #nixpkgs.config.pulseaudio = true;
+  sound.enable = true;
+  hardware.pulseaudio.enable = true;
+  nixpkgs.config.pulseaudio = true;
 
-  #boot.blacklistedKernelModules = [
-  #  "nouveau"
-  #  "nvidia"
+  #boot.kernelParams = [
+
+    # Reference: https://wiki.archlinux.org/title/intel_graphics
+    #"options i915 enable_guc=1"
+
   #];
+
+  boot.blacklistedKernelModules = [
+    "nouveau"
+    "nvidia"
+  ];
 
   #services.autorandr = { enable = true; };
 
@@ -87,14 +98,20 @@
   #  ATTRS{idVendor}=="27b8", ATTRS{idProduct}=="01ed", MODE:="666", GROUP="plugdev"
   #'';
 
-  #boot.initrd.kernelModules = [
-  #  "i915"
-  #];
+  hardware.opengl = {
 
-  #hardware.opengl = {
-  #  enable = true;
-  #  extraPackages = with pkgs; [ intel-media-driver vaapiVdpau libvdpau-va-gl ];
-  #};
+    enable = true;
+
+    extraPackages = with pkgs; [
+
+      intel-media-driver
+      libvdpau-va-gl
+      vaapiIntel
+      vaapiVdpau
+
+    ];
+
+  };
 
   #environment.variables = {
   #  VDPAU_DRIVER = "va_gl";
@@ -112,11 +129,26 @@
   #services.cron.enable = true;
 
   #virtualisation = {
+
   #  docker = {
+
   #    enable = true;
-  #    rootless.enable = true;
+
+  #    #storageDriver = "overlay2";
+  #    storageDriver = "zfs";
+
+  #    rootless = {
+
+  #      enable = true;
+
+  #      setSocketVariable = true;
+
+  #    };
+
   #  };
-  #  virtualbox.host.enable = true;
+
+  #  virtualbox.host.enable = false;
+
   #};
 
   #networking.firewall = {

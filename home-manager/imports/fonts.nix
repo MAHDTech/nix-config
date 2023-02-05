@@ -12,7 +12,7 @@
     cascadia-code
     corefonts
     jetbrains-mono
-    nerdfonts
+    #nerdfonts
     ubuntu_font_family
     dejavu_fonts
     redhat-official-fonts
@@ -26,4 +26,3 @@
   };
 
 }
-

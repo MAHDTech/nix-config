@@ -11,7 +11,7 @@
 
     enable = true;
 
-    historyControl = [ 
+    historyControl = [
 
       "ignoredups"
       "ignorespace"
@@ -44,5 +44,27 @@
 
   };
 
-}
+  home.file = {
 
+    ".shrc" = {
+
+      source = builtins.toPath ./../files/rc.sh;
+      target = ".shrc" ;
+
+    };
+
+  };
+
+  xdg.configFile = {
+
+    "rc" = {
+
+      source = builtins.toPath ./../files/bash;
+      target = "bash" ;
+      recursive = true;
+
+    };
+
+  };
+
+}

@@ -64,6 +64,9 @@
     # XDG user directories
     ./imports/user-dirs.nix
 
+    # VMware
+    ./imports/vmware.nix
+
     # Custom scripts
     #./imports/scripts.nix
 

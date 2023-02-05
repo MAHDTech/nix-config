@@ -38,13 +38,16 @@ INST_ENABLE_SWAP="${NIX_CONFIG_INST_ENABLE_SWAP:=TRUE}"
 INST_ENABLE_ENCRYPTION="${NIX_CONFIG_INST_ENABLE_ENCRYPTION:=TRUE}"
 
 # Whether to enable impermanence or not.
-INST_ENABLE_IMPERMANENCE="${NIC_CONFIG_INST_ENABLE_IMPERMANENCE:=FALSE}""
+INST_ENABLE_IMPERMANENCE="${NIX_CONFIG_INST_ENABLE_IMPERMANENCE:=FALSE}"
 
 # The name of the ZFS boot pool
 INST_ZFS_POOL_BOOT="bpool"
 
 # The name of the ZFS boot pool
 INST_ZFS_POOL_ROOT="rpool"
+
+# The hostname of the system
+INST_HOSTNAME="${NIX_CONFIG_INST_HOSTNAME}"
 
 ##########
 # Functions
@@ -73,6 +76,13 @@ else
 	writeLog "INFO" "Executing script as root user."
 fi
 
+# Ensure the hostname is not empty before starting.
+if [[ "${INST_HOSTNAME:-EMPTY}" == "EMPTY" ]];
+then
+	writeLog "ERROR" "The hostname cannot be empty"
+	exit 1
+fi
+
 PROMPT="This will now wipe all partitions on the following disks: ${INST_DISKS[*]}. Are you sure? Y/N: "
 read -p "${PROMPT}" -n 1 -r CHOICE
 echo -e "\n"
@@ -86,7 +96,7 @@ fi
 
 writeLog "INFO" "Preparing disks"
 
-umount -Rl /mnt || true
+umount -Rl /mnt 2>/dev/null || true
 zpool export -a || true
 
 for DISK in "${INST_DISKS[@]}";
@@ -103,7 +113,15 @@ do
 		exit 2
 	fi
 
-	writeLog "INFO" "Wiping partitions on ${DISK}"
+	writeLog "INFO" "Wiping disk ${DISK}"
+
+	zpool labelclear -f "${DISK}" || true
+
+	wipefs -a "${DISK}" || {
+		writeLog "ERROR" "Failed to wipe filesystem on ${DISK}"
+		exit 99
+	}
+
 	sgdisk --zap-all "${DISK}" || {
 		writeLog "ERROR" "Failed to wipe all partitions on ${DISK}"
 		exit 99
@@ -343,7 +361,7 @@ zfs create \
 zfs create \
 	-o canmount=on \
 	-o mountpoint=/boot \
-	${INST_ZFS_POOL_BOOT}/nixos/root || {
+	${INST_ZFS_POOL_BOOT}/nixos/boot || {
 		writeLog "ERROR" "Failed to create boot dataset nixos"
 		exit 91
 	}
@@ -355,20 +373,32 @@ do
 
 	mkfs.vfat -n EFI "${DISK}p1" || {
 		writeLog "ERROR" "Failed to create EFI FAT partition"
-		90
-	}
-
-	mkdir --parents "/mnt/boot/efis/${DISK##*/}p1" || {
-		writeLog "ERROR" "Failed to create required directory for EFI FAT partitions"
-		exit 90
-	}
-
-	mount -t vfat ${DISK}p1 "/mnt/boot/efis/${DISK##*/}p1" || {
-		writeLog "ERROR" "Failed to mount EFI FAT partition"
 		exit 90
 	}
 
 done
+
+if [[ "${#INST_DISKS[@]}" -eq 2 ]];
+then
+
+	writeLog "INFO" "Configuring EFI for mirrored disks"
+
+	for DISK in "${INST_DISKS[@]}";
+	do
+	
+		mkdir --parents "/mnt/boot/efis/${DISK##*/}p1" || {
+			writeLog "ERROR" "Failed to create required directory for EFI FAT partitions"
+			exit 90
+		}
+
+		mount -t vfat ${DISK}p1 "/mnt/boot/efis/${DISK##*/}p1" || {
+			writeLog "ERROR" "Failed to mount EFI FAT partition"
+			exit 90
+		}
+
+	done
+
+fi
 
 mkdir --parents /mnt/boot/efi || {
 	writeLog "ERROR" "Failed to create required directory for EFI"
@@ -414,82 +444,11 @@ nixos-generate-config --root /mnt || {
 	exit 88
 }
 
-writeLog "INFO" "Hashing root password"
+#writeLog "INFO" "Hashing root password"
+#INST_ROOT_PASSWD=$(mkpasswd -m SHA-512 -s)
+#export INST_ROOT_PASSWD
 
-INST_ROOT_PASSWD=$(mkpasswd -m SHA-512 -s)
-export INST_ROOT_PASSWD
-
-writeLog "INFO" "Modifying NixOS hardware configuration"
-
-sed -i "s|# networking.hostName = \"nixos\"; |networking.hostName = \"${INST_HOSTNAME}\";|g" /mnt/etc/nixos/configuration.nix
-sed -i "s/./hardware-configuration.nix|./hardware-configuration.nix ./zfs.nix|g" /mnt/etc/nixos/configuration.nix
-sed -i '/boot.loader/d' /mnt/etc/nixos/configuration.nix
-sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /mnt/etc/nixos/hardware-configuration.nix
-
-writeLog "INFO" "Modifying NixOS hardware configuration (ZFS)"
-
-tee -a /mnt/etc/nixos/zfs.nix <<-EOF
-{ config, pkgs, ... }:
-
-{
-    boot.zfs.extraPools = [
-        "${INST_ZFS_POOL_BOOT}"
-        "${INST_ZFS_POOL_ROOT}"
-    ];
-    boot.supportedFilesystems = [ "zfs" ];
-    networking.hostId = "$(head -c 8 /etc/machine-id)";
-    services.zfs.autoScrub.enable = true;
-    services.zfs.trim.enable = true;
-    boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
-    boot.kernelParams = [
-        "zfs.zfs_arc_max=12884901888" 
-    ];
-    boot.loader.efi.efiSysMountPoint = "/boot/efi";
-    boot.loader.efi.canTouchEfiVariables = false;
-    boot.loader.generationsDir.copyKernels = true;
-    boot.loader.grub.efiInstallAsRemovable = true;
-    boot.loader.grub.enable = false;
-    boot.loader.grub.version = 2;
-    boot.loader.grub.copyKernels = true;
-    boot.loader.grub.efiSupport = true;
-    boot.loader.grub.zfsSupport = true;
-    boot.loader.grub.extraPrepareConfig = ''
-        mkdir -p /boot/efis
-        for DISK in /boot/efis/*;
-        do
-            mount $DISK ;
-        done
-        mkdir -p /boot/efi
-        mount /boot/efi
-    '';
-    boot.loader.grub.extraInstallCommands = ''
-        ESP_MIRROR=$(mktemp -d)
-        cp -r /boot/efi/EFI $ESP_MIRROR
-        for DISK in /boot/efis/*;
-        do
-            cp -r $ESP_MIRROR/EFI $DISK
-        done
-        rm -rf $ESP_MIRROR
-    '';
-    boot.loader.grub.devices = [
-EOF
-
-for DISK in "${INST_DISKS[@]}";
-do
-	printf "    \"${DISK}\"\n" >>/mnt/etc/nixos/zfs.nix
-done
-
-tee -a /mnt/etc/nixos/zfs.nix <<-EOF
-    ];
-EOF
-
-tee -a /mnt/etc/nixos/zfs.nix <<-EOF
-    users.users.root.initialHashedPassword = "${INST_ROOT_PASSWD}";
-    networking.hostId = "$(head -c 8 /etc/machine-id)";
-}
-EOF
-
-if [[ "${INST_ENABLE_IMPERMANENCE^^}"" == "TRUE" ]];
+if [[ "${INST_ENABLE_IMPERMANENCE^^}" == "TRUE" ]];
 then
 
 	writeLog "INFO" "Enabling impermanence on root file system."
@@ -502,9 +461,35 @@ then
 
 fi
 
-echo -e "\n#########################"
-pause "Press ENTER to begin NixOS installation..."
-echo -e "\n#########################"
+echo -e "\n\n"
+writeLog "INFO" "Displaing current mount information"
+for DISK in "${INST_DISKS[@]}";
+do
+	mount | grep "${DISK}"
+	blkid | grep "${DISK}"
+done
+mount | grep "${INST_ZFS_POOL_BOOT}"
+mount | grep "${INST_ZFS_POOL_ROOT}"
+echo -e "\n\n"
+
+writeLog "INFO" "Displaying current ZFS pool information"
+zpool status
+echo -e "\n\n"
+
+# HACK: Fix this.
+INST_EFI_UUID=$(ls -la /dev/disk/by-uuid/ | grep "${NIX_CONFIG_INST_DISK_1##*/}p1" | cut -d ' ' -f 11)
+
+writeLog "WARN" "The UUID for the EFI partition has changed, update git with id ${INST_EFI_UUID:-ERROR}"
+
+echo -e "\n"
+echo -e "#########################"
+echo -e "NixOS installation"
+echo -e "#########################"
+echo -e "\n"
+
+pause "Press ENTER to begin the NixOS installation when ready..."
+
+git pull
 
 writeLog "INFO" "Installing NixOS system onto ${INST_HOSTNAME} and applying configuration"
 

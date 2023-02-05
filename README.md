@@ -86,6 +86,17 @@ nixos-rebuild \
     --flake '.#'
 ```
 
+Or remotely.
+
+```bash
+nixos-rebuild \
+    boot  \
+    --use-remote-sudo \
+    --upgrade \
+    --refresh \
+    --flake 'github:MAHDTech/nix-config#'
+```
+
 ### Home Manager
 
 Home Manager changes are switched over live.

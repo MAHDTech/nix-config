@@ -15,7 +15,7 @@
 
   programs.gpg = {
 
-    enable = true ;
+    enable = false ;
 
     package = pkgs.gnupg ;
 
@@ -154,7 +154,7 @@
 
   services.gpg-agent = {
 
-    enable = true;
+    enable = false;
 
     enableBashIntegration = true ;
     enableFishIntegration = false ;
