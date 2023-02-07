@@ -1,0 +1,16 @@
+# binaries.nix
+{ config, lib, pkgs, ... }:
+
+{
+
+  home.packages = [
+
+    (pkgs.callPackage ./tkg.nix {})
+
+    (pkgs.callPackage ./carvel.nix {})
+
+    (pkgs.callPackage ./ls-colors.nix {})
+
+  ];
+
+}

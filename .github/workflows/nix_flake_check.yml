@@ -1,4 +1,4 @@
-name: Check Nix flake
+name: Nix Flake check
 
 on:
 
@@ -24,5 +24,10 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v18
 
-      - name: Check Nix flakes
-        run: nix flake check --no-build
+      - name: Check Nix Flake
+        run: >
+          nix flake check
+            --no-build
+            --refresh
+            --keep-going
+            --verbose

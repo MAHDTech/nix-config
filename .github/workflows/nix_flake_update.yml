@@ -1,4 +1,4 @@
-name: Update Nix flake
+name: Nix Flake update
 
 on:
 
@@ -21,7 +21,10 @@ jobs:
 
       - uses: cachix/install-nix-action@v18
 
-      - run: nix flake update
+      - name: Update Nix Flake
+        run: >
+          nix flake update
+          --verbose
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
