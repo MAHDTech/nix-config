@@ -172,7 +172,7 @@ _These are a work in progress..._
 
 ## Updates
 
-Updating the Nix flake lock file `flake.lock` is done via PRs with GitHub Actions.
+Updating the Nix flake lock file `flake.lock` is done via GitHub Actions.
 
 The manual method is to run the following command within the root of the repository;
 
