@@ -302,3 +302,29 @@ function dotfiles() {
 	return 0
 
 }
+
+function dotfiles_all_the_things() {
+
+	dotfiles update || {
+		writeLog "ERROR" "Failed to update dotfiles"
+		return 1
+	}
+
+	dotfiles check || {
+		writeLog "ERROR" "Failed to check dotfiles"
+		return 1
+	}
+
+	dotfiles build || {
+		writeLog "ERROR" "Failed to build dotfiles"
+		return 1
+	}
+
+	dotfiles switch || {
+		writeLog "ERROR" "Failed to switch dotfiles"
+		return 1
+	}
+
+	return 0
+
+}
