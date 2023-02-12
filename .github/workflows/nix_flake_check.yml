@@ -25,9 +25,9 @@ jobs:
         uses: cachix/install-nix-action@v18
 
       - name: Check Nix Flake
-        run: >
+        run: >-
           nix flake check
-            --no-build
-            --refresh
-            --keep-going
-            --verbose
+          --no-build
+          --refresh
+          --keep-going
+          --verbose
