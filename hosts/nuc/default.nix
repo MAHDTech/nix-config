@@ -18,7 +18,8 @@
     ./audio.nix
     ./video.nix
 
-    ./desktop-environment.nix
+    #./desktop-pantheon.nix
+    ./desktop-gnome.nix
 
   ];
 
