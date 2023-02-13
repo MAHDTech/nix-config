@@ -21,13 +21,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Nix
+      - name: "Install Nix ❄️"
         uses: cachix/install-nix-action@v18
 
-      - name: Check Nix Flake
+      - name: Nix Flake check
         run: >-
           nix flake check
           --no-build
           --refresh
           --keep-going
           --verbose
+
+      - name: Statix check
+        run: nix run nixpkgs#statix -- check

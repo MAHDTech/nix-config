@@ -28,26 +28,101 @@
 
     };
 
-    services = {
+    network = {
 
-      suspend-on-low-battery =
-        let
+      wait-online.anyInterface = true;
 
-          battery-level-sufficient = pkgs.writeShellScriptBin "battery-level-sufficient" ''
-            test "$(cat /sys/class/power_supply/BAT0/status)" != Discharging \
-            || test "$(cat /sys/class/power_supply/BAT0/capacity)" -ge 5
-          '';
+      config = {
 
-        in {
+      };
 
-          serviceConfig = { Type = "oneshot"; };
-          onFailure = [ "suspend.target" ];
-          script = "${lib.getExe battery-level-sufficient}";
+      networks =
+
+        let networkConfig = {
+
+          DHCP = "yes";
+          DNSSEC = "yes";
+          DNSOverTLS = "no";
+
+          DNS = [
+
+            "1.1.1.1"
+            "1.0.0.1"
+
+          ];
+
+        }; in {
+
+          "40-wired" = {
+
+            enable = true;
+            name = "en*";
+
+            inherit networkConfig;
+
+            dhcpV4Config.RouteMetric = 1000;
+
+          };
+
+          "40-wireless" = {
+
+            enable = true;
+            name = "wl*";
+
+            inherit networkConfig;
+
+            dhcpV4Config.RouteMetric = 2000;
+
+          };
+
+          "40-tunnel" = {
+
+            enable = true;
+            name = "tun*";
+
+            inherit networkConfig;
+
+            linkConfig.Unmanaged = true;
+
+          };
+
+          "40-bluetooth" = {
+
+            enable = true;
+            name = "bn*";
+
+            inherit networkConfig;
+
+            dhcpV4Config.RouteMetric = 3000;
+
+          };
 
         };
 
+      };
+
     };
 
-  };
+    services = {
+
+      /*
+      # Wait for any interface to come online.
+      systemd-networkd-wait-online = {
+
+        serviceConfig = {
+
+          ExecStart = [
+
+            ""
+            "${config.systemd.package}/lib/systemd/systemd-networkd-wait-online --any"
+
+          ];
+
+        };
+
+      };
+      */
+
+    };
 
 }

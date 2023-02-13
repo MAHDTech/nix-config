@@ -70,7 +70,6 @@ function _dotfiles_actions() {
 					--use-remote-sudo \
 					--upgrade-all \
 					--refresh \
-					--allow-dirty \
 					--flake "${FLAKE_LOCATION}#" \
 					"${EXTRA_ARGS[@]}" || {
 
@@ -119,12 +118,19 @@ function dotfiles() {
 	local EXECUTE="FALSE"
 
 	local VALID_ACTIONS=(
+
+		# Common
+		"info"
 		"check"
 		"build"
 		"test"
 		"switch"
 		"update"
 		"garbage-collect"
+
+		# NixOS
+		"boot"
+
 	)
 
 	# Check if the action is valid before continuing.
@@ -158,6 +164,9 @@ function dotfiles() {
 			return 1
 		}
 
+		# HACK: --allow-dirty
+		git add --all || true
+
 		FLAKE_LOCATION="${FLAKE_LOCAL}"
 
 	else
@@ -172,13 +181,14 @@ function dotfiles() {
 
 		"nixos" )
 
-			FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
+			writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
 
 		;;
 
 		* )
 
 			FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
+			writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
 
 		;;
 
@@ -188,11 +198,19 @@ function dotfiles() {
 
 	case "${ACTION}" in
 
+		"info" )
+
+			nix flake info || {
+				writeLog "ERROR" "Failed to display flake info"
+				return 1
+			}
+
+		;;
+
 		"check" )
 
 			nix flake check \
 				--no-build \
-				--allow-dirty \
 				--keep-going \
 				"${EXTRA_ARGS[@]}" || {
 					writeLog "WARN" "Failed flake check!"
@@ -214,6 +232,21 @@ function dotfiles() {
 
 			_dotfiles_actions "test" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
 				writeLog "ERROR" "Failed to test dotfiles"
+				return 1
+			}
+
+		;;
+
+		"boot" )
+
+			if [[ ! "${OS_NAME}" == "nixos" ]];
+			then
+				writeLog "ERROR" "Switching over on boot is only supported on NixOS"
+				return 1
+			fi
+
+			_dotfiles_actions "boot" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
+				writeLog "ERROR" "Failed to switch dotfiles"
 				return 1
 			}
 

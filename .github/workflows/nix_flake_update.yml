@@ -3,7 +3,7 @@ name: Nix Flake update
 on:
 
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 0 * * 0"
 
   workflow_dispatch:
 
@@ -18,18 +18,22 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - uses: cachix/install-nix-action@v18
+      - name: "Install Nix ❄️"
+        uses: cachix/install-nix-action@v18
 
-      - name: Update Nix Flake
+      #- name: Update flake.lock
+      #  uses: DeterminateSystems/update-flake-lock@v15
+
+      - name: Nix Flake update
         run: >
           nix flake update
           --verbose
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Update flake.lock
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Update flake.lock
           branch: trunk

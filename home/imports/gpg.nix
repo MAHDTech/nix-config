@@ -164,7 +164,6 @@
 
   services.gpg-agent = {
 
-
     # NOTE: PCSCD conflicts with gpg-agent
     enable = true;
 

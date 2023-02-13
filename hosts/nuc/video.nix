@@ -13,6 +13,9 @@ in {
     intel-gpu-tools
     glxinfo
 
+    # Displaylink docking station.
+    displaylink
+
   ];
 
   boot.blacklistedKernelModules = [
@@ -30,8 +33,8 @@ in {
   # lspci -nn |grep  -Ei 'VGA|DISPLAY'
   boot.kernelParams = [
 
-    "i915.force_probe=5691"
-    "i915.enable_guc=3"
+    #"i915.force_probe=5691"
+    #"i915.enable_guc=3"
 
   ];
 

@@ -39,7 +39,7 @@ function quoteParams() {
 
 }
 
-function dotfiles() {
+function DISABLED_dotfiles() {
 
 	# Allows the use of the 'dotfiles' command
 	# Remember: https://lwn.net/Articles/701009/
@@ -105,7 +105,7 @@ function dotfiles() {
 
 }
 
-function dotfiles_update() {
+function DISABLED_dotfiles_update() {
 
 	# Updates the dotfiles submodules
 
@@ -125,7 +125,7 @@ function dotfiles_update() {
 
 }
 
-function dotfiles_remind() {
+function DISABLE_dotfiles_remind() {
 
 	# Reminds you to stage and commit the changes in your dotfiles
 

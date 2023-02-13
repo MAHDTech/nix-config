@@ -3,6 +3,7 @@
   imports = [
 
     ./networkmanager
+    ./seahorse
     ./ssh
 
   ];

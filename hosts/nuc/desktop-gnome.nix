@@ -12,6 +12,10 @@ in {
 
     gnomeExtensions.appindicator
 
+    gnome.gnome-tweaks
+
+    ibus
+
   ];
 
   services.udev.packages = with pkgs; [
@@ -32,10 +36,12 @@ in {
     displayManager = {
 
       gdm.enable = true;
-      gnome.enable = true;
 
-      autologin.enable = false;
-      autologin.user = "user";
+    };
+
+    desktopManager = {
+
+      gnome.enable = true;
 
     };
 
@@ -43,24 +49,24 @@ in {
 
   environment.gnome.excludePackages = (with pkgs; [
 
-    gnome-photos
-    gnome-tour
+    gnome-photos                # photo viewer
+    gnome-tour                  # welcome tour
 
   ]) ++ (with pkgs.gnome; [
 
-    cheese                 # webcam tool
-    gnome-music            # music player
-    #gnome-terminal         # terminal
-    #gedit                  # text editor
-    epiph                   # web browser
-    geary                   # email reader
-    evinc                   # document viewer
-    #gnome-characters
-    totem                   # video player
-    tali                    # poker game
-    iagno                   # go game
-    hitori                  # sudoku game
-    atomix                  # puzzle game
+    atomix                      # puzzle game
+    cheese                      # webcam tool
+    epiphany                    # web browser
+    evince                      # document viewer
+    geary                       # email reader
+    #gedit                       # text editor
+    gnome-characters
+    gnome-music                 # music player
+    #gnome-terminal              # terminal
+    hitori                      # sudoku game
+    iagno                       # go game
+    tali                        # poker game
+    totem                       # video player
 
   ]);
 

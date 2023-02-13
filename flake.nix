@@ -47,6 +47,7 @@
       repo = "sops-nix";
       ref = "master";
       flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nix-colors = {
@@ -55,6 +56,15 @@
       repo = "nix-colors";
       ref = "main";
       flake = true;
+    };
+
+    statix = {
+      type = "github";
+      owner = "nerdypepper";
+      repo = "statix";
+      ref = "master";
+      flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
   };
@@ -88,9 +98,11 @@
     };
 
     pkgsAllowUnfree = {
-      nixpkgs.config = {
-        allowUnfree = true;
-        allowUnfreePredicate = (pkg: true);
+      nixpkgs = {
+        config = {
+          allowUnfree = true;
+          allowUnfreePredicate = (_: true);
+        };
       };
     };
 
@@ -114,20 +126,25 @@
 
     configHomeManager = { system, extraSpecialArgs, ... }: home-manager.lib.homeManagerConfiguration rec {
 
+      inherit system;
+
       pkgs = pkgsImportSystem system;
 
       extraSpecialArgs = {
-        inherit inputs;
-        inherit outputs;
+        inherit nixpkgs;
+        inherit nixpkgs-unstable;
+        inherit username;
       };
 
       modules = [
 
-        pkgsAllowUnfree
-
         ./home {
           home = configHome;
         }
+
+        pkgsAllowUnfree
+
+        #sops-nix.nixosModules.sops
 
       ];
 
@@ -139,25 +156,33 @@
 
     configNixOS = { system, extraModules, ... }: nixpkgs.lib.nixosSystem rec {
 
-      system = system;
+      inherit system;
+
+      pkgs = pkgsImportSystem system;
 
       specialArgs = {
-        inherit system;
-        inherit inputs;
-        inherit outputs;
+        inherit nixpkgs;
+        inherit nixpkgs-unstable;
+        inherit username;
       };
 
       modules = [
 
-        pkgsAllowUnfree
+        home-manager.nixosModules.home-manager {
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
 
-        #home-manager.nixosModules.home-manager {
-        #  home-manager = {
-        #    useGlobalPkgs = true;
-        #    useUserPackages = true;
-        #    users.${username} = import ./home;
-        #  };
-        #}
+            users.${username} = import ./home;
+            extraSpecialArgs = {
+	            inherit globalStateVersion;
+	            home = configHome;
+            };
+
+          };
+        }
+
+        pkgsAllowUnfree
 
         #sops-nix.nixosModules.sops
 
@@ -177,7 +202,9 @@
 
         system = "x86_64-linux";
 
-        extraSpecialArgs = { inherit inputs outputs; };
+        extraSpecialArgs = {
+
+        };
 
       };
 
@@ -195,28 +222,13 @@
 
         extraModules = [
 
+          pkgsAllowUnfree
+
           nixos-hardware.nixosModules.common-pc-laptop
           nixos-hardware.nixosModules.common-cpu-intel
           nixos-hardware.nixosModules.common-gpu-intel
 
           ./hosts/nuc {
-            system.stateVersion = globalStateVersion;
-          }
-
-        ];
-
-      };
-
-      zim = configNixOS {
-
-        system = "x86_64-linux";
-
-        extraModules = [
-
-          nixos-hardware.nixosModules.common-cpu-amd
-          nixos-hardware.nixosModules.common-gpu-amd
-
-          ./hosts/zim {
             system.stateVersion = globalStateVersion;
           }
 
@@ -231,7 +243,6 @@
     #########################
 
     /*
-    # TODO: Finish this.
     devShells = forAllSystems (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};

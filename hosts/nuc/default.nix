@@ -21,6 +21,9 @@
     #./desktop-pantheon.nix
     ./desktop-gnome.nix
 
+    # Laptop
+    ./battery
+
   ];
 
   networking = {

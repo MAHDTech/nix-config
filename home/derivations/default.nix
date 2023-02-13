@@ -9,6 +9,8 @@
 
     (pkgs.callPackage ./carvel.nix {})
 
+    (pkgs.callPackage ./kpack.nix {})
+
     (pkgs.callPackage ./ls-colors.nix {})
 
   ];

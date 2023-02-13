@@ -11,8 +11,6 @@
 
     enable = true ;
 
-    #defaultEditor = true ;
-
     plugins = with pkgs.vimPlugins; [
 
       rust-vim

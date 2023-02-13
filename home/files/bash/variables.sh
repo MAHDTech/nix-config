@@ -165,39 +165,6 @@ else
 fi
 
 ########################################
-# Languages and Timezones
-########################################
-
-# Language configuration (Ubuntu)
-#   dpkg-reconfigure locales
-#   sudo locale-gen en_AU
-#   sudo update-locale LANG=en_AU.UTF-8
-
-# Language configuration (Fedora)
-#   sudo dnf -y install glibc-locale-source glibc-langpack-en
-#   sudo localedef --verbose --force --inputfile $LANGUAGE --charmap UTF-8 $LANG
-
-# TimeZone is UTC
-#export TZ='UTC-0'
-#export TIMEZONE="Etc/Universal"
-
-export LANGUAGE="en_AU"
-export LANG="en_AU.UTF-8"
-export LC_ADDRESS="en_AU.UTF-8"
-export LC_ALL="en_AU.UTF-8"
-export LC_COLLATE="en_AU.UTF-8"
-export LC_CTYPE="en_AU.UTF-8"
-export LC_IDENTIFICATION="en_AU.UTF-8"
-export LC_MEASUREMENT="en_AU.UTF-8"
-export LC_MESSAGES="en_AU.UTF-8"
-export LC_MONETARY="en_AU.UTF-8"
-export LC_NAME="en_AU.UTF-8"
-export LC_NUMERIC="en_AU.UTF-8"
-export LC_PAPER="en_AU.UTF-8"
-export LC_TELEPHONE="en_AU.UTF-8"
-export LC_TIME="en_AU.UTF-8"
-
-########################################
 # Systemd
 ########################################
 
@@ -353,4 +320,3 @@ export CODEQL_SETUP_SUBMODULES="True"
 ########################################
 
 # EOF
-

@@ -33,6 +33,12 @@ in {
 
     kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
 
+    extraModulePackages = with config.boot.kernelPackages; [
+
+      acpi_call
+
+    ];
+
     kernelModules = [
 
       "acpi_call"
@@ -41,6 +47,7 @@ in {
 
     kernelParams = [
 
+      "acpi_osi=Linux"
       "acpi_backlight=native"
 
       "nohibernate"

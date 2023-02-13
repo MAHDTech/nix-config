@@ -10,7 +10,7 @@
 
   ];
 
-  # XDG Desktop Portal is needed for flatpaks to work.
+  # If you're not using GNOME, XDG Desktop Portal is needed for flatpaks to work.
   xdg.portal = {
 
     enable = true;

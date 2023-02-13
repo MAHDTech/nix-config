@@ -4,6 +4,7 @@
 
     ./systemd
 
+    ./acpid
     ./autorandr
     ./cron
     ./dhcpd
@@ -12,11 +13,13 @@
     ./pam
     ./pcscd
     ./power-profiles-daemon
+    ./resolved
     ./sshd
     #./sops
     ./throttled
     ./tlp
     ./udev
+    ./usbguard
 
     #./zfs      # per-host.
 

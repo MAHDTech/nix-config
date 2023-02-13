@@ -5,12 +5,18 @@
 # Description: VSCode extension management
 ##################################################
 
-{
+let
 
-  home.packages = with pkgs; [
+  pkgsUnstable = import <nixpkgs-unstable> {};
 
-    vscode
-    #vscode-with-extensions
+in {
+
+  home.packages = [
+
+    #pkgs.vscode
+    #pkgs.vscode-with-extensions
+
+    #pkgsUnstable.vscode
 
   ];
 
@@ -21,6 +27,7 @@
       enable = true ;
 
       package = pkgs.vscode ;
+      #package = pkgsUnstable.vscode ;
 
       extensions = with pkgs.vscode-extensions ; [
 

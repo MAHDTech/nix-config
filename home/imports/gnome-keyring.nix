@@ -20,7 +20,7 @@
 
     gnome-keyring = {
 
-      enable = true ;
+      enable = false ;
 
       components = [
         "pkcs11"

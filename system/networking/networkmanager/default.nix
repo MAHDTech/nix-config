@@ -7,7 +7,7 @@
     # https://developer-old.gnome.org/NetworkManager/stable/NetworkManager.conf.html
     networkmanager = {
 
-      enable = true;
+      enable = false;
 
       dns = "systemd-resolved";
 

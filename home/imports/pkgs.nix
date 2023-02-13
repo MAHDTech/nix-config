@@ -19,9 +19,8 @@
     # Google Cloud
     #google-cloud-sdk
 
-    # VMWare
-
     # CLI utilities
+    alejandra
     bat
     binutils
     bottom
@@ -84,6 +83,10 @@
     xxd
     youtube-dl
     zip
+    wally-cli
+
+    # Office
+    libreoffice
 
     # Development
     cmake
@@ -122,8 +125,8 @@
     librsvg
     locale
     logseq
-    #_1password
-    #_1password-gui
+    _1password
+    _1password-gui
 
   ];
 

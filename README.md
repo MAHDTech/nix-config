@@ -66,7 +66,7 @@ Then I found _Nix_ and _NixOS_.
 
 Nix might not be perfect, but it's a hell of a lot better than the brittle, hacked together shell scripts that I have left behind.
 
-NixOS might have a steep learning curve, but it's worth it imo.
+NixOS might have a steep learning curve, but it's been worth it imo.
 
 ![NixOS Learning Curve](docs/images/nixos_curve.png)
 

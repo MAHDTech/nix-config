@@ -17,10 +17,15 @@
 
   networking = {
 
+    useNetworkd = true;
+
     enableIPv6 = true;
 
     useDHCP = false;
 
+    useHostResolvConf = false;
+
+    /*
     resolvconf = {
 
       enable = true;
@@ -29,7 +34,10 @@
       dnsExtensionMechanism = true;
       dnsSingleRequest = true;
 
+      extraConfig = "";
+
     };
+    */
 
   };
 

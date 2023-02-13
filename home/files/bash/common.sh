@@ -567,46 +567,6 @@ function pimped_prompt() {
 
 }
 
-function locale_generate() {
-
-		local LOCALE_GEN_FILE="/etc/locale.gen"
-		# shellcheck disable=SC2034
-		local LANG_FRONT=${LANG%.*}
-		# shellcheck disable=SC2034
-		local LANG_BACK=${LANG#*.}
-
-		if [[ -f "${LOCALE_GEN_FILE}" ]];
-		then
-
-				# Does a change need to be made
-				if grep -E -q "^# ${LANG} ${LANGUAGE_BACK}" "${LOCALE_GEN_FILE}" ;
-				then
-
-						writeLog "INFO" "Reconfiguring locale to ${LANG}"
-
-						sudo sed -i "s/^# $LANG $LANG_BACK/$LANG $LANG_BACK/g" "${LOCALE_GEN_FILE}" || return 1
-
-						if ! checkBin locale-gen;
-						then
-								sudo apt-get install --yes locales locales-all
-						fi
-
-						sudo locale-gen "${LANGUAGE}" || { writeLog "ERROR" "Failed to rune locale-gen" ; return 1 ; }
-
-						sudo update-locale LANG="${LANG}" || { writeLog "ERROR" "Failed to run update-locale" ; return 1 ; }
-
-				fi
-
-		else
-
-				writeLog "DEBUG" "No locale gen file present at ${LOCALE_GEN_FILE}"
-
-		fi
-
-		return 0
-
-}
-
 function showMemUsage() {
 
 		# I can never remember the ps syntax :/

@@ -202,17 +202,27 @@ import_functions_environment || {
 	return 1
 }
 
+if [[ ! -f "${ENVFILES}/wireless.env.tmpl" ]];
+then
+	writeLog "INFO" "Creating wpa_supplicant template"
+
+	cat <<- EOF >> "${ENVFILES}/wireless.env.tmpl"
+	# Wireless configuration
+
+	PSK_HOME="PASSWORD_HERE"
+
+	PSK_WORK="PASSWORD_HERE"
+
+	EOF
+
+fi
+
 #########################
 # Setup Bash
 #########################
 
 shell_options || {
 	writeLog "ERROR" "Failed to set Bash Shell options!"
-	return 1
-}
-
-locale_generate || {
-	writeLog "ERROR" "Failed to generate the locale"
 	return 1
 }
 
@@ -279,6 +289,7 @@ writeLog "DEBUG" "New PATH: $PATH"
 
 # HACK: Manually set SSH_AUTH_SOCK if not already set.
 export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
+
 if [[ "${SSH_AUTH_SOCK:-EMPTY}" == "EMPTY" ]];
 then
 
