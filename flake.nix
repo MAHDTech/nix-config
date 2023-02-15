@@ -102,7 +102,6 @@
 
     configHome = {
       inherit username;
-      inherit globalStateVersion;
       homeDirectory = "/home/${username}";
       stateVersion = globalStateVersion;
     };
@@ -137,7 +136,7 @@
 
         pkgsAllowUnfree
 
-        sops-nix.nixosModules.sops
+        #sops-nix.nixosModules.sops
 
       ];
 
@@ -177,7 +176,7 @@
 
         pkgsAllowUnfree
 
-        sops-nix.nixosModules.sops
+        #sops-nix.nixosModules.sops
 
       ] ++ extraModules;
 

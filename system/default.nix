@@ -8,7 +8,7 @@
     ./networking
     ./power
     ./programs
-    #./secrets # TODO: Finish sops-nix
+    #./secrets TODO: Setup SOPS
     ./services
     ./users
     ./groups

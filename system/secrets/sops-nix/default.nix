@@ -4,8 +4,6 @@
 
   imports = [
 
-    <sops-nix/modules/sops>
-
   ];
 
   environment.systemPackages = with pkgs; [
