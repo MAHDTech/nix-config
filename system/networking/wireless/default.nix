@@ -32,12 +32,30 @@
         MAHDTech = {
 
             psk = "@PSK_HOME@";
+            priority = 100;
+            authProtocols = [
+              "WPA-PSK"
+            ];
 
         };
 
         Horizon-VMware = {
 
             psk = "@PSK_WORK_CORP@";
+            priority = 100;
+            authProtocols = [
+              "WPA-PSK"
+            ];
+
+        };
+
+        Lab-Wifi = {
+
+            psk = "@PSK_WORK_LAB@";
+            priority = 50;
+            authProtocols = [
+              "WPA-PSK"
+            ];
 
         };
 
