@@ -102,6 +102,7 @@
 
     configHome = {
       inherit username;
+      inherit globalStateVersion;
       homeDirectory = "/home/${username}";
       stateVersion = globalStateVersion;
     };
@@ -120,13 +121,12 @@
 
     configHomeManager = { system, ... }: home-manager.lib.homeManagerConfiguration rec {
 
-      inherit system;
-
       pkgs = pkgsImportSystem system;
 
       extraSpecialArgs = {
         inherit inputs;
         inherit username;
+        inherit globalStateVersion;
       };
 
       modules = [
@@ -137,7 +137,7 @@
 
         pkgsAllowUnfree
 
-        #sops-nix.nixosModules.sops
+        sops-nix.nixosModules.sops
 
       ];
 
@@ -151,11 +151,12 @@
 
       inherit system;
 
-      #pkgs = pkgsImportSystem system;
+      pkgs = pkgsImportSystem system;
 
       specialArgs = {
         inherit inputs;
         inherit username;
+        inherit globalStateVersion;
       };
 
       modules = [
@@ -167,8 +168,8 @@
 
             users.${username} = ./home;
             extraSpecialArgs = {
-	            inherit globalStateVersion;
-	            home = configHome;
+              inherit globalStateVersion;
+              home = configHome;
             };
 
           };
@@ -176,7 +177,7 @@
 
         pkgsAllowUnfree
 
-        #sops-nix.nixosModules.sops
+        sops-nix.nixosModules.sops
 
       ] ++ extraModules;
 
