@@ -69,7 +69,7 @@
 
   };
 
-  outputs = inputs @ {
+  outputs = {
     self,
     nixpkgs,
     nixpkgs-unstable,
@@ -77,18 +77,12 @@
     home-manager,
     sops-nix,
     ...
-  }: let
+  }@inputs:
 
-    #########################
-    # Common
-    #########################
+  let
 
     username = "mahdtech";
 
-    # It's perfectly fine and recommended to leave this value at the release version of the first install of this system.
-    # Changing this option will not upgrade your system.
-    # In fact it is meant to stay constant exactly when you upgrade your system.
-    # You should only bump this option, if you are sure that you can or have migrated all state on your system which is affected by this option.
     globalStateVersion = "22.11";
 
     inherit (self) outputs;
@@ -124,15 +118,14 @@
     # Home Manager
     #########################
 
-    configHomeManager = { system, extraSpecialArgs, ... }: home-manager.lib.homeManagerConfiguration rec {
+    configHomeManager = { system, ... }: home-manager.lib.homeManagerConfiguration rec {
 
       inherit system;
 
       pkgs = pkgsImportSystem system;
 
       extraSpecialArgs = {
-        inherit nixpkgs;
-        inherit nixpkgs-unstable;
+        inherit inputs;
         inherit username;
       };
 
@@ -158,11 +151,10 @@
 
       inherit system;
 
-      pkgs = pkgsImportSystem system;
+      #pkgs = pkgsImportSystem system;
 
       specialArgs = {
-        inherit nixpkgs;
-        inherit nixpkgs-unstable;
+        inherit inputs;
         inherit username;
       };
 
@@ -173,7 +165,7 @@
             useGlobalPkgs = true;
             useUserPackages = true;
 
-            users.${username} = import ./home;
+            users.${username} = ./home;
             extraSpecialArgs = {
 	            inherit globalStateVersion;
 	            home = configHome;
@@ -202,10 +194,6 @@
 
         system = "x86_64-linux";
 
-        extraSpecialArgs = {
-
-        };
-
       };
 
     };
@@ -221,8 +209,6 @@
         system = "x86_64-linux";
 
         extraModules = [
-
-          pkgsAllowUnfree
 
           nixos-hardware.nixosModules.common-pc-laptop
           nixos-hardware.nixosModules.common-cpu-intel

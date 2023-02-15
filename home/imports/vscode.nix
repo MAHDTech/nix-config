@@ -7,7 +7,7 @@
 
 let
 
-  pkgsUnstable = import <nixpkgs-unstable> {};
+  #pkgsUnstable = inputs.nixpkgs-unstable.packages;
 
 in {
 
@@ -27,7 +27,7 @@ in {
       enable = true ;
 
       package = pkgs.vscode ;
-      #package = pkgsUnstable.vscode ;
+      #package = nixpkgs-unstable.packages.${pkgs.system}.vscode ;
 
       extensions = with pkgs.vscode-extensions ; [
 

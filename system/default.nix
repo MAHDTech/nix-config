@@ -1,4 +1,4 @@
-{ config, pkgs, nixpkgs, lib, ... }:
+{ inputs, config, pkgs, lib, ... }:
 
 {
 
@@ -81,19 +81,13 @@
     '';
 
     nixPath = [
-      "nixpkgs=${nixpkgs}"
+      "nixpkgs=${inputs.nixpkgs}"
     ];
 
-    registry.nixpkgs.flake = nixpkgs;
+    registry.nixpkgs.flake = inputs.nixpkgs;
 
     package = pkgs.nixStable;
     #package = pkgs.nixUnstable;
-
-  };
-
-  nixpkgs.config = {
-
-    allowUnfree = true ;
 
   };
 
@@ -104,6 +98,7 @@
     allowReboot = true;
 
     flake = "/home/mahdtech/Projects/GitHub/MAHDTech/nix-config";
+
     flags = [
       "--update-input"
       "nixpkgs"

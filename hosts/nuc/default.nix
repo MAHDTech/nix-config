@@ -1,10 +1,4 @@
-{
-  config,
-  lib,
-  nixpkgs,
-  pkgs,
-  ...
-}:
+{ inputs, config, lib, pkgs, ... }:
 
 {
 

@@ -1,4 +1,4 @@
-{ username, config, lib, nixpkgs, pkgs, ... }:
+{ username, config, lib, pkgs, ... }:
 
 {
 

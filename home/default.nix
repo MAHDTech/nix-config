@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ inputs, config, lib, pkgs, ... }:
 
 {
 
@@ -68,9 +68,6 @@
 
     # Custom scripts
     #./imports/scripts.nix
-
-    # TODO: Finish backup
-    # ./imports/backup.nix
 
     # Custom derivations.
     ./derivations
