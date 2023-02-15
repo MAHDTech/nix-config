@@ -1,5 +1,5 @@
 # binaries.nix
-{ config, lib, pkgs, ... }:
+{ inputs, config, lib, pkgs, ... }:
 
 {
 

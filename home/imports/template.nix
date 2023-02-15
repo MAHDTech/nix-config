@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ inputs, config, lib, pkgs, ... }:
 
 ##################################################
 # Name: template.nix
@@ -10,4 +10,3 @@
 # STUFF GOES HERE...
 
 }
-

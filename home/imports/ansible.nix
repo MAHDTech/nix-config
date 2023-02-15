@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ inputs, config, lib, pkgs, ... }:
 
 ##################################################
 # Name: ansible.nix
@@ -16,4 +16,3 @@
   ];
 
 }
-

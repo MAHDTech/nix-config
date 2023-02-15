@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ inputs, config, lib, pkgs, ... }:
 
 ##################################################
 # Name: scripts.nix
@@ -21,4 +21,3 @@
   };
 
 }
-

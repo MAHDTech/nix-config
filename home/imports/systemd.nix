@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ inputs, config, lib, pkgs, ... }:
 
 ##################################################
 # Name: systemd.nix
@@ -14,4 +14,3 @@
   };
 
 }
-
