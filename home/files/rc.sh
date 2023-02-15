@@ -153,7 +153,7 @@ function import_functions_environment() {
 		then
 
 			writeLog "INFO" "Copying environment template to ${ENVFILES}/variables.sh"
-			cp --force "${DOTFILES}/environment.sh" "${ENVFILES}/variables.sh" || {
+			cat "${DOTFILES}/environment.sh" > "${ENVFILES}/variables.sh" || {
 				writeLog "WARN" "Failed to copy environment variables template"
 				return 1
 			}
@@ -174,10 +174,13 @@ function import_functions_environment() {
 
 		if [[ -f "${DOTFILES}/environment.sh" ]];
 		then
-			cp --force "${DOTFILES}/environment.sh" "${ENVFILES}/variables.sh" || {
+			
+			writeLog "INFO" "Copying environment template to ${ENVFILES}/variables.sh"
+			cat "${DOTFILES}/environment.sh" > "${ENVFILES}/variables.sh" || {
 				writeLog "WARN" "Failed to copy environment variables template"
 				return 1
 			}
+		
 		fi
 
 	fi

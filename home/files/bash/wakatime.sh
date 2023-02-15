@@ -7,82 +7,91 @@
 
 function checkWakaTime() {
 
-	local WAKATIME_CONFIG="${HOME}/.wakatime.cfg"
-	local WAKATIME_PASS
+	#local WAKATIME_HOME="${HOME}/.config/wakatime"
+	local WAKATIME_HOME="${HOME}"
+	local WAKATIME_CONFIG="${WAKATIME_HOME}/.wakatime.cfg"
+
+	if [[ ! -d "${WAKATIME_HOME}" ]];
+	then
+
+		mkdir --parents "${WAKATIME_HOME}"
+
+		writeLog "INFO" "Wakatime home directory created."
+
+	fi
 
 	if [[ -f "${WAKATIME_CONFIG}" ]];
 	then
 
-		if ! grep -q "hide_file_names" "${WAKATIME_CONFIG}" > /dev/null;
-		then
-			writeLog "WARN" "Please add 'hide_file_names' settings to your wakatime config"
-			WAKATIME_PASS="FALSE"
-		fi
-
-		if ! grep -q "hide_project_names" "${WAKATIME_CONFIG}" > /dev/null;
-		then
-			writeLog "WARN" "Please add 'hide_project_names' settings to your wakatime config"
-			WAKATIME_PASS="FALSE"
-		fi
+		writeLog "DEBUG" "Wakatime config is present."
 
 	else
 
 		writeLog "WARN" "No Wakatime configuration is present"
+
+		# https://github.com/wakatime/wakatime-cli/blob/develop/USAGE.md	
 		cat <<- EOF >> "${WAKATIME_CONFIG}"
 		[settings]
-
-		debug = false
+		
+		hostname = ${HOSTNAME}
+		
+		debug = ${WAKATIME_DEBUG:=false}
+		
+		api_url = https://api.wakatime.com/api/v1
 		api_key = ${WAKATIME_API_KEY:-MISSING_API_KEY}
-		hide_file_names =
-		    /Projects/hidden/
-		    /Projects/secret/
-		    /projects/hidden/
-		    /projects/secret/
-		hide_project_names =
-		    /Projects/hidden/
-		    /Projects/secret/
-		    /projects/hidden/
-		    /projects/secret/
+		#api_key_vault_cmd = shell command here
+		
+		hide_file_names = false
+		hide_project_names = false
 		hide_branch_names = false
-		ignore =
-		    COMMIT_EDITMSG$
-		    PULLREQ_EDITMSG$
-		    MERGE_MSG$
-		    TAG_EDITMSG$
+		hide_project_folder = false
+		
 		exclude =
 		    ^COMMIT_EDITMSG$
 		    ^TAG_EDITMSG$
 		    ^/var/(?!www/).*
 		    ^/etc/
+		
 		include =
 		    .*
+		
 		include_only_with_project_file = false
-		status_bar_icon = true
+		
+		exclude_unknown_project = false
+		
 		status_bar_enabled = true
-		status_bar_hide_categories = false
 		status_bar_coding_activity = true
+		status_bar_hide_categories = false
+		
 		offline = true
+		#proxy = https://user:pass@localhost:8080
+		
 		no_ssl_verify = false
 		ssl_certs_file =
 		timeout = 30
-		hostname = ${HOSTNAME}
+		log_file = ${WAKATIME_HOME}/wakatime.log
+
+		[projectmap]
+		#projects/foo = new project name
+		#^/home/user/projects/bar(\d+)/ = project{0}
+
+		[project_api_key]
+		#projects/foo = your-api-key
+		#^/home/user/projects/bar(\d+)/ = your-api-key
 
 		[git]
-		
-		disable_submodules = false
-		
+		submodules_disabled = false
+
+		[git_submodule_projectmap]
+		#some/submodule/name = new project name
+		#^/home/user/projects/bar(\d+)/ = project{0}
+
 		EOF
 
 		writeLog "INFO" "Default Wakatime config created. Please update the API Key before it will work correctly."
 
 	fi
 
-	if [[ "${WAKATIME_PASS:-TRUE}" == "TRUE" ]];
-	then
-		return 0
-	else
-		return 1
-	fi
+	return 0
 
 }
-

@@ -73,7 +73,6 @@
     tree
     unzip
     usbutils
-    wakatime
     wget
     wsl-open
     xdg-user-dirs

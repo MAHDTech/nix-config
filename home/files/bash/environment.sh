@@ -115,3 +115,6 @@ export GITHUB_TOKEN=""
 # GitLab
 export GITLAB_TOKEN=""
 
+# Wakatime
+export WAKATIME_API_KEY=""
+export WAKATIME_DEBUG="false"
