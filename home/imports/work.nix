@@ -9,9 +9,11 @@
 
   home.packages = with pkgs; [
 
-    citrix_workspace
     slack
     teams
+
+    citrix_workspace
+
     vmware-horizon-client
 
   ];

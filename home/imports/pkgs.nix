@@ -88,6 +88,7 @@
     libreoffice
 
     # Development
+    nixos-generators
     cmake
     gcc
     gdb

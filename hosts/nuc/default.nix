@@ -6,6 +6,7 @@
 
     ./hardware-configuration.nix
 
+    # System defaults
     ../../system
 
     ./boot.nix
@@ -17,6 +18,9 @@
 
     # Laptop
     ./battery
+
+    # Virtualization
+    ../../system/virtualisation/host
 
   ];
 

@@ -70,6 +70,7 @@ function _dotfiles_actions() {
 					--use-remote-sudo \
 					--upgrade-all \
 					--refresh \
+					--impure \
 					--flake "${FLAKE_LOCATION}#" \
 					"${EXTRA_ARGS[@]}" || {
 
@@ -212,6 +213,7 @@ function dotfiles() {
 			nix flake check \
 				--no-build \
 				--keep-going \
+				--impure \
 				"${EXTRA_ARGS[@]}" || {
 					writeLog "WARN" "Failed flake check!"
 					return 1
