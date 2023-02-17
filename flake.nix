@@ -160,25 +160,29 @@
 
       modules = [
 
-        home-manager.nixosModules.home-manager {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-
-            users.${username} = ./home;
-            extraSpecialArgs = {
-              inherit globalStateVersion;
-              home = configHome;
-            };
-
-          };
-        }
-
         pkgsAllowUnfree
 
         #sops-nix.nixosModules.sops
 
       ] ++ extraModules;
+
+    };
+
+    configNixOSHomeManager = {
+
+      home-manager.nixosModules.home-manager {
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+
+          users.${username} = ./home;
+          extraSpecialArgs = {
+            inherit globalStateVersion;
+            home = configHome;
+          };
+
+        };
+      }
 
     };
 
@@ -205,6 +209,26 @@
     nixosConfigurations = {
 
       nuc = configNixOS {
+
+        system = "x86_64-linux";
+
+        extraModules = [
+
+          nixos-hardware.nixosModules.common-pc-laptop
+          nixos-hardware.nixosModules.common-cpu-intel
+          nixos-hardware.nixosModules.common-gpu-intel
+
+          ./hosts/nuc {
+            system.stateVersion = globalStateVersion;
+          }
+
+          configNixOSHomeManager
+
+        ];
+
+      };
+
+      vmware = configNixOS {
 
         system = "x86_64-linux";
 

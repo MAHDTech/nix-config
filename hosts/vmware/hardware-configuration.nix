@@ -5,18 +5,19 @@
 
 {
 
-  imports = [
-    (modulesPath + "/installer/scan/not-detected.nix")
-  ];
+  imports = [ ];
 
   boot.initrd.availableKernelModules = [
 
+    "ahci"
+    "ata_piix"
     "nvme"
     "sd_mod"
-    "thunderbolt"
+    "uhci_hcdod"
+    "nvme"
     "usb_storage"
     "usbhid"
-    "xhci_pci"
+    "vmw_pvscsi"
 
   ];
 
@@ -93,7 +94,7 @@
   };
 
   fileSystems."/boot/efi" = {
-    device = "/dev/disk/by-uuid/C7E2-7D81";
+    device = "/dev/disk/by-uuid/E159-D179";
     fsType = "vfat";
     neededForBoot = true;
   };

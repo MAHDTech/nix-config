@@ -62,6 +62,7 @@
 
     # Vim plugin management
     ./imports/vim.nix
+    ./imports/neovim.nix
 
     # Work stuff
     ./imports/work.nix
