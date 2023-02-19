@@ -136,7 +136,7 @@
 
         pkgsAllowUnfree
 
-        #sops-nix.nixosModules.sops
+        sops-nix.nixosModules.sops
 
       ];
 
@@ -147,8 +147,6 @@
     #########################
 
     configNixOS = { system, extraModules, ... }: nixpkgs.lib.nixosSystem rec {
-
-      inherit system;
 
       pkgs = pkgsImportSystem system;
 
@@ -162,28 +160,21 @@
 
         pkgsAllowUnfree
 
-        #sops-nix.nixosModules.sops
+        sops-nix.nixosModules.sops
 
       ] ++ extraModules;
 
     };
 
     configNixOSHomeManager = {
+        useGlobalPkgs = true;
+        useUserPackages = true;
 
-      home-manager.nixosModules.home-manager {
-        home-manager = {
-          useGlobalPkgs = true;
-          useUserPackages = true;
-
-          users.${username} = ./home;
-          extraSpecialArgs = {
-            inherit globalStateVersion;
-            home = configHome;
-          };
-
+        users.${username} = ./home;
+        extraSpecialArgs = {
+          inherit globalStateVersion;
+          home = configHome;
         };
-      }
-
     };
 
   in {
@@ -222,7 +213,9 @@
             system.stateVersion = globalStateVersion;
           }
 
-          configNixOSHomeManager
+          home-manager.nixosModules.home-manager {
+            home-manager = configNixOSHomeManager;
+          }
 
         ];
 

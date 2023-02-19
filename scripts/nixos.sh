@@ -546,7 +546,7 @@ writeLog "INFO" "Displaying current ZFS dataset configuration"
 zfs list
 echo -e "\n\n"
 
-# HACK: Fix this fragile.
+# HACK: Fix this it's too fragile.
 INST_EFI_UUID=$(ls -la /dev/disk/by-uuid/ | grep "${NIX_CONFIG_INST_DISK_1##*/}${PART_1}" | cut -d ' ' -f 10)
 
 writeLog "WARN" "The UUID for the EFI partition has changed, update git with the id ${INST_EFI_UUID:-ERROR} before continuing..." 
