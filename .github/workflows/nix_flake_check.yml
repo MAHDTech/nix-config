@@ -10,6 +10,10 @@ on:
     branches:
       - "trunk"
 
+env:
+  NIXPKGS_ALLOW_UNFREE: 1
+  RUST_BACKTRACE: 1
+
 jobs:
 
   nix:
@@ -31,6 +35,7 @@ jobs:
           --refresh
           --keep-going
           --verbose
+          --impure
 
       - name: Statix check
         run: nix run nixpkgs#statix -- check

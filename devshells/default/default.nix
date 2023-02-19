@@ -15,6 +15,14 @@ inputs.devenv.lib.mkShell {
 
         hello
 
+        nixpkgs-fmt
+        statix
+
+        sops
+        #sops-init-gpg-key
+        #sops-import-keys-hook
+        ssh-to-pgp
+
       ];
 
       env = {

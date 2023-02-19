@@ -10,9 +10,12 @@ on:
 permissions:
   contents: write
 
+env:
+  NIXPKGS_ALLOW_UNFREE: 1
+
 jobs:
 
-  build:
+  nix:
 
     runs-on: ubuntu-latest
 

@@ -121,6 +121,8 @@ function dotfiles() {
 	local VALID_ACTIONS=(
 
 		# Common
+		"cd"
+		"dir"
 		"info"
 		"check"
 		"build"
@@ -199,6 +201,17 @@ function dotfiles() {
 
 	case "${ACTION}" in
 
+		"cd | dir" )
+
+			popd > /dev/null || return 1
+
+			cd "${DOTFILES_CONFIG}" > /dev/null || {
+				writeLog "ERROR" "Failed to change into ${DOTFILES_CONFIG}"
+				return 1
+			}
+
+		;;
+
 		"info" )
 
 			nix flake info || {
@@ -218,6 +231,11 @@ function dotfiles() {
 					writeLog "WARN" "Failed flake check!"
 					return 1
 				}
+
+			nix run nixpkgs#statix -- check || {
+				writeLog "WARN" "Failed to run statix!"
+				return 1
+			}
 
 		;;
 

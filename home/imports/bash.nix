@@ -48,7 +48,7 @@
 
     ".shrc" = {
 
-      source = builtins.toPath ./../files/rc.sh;
+      source = ./../files/rc.sh;
       target = ".shrc" ;
 
     };
@@ -59,7 +59,7 @@
 
     "rc" = {
 
-      source = builtins.toPath ./../files/bash;
+      source = ./../files/bash;
       target = "bash" ;
 
       recursive = true;

@@ -116,11 +116,15 @@
       inherit system;
     };
 
+    pkgsImportSystemUnstable = system: import inputs.nixpkgs-unstable {
+      inherit system;
+    };
+
     pkgsAllowUnfree = {
       nixpkgs = {
         config = {
           allowUnfree = true;
-          allowUnfreePredicate = (_: true);
+          allowUnfreePredicate = _: true;
         };
       };
     };
@@ -189,6 +193,8 @@
 
         users.${username} = ./home;
         extraSpecialArgs = {
+          inherit inputs;
+          inherit username;
           inherit globalStateVersion;
           home = configHome;
         };

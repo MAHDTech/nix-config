@@ -52,7 +52,9 @@
         autocrlf = "input" ;
         editor = "vim" ;
         filemore = true ;
-        hooksPath = ".githooks" ;
+
+        # Managed with devenv githooks.
+        #hooksPath = ".githooks" ;
 
       };
 
