@@ -3,8 +3,10 @@
 #########################
 
 keys:
-  - &admin_mahdtech_age X
-  - &admin_mahdtech_gpg X
+  # Users
+  #- &admin_mahdtech_age X
+  - &admin_mahdtech_gpg 521A973C9426E8F4EE1C48FB3E520D84C0F43391
+  # Systems
 
 creation_rules:
 
@@ -16,4 +18,3 @@ creation_rules:
 
     - age:
       - *admin_mahdtech_age
-

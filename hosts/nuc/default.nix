@@ -18,6 +18,7 @@
 
     # Laptop
     ./battery
+    ../../system/networking/wireless
 
     # Virtualization
     ../../system/virtualisation/host

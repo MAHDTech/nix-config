@@ -12,7 +12,7 @@
 
   programs.ssh = {
 
-    # Now managed with Home Manager.
+    # Managed per-user with Home Manager.
     startAgent = false;
 
     # New versions of OpenSSH seem to default to disallowing all `ssh-add -s`

@@ -14,8 +14,9 @@
 
     # This will add secrets.yml to the nix store
     # You can avoid this by adding a string to the full path instead, i.e.
-    # sops.defaultSopsFile = "/root/.sops/secrets/example.yaml";
-    defaultSopsFile = ../../../secrets.yaml;
+    # defaultSopsFile = "/root/.sops/secrets/example.yaml";
+    defaultSopsFile = ../../../secrets/secrets.yaml;
+    defaultSopsFormat = "yaml";
 
     age = {
 
@@ -32,10 +33,27 @@
 
     };
 
+    gnupg = {
+
+      sshKeyPaths = [
+        "/etc/ssh/ssh_host_rsa.key"
+        "/etc/ssh/ssh_host_ed25519.key"
+      ];
+
+    };
+
     # This is the actual specification of the secrets.
     secrets = {
 
-      "wakatime/api-key" = {};
+      github = {
+        sopsFile = ../../../secrets/github.yaml;
+        format = "yaml";
+      };
+
+      wakatime = {
+        sopsFile = ../../../secrets/wakatime.yaml;
+        format = "yaml";
+      };
 
     };
 

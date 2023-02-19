@@ -34,12 +34,9 @@ in {
 
   };
 
-  #services.xserver.videoDrivers = [ "intel" ];
+  services.xserver.videoDrivers = [ "vmware" ];
 
   environment.variables = {
-
-    #VDPAU_DRIVER = "va_gl";
-    #LIBVA_DRIVER_NAME = "iHD";
 
   };
 

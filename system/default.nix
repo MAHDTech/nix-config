@@ -8,7 +8,7 @@
     ./networking
     ./power
     ./programs
-    #./secrets TODO: Setup SOPS
+    ./secrets
     ./services
     ./users
     ./groups
@@ -105,7 +105,7 @@
       "--commit-lock-file"
     ];
 
-    dates = "17:30";
+    dates = "00:00";
 
   };
 

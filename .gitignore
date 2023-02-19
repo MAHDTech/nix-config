@@ -10,3 +10,11 @@ Cargo.lock
 
 # Ignore Nix result file.
 result
+
+# Ignore dev env vars.
+.devenv
+**/.devenv
+
+# Ignore direnv
+.direnv
+**/.direnv

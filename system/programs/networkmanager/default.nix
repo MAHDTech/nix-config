@@ -12,7 +12,7 @@
 
   programs.nm-applet = {
 
-    enable = true;
+    enable = false;
 
   };
 

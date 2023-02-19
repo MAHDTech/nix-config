@@ -48,7 +48,6 @@ in {
     kernelParams = [
 
       "acpi_osi=Linux"
-      "acpi_backlight=native"
 
       "nohibernate"
       "zfs.zfs_arc_max=12884901888"

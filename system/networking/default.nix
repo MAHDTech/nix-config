@@ -5,9 +5,10 @@
   imports = [
 
     ./firewall
-    ./networkmanager
-    ./wireless
 
+    ./networkmanager
+
+    #./wireless         # Configured per-host.
 
   ];
 

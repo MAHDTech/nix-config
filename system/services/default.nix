@@ -15,13 +15,12 @@
     ./power-profiles-daemon
     ./resolved
     ./sshd
-    #./sops
     ./throttled
     ./tlp
     ./udev
     ./usbguard
 
-    #./zfs      # per-host.
+    #./zfs          # Configured per-host.
 
   ];
 

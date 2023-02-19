@@ -1,8 +1,5 @@
 {
 
-  # Thanks to Misterio77 for the awesome starter configs
-  # https://github.com/Misterio77/nix-starter-configs
-
   description = "NixOS and Home Manager configuration";
 
   inputs = {
@@ -67,6 +64,23 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # https://devenv.sh/
+    devenv = {
+      type = "github";
+      owner = "cachix";
+      repo = "devenv";
+      ref = "main";
+      flake = true;
+    };
+
+    fenix = {
+      type = "github";
+      owner = "nix-community";
+      repo = "fenix";
+      ref = "main";
+      flake = true;
+    };
+
   };
 
   outputs = {
@@ -76,6 +90,7 @@
     nixos-hardware,
     home-manager,
     sops-nix,
+    devenv,
     ...
   }@inputs:
 
@@ -86,6 +101,16 @@
     globalStateVersion = "22.11";
 
     inherit (self) outputs;
+
+    systems = [
+      "aarch64-darwin"
+      "aarch64-linux"
+      #"i686-linux"
+      "x86_64-darwin"
+      "x86_64-linux"
+    ];
+
+    forAllSystems = f: builtins.listToAttrs (map (name: { inherit name; value = f name; }) systems);
 
     pkgsImportSystem = system: import inputs.nixpkgs {
       inherit system;
@@ -105,14 +130,6 @@
       homeDirectory = "/home/${username}";
       stateVersion = globalStateVersion;
     };
-
-    forAllSystems = nixpkgs.lib.genAttrs [
-      "aarch64-darwin"
-      "aarch64-linux"
-      "i686-linux"
-      "x86_64-darwin"
-      "x86_64-linux"
-    ];
 
     #########################
     # Home Manager
@@ -245,15 +262,23 @@
     # Dev Shells
     #########################
 
-    /*
     devShells = forAllSystems (system:
+
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
-        import ./shells { inherit pkgs; }
+
+        pkgs = pkgsImportSystem system;
+
+      in {
+
+        default = import ./devshells/default {
+          inherit username;
+          inherit inputs;
+          inherit pkgs;
+        };
+
+      }
+
     );
-    */
 
   };
-
 }

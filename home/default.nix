@@ -70,6 +70,9 @@
     # Custom scripts
     #./imports/scripts.nix
 
+    # Direnv
+    ./programs/direnv
+
     # Custom derivations.
     ./derivations
 
