@@ -1,12 +1,20 @@
 #########################
 # SOPS configuration.
+#
+# NOTE:
+#
+# ssh-to-age -i ~/.ssh/keys/id_ed25519.pub >> ~/.config/sops/age/keys.txt
+# ssh-to-age -private-key -i ~/.ssh/keys/id_ed25519 >> ~/.config/sops/age/keys.txt
+#
 #########################
 
 keys:
   # Users
-  #- &admin_mahdtech_age X
+  - &admin_mahdtech_age age1g9watu56msn7xlqfsxhteppv7uvrm9wte7zn7lhul4nw9y7pys9s6wldan
   - &admin_mahdtech_gpg 521A973C9426E8F4EE1C48FB3E520D84C0F43391
   # Systems
+  - &system_nuc_age age1atpe6jwhjgzajhpn9ky28d36tedm6ccu2t2w4vna78k7kwkwwycsprq800
+  - &system_nuc_gpg 3427c11a2069c301130939caeef52927134a6d84
 
 creation_rules:
 
@@ -15,6 +23,8 @@ creation_rules:
 
     - pgp:
       - *admin_mahdtech_gpg
+      - *system_nuc_gpg
 
     - age:
       - *admin_mahdtech_age
+      - *system_nuc_age

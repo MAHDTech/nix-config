@@ -21,7 +21,9 @@ inputs.devenv.lib.mkShell {
         sops
         #sops-init-gpg-key
         #sops-import-keys-hook
+        ssh-to-age
         ssh-to-pgp
+        age
 
       ];
 
