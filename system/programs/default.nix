@@ -1,11 +1,1 @@
-{
-
-  imports = [
-
-    ./networkmanager
-    ./seahorse
-    ./ssh
-
-  ];
-
-}
+{imports = [./networkmanager ./seahorse ./ssh];}

@@ -1,19 +1,15 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-    zsa-udev-rules
-
-  ];
+  environment.systemPackages = with pkgs; [zsa-udev-rules];
 
   services.udev = {
-
     enable = true;
 
     extraRules = ''
@@ -45,7 +41,5 @@
 
       # EOF
     '';
-
   };
-
 }

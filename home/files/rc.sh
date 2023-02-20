@@ -7,7 +7,7 @@
 
 # Bash notes
 #   Reference:      - https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html
-#   .bash_profile   - Read during interative login shell or --login
+#   .bash_profile   - Read during interactive login shell or --login
 #   .bashrc         - Read during interactive non-login shell
 #   .bash_logout    - Read during logout
 
@@ -44,6 +44,7 @@ FOLDERS=(
 	"${HOME}/CodeQL/codeql"
 	"${HOME}/CodeQL/bin"
 	"${HOME}/.local/bin"
+	"${HOME}/.local/scripts"
 	"${HOME}/go/bin"
 	"${HOME}/.krew/bin"
 	"${HOME}/.cargo/bin"
@@ -80,14 +81,13 @@ REQ_BINS=(
 
 case $- in
 
-	*i* ) ;;
+*i*) ;;
 
-	* ) return 0 ;;
+*) return 0 ;;
 
 esac
 
-if [ -z "$PS1" ];
-then
+if [ -z "$PS1" ]; then
 
 	return 0
 
@@ -99,8 +99,7 @@ fi
 
 function import_functions_dotfiles() {
 
-	if [[ -d "${DOTFILES}" ]];
-	then
+	if [[ -d ${DOTFILES} ]]; then
 
 		# Import these dependencies in order.
 		IMPORTS=(
@@ -110,10 +109,8 @@ function import_functions_dotfiles() {
 			"environment.sh"
 		)
 
-		for FILE in "${IMPORTS[@]}";
-		do
-			if [[ -f "${DOTFILES}/${FILE}" ]];
-			then
+		for FILE in "${IMPORTS[@]}"; do
+			if [[ -f "${DOTFILES}/${FILE}" ]]; then
 				# shellcheck disable=1090
 				source "${DOTFILES}/${FILE}"
 			fi
@@ -124,8 +121,7 @@ function import_functions_dotfiles() {
 			return 1
 		}
 
-		for FILE in $(find "${DOTFILES}" -maxdepth 1 -type f -o -type l | sort -V);
-		do
+		for FILE in $(find "${DOTFILES}" -maxdepth 1 -type f -o -type l | sort -V); do
 			# shellcheck disable=1090
 			source "${FILE}"
 		done
@@ -136,24 +132,21 @@ function import_functions_dotfiles() {
 
 function import_functions_environment() {
 
-	if [[ -d "${ENVFILES}" ]];
-	then
+	if [[ -d ${ENVFILES} ]]; then
 
 		# Source the special environment file if its present
 		# shellcheck source=${HOME}/.config/environment/variables
-		if [[ -f "${ENVFILES}/variables.sh" ]];
-		then
+		if [[ -f "${ENVFILES}/variables.sh" ]]; then
 
 			source "${ENVFILES}/variables.sh" || {
 				writeLog "WARN" "Failed to source local environment variable overrides."
 				return 1
 			}
 
-		elif [[ -f "${DOTFILES}/environment.sh" ]];
-		then
+		elif [[ -f "${DOTFILES}/environment.sh" ]]; then
 
 			writeLog "INFO" "Copying environment template to ${ENVFILES}/variables.sh"
-			cat "${DOTFILES}/environment.sh" > "${ENVFILES}/variables.sh" || {
+			cat "${DOTFILES}/environment.sh" >"${ENVFILES}/variables.sh" || {
 				writeLog "WARN" "Failed to copy environment variables template"
 				return 1
 			}
@@ -172,15 +165,14 @@ function import_functions_environment() {
 			return 1
 		}
 
-		if [[ -f "${DOTFILES}/environment.sh" ]];
-		then
-			
+		if [[ -f "${DOTFILES}/environment.sh" ]]; then
+
 			writeLog "INFO" "Copying environment template to ${ENVFILES}/variables.sh"
-			cat "${DOTFILES}/environment.sh" > "${ENVFILES}/variables.sh" || {
+			cat "${DOTFILES}/environment.sh" >"${ENVFILES}/variables.sh" || {
 				writeLog "WARN" "Failed to copy environment variables template"
 				return 1
 			}
-		
+
 		fi
 
 	fi
@@ -192,8 +184,7 @@ import_functions_dotfiles || {
 	return 1
 }
 
-if [[ "${OS_LAYER:-UNKNOWN}" == "UNKNOWN" ]];
-then
+if [[ ${OS_LAYER:-UNKNOWN} == "UNKNOWN" ]]; then
 	writeLog "START" "Loading dotfiles for ${OS_FAMILY} ${OS_NAME} ${OS_VER}"
 else
 	writeLog "START" "Loading dotfiles for ${OS_FAMILY} ${OS_NAME} ${OS_VER} running on ${OS_LAYER}"
@@ -205,16 +196,15 @@ import_functions_environment || {
 	return 1
 }
 
-if [[ ! -f "${ENVFILES}/wireless.env.tmpl" ]];
-then
+if [[ ! -f "${ENVFILES}/wireless.env.tmpl" ]]; then
 	writeLog "INFO" "Creating wpa_supplicant template"
 
-	cat <<- EOF >> "${ENVFILES}/wireless.env.tmpl"
-	# Wireless configuration
+	cat <<-EOF >>"${ENVFILES}/wireless.env.tmpl"
+		# Wireless configuration
 
-	PSK_HOME="PASSWORD_HERE"
+		PSK_HOME="PASSWORD_HERE"
 
-	PSK_WORK="PASSWORD_HERE"
+		PSK_WORK="PASSWORD_HERE"
 
 	EOF
 
@@ -230,21 +220,17 @@ shell_options || {
 }
 
 # Enable auto-completion
-if ! shopt -oq posix;
-then
-	if [[ -f /usr/share/bash-completion/bash_completion ]];
-	then
+if ! shopt -oq posix; then
+	if [[ -f /usr/share/bash-completion/bash_completion ]]; then
 		source /usr/share/bash-completion/bash_completion
-	elif [[ -f /etc/bash_completion ]];
-	then
+	elif [[ -f /etc/bash_completion ]]; then
 		. /etc/bash_completion
 	else
 		writeLog "WARN" "Unable to source bash completion, is the package installed?"
 	fi
 fi
 
-if checkBin ls-colors-bash.sh;
-then
+if checkBin ls-colors-bash.sh; then
 	source ls-colors-bash.sh
 fi
 
@@ -255,11 +241,9 @@ fi
 writeLog "DEBUG" "Current PATH: $PATH"
 
 # All all the provided folders to the PATH
-for FOLDER in "${FOLDERS[@]}";
-do
+for FOLDER in "${FOLDERS[@]}"; do
 
-	if [ -d "${FOLDER}" ];
-	then
+	if [ -d "${FOLDER}" ]; then
 		addPath "${FOLDER}"
 	else
 		writeLog "DEBUG" "Folder ${FOLDER} doesn't exist"
@@ -293,14 +277,12 @@ writeLog "DEBUG" "New PATH: $PATH"
 # HACK: Manually set SSH_AUTH_SOCK if not already set.
 export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
 
-if [[ "${SSH_AUTH_SOCK:-EMPTY}" == "EMPTY" ]];
-then
+if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
 
-    if [[ -S "${_SSH_AUTH_SOCK}" ]];
-    then
-        writeLog "DEBUG" "Setting default SSH socket location"
-        export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
-    fi
+	if [[ -S ${_SSH_AUTH_SOCK} ]]; then
+		writeLog "DEBUG" "Setting default SSH socket location"
+		export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
+	fi
 
 fi
 writeLog "INFO" "SSH socket at ${SSH_AUTH_SOCK}"
@@ -308,8 +290,7 @@ writeLog "INFO" "SSH socket at ${SSH_AUTH_SOCK}"
 YUBIKEY_LOAD="FALSE"
 YUBIKEY_MODEL="ID 1050:0407 Yubico.com Yubikey 4/5 OTP+U2F+CCID"
 
-if lsusb | grep "${YUBIKEY_MODEL}" >/dev/null;
-then
+if lsusb | grep "${YUBIKEY_MODEL}" >/dev/null; then
 
 	writeLog "INFO" "Detected connected YubiKey, loading SSH keys"
 	YUBIKEY_LOAD="TRUE"
@@ -322,8 +303,7 @@ else
 	read -p "${PROMPT}" -n 1 -r CHOICE
 	echo -e "\n"
 
-	if [[ "${CHOICE}" =~ ^[Yy] ]];
-	then
+	if [[ ${CHOICE} =~ ^[Yy] ]]; then
 
 		writeLog "INFO" "User manually asked for YubiKey SSH to be loaded."
 		YUBIKEY_LOAD="TRUE"
@@ -336,11 +316,9 @@ else
 
 fi
 
-if [[ "${YUBIKEY_LOAD:-FALSE}" == "TRUE" ]];
-then
+if [[ ${YUBIKEY_LOAD:-FALSE} == "TRUE" ]]; then
 
-	if checkBin figlet;
-	then
+	if checkBin figlet; then
 		figlet YubiKey SSH
 	fi
 
@@ -360,19 +338,17 @@ checkWakaTime || {
 # Rust
 #########################
 
-if checkBin rustup;
-then
+if checkBin rustup; then
 
 	configureRustup || {
 		writeLog "ERROR" "Failed to configure rustup"
-	};
+	}
 
 	updateRust || {
 		writeLog "ERROR" "Failed to update Rust"
-	};
+	}
 
-	if [[ -f "${HOME}/.cargo/env" ]];
-	then
+	if [[ -f "${HOME}/.cargo/env" ]]; then
 		writeLog "INFO" "Sourcing Cargo Environment"
 		. "${HOME}/.cargo/env"
 	fi
@@ -383,13 +359,11 @@ fi
 # Fortune cookies
 #########################
 
-if checkBin figlet;
-then
+if checkBin figlet; then
 	figlet dotfiles
 fi
 
-if checkBin fortune;
-then
+if checkBin fortune; then
 	fortune
 fi
 

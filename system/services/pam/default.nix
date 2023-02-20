@@ -1,21 +1,17 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   security.pam.services = {
-
     login.u2fAuth = true;
 
     sudo.u2fAuth = true;
-
   };
-
 }

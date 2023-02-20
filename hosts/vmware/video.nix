@@ -1,41 +1,27 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
+  environment.systemPackages = with pkgs; [glxinfo];
 
-  ];
+  boot.blacklistedKernelModules = [];
 
-  environment.systemPackages = with pkgs; [
-
-    glxinfo
-
-  ];
-
-  boot.blacklistedKernelModules = [
-
-  ];
-
-  boot.kernelParams = [
-
-  ];
+  boot.kernelParams = [];
 
   hardware.opengl = {
-
     enable = true;
 
     driSupport = true;
 
-    extraPackages = with pkgs; [
-
-    ];
-
+    extraPackages = with pkgs; [];
   };
 
-  services.xserver.videoDrivers = [ "vmware" ];
+  services.xserver.videoDrivers = ["vmware"];
 
-  environment.variables = {
-
-  };
-
+  environment.variables = {};
 }

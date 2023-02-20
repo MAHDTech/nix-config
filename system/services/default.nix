@@ -1,7 +1,5 @@
 {
-
   imports = [
-
     ./systemd
 
     ./acpid
@@ -21,7 +19,5 @@
     ./usbguard
 
     #./zfs          # Configured per-host.
-
   ];
-
 }

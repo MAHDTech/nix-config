@@ -1,31 +1,23 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   powerManagement = {
-
     enable = true;
 
-    powertop = {
-
-        enable = true;
-
-    };
+    powertop = {enable = true;};
 
     cpuFreqGovernor = "performance";
 
     resumeCommands = ''
       echo "Resuming from suspend..."
     '';
-
   };
-
 }

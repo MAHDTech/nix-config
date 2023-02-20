@@ -1,13 +1,13 @@
-{ inputs, config, lib, pkgs, ... }:
-
-let
-
+{
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   username = "mahdtech";
-
 in {
-
   users.users.${username} = {
-
     name = username;
     uid = 1000;
     isNormalUser = true;
@@ -36,16 +36,12 @@ in {
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJkDYJ0EnGd7wkoW4MCz9bjgEHVoGZcwv5veeTr3/Gke"
     ];
-
   };
 
   users.groups = {
-
     ${username} = {
-        name = username;
-        gid = 1000;
+      name = username;
+      gid = 1000;
     };
-
   };
-
 }

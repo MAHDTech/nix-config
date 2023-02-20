@@ -1,7 +1,4 @@
-{ pkgs, ... }:
-
-{
-
+{pkgs, ...}: {
   pre-commit.hooks = {
     actionlint.enable = true;
     markdownlint.enable = true;
@@ -11,10 +8,5 @@
     deadnix.enable = true;
   };
 
-  packages = with pkgs; [
-
-    nixpkgs-fmt
-
-  ];
-
+  packages = with pkgs; [nixpkgs-fmt];
 }

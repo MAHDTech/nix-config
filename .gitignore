@@ -14,6 +14,8 @@ result
 # Ignore dev env vars.
 .devenv
 **/.devenv
+**/.devenv*
+**/devenv.local.nix
 
 # Ignore direnv
 .direnv

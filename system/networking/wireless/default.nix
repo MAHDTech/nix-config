@@ -1,25 +1,20 @@
-{ username, config, lib, pkgs, ... }:
-
 {
-
-  environment.systemPackages = with pkgs; [
-
-    wpa_supplicant
-
-  ];
+  username,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  environment.systemPackages = with pkgs; [wpa_supplicant];
 
   networking = {
-
     wireless = {
-
       enable = true;
 
       userControlled = {
-
         enable = true;
 
         group = "wheel";
-
       };
 
       # https://nixos.wiki/wiki/Wpa_supplicant
@@ -28,41 +23,24 @@
 
       # watch -n 3 wpa_cli status
       networks = {
-
         MAHDTech = {
-
-            psk = "@PSK_HOME@";
-            priority = 100;
-            authProtocols = [
-              "WPA-PSK"
-            ];
-
+          psk = "@PSK_HOME@";
+          priority = 100;
+          authProtocols = ["WPA-PSK"];
         };
 
         Horizon-VMware = {
-
-            psk = "@PSK_WORK_CORP@";
-            priority = 100;
-            authProtocols = [
-              "WPA-PSK"
-            ];
-
+          psk = "@PSK_WORK_CORP@";
+          priority = 100;
+          authProtocols = ["WPA-PSK"];
         };
 
         Lab-Wifi = {
-
-            psk = "@PSK_WORK_LAB@";
-            priority = 50;
-            authProtocols = [
-              "WPA-PSK"
-            ];
-
+          psk = "@PSK_WORK_LAB@";
+          priority = 50;
+          authProtocols = ["WPA-PSK"];
         };
-
       };
-
     };
-
   };
-
 }

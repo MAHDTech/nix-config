@@ -1,29 +1,23 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   virtualisation = {
-
     vmware = {
-
       host = {
-
         enable = true;
 
         package = pkgs.vmware-workstation;
 
         extraPackages = with pkgs; [
-
           #ntfs3g
-
         ];
 
         extraConfig = ''
@@ -33,11 +27,7 @@
           mks.vk.allowUnsupportedDevices = "TRUE"
 
         '';
-
       };
-
     };
-
   };
-
 }

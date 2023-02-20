@@ -1,9 +1,11 @@
-{ inputs, config, pkgs, lib, ... }:
-
 {
-
+  inputs,
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   imports = [
-
     #./modules
     ./networking
     ./power
@@ -13,30 +15,18 @@
     ./users
     ./groups
     ./virtualisation
-
   ];
 
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   time.timeZone = "Australia/Canberra";
 
   i18n = {
-
     defaultLocale = "en_AU.UTF-8";
 
-    supportedLocales = [
-
-      "all"
-      "en_AU.UTF-8/UTF-8"
-      "en_AU/ISO-8859-1"
-      "en_US.UTF-8/UTF-8"
-
-    ];
+    supportedLocales = ["all" "en_AU.UTF-8/UTF-8" "en_AU/ISO-8859-1" "en_US.UTF-8/UTF-8"];
 
     extraLocaleSettings = {
-
       LANGUAGE = "en_AU";
       LANG = "en_AU.UTF-8";
 
@@ -54,59 +44,39 @@
       LC_PAPER = "en_AU.UTF-8";
       LC_TELEPHONE = "en_AU.UTF-8";
       LC_TIME = "en_AU.UTF-8";
-
     };
-
   };
 
   nix = {
-
     enable = true;
 
     settings = {
-
       sandbox = true;
 
-      trusted-users = [
-
-        "root"
-        "mahdtech"
-
-      ];
-
+      trusted-users = ["root" "mahdtech"];
     };
 
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
 
-    nixPath = [
-      "nixpkgs=${inputs.nixpkgs}"
-    ];
+    nixPath = ["nixpkgs=${inputs.nixpkgs}"];
 
     registry.nixpkgs.flake = inputs.nixpkgs;
 
     package = pkgs.nixStable;
     #package = pkgs.nixUnstable;
-
   };
 
   system.autoUpgrade = {
-
     enable = false;
 
     allowReboot = true;
 
     flake = "/home/mahdtech/Projects/GitHub/MAHDTech/nix-config";
 
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "--commit-lock-file"
-    ];
+    flags = ["--update-input" "nixpkgs" "--commit-lock-file"];
 
     dates = "00:00";
-
   };
-
 }

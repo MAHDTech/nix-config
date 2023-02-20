@@ -1,17 +1,15 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   programs.ssh = {
-
     # Managed per-user with Home Manager.
     startAgent = false;
 
@@ -22,7 +20,5 @@
     # NOTE: To add keys from Yubikey
     # ssh-add -e /run/current-system/sw/lib/opensc-pkcs11.so
     # ssh-add -s /run/current-system/sw/lib/opensc-pkcs11.so
-
   };
-
 }

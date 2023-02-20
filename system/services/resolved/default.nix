@@ -1,40 +1,25 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   services.resolved = {
-
     enable = true;
 
     llmnr = "true";
 
     dnssec = "allow-downgrade";
 
-    fallbackDns = [
+    fallbackDns = ["1.1.1.1" "1.0.0.1"];
 
-      "1.1.1.1"
-      "1.0.0.1"
-
-    ];
-
-    domains = [
-
-      "mahdtech.com"
-      "saltlabs.tech"
-      "saltlabs.cloud"
-
-    ];
+    domains = ["mahdtech.com" "saltlabs.tech" "saltlabs.cloud"];
 
     extraConfig = "";
-
   };
-
 }

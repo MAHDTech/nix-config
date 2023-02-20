@@ -1,9 +1,11 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
-
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
-
     ./hardware-configuration.nix
 
     # System defaults
@@ -17,14 +19,10 @@
 
     # Virtualization
     ../../system/virtualisation/guest
-
   ];
 
   networking = {
-
     hostName = "vmware";
     hostId = "def10001";
-
   };
-
 }

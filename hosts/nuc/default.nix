@@ -1,9 +1,11 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
-
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
-
     ./hardware-configuration.nix
 
     # System defaults
@@ -22,14 +24,10 @@
 
     # Virtualization
     ../../system/virtualisation/host
-
   ];
 
   networking = {
-
     hostName = "nuc";
     hostId = "def00001";
-
   };
-
 }

@@ -1,81 +1,40 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
-
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   # Define imports
   imports = [
+    # Home Manager configuration
+    ./nix/home-manager
 
-    # Home Manager
-    ./imports/home-manager.nix
+    # User environment config
+    ./nix/user
 
-    # XDG user directories
-    ./imports/user-dirs.nix
+    # Files and directories
+    ./nix/files
 
-    # Common
-    ./imports/common.nix
+    # Font management
+    ./nix/fonts
 
-    # Global package config
-    ./imports/pkgs.nix
+    # Modules
+    ./nix/modules
 
-    # Systemd
-    ./imports/systemd.nix
+    # Custom derivations
+    ./nix/derivations
 
-    # Bash
-    ./imports/bash.nix
+    # Secrets
+    ./nix/secrets
 
-    # Fonts
-    ./imports/fonts.nix
+    # Packages
+    ./nix/packages
 
-    # Files
-    ./imports/files.nix
+    # Programs
+    ./nix/programs
 
-    # Fuzzy Finder
-    ./imports/fzf.nix
-
-    # GNOME Keyring
-    ./imports/gnome-keyring.nix
-
-    # GPG
-    ./imports/gpg.nix
-
-    # SSH
-    ./imports/ssh.nix
-
-    # Smart Cards
-    ./imports/smartcards.nix
-
-    # Starship
-    ./imports/starship.nix
-
-    # Git
-    # TODO: Finish git
-    ./imports/git.nix
-
-    # Ansible
-    ./imports/ansible.nix
-
-    # htop
-    ./imports/htop.nix
-
-    # VSCode extension management
-    ./imports/vscode.nix
-
-    # Vim plugin management
-    ./imports/vim.nix
-    ./imports/neovim.nix
-
-    # Work stuff
-    ./imports/work.nix
-
-    # Custom scripts
-    #./imports/scripts.nix
-
-    # Direnv
-    ./programs/direnv
-
-    # Custom derivations.
-    ./derivations
-
+    # Services
+    ./nix/services
   ];
-
 }

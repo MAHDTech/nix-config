@@ -1,20 +1,16 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   services.pcscd = {
-
     # NOTE: PCSCD conflicts with gpg-agent
     enable = false;
-
   };
-
 }

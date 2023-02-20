@@ -1,35 +1,27 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   services.zfs = {
-
     autoScrub = {
-
       enable = true;
 
       interval = "weekly";
 
       pools = [];
-
     };
 
     trim = {
-
       enable = true;
 
       interval = "weekly";
-
     };
-
   };
-
 }

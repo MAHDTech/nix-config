@@ -1,23 +1,21 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
-
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
-
     ./firewall
 
     ./networkmanager
 
     #./wireless         # Configured per-host.
-
   ];
 
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   networking = {
-
     useNetworkd = true;
 
     enableIPv6 = true;
@@ -29,17 +27,15 @@
     /*
     resolvconf = {
 
-      enable = true;
+    enable = true;
 
-      useLocalResolver = false;
-      dnsExtensionMechanism = true;
-      dnsSingleRequest = true;
+    useLocalResolver = false;
+    dnsExtensionMechanism = true;
+    dnsSingleRequest = true;
 
-      extraConfig = "";
+    extraConfig = "";
 
     };
     */
-
   };
-
 }

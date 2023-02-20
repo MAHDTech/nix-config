@@ -1,25 +1,15 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
+  environment.systemPackages = with pkgs; [];
 
-  ];
+  services.dhcpd4 = {enable = false;};
 
-  environment.systemPackages = with pkgs; [
-
-  ];
-
-  services.dhcpd4 = {
-
-    enable = false;
-
-  };
-
-  services.dhcpd6 = {
-
-    enable = false;
-
-  };
-
+  services.dhcpd6 = {enable = false;};
 }

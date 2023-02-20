@@ -1,21 +1,18 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   services.tlp = {
-
     enable = true;
 
     settings = {
-
       USB_AUTOSUSPEND = 0;
 
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
@@ -37,9 +34,6 @@
       NATACPI_ENABLE = 1;
       TPACPI_ENABLE = 1;
       TPSMAPI_ENABLE = 1;
-
     };
-
   };
-
 }

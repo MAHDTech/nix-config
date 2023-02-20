@@ -1,16 +1,14 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
-
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
-
     ./docker
     #./flatpak                    # Enabled by default in GNOME
-
   ];
 
-  environment.systemPackages = with pkgs; [
-
-  ];
-
+  environment.systemPackages = with pkgs; [];
 }

@@ -1,17 +1,15 @@
-{ inputs, config, lib, pkgs, ... }:
-
 {
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [];
 
-  imports = [
-
-  ];
-
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   services.avahi = {
-
     enable = true;
 
     nssmdns = true;
@@ -20,13 +18,9 @@
     ipv6 = true;
 
     publish = {
-
       enable = true;
       address = true;
       workstation = true;
-
     };
-
   };
-
 }

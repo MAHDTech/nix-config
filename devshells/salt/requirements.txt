@@ -1,0 +1,16 @@
+
+salt
+salt-lint
+salt-lsp
+
+idem
+idem-azurerm
+idem-azure
+idem-aws
+idem-helm
+idem-salt
+idem-gcp
+idem-gitlab
+idem-github
+idem-vault
+idem-k8s

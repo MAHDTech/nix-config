@@ -1,9 +1,7 @@
 {
-
   description = "NixOS and Home Manager configuration";
 
   inputs = {
-
     nixpkgs = {
       type = "github";
       owner = "NixOS";
@@ -81,6 +79,13 @@
       flake = true;
     };
 
+    mach-nix = {
+      type = "github";
+      owner = "DavHau";
+      repo = "mach-nix";
+      ref = "master";
+      flake = true;
+    };
   };
 
   outputs = {
@@ -90,12 +95,13 @@
     nixos-hardware,
     home-manager,
     sops-nix,
+    nix-colors,
+    statix,
     devenv,
+    fenix,
+    mach-nix,
     ...
-  }@inputs:
-
-  let
-
+  } @ inputs: let
     username = "mahdtech";
 
     globalStateVersion = "22.11";
@@ -110,15 +116,17 @@
       "x86_64-linux"
     ];
 
-    forAllSystems = f: builtins.listToAttrs (map (name: { inherit name; value = f name; }) systems);
+    forAllSystems = f:
+      builtins.listToAttrs (map (name: {
+          inherit name;
+          value = f name;
+        })
+        systems);
 
-    pkgsImportSystem = system: import inputs.nixpkgs {
-      inherit system;
-    };
+    pkgsImportSystem = system: import inputs.nixpkgs {inherit system;};
 
-    pkgsImportSystemUnstable = system: import inputs.nixpkgs-unstable {
-      inherit system;
-    };
+    pkgsImportSystemUnstable = system:
+      import inputs.nixpkgs-unstable {inherit system;};
 
     pkgsAllowUnfree = {
       nixpkgs = {
@@ -139,81 +147,72 @@
     # Home Manager
     #########################
 
-    configHomeManager = { system, ... }: home-manager.lib.homeManagerConfiguration rec {
+    configHomeManager = {system, ...}:
+      home-manager.lib.homeManagerConfiguration rec {
+        pkgs = pkgsImportSystem system;
 
-      pkgs = pkgsImportSystem system;
+        extraSpecialArgs = {
+          inherit inputs;
+          inherit username;
+          inherit globalStateVersion;
+        };
 
-      extraSpecialArgs = {
-        inherit inputs;
-        inherit username;
-        inherit globalStateVersion;
+        modules = [
+          ./home
+          {home = configHome;}
+
+          pkgsAllowUnfree
+
+          sops-nix.nixosModules.sops
+        ];
       };
-
-      modules = [
-
-        ./home {
-          home = configHome;
-        }
-
-        pkgsAllowUnfree
-
-        sops-nix.nixosModules.sops
-
-      ];
-
-    };
 
     #########################
     # NixOS
     #########################
 
-    configNixOS = { system, extraModules, ... }: nixpkgs.lib.nixosSystem rec {
+    configNixOS = {
+      system,
+      extraModules,
+      ...
+    }:
+      nixpkgs.lib.nixosSystem rec {
+        pkgs = pkgsImportSystem system;
 
-      pkgs = pkgsImportSystem system;
-
-      specialArgs = {
-        inherit inputs;
-        inherit username;
-        inherit globalStateVersion;
-      };
-
-      modules = [
-
-        pkgsAllowUnfree
-
-        sops-nix.nixosModules.sops
-
-      ] ++ extraModules;
-
-    };
-
-    configNixOSHomeManager = {
-        useGlobalPkgs = true;
-        useUserPackages = true;
-
-        users.${username} = ./home;
-        extraSpecialArgs = {
+        specialArgs = {
           inherit inputs;
           inherit username;
           inherit globalStateVersion;
-          home = configHome;
         };
+
+        modules =
+          [
+            pkgsAllowUnfree
+
+            sops-nix.nixosModules.sops
+          ]
+          ++ extraModules;
+      };
+
+    configNixOSHomeManager = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
+
+      users.${username} = ./home;
+      extraSpecialArgs = {
+        inherit inputs;
+        inherit username;
+        inherit globalStateVersion;
+        home = configHome;
+      };
     };
-
   in {
-
     #########################
     # Home Manager Standalone
     #########################
 
     homeConfigurations = {
-
-      "${username}@penguin" = configHomeManager {
-
-        system = "x86_64-linux";
-
-      };
-
+      "${username}@penguin" = configHomeManager {system = "x86_64-linux";};
     };
 
     #########################
@@ -221,70 +220,55 @@
     #########################
 
     nixosConfigurations = {
-
       nuc = configNixOS {
-
         system = "x86_64-linux";
 
         extraModules = [
-
           nixos-hardware.nixosModules.common-pc-laptop
           nixos-hardware.nixosModules.common-cpu-intel
           nixos-hardware.nixosModules.common-gpu-intel
 
-          ./hosts/nuc {
-            system.stateVersion = globalStateVersion;
-          }
+          ./hosts/nuc
+          {system.stateVersion = globalStateVersion;}
 
-          home-manager.nixosModules.home-manager {
-            home-manager = configNixOSHomeManager;
-          }
-
+          home-manager.nixosModules.home-manager
+          {home-manager = configNixOSHomeManager;}
         ];
-
       };
 
       vmware = configNixOS {
-
         system = "x86_64-linux";
 
         extraModules = [
-
           nixos-hardware.nixosModules.common-pc-laptop
           nixos-hardware.nixosModules.common-cpu-intel
           nixos-hardware.nixosModules.common-gpu-intel
 
-          ./hosts/nuc {
-            system.stateVersion = globalStateVersion;
-          }
-
+          ./hosts/nuc
+          {system.stateVersion = globalStateVersion;}
         ];
-
       };
-
     };
 
     #########################
     # Dev Shells
+    # nix develop --impure .#${name}
     #########################
 
-    devShells = forAllSystems (system:
+    devShells = forAllSystems (system: let
+      pkgs = pkgsImportSystem system;
+    in {
+      default = import ./devshells/default {
+        inherit username;
+        inherit inputs;
+        inherit pkgs;
+      };
 
-      let
-
-        pkgs = pkgsImportSystem system;
-
-      in {
-
-        default = import ./devshells/default {
-          inherit username;
-          inherit inputs;
-          inherit pkgs;
-        };
-
-      }
-
-    );
-
+      salt = import ./devshells/salt {
+        inherit username;
+        inherit inputs;
+        inherit pkgs;
+      };
+    });
   };
 }

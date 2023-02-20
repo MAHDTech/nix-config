@@ -1,18 +1,19 @@
-{ username, inputs, pkgs, ...}:
-
+{
+  username,
+  inputs,
+  pkgs,
+  ...
+}:
 inputs.devenv.lib.mkShell {
-
   inherit inputs;
   inherit pkgs;
 
   modules = [
-
     {
-
       # https://devenv.sh/reference/options/
 
       packages = with pkgs; [
-
+        figlet
         hello
 
         nixpkgs-fmt
@@ -24,109 +25,122 @@ inputs.devenv.lib.mkShell {
         ssh-to-age
         ssh-to-pgp
         age
-
       ];
 
       env = {
-
         USERNAME = username;
         DEVENV_DEVSHELL = "default";
-
       };
 
       enterShell = ''
 
-        hello --greeting "Dev Shell: Default"
+        figlet $DEVENV_DEVSHELL
+
+        hello \
+          --greeting \
+          "Hello $USERNAME, welcome to the $DEVENV_DEVSHELL development shell!"
 
       '';
 
       pre-commit = {
+        default_stages = ["commit"];
 
-        default_stages = [
-          "commit"
-        ];
-
-        excludes = [
-          "README.md"
-        ];
+        excludes = ["README.md"];
 
         hooks = {
+          # Nix
+          alejandra.enable = true;
+          nixfmt.enable = false;
+          nixpkgs-fmt.enable = false;
+          deadnix.enable = false;
+          statix.enable = true;
 
+          # GitHub Actions
           actionlint.enable = true;
-          #alejandra.enable = true;
-          #ansible-lint.enable = true;
-          #autoflake.enable = true;
-          #bats.enable = true;
-          #black.enable = true;
-          #cargo-check.enable = true;
-          #clippy.enable = true;
-          #commitizen.enable = true;
-          #deadnix.enable = true;
-          #dhall-format.enable = true;
-          #flake8.enable = true;
-          #gofmt.enable = true;
-          #gotest.enable = true;
-          #govet.enable = true;
-          #hadolint.enable = true;
-          #hlint.enable = true;
-          #hunspell.enable = true;
-          #markdownlint.enable = true;
-          #mdsh.enable = true;
-          #nixfmt.enable = true;
-          #nixpkgs-fmt.enable = true;
-          #prettier.enable = true;
-          #pylint.enable = true;
-          #revive.enable = true;
-          #ruff.enable = true;
-          #rustfmt.enable = true;
-          #shellcheck.enable = true;
-          #shfmt.enable = true;
-          #staticcheck.enable = true;
-          #statix.enable = true;
-          #terraform-format.enable = true;
-          #typos.enable = true;
-          #yamllint.enable = true;
 
+          # Ansible
+          ansible-lint.enable = false;
+
+          # Python
+          autoflake.enable = true;
+          black.enable = true;
+          flake8.enable = true;
+          pylint.enable = true;
+          ruff.enable = true;
+
+          # Bash
+          bats.enable = true;
+          shellcheck.enable = true;
+          shfmt.enable = true;
+
+          # Rust
+          cargo-check.enable = true;
+          clippy.enable = true;
+          rustfmt.enable = true;
+
+          # Go
+          gofmt.enable = true;
+          gotest.enable = true;
+          govet.enable = true;
+          revive.enable = true;
+          staticcheck.enable = true;
+
+          # Spelling
+          hunspell.enable = false;
+          typos.enable = false;
+
+          # Git commit messages
+          commitizen.enable = true;
+
+          # Docker
+          hadolint.enable = true;
+
+          # Dhall
+          dhall-format.enable = true;
+
+          # Markdown
+          markdownlint.enable = true;
+          mdsh.enable = true;
+
+          # Common
+          prettier.enable = true;
+
+          # YAML
+          yamllint.enable = true;
+
+          # Terraform
+          terraform-format.enable = true;
+
+          # Haskell
+          hlint.enable = true;
         };
-
       };
 
       devcontainer.enable = true;
 
       devenv = {
-
         flakesIntegration = true;
         #warnOnNewVersion = true;
-
       };
 
       difftastic.enable = true;
 
-      hosts = {
-
-        "example.com" = "1.1.1.1";
-
-      };
+      hosts = {"example.com" = "1.1.1.1";};
 
       languages = {
-
         cue = {
           enable = true;
           package = pkgs.cue;
         };
 
-        gawk = {
-          enable = true;
-        };
+        gawk = {enable = true;};
 
         go = {
           enable = true;
           package = pkgs.go;
         };
 
-        nix = {
-          enable = true;
-        };
+        nix = {enable = true;};
 
         python = {
           enable = true;
@@ -137,9 +151,7 @@ inputs.devenv.lib.mkShell {
             package = pkgs.poetry;
           };
 
-          venv = {
-            enable = true;
-          };
+          venv = {enable = true;};
         };
 
         rust = {
@@ -151,11 +163,9 @@ inputs.devenv.lib.mkShell {
           enable = true;
           package = pkgs.terraform;
         };
-
       };
 
       services = {
-
         wiremock = {
           enable = false;
           port = 8080;
@@ -180,9 +190,7 @@ inputs.devenv.lib.mkShell {
               };
               response = {
                 body = "This is text in the response body";
-                headers = {
-                  Content-Type = "text/plain";
-                };
+                headers = {Content-Type = "text/plain";};
                 status = 200;
               };
             }
@@ -193,9 +201,7 @@ inputs.devenv.lib.mkShell {
                 url = "/json";
               };
               response = {
-                jsonBody = {
-                  key = "value";
-                };
+                jsonBody = {key = "value";};
                 status = 200;
               };
             }
@@ -211,9 +217,6 @@ inputs.devenv.lib.mkShell {
           path = "/home/${inputs.devenv.config.env.USERNAME}/.config/starship.toml";
         };
       };
-
     }
-
   ];
-
 }

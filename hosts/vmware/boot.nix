@@ -1,86 +1,56 @@
-{ inputs, config, lib, pkgs, ... }:
-
-let
-
-  zfsPoolNames = [
-    "bpool"
-    "rpool"
-  ];
-
+{
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  zfsPoolNames = ["bpool" "rpool"];
 in {
-
   imports = [
-
-    ../../system/services/zfs {
-
-      services.zfs.autoScrub.pools = zfsPoolNames;
-
-    }
-
+    ../../system/services/zfs
+    {services.zfs.autoScrub.pools = zfsPoolNames;}
   ];
 
-  environment.systemPackages = with pkgs; [
-
-  ];
+  environment.systemPackages = with pkgs; [];
 
   boot = {
-
-    supportedFilesystems = [
-
-      "zfs"
-
-    ];
+    supportedFilesystems = ["zfs"];
 
     kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
 
-    extraModulePackages = with config.boot.kernelPackages; [
+    extraModulePackages = with config.boot.kernelPackages; [acpi_call];
 
-      acpi_call
-
-    ];
-
-    kernelModules = [
-
-      "acpi_call"
-
-    ];
+    kernelModules = ["acpi_call"];
 
     kernelParams = [
-
       "acpi_osi=Linux"
 
       "nohibernate"
       "zfs.zfs_arc_max=12884901888"
 
       "usbcore.autosuspend=-1"
-
     ];
 
     loader = {
-
       timeout = 3;
 
       efi = {
-
         efiSysMountPoint = "/boot/efi";
         canTouchEfiVariables = false;
-
       };
 
       generationsDir.copyKernels = true;
 
       systemd-boot = {
-
         enable = false;
 
         graceful = true;
         memtest86.enable = true;
         netbootxyz.enable = false;
-
       };
 
       grub = {
-
         enable = true;
 
         version = 2;
@@ -92,9 +62,7 @@ in {
         # TODO: https://github.com/vinceliuice/grub2-themes
         #theme =
 
-        memtest86 = {
-          enable = true;
-        };
+        memtest86 = {enable = true;};
 
         #extraPrepareConfig = ''
         #  mkdir -p /boot/efis
@@ -117,21 +85,15 @@ in {
         #'';
 
         device = "nodev"; # UEFI only
-
       };
-
     };
 
     zfs = {
-
       extraPools = zfsPoolNames;
 
       devNodes = "/dev/disk/by-partuuid";
 
-      forceImportAll = true ;
-
+      forceImportAll = true;
     };
-
   };
-
 }
