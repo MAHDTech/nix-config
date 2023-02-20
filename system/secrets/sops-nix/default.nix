@@ -60,7 +60,7 @@
     };
 
     # This is the actual specification of the secrets that
-    # will be available to the system at
+    # will be available to the system at /run/secrets.d/
     /*
     secrets = {
 

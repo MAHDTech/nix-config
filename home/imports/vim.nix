@@ -5,7 +5,17 @@
 # Description: Vim and plugins configuration
 ##################################################
 
-{
+let
+
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+
+  unstablePlugins = with pkgsUnstable.vimPlugins; [
+
+    vim-wakatime
+
+  ];
+
+in {
 
   programs.vim = {
 
@@ -20,9 +30,9 @@
       rust-vim
       vader-vim
       vim-one
-      vim-wakatime
+      #vim-wakatime
 
-    ];
+    ] ++ unstablePlugins;
 
     settings = {
 

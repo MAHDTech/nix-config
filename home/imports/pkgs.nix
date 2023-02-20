@@ -5,7 +5,17 @@
 # Description: Package management
 ##################################################
 
-{
+let
+
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+
+  unstablePkgs = with pkgsUnstable; [
+
+    wakatime
+
+  ];
+
+in {
 
   home.packages = with pkgs; [
 
@@ -112,7 +122,7 @@
     rust-analyzer
     rustup
     texlive.combined.scheme-full
-    wakatime
+    #wakatime # Now tracking unstable
     zsa-udev-rules
 
     # Font management
@@ -128,6 +138,6 @@
     _1password
     _1password-gui
 
-  ];
+  ] ++ unstablePkgs;
 
 }
