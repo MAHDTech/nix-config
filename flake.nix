@@ -148,7 +148,7 @@
     #########################
 
     configHomeManager = {system, ...}:
-      home-manager.lib.homeManagerConfiguration rec {
+      home-manager.lib.homeManagerConfiguration {
         pkgs = pkgsImportSystem system;
 
         extraSpecialArgs = {
@@ -176,7 +176,7 @@
       extraModules,
       ...
     }:
-      nixpkgs.lib.nixosSystem rec {
+      nixpkgs.lib.nixosSystem {
         pkgs = pkgsImportSystem system;
 
         specialArgs = {
