@@ -161,14 +161,11 @@ home-manager \
 
 _These are a work in progress..._
 
-|    Shell    | Command                                            |
-| :---------: | :------------------------------------------------- |
-| python 3.11 | nix develop github:MAHDTech/nix-config#python-3_11 |
-| python 3.10 | nix develop github:MAHDTech/nix-config#python-3_10 |
-| python 3.9  | nix develop github:MAHDTech/nix-config#python-3_9  |
-| python 3.8  | nix develop github:MAHDTech/nix-config#python-3_8  |
-| python 3.7  | nix develop github:MAHDTech/nix-config#python-3_7  |
-| python 2.7  | nix develop github:MAHDTech/nix-config#python-2_7  |
+|  Shell  | Description                           |
+| :-----: | :------------------------------------ |
+| default | Everything including the kitchen sink |
+|   nix   | For working with Nix and NixOS        |
+|  salt   | SaltStack and python tooling          |
 
 ## Updates
 

@@ -36,8 +36,7 @@ export FLATPAK_ENABLE_SDK_EXT="rust,golang"
 
 PYTHONVERSION="$(python3 -c 'import sys; print(str(sys.version_info[0])+"."+str(sys.version_info[1]))' 2</dev/null)"
 
-if [[ "${PYTHON_VERSION:-EMPTY}" ]];
-then
+if [[ "${PYTHON_VERSION:-EMPTY}" ]]; then
 	# NOTE: Flatpaks have old python, set a default
 	export PYTHONVERSION="3.9"
 
@@ -126,14 +125,12 @@ export LIBGL_ALWAYS_INDIRECT=0
 export QT_QPA_PLATFORM=wayland
 export XDG_SESSION_TYPE=wayland
 
-if [[ "${WSL:-FALSE}" == "TRUE" ]];
-then
+if [[ ${WSL:-FALSE} == "TRUE" ]]; then
 
-	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}' | head -n1 ):0.0
+	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}' | head -n1):0.0
 	export DISPLAY
 
-elif [[ "${CROS:-FALSE}" == "TRUE" ]];
-then
+elif [[ ${CROS:-FALSE} == "TRUE" ]]; then
 
 	export DISPLAY=":0"
 	export XAUTHORITY="${HOME}/.Xauthority"
@@ -147,13 +144,11 @@ then
 	# YOLO allow everybody
 	#xhost +
 
-elif [[ "${ID:-UNKNOWN}" == "fedora" ]];
-then
+elif [[ ${ID:-UNKNOWN} == "fedora" ]]; then
 
 	export DISPLAY="localhost:0"
 
-elif [[ "${OS_LAYER:-UNKNOWN}" == "TOOLBOX" ]];
-then
+elif [[ ${OS_LAYER:-UNKNOWN} == "TOOLBOX" ]]; then
 
 	export DISPLAY=":0"
 
@@ -305,7 +300,7 @@ export HOMEBREW_VERSION="True"
 # Starship
 #######################################
 
-export STARSHIP_CONFIG="${HOME}/.config/starship/starship.toml"
+export STARSHIP_CONFIG="${HOME}/.config/starship.toml"
 export STARSHIP_CACHE="${HOME}/.cache/starship"
 
 ########################################

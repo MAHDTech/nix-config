@@ -6,6 +6,8 @@
   ...
 }: {
   imports = [
+    ./fonts
+    ./groups
     #./modules
     ./networking
     ./power
@@ -13,7 +15,6 @@
     ./secrets
     ./services
     ./users
-    ./groups
     ./virtualisation
   ];
 

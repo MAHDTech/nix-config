@@ -49,7 +49,6 @@ in {
       shadow
       shellcheck
       sops
-      starship
       tokei
       tree
       unzip

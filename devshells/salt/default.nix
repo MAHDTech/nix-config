@@ -31,10 +31,8 @@ inputs.devenv.lib.mkShell {
 
       enterShell = ''
 
-        # Source the virtual environments
+        # Source the virtual environment
         source $VIRTUAL_ENV/bin/activate
-
-        pip install --upgrade pip
 
         pip install \
           --requirement $DEVENV_DEVSHELL_ROOT/requirements.txt
@@ -126,8 +124,8 @@ inputs.devenv.lib.mkShell {
         enable = true;
         package = pkgs.starship;
         config = {
-          enable = false;
-          path = "/home/${inputs.devenv.config.env.USERNAME}/.config/starship.toml";
+          enable = true;
+          path = "/home/\$\{USERNAME\}/.config/starship.toml";
         };
       };
     }

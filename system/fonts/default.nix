@@ -4,15 +4,11 @@
   lib,
   pkgs,
   ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+}: {
+  # https://nixos.wiki/wiki/Fonts
 
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs;
-    [
-      font-manager
-
+  fonts = {
+    fonts = with pkgs; [
       corefonts
       dejavu_fonts
       dina-font
@@ -58,12 +54,43 @@ in {
           "VictorMono"
         ];
       })
-    ]
-    ++ unstablePkgs;
+    ];
 
-  fonts = {
-    fontconfig = {
+    fontDir = {
       enable = true;
+    };
+
+    fontconfig = {
+      defaultFonts = {
+        monospace = [
+          "Ubuntu Mono Regular"
+          "UbuntuMono Nerd Font Regular"
+          "Noto Sans Mono"
+          "Noto Sans Mono Regular"
+          "DejaVu Sans Mono Book"
+          "Source Code Pro Regular"
+        ];
+
+        sansSerif = [
+          "Metropolis"
+          "Metropolis Regular"
+          "Ubuntu Regular"
+          "Ubuntu Nerd Font Book"
+          "Noto Sans"
+          "DejaVu Sans Book"
+          "Source Sans Pro"
+        ];
+
+        serif = [
+          "Metropolis"
+          "Metropolis Regular"
+          "Ubuntu Regular"
+          "Ubuntu Nerd Font Book"
+          "Noto Serif"
+          "DejaVu Serif Book"
+          "Source Serif Pro"
+        ];
+      };
     };
   };
 }

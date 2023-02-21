@@ -25,9 +25,9 @@ inputs.devenv.lib.mkShell {
         ssh-to-age
         ssh-to-pgp
         age
+
         bash
         bash-completion
-
       ];
 
       env = {
@@ -46,8 +46,8 @@ inputs.devenv.lib.mkShell {
           "
           Hello $USERNAME!
 
-          Shell: $DEVENV_DEVSHELL
-          Project: $PROJECT_NAME
+          Shell: \$\{DEVENV_DEVSHELL:-Unknown\}
+          Project: \$\{PROJECT_NAME:-Unknown\}
           "
 
       '';
@@ -62,7 +62,7 @@ inputs.devenv.lib.mkShell {
           alejandra.enable = true;
           nixfmt.enable = false;
           nixpkgs-fmt.enable = false;
-          deadnix.enable = false;
+          deadnix.enable = true;
           statix.enable = true;
 
           # GitHub Actions
@@ -114,8 +114,8 @@ inputs.devenv.lib.mkShell {
         enable = true;
         package = pkgs.starship;
         config = {
-          enable = false;
-          path = "/home/${inputs.devenv.config.env.USERNAME}/.config/starship.toml";
+          enable = true;
+          path = "/home/\$\{USERNAME\}/.config/starship.toml";
         };
       };
     }
