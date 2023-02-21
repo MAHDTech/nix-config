@@ -12,38 +12,37 @@ function DISABLED_nix-uninstall() {
 	local NIX_PROFILE_SCRIPT="${HOME}/.nix-profile/etx/profile.d/nix.sh"
 
 	# Is there an existing /nix dir?
-	if [[ -d "${NIX_STORE_HOME}" ]];
-	then
+	if [[ -d ${NIX_STORE_HOME} ]]; then
 
 		writeLog "INFO" "Uninstalling Nix"
 
 		sudo rm -rf "${HOME}/"{.nix-channels,.nix-defexpr,.nix-profile,.config/nixpkgs} || {
-			writeLog "WARNING" "Failed to remove all Nix directories in \$HOME"
-		};
+			writeLog "WARNING" 'Failed to remove all Nix directories in $HOME'
+		}
 
 		sudo rm -rf /root/{.nix-channels,.nix-defexpr,.nix-profile,.config/nixpkgs} || {
 			writeLog "WARNING" "Failed to remove all Nix directories in root"
-		};
+		}
 
 		sudo rm -f /etc/profile.d/nix.sh* || {
 			writeLog "ERROR" "Failed to remove nix.sh profile"
 			return 1
-		};
+		}
 
 		sudo rm -rf "${NIX_STORE_HOME}" || {
 			writeLog "ERROR" "Failed to remove Nix Store home"
 			return 1
-		};
+		}
 
 		sudo rm -rf "${NIX_STORE_CONFIG}" || {
 			writeLog "ERROR" "Failed to remove Nix Store config"
 			return 1
-		};
+		}
 
 		sudo rm -f "${NIX_PROFILE_SCRIPT}" || {
 			writeLog "ERROR" "Failed to remove Nix Profile script"
 			return 1
-		};
+		}
 
 	fi
 
@@ -63,37 +62,37 @@ function _dotfiles_actions() {
 
 	case "${OS_NAME:-EMPTY}" in
 
-		"nixos" )
+	"nixos")
 
-			nixos-rebuild \
-				"${ACTION}" \
-					--use-remote-sudo \
-					--upgrade-all \
-					--refresh \
-					--impure \
-					--flake "${FLAKE_LOCATION}#" \
-					"${EXTRA_ARGS[@]}" || {
+		nixos-rebuild \
+			"${ACTION}" \
+			--use-remote-sudo \
+			--upgrade-all \
+			--refresh \
+			--impure \
+			--flake "${FLAKE_LOCATION}#" \
+			"${EXTRA_ARGS[@]}" || {
 
-						writeLog "ERROR" "Failed to perform NixOS ${ACTION,,}"
-						popd > /dev/null || return 1
-						return 1
+			writeLog "ERROR" "Failed to perform NixOS ${ACTION,,}"
+			popd >/dev/null || return 1
+			return 1
 
-					}
+		}
 
 		;;
 
-		* )
+	*)
 
-			home-manager \
-				"${ACTION}" \
-				--flake "${FLAKE_LOCATION}" \
-				"${EXTRA_ARGS[@]}" || {
+		home-manager \
+			"${ACTION}" \
+			--flake "${FLAKE_LOCATION}" \
+			"${EXTRA_ARGS[@]}" || {
 
-					writeLog "ERROR" "Failed to perform Nix Home Manager ${ACTION,,}"
-					popd > /dev/null || return 1
-					return 1
+			writeLog "ERROR" "Failed to perform Nix Home Manager ${ACTION,,}"
+			popd >/dev/null || return 1
+			return 1
 
-				}
+		}
 
 		;;
 
@@ -137,11 +136,9 @@ function dotfiles() {
 	)
 
 	# Check if the action is valid before continuing.
-	for VALID_ACTION in "${VALID_ACTIONS[@]}";
-	do
+	for VALID_ACTION in "${VALID_ACTIONS[@]}"; do
 
-		if [[ "$ACTION" == "$VALID_ACTION" ]];
-		then
+		if [[ $ACTION == "$VALID_ACTION" ]]; then
 			writeLog "DEBUG" "The action ${ACTION} is valid."
 			EXECUTE="TRUE"
 			break
@@ -150,8 +147,7 @@ function dotfiles() {
 	done
 
 	# Return if the action is invalid.
-	if [[ "${EXECUTE}" == "FALSE" ]];
-	then
+	if [[ ${EXECUTE} == "FALSE" ]]; then
 
 		writeLog "ERROR" "Invalid action: ${ACTION:-NONE}"
 		return 1
@@ -159,15 +155,14 @@ function dotfiles() {
 	fi
 
 	# Change into the dotfiles config directory.
-	if [[ -d "${DOTFILES_CONFIG}" ]];
-	then
+	if [[ -d ${DOTFILES_CONFIG} ]]; then
 
-		pushd "${DOTFILES_CONFIG}" > /dev/null || {
+		pushd "${DOTFILES_CONFIG}" >/dev/null || {
 			writeLog "Failed to change into ${DOTFILES_CONFIG}"
 			return 1
 		}
 
-		# HACK: --allow-dirty
+		# HACK: allows dirty
 		git add --all || true
 
 		FLAKE_LOCATION="${FLAKE_LOCAL}"
@@ -182,16 +177,16 @@ function dotfiles() {
 
 	case "${OS_NAME:-EMPTY}" in
 
-		"nixos" )
+	"nixos")
 
-			writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
+		writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
 
 		;;
 
-		* )
+	*)
 
-			FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
-			writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
+		FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
+		writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
 
 		;;
 
@@ -201,153 +196,152 @@ function dotfiles() {
 
 	case "${ACTION}" in
 
-		"cd | dir" )
+	cd | dir | pushd)
 
-			popd > /dev/null || return 1
+		popd >/dev/null || return 1
 
-			cd "${DOTFILES_CONFIG}" > /dev/null || {
-				writeLog "ERROR" "Failed to change into ${DOTFILES_CONFIG}"
-				return 1
-			}
-
-		;;
-
-		"info" )
-
-			nix flake info || {
-				writeLog "ERROR" "Failed to display flake info"
-				return 1
-			}
-
-		;;
-
-		"check" )
-
-			nix flake check \
-				--no-build \
-				--keep-going \
-				--impure \
-				"${EXTRA_ARGS[@]}" || {
-					writeLog "WARN" "Failed flake check!"
-					return 1
-				}
-
-			nix run nixpkgs#statix -- check || {
-				writeLog "WARN" "Failed to run statix!"
-				return 1
-			}
-
-		;;
-
-		"build" )
-
-			_dotfiles_actions "build" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
-				writeLog "ERROR" "Failed to build dotfiles"
-				return 1
-			}
-
-		;;
-
-		"test" )
-
-			_dotfiles_actions "test" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
-				writeLog "ERROR" "Failed to test dotfiles"
-				return 1
-			}
-
-		;;
-
-		"boot" )
-
-			if [[ ! "${OS_NAME}" == "nixos" ]];
-			then
-				writeLog "ERROR" "Switching over on boot is only supported on NixOS"
-				return 1
-			fi
-
-			_dotfiles_actions "boot" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
-				writeLog "ERROR" "Failed to switch dotfiles"
-				return 1
-			}
-
-		;;
-
-		"switch" )
-
-			_dotfiles_actions "switch" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
-				writeLog "ERROR" "Failed to switch dotfiles"
-				return 1
-			}
-
-		;;
-
-		"update" )
-
-			case "${OS_NAME:-EMPTY}" in
-
-				"nixos" )
-
-					nix flake update || {
-						writeLog "ERROR" "Failed to update Nix flake"
-						popd > /dev/null || return 1
-						return 1
-					}
-
-				;;
-
-				* )
-
-					nix flake update || {
-						writeLog "ERROR" "Failed to update Nix flake"
-						popd > /dev/null || return 1
-						return 1
-					}
-
-				;;
-
-			esac
-
-		;;
-
-		"garbage-collect" )
-
-			case "${OS_NAME:-EMPTY}" in
-
-				"nixos" )
-
-					nix-collect-garbage --delete-older-than 1d || {
-						writeLog "ERROR" "Failed to collect Nix garbage"
-						popd > /dev/null || return 1
-						return 1
-					}
-
-				;;
-
-				* )
-
-					nix-collect-garbage --delete-older-than 1d || {
-						writeLog "ERROR" "Failed to collect Nix garbage"
-						popd > /dev/null || return 1
-						return 1
-					}
-
-				;;
-
-			esac
-			
-
-		;;
-
-		* )
-
-			writeLog "ERROR" "Invalid action: ${ACTION:-NONE}"
+		cd "${DOTFILES_CONFIG}" >/dev/null || {
+			writeLog "ERROR" "Failed to change into ${DOTFILES_CONFIG}"
 			return 1
+		}
+
+		;;
+
+	info)
+
+		nix flake info || {
+			writeLog "ERROR" "Failed to display flake info"
+			return 1
+		}
+
+		;;
+
+	check)
+
+		nix flake check \
+			--no-build \
+			--keep-going \
+			--impure \
+			"${EXTRA_ARGS[@]}" || {
+			writeLog "WARN" "Failed flake check!"
+			return 1
+		}
+
+		nix run nixpkgs#statix -- check || {
+			writeLog "WARN" "Failed to run statix!"
+			return 1
+		}
+
+		;;
+
+	build)
+
+		_dotfiles_actions "build" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
+			writeLog "ERROR" "Failed to build dotfiles"
+			return 1
+		}
+
+		;;
+
+	test)
+
+		_dotfiles_actions "test" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
+			writeLog "ERROR" "Failed to test dotfiles"
+			return 1
+		}
+
+		;;
+
+	boot)
+
+		if [[ ${OS_NAME} != "nixos" ]]; then
+			writeLog "ERROR" "Switching over on boot is only supported on NixOS"
+			return 1
+		fi
+
+		_dotfiles_actions "boot" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
+			writeLog "ERROR" "Failed to switch dotfiles"
+			return 1
+		}
+
+		;;
+
+	switch)
+
+		_dotfiles_actions "switch" "${FLAKE_LOCATION}" "${EXTRA_ARGS[@]}" || {
+			writeLog "ERROR" "Failed to switch dotfiles"
+			return 1
+		}
+
+		;;
+
+	update)
+
+		case "${OS_NAME:-EMPTY}" in
+
+		"nixos")
+
+			nix flake update || {
+				writeLog "ERROR" "Failed to update Nix flake"
+				popd >/dev/null || return 1
+				return 1
+			}
+
+			;;
+
+		*)
+
+			nix flake update || {
+				writeLog "ERROR" "Failed to update Nix flake"
+				popd >/dev/null || return 1
+				return 1
+			}
+
+			;;
+
+		esac
+
+		;;
+
+	garbage-collect)
+
+		case "${OS_NAME:-EMPTY}" in
+
+		"nixos")
+
+			nix-collect-garbage --delete-older-than 1d || {
+				writeLog "ERROR" "Failed to collect Nix garbage"
+				popd >/dev/null || return 1
+				return 1
+			}
+
+			;;
+
+		*)
+
+			nix-collect-garbage --delete-older-than 1d || {
+				writeLog "ERROR" "Failed to collect Nix garbage"
+				popd >/dev/null || return 1
+				return 1
+			}
+
+			;;
+
+		esac
+
+		;;
+
+	\
+		*)
+
+		writeLog "ERROR" "Invalid action: ${ACTION:-NONE}"
+		return 1
 
 		;;
 
 	esac
-	
-	popd > /dev/null || {
+
+	popd >/dev/null || {
 		writeLog "ERROR" "Failed to pop the folder stack"
 		return 1
 	}
