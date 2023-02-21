@@ -16,28 +16,28 @@ inputs.devenv.lib.mkShell {
         figlet
         hello
 
+        nixpkgs-fmt
+        statix
+
+        sops
+        #sops-init-gpg-key
+        #sops-import-keys-hook
+        ssh-to-age
+        ssh-to-pgp
+        age
         bash
         bash-completion
 
-        python3
       ];
 
       env = {
         USERNAME = username;
-        DEVENV_DEVSHELL_NAME = "salt";
+        DEVENV_DEVSHELL_NAME = "nix";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
       enterShell = ''
-
-        # Source the virtual environments
-        source $VIRTUAL_ENV/bin/activate
-
-        pip install --upgrade pip
-
-        pip install \
-          --requirement $DEVENV_DEVSHELL_ROOT/requirements.txt
 
         figlet $DEVENV_DEVSHELL
 
@@ -58,15 +58,15 @@ inputs.devenv.lib.mkShell {
         excludes = ["README.md"];
 
         hooks = {
+          # Nix
+          alejandra.enable = true;
+          nixfmt.enable = false;
+          nixpkgs-fmt.enable = false;
+          deadnix.enable = false;
+          statix.enable = true;
+
           # GitHub Actions
           actionlint.enable = true;
-
-          # Python
-          autoflake.enable = true;
-          black.enable = true;
-          flake8.enable = true;
-          pylint.enable = true;
-          ruff.enable = true;
 
           # Bash
           bats.enable = true;
@@ -79,9 +79,6 @@ inputs.devenv.lib.mkShell {
 
           # Git commit messages
           commitizen.enable = true;
-
-          # Docker
-          hadolint.enable = true;
 
           # Markdown
           markdownlint.enable = true;
@@ -107,20 +104,11 @@ inputs.devenv.lib.mkShell {
       hosts = {"example.com" = "1.1.1.1";};
 
       languages = {
-        python = {
-          enable = true;
-          package = pkgs.python3;
-
-          poetry = {
-            enable = false;
-            package = pkgs.poetry;
-          };
-
-          venv = {enable = true;};
-        };
+        nix = {enable = true;};
       };
 
-      services = {};
+      services = {
+      };
 
       starship = {
         enable = true;

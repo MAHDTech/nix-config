@@ -252,13 +252,19 @@
 
     #########################
     # Dev Shells
-    # nix develop --impure .#${name}
+    # nix develop --impure .#${NAME}
     #########################
 
     devShells = forAllSystems (system: let
       pkgs = pkgsImportSystem system;
     in {
       default = import ./devshells/default {
+        inherit username;
+        inherit inputs;
+        inherit pkgs;
+      };
+
+      nix = import ./devshells/nix {
         inherit username;
         inherit inputs;
         inherit pkgs;

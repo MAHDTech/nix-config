@@ -24,6 +24,7 @@ in {
       figlet
       file
       fortune
+      hello
       htop
       inetutils
       jq

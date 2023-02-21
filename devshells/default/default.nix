@@ -25,11 +25,18 @@ inputs.devenv.lib.mkShell {
         ssh-to-age
         ssh-to-pgp
         age
+
+        bash
+        bash-completion
+
+        python3
       ];
 
       env = {
         USERNAME = username;
-        DEVENV_DEVSHELL = "default";
+        DEVENV_DEVSHELL = "kitchen sink";
+
+        DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
       enterShell = ''
@@ -38,7 +45,12 @@ inputs.devenv.lib.mkShell {
 
         hello \
           --greeting \
-          "Hello $USERNAME, welcome to the $DEVENV_DEVSHELL development shell!"
+          "
+          Hello $USERNAME!
+
+          Shell: $DEVENV_DEVSHELL
+          Project: $PROJECT_NAME
+          "
 
       '';
 
@@ -116,7 +128,7 @@ inputs.devenv.lib.mkShell {
         };
       };
 
-      devcontainer.enable = true;
+      devcontainer.enable = false;
 
       devenv = {
         flakesIntegration = true;

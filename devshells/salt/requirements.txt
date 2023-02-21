@@ -1,7 +1,23 @@
 
+# Python
+autopep8
+black
+flake8
+mypy
+pydocstyle
+pylint
+pytest
+pytest-cov
+pytest-mock
+pytest-salt
+
+# Saltstack
+
 salt
 salt-lint
 salt-lsp
+
+# Idem
 
 idem
 idem-azurerm
@@ -11,6 +27,6 @@ idem-helm
 idem-salt
 idem-gcp
 idem-gitlab
-idem-github
+#idem-github
 idem-vault
 idem-k8s
