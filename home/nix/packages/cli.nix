@@ -39,7 +39,6 @@ in {
       pandoc
       pciutils
       powershell
-      pulumi-bin
       puppeteer-cli
       rclone
       read-edid

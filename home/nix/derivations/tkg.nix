@@ -5,11 +5,11 @@
   checksum = "03c9b77e65ef8ba0b7d7b51df583fdb32d47171bcc8c1a67536aa2d2afad9f0a";
   homepage = "https://customerconnect.vmware.com/downloads/details?downloadGroup=TKG-210&productId=1400";
 in
-  pkgs.stdenv.mkDerivation rec {
+  pkgs.stdenv.mkDerivation {
     name = product_name;
     version = product_version;
 
-    src = pkgs.requireFile rec {
+    src = pkgs.requireFile {
       name = filename;
       sha256 = checksum;
 

@@ -1,7 +1,7 @@
 {
-  username,
   inputs,
   pkgs,
+  username,
   ...
 }:
 inputs.devenv.lib.mkShell {
@@ -30,11 +30,12 @@ inputs.devenv.lib.mkShell {
         bash-completion
 
         python3
+
+        skopeo
       ];
 
       env = {
-        USERNAME = username;
-        DEVENV_DEVSHELL = "kitchen sink";
+        DEVENV_DEVSHELL = "default";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
@@ -43,13 +44,13 @@ inputs.devenv.lib.mkShell {
 
         figlet $DEVENV_DEVSHELL
 
+        hello "Welcome ${username}!"
+
         hello \
           --greeting \
           "
-          Hello $USERNAME!
-
-          Shell: \$\{DEVENV_DEVSHELL:-Unknown\}
-          Project: \$\{PROJECT_NAME:-Unknown\}
+          Shell: ''${DEVENV_DEVSHELL:-Unknown}
+          Project: ''${PROJECT_NAME:-Unknown}
           "
 
       '';
@@ -111,7 +112,10 @@ inputs.devenv.lib.mkShell {
           dhall-format.enable = true;
 
           # Markdown
-          markdownlint.enable = true;
+          markdownlint = {
+            enable = true;
+          };
+
           mdsh.enable = true;
 
           # Common
@@ -125,6 +129,39 @@ inputs.devenv.lib.mkShell {
 
           # Haskell
           hlint.enable = true;
+        };
+
+        settings = {
+          markdownlint = {
+            config = {
+              # No hard tabs allowed.
+              no-hard-tabs = true;
+
+              # Unordered list intendation.
+              MD007 = {
+                indent = 4;
+              };
+
+              # Training spaces
+              MD009 = {
+                br_spaces = 2;
+              };
+
+              # Line length
+              MD013 = false;
+
+              # Inline HTML
+              MD033 = false;
+
+              # List marker spaces.
+              # Disabled for use with prettier.
+              MD030 = false;
+            };
+          };
+
+          yamllint = {
+            configPath = builtins.toString (./. + "/.linters/yaml-lint.yaml");
+          };
         };
       };
 
@@ -177,56 +214,12 @@ inputs.devenv.lib.mkShell {
         };
       };
 
-      services = {
-        wiremock = {
-          enable = false;
-          port = 8080;
-          verbose = true;
-          mappings = [
-            {
-              name = "path";
-              request = {
-                method = "GET";
-                url = "/path";
-              };
-              response = {
-                status = 200;
-                body = "OK!";
-              };
-            }
-            {
-              name = "body";
-              request = {
-                method = "GET";
-                url = "/body";
-              };
-              response = {
-                body = "This is text in the response body";
-                headers = {Content-Type = "text/plain";};
-                status = 200;
-              };
-            }
-            {
-              name = "json";
-              request = {
-                method = "GET";
-                url = "/json";
-              };
-              response = {
-                jsonBody = {key = "value";};
-                status = 200;
-              };
-            }
-          ];
-        };
-      };
-
       starship = {
         enable = true;
         package = pkgs.starship;
         config = {
           enable = true;
-          path = "/home/\$\{USERNAME\}/.config/starship.toml";
+          path = "/home/${username}/.config/starship.toml";
         };
       };
     }

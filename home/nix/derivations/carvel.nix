@@ -12,6 +12,12 @@
       sha256 = "sha256-a1Pg2Gb7PNy3gUdcI5c+q2w3lZ5TwiCUvIH5mIhNdK4=";
     };
 
+    kctrl = pkgs.fetchurl {
+      name = "kctrl";
+      url = "https://github.com/carvel-dev/kapp-controller/releases/download/v0.40.0/kctrl-linux-amd64";
+      sha256 = "sha256-FqXD5/9J1S5hadSlf6v56GLW6vfnuHKTunNquURogDQ=";
+    };
+
     kbld = pkgs.fetchurl {
       name = "kbld";
       url = "https://github.com/carvel-dev/kbld/releases/download/v0.36.4/kbld-linux-amd64";
@@ -31,7 +37,7 @@
     };
   };
 in
-  pkgs.stdenv.mkDerivation rec {
+  pkgs.stdenv.mkDerivation {
     name = "carvel-dev";
     version = "1.0.0";
 
@@ -42,6 +48,7 @@ in
 
       install --verbose ${carvel.ytt} $out/bin/ytt
       install --verbose ${carvel.kapp} $out/bin/kapp
+      install --verbose ${carvel.kctrl} $out/bin/kctrl
       install --verbose ${carvel.kbld} $out/bin/kbld
       install --verbose ${carvel.imgpkg} $out/bin/imgpkg
       install --verbose ${carvel.vendir} $out/bin/vendir

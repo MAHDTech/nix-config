@@ -24,6 +24,10 @@ in {
 
       pulumi-bin
 
+      podman
+      buildah
+      skopeo
+
       terraform
       terraform-docs
       terraform-ls

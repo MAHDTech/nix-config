@@ -13,6 +13,8 @@
 
     (pkgs.callPackage ./kpack.nix {})
 
+    (pkgs.callPackage ./pivnet.nix {})
+
     (pkgs.callPackage ./ls-colors.nix {})
   ];
 }

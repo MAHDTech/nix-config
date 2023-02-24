@@ -5,7 +5,7 @@
     sha256 = "sha256-U9ivaC2JbZ5wOwZyQbbSa3AZxDsGguifqjho6lTmC+Y=";
   };
 in
-  pkgs.stdenv.mkDerivation rec {
+  pkgs.stdenv.mkDerivation {
     name = "ls-colors";
     version = "1.0.0";
 

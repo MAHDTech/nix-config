@@ -13,7 +13,7 @@
     };
   };
 in
-  pkgs.stdenv.mkDerivation rec {
+  pkgs.stdenv.mkDerivation {
     name = "kpack";
     version = "1.0.0";
 
