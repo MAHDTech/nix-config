@@ -89,24 +89,21 @@
   };
 
   outputs = {
-    self,
     nixpkgs,
-    nixpkgs-unstable,
+    #nixpkgs-unstable,
     nixos-hardware,
     home-manager,
     sops-nix,
-    nix-colors,
-    statix,
-    devenv,
-    fenix,
-    mach-nix,
+    #nix-colors,
+    #statix,
+    #devenv,
+    #fenix,
+    #mach-nix,
     ...
   } @ inputs: let
     username = "mahdtech";
 
     globalStateVersion = "22.11";
-
-    inherit (self) outputs;
 
     systems = [
       "aarch64-darwin"
@@ -125,8 +122,7 @@
 
     pkgsImportSystem = system: import inputs.nixpkgs {inherit system;};
 
-    pkgsImportSystemUnstable = system:
-      import inputs.nixpkgs-unstable {inherit system;};
+    #pkgsImportSystemUnstable = system: import inputs.nixpkgs-unstable {inherit system;};
 
     pkgsAllowUnfree = {
       nixpkgs = {
@@ -259,19 +255,16 @@
       pkgs = pkgsImportSystem system;
     in {
       default = import ./devshells/default {
-        inherit username;
         inherit inputs;
         inherit pkgs;
       };
 
       nix = import ./devshells/nix {
-        inherit username;
         inherit inputs;
         inherit pkgs;
       };
 
       salt = import ./devshells/salt {
-        inherit username;
         inherit inputs;
         inherit pkgs;
       };

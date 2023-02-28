@@ -1,8 +1,6 @@
 {
   inputs,
-  config,
   pkgs,
-  lib,
   ...
 }: {
   imports = [
@@ -58,7 +56,12 @@
     };
 
     extraOptions = ''
+      # Enable flakes
       experimental-features = nix-command flakes
+
+      # Keep outputs and derivations during garbage-collect
+      keep-outputs = true
+      keep-derivations = true
     '';
 
     nixPath = ["nixpkgs=${inputs.nixpkgs}"];

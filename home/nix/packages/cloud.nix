@@ -1,7 +1,5 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
 }: let
@@ -33,6 +31,8 @@ in {
       terraform-ls
       tflint
       tfsec
+
+      wrangler_1
     ]
     ++ unstablePkgs;
 }

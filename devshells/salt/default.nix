@@ -1,5 +1,4 @@
 {
-  username,
   inputs,
   pkgs,
   ...
@@ -23,9 +22,6 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
-        USERNAME = username;
-        DEVENV_DEVSHELL_NAME = "salt";
-
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
@@ -37,12 +33,12 @@ inputs.devenv.lib.mkShell {
         pip install \
           --requirement $DEVENV_DEVSHELL_ROOT/requirements.txt
 
-        figlet $DEVENV_DEVSHELL
+        figlet ''${PROJECT_SHELL:-Unknown}
 
         hello \
           --greeting \
           "
-          Hello $USERNAME!
+          Welcome ''${USER}!
 
           Shell: $DEVENV_DEVSHELL
           Project: $PROJECT_NAME
@@ -91,6 +87,39 @@ inputs.devenv.lib.mkShell {
           # YAML
           yamllint.enable = true;
         };
+
+        settings = {
+          markdownlint = {
+            config = {
+              # No hard tabs allowed.
+              no-hard-tabs = true;
+
+              # Unordered list intendation.
+              MD007 = {
+                indent = 4;
+              };
+
+              # Training spaces
+              MD009 = {
+                br_spaces = 2;
+              };
+
+              # Line length
+              MD013 = false;
+
+              # Inline HTML
+              MD033 = false;
+
+              # List marker spaces.
+              # Disabled for use with prettier.
+              MD030 = false;
+            };
+          };
+
+          yamllint = {
+            configPath = builtins.toString (./. + "/.linters/yaml-lint.yaml");
+          };
+        };
       };
 
       devcontainer.enable = false;
@@ -125,7 +154,7 @@ inputs.devenv.lib.mkShell {
         package = pkgs.starship;
         config = {
           enable = true;
-          path = "/home/\$\{USERNAME\}/.config/starship.toml";
+          path = "/home/$USER/.config/starship.toml";
         };
       };
     }
