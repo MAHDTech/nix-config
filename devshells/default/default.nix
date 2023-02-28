@@ -34,6 +34,8 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
+        PROJECT_SHELL="default";
+
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 

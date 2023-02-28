@@ -1,5 +1,6 @@
 
 # Python
+
 autopep8
 black
 flake8
@@ -15,7 +16,6 @@ pytest-salt
 
 salt
 salt-lint
-salt-lsp
 
 # Idem
 

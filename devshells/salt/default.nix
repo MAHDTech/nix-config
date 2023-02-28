@@ -22,6 +22,8 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
+        PROJECT_SHELL="salt";
+
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
@@ -40,8 +42,8 @@ inputs.devenv.lib.mkShell {
           "
           Welcome ''${USER}!
 
-          Shell: $DEVENV_DEVSHELL
-          Project: $PROJECT_NAME
+          Shell: ''${PROJECT_SHELL:-Unknown}
+          Project: ''${PROJECT_NAME:-Unknown}
           "
 
       '';

@@ -30,6 +30,8 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
+        PROJECT_SHELL="nix";
+
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
