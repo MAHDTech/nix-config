@@ -1,11 +1,6 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{...}: {
   imports = [
+    ./alacritty.nix
     ./ansible.nix
     ./bash.nix
     ./command-not-found.nix

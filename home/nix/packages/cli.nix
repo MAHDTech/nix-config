@@ -1,8 +1,6 @@
 {
-  inputs,
-  config,
-  lib,
   pkgs,
+  inputs,
   ...
 }: let
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
@@ -48,6 +46,7 @@ in {
       shadow
       shellcheck
       sops
+      terminator
       tokei
       tree
       unzip

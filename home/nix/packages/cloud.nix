@@ -21,6 +21,7 @@ in {
       kubernetes-helm
       kustomize
       kustomize-sops
+      octant
 
       packer
 
