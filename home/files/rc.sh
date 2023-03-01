@@ -288,7 +288,7 @@ fi
 writeLog "INFO" "SSH socket at ${SSH_AUTH_SOCK}"
 
 YUBIKEY_LOAD="FALSE"
-YUBIKEY_MODEL="ID 1050:0407 Yubico.com Yubikey 4/5 OTP+U2F+CCID"
+YUBIKEY_MODEL="ID 1050:0407 Yubico YubiKey OTP+FIDO+CCID"
 
 if lsusb | grep "${YUBIKEY_MODEL}" >/dev/null; then
 
