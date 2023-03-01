@@ -17,6 +17,10 @@ in {
       google-cloud-sdk
 
       kubectl
+      kind
+      kubernetes-helm
+      kustomize
+      kustomize-sops
 
       packer
 
