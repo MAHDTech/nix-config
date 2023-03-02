@@ -1,7 +1,6 @@
 {
   inputs,
   pkgs,
-  username,
   ...
 }:
 inputs.devenv.lib.mkShell {
@@ -35,21 +34,21 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
-        DEVENV_DEVSHELL = "default";
+        PROJECT_SHELL="default";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
       enterShell = ''
 
-        figlet $DEVENV_DEVSHELL
-
-        hello "Welcome ${username}!"
+        figlet ''${PROJECT_SHELL:-Unknown}
 
         hello \
           --greeting \
           "
-          Shell: ''${DEVENV_DEVSHELL:-Unknown}
+          Welcome ''${USER}!
+
+          Shell: ''${PROJECT_SHELL:-Unknown}
           Project: ''${PROJECT_NAME:-Unknown}
           "
 
@@ -219,7 +218,7 @@ inputs.devenv.lib.mkShell {
         package = pkgs.starship;
         config = {
           enable = true;
-          path = "/home/${username}/.config/starship.toml";
+          path = "/home/$USER/.config/starship.toml";
         };
       };
     }

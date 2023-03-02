@@ -1,7 +1,5 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
 }: let
@@ -18,10 +16,11 @@ in {
 
       gtk3
 
+      logseq
+
       inkscape
       libreoffice
-
-      logseq
+      pinta
     ]
     ++ unstablePkgs;
 }

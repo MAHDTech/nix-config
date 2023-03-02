@@ -1,6 +1,5 @@
 {
   inputs,
-  config,
   lib,
   pkgs,
   ...
@@ -14,7 +13,7 @@ in {
   programs.starship = {
     enable = true;
 
-    package = pkgs.starship;
+    package = pkgsUnstable.starship;
 
     enableBashIntegration = true;
     enableFishIntegration = false;

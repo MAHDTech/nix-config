@@ -1,7 +1,5 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
 }: let
@@ -13,6 +11,7 @@ in {
     [
       #pkgs.vscode
       #pkgs.vscode-with-extensions
+      #pkgs.vscode.fhs
     ]
     ++ unstablePkgs;
 
@@ -20,7 +19,7 @@ in {
     vscode = {
       enable = true;
 
-      package = pkgsUnstable.vscode;
+      package = pkgsUnstable.vscode.fhs;
 
       enableExtensionUpdateCheck = true;
       enableUpdateCheck = true;
@@ -28,11 +27,9 @@ in {
       mutableExtensionsDir = true;
 
       extensions = with pkgs.vscode-extensions; [
-        # TODO: Currently managing extensions via VSCode settings sync.
       ];
 
       userSettings = {
-        # TODO: Currently managing settings via VSCode settings sync.
       };
 
       # Careful, these override the vim extension.
