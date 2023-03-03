@@ -208,7 +208,11 @@
     #########################
 
     homeConfigurations = {
-      "${username}@penguin" = configHomeManager {system = "x86_64-linux";};
+
+      "mahdtech@penguin" = configHomeManager {system = "x86_64-linux";};
+      
+      "matthewd3@vmware.lab" = configHomeManager {system = "x86_64-linux";};
+
     };
 
     #########################
