@@ -4,11 +4,16 @@ name: Nix Flake check
 on:
   push:
     branches:
-      - "trunk"
+      - $default-branch
+      - trunk
 
   pull_request:
     branches:
+      - $default-branch
       - "trunk"
+
+permissions:
+  contents: read
 
 env:
   NIXPKGS_ALLOW_UNFREE: 1
@@ -23,7 +28,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: "Install Nix ❄️"
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v20
+
+      - id: cachix
+        name: "Enable Cachix ❄️"
+        uses: cachix/cachix-action@v12
+        with:
+          name: mahdtech
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: Nix Flake check
         run: >-
