@@ -150,7 +150,7 @@
 
           pkgsAllowUnfree
 
-          sops-nix.nixosModules.sops
+          sops-nix.homeManagerModules.sops
         ];
       };
 
@@ -192,6 +192,13 @@
         inherit globalStateVersion;
         home = configHome;
       };
+
+      sharedModules = [
+        pkgsAllowUnfree
+
+        sops-nix.homeManagerModules.sops
+      ];
+
     };
   in {
     #########################
