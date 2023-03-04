@@ -87,8 +87,8 @@
       # https://github.com/alacritty/alacritty-theme
       colors = {
         primary = {
-          background = "0x1e2030";
-          foreground = "0x7f85a3";
+          background = "0x24283b";
+          foreground = "0xa9b1d6";
         };
 
         cursor = {
@@ -97,25 +97,95 @@
         };
 
         normal = {
-          black = "0x444a73";
-          red = "0xff5370";
-          green = "0x4fd6be";
-          yellow = "0xffc777";
-          blue = "0x3e68d7";
-          magenta = "0xfc7b7b";
-          cyan = "0x86e1fc";
-          white = "0xd0d0d0";
+          black = "0x32344a";
+          red = "0xf7768e";
+          green = "0x9ece6a";
+          yellow = "0xe0af68";
+          blue = "0x7aa2f7";
+          magenta = "0xad8ee6";
+          cyan = "0x449dab";
+          white = "0x9699a8";
         };
 
         bright = {
-          black = "0x828bb8";
-          red = "0xff98a4";
-          green = "0xc3e88d";
-          yellow = "0xffc777";
-          blue = "0x82aaff";
-          magenta = "0xff966c";
-          cyan = "0xb4f9f8";
-          white = "0x5f8787";
+          black = "0x444b6a";
+          red = "0xff7a93";
+          green = "0xb9f27c";
+          yellow = "0xff9e64";
+          blue = "0x7da6ff";
+          magenta = "0xbb9af7";
+          cyan = "0x0db9d7";
+          white = "0xacb0d0";
+        };
+      };
+
+      schemes = {
+        tokyo-night-storm = {
+          primary = {
+            background = "0x24283b";
+            foreground = "0xa9b1d6";
+          };
+
+          cursor = {
+            text = "0x7f85a3";
+            cursor = "0x808080";
+          };
+
+          normal = {
+            black = "0x32344a";
+            red = "0xf7768e";
+            green = "0x9ece6a";
+            yellow = "0xe0af68";
+            blue = "0x7aa2f7";
+            magenta = "0xad8ee6";
+            cyan = "0x449dab";
+            white = "0x9699a8";
+          };
+
+          bright = {
+            black = "0x444b6a";
+            red = "0xff7a93";
+            green = "0xb9f27c";
+            yellow = "0xff9e64";
+            blue = "0x7da6ff";
+            magenta = "0xbb9af7";
+            cyan = "0x0db9d7";
+            white = "0xacb0d0";
+          };
+        };
+
+        moonlight = {
+          primary = {
+            background = "0x1e2030";
+            foreground = "0x7f85a3";
+          };
+
+          cursor = {
+            text = "0x7f85a3";
+            cursor = "0x808080";
+          };
+
+          normal = {
+            black = "0x444a73";
+            red = "0xff5370";
+            green = "0x4fd6be";
+            yellow = "0xffc777";
+            blue = "0x3e68d7";
+            magenta = "0xfc7b7b";
+            cyan = "0x86e1fc";
+            white = "0xd0d0d0";
+          };
+
+          bright = {
+            black = "0x828bb8";
+            red = "0xff98a4";
+            green = "0xc3e88d";
+            yellow = "0xffc777";
+            blue = "0x82aaff";
+            magenta = "0xff966c";
+            cyan = "0xb4f9f8";
+            white = "0x5f8787";
+          };
         };
       };
 
@@ -145,7 +215,7 @@
       live_config_reload = true;
 
       mouse = {
-        hide_when_typing = true;
+        hide_when_typing = false;
 
         double_click = {
           threshold = 300;

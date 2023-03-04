@@ -30,6 +30,7 @@ in {
       podman
       buildah
       skopeo
+      dive
 
       terraform
       terraform-docs
