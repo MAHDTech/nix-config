@@ -15,12 +15,10 @@ function quoteParams() {
 	declare -ga PARAMS=("${@}")
 
 	# Loop over all the provided params
-	for INDEX in "${!PARAMS[@]}";
-	do
+	for INDEX in "${!PARAMS[@]}"; do
 
 		# If the git param has spaces, quote it
-		if [[ ${PARAMS[$INDEX]} =~ ${PATTERN} ]];
-		then
+		if [[ ${PARAMS[$INDEX]} =~ ${PATTERN} ]]; then
 
 			writeLog "DEBUG" "Params before: ${PARAMS[$INDEX]}"
 
@@ -58,27 +56,24 @@ function DISABLED_dotfiles() {
 	LOCATION_DOTFILES="${HOME}/.dotfiles"
 	LOCATION_GIT="$(which git)"
 
-	if [[ ! -f "${LOCATION_GIT}" ]];
-	then
+	if [[ ! -f ${LOCATION_GIT} ]]; then
 		writeLog "ERROR" "Please ensure git is installed and available in the PATH"
 		return 1
 	fi
 
-	if [[ "${GIT_COMMAND:-EMPTY}" == "EMPTY" ]];
-	then
+	if [[ ${GIT_COMMAND:-EMPTY} == "EMPTY" ]]; then
 
 		"${LOCATION_GIT}" \
-			--help \
-		|| return 1
+			--help ||
+			return 1
 
-	elif [[ "${#GIT_PARAMS[@]}" -eq 0 ]];
-	then
+	elif [[ ${#GIT_PARAMS[@]} -eq 0 ]]; then
 
 		"${LOCATION_GIT}" \
 			--git-dir="${LOCATION_DOTFILES}" \
 			--work-tree "${HOME}" \
-			"${GIT_COMMAND}" \
-		|| return 1
+			"${GIT_COMMAND}" ||
+			return 1
 
 	else
 
@@ -91,8 +86,8 @@ function DISABLED_dotfiles() {
 			--git-dir="${LOCATION_DOTFILES}" \
 			--work-tree "${HOME}" \
 			"${GIT_COMMAND}" \
-			"${PARAMS[@]}" \
-		|| return 1
+			"${PARAMS[@]}" ||
+			return 1
 
 	fi
 
@@ -129,14 +124,12 @@ function DISABLE_dotfiles_remind() {
 
 	# Reminds you to stage and commit the changes in your dotfiles
 
-	if ! dotfiles diff --quiet --exit-code;
-	then
+	if ! dotfiles diff --quiet --exit-code; then
 
 		writeLog "WARN" "You have unstaged changes in your dotfiles!"
 		return 1
 
-	elif ! dotfiles diff --quiet --exit-code --cached;
-	then
+	elif ! dotfiles diff --quiet --exit-code --cached; then
 
 		writeLog "WARN" "You have uncommitted changes in your dotfiles!"
 		return 1
@@ -161,9 +154,8 @@ function git_squash_branch() {
 
 	DEFAULT="${DEFAULT:=trunk}"
 
-	if [ "${BRANCH:-EMPTY}" == "EMPTY" ];
-	then
-		writeLog "ERROR" "Please provide a branch to squash as \$1"
+	if [ "${BRANCH:-EMPTY}" == "EMPTY" ]; then
+		writeLog "ERROR" 'Please provide a branch to squash as $1'
 		return 1
 	fi
 
@@ -218,8 +210,11 @@ function git_remove_submodule() {
 	read -p "Press [Enter] to continue....."
 
 	writeLog "INFO" "Stage the changes to .gitmodules"
-	git add .gitmodules \
-		|| { writeLog "ERROR" "Failed to stage .gitmodules" ; return 1 ; }
+	git add .gitmodules ||
+		{
+			writeLog "ERROR" "Failed to stage .gitmodules"
+			return 1
+		}
 	read -p "Press [Enter] to continue....."
 
 	writeLog "INFO" "Remove the section from .git/config"
@@ -228,43 +223,55 @@ function git_remove_submodule() {
 
 	writeLog "INFO" "Remove the path from git cache"
 
-	if [ "${GIT_SUBMODULE_PATH:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${GIT_SUBMODULE_PATH:-EMPTY}" == "EMPTY" ]; then
 		read -p "Enter the git submodule folder name: " -r GIT_SUBMODULE_PATH
 		echo -e "\n"
 	fi
 
-	if [ ! -d "${GIT_SUBMODULE_PATH}" ];
-	then
+	if [ ! -d "${GIT_SUBMODULE_PATH}" ]; then
 		writeLog "WARN" "There is no existing folder ${GIT_SUBMODULE_PATH}"
 	fi
 
 	read -p "Are you sure you want to remove ${GIT_SUBMODULE_PATH} from the git cache? Y/N: " -n 1 -r CHOICE
 	echo -e "\n"
 
-	if [[ "${CHOICE}" =~ ^[Yy] ]];
-	then
+	if [[ ${CHOICE} =~ ^[Yy] ]]; then
 
-		git rm -r --cached "${GIT_SUBMODULE_PATH}" \
-			|| { writeLog "ERROR" "Failed to remove submodule from git cache" ; return 1 ; }
+		git rm -r --cached "${GIT_SUBMODULE_PATH}" ||
+			{
+				writeLog "ERROR" "Failed to remove submodule from git cache"
+				return 1
+			}
 
-		rm -rf ".git/modules/$GIT_SUBMODULE_PATH" \
-			|| { writeLog "ERROR" "Failed to remove the git submodule from git tree" ; return 1 ; }
+		rm -rf ".git/modules/$GIT_SUBMODULE_PATH" ||
+			{
+				writeLog "ERROR" "Failed to remove the git submodule from git tree"
+				return 1
+			}
 
 		writeLog "INFO" "Staging changes"
 
-		git add --all \
-			|| { writeLog "ERROR" "Failed to stage changes" ; return 1 ; }
+		git add --all ||
+			{
+				writeLog "ERROR" "Failed to stage changes"
+				return 1
+			}
 
 		writeLog "INFO" "Committing changes"
 
-		git commit --no-gpg-sign --no-verify -am "Removed submodule" \
-			|| { writeLog "ERROR" "Failed to commit changes" ; return 1 ; }
+		git commit --no-gpg-sign --no-verify -am "Removed submodule" ||
+			{
+				writeLog "ERROR" "Failed to commit changes"
+				return 1
+			}
 
 		writeLog "INFO" "Removing untracked files"
 
-		rm -rf "${GIT_SUBMODULE_PATH}" || \
-			{ writeLog "ERROR" "Failed to remove git submodule files" ; return 1 ; }
+		rm -rf "${GIT_SUBMODULE_PATH}" ||
+			{
+				writeLog "ERROR" "Failed to remove git submodule files"
+				return 1
+			}
 
 	else
 
@@ -279,11 +286,10 @@ function git_remove_submodule() {
 
 function git_prune_large_file() {
 
-	if [[ "${1-}" ]];
-	then
+	if [[ "${1-}" ]]; then
 		local FILENAME="${1}"
 	else
-		writeLog "ERROR" "Please provide the large file path as \$1. This should be the relative filename based on the git dir context."
+		writeLog "ERROR" 'Please provide the large file path as $1. This should be the relative filename based on the git dir context.'
 		return 1
 	fi
 
@@ -292,11 +298,11 @@ function git_prune_large_file() {
 		--force \
 		--prune-empty \
 		--index-filter \
-			"git rm --cached -f --ignore-unmatch ${FILENAME}" \
+		"git rm --cached -f --ignore-unmatch ${FILENAME}" \
 		--tag-name-filter cat -- --all || {
-			writeLog "ERROR" "Failed to prune large file ${FILENAME}"
-			return 1
-		}
+		writeLog "ERROR" "Failed to prune large file ${FILENAME}"
+		return 1
+	}
 
 	return 0
 
@@ -309,12 +315,15 @@ function git_prune_all() {
 	writeLog "INFO" "Pruning local branches and tags not found on remote"
 
 	git fetch \
-			--all \
-			--prune \
-			--tags \
-			--prune-tags \
-			--verbose \
-		|| { writeLog "ERROR" "Failed to prune all local branches and tags" ; return 1 ; }
+		--all \
+		--prune \
+		--tags \
+		--prune-tags \
+		--verbose ||
+		{
+			writeLog "ERROR" "Failed to prune all local branches and tags"
+			return 1
+		}
 
 	return 0
 
@@ -349,13 +358,11 @@ function git_prune_merged() {
 	BRANCHES_MERGED=$(git branch --list --merged)
 	BRANCHES_TOTAL="${#BRANCHES_PROTECTED[*]}"
 
-	echo "${BRANCHES_MERGED}" | for BRANCH in "${BRANCHES_PROTECTED[@]}" ;
-	do
+	echo "${BRANCHES_MERGED}" | for BRANCH in "${BRANCHES_PROTECTED[@]}"; do
 
-		BRANCHES_COUNT=$(( "${BRANCHES_COUNT:-0}" + 1 ))
+		BRANCHES_COUNT=$(("${BRANCHES_COUNT:-0}" + 1))
 
-		if [[ "${BRANCHES_COUNT}" -eq "${BRANCHES_TOTAL}" ]];
-		then
+		if [[ ${BRANCHES_COUNT} -eq ${BRANCHES_TOTAL} ]]; then
 
 			grep -v "${BRANCH}"
 
@@ -365,10 +372,10 @@ function git_prune_merged() {
 
 		fi
 
-	done > "${TEMPFILE}"
+	done >"${TEMPFILE}"
 
-	vi "${TEMPFILE}" && \
-	xargs git branch -d < "${TEMPFILE}"
+	vi "${TEMPFILE}" &&
+		xargs git branch -d <"${TEMPFILE}"
 
 	rm -f "${TEMPFILE}"
 
@@ -383,20 +390,25 @@ function git_pull_all() {
 	writeLog "WARN" "TODO: NOT FINISHED YET"
 	return 0
 
-	git branch -r | grep -v '\->' \
-	| while read -r REMOTE;
-	do
+	git branch -r | grep -v '\->' |
+		while read -r REMOTE; do
 
-		writeLog "INFO" "Tracking ${REMOTE#origin/} against ${REMOTE}"
-		echo git branch --track "${REMOTE#origin/}" "${REMOTE}";
+			writeLog "INFO" "Tracking ${REMOTE#origin/} against ${REMOTE}"
+			echo git branch --track "${REMOTE#origin/}" "${REMOTE}"
 
-	done
+		done
 
-	git fetch --all \
-		|| { writeLog "ERR" "Failed to git fetch all branches" ; return 1 ; }
+	git fetch --all ||
+		{
+			writeLog "ERR" "Failed to git fetch all branches"
+			return 1
+		}
 
-	git pull --all \
-		|| { writeLog "ERRO" "Failed to git pull all branches" ; return 1 ; }
+	git pull --all ||
+		{
+			writeLog "ERRO" "Failed to git pull all branches"
+			return 1
+		}
 
 	return 0
 
@@ -406,7 +418,7 @@ function git_command_dir() {
 
 	# Returns the git directory
 
-	git rev-parse --git-dir > /dev/null 2>&1
+	git rev-parse --git-dir >/dev/null 2>&1
 
 }
 
@@ -414,7 +426,7 @@ function git_command_status() {
 
 	# Returns 0 when there is nothing to commit
 
-	git status 2> /dev/null | grep "nothing to commit" > /dev/null 2>&1
+	git status 2>/dev/null | grep "nothing to commit" >/dev/null 2>&1
 
 }
 
@@ -423,18 +435,15 @@ function git_status() {
 	# Shows git status in PS1
 	# Useful characters: 𝘟 ✗ Ӽ 𝘟 𝞦 ✔ ✓ ▲ ➜
 
-	if git_command_dir ;
-	then
+	if git_command_dir; then
 
-		if ! git_command_status ;
-		then
+		if ! git_command_status; then
 
 			# shellcheck disable=SC2154
 			echo "${fgRed}𝞦${fgReset}"
 			return 0
 
-		elif git_command_status ;
-		then
+		elif git_command_status; then
 
 			# shellcheck disable=SC2154
 			echo "${fgGreen}✔${fgReset}"
@@ -458,9 +467,9 @@ function git_branch() {
 
 	local GIT_BRANCH
 
-	GIT_BRANCH=$( \
-		git branch --no-color 2> /dev/null \
-		| sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+	GIT_BRANCH=$(
+		git branch --no-color 2>/dev/null |
+			sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
 	)
 
 	echo -n "${GIT_BRANCH:=none}"
@@ -476,14 +485,12 @@ function git_reset_branch() {
 	local BRANCH_DEFAULT="trunk"
 	declare -a GIT_PARAMS=("${@:2}")
 
-	if [[ "${BRANCH:-EMPTY}" == "EMPTY" ]];
-	then
+	if [[ ${BRANCH:-EMPTY} == "EMPTY" ]]; then
 
 		BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 		writeLog "INFO" "Resetting current branch ${BRANCH}"
 
-	elif [[ "${BRANCH^^}" == "ALL" ]];
-	then
+	elif [[ ${BRANCH^^} == "ALL" ]]; then
 
 		writeLog "INFO" "Erasing ALL branch history and re-initializing repository"
 
@@ -491,10 +498,9 @@ function git_reset_branch() {
 		BRANCH_ERASE="TRUE"
 		BRANCH="${BRANCH_DEFAULT}"
 
-	elif [[ "${BRANCH}" =~ ^-- ]];
-	then
+	elif [[ ${BRANCH} =~ ^-- ]]; then
 
-		writeLog "INFO" "Please provide the branch name as \$1 and not extra args."
+		writeLog "INFO" 'Please provide the branch name as $1 and not extra args.'
 		return 1
 
 	else
@@ -509,50 +515,72 @@ function git_reset_branch() {
 		return 1
 	}
 
-	git checkout --orphan git_reset || \
-		{ writeLog "ERROR" "Failed to checkout new branch 'git_reset'" ; return 1 ; }
+	git checkout --orphan git_reset ||
+		{
+			writeLog "ERROR" "Failed to checkout new branch 'git_reset'"
+			return 1
+		}
 
-	git add --all || \
-		{ writeLog "ERROR" "Failed to stage files" ; return 1 ; }
+	git add --all ||
+		{
+			writeLog "ERROR" "Failed to stage files"
+			return 1
+		}
 
 	# Commit all the files into the git_reset branch
 	writeLog "INFO" "Initialize new ${BRANCH} branch"
 
 	# shellcheck disable=2086
-	git commit --no-verify --message "Initialize ${BRANCH} branch" "${PARAMS[@]}" \
-		|| { writeLog "ERROR" "Failed to commit files" ; return 1 ; }
+	git commit --no-verify --message "Initialize ${BRANCH} branch" "${PARAMS[@]}" ||
+		{
+			writeLog "ERROR" "Failed to commit files"
+			return 1
+		}
 
 	# Delete the prior branch
-	git branch --delete --force "${BRANCH}" || \
-		{ writeLog "ERROR" "Failed to delete branch ${BRANCH}" ; return 1 ; }
+	git branch --delete --force "${BRANCH}" ||
+		{
+			writeLog "ERROR" "Failed to delete branch ${BRANCH}"
+			return 1
+		}
 
 	# Rename current branch to the prior branch
-	git branch --move "${BRANCH}" || \
-		{ writeLog "ERROR" "Failed to rename branch ${BRANCH}" ; return 1 ; }
+	git branch --move "${BRANCH}" ||
+		{
+			writeLog "ERROR" "Failed to rename branch ${BRANCH}"
+			return 1
+		}
 
-	if [ "${BRANCH_ERASE^^}" == "TRUE" ];
-	then
+	if [ "${BRANCH_ERASE^^}" == "TRUE" ]; then
 
 		writeLog "INFO" "Removing old branches"
 
-		for OTHER_BRANCH in $(git branch | grep -v "${BRANCH}");
-		do
+		for OTHER_BRANCH in $(git branch | grep -v "${BRANCH}"); do
 
 			writeLog "INFO" "Removing branch ${OTHER_BRANCH}"
-			git branch --delete --force "${OTHER_BRANCH}" || \
-				{ writeLog "ERROR" "Failed to remove branch ${OTHER_BRANCH}" ; return 1 ; }
+			git branch --delete --force "${OTHER_BRANCH}" ||
+				{
+					writeLog "ERROR" "Failed to remove branch ${OTHER_BRANCH}"
+					return 1
+				}
 
 		done
 
 	fi
 
 	# Force push to origin
-	git push --force origin "${BRANCH}" || \
-		{ writeLog "ERROR" "Failed to push branch ${BRANCH} to origin" ; return 1 ; }
+	git push --force origin "${BRANCH}" ||
+		{
+			writeLog "ERROR" "Failed to push branch ${BRANCH} to origin"
+			return 1
+		}
 
 	# Remove old files
-	git gc --aggressive --prune=all || \
-		{ writeLog "ERROR" "Failed to run git garbage collection" ; return 1 ; }
+	git gc --aggressive --prune=all ||
+		{
+			writeLog "ERROR" "Failed to run git garbage collection"
+			return 1
+		}
 
 	return 0
 
@@ -567,24 +595,39 @@ function git_reset_tags() {
 	#git tag -l | xargs -n 1 git push --delete origin
 
 	writeLog "INFO" "Syncing local and remote tags"
-	git fetch --tags \
-		|| { writeLog "ERROR" "Failed to fetch remote tags" ; return 1 ; }
+	git fetch --tags ||
+		{
+			writeLog "ERROR" "Failed to fetch remote tags"
+			return 1
+		}
 
 	writeLog "INFO" "Deleting all local tags"
-	git tag --list | xargs -n 1 git tag --delete \
-		|| { writeLog "ERROR" "Failed to delete local git tags" ; return 1 ; }
+	git tag --list | xargs -n 1 git tag --delete ||
+		{
+			writeLog "ERROR" "Failed to delete local git tags"
+			return 1
+		}
 
 	writeLog "INFO" "Fetching all remote tags"
-	git fetch --tags \
-		|| { writeLog "ERROR" "Failed to fetch remote tags" ; return 1 ; }
+	git fetch --tags ||
+		{
+			writeLog "ERROR" "Failed to fetch remote tags"
+			return 1
+		}
 
 	writeLog "INFO" "Deleting all remote tags"
-	git tag --list | xargs -n 1 git push --delete origin \
-		|| { writeLog "ERROR" "Failed to delete remote tags" ; return 1; }
+	git tag --list | xargs -n 1 git push --delete origin ||
+		{
+			writeLog "ERROR" "Failed to delete remote tags"
+			return 1
+		}
 
 	writeLog "INFO" "Deleting all local tags"
-	git tag --list | xargs -n 1 git tag --delete \
-		|| { writeLog "ERROR" "Failed to delete local git tags" ; return 1 ; }
+	git tag --list | xargs -n 1 git tag --delete ||
+		{
+			writeLog "ERROR" "Failed to delete local git tags"
+			return 1
+		}
 
 	return 0
 
@@ -597,22 +640,30 @@ function git_checkout() {
 
 	local BRANCH="${1}"
 
-	if [ "${BRANCH:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${BRANCH:-EMPTY}" == "EMPTY" ]; then
 		writeLog "ERROR" "mate, I need a branch name!"
 		return 1
 	fi
 
 	writeLog "INFO" "Checking out a new branch ${BRANCH} and setting it to track origin/${BRANCH}"
 
-	git pull --all \
-		|| { writeLog "ERROR" "Failed to update the repo" ; return 1 ; }
+	git pull --all ||
+		{
+			writeLog "ERROR" "Failed to update the repo"
+			return 1
+		}
 
-	git checkout -b "${BRANCH}" \
-		|| { writeLog "ERROR" "Failed to checkout a new branch ${BRANCH}" ; return 1 ; }
+	git checkout -b "${BRANCH}" ||
+		{
+			writeLog "ERROR" "Failed to checkout a new branch ${BRANCH}"
+			return 1
+		}
 
-	git push --set-upstream --verbose \
-		|| { writeLog "ERROR" "Failed to set upstream on local branch ${BRANCH} to origin/${BRANCH}" ; return 1 ; }
+	git push --set-upstream --verbose ||
+		{
+			writeLog "ERROR" "Failed to set upstream on local branch ${BRANCH} to origin/${BRANCH}"
+			return 1
+		}
 
 	writeLog "INFO" "Time to GitKraken!"
 
@@ -634,8 +685,7 @@ function github_pr() {
 	TITLE="${TITLE:=WIP}"
 	BODY="${BODY:=WIP}"
 
-	if ! checkBin gh;
-	then
+	if ! checkBin gh; then
 		writeLog "ERROR" "Please install the GitHub CLI 'gh'"
 		return 1
 	fi
@@ -646,8 +696,11 @@ function github_pr() {
 		--draft \
 		--title "${TITLE}" \
 		--body "${BODY}" \
-		--assignee MAHDTech \
-		|| { writeLog "ERROR" "Failed to create PR for ${BRANCH_SOURCE}" ; return 1 ; }
+		--assignee MAHDTech ||
+		{
+			writeLog "ERROR" "Failed to create PR for ${BRANCH_SOURCE}"
+			return 1
+		}
 
 	return 0
 
@@ -670,31 +723,26 @@ function git_checkin() {
 		environment/production
 	)
 
-	if [[ "${BRANCH_SOURCE:-EMPTY}" == "EMPTY" ]] || [[ "${BRANCH_SOURCE,,}" == "current" ]];
-	then
+	if [[ ${BRANCH_SOURCE:-EMPTY} == "EMPTY" ]] || [[ ${BRANCH_SOURCE,,} == "current" ]]; then
 		BRANCH_SOURCE="$(git rev-parse --abbrev-ref HEAD)"
 	fi
 
-	if [[ "${BRANCH_DEST:-EMPTY}" == "EMPTY" ]];
-	then
+	if [[ ${BRANCH_DEST:-EMPTY} == "EMPTY" ]]; then
 
 		BRANCH_DEST="trunk"
 
 		read -p "The source branch \"${BRANCH_SOURCE}\" will be checked into the branch \"${BRANCH_DEST}\". Are you sure? Y/N: " -n 1 -r CHOICE
 		echo -e "\n"
 
-		if [[ ! "${CHOICE}" =~ ^[Yy] ]];
-		then
+		if [[ ! ${CHOICE} =~ ^[Yy] ]]; then
 			writeLog "INFO" "No changes were made, goodbye!"
 			return 1
 		fi
 
 	fi
 
-	for BRANCH_PROTECTED in "${BRANCHES_PROTECTED[@]}";
-	do
-		if [ "${BRANCH_SOURCE,,}" == "${BRANCH_PROTECTED,,}" ];
-		then
+	for BRANCH_PROTECTED in "${BRANCHES_PROTECTED[@]}"; do
+		if [ "${BRANCH_SOURCE,,}" == "${BRANCH_PROTECTED,,}" ]; then
 			writeLog "ERROR" "Not removing protected branch ${BRANCH_SOURCE}"
 			return 1
 		fi
@@ -703,23 +751,41 @@ function git_checkin() {
 
 	writeLog "INFO" "Checking in completed branch ${BRANCH_SOURCE} and changing over to branch ${BRANCH_DEST}"
 
-	git checkout "${BRANCH_DEST}" \
-		|| { writeLog "ERROR" "Failed to checkout ${BRANCH_DEST} branch" ; return 1 ; }
+	git checkout "${BRANCH_DEST}" ||
+		{
+			writeLog "ERROR" "Failed to checkout ${BRANCH_DEST} branch"
+			return 1
+		}
 
-	git branch --set-upstream-to=origin/${BRANCH_DEST} ${BRANCH_DEST} \
-		|| { writeLog "ERROR" "Failed to set upstream on ${BRANCH_DEST} branch" ; return 1 ; }
+	git branch --set-upstream-to=origin/${BRANCH_DEST} ${BRANCH_DEST} ||
+		{
+			writeLog "ERROR" "Failed to set upstream on ${BRANCH_DEST} branch"
+			return 1
+		}
 
-	git pull --all --tags \
-		|| { writeLog "ERROR" "Failed to pull from origin" ; return 1 ; }
+	git pull --all --tags ||
+		{
+			writeLog "ERROR" "Failed to pull from origin"
+			return 1
+		}
 
-	git_prune_all \
-		|| { writeLog "ERROR" "Failed to git_prune_all" ; return 1 ; }
+	git_prune_all ||
+		{
+			writeLog "ERROR" "Failed to git_prune_all"
+			return 1
+		}
 
-	git branch -D "${BRANCH_SOURCE}" \
-		|| { writeLog "ERROR" "Failed to delete branch ${BRANCH_SOURCE}" ; return 1 ; }
+	git branch -D "${BRANCH_SOURCE}" ||
+		{
+			writeLog "ERROR" "Failed to delete branch ${BRANCH_SOURCE}"
+			return 1
+		}
 
-	git branch --all \
-		|| { writeLog "ERROR" "Failed to list branches" ; return 1 ; }
+	git branch --all ||
+		{
+			writeLog "ERROR" "Failed to list branches"
+			return 1
+		}
 
 	return 0
 
@@ -735,17 +801,25 @@ function git_reset_delete() {
 	read -p "Are you sure you want to reset the current branch ${BRANCH_CURRENT} to HEAD and delete any untracked files? Y/N: " -n 1 -r CHOICE
 	echo -e "\n"
 
-	if [[ "${CHOICE}" =~ ^[Yy] ]];
-	then
+	if [[ ${CHOICE} =~ ^[Yy] ]]; then
 
-		git reset HEAD --hard \
-			|| { writeLog "ERROR" "Failed to reset to HEAD" ; return 1 ; }
+		git reset HEAD --hard ||
+			{
+				writeLog "ERROR" "Failed to reset to HEAD"
+				return 1
+			}
 
-		git clean --force -d \
-			|| { writeLog "ERROR" "Failed to clean untracked files" ; return 1 ; }
+		git clean --force -d ||
+			{
+				writeLog "ERROR" "Failed to clean untracked files"
+				return 1
+			}
 
-		git status \
-			|| { writeLog "ERROR" "Failed to display current git status" ; return 1 ; }
+		git status ||
+			{
+				writeLog "ERROR" "Failed to display current git status"
+				return 1
+			}
 
 	else
 
@@ -759,8 +833,11 @@ function git_reset_delete() {
 
 function git_set_head() {
 
-	git remote set-head origin --auto \
-		|| { writeLog "ERR" "Failed to set HEAD automatically!" ; return 1 ; }
+	git remote set-head origin --auto ||
+		{
+			writeLog "ERR" "Failed to set HEAD automatically!"
+			return 1
+		}
 
 }
 
@@ -772,16 +849,14 @@ function git_sync_fork() {
 	local BRANCH="${1}"
 
 	# Has a branch been provided?
-	if [[ "${BRANCH:-EMPTY}" == "EMPTY" ]];
-	then
+	if [[ ${BRANCH:-EMPTY} == "EMPTY" ]]; then
 		writeLog "ERROR" "Please provide the branch name to merge upstream changes into."
 		git branch --all
 		return 1
 	fi
 
 	# Has 'upstream' been configured as a git remote?
-	if git remote -v | cut --fields 1 | grep -s "${UPSTREAM}" ;
-	then
+	if git remote -v | cut --fields 1 | grep -s "${UPSTREAM}"; then
 
 		# Upstream has already been configured, fetch the latest changes.
 		git fetch upstream || {
@@ -814,8 +889,7 @@ function git_folder_status() {
 
 	local CURRENT_BRANCH
 
-	while IFS= read -r -d '' FOLDER
-	do
+	while IFS= read -r -d '' FOLDER; do
 
 		# Reset variables
 		CURRENT_BRANCH=""
@@ -827,8 +901,7 @@ function git_folder_status() {
 			return 0
 		}
 
-		if [[ ! -d ".git" ]];
-		then
+		if [[ ! -d ".git" ]]; then
 			writeLog "INFO" "Skipped folder: ${FOLDER} not a git directory"
 			# shellcheck disable=2164
 			popd
@@ -847,8 +920,7 @@ function git_folder_status() {
 		# Determine the current branch
 		CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-		if [[ "${CURRENT_BRANCH:-EMPTY}" == "EMPTY" ]];
-		then
+		if [[ ${CURRENT_BRANCH:-EMPTY} == "EMPTY" ]]; then
 			writeLog "ERROR" "Failed to determine current branch"
 			# shellcheck disable=2164
 			popd
@@ -868,14 +940,13 @@ function git_folder_status() {
 		# Is there changes staged, but not committed?
 		git diff --cached --exit-code || {
 			writeLog "ERROR" "Failed folder: ${FOLDER}. Please commit changes and try again."
-		# stay in the dir for quick fix.
-		# popd
-		return 1
+			# stay in the dir for quick fix.
+			# popd
+			return 1
 		}
 
 		# Is there changes committed but not pushed?
-		if ! git rev-list "origin/${CURRENT_BRANCH}" | grep --silent "$(git rev-parse HEAD)";
-		then
+		if ! git rev-list "origin/${CURRENT_BRANCH}" | grep --silent "$(git rev-parse HEAD)"; then
 			writeLog "ERROR" "Failed folder: ${FOLDER}. Please push your changes and try again."
 			return 1
 		fi
@@ -885,7 +956,7 @@ function git_folder_status() {
 			return 1
 		}
 
-	done <  <(find . -maxdepth 1 -type d -print0)
+	done < <(find . -maxdepth 1 -type d -print0)
 
 	writeLog "INFO" "All folders checked, no files need staging or commiting"
 	return 0
@@ -903,10 +974,9 @@ function github_download_release() {
 		return 1
 	}
 
-	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" "Please provide the ORG/REPO as \$1"
+		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
 		return 1
 
 	else
@@ -916,22 +986,19 @@ function github_download_release() {
 
 	fi
 
-	URL_PATH="https://api.github.com/repos/${GITHUB_ORG}/${GITHUB_REPO}/releases/latest";
+	URL_PATH="https://api.github.com/repos/${GITHUB_ORG}/${GITHUB_REPO}/releases/latest"
 
 	URL=$(
 		curl \
 			--silent \
 			--location \
-			"${URL_PATH}" \
-		| \
-		egrep \
-			"browser_download_url|tarball_url|zipball_url" \
-		| \
-		cut \
-			--delim '"' \
-			--field 4 \
-		| \
-		fzf
+			"${URL_PATH}" |
+			egrep \
+				"browser_download_url|tarball_url|zipball_url" |
+			cut \
+				--delim '"' \
+				--field 4 |
+			fzf
 	)
 
 	curl --silent --location --remote-name "${URL}" || {
@@ -966,8 +1033,7 @@ function github_delete_workflows() {
 	# The expectation is to be passed org/repo as $1
 	GITHUB_ORG_REPO="$1"
 
-	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ];
-	then
+	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ]; then
 
 		HEADER_TOKEN="Authorization: token ${GITHUB_TOKEN}"
 		writeLog "INFO" "Using authenticated access to GitHub API"
@@ -975,15 +1041,14 @@ function github_delete_workflows() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" "No token is defined. Please set the PAT in \$GITHUB_TOKEN"
+		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
 		return 1
 
 	fi
 
-	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" "Please provide the ORG/REPO as \$1"
+		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
 		return 1
 
 	else
@@ -995,22 +1060,19 @@ function github_delete_workflows() {
 	writeLog "INFO" "Obtaining a list of GitHub Workflow runs"
 
 	LOOP="TRUE"
-	while [[ "${LOOP}" != "FALSE" ]];
-	do
+	while [[ ${LOOP} != "FALSE" ]]; do
 
 		WORKFLOW_RUNS=""
 		WORKFLOW_RUNS=$(curl --silent --request GET --header "${HEADER_TOKEN}" --header "${HEADER_APP}" "${URL}${PAGE}" | jq --raw-output .workflow_runs[].id)
 
-		if [ "${WORKFLOW_RUNS:-EMPTY}" == "EMPTY" ];
-		then
+		if [ "${WORKFLOW_RUNS:-EMPTY}" == "EMPTY" ]; then
 			writeLog "ERROR" "Workflow run list is empty or failed to obtain the list from ${GITHUB_ORG_REPO}"
 			LOOP="FALSE"
-            continue
+			continue
 		fi
 
 		COUNTER=0
-		while IFS= read -r WORKFLOW;
-		do
+		while IFS= read -r WORKFLOW; do
 
 			writeLog "INFO" "Deleting Worklow ${WORKFLOW}"
 
@@ -1018,11 +1080,10 @@ function github_delete_workflows() {
 			RESULT=$(curl --silent --write-out '%{http_code}' --output /dev/null --request DELETE --header "${HEADER_TOKEN}" --header "${HEADER_APP}" "${URL}/${WORKFLOW}")
 
 			# '204 No content' means it worked
-			if [ "${RESULT:-0}" -eq 204 ];
-			then
+			if [ "${RESULT:-0}" -eq 204 ]; then
 
 				writeLog "INFO" "Response: ${RESULT}"
-				COUNTER=$(( COUNTER +1 ))
+				COUNTER=$((COUNTER + 1))
 
 			else
 
@@ -1030,7 +1091,7 @@ function github_delete_workflows() {
 
 			fi
 
-		done <<< "${WORKFLOW_RUNS}"
+		done <<<"${WORKFLOW_RUNS}"
 
 		writeLog "INFO" "Deleted a total of ${COUNTER} Workflow Runs"
 
@@ -1070,9 +1131,8 @@ function github_query_projects() {
 	# The expectation is to be passed org/repo as $1
 	GITHUB_ORG_REPO="${1}"
 
-	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ];
-	then
-		writeLog "ERROR" "Please provide the ORG/REPO as \$1"
+	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
+		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
 		return 1
 	fi
 
@@ -1084,22 +1144,21 @@ function github_query_projects() {
 	HEADER_JSON="Content-Type: application/json"
 
 	# Handling JSON with heredocs is a PITA, use direct files instead.
-	GRAPHQL_FILES="${HOME}/.config/GitHub/GraphQL"
-	GRAPHQL_FILE_QUERY="${GRAPHQL_FILES}/query_projects.gql"
+	GRAPHQL_FILES="${HOME}/.config/github/graphql"
+	GRAPHQL_FILE_QUERY="${GRAPHQL_FILES}/queries/projects.gql"
 
 	GRAPHQL_QUERY=$(jq --null-input \
 		--arg QUERY "$(sed -e "s/\$GITHUB_ORG/${GITHUB_ORG}/" -e "s/\$GITHUB_REPO/${GITHUB_REPO}/" "${GRAPHQL_FILE_QUERY}" | tr -d '\n')" \
-		'{ query: $QUERY }' )
-	GRAPHQL_QUERY=${GRAPHQL_QUERY//[$'\t\r\n']}
+		'{ query: $QUERY }')
+	GRAPHQL_QUERY=${GRAPHQL_QUERY//[$'\t\r\n']/}
 	GRAPHQL_QUERY=${GRAPHQL_QUERY//[[::space::]]/}
 
-	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ];
-	then
+	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ]; then
 		HEADER_TOKEN="Authorization: token ${GITHUB_TOKEN}"
 		writeLog "INFO" "Using authenticated access to GitHub API"
 	else
 		HEADER_TOKEN=""
-		writeLog "ERROR" "No token is defined. Please set the PAT in \$GITHUB_TOKEN"
+		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
 		return 1
 	fi
 
@@ -1109,17 +1168,16 @@ function github_query_projects() {
 		--request POST \
 		--header "${HEADER_TOKEN}" \
 		--data "${GRAPHQL_QUERY}" \
-		"${GITHUB_API}" \
-		|| writeLog "ERROR" "Failed to obtain list of GitHub Projects"
-		#| jq -r '.data.repository.packages.nodes[].versions.nodes[].version')
+		"${GITHUB_API}" ||
+		writeLog "ERROR" "Failed to obtain list of GitHub Projects"
+	#| jq -r '.data.repository.packages.nodes[].versions.nodes[].version')
 
 	return 0
 
 }
 
-
 # shellcheck disable=2034
-function github_delete_packages() {
+function github_delete_packages_old() {
 
 	# Deletes all packages from a given GitHub org
 	# References:
@@ -1159,18 +1217,17 @@ function github_delete_packages() {
 	HEADER_DELETE="Accept: application/vnd.github.package-deletes-preview+json"
 
 	# Handling JSON with heredocs is a PITA, use direct files instead.
-	GRAPHQL_FILES="${HOME}/.config/GitHub/GraphQL"
-	GRAPHQL_FILE_QUERY="${GRAPHQL_FILES}/query_packages.gql"
-	GRAPHQL_FILE_MUTATION="${GRAPHQL_FILES}/mutation_packages.gql"
+	GRAPHQL_FILES="${HOME}/.config/github/graphql"
+	GRAPHQL_FILE_QUERY="${GRAPHQL_FILES}/queries/packages.gql"
+	GRAPHQL_FILE_MUTATION="${GRAPHQL_FILES}/mutations/packages.gql"
 
 	GRAPHQL_QUERY=$(jq --null-input \
 		--arg QUERY "$(sed -e "s/\$GITHUB_ORG/${GITHUB_ORG}/" -e "s/\$GITHUB_REPO/${GITHUB_REPO}/" "${GRAPHQL_FILE_QUERY}" | tr -d '\n')" \
-		'{ query: $QUERY }' )
-	GRAPHQL_QUERY=${GRAPHQL_QUERY//[$'\t\r\n']}
+		'{ query: $QUERY }')
+	GRAPHQL_QUERY=${GRAPHQL_QUERY//[$'\t\r\n']/}
 	GRAPHQL_QUERY=${GRAPHQL_QUERY//[[::space::]]/}
 
-	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ];
-	then
+	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ]; then
 
 		HEADER_TOKEN="Authorization: token ${GITHUB_TOKEN}"
 		writeLog "INFO" "Using authenticated access to GitHub API"
@@ -1178,24 +1235,22 @@ function github_delete_packages() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" "No token is defined. Please set the PAT in \$GITHUB_TOKEN"
+		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
 		return 1
 
 	fi
 
-	if [ "${GITHUB_ORG:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${GITHUB_ORG:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" "Please provide the ORG as \$1"
+		writeLog "ERROR" 'Please provide the ORG as $1'
 		return 1
 
 	fi
 
-	read -p "Are you sure you want to remove all packages from the GitHub ${GITHUB_ORG} organization under ${GITHUB_REPO} Y/N: " -n 1 -r CHOICE
+	read -p "Are you sure you want to remove all packages from the GitHub ${GITHUB_ORG} organization under repo ${GITHUB_REPO} Y/N: " -n 1 -r CHOICE
 	echo -e "\n"
 
-	if [[ ! "${CHOICE}" =~ ^[Yy] ]];
-	then
+	if [[ ! ${CHOICE} =~ ^[Yy] ]]; then
 
 		writeLog "INFO" "No changes have been made, goodbye!"
 		return 1
@@ -1207,34 +1262,31 @@ function github_delete_packages() {
 	PACKAGES=""
 	PACKAGES=$(curl --silent --request POST --head "${HEADER_JSON}" --header "${HEADER_TOKEN}" --data "${GRAPHQL_QUERY}" "${GITHUB_API}" | jq -r '.data.repository.packages.nodes[].versions.nodes[].version')
 
-	if [ "${PACKAGES:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${PACKAGES:-EMPTY}" == "EMPTY" ]; then
 		writeLog "ERROR" "Failed to obtain list of packages from GitHub organization ${ORG}"
 		return 1
 	fi
 
 	COUNTER=0
-	while IFS= read -r PACKAGE_VERSION_ID;
-	do
+	while IFS= read -r PACKAGE_VERSION_ID; do
 
 		writeLog "INFO" "Deleting Package ${PACKAGE_VERSION_ID}"
 
 		unset GRAPHQL_MUTATION
 		GRAPHQL_MUTATION=$(jq --null-input \
 			--arg QUERY "$(sed -e "s/\$PACKAGE_VERSION_ID/${PACKAGE_VERSION_ID}/" -e "s/\$GITHUB_REPO/${GITHUB_REPO}/" "${GRAPHQL_FILE_QUERY}" | tr -d '\n')" \
-			'{ query: $QUERY }' )
-		GRAPHQL_MUTATION=${GRAPHQL_MUTATION//[$'\t\r\n']}
+			'{ query: $QUERY }')
+		GRAPHQL_MUTATION=${GRAPHQL_MUTATION//[$'\t\r\n']/}
 		GRAPHQL_MUTATION=${GRAPHQL_MUTATION//[[::space::]]/}
 
 		unset RESULT
 		RESULT=$(curl --silent --write-out '%{http_code}' --output /dev/null --request POST --header "${HEADER_TOKEN}" --header "${HEADER_DELETE}" --data "${GRAPHQL_MUTATION}" "${GITHUB_API}")
 
 		# '204 No content' means it worked
-		if [ "${RESULT:-0}" -eq 204 ];
-		then
+		if [ "${RESULT:-0}" -eq 204 ]; then
 
 			writeLog "INFO" "Response: ${RESULT}"
-			COUNTER=$(( COUNTER +1 ))
+			COUNTER=$((COUNTER + 1))
 
 		else
 
@@ -1242,7 +1294,7 @@ function github_delete_packages() {
 
 		fi
 
-	done <<< "${PACKAGES}"
+	done <<<"${PACKAGES}"
 
 	writeLog "INFO" "Deleted a total of ${COUNTER} Workflow Runs"
 
@@ -1271,8 +1323,7 @@ function github_get_label() {
 	GITHUB_API="https://api.github.com"
 	HEADER_APP="Accept: application/vnd.github.v3+json"
 
-	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ];
-	then
+	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ]; then
 
 		HEADER_TOKEN="Authorization: token ${GITHUB_TOKEN}"
 		writeLog "INFO" "Using authenticated access to GitHub API"
@@ -1280,23 +1331,21 @@ function github_get_label() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" "No token is defined. Please set the PAT in \$GITHUB_TOKEN"
+		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
 		return 1
 
 	fi
 
-	if [[ "${GITHUB_LABEL_NAME:-EMPTY}" == "EMPTY" ]];
-	then
+	if [[ ${GITHUB_LABEL_NAME:-EMPTY} == "EMPTY" ]]; then
 
-		writeLog "ERROR" "Please provide a valid label name as \$2"
+		writeLog "ERROR" 'Please provide a valid label name as $2'
 		return 1
 
 	fi
 
-	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" "Please provide the ORG/REPO as \$1"
+		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
 		return 1
 
 	else
@@ -1309,8 +1358,7 @@ function github_get_label() {
 	RESULT=$(curl --silent --write-out '%{http_code}' --output /dev/null --request POST --header "${HEADER_TOKEN}" --header "${HEADER_APP}" "${URL}")
 
 	# '200' means the label exists
-	if [ "${RESULT:-0}" -eq 200 ];
-	then
+	if [ "${RESULT:-0}" -eq 200 ]; then
 
 		writeLog "INFO" "The GitHub Label ${GITHUB_LABEL_NAME} already exists."
 		return 0
@@ -1346,8 +1394,7 @@ function github_create_label() {
 	PAGE="?&per_page=100"
 	HEADER_APP="Accept: application/vnd.github.v3+json"
 
-	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ];
-	then
+	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ]; then
 
 		HEADER_TOKEN="Authorization: token ${GITHUB_TOKEN}"
 		writeLog "INFO" "Using authenticated access to GitHub API"
@@ -1355,15 +1402,14 @@ function github_create_label() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" "No token is defined. Please set the PAT in \$GITHUB_TOKEN"
+		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
 		return 1
 
 	fi
 
-	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ];
-	then
+	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" "Please provide the ORG/REPO as \$1"
+		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
 		return 1
 
 	else
@@ -1372,10 +1418,9 @@ function github_create_label() {
 
 	fi
 
-	if [[ ! -f "${GITHUB_LABEL_FILE}" ]];
-	then
+	if [[ ! -f ${GITHUB_LABEL_FILE} ]]; then
 
-		writeLog "ERROR" "Please provide a valid label.json file as \$2"
+		writeLog "ERROR" 'Please provide a valid label.json file as $2'
 		return 1
 
 	fi
@@ -1384,8 +1429,7 @@ function github_create_label() {
 	RESULT=$(curl --silent --write-out '%{http_code}' --output /dev/null --request POST --header "${HEADER_TOKEN}" --header "${HEADER_APP}" "${URL}" --data "@${GITHUB_LABEL_FILE}")
 
 	# '201 Created' means it worked
-	if [ "${RESULT:-0}" -eq 201 ];
-	then
+	if [ "${RESULT:-0}" -eq 201 ]; then
 
 		writeLog "INFO" "Label created successfully"
 
@@ -1415,15 +1459,13 @@ function github_set_defaults() {
 	local GITHUB_LABEL_NAME
 
 	# Apply Labels
-	for LABEL in "${GITHUB_LABELS}/"*.json ;
-	do
+	for LABEL in "${GITHUB_LABELS}/"*.json; do
 
 		# Extract the label name
 		GITHUB_LABEL_NAME=$(jq --raw-output .name "${LABEL}")
 
 		# Check if the label already exists
-		if ! github_get_label "${GITHUB_ORG_REPO}" "${GITHUB_LABEL_NAME}"
-		then
+		if ! github_get_label "${GITHUB_ORG_REPO}" "${GITHUB_LABEL_NAME}"; then
 
 			writeLog "INFO" "Creating Label ${LABEL}"
 

@@ -1,7 +1,7 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {imports = [./scripts.nix ./xdg.nix];}
+{...}: {
+  imports = [
+    ./scripts.nix
+    ./xdg.nix
+    ./github.nix
+  ];
+}

@@ -44,7 +44,7 @@ FOLDERS=(
 	"${HOME}/CodeQL/codeql"
 	"${HOME}/CodeQL/bin"
 	"${HOME}/.local/bin"
-	"${HOME}/.local/scripts"
+	"${HOME}/.local/bin/scripts"
 	"${HOME}/go/bin"
 	"${HOME}/.krew/bin"
 	"${HOME}/.cargo/bin"
@@ -288,9 +288,8 @@ fi
 writeLog "INFO" "SSH socket at ${SSH_AUTH_SOCK}"
 
 YUBIKEY_LOAD="FALSE"
-YUBIKEY_MODEL="ID 1050:0407 Yubico YubiKey OTP+FIDO+CCID"
 
-if lsusb | grep "${YUBIKEY_MODEL}" >/dev/null; then
+if lsusb | grep -i Yubikey >/dev/null; then
 
 	writeLog "INFO" "Detected connected YubiKey, loading SSH keys"
 	YUBIKEY_LOAD="TRUE"
