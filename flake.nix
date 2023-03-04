@@ -210,12 +210,12 @@
     #########################
 
     homeConfigurations = {
-      "mahdtech@penguin" = configHomeManager {
+      "mahdtech" = configHomeManager {
         system = "x86_64-linux";
         username = "mahdtech";
       };
 
-      "matthewd3@vmware.lab" = configHomeManager {
+      "matthewd3" = configHomeManager {
         system = "x86_64-linux";
         username = "matthewd3@vmware.lab";
       };

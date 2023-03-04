@@ -114,7 +114,8 @@ function dotfiles() {
 	local FLAKE_REMOTE="github:MAHDTech/nix-config"
 	local FLAKE_LOCAL="."
 	local FLAKE_HOME_MANAGER
-	FLAKE_HOME_MANAGER="$(printf '%s\n' "$(whoami)"@"$(hostname)")"
+	#FLAKE_HOME_MANAGER="$(printf '%s\n' "$(whoami)"@"$(hostname)")"
+	FLAKE_HOME_MANAGER="${USER%%@*}"
 
 	local EXECUTE="FALSE"
 
@@ -163,7 +164,7 @@ function dotfiles() {
 			return 1
 		}
 
-		# HACK: allows dirty
+		# HACK: allow dirty
 		git add --all || true
 
 		FLAKE_LOCATION="${FLAKE_LOCAL}"
