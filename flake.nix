@@ -93,8 +93,6 @@
     ...
   } @ inputs: let
 
-    defaultUsername = "mahdtech";
-
     globalStateVersion = "22.11";
 
     systems = [
@@ -124,7 +122,7 @@
       };
     };
 
-    configHome = {username ? defaultUsername, ...}:{
+    configHome = {username, ...}:{
       inherit username;
       homeDirectory = "/home/${username}";
       stateVersion = globalStateVersion;
@@ -134,7 +132,7 @@
     # Home Manager
     #########################
 
-    configHomeManager = {system, username ? defaultUsername, ...}:
+    configHomeManager = {system, username, ...}:
       home-manager.lib.homeManagerConfiguration {
         pkgs = pkgsImportSystem system;
 
@@ -162,7 +160,7 @@
     configNixOS = {
       system,
       extraModules,
-      username ? defaultUsername,
+      username,
       ...
     }:
       nixpkgs.lib.nixosSystem {
@@ -183,7 +181,7 @@
           ++ extraModules;
       };
 
-    configNixOSHomeManager = {username ? defaultUsername}:{
+    configNixOSHomeManager = {username}:{
       useGlobalPkgs = true;
       useUserPackages = true;
 
@@ -212,6 +210,12 @@
         system = "x86_64-linux";
         username = "mahdtech";
       };
+
+      "matthewd3@vmware.lab" = configHomeManager {
+        system = "x86_64-linux";
+        username = "matthewd3@vmware.lab";
+      };
+
     };
 
     #########################
@@ -220,6 +224,7 @@
 
     nixosConfigurations = {
       nuc = configNixOS {
+        username = "mahdtech";
         system = "x86_64-linux";
 
         extraModules = [
@@ -237,6 +242,7 @@
       };
 
       vmware = configNixOS {
+        username = "mahdtech";
         system = "x86_64-linux";
 
         extraModules = [

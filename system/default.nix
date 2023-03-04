@@ -77,7 +77,7 @@
 
     allowReboot = true;
 
-    flake = "/home/mahdtech/Projects/GitHub/MAHDTech/nix-config";
+    flake = "$HOME/Projects/GitHub/MAHDTech/nix-config";
 
     flags = ["--update-input" "nixpkgs" "--commit-lock-file"];
 
