@@ -7,6 +7,15 @@ inputs.devenv.lib.mkShell {
   inherit inputs;
   inherit pkgs;
 
+  sopsPGPKeysDirs = [
+    "${toString ./.}/secrets/keys/hosts"
+    "${toString ./.}/secrets/keys/users"
+  ];
+
+  nativeBuildInputs = [
+    (pkgs.callPackage sops-nix {}).sops-import-keys-hook
+  ];
+
   modules = [
     {
       # https://devenv.sh/reference/options/

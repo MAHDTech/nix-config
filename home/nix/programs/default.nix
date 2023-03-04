@@ -13,6 +13,7 @@
     ./neovim.nix
     ./python.nix
     ./salt.nix
+    ./sops-nix.nix
     ./ssh.nix
     ./starship.nix
     ./vim.nix

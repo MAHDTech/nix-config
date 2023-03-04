@@ -1,20 +1,29 @@
-#########################
+
+##################################################
 # SOPS configuration.
 #
-# NOTE:
+# NOTES:
 #
-# ssh-to-age -i ~/.ssh/keys/id_ed25519.pub >> ~/.config/sops/age/keys.txt
-# ssh-to-age -private-key -i ~/.ssh/keys/id_ed25519 >> ~/.config/sops/age/keys.txt
+#    nix-shell -p sops --run "sops secrets/example.yaml"
 #
-#########################
+##################################################
 
 keys:
-  # Users
-  - &admin_mahdtech_age age1g9watu56msn7xlqfsxhteppv7uvrm9wte7zn7lhul4nw9y7pys9s6wldan
+
+  # Users (AGE)
+  - &admin_mahdtech_nuc_age age1g9watu56msn7xlqfsxhteppv7uvrm9wte7zn7lhul4nw9y7pys9s6wldan
+  - &admin_mahdtech_penguin_age age1et76l876ugsr3zavg7vd7cdrdfh7v0fc3h30rmupr06xp3a2g4lqr9tskr
+
+  # Users (GPG)
   - &admin_mahdtech_gpg 521A973C9426E8F4EE1C48FB3E520D84C0F43391
-  # Systems
+
+  # Systems (AGE)
   - &system_nuc_age age1atpe6jwhjgzajhpn9ky28d36tedm6ccu2t2w4vna78k7kwkwwycsprq800
+  - &system_penguin_age age14qny4gehy8fkga9vha5khn26ywuutm5d3w5urawwaz68pr5py5nsl6xj8u
+
+  # Systems (GPG)
   - &system_nuc_gpg 3427c11a2069c301130939caeef52927134a6d84
+  - &system_penguin_gpg 21ba9b4c175dda9f5f3519532e51b9ac938f3a69
 
 creation_rules:
 
@@ -24,7 +33,10 @@ creation_rules:
     - pgp:
       - *admin_mahdtech_gpg
       - *system_nuc_gpg
+      - *system_penguin_gpg
 
     - age:
-      - *admin_mahdtech_age
+      - *admin_mahdtech_nuc_age
+      - *admin_mahdtech_penguin_age
       - *system_nuc_age
+      - *system_penguin_age
