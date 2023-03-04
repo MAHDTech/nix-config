@@ -20,3 +20,6 @@ result
 # Ignore direnv
 .direnv
 **/.direnv
+
+# Ignore the pre-commit hook config
+#.pre-commit-config.yaml
