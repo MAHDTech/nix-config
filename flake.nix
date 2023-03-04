@@ -92,7 +92,8 @@
     #fenix,
     ...
   } @ inputs: let
-    username = "mahdtech";
+
+    defaultUsername = "mahdtech";
 
     globalStateVersion = "22.11";
 
@@ -123,7 +124,7 @@
       };
     };
 
-    configHome = {
+    configHome = {username ? defaultUsername, ...}:{
       inherit username;
       homeDirectory = "/home/${username}";
       stateVersion = globalStateVersion;
@@ -133,7 +134,7 @@
     # Home Manager
     #########################
 
-    configHomeManager = {system, ...}:
+    configHomeManager = {system, username ? defaultUsername, ...}:
       home-manager.lib.homeManagerConfiguration {
         pkgs = pkgsImportSystem system;
 
@@ -161,6 +162,7 @@
     configNixOS = {
       system,
       extraModules,
+      username ? defaultUsername,
       ...
     }:
       nixpkgs.lib.nixosSystem {
@@ -181,14 +183,14 @@
           ++ extraModules;
       };
 
-    configNixOSHomeManager = {
+    configNixOSHomeManager = {username ? defaultUsername}:{
       useGlobalPkgs = true;
       useUserPackages = true;
 
       users.${username} = ./home;
       extraSpecialArgs = {
         inherit inputs;
-        inherit username;
+        #inherit username;
         inherit globalStateVersion;
         home = configHome;
       };
@@ -206,7 +208,10 @@
     #########################
 
     homeConfigurations = {
-      "${username}@penguin" = configHomeManager {system = "x86_64-linux";};
+      "mahdtech@penguin" = configHomeManager {
+        system = "x86_64-linux";
+        username = "mahdtech";
+      };
     };
 
     #########################
@@ -225,8 +230,9 @@
           ./hosts/nuc
           {system.stateVersion = globalStateVersion;}
 
-          home-manager.nixosModules.home-manager
-          {home-manager = configNixOSHomeManager;}
+          home-manager.nixosModules.home-manager {
+            home-manager = configNixOSHomeManager {username = "mahdtech";};
+          }
         ];
       };
 
