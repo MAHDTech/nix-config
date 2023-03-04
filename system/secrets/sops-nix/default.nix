@@ -16,36 +16,25 @@
     defaultSopsFile = ../../../secrets/secrets.yaml;
     defaultSopsFormat = "yaml";
 
+    # NOTE: Only ED25519 keys are supported with age.
     age = {
-      # This will automatically import SSH keys as age keys
-      # NOTE: Only ED25519 keys are supported at present.
       sshKeyPaths = [
-        # System
         "/etc/ssh/ssh_host_ed25519_key"
-
-        # User
-        "/home/mahdtech/.ssh/keys/id_ed25519"
+        "/home/mahdtech/.ssh/id_ed25519"
       ];
 
-      # This is using an age key that is expected to already be in the filesystem
-      keyFile = "/home/mahdtech/config/sops/age/keys.txt";
+      # This is where the key file lives on the local system.
+      keyFile = "/home/mahdtech/.config/sops/age/keys.txt";
 
       # This will generate a new key if the key specified above does not exist
       generateKey = false;
     };
 
+    # NOTE: Only RSA keys are supported with gpg.
     gnupg = {
-      #home = "/var/lib/sops";
-
-      # This must be disabled when home is set.
-      # NOTE: Only RSA keys are supported at present.
       sshKeyPaths = [
-        # System
         "/etc/ssh/ssh_host_rsa_key"
-        #"/etc/ssh/ssh_host_ed25519_key"
-
-        # User
-        #"/home/mahdtech/.ssh/keys/id_ed25519"
+        "/home/mahdtech/.ssh/id_rsa"
       ];
     };
 

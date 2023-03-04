@@ -85,6 +85,7 @@ function _dotfiles_actions() {
 
 		home-manager \
 			"${ACTION}" \
+			--impure \
 			--flake "${FLAKE_LOCATION}" \
 			"${EXTRA_ARGS[@]}" || {
 

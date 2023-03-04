@@ -151,6 +151,7 @@
           inherit inputs;
           inherit username;
           inherit globalStateVersion;
+          inherit system;
         };
 
         modules = [
