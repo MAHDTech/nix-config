@@ -1,6 +1,5 @@
-
 {
   imports = [
-    #./sops-nix
-  ]
-;}
+    ./sops-nix
+  ];
+}

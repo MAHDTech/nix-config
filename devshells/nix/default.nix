@@ -7,14 +7,14 @@ inputs.devenv.lib.mkShell {
   inherit inputs;
   inherit pkgs;
 
-  sopsPGPKeysDirs = [
-    "${toString ./.}/secrets/keys/hosts"
-    "${toString ./.}/secrets/keys/users"
-  ];
+  #sopsPGPKeysDirs = [
+  #  "${toString ./.}/secrets/keys/hosts"
+  #  "${toString ./.}/secrets/keys/users"
+  #];
 
-  nativeBuildInputs = [
-    (pkgs.callPackage sops-nix {}).sops-import-keys-hook
-  ];
+  #nativeBuildInputs = [
+  #  (pkgs.callPackage sops-nix {}).sops-import-keys-hook
+  #];
 
   modules = [
     {
@@ -39,7 +39,7 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
-        PROJECT_SHELL="nix";
+        PROJECT_SHELL = "nix";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };

@@ -18,12 +18,12 @@ inputs.devenv.lib.mkShell {
         nixpkgs-fmt
         statix
 
-        sops
+        #sops
         #sops-init-gpg-key
         #sops-import-keys-hook
-        ssh-to-age
-        ssh-to-pgp
-        age
+        #ssh-to-age
+        #ssh-to-pgp
+        #age
 
         bash
         bash-completion
@@ -34,7 +34,7 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
-        PROJECT_SHELL="default";
+        PROJECT_SHELL = "default";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };

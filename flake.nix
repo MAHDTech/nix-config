@@ -78,14 +78,6 @@
       ref = "main";
       flake = true;
     };
-
-    mach-nix = {
-      type = "github";
-      owner = "DavHau";
-      repo = "mach-nix";
-      ref = "master";
-      flake = true;
-    };
   };
 
   outputs = {
@@ -98,7 +90,6 @@
     #statix,
     #devenv,
     #fenix,
-    #mach-nix,
     ...
   } @ inputs: let
     username = "mahdtech";
@@ -108,7 +99,6 @@
     systems = [
       "aarch64-darwin"
       "aarch64-linux"
-      #"i686-linux"
       "x86_64-darwin"
       "x86_64-linux"
     ];
