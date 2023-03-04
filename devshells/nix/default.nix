@@ -127,6 +127,7 @@ inputs.devenv.lib.mkShell {
           };
 
           yamllint = {
+            relaxed = false;
             configPath = builtins.toString (./. + "/.linters/yaml-lint.yaml");
           };
         };

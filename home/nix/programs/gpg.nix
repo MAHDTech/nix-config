@@ -1,7 +1,6 @@
 {
   inputs,
   config,
-  lib,
   pkgs,
   ...
 }:
@@ -247,6 +246,30 @@ in {
         W13hOz6b3au5LrTBt+M+vfGTSff3USuf/mH3Gx3+pFTcS1MQJKV+73nQua74PTlR
         maJ9BabgygKRdcypdNj5zg==
         =tRUm
+        -----END PGP PUBLIC KEY BLOCK-----
+
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+        Comment: Penguin
+
+        xsDNBAAAAAABDAC/w5IQ+wBMhBcI1hNRxVOquBdatdC0HQA1anRcSHt51NPcjCgL
+        tSV0IR6tsZ06eaNQuecEvPrCO/SZLN9+3URT3B83WSdN9onL8yvogkKPd5VM/92Y
+        fPX6PwBcJ+inuqWEH50VGdfy9DODHItVxaBsAO+PVSgg6kVHyMGx/bshRLA6bl9J
+        e8uY87sB0PRs4Zj66PbXt8s4Yv0c8ap40zQa59vza2KfyLhWsZGrDNQr9F3OfpzE
+        jc5H495wI+XkIz/gPPzPfB+S+8RYo17is/zLAJKCtmNKujKTagCXPNoaBTbSxTp8
+        5rIRO47UJLmnKE6VIvwTLxMHXEXNcB10+gh8RraHWLMS69q1k8mq4/2Yf8nbvUJx
+        xVgB+av209hnK3gKM3V84fM4F/oZg87UpjFHm9JxSb4ApUlgTATwnP8zYmLDz5rf
+        1ENAAkQ009R9tdvl0RAQO3AQGpsl/z+hipor/3DogIfo/VRC7K7dwS5k/Of7RJE8
+        g/619DcijlQO2wkAEQEAAc0pcm9vdCAoSW1wb3J0ZWQgZnJvbSBTU0gpIDxyb290
+        QGxvY2FsaG9zdD7CwOIEEwEIABYFAgAAAAAJEC5RuayTjzppAhsPAhkBAADRzgwA
+        MHTN/l84A3WA68ytO2Or4YvjNrQTPAsodL39qyidyRJD1/Kp9W1PepoUBaHQGGB6
+        G5d0R2R6eZDZO2hq2A6xfx71LVzJqueoiqi2eSzReFHvSzhFeZJKfigEp6viLAoE
+        JxfmrQsfpRqWsODlYUVNCv8JJ5dIArjvq97sCAvvXBTyy4eFSV9lbLS1NNfldji3
+        dQLEF5eUjeLG87C+cQzB/tL2POX0AfSgAGmWQJIL2c0/tHt7PiLq1zU7vj59fYAf
+        TEDqFf6ONvqUZeoAWU1uZB0ZsCMfeQfhUKDopxjiXTh9SSeMMhYmeXpoMuLvpBCu
+        pi/DER0YZo0ysu6yvQ5GZ/V2FmeN9R8owiHfoRnF+ASPxc2zCMjQnbVxnVyN9wdW
+        nEcu/gVtcXFGDM4L/kEUEg+nPaPRO4kFFDpf1p7jfkh9mUCJ1MapAOqth1+KJRBl
+        4nxl7DBIt9C6A5wx77JSQJwnz8r+YR1/Yi0u5W4fAv+WX/omYFGMVqlUom8+UPt0
+        =Dw0a
         -----END PGP PUBLIC KEY BLOCK-----
       '';
     };
