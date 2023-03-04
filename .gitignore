@@ -22,4 +22,4 @@ result
 **/.direnv
 
 # Ignore the pre-commit hook config
-#.pre-commit-config.yaml
+.pre-commit-config.yaml
