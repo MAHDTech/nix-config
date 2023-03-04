@@ -92,7 +92,6 @@
     #fenix,
     ...
   } @ inputs: let
-
     globalStateVersion = "22.11";
 
     systems = [
@@ -122,7 +121,7 @@
       };
     };
 
-    configHome = {username, ...}:{
+    configHome = {username, ...}: {
       inherit username;
       homeDirectory = "/home/${username}";
       stateVersion = globalStateVersion;
@@ -132,7 +131,11 @@
     # Home Manager
     #########################
 
-    configHomeManager = {system, username, ...}:
+    configHomeManager = {
+      system,
+      username,
+      ...
+    }:
       home-manager.lib.homeManagerConfiguration {
         pkgs = pkgsImportSystem system;
 
@@ -145,7 +148,9 @@
 
         modules = [
           ./home
-          {home = configHome;}
+          {
+            home = configHome {inherit username;};
+          }
 
           pkgsAllowUnfree
 
@@ -181,7 +186,7 @@
           ++ extraModules;
       };
 
-    configNixOSHomeManager = {username}:{
+    configNixOSHomeManager = {username}: {
       useGlobalPkgs = true;
       useUserPackages = true;
 
@@ -198,7 +203,6 @@
 
         sops-nix.homeManagerModules.sops
       ];
-
     };
   in {
     #########################
@@ -215,7 +219,6 @@
         system = "x86_64-linux";
         username = "matthewd3@vmware.lab";
       };
-
     };
 
     #########################
@@ -235,7 +238,8 @@
           ./hosts/nuc
           {system.stateVersion = globalStateVersion;}
 
-          home-manager.nixosModules.home-manager {
+          home-manager.nixosModules.home-manager
+          {
             home-manager = configNixOSHomeManager {username = "mahdtech";};
           }
         ];
