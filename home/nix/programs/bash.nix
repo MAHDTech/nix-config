@@ -1,10 +1,14 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
-}: {
+}: let
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+
+  unstablePkgs = with pkgsUnstable; [];
+in {
+  home.packages = with pkgs; [bash bash-completion nix-bash-completions] ++ unstablePkgs;
+
   programs.bash = {
     enable = true;
 

@@ -337,19 +337,23 @@ checkWakaTime || {
 # Rust
 #########################
 
-if checkBin rustup; then
+if [[ ${RUST_ENABLED:-TRUE} == "TRUE" ]]; then
 
-	configureRustup || {
-		writeLog "ERROR" "Failed to configure rustup"
-	}
+	if checkBin rustup; then
 
-	updateRust || {
-		writeLog "ERROR" "Failed to update Rust"
-	}
+		configureRustup || {
+			writeLog "ERROR" "Failed to configure rustup"
+		}
 
-	if [[ -f "${HOME}/.cargo/env" ]]; then
-		writeLog "INFO" "Sourcing Cargo Environment"
-		. "${HOME}/.cargo/env"
+		updateRust || {
+			writeLog "ERROR" "Failed to update Rust"
+		}
+
+		if [[ -f "${HOME}/.cargo/env" ]]; then
+			writeLog "INFO" "Sourcing Cargo Environment"
+			. "${HOME}/.cargo/env"
+		fi
+
 	fi
 
 fi

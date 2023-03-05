@@ -30,7 +30,7 @@ export PLATFORM="${VARIANT:=$OS_NAME}"
 
 # A list of all the environments, each representing a separate SSH key.
 export ENVS=(
-    "${USER}"
+	"${USER}"
 )
 
 export DOMAIN=""
@@ -69,6 +69,13 @@ export NIX_ENABLED="FALSE"
 # Where is the Nix profile
 export NIX_PROFILE_SCRIPT_USER="${HOME}/.nix-profile/etc/profile.d/nix.sh"
 export NIX_PROFILE_SCRIPT_MACHINE="/etc/profile.d/nix.sh"
+
+#########################
+# Rust
+#########################
+
+# Whether to update rust and cargo.
+export RUST_ENABLED="TRUE"
 
 #########################
 # Kubernetes
