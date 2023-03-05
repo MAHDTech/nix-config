@@ -11,10 +11,11 @@ in {
 
   programs.bash = {
     enable = true;
+    enableCompletion = true;
 
     historyControl = ["ignoredups" "ignorespace"];
-
-    initExtra = "\n";
+    historyIgnore = ["sops"];
+    historySize = 10000;
 
     shellAliases = {};
 
@@ -27,10 +28,24 @@ in {
       "checkjobs"
     ];
 
-    # TODO: Transition away from manual rc management.
+    # TODO: Transition away from manual rc management.a
+    # These are added to the top of .bashrc
     bashrcExtra = ''
+    '';
+
+    initExtra = ''
       . ~/.shrc
     '';
+
+    logoutExtra = ''
+    '';
+
+    profileExtra = ''
+    '';
+
+    sessionVariables = {
+      EDITOR = "vim";
+    };
   };
 
   home.file = {
