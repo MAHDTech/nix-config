@@ -256,72 +256,80 @@ export PATH
 writeLog "DEBUG" "New PATH: $PATH"
 
 #########################
-# SSH
-#
-# NOTES:
-#
-#	- First time setup.
-#		mkdir -p ~/.ssh/keys
-#		ssh-keygen \
-#			-C MAHDTech@saltlabs.tech \
-#			-t ed25519-sk \
-#			-O resident \
-#			-O verify-required \
-#			-f ~/.ssh/keys/id_ed25519_sk
-#
-#	- On new systems;
-#		ssh-keygen -K
-#
+# Yubikey
 #########################
 
-# HACK: Manually set SSH_AUTH_SOCK if not already set.
-export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
+if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then
 
-if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
+	#########################
+	# SSH
+	#
+	# NOTES:
+	#
+	#	- First time setup.
+	#		mkdir -p ~/.ssh/keys
+	#		ssh-keygen \
+	#			-C MAHDTech@saltlabs.tech \
+	#			-t ed25519-sk \
+	#			-O resident \
+	#			-O verify-required \
+	#			-f ~/.ssh/keys/id_ed25519_sk
+	#
+	#	- On new systems;
+	#		ssh-keygen -K
+	#
+	#########################
 
-	if [[ -S ${_SSH_AUTH_SOCK} ]]; then
-		writeLog "DEBUG" "Setting default SSH socket location"
-		export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
+	# HACK: Manually set SSH_AUTH_SOCK if not already set.
+	export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
+
+	if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
+
+		if [[ -S ${_SSH_AUTH_SOCK} ]]; then
+			writeLog "DEBUG" "Setting default SSH socket location"
+			export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
+		fi
+
 	fi
+	writeLog "INFO" "SSH socket at ${SSH_AUTH_SOCK}"
 
-fi
-writeLog "INFO" "SSH socket at ${SSH_AUTH_SOCK}"
+	YUBIKEY_LOAD="FALSE"
 
-YUBIKEY_LOAD="FALSE"
+	if lsusb | grep -i Yubikey >/dev/null; then
 
-if lsusb | grep -i Yubikey >/dev/null; then
-
-	writeLog "INFO" "Detected connected YubiKey, loading SSH keys"
-	YUBIKEY_LOAD="TRUE"
-
-else
-
-	writeLog "WARN" "YubiKey not detected, unable to load SSH keys"
-
-	PROMPT="YubiKey not detected, plugin now and hit 'Y' to load, or hit 'N' to skip..."
-	read -p "${PROMPT}" -n 1 -r CHOICE
-	echo -e "\n"
-
-	if [[ ${CHOICE} =~ ^[Yy] ]]; then
-
-		writeLog "INFO" "User manually asked for YubiKey SSH to be loaded."
+		writeLog "INFO" "Detected connected YubiKey, loading SSH keys"
 		YUBIKEY_LOAD="TRUE"
 
 	else
 
-		writeLog "WARN" "YubiKey not detected, user skipped SSH key load"
+		writeLog "WARN" "YubiKey not detected, unable to load SSH keys"
+
+		PROMPT="YubiKey not detected, plugin now and hit 'Y' to load, or hit 'N' to skip..."
+		read -p "${PROMPT}" -n 1 -r CHOICE
+		echo -e "\n"
+
+		if [[ ${CHOICE} =~ ^[Yy] ]]; then
+
+			writeLog "INFO" "User manually asked for YubiKey SSH to be loaded."
+			YUBIKEY_LOAD="TRUE"
+
+		else
+
+			writeLog "WARN" "YubiKey not detected, user skipped SSH key load"
+
+		fi
 
 	fi
 
-fi
+	if [[ ${YUBIKEY_LOAD:-FALSE} == "TRUE" ]]; then
 
-if [[ ${YUBIKEY_LOAD:-FALSE} == "TRUE" ]]; then
+		if checkBin figlet; then
+			figlet YubiKey SSH
+		fi
 
-	if checkBin figlet; then
-		figlet YubiKey SSH
+		ssh-add -K
+
 	fi
-
-	ssh-add -K
 
 fi
 

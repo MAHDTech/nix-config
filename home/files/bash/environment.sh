@@ -71,6 +71,12 @@ export NIX_PROFILE_SCRIPT_USER="${HOME}/.nix-profile/etc/profile.d/nix.sh"
 export NIX_PROFILE_SCRIPT_MACHINE="/etc/profile.d/nix.sh"
 
 #########################
+# Yubikey
+#########################
+
+export YUBIKEY_ENABLED="FALSE"
+
+#########################
 # Rust
 #########################
 
