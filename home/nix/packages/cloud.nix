@@ -16,8 +16,9 @@ in {
 
       google-cloud-sdk
 
-      kubectl
       kind
+      krew
+      kubectl
       kubernetes-helm
       kustomize
       kustomize-sops
