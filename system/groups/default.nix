@@ -1,9 +1,7 @@
 {
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
-  users.groups = {"plugdev" = {gid = 10000;};};
+  users.groups = {
+    "plugdev" = {gid = 10000;};
+
+    "vmware" = {gid = 10001;};
+  };
 }

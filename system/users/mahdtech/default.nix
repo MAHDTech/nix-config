@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   username = "mahdtech";
 in {
   users.users.${username} = {
@@ -31,6 +25,7 @@ in {
       "disk"
       "networkmanager"
       "plugdev"
+      "vmware"
     ];
 
     openssh.authorizedKeys.keys = [
