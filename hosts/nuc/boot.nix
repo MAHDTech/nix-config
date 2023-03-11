@@ -1,11 +1,9 @@
 {
-  inputs,
   config,
-  lib,
   pkgs,
   ...
 }: let
-  zfsPoolNames = ["bpool" "rpool"];
+  zfsPoolNames = ["bpool" "rpool" "steam"];
 in {
   imports = [
     ../../system/services/zfs

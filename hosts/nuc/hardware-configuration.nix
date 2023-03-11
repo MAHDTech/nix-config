@@ -4,7 +4,6 @@
 {
   config,
   lib,
-  pkgs,
   modulesPath,
   ...
 }: {
@@ -57,6 +56,13 @@
     device = "bpool/nixos/boot";
     fsType = "zfs";
     neededForBoot = true;
+    options = ["zfsutil" "X-mount.mkdir"];
+  };
+
+  fileSystems."/steam" = {
+    device = "steam";
+    fsType = "zfs";
+    neededForBoot = false;
     options = ["zfsutil" "X-mount.mkdir"];
   };
 

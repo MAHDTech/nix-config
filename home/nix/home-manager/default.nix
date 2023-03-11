@@ -1,11 +1,4 @@
-{
-  globalStateVersion,
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
+{globalStateVersion, ...}: let
   stateVersion = globalStateVersion;
 in {
   programs.home-manager = {enable = true;};
@@ -15,4 +8,6 @@ in {
 
     inherit stateVersion;
   };
+
+  targets.genericLinux.enable = true;
 }

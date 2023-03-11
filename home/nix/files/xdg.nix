@@ -1,7 +1,6 @@
 {
   inputs,
   config,
-  lib,
   pkgs,
   ...
 }: let
@@ -12,6 +11,7 @@ in {
   home.packages = with pkgs; [xdg-user-dirs xdg-utils] ++ unstablePkgs;
 
   xdg = {
+    enable = true;
     configFile = {
       # Enable hardware acceleration for VP9 on Intel GPUs
       "mpv.conf" = {

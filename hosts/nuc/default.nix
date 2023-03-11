@@ -1,10 +1,4 @@
 {
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
   imports = [
     ./hardware-configuration.nix
 
@@ -24,6 +18,9 @@
 
     # Virtualization
     ../../system/virtualisation/host
+
+    # Steam
+    ../../system/programs/steam
   ];
 
   networking = {

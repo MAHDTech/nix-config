@@ -7,6 +7,7 @@
     ./cron
     ./dhcpd
     ./dbus
+    ./flatpak
     ./gnome-keyring
     ./pam
     ./pcscd

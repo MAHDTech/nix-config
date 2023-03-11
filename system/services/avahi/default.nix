@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
@@ -19,7 +13,7 @@
 
     publish = {
       enable = true;
-      address = true;
+      addresses = true;
       workstation = true;
     };
   };

@@ -43,13 +43,12 @@ FOLDERS=(
 	"${HOME}/appimage"
 	"${HOME}/CodeQL/codeql"
 	"${HOME}/CodeQL/bin"
-	"${HOME}/.local/bin"
-	"${HOME}/.local/bin/scripts"
 	"${HOME}/go/bin"
+	"${HOME}/.pulumi/bin"
 	"${HOME}/.krew/bin"
 	"${HOME}/.cargo/bin"
-	"${HOME}/bin"
-	"${HOME}/.pulumi/bin"
+	"${HOME}/.local/bin/scripts"
+	"${HOME}/.local/bin"
 	"${HOME}/.nix-profile/bin"
 )
 
