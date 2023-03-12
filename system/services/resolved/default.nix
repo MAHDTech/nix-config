@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
@@ -18,7 +12,12 @@
 
     fallbackDns = ["1.1.1.1" "1.0.0.1"];
 
-    domains = ["mahdtech.com" "saltlabs.tech" "saltlabs.cloud"];
+    domains = [
+      "mahdtech.com"
+      "saltlabs.tech"
+      "saltlabs.cloud"
+      "vmware.local"
+    ];
 
     extraConfig = "";
   };

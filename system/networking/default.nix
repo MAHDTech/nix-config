@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./firewall
 
@@ -23,19 +17,5 @@
     useDHCP = false;
 
     useHostResolvConf = false;
-
-    /*
-    resolvconf = {
-
-    enable = true;
-
-    useLocalResolver = false;
-    dnsExtensionMechanism = true;
-    dnsSingleRequest = true;
-
-    extraConfig = "";
-
-    };
-    */
   };
 }

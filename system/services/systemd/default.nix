@@ -24,7 +24,9 @@
     };
 
     network = {
+      enable = true;
       wait-online.anyInterface = true;
+      wait-online.timeout = 120;
 
       config = {};
 
@@ -34,7 +36,7 @@
           DNSSEC = "yes";
           DNSOverTLS = "no";
 
-          DNS = ["1.1.1.1" "1.0.0.1" "8.8.8.8"];
+          DNS = [];
         };
       in {
         "40-wired" = {
