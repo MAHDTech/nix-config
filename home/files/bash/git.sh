@@ -1033,7 +1033,7 @@ function github_delete_workflows() {
 	# The expectation is to be passed org/repo as $1
 	GITHUB_ORG_REPO="$1"
 
-	if [ "${GITHUB_TOKEN:-EMPTY}" != "EMPTY" ]; then
+	if [[ ${GITHUB_TOKEN:-EMPTY} != "EMPTY" ]]; then
 
 		HEADER_TOKEN="Authorization: token ${GITHUB_TOKEN}"
 		writeLog "INFO" "Using authenticated access to GitHub API"
@@ -1046,7 +1046,7 @@ function github_delete_workflows() {
 
 	fi
 
-	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
+	if [[ ${GITHUB_ORG_REPO:-EMPTY} == "EMPTY" ]]; then
 
 		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
 		return 1
@@ -1065,7 +1065,7 @@ function github_delete_workflows() {
 		WORKFLOW_RUNS=""
 		WORKFLOW_RUNS=$(curl --silent --request GET --header "${HEADER_TOKEN}" --header "${HEADER_APP}" "${URL}${PAGE}" | jq --raw-output .workflow_runs[].id)
 
-		if [ "${WORKFLOW_RUNS:-EMPTY}" == "EMPTY" ]; then
+		if [[ ${WORKFLOW_RUNS:-EMPTY} == "EMPTY" ]]; then
 			writeLog "ERROR" "Workflow run list is empty or failed to obtain the list from ${GITHUB_ORG_REPO}"
 			LOOP="FALSE"
 			continue
@@ -1080,20 +1080,21 @@ function github_delete_workflows() {
 			RESULT=$(curl --silent --write-out '%{http_code}' --output /dev/null --request DELETE --header "${HEADER_TOKEN}" --header "${HEADER_APP}" "${URL}/${WORKFLOW}")
 
 			# '204 No content' means it worked
-			if [ "${RESULT:-0}" -eq 204 ]; then
+			if [[ ${RESULT:-0} -eq 204 ]]; then
 
 				writeLog "INFO" "Response: ${RESULT}"
-				COUNTER=$((COUNTER + 1))
 
 			else
 
 				writeLog "ERROR" "Response: ${RESULT}"
 
 			fi
+			# If it fails, still increment the counter to avoid infinite loop.
+			COUNTER=$((COUNTER + 1))
 
 		done <<<"${WORKFLOW_RUNS}"
 
-		writeLog "INFO" "Deleted a total of ${COUNTER} Workflow Runs"
+		writeLog "INFO" "Processed a total of ${COUNTER} Workflow Runs. Review the results for more details."
 
 	done
 
