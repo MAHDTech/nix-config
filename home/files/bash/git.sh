@@ -1071,8 +1071,9 @@ function github_delete_workflows() {
 			continue
 		fi
 
-		COUNTER=0
-		while IFS= read -r WORKFLOW; do
+		COUNTER_SUCCESS=0
+		COUNTER_FAILURE=0
+		while IFS='' read -r WORKFLOW; do
 
 			writeLog "INFO" "Deleting Worklow ${WORKFLOW}"
 
@@ -1083,18 +1084,19 @@ function github_delete_workflows() {
 			if [[ ${RESULT:-0} -eq 204 ]]; then
 
 				writeLog "INFO" "Response: ${RESULT}"
+				COUNTER_SUCCESS=$((COUNTER_SUCCESS + 1))
 
 			else
 
 				writeLog "ERROR" "Response: ${RESULT}"
+				COUNTER_FAILURE=$((COUNTER_FAILURE + 1))
 
 			fi
-			# If it fails, still increment the counter to avoid infinite loop.
-			COUNTER=$((COUNTER + 1))
 
 		done <<<"${WORKFLOW_RUNS}"
 
-		writeLog "INFO" "Processed a total of ${COUNTER} Workflow Runs. Review the results for more details."
+		writeLog "INFO" "Deleted a total of ${COUNTER_SUCCESS} Workflow Runs."
+		writeLog "WARN" "Failed to delete a total of ${COUNTER_FAILURE} Workflow Runs."
 
 	done
 

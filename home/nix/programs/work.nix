@@ -1,7 +1,5 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
 }: let
@@ -17,6 +15,8 @@ in {
       citrix_workspace
 
       vmware-horizon-client
+
+      zoom-us
     ]
     ++ unstablePkgs;
 }

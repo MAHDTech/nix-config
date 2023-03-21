@@ -1,13 +1,13 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
 }: let
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
-  unstablePkgs = with pkgsUnstable; [];
+  unstablePkgs = with pkgsUnstable; [
+    hugo
+  ];
 in {
   home.packages = with pkgs;
     [
@@ -30,8 +30,6 @@ in {
       haskellPackages.language-docker
 
       hidapi
-
-      hugo
 
       nodejs-16_x
 
