@@ -11,6 +11,7 @@
 in {
   home.packages = with pkgs;
     [
+      bob
       cmake
       gcc
       gdb
@@ -32,8 +33,6 @@ in {
       hidapi
 
       nodejs-16_x
-
-      pkgconfig
 
       rust-analyzer
       rustup

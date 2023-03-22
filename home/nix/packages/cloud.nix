@@ -39,7 +39,7 @@ in {
       tflint
       tfsec
 
-      wrangler_1
+      nodePackages.wrangler
     ]
     ++ unstablePkgs;
 }
