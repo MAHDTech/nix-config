@@ -6,10 +6,13 @@
       trustedInterfaces = ["docker0"];
 
       allowedTCPPorts = [
+        1313
         17500
+        443
         5000
-        8080
+        80
         8000
+        8080
         8443
       ];
 

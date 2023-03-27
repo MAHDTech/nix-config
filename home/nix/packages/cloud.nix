@@ -16,12 +16,12 @@ in {
 
       google-cloud-sdk
 
-      kind
-      krew
-      kubectl
-      kubernetes-helm
-      kustomize
-      kustomize-sops
+      #kind
+      #krew
+      #kubectl
+      #kubernetes-helm
+      #kustomize
+      #kustomize-sops
       octant
 
       packer

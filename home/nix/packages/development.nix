@@ -6,38 +6,40 @@
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
   unstablePkgs = with pkgsUnstable; [
-    hugo
+    #hugo
   ];
 in {
   home.packages = with pkgs;
     [
-      bob
-      cmake
-      gcc
-      gdb
-      glib
-      glibc
-      gnumake
-      gnupatch
+      #bob
+      #cmake
+      #gcc
+      #gdb
+      #glib
+      #glibc
+      #gnumake
+      #gnupatch
 
-      go
-      gofumpt
-      golangci-lint
-      golint
+      #go
+      #gofumpt
+      #golangci-lint
+      #golint
 
-      graphviz
+      #graphviz
 
-      haskellPackages.hadolint
-      haskellPackages.language-docker
+      #haskellPackages.hadolint
+      #haskellPackages.language-docker
 
-      hidapi
+      #hidapi
 
-      nodejs-16_x
+      #nodejs-16_x
 
-      rust-analyzer
-      rustup
+      #rust-analyzer
+      #rustup
 
-      texlive.combined.scheme-full
+      #shfmt
+
+      #texlive.combined.scheme-full
 
       zsa-udev-rules
     ]
