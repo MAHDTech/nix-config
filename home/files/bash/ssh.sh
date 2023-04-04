@@ -26,6 +26,12 @@ function load_yubikey() {
 	#
 	#########################
 
+	# If running in VSCode shell, return immediately.
+	if [[ ${VSCODE_SHELL_INTEGRATION:-EMPTY} != "EMPTY" ]]; then
+		writeLog "WARN" "VSCode Shell detected, skipping YubiKey interactive loader."
+		return 0
+	fi
+
 	# HACK: Manually set SSH_AUTH_SOCK if not already set.
 	export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
 

@@ -25,8 +25,12 @@
 
     network = {
       enable = true;
-      wait-online.anyInterface = true;
-      wait-online.timeout = 120;
+
+      wait-online = {
+        anyInterface = true;
+        timeout = 120;
+        extraArgs = [];
+      };
 
       config = {};
 

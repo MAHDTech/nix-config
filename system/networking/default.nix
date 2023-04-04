@@ -11,6 +11,7 @@
 
   networking = {
     useNetworkd = true;
+    dhcpcd.enable = false;
 
     enableIPv6 = true;
 
