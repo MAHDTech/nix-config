@@ -1,20 +1,12 @@
 {
   inputs,
   pkgs,
+  #pkgsUnstable,
   ...
 }:
 inputs.devenv.lib.mkShell {
   inherit inputs;
   inherit pkgs;
-
-  #sopsPGPKeysDirs = [
-  #  "${toString ./.}/secrets/keys/hosts"
-  #  "${toString ./.}/secrets/keys/users"
-  #];
-
-  #nativeBuildInputs = [
-  #  (pkgs.callPackage sops-nix {}).sops-import-keys-hook
-  #];
 
   modules = [
     {
@@ -27,19 +19,23 @@ inputs.devenv.lib.mkShell {
         nixpkgs-fmt
         statix
 
-        sops
+        #sops
         #sops-init-gpg-key
         #sops-import-keys-hook
-        ssh-to-age
-        ssh-to-pgp
-        age
+        #ssh-to-age
+        #ssh-to-pgp
+        #age
 
         bash
         bash-completion
+
+        python3
+
+        skopeo
       ];
 
       env = {
-        PROJECT_SHELL = "nix";
+        PROJECT_SHELL = "default";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
@@ -69,16 +65,38 @@ inputs.devenv.lib.mkShell {
           alejandra.enable = true;
           nixfmt.enable = false;
           nixpkgs-fmt.enable = false;
-          deadnix.enable = true;
+          deadnix.enable = false;
           statix.enable = true;
 
           # GitHub Actions
           actionlint.enable = true;
 
+          # Ansible
+          ansible-lint.enable = false;
+
+          # Python
+          autoflake.enable = true;
+          black.enable = true;
+          flake8.enable = true;
+          pylint.enable = true;
+          ruff.enable = true;
+
           # Bash
           bats.enable = true;
           shellcheck.enable = true;
           shfmt.enable = true;
+
+          # Rust
+          cargo-check.enable = true;
+          clippy.enable = true;
+          rustfmt.enable = true;
+
+          # Go
+          gofmt.enable = true;
+          gotest.enable = true;
+          govet.enable = true;
+          revive.enable = true;
+          staticcheck.enable = true;
 
           # Spelling
           hunspell.enable = false;
@@ -87,8 +105,17 @@ inputs.devenv.lib.mkShell {
           # Git commit messages
           commitizen.enable = true;
 
+          # Docker
+          hadolint.enable = true;
+
+          # Dhall
+          dhall-format.enable = true;
+
           # Markdown
-          markdownlint.enable = true;
+          markdownlint = {
+            enable = true;
+          };
+
           mdsh.enable = true;
 
           # Common
@@ -96,9 +123,19 @@ inputs.devenv.lib.mkShell {
 
           # YAML
           yamllint.enable = true;
+
+          # Terraform
+          terraform-format.enable = true;
+
+          # Haskell
+          hlint.enable = true;
         };
 
         settings = {
+          deadnix = {
+            noUnderscore = true;
+          };
+
           markdownlint = {
             config = {
               # No hard tabs allowed.
@@ -127,7 +164,6 @@ inputs.devenv.lib.mkShell {
           };
 
           yamllint = {
-            relaxed = false;
             configPath = builtins.toString (./. + "/.linters/yaml-lint.yaml");
           };
         };
@@ -145,10 +181,41 @@ inputs.devenv.lib.mkShell {
       hosts = {"example.com" = "1.1.1.1";};
 
       languages = {
-        nix = {enable = true;};
-      };
+        cue = {
+          enable = true;
+          package = pkgs.cue;
+        };
 
-      services = {
+        gawk = {enable = true;};
+
+        go = {
+          enable = true;
+          package = pkgs.go;
+        };
+
+        nix = {enable = true;};
+
+        python = {
+          enable = true;
+          package = pkgs.python3;
+
+          poetry = {
+            enable = true;
+            package = pkgs.poetry;
+          };
+
+          venv = {enable = true;};
+        };
+
+        rust = {
+          enable = true;
+          version = "stable";
+        };
+
+        terraform = {
+          enable = true;
+          package = pkgs.terraform;
+        };
       };
 
       starship = {

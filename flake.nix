@@ -45,23 +45,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-colors = {
-      type = "github";
-      owner = "misterio77";
-      repo = "nix-colors";
-      ref = "main";
-      flake = true;
-    };
-
-    statix = {
-      type = "github";
-      owner = "nerdypepper";
-      repo = "statix";
-      ref = "master";
-      flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # https://devenv.sh/
     devenv = {
       type = "github";
@@ -81,20 +64,20 @@
   };
 
   outputs = {
+    self,
     nixpkgs,
-    #nixpkgs-unstable,
+    nixpkgs-unstable,
     nixos-hardware,
     home-manager,
     sops-nix,
-    #nix-colors,
-    #statix,
-    #devenv,
-    #fenix,
+    devenv,
     ...
   } @ inputs: let
     globalStateVersion = "22.11";
 
-    systems = [
+    buildSystem = "x86_64-linux";
+
+    hostSystems = [
       "aarch64-darwin"
       "aarch64-linux"
       "x86_64-darwin"
@@ -106,11 +89,30 @@
           inherit name;
           value = f name;
         })
-        systems);
+        hostSystems);
 
-    pkgsImportSystem = system: import inputs.nixpkgs {inherit system;};
+    pkgsImportSystem = system:
+      import nixpkgs {
+        inherit system;
+      };
 
-    #pkgsImportSystemUnstable = system: import inputs.nixpkgs-unstable {inherit system;};
+    pkgsImportSystemUnstable = system:
+      import inputs.nixpkgs-unstable {inherit system;};
+
+    _pkgsImportCrossSystem = buildPlatform: hostPlatform:
+      if buildPlatform == hostPlatform
+      then
+        import inputs.nixpkgs {
+          system = buildPlatform;
+          localSystem = buildPlatform;
+          crossSystem = buildPlatform;
+        }
+      else
+        import inputs.nixpkgs {
+          system = buildPlatform;
+          localSystem = buildPlatform;
+          crossSystem = hostPlatform;
+        };
 
     pkgsAllowUnfree = {
       nixpkgs = {
@@ -264,24 +266,31 @@
     # Dev Shells
     # nix develop --impure .#${NAME}
     #########################
+    devShells = forAllSystems (_hostPlatform: let
+      # Build Platform
+      system = buildSystem;
 
-    devShells = forAllSystems (system: let
+      inherit (self.packages.${system}) default;
       pkgs = pkgsImportSystem system;
+      pkgsUnstable = pkgsImportSystemUnstable system;
     in {
-      default = import ./devshells/default {
+      devenv = import ./nix/devshells/devenv {
+        inherit inputs;
+        inherit pkgs;
+        inherit pkgsUnstable;
+      };
+
+      nix = import ./nix/devshells/nix {
         inherit inputs;
         inherit pkgs;
       };
 
-      nix = import ./devshells/nix {
+      salt = import ./nix/devshells/salt {
         inherit inputs;
         inherit pkgs;
       };
 
-      salt = import ./devshells/salt {
-        inherit inputs;
-        inherit pkgs;
-      };
+      default = self.devShells.${system}.devenv;
     });
   };
 }

@@ -15,31 +15,25 @@ inputs.devenv.lib.mkShell {
         figlet
         hello
 
-        nixpkgs-fmt
-        statix
-
-        #sops
-        #sops-init-gpg-key
-        #sops-import-keys-hook
-        #ssh-to-age
-        #ssh-to-pgp
-        #age
-
         bash
         bash-completion
 
         python3
-
-        skopeo
       ];
 
       env = {
-        PROJECT_SHELL = "default";
+        PROJECT_SHELL = "salt";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
       enterShell = ''
+
+        # Source the virtual environment
+        source $VIRTUAL_ENV/bin/activate
+
+        pip install \
+          --requirement $DEVENV_DEVSHELL_ROOT/requirements.txt
 
         figlet ''${PROJECT_SHELL:-Unknown}
 
@@ -60,18 +54,8 @@ inputs.devenv.lib.mkShell {
         excludes = ["README.md"];
 
         hooks = {
-          # Nix
-          alejandra.enable = true;
-          nixfmt.enable = false;
-          nixpkgs-fmt.enable = false;
-          deadnix.enable = false;
-          statix.enable = true;
-
           # GitHub Actions
           actionlint.enable = true;
-
-          # Ansible
-          ansible-lint.enable = false;
 
           # Python
           autoflake.enable = true;
@@ -85,18 +69,6 @@ inputs.devenv.lib.mkShell {
           shellcheck.enable = true;
           shfmt.enable = true;
 
-          # Rust
-          cargo-check.enable = true;
-          clippy.enable = true;
-          rustfmt.enable = true;
-
-          # Go
-          gofmt.enable = true;
-          gotest.enable = true;
-          govet.enable = true;
-          revive.enable = true;
-          staticcheck.enable = true;
-
           # Spelling
           hunspell.enable = false;
           typos.enable = false;
@@ -107,14 +79,8 @@ inputs.devenv.lib.mkShell {
           # Docker
           hadolint.enable = true;
 
-          # Dhall
-          dhall-format.enable = true;
-
           # Markdown
-          markdownlint = {
-            enable = true;
-          };
-
+          markdownlint.enable = true;
           mdsh.enable = true;
 
           # Common
@@ -122,12 +88,6 @@ inputs.devenv.lib.mkShell {
 
           # YAML
           yamllint.enable = true;
-
-          # Terraform
-          terraform-format.enable = true;
-
-          # Haskell
-          hlint.enable = true;
         };
 
         settings = {
@@ -176,42 +136,20 @@ inputs.devenv.lib.mkShell {
       hosts = {"example.com" = "1.1.1.1";};
 
       languages = {
-        cue = {
-          enable = true;
-          package = pkgs.cue;
-        };
-
-        gawk = {enable = true;};
-
-        go = {
-          enable = true;
-          package = pkgs.go;
-        };
-
-        nix = {enable = true;};
-
         python = {
           enable = true;
           package = pkgs.python3;
 
           poetry = {
-            enable = true;
+            enable = false;
             package = pkgs.poetry;
           };
 
           venv = {enable = true;};
         };
-
-        rust = {
-          enable = true;
-          version = "stable";
-        };
-
-        terraform = {
-          enable = true;
-          package = pkgs.terraform;
-        };
       };
+
+      services = {};
 
       starship = {
         enable = true;
