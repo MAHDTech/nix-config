@@ -49,6 +49,7 @@ FOLDERS=(
 	"${HOME}/.cargo/bin"
 	"${HOME}/.local/bin/scripts"
 	"${HOME}/.local/bin"
+	"${HOME}/bin"
 	"${HOME}/.nix-profile/bin"
 )
 

@@ -7,6 +7,15 @@ inputs.devenv.lib.mkShell {
   inherit inputs;
   inherit pkgs;
 
+  #sopsPGPKeysDirs = [
+  #  "${toString ./.}/secrets/keys/hosts"
+  #  "${toString ./.}/secrets/keys/users"
+  #];
+
+  #nativeBuildInputs = [
+  #  (pkgs.callPackage sops-nix {}).sops-import-keys-hook
+  #];
+
   modules = [
     {
       # https://devenv.sh/reference/options/
@@ -15,25 +24,27 @@ inputs.devenv.lib.mkShell {
         figlet
         hello
 
+        nixpkgs-fmt
+        statix
+
+        sops
+        #sops-init-gpg-key
+        #sops-import-keys-hook
+        ssh-to-age
+        ssh-to-pgp
+        age
+
         bash
         bash-completion
-
-        python3
       ];
 
       env = {
-        PROJECT_SHELL="salt";
+        PROJECT_SHELL = "nix";
 
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
       enterShell = ''
-
-        # Source the virtual environment
-        source $VIRTUAL_ENV/bin/activate
-
-        pip install \
-          --requirement $DEVENV_DEVSHELL_ROOT/requirements.txt
 
         figlet ''${PROJECT_SHELL:-Unknown}
 
@@ -54,15 +65,15 @@ inputs.devenv.lib.mkShell {
         excludes = ["README.md"];
 
         hooks = {
+          # Nix
+          alejandra.enable = true;
+          nixfmt.enable = false;
+          nixpkgs-fmt.enable = false;
+          deadnix.enable = true;
+          statix.enable = true;
+
           # GitHub Actions
           actionlint.enable = true;
-
-          # Python
-          autoflake.enable = true;
-          black.enable = true;
-          flake8.enable = true;
-          pylint.enable = true;
-          ruff.enable = true;
 
           # Bash
           bats.enable = true;
@@ -76,9 +87,6 @@ inputs.devenv.lib.mkShell {
           # Git commit messages
           commitizen.enable = true;
 
-          # Docker
-          hadolint.enable = true;
-
           # Markdown
           markdownlint.enable = true;
           mdsh.enable = true;
@@ -91,6 +99,10 @@ inputs.devenv.lib.mkShell {
         };
 
         settings = {
+          deadnix = {
+            noUnderscore = true;
+          };
+
           markdownlint = {
             config = {
               # No hard tabs allowed.
@@ -119,6 +131,7 @@ inputs.devenv.lib.mkShell {
           };
 
           yamllint = {
+            relaxed = false;
             configPath = builtins.toString (./. + "/.linters/yaml-lint.yaml");
           };
         };
@@ -136,20 +149,11 @@ inputs.devenv.lib.mkShell {
       hosts = {"example.com" = "1.1.1.1";};
 
       languages = {
-        python = {
-          enable = true;
-          package = pkgs.python3;
-
-          poetry = {
-            enable = false;
-            package = pkgs.poetry;
-          };
-
-          venv = {enable = true;};
-        };
+        nix = {enable = true;};
       };
 
-      services = {};
+      services = {
+      };
 
       starship = {
         enable = true;
