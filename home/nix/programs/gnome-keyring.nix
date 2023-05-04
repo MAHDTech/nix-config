@@ -1,7 +1,5 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
 }: let
@@ -16,6 +14,7 @@ in {
     gnome-keyring = {
       enable = false;
 
+      # GPG is managed seperately.
       components = ["pkcs11" "secrets" "ssh"];
     };
   };
