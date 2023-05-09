@@ -14,13 +14,13 @@ in {
       _1password
       _1password-gui
 
-      gtk3
+      #gtk3
 
-      logseq
+      #logseq
 
-      inkscape
-      libreoffice
-      pinta
+      #inkscape
+      #libreoffice
+      #pinta
     ]
     ++ unstablePkgs;
 }
