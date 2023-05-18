@@ -46,14 +46,12 @@ in {
       shadow
       shellcheck
       sops
-      terminator
       tokei
       tree
       unzip
       usbutils
       wally-cli
       wget
-      wsl-open
       xdotool
       xsv
       xxd

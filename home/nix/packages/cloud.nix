@@ -9,12 +9,12 @@
 in {
   home.packages = with pkgs;
     [
-      awscli
+      #awscli
 
-      azure-cli
-      azure-storage-azcopy
+      #azure-cli
+      #azure-storage-azcopy
 
-      google-cloud-sdk
+      #google-cloud-sdk
 
       #kind
       #krew
@@ -22,24 +22,24 @@ in {
       #kubernetes-helm
       #kustomize
       #kustomize-sops
-      octant
+      #octant
 
-      packer
+      #packer
 
-      pulumi-bin
+      #pulumi-bin
 
-      podman
-      buildah
-      skopeo
-      dive
+      #podman
+      #buildah
+      #skopeo
+      #dive
 
-      terraform
-      terraform-docs
-      terraform-ls
-      tflint
-      tfsec
+      #terraform
+      #terraform-docs
+      #terraform-ls
+      #tflint
+      #tfsec
 
-      nodePackages.wrangler
+      #nodePackages.wrangler
     ]
     ++ unstablePkgs;
 }

@@ -1,7 +1,5 @@
 {
   username,
-  config,
-  lib,
   pkgs,
   ...
 }: {
@@ -37,6 +35,18 @@
 
         Lab-Wifi = {
           psk = "@PSK_WORK_LAB@";
+          priority = 50;
+          authProtocols = ["WPA-PSK"];
+        };
+
+        Belong518D40 = {
+          psk = "@PSK_TOM_HOME_LAB@";
+          priority = 50;
+          authProtocols = ["WPA-PSK"];
+        };
+
+        Coldspot = {
+          psk = "@PSK_COLDSPOT@";
           priority = 50;
           authProtocols = ["WPA-PSK"];
         };

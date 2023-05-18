@@ -5,22 +5,22 @@
 }: let
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
-  unstablePkgs = with pkgsUnstable; [];
+  unstablePkgs = with pkgsUnstable; [
+    brave
+  ];
 in {
   home.packages = with pkgs;
     [
       _1password
       _1password-gui
 
-      brave
+      #gtk3
 
-      gtk3
+      #logseq
 
-      logseq
-
-      inkscape
-      libreoffice
-      pinta
+      #inkscape
+      #libreoffice
+      #pinta
     ]
     ++ unstablePkgs;
 }
