@@ -7,7 +7,7 @@
 
   unstablePkgs = with pkgsUnstable; [
     brave
-    lapce
+    #lapce
     logseq
   ];
 in {
