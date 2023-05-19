@@ -7,6 +7,8 @@
 
   unstablePkgs = with pkgsUnstable; [
     brave
+    lapce
+    logseq
   ];
 in {
   home.packages = with pkgs;
@@ -16,13 +18,11 @@ in {
 
       microsoft-edge
 
-      #gtk3
+      gtk3
 
-      #logseq
-
-      #inkscape
-      #libreoffice
-      #pinta
+      inkscape
+      libreoffice
+      pinta
     ]
     ++ unstablePkgs;
 }
