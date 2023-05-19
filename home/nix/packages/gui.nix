@@ -14,6 +14,8 @@ in {
       _1password
       _1password-gui
 
+      microsoft-edge
+
       #gtk3
 
       #logseq
