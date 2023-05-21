@@ -9,16 +9,14 @@
 in {
   home.packages =
     [
-      #pkgs.vscode
-      #pkgs.vscode-with-extensions
-      #pkgs.vscode.fhs
     ]
     ++ unstablePkgs;
 
   programs = {
     vscode = {
-      enable = true;
+      enable = false;
 
+      # vscode, vscode-fhs
       package = pkgsUnstable.vscode.fhs;
 
       enableExtensionUpdateCheck = true;
