@@ -15,7 +15,16 @@ in {
   boot = {
     supportedFilesystems = ["zfs"];
 
-    kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+    # Latest kernel
+    #kernelPackages = pkgs.linuxPackages_latest;
+
+    # ZFS compatible
+    #kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+
+    # Intel ARC driver test
+    #kernelPackages = pkgs.linuxPackages_6_3;
+    #kernelPackages = pkgs.linuxPackages_6_2;
+    kernelPackages = pkgs.linuxPackages_6_1;
 
     extraModulePackages = with config.boot.kernelPackages; [acpi_call];
 
@@ -88,11 +97,18 @@ in {
     };
 
     zfs = {
+      requestEncryptionCredentials = true;
+
+      # Enable zfsUnstable pkg
+      enableUnstable = false;
+
       extraPools = zfsPoolNames;
 
       devNodes = "/dev/disk/by-partuuid";
 
       forceImportAll = true;
+
+      allowHibernation = false;
     };
   };
 }
