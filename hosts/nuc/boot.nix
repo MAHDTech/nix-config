@@ -19,12 +19,12 @@ in {
     #kernelPackages = pkgs.linuxPackages_latest;
 
     # ZFS compatible
-    #kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+    kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
 
     # Intel ARC driver test
     #kernelPackages = pkgs.linuxPackages_6_3;
     #kernelPackages = pkgs.linuxPackages_6_2;
-    kernelPackages = pkgs.linuxPackages_6_1;
+    #kernelPackages = pkgs.linuxPackages_6_1;
 
     extraModulePackages = with config.boot.kernelPackages; [acpi_call];
 
