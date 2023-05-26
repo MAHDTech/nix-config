@@ -61,7 +61,6 @@ in {
       grub = {
         enable = true;
 
-        version = 2;
         efiInstallAsRemovable = true;
         copyKernels = true;
         efiSupport = true;

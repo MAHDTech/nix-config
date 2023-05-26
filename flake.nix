@@ -32,6 +32,7 @@
       repo = "home-manager";
       #ref = "master";
       ref = "release-22.11";
+      #ref = "release-23.05";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };

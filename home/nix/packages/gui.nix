@@ -16,7 +16,7 @@ in {
       _1password
       _1password-gui
 
-      microsoft-edge
+      #microsoft-edge
 
       gtk3
 
