@@ -12,6 +12,8 @@
     libva-utils
   ];
 
+  boot.initrd.kernelModules = ["i915"];
+
   boot.blacklistedKernelModules = ["nouveau" "nvidia"];
 
   # https://dgpu-docs.intel.com/devices/hardware-table.html
@@ -21,12 +23,12 @@
   # https://wiki.archlinux.org/title/Intel_graphics#Enable_GuC_/_HuC_firmware_loading
   # lspci -nn |grep  -Ei 'VGA|DISPLAY'
   boot.kernelParams = [
-    #"i915.force_probe=5691"
-    #"i915.enable_guc=3"
+    "i915.force_probe=5691"
+    "i915.enable_guc=3"
   ];
 
   nixpkgs.config.packageOverrides = pkgs: {
-    vaapiIntel = pkgs.vaapiIntel.override {enableHybridCodec = true;};
+    vaapiIntel = pkgs.vaapiIntel.override {enableHybridCodec = false;};
   };
 
   hardware.opengl = {
@@ -43,7 +45,7 @@
     ];
   };
 
-  #services.xserver.videoDrivers = [ "intel" ];
+  services.xserver.videoDrivers = ["intel"];
 
   environment.variables = {
     VDPAU_DRIVER = "va_gl";

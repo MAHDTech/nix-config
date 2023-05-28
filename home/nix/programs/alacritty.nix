@@ -30,7 +30,7 @@
         dynamic_padding = true;
 
         decorations = "full";
-        decorations_theme_variant = "dark";
+        decorations_theme_variant = "Dark";
 
         startup_mode = "Windowed";
 

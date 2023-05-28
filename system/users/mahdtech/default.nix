@@ -24,6 +24,7 @@ in {
       "audio"
       "disk"
       "networkmanager"
+      "pipewire"
       "plugdev"
       "vmware"
     ];

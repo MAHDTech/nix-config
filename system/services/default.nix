@@ -14,6 +14,7 @@
     ./power-profiles-daemon
     ./resolved
     ./sshd
+    ./thermald
     ./throttled
     ./tlp
     ./udev

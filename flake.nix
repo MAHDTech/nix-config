@@ -73,7 +73,7 @@
     devenv,
     ...
   } @ inputs: let
-    globalStateVersion = "22.11";
+    globalStateVersion = "22.05";
 
     buildSystem = "x86_64-linux";
 
