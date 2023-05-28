@@ -1,7 +1,5 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   ...
 }: let
@@ -11,5 +9,5 @@
 in {
   home.packages = with pkgs; [] ++ unstablePkgs;
 
-  programs.neovim = {enable = true;};
+  programs.neovim = {enable = false;};
 }
