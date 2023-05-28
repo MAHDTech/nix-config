@@ -12,6 +12,23 @@ in {
 
   xdg = {
     enable = true;
+
+    cacheHome = "${config.home.homeDirectory}/.cache";
+    configHome = "${config.home.homeDirectory}/.config";
+    dataHome = "${config.home.homeDirectory}/.local/share";
+    stateHome = "${config.home.homeDirectory}/.local/state";
+
+    systemDirs = {
+      # Directory names to add to XDG_CONFIG_DIRS
+      config = [];
+
+      # Directory names to add to XDG_DATA_DIRS
+      data = [
+        "/var/lib/flatpak/exports/share"
+        "${config.home.homeDirectory}/.local/share/flatpak/exports/share"
+      ];
+    };
+
     configFile = {
       # Enable hardware acceleration for VP9 on Intel GPUs
       "mpv.conf" = {

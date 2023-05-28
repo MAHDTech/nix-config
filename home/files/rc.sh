@@ -41,6 +41,8 @@ FOLDERS=(
 	"${HOME}/.rvm/bin"
 	"${HOME}/.radicle/bin"
 	"${HOME}/appimage"
+	"/var/lib/flatpak/exports/share"
+	"${HOME}/.local/share/flatpak/exports/share"
 	"${HOME}/CodeQL/codeql"
 	"${HOME}/CodeQL/bin"
 	"${HOME}/go/bin"
