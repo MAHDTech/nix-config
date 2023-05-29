@@ -1,6 +1,4 @@
 {
-  inputs,
-  config,
   lib,
   pkgs,
   ...
@@ -9,5 +7,5 @@
 
   environment.systemPackages = with pkgs; [];
 
-  services.gnome.gnome-keyring = {enable = true;};
+  services.gnome.gnome-keyring = {enable = lib.mkForce false;};
 }

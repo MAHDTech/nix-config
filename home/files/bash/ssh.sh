@@ -27,7 +27,7 @@ function load_yubikey() {
 	#########################
 
 	# If running in VSCode shell, return immediately.
-	if [[ ${VSCODE_SHELL_INTEGRATION:-EMPTY} != "EMPTY" ]]; then
+	if [[ ${ENVIRONMENT:-EMPTY} == "VSCODE" ]]; then
 		writeLog "WARN" "VSCode Shell detected, skipping YubiKey interactive loader."
 		return 0
 	fi
@@ -38,12 +38,12 @@ function load_yubikey() {
 	if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
 
 		if [[ -S ${_SSH_AUTH_SOCK} ]]; then
-			writeLog "DEBUG" "Updarting SSH socket location"
+			writeLog "DEBUG" "Updating SSH socket location"
 			export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
 		fi
 
 	fi
-	writeLog "INFO" "SSH socket at ${SSH_AUTH_SOCK}"
+	writeLog "INFO" "SSH socket is set to ${SSH_AUTH_SOCK}"
 
 	YUBIKEY_LOADED="FALSE"
 	until [[ ${YUBIKEY_LOADED} == "TRUE" ]]; do

@@ -12,7 +12,7 @@ in {
 
   services = {
     gnome-keyring = {
-      enable = false;
+      enable = true;
 
       # GPG is managed seperately.
       components = ["pkcs11" "secrets" "ssh"];

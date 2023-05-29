@@ -16,7 +16,10 @@
     vdpauinfo
   ];
 
-  boot.initrd.kernelModules = ["i915"];
+  boot.initrd.kernelModules = [
+    "i915"
+    "kvm-intel"
+  ];
 
   boot.blacklistedKernelModules = ["nouveau" "nvidia"];
 
@@ -29,6 +32,7 @@
   boot.kernelParams = [
     #"i915.force_probe=5691"
     "i915.enable_guc=3"
+    "acpi_rev_override=5"
   ];
 
   hardware.opengl = {
@@ -43,6 +47,7 @@
       linux-firmware
       mesa
       vaapi-intel-hybrid
+      vaapiIntel
       vaapiVdpau
     ];
 
@@ -52,6 +57,7 @@
       linux-firmware
       mesa
       vaapi-intel-hybrid
+      vaapiIntel
       vaapiVdpau
     ];
   };
