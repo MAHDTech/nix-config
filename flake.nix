@@ -73,6 +73,8 @@
     devenv,
     ...
   } @ inputs: let
+    defaultUsername = "mahdtech";
+
     globalStateVersion = "23.05";
 
     buildSystem = "x86_64-linux";
@@ -212,9 +214,9 @@
     #########################
 
     homeConfigurations = {
-      "mahdtech" = configHomeManager {
+      ${defaultUsername} = configHomeManager {
         system = "x86_64-linux";
-        username = "mahdtech";
+        username = defaultUsername;
       };
     };
 
@@ -224,7 +226,7 @@
 
     nixosConfigurations = {
       nuc = configNixOS {
-        username = "mahdtech";
+        username = defaultUsername;
         system = "x86_64-linux";
 
         extraModules = [
@@ -237,7 +239,7 @@
 
           home-manager.nixosModules.home-manager
           {
-            home-manager = configNixOSHomeManager {username = "mahdtech";};
+            home-manager = configNixOSHomeManager {username = defaultUsername;};
           }
         ];
       };
