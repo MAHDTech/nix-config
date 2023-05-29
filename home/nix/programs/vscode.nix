@@ -26,7 +26,7 @@ in {
     vscode = {
       enable = false;
 
-      package = pkgsUnstable.vscode;
+      package = pkgsUnstable.vscode-fhs;
 
       enableExtensionUpdateCheck = true;
       enableUpdateCheck = true;

@@ -1,15 +1,19 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [
-    displaylink
     glxinfo
     intel-gpu-tools
+    intel-graphics-compiler
+    intel-media-sdk
+    intel-ocl
+    inteltool
     libva-utils
+    linux-firmware
+    mesa
+    vaapi-intel-hybrid
+    vaapiVdpau
+    vdpauinfo
   ];
 
   boot.initrd.kernelModules = ["i915"];
@@ -23,25 +27,32 @@
   # https://wiki.archlinux.org/title/Intel_graphics#Enable_GuC_/_HuC_firmware_loading
   # lspci -nn |grep  -Ei 'VGA|DISPLAY'
   boot.kernelParams = [
-    "i915.force_probe=5691"
+    #"i915.force_probe=5691"
     "i915.enable_guc=3"
   ];
-
-  nixpkgs.config.packageOverrides = pkgs: {
-    vaapiIntel = pkgs.vaapiIntel.override {enableHybridCodec = false;};
-  };
 
   hardware.opengl = {
     enable = true;
 
     driSupport = true;
+    #driSupport32bit = true;
 
     extraPackages = with pkgs; [
       intel-media-driver
-      libvdpau-va-gl
-      vaapiIntel
+      intel-ocl
+      linux-firmware
+      mesa
+      vaapi-intel-hybrid
       vaapiVdpau
-      vdpauinfo
+    ];
+
+    extraPackages32 = with pkgs; [
+      intel-media-driver
+      intel-ocl
+      linux-firmware
+      mesa
+      vaapi-intel-hybrid
+      vaapiVdpau
     ];
   };
 

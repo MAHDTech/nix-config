@@ -5,6 +5,8 @@
       executable = true;
 
       text = ''
+        #!/usr/bin/env bash
+
         set -euo pipefail
 
         if [[ ''${1-} ]]; then
@@ -35,6 +37,16 @@
         docker system df
 
         exit 0
+      '';
+    };
+    "direnv-wrapper" = {
+      target = "${config.home.homeDirectory}/.local/bin/flatpak/direnv-wrapper";
+      executable = true;
+
+      text = ''
+        #!/bin/sh
+
+        exec flatpak-spawn --host direnv "$@"
       '';
     };
   };

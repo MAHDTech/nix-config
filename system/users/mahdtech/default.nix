@@ -18,15 +18,16 @@ in {
 
     extraGroups = [
       username
-      "wheel"
-      "docker"
-      "video"
       "audio"
       "disk"
+      "docker"
+      "flatpak"
       "networkmanager"
       "pipewire"
       "plugdev"
+      "video"
       "vmware"
+      "wheel"
     ];
 
     openssh.authorizedKeys.keys = [
