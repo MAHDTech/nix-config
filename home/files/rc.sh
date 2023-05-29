@@ -224,9 +224,21 @@ shell_options || {
 # Enable auto-completion
 if ! shopt -oq posix; then
 	if [[ -f /usr/share/bash-completion/bash_completion ]]; then
+		writeLog "INFO" "Sourcing bash completion from usr share"
 		source /usr/share/bash-completion/bash_completion
 	elif [[ -f /etc/bash_completion ]]; then
+		writeLog "INFO" "Sourcing bash completion from etc"
 		. /etc/bash_completion
+	elif shopt -q progcomp &>/dev/null; then
+		writeLog "INFO" "Enabling programmable completion for bash"
+		. "@bash-completion@/etc/profile.d/bash_completion.sh"
+		nullglobStatus=$(shopt -p nullglob)
+		shopt -s nullglob
+		for MODULE in "@out@/etc/bash_completion.d/"* "@out@/share/bash-completion/completions/"*; do
+			. "${MODULE}"
+		done
+		eval "$nullglobStatus"
+		unset nullglobStatus p MODULE
 	else
 		writeLog "WARN" "Unable to source bash completion, is the package installed?"
 	fi
