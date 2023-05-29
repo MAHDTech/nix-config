@@ -216,11 +216,6 @@
         system = "x86_64-linux";
         username = "mahdtech";
       };
-
-      "matthewd3" = configHomeManager {
-        system = "x86_64-linux";
-        username = "matthewd3@vmware.lab";
-      };
     };
 
     #########################
@@ -244,20 +239,6 @@
           {
             home-manager = configNixOSHomeManager {username = "mahdtech";};
           }
-        ];
-      };
-
-      vmware = configNixOS {
-        username = "mahdtech";
-        system = "x86_64-linux";
-
-        extraModules = [
-          nixos-hardware.nixosModules.common-pc-laptop
-          nixos-hardware.nixosModules.common-cpu-intel
-          nixos-hardware.nixosModules.common-gpu-intel
-
-          ./hosts/nuc
-          {system.stateVersion = globalStateVersion;}
         ];
       };
     };
