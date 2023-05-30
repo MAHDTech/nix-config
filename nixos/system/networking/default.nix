@@ -17,7 +17,7 @@
 
     dhcpcd.enable = false;
 
-    enableIPv6 = true;
+    enableIPv6 = false;
 
     useDHCP = false;
 
