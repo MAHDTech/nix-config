@@ -291,7 +291,7 @@ checkWakaTime || {
 # Rust
 #########################
 
-if [[ ${RUST_ENABLED:-TRUE} == "TRUE" ]]; then
+if [[ ${RUST_ENABLED:-FALSE} == "TRUE" ]]; then
 
 	if checkBin rustup; then
 

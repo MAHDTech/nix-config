@@ -4,6 +4,7 @@
     ./ansible.nix
     ./bash.nix
     ./command-not-found.nix
+    ./dconf.nix
     ./direnv.nix
     ./fzf.nix
     ./git.nix

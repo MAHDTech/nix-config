@@ -27,7 +27,7 @@ function load_yubikey() {
 	#########################
 
 	# If running in VSCode shell, return immediately.
-	if [[ ${ENVIRONMENT:-EMPTY} == "VSCODE" ]]; then
+	if [[ ${ENVIRONMENT:-EMPTY} == "vscode" ]]; then
 		writeLog "WARN" "VSCode Shell detected, skipping YubiKey interactive loader."
 		return 0
 	fi
