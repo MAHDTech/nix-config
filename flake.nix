@@ -151,7 +151,7 @@
         };
 
         modules = [
-          ./home
+          ./home-manager
           {
             home = configHome {inherit username;};
           }
@@ -194,7 +194,7 @@
       useGlobalPkgs = true;
       useUserPackages = true;
 
-      users.${username} = ./home;
+      users.${username} = ./home-manager;
       extraSpecialArgs = {
         inherit inputs;
         #inherit username;
@@ -234,7 +234,7 @@
           nixos-hardware.nixosModules.common-cpu-intel
           nixos-hardware.nixosModules.common-gpu-intel
 
-          ./hosts/nuc
+          ./nixos/hosts/nuc
           {system.stateVersion = globalStateVersion;}
 
           home-manager.nixosModules.home-manager
