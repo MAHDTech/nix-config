@@ -30,7 +30,7 @@
   # https://wiki.archlinux.org/title/Intel_graphics#Enable_GuC_/_HuC_firmware_loading
   # lspci -nn |grep  -Ei 'VGA|DISPLAY'
   boot.kernelParams = [
-    "i915.force_probe=5691"
+    #"i915.force_probe=5691"
     "i915.enable_guc=3"
     "acpi_rev_override=5"
   ];

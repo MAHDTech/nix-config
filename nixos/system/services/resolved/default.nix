@@ -4,7 +4,7 @@
   environment.systemPackages = with pkgs; [];
 
   services.resolved = {
-    enable = true;
+    enable = false;
 
     llmnr = "true";
 

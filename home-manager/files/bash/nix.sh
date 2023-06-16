@@ -368,8 +368,8 @@ function dotfiles_all_the_things() {
 		return 1
 	}
 
-	dotfiles switch || {
-		writeLog "ERROR" "Failed to switch dotfiles"
+	dotfiles boot || {
+		writeLog "ERROR" "Failed to boot dotfiles"
 		return 1
 	}
 

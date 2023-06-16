@@ -10,7 +10,7 @@ in {
   home.packages = with pkgs;
     [
       slack
-      teams
+      #teams
 
       #citrix_workspace
 

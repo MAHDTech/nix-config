@@ -23,6 +23,8 @@ in {
       inkscape
       libreoffice
       pinta
+
+      gparted
     ]
     ++ unstablePkgs;
 }

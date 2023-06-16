@@ -10,12 +10,19 @@
     networkmanager = {
       enable = true;
 
-      dns = "systemd-resolved";
+      #dns = "systemd-resolved";
+      dns = "default";
+
+      dhcp = "internal";
 
       plugins = with pkgs; [
         networkmanager-openvpn
         networkmanager-openconnect
       ];
+
+      wifi = {
+        backend = "iwd";
+      };
     };
   };
 }

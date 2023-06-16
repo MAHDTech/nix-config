@@ -33,6 +33,7 @@ in {
       ncdu
       neofetch
       nushell
+      ntfs3g
       openssh
       pandoc
       pciutils
@@ -52,6 +53,7 @@ in {
       usbutils
       wally-cli
       wget
+      ventoy-full
       xdotool
       xsv
       xxd

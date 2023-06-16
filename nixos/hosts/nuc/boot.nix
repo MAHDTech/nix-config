@@ -3,7 +3,7 @@
   pkgs,
   ...
 }: let
-  zfsPoolNames = ["bpool" "rpool" "steam"];
+  zfsPoolNames = ["bpool" "rpool"];
 in {
   imports = [
     ../../system/services/zfs
@@ -87,6 +87,9 @@ in {
         #'';
 
         device = "nodev"; # UEFI only
+
+        # Enable auto-detection
+        useOSProber = true;
       };
     };
 
