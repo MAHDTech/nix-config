@@ -7,8 +7,9 @@
 
   unstablePkgs = with pkgsUnstable; [
     brave
-    #lapce
+    lapce
     logseq
+    microsoft-edge
   ];
 in {
   home.packages = with pkgs;
@@ -16,13 +17,13 @@ in {
       _1password
       _1password-gui
 
-      #microsoft-edge
-
       gtk3
 
       inkscape
       libreoffice
       pinta
+
+      tilix
 
       gparted
     ]

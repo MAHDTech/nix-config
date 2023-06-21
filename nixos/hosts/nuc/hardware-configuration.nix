@@ -59,13 +59,6 @@
     options = ["zfsutil" "X-mount.mkdir"];
   };
 
-  #fileSystems."/steam" = {
-  #  device = "steam";
-  #  fsType = "zfs";
-  #  neededForBoot = false;
-  #  options = ["zfsutil" "X-mount.mkdir"];
-  #};
-
   fileSystems."/boot/efi" = {
     device = "/dev/disk/by-uuid/C7E2-7D81";
     fsType = "vfat";
