@@ -108,7 +108,7 @@ function dotfiles() {
 	shift
 	local EXTRA_ARGS=("$@")
 
-	local DOTFILES_CONFIG="${DOTFILES_CONFIG:=$HOME/Projects/GitHub/MAHDTech/nix-config}"
+	local DOTFILES_CONFIG="${DOTFILES_CONFIG:=/mnt/projects/github/MAHDTech/nix-config}"
 
 	local FLAKE_LOCATION
 	local FLAKE_REMOTE="github:MAHDTech/nix-config"

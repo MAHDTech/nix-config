@@ -2,7 +2,7 @@
   product_name = "tkg";
   product_version = "2.2.0";
   filename = "tanzu-cli-bundle-linux-amd64.tar.gz";
-  checksum = "f266ceb45400ba92bb173e70ae2d0677fc931e8b2066fa243bd852208203d08f";
+  checksum = "0j640sq4yfidmzr4rbdrqnjczm7xsrnkagsaz9hnrg57sxlzii7h";
   homepage = "https://customerconnect.vmware.com/downloads/details?downloadGroup=TKG-220&productId=1400";
 in
   pkgs.stdenv.mkDerivation {
@@ -21,6 +21,7 @@ in
         Once you have downloaded the file, please use the following command and re-run the installation:
 
         nix-prefetch-url file://\$PWD/${filename}
+        nix-hash --type sha256 --flat --base32 ${filename}
       '';
     };
 
