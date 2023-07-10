@@ -32,9 +32,10 @@
   # 00:02.0 VGA compatible controller [0300]: Intel Corporation Alder Lake-P Integrated Graphics Controller [8086:46a6] (rev 0c)
   # 03:00.0 Display controller [0380]: Intel Corporation DG2 [Arc A730M] [8086:5691] (rev 08)
   boot.kernelParams = [
-    "i915.force_probe=46a6"
-    "i915.force_probe=5691"
-    "i915.enable_guc=3"
+    # Pre v6.2 kernel
+    #"i915.force_probe=46a6"
+    #"i915.force_probe=5691"
+    #"i915.enable_guc=3"
     "acpi_rev_override=5"
   ];
 
