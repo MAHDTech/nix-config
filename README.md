@@ -144,8 +144,15 @@ nixos-rebuild \
     boot  \
     --use-remote-sudo \
     --upgrade-all \
+    --refresh \
     --impure \
     --flake ".#${NIXOS_HOST}"
+```
+
+Check the status of the home-manager systemd unit
+
+```bash
+systemctl status "home-manager-$USER.service"
 ```
 
 ## Usage
@@ -159,6 +166,8 @@ nixos-rebuild \
     boot  \
     --use-remote-sudo \
     --upgrade-all \
+    --refresh \
+    --impure \
     --flake '.#'
 ```
 

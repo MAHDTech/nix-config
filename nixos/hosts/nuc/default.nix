@@ -9,8 +9,8 @@
     ./audio.nix
     ./video.nix
 
-    ./desktop-pantheon.nix
-    #./desktop-gnome.nix
+    #./desktop-pantheon.nix
+    ./desktop-gnome.nix
 
     # Laptop
     ./battery
