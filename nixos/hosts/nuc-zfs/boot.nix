@@ -2,17 +2,24 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  zfsPoolNames = ["bpool" "rpool"];
+in {
   imports = [
+    ../../system/services/zfs
+    {services.zfs.autoScrub.pools = zfsPoolNames;}
   ];
 
   environment.systemPackages = with pkgs; [];
 
   boot = {
-    supportedFilesystems = [""];
+    supportedFilesystems = ["zfs"];
 
     # Latest kernel
-    kernelPackages = pkgs.linuxPackages_latest;
+    #kernelPackages = pkgs.linuxPackages_latest;
+
+    # ZFS compatible
+    kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
 
     extraModulePackages = with config.boot.kernelPackages; [acpi_call];
 
@@ -23,6 +30,7 @@
       "acpi_backlight=native"
 
       "nohibernate"
+      "zfs.zfs_arc_max=12884901888"
 
       "usbcore.autosuspend=-1"
     ];
@@ -31,14 +39,14 @@
       timeout = 3;
 
       efi = {
-        efiSysMountPoint = "/boot";
+        efiSysMountPoint = "/boot/efi";
         canTouchEfiVariables = false;
       };
 
       generationsDir.copyKernels = true;
 
       systemd-boot = {
-        enable = true;
+        enable = false;
 
         graceful = true;
         memtest86.enable = true;
@@ -46,12 +54,12 @@
       };
 
       grub = {
-        enable = false;
+        enable = true;
 
         efiInstallAsRemovable = true;
         copyKernels = true;
         efiSupport = true;
-        zfsSupport = false;
+        zfsSupport = true;
 
         # TODO: https://github.com/vinceliuice/grub2-themes
         #theme =
@@ -85,5 +93,19 @@
       };
     };
 
+    zfs = {
+      requestEncryptionCredentials = true;
+
+      # Enable zfsUnstable pkg
+      enableUnstable = false;
+
+      extraPools = zfsPoolNames;
+
+      devNodes = "/dev/disk/by-partuuid";
+
+      forceImportAll = true;
+
+      allowHibernation = false;
+    };
   };
 }

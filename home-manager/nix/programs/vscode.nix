@@ -19,13 +19,13 @@
 in {
   home.packages =
     [
-      vscode-insiders
+      #vscode-insiders
     ]
     ++ unstablePkgs;
 
   programs = {
     vscode = {
-      enable = false;
+      enable = true;
 
       package = pkgsUnstable.vscode-fhs;
 

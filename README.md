@@ -114,6 +114,40 @@ vim ./scripts/bootstrap.sh
 ./scripts/bootstrap.sh
 ```
 
+#### Manual
+
+Make sure flakes are enabled.
+
+```bash
+nix = {
+  package = pkgs.nixFlakes;
+  extraOptions = ''
+    experimental-features = nix-command flakes
+  '';
+};
+```
+
+Apply if necessary
+
+```bash
+sudo nixos-rebuild switch
+```
+
+Apply the desired host configuration
+
+```bash
+export NIXPKGS_ALLOW_UNFREE=1
+
+NIXOS_HOST="nuc"
+
+nixos-rebuild \
+    boot  \
+    --use-remote-sudo \
+    --upgrade-all \
+    --impure \
+    --flake ".#${NIXOS_HOST}"
+```
+
 ## Usage
 
 ### NixOS

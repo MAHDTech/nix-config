@@ -9,5 +9,5 @@
 
   environment.systemPackages = with pkgs; [];
 
-  programs.nm-applet = {enable = false;};
+  programs.nm-applet = {enable = true;};
 }

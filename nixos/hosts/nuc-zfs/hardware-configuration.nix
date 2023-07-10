@@ -17,21 +17,54 @@
 
   boot.extraModulePackages = [];
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/31e25187-1403-456c-99ed-904bac3df038";
-      fsType = "ext4";
-    };
+  fileSystems."/" = {
+    device = "rpool/nixos/root";
+    fsType = "zfs";
+    neededForBoot = true;
+    options = ["zfsutil" "X-mount.mkdir"];
+  };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/58CC-4349";
-      fsType = "vfat";
-    };
+  fileSystems."/nix" = {
+    device = "rpool/nixos/nix";
+    fsType = "zfs";
+    neededForBoot = true;
+    options = ["zfsutil" "X-mount.mkdir"];
+  };
 
-  fileSystems."/mnt/projects" =
-    { device = "/dev/disk/by-uuid/f26b78a3-11e1-4c50-8f2e-50d76c6fde44";
-      fsType = "ext4";
-    };
-  
+  fileSystems."/home" = {
+    device = "rpool/nixos/home";
+    fsType = "zfs";
+    neededForBoot = true;
+    options = ["zfsutil" "X-mount.mkdir"];
+  };
+
+  fileSystems."/var/lib" = {
+    device = "rpool/nixos/var/lib";
+    fsType = "zfs";
+    neededForBoot = true;
+    options = ["zfsutil" "X-mount.mkdir"];
+  };
+
+  fileSystems."/var/log" = {
+    device = "rpool/nixos/var/log";
+    fsType = "zfs";
+    neededForBoot = true;
+    options = ["zfsutil" "X-mount.mkdir"];
+  };
+
+  fileSystems."/boot" = {
+    device = "bpool/nixos/boot";
+    fsType = "zfs";
+    neededForBoot = true;
+    options = ["zfsutil" "X-mount.mkdir"];
+  };
+
+  fileSystems."/boot/efi" = {
+    device = "/dev/disk/by-uuid/C7E2-7D81";
+    fsType = "vfat";
+    neededForBoot = true;
+  };
+
   swapDevices = [];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
