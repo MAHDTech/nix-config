@@ -7,7 +7,7 @@
   ...
 }: {
   home.packages = [
-    #(pkgs.callPackage ./tkg.nix {})
+    (pkgs.callPackage ./tkg.nix {})
 
     #(pkgs.callPackage ./carvel.nix {})
 

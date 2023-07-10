@@ -23,7 +23,7 @@
 
       package = pkgs.docker;
       enableOnBoot = true;
-      storageDriver = "zfs";
+      storageDriver = "overlay2";
       logDriver = "journald";
 
       autoPrune.enable = true;

@@ -1,9 +1,9 @@
 {pkgs, ...}: let
   product_name = "tkg";
-  product_version = "2.1.0";
+  product_version = "2.2.0";
   filename = "tanzu-cli-bundle-linux-amd64.tar.gz";
-  checksum = "03c9b77e65ef8ba0b7d7b51df583fdb32d47171bcc8c1a67536aa2d2afad9f0a";
-  homepage = "https://customerconnect.vmware.com/downloads/details?downloadGroup=TKG-210&productId=1400";
+  checksum = "f266ceb45400ba92bb173e70ae2d0677fc931e8b2066fa243bd852208203d08f";
+  homepage = "https://customerconnect.vmware.com/downloads/details?downloadGroup=TKG-220&productId=1400";
 in
   pkgs.stdenv.mkDerivation {
     name = product_name;
