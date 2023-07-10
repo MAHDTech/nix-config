@@ -5,6 +5,49 @@
 # Description: Contains ssh related functions
 ##################################################
 
+function load_sshSocket() {
+
+	# HACK: Manually set SSH_AUTH_SOCK if not already set.
+	export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
+
+	if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
+
+		if [[ -S ${_SSH_AUTH_SOCK} ]]; then
+			writeLog "DEBUG" "Updating SSH socket location"
+			export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
+		fi
+
+	else
+		writeLog "DEBUG" "SSH socket already set to ${SSH_AUTH_SOCK}"
+	fi
+
+	writeLog "INFO" "SSH socket is set to ${SSH_AUTH_SOCK}"
+	return 9
+
+}
+
+function load_sshkeys() {
+
+	# If running in VSCode shell, return immediately.
+	if [[ ${ENVIRONMENT:-EMPTY} == "vscode" ]]; then
+		writeLog "WARN" "VSCode Shell detected, skipping YubiKey interactive loader."
+		return 0
+	fi
+
+	load_sshSocket || {
+		writeLog "WARN" "Failed to setup SSH socket"
+		return 1
+	}
+
+	ssh-add || {
+		writeLog "WARN" "Failed to load SSH keys"
+		return 1
+	}
+
+	return 0
+
+}
+
 function load_yubikey() {
 
 	#########################
@@ -32,18 +75,10 @@ function load_yubikey() {
 		return 0
 	fi
 
-	# HACK: Manually set SSH_AUTH_SOCK if not already set.
-	export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
-
-	if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
-
-		if [[ -S ${_SSH_AUTH_SOCK} ]]; then
-			writeLog "DEBUG" "Updating SSH socket location"
-			export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
-		fi
-
-	fi
-	writeLog "INFO" "SSH socket is set to ${SSH_AUTH_SOCK}"
+	load_sshSocket || {
+		writeLog "WARN" "Failed to setup SSH socket"
+		return 1
+	}
 
 	YUBIKEY_LOADED="FALSE"
 	until [[ ${YUBIKEY_LOADED} == "TRUE" ]]; do

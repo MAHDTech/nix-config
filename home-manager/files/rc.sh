@@ -274,9 +274,21 @@ writeLog "DEBUG" "New PATH: $PATH"
 #########################
 
 if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then
+
+	writeLog "INFO" "Loading resident SSH keys from YubiKey"
+
 	load_yubikey || {
 		writeLog "WARN" "Failed to setup YubiKey for SSH"
 	}
+
+else
+
+	writeLog "INFO" "Loading SSH keys from ${HOME}/.ssh"
+
+	load_sshkeys || {
+		writeLog "WARN" "Failed to load SSH keys"
+	}
+
 fi
 
 #########################
