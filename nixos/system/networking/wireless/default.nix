@@ -7,7 +7,13 @@
 
   networking = {
     wireless = {
+      # Whether to enable wpa_supplicant
       enable = false;
+
+      iwd = {
+        # Whether to enable iwd
+        enable = true;
+      };
 
       userControlled = {
         enable = true;

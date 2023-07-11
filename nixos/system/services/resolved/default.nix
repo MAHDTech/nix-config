@@ -1,10 +1,13 @@
+#
+# systemd-resolved
+#
 {pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
 
   services.resolved = {
-    enable = false;
+    enable = true;
 
     llmnr = "true";
 

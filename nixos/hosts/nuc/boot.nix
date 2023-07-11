@@ -27,6 +27,12 @@
       "usbcore.autosuspend=-1"
     ];
 
+    kernel = {
+      sysctl = {
+        #"net.ipv6.conf.all.disable_ipv6" = 1;
+      };
+    };
+
     loader = {
       timeout = 3;
 
@@ -84,6 +90,5 @@
         useOSProber = true;
       };
     };
-
   };
 }

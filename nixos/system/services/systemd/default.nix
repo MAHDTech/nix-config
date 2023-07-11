@@ -1,3 +1,6 @@
+#
+# systemd
+#
 {
   config,
   pkgs,
@@ -23,10 +26,12 @@
       };
     };
 
+    # systemd-networkd
     network = {
       enable = true;
 
       wait-online = {
+        enable = true;
         anyInterface = true;
         timeout = 120;
         extraArgs = [];
@@ -52,6 +57,7 @@
           dhcpV4Config.RouteMetric = 1000;
         };
 
+        # NetworkManager for WiFi
         "40-wireless" = {
           enable = false;
           name = "wl*";

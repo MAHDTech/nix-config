@@ -1,6 +1,6 @@
 {
   imports = [
     # Install steam using nixpkgs
-    #./nixpkgs
+    ./nixpkgs.nix
   ];
 }

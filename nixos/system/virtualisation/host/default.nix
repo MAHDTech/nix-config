@@ -17,7 +17,7 @@
         package = pkgs.vmware-workstation;
 
         extraPackages = with pkgs; [
-          #ntfs3g
+          ntfs3g
         ];
 
         extraConfig = ''
