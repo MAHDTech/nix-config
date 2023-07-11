@@ -13,7 +13,7 @@
   # NetworkManager for WLAN
 
   networking = {
-    useNetworkd = false;
+    useNetworkd = true;
 
     dhcpcd.enable = false;
 

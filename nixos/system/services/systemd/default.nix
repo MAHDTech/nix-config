@@ -24,7 +24,7 @@
     };
 
     network = {
-      enable = false;
+      enable = true;
 
       wait-online = {
         anyInterface = true;
