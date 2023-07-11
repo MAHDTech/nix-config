@@ -209,7 +209,7 @@ inputs.devenv.lib.mkShell {
 
         rust = {
           enable = true;
-          version = "stable";
+          channel = "stable";
         };
 
         terraform = {
