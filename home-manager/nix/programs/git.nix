@@ -225,8 +225,12 @@ in {
 
     ignores = [
       # VS Code / VS Codium
-      ".vscode/"
-      ".vscode-oss/"
+      "!.vscode/"
+      "!.vscode-oss/"
+      "!.vscode/settings.json"
+      "!.vscode-oss/settings.json"
+      ".vscode/**"
+      ".vscode-oss/**"
 
       # IntelliJ
       "*.iml"
