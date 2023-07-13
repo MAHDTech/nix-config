@@ -7,7 +7,7 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs; [git git-lfs gh git-filter-repo bfg-repo-cleaner diff-so-fancy] ++ unstablePkgs;
+  home.packages = with pkgs; [git git-lfs gh git-filter-repo bfg-repo-cleaner] ++ unstablePkgs;
 
   programs.git = {
     enable = true;
@@ -48,7 +48,7 @@ in {
         # Managed with devenv githooks.
         #hooksPath = ".githooks" ;
 
-        pager = "diff-so-fancy | less --tabs=4 -RFX";
+        #pager = "";
       };
 
       # [credential]
@@ -81,11 +81,14 @@ in {
 
       # [interactive]
       interactive = {
-        diffFilter = "diff-so-fancy --patch";
+        #diffFilter = "";
       };
 
       # [diff]
-      diff = {colorMoved = "zebra";};
+      diff = {
+        external = "difft";
+        colorMoved = "zebra";
+      };
 
       # [init]
       init = {
