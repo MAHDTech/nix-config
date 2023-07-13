@@ -10,6 +10,7 @@ in {
   home.packages = with pkgs;
     [
       bat
+      blackbox-terminal
       binutils
       bottom
       bzip2
