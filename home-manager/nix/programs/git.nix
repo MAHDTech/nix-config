@@ -36,6 +36,10 @@ in {
       # Lazy review with vim of a single file provided
       reviewone = ''
         !vim -p +"tabdo Gdiff $REVIEW_BRANCH" +"let g:gitgutter_diff_base = '$REVIEW_BRANCH'"'';
+
+      # Use external diff tool
+      dft = ''
+        difftool'';
     };
 
     extraConfig = {
@@ -47,8 +51,6 @@ in {
 
         # Managed with devenv githooks.
         #hooksPath = ".githooks" ;
-
-        #pager = "";
       };
 
       # [credential]
@@ -81,13 +83,22 @@ in {
 
       # [interactive]
       interactive = {
-        #diffFilter = "";
       };
 
       # [diff]
       diff = {
         external = "difft";
+        tool = "difftastic";
         colorMoved = "zebra";
+      };
+
+      # [difftool]
+      difftool = {
+        prompt = false;
+
+        "difftastic" = {
+          cmd = "difft $LOCAL $REMOTE";
+        };
       };
 
       # [init]
@@ -104,6 +115,11 @@ in {
           process = "git-lfs filter-process";
           required = true;
         };
+      };
+
+      # [pager]
+      pager = {
+        difftool = true;
       };
 
       # [fetch]
