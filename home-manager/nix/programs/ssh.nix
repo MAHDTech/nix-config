@@ -40,7 +40,9 @@
     includes = [];
 
     # These options override any Host settings globally.
-    extraOptionOverrides = {};
+    extraOptionOverrides = {
+      RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
+    };
 
     matchBlocks = {
       "TT-1" = {
