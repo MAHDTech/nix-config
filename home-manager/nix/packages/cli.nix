@@ -47,6 +47,7 @@ in {
       rsync
       shadow
       shellcheck
+      socat
       sops
       tokei
       tree
