@@ -27,6 +27,13 @@ export LOG_FILE="${LOG_DIR}/${SCRIPT}.log"
 
 export LOG_LEVEL="DEBUG"
 
+# Allow unfree packages.
+export NIXPKGS_ALLOW_UNFREE=1
+
+# Cachix auth token
+export CACHIX_AUTH_TOKEN
+export CACHIX_CACHE_NAME
+
 ### Debian ###
 
 # TODO
@@ -55,10 +62,10 @@ export NIX_CONFIG_INST_PARTSIZE_SWAP=64
 export NIX_CONFIG_INST_ENABLE_SWAP=FALSE
 
 # Whether to enable encryption or not.
-export NIX_CONFIG_INST_ENABLE_ENCRYPTION=FALSEfdis
+export NIX_CONFIG_INST_ENABLE_ENCRYPTION=FALSE
 
 # Whether to enable impermanence or not.
-export NIC_CONFIG_INST_ENABLE_IMPERMANENCE=FALSE
+export NIX_CONFIG_INST_ENABLE_IMPERMANENCE=FALSE
 
 # The hostname will be requested from the user.
 export NIX_CONFIG_INST_HOSTNAME
@@ -99,6 +106,14 @@ PROMPT="OPTIONAL: If you are using proxy, enter it now including the http prefix
 read -p "${PROMPT}" -n 30 -r NIX_CONFIG_PROXY_SERVER
 echo -e "\n"
 
+PROMPT="OPTIONAL: If you are using Cachix, enter the cache name to use: "
+read -p "${PROMPT}" -n 30 -r CACHIX_CACHE_NAME
+echo -e "\n"
+
+PROMPT="OPTIONAL: If you are using Cachix, enter you're auth token: "
+read -p "${PROMPT}" -n 30 -r CACHIX_AUTH_TOKEN
+echo -e "\n"
+
 if [[ ! "${NIX_CONFIG_PROXY_SERVER}" == "EMPTY" ]];
 then
 
@@ -111,7 +126,42 @@ then
 fi
 
 # Checking for internet connectivity
-if echo -e "GET https://nixos.org HTTP/1.0\n\n" | nc nixos.org 443 > /dev/null 2>&1;
+
+if type curl > /dev/null 2>&1;
+then
+
+	writeLog "DEBUG" "curl is available"
+
+	NET_CHECK_COMMAND=(
+		"curl"
+		"https://nixos.org"
+	)
+
+elif type nc > /dev/null 2>&1;
+then
+
+	writeLog "DEBUG" "netcat is available"
+
+	NET_CHECK_COMMAND=(
+		"echo"
+		"-e"
+		"GET"
+		"https://nixos.org HTTP/1.0\n\n"
+		"|"
+		"nc"
+		"nixos.org"
+		"443"
+		">"
+		"/dev/null"
+		"2>&1"
+	)
+
+else
+	writeLog "ERROR" "Both curl and netcat are not installed."
+	exit 1	
+fi
+
+if "${NET_CHECK_COMMAND[@]}" >/dev/null 2>&1;
 then
 
 	writeLog "INFO" "Verified connection to nixos.org"
@@ -140,14 +190,6 @@ else
 	export NIX_CONFIG_INST_HOSTNAME
 fi
 
-if [[ "${NIX_CONFIG_INST_DISK_1:-EMPTY}" == "EMPTY" ]];
-then
-
-	writeLog "ERROR" "You need to at least provide a single disk to install on."
-	exit 1
-
-fi
-
 detectOS || {
 	writeLog "ERROR" "Failed to determine the Operating System!"
 	exit 1
@@ -166,6 +208,12 @@ case "${OS_NAME}" in
 
 	"nixos" )
 
+		if [[ "${NIX_CONFIG_INST_DISK_1:-EMPTY}" == "EMPTY" ]];
+		then
+			writeLog "ERROR" "You need to at least provide a single disk to install on."
+			exit 1
+		fi
+		
 		# shellcheck source=scripts/nixos.sh		
 		"./${SCRIPT_DIR}/nixos.sh"
 

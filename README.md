@@ -114,7 +114,7 @@ vim ./scripts/bootstrap.sh
 ./scripts/bootstrap.sh
 ```
 
-#### Manual
+#### Manual (NixOS)
 
 Make sure flakes are enabled.
 

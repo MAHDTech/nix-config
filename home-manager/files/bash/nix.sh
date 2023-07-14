@@ -5,7 +5,7 @@
 # Description: Assorted Nix related functions
 ##################################################
 
-function DISABLED_nix-uninstall() {
+function nix-uninstall() {
 
 	local NIX_STORE_HOME="/nix"
 	local NIX_STORE_CONFIG="/etc/nix"
@@ -108,7 +108,7 @@ function dotfiles() {
 	shift
 	local EXTRA_ARGS=("$@")
 
-	local DOTFILES_CONFIG="${DOTFILES_CONFIG:=/mnt/projects/github/MAHDTech/nix-config}"
+	local DOTFILES_CONFIG="${DOTFILES_CONFIG:=$HOME/Projects/github/MAHDTech/nix-config}"
 
 	local FLAKE_LOCATION
 	local FLAKE_REMOTE="github:MAHDTech/nix-config"
@@ -157,7 +157,12 @@ function dotfiles() {
 	fi
 
 	# Change into the dotfiles config directory.
-	if [[ -d ${DOTFILES_CONFIG} ]]; then
+	if [[ ! "${FLAKE_LOCATION_FORCED:-NONE}" == "NONE" ]];
+	then
+		writeLog "WARN" "Using FORCED dotfiles as flake location is set to ${FLAKE_LOCATION_FORCED}"
+		FLAKE_LOCATION="${FLAKE_LOCATION_FORCED}"
+
+	elif [[ -d ${DOTFILES_CONFIG} ]]; then
 
 		pushd "${DOTFILES_CONFIG}" >/dev/null || {
 			writeLog "Failed to change into ${DOTFILES_CONFIG}"
@@ -167,12 +172,12 @@ function dotfiles() {
 		# HACK: allow dirty
 		git add --all || true
 
+		writeLog "WARN" "Using LOCAL dotfiles as the config directory is present ${DOTFILES_CONFIG}"
 		FLAKE_LOCATION="${FLAKE_LOCAL}"
 
 	else
 
-		writeLog "WARN" "The dotfiles config directory is not present ${DOTFILES_CONFIG}"
-
+		writeLog "WARN" "Using REMOTE dotfiles as the config directory is not present ${DOTFILES_CONFIG}"
 		FLAKE_LOCATION="${FLAKE_REMOTE}"
 
 	fi
