@@ -264,16 +264,6 @@
         inherit pkgsUnstable;
       };
 
-      nix = import ./nix/devshells/nix {
-        inherit inputs;
-        inherit pkgs;
-      };
-
-      salt = import ./nix/devshells/salt {
-        inherit inputs;
-        inherit pkgs;
-      };
-
       default = self.devShells.${system}.devenv;
     });
   };
