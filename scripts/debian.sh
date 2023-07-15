@@ -266,10 +266,13 @@ sudo apt install --yes \
 	exit 21
 }
 
-sudo docker run hello-world || {
-	writeLog "ERROR" "Failed to test Docker!"
-	exit 22
-}
+sudo docker run \
+	--name hello-world \
+	--rm \
+	docker.io/hello-world || {
+		writeLog "ERROR" "Failed to test Docker!"
+		exit 22
+	}
 
 sudo usermod --append --groups docker "$USER" || {
 	writeLog "ERROR" "Failed to add user $USER to docker group!"
