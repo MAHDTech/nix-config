@@ -14,7 +14,7 @@
         fi
 
         # Stop all running containers if force is enabled
-        if [[ "''${FORCE:-FALSE}" == "FORCE" ]]; then
+        if [[ "''${FORCE:-NONE}" == "FORCE" ]]; then
           docker stop $(docker ps -a -q) >/dev/null 2>&1 || {
             echo "Failed to stop running containers, skipping..."
           }
@@ -34,14 +34,15 @@
         }
 
         # If force was on, remove volumes as well.
-        if [[ "''${FORCE:-FALSE}" == "FORCE" ]]; then
-          for VOLUME in docker volume ls --output json | jq -r .Name;
+        if [[ "''${FORCE:-NONE}" == "FORCE" ]]; then
+          for VOLUME in $(docker volume ls --output json | jq -r .Name);
           do
             echo "Removing volume $VOLUME"
             docker volume rm $VOLUME || {
               echo "Failed to remove volume $VOLUME, skipping..."
             }
           done
+        fi
 
         echo -e "\nAFTER:\n"
         docker system df

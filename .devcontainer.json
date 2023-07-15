@@ -1,0 +1,24 @@
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "exiasr.hadolint",
+        "nhoizey.gremlins",
+        "esbenp.prettier-vscode",
+        "github.copilot",
+        "github.vscode-github-actions",
+        "kamadorueda.alejandra",
+        "ms-azuretools.vscode-docker",
+        "pinage404.nix-extension-pack",
+        "redhat.vscode-yaml",
+        "timonwong.shellcheck",
+        "tuxtina.json2yaml",
+        "vscodevim.vim",
+        "wakatime.vscode-wakatime"
+      ]
+    }
+  },
+  "image": "ghcr.io/cachix/devenv:latest",
+  "overrideCommand": false,
+  "updateContentCommand": "devenv ci"
+}
