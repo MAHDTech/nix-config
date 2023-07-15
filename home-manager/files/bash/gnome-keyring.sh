@@ -41,7 +41,7 @@ function start_gnome_keyring() {
 			# Home Manager now manages gnome-keyring as a systemd unit
 			if type home-manager >/dev/null 2>&1; then
 
-				systemctl --user --restart gnome-keyring.service || {
+				systemctl --user restart gnome-keyring.service || {
 					writeLog "ERROR" "Failed to start the gnome-keyring user service"
 					return 1
 				}

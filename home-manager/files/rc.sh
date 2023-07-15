@@ -276,24 +276,29 @@ writeLog "DEBUG" "New PATH: $PATH"
 # gnome-keyring should be started via daemon now, verify
 start_gnome_keyring || {
 	writeLog "ERROR" "Failed to start gnome-keyring unable to configure SSH"
-	exit 1
+	LOAD_SSH="FALSE"
 }
 
-if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then
+if [[ "${LOAD_SSH:-TRUE}" == "TRUE" ]];
+then
 
-	writeLog "INFO" "Loading resident SSH keys from YubiKey"
+	if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then
 
-	load_yubikey || {
-		writeLog "WARN" "Failed to setup YubiKey for SSH"
-	}
+		writeLog "INFO" "Loading resident SSH keys from YubiKey"
 
-else
+		load_yubikey || {
+			writeLog "WARN" "Failed to setup YubiKey for SSH"
+		}
 
-	writeLog "INFO" "Loading SSH keys from ${HOME}/.ssh"
+	else
 
-	load_sshkeys || {
-		writeLog "WARN" "Failed to load SSH keys"
-	}
+		writeLog "INFO" "Loading SSH keys from ${HOME}/.ssh"
+
+		load_sshkeys || {
+			writeLog "WARN" "Failed to load SSH keys"
+		}
+
+	fi
 
 fi
 

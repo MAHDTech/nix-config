@@ -33,6 +33,16 @@
           echo "Failed to prune unused images, skipping..."
         }
 
+        # If force was on, remove volumes as well.
+        if [[ "''${FORCE:-FALSE}" == "FORCE" ]]; then
+          for VOLUME in docker volume ls --output json | jq -r .Name;
+          do
+            echo "Removing volume $VOLUME"
+            docker volume rm $VOLUME || {
+              echo "Failed to remove volume $VOLUME, skipping..."
+            }
+          done
+
         echo -e "\nAFTER:\n"
         docker system df
 
