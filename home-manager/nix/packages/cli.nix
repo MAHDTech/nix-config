@@ -31,6 +31,7 @@ in {
       locale
       lolcat
       mkpasswd
+      nixos-generators
       ncdu
       neofetch
       nushell

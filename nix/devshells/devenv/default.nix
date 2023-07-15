@@ -1,7 +1,6 @@
 {
   inputs,
   pkgs,
-  pkgsUnstable,
   ...
 }:
 inputs.devenv.lib.mkShell {
