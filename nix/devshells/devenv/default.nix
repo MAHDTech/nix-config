@@ -1,7 +1,7 @@
 {
   inputs,
   pkgs,
-  #pkgsUnstable,
+  pkgsUnstable,
   ...
 }:
 inputs.devenv.lib.mkShell {
@@ -18,6 +18,8 @@ inputs.devenv.lib.mkShell {
 
         nixpkgs-fmt
         statix
+        nil
+        alejandra
 
         #sops
         #sops-init-gpg-key
@@ -35,12 +37,14 @@ inputs.devenv.lib.mkShell {
       ];
 
       env = {
-        PROJECT_SHELL = "default";
-
         DEVENV_DEVSHELL_ROOT = builtins.toString ./.;
       };
 
       enterShell = ''
+        # Linters
+        export HUNSPELL_CONFIG=''${PROJECT_DIR}/.linters/config/hunspell.conf
+        export PRETTIER_CONFIG=''${PROJECT_DIR}/.linters/config/.prettierrc.yaml
+        export YAMLLINT_CONFIG_FILE=''${PROJECT_DIR}/.linters/config/.yamllint.yml
 
         figlet ''${PROJECT_SHELL:-Unknown}
 
@@ -51,6 +55,7 @@ inputs.devenv.lib.mkShell {
 
           Shell: ''${PROJECT_SHELL:-Unknown}
           Project: ''${PROJECT_NAME:-Unknown}
+          Directory: ''${PROJECT_DIR:-Unknown}
           "
 
       '';
@@ -100,7 +105,7 @@ inputs.devenv.lib.mkShell {
 
           # Spelling
           hunspell.enable = false;
-          typos.enable = false;
+          typos.enable = true;
 
           # Git commit messages
           commitizen.enable = true;
@@ -163,13 +168,41 @@ inputs.devenv.lib.mkShell {
             };
           };
 
+          prettier = {
+            output = "check";
+            write = true;
+          };
+
           yamllint = {
-            configPath = builtins.toString (./. + "/.linters/yaml-lint.yaml");
           };
         };
       };
 
-      devcontainer.enable = false;
+      devcontainer = {
+        enable = true;
+
+        settings = {
+          customizations = {
+            vscode = {
+              extensions = [
+                "exiasr.hadolint"
+                "nhoizey.gremlins"
+                "esbenp.prettier-vscode"
+                "github.copilot"
+                "github.vscode-github-actions"
+                "kamadorueda.alejandra"
+                "ms-azuretools.vscode-docker"
+                "pinage404.nix-extension-pack"
+                "redhat.vscode-yaml"
+                "timonwong.shellcheck"
+                "tuxtina.json2yaml"
+                "vscodevim.vim"
+                "wakatime.vscode-wakatime"
+              ];
+            };
+          };
+        };
+      };
 
       devenv = {
         flakesIntegration = true;
@@ -178,7 +211,7 @@ inputs.devenv.lib.mkShell {
 
       difftastic.enable = true;
 
-      hosts = {"example.com" = "1.1.1.1";};
+      #hosts = {"example.com" = "1.1.1.1";};
 
       languages = {
         cue = {
@@ -189,7 +222,7 @@ inputs.devenv.lib.mkShell {
         gawk = {enable = true;};
 
         go = {
-          enable = true;
+          enable = false;
           package = pkgs.go;
         };
 
@@ -213,7 +246,7 @@ inputs.devenv.lib.mkShell {
         };
 
         terraform = {
-          enable = true;
+          enable = false;
           package = pkgs.terraform;
         };
       };

@@ -5,17 +5,13 @@
 # Description: Loads the correct script based on the OS.
 #########################
 
-set -e
-set -u
-set -o pipefail
-
 clear
 
-##########
-# Variables
-##########
+set -euoa pipefail
 
-### Common ###
+#########################
+# Variables
+#########################
 
 SCRIPT=${0##*/}
 SCRIPT_DIR=${0%/*}
@@ -34,11 +30,25 @@ export NIXPKGS_ALLOW_UNFREE=1
 export CACHIX_AUTH_TOKEN
 export CACHIX_CACHE_NAME
 
-### Debian ###
+# Flake location assumes local but can be overridden
+export FLAKE_LOCATION
 
-# TODO
+#########################
+# Debian
+#########################
 
-### NixOS ###
+# If you want the Nix daemon installed directly.
+export INSTALL_NIX_ON_DEBIAN="${INSTALL_NIX_ON_DEBIAN:-FALSE}"
+
+# The supported old releases to upgrade from.
+export DEBIAN_VERSION_CODENAMES=("buster" "bullseye")
+
+# The distro to update the container to
+export DEBIAN_VERSION_CODENAME="${DEBIAN_VERSION_CODENAME:-bookworm}"
+
+#########################
+# NixOS
+#########################
 
 # The first disk (required)
 export NIX_CONFIG_INST_DISK_1
@@ -55,7 +65,7 @@ export NIX_CONFIG_INST_PARTSIZE_BOOT=4
 # The size of the root pool in GB. If set to '0' will use all remaining space.
 export NIX_CONFIG_INST_PARTSIZE_ROOT=0
 
-# The size of the swap parition in GB.
+# The size of the swap partition in GB.
 export NIX_CONFIG_INST_PARTSIZE_SWAP=64
 
 # Whether to use swap or not.
@@ -74,8 +84,7 @@ export NIX_CONFIG_INST_HOSTNAME
 # Functions
 ##########
 
-if [[ -f "${SCRIPT_DIR}/common.sh" ]];
-then
+if [[ -f "${SCRIPT_DIR}/common.sh" ]]; then
 	# shellcheck source=scripts/common.sh
 	source "${SCRIPT_DIR}/common.sh"
 else
@@ -90,16 +99,8 @@ fi
 writeLog "DEBUG" "Started ${SCRIPT}, writing log to ${LOG_FILE}"
 
 echo -e "\n"
-PROMPT="REQUIRED: Enter the desired hostname for the system and press ENTER: "
-read -p "${PROMPT}" -n 30 -r NIX_CONFIG_INST_HOSTNAME
-echo -e "\n"
-
-PROMPT="REQUIRED: Enter the first disk name including the /dev portion: "
-read -p "${PROMPT}" -n 30 -r NIX_CONFIG_INST_DISK_1
-echo -e "\n"
-
-PROMPT="OPTIONAL: Enter the second mirror disk name including the /dev portion: "
-read -p "${PROMPT}" -n 30 -r NIX_CONFIG_INST_DISK_2
+PROMPT="REQUIRED: Enter the flake location and press ENTER. Defaults to the current directory '.' : "
+read -p "${PROMPT}" -n 30 -r FLAKE_LOCATION
 echo -e "\n"
 
 PROMPT="OPTIONAL: If you are using proxy, enter it now including the http prefix: "
@@ -114,21 +115,18 @@ PROMPT="OPTIONAL: If you are using Cachix, enter you're auth token: "
 read -p "${PROMPT}" -n 30 -r CACHIX_AUTH_TOKEN
 echo -e "\n"
 
-if [[ ! "${NIX_CONFIG_PROXY_SERVER}" == "EMPTY" ]];
-then
+if [[ ${NIX_CONFIG_PROXY_SERVER} != "EMPTY" ]]; then
 
 	export HTTP_PROXY="${NIX_CONFIG_PROXY_SERVER}"
 	export HTTPS_PROXY="${NIX_CONFIG_PROXY_SERVER}"
-	
+
 	export http_proxy="${NIX_CONFIG_PROXY_SERVER}"
 	export https_proxy="${NIX_CONFIG_PROXY_SERVER}"
 
 fi
 
 # Checking for internet connectivity
-
-if type curl > /dev/null 2>&1;
-then
+if type curl >/dev/null 2>&1; then
 
 	writeLog "DEBUG" "curl is available"
 
@@ -137,8 +135,7 @@ then
 		"https://nixos.org"
 	)
 
-elif type nc > /dev/null 2>&1;
-then
+elif type nc >/dev/null 2>&1; then
 
 	writeLog "DEBUG" "netcat is available"
 
@@ -151,18 +148,14 @@ then
 		"nc"
 		"nixos.org"
 		"443"
-		">"
-		"/dev/null"
-		"2>&1"
 	)
 
 else
 	writeLog "ERROR" "Both curl and netcat are not installed."
-	exit 1	
+	exit 1
 fi
 
-if "${NET_CHECK_COMMAND[@]}" >/dev/null 2>&1;
-then
+if "${NET_CHECK_COMMAND[@]}" >/dev/null 2>&1; then
 
 	writeLog "INFO" "Verified connection to nixos.org"
 
@@ -182,14 +175,6 @@ else
 
 fi
 
-if [[ "${#NIX_CONFIG_INST_HOSTNAME}" -lt 1 ]];
-then
-	writeLog "ERROR" "Hostname need to be more than 1 character."
-	exit 1
-else
-	export NIX_CONFIG_INST_HOSTNAME
-fi
-
 detectOS || {
 	writeLog "ERROR" "Failed to determine the Operating System!"
 	exit 1
@@ -199,33 +184,54 @@ writeLog "INFO" "Operating System: ${OS_NAME}"
 
 case "${OS_NAME}" in
 
-	"debian" )
+"debian")
 
-		# shellcheck source=scripts/debian.sh
-		"./${SCRIPT_DIR}/debian.sh"
-
-	;;
-
-	"nixos" )
-
-		if [[ "${NIX_CONFIG_INST_DISK_1:-EMPTY}" == "EMPTY" ]];
-		then
-			writeLog "ERROR" "You need to at least provide a single disk to install on."
-			exit 1
-		fi
-		
-		# shellcheck source=scripts/nixos.sh		
-		"./${SCRIPT_DIR}/nixos.sh"
+	# shellcheck source=scripts/debian.sh
+	source "./${SCRIPT_DIR}/debian.sh"
 
 	;;
 
-	* )
+"nixos")
 
-		msg "Unsupported Operating System."
+	echo -e "\n"
+	PROMPT="REQUIRED: Enter the desired hostname for the system and press ENTER: "
+	read -p "${PROMPT}" -n 30 -r NIX_CONFIG_INST_HOSTNAME
+	echo -e "\n"
+
+	if [[ ${#NIX_CONFIG_INST_HOSTNAME} -lt 1 ]]; then
+		writeLog "ERROR" "Hostname need to be more than 1 character."
 		exit 1
+	else
+		export NIX_CONFIG_INST_HOSTNAME
+	fi
+
+	PROMPT="REQUIRED: Enter the first disk name including the /dev portion: "
+	read -p "${PROMPT}" -n 30 -r NIX_CONFIG_INST_DISK_1
+	echo -e "\n"
+
+	PROMPT="OPTIONAL: Enter the second mirror disk name including the /dev portion: "
+	read -p "${PROMPT}" -n 30 -r NIX_CONFIG_INST_DISK_2
+	echo -e "\n"
+
+	if [[ ${NIX_CONFIG_INST_DISK_1:-EMPTY} == "EMPTY" ]]; then
+		writeLog "ERROR" "You need to at least provide a single disk to install on."
+		exit 1
+	fi
+
+	# shellcheck source=scripts/nixos.sh
+	source "./${SCRIPT_DIR}/nixos.sh"
+
+	;;
+
+*)
+
+	msg "Unsupported Operating System."
+	exit 1
 
 	;;
 
 esac
 
 writeLog "DEBUG" "Finished ${SCRIPT}"
+
+exit 0

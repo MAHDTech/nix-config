@@ -73,6 +73,9 @@ in {
       # the agent before it asks for a passphrase.
       use-agent = true;
 
+      # Allow a fake pinentry for hardware GPG keys.
+      pinentry-mode = "loopback";
+
       throw-keyids = true;
 
       no-symkey-cache = true;
@@ -138,14 +141,16 @@ in {
   };
 
   services.gpg-agent = {
-    # NOTE: PCSCD conflicts with gpg-agent
+    # NOTE:
+    #   - PCSCD conflicts with gpg-agent
+    #   - gnome-keyring is no longer a wrapper for gpg-agent
     enable = true;
 
     enableBashIntegration = true;
     enableFishIntegration = false;
     enableZshIntegration = false;
 
-    enableExtraSocket = false;
+    enableExtraSocket = true;
     enableSshSupport = false;
     enableScDaemon = true;
 

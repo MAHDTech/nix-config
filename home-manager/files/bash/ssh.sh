@@ -8,13 +8,17 @@
 function load_sshSocket() {
 
 	# HACK: Manually set SSH_AUTH_SOCK if not already set.
-	export _SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
+	export _SSH_AUTH_SOCK
+	_SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
 
 	if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
 
 		if [[ -S ${_SSH_AUTH_SOCK} ]]; then
 			writeLog "DEBUG" "Updating SSH socket location"
 			export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
+		else
+			writeLog "WARN" "No existing SSH auth socket exists, aborting..."
+			return 1
 		fi
 
 	else
@@ -22,7 +26,7 @@ function load_sshSocket() {
 	fi
 
 	writeLog "INFO" "SSH socket is set to ${SSH_AUTH_SOCK}"
-	return 9
+	return 0
 
 }
 
@@ -105,7 +109,10 @@ function load_yubikey() {
 				figlet YubiKey SSH
 			fi
 
-			ssh-add -K
+			ssh-add -K || {
+				writeLog "ERROR" "Failed to load resident SSH keys"
+				return 1
+			}
 			YUBIKEY_LOADED="TRUE"
 
 		fi

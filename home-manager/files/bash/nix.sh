@@ -74,7 +74,7 @@ function _dotfiles_actions() {
 			"${EXTRA_ARGS[@]}" || {
 
 			writeLog "ERROR" "Failed to perform NixOS ${ACTION,,}"
-			popd >/dev/null || return 1
+			popd >/dev/null 2>&1
 			return 1
 
 		}
@@ -90,7 +90,7 @@ function _dotfiles_actions() {
 			"${EXTRA_ARGS[@]}" || {
 
 			writeLog "ERROR" "Failed to perform Nix Home Manager ${ACTION,,}"
-			popd >/dev/null || return 1
+			popd >/dev/null 2>&1
 			return 1
 
 		}
@@ -108,7 +108,7 @@ function dotfiles() {
 	shift
 	local EXTRA_ARGS=("$@")
 
-	local DOTFILES_CONFIG="${DOTFILES_CONFIG:=$HOME/Projects/github/MAHDTech/nix-config}"
+	local DOTFILES_CONFIG="${DOTFILES_CONFIG:=$HOME/dotfiles}"
 
 	local FLAKE_LOCATION
 	local FLAKE_REMOTE="github:MAHDTech/nix-config"
@@ -157,8 +157,7 @@ function dotfiles() {
 	fi
 
 	# Change into the dotfiles config directory.
-	if [[ ! "${FLAKE_LOCATION_FORCED:-NONE}" == "NONE" ]];
-	then
+	if [[ ${FLAKE_LOCATION_FORCED:-NONE} != "NONE" ]]; then
 		writeLog "WARN" "Using FORCED dotfiles as flake location is set to ${FLAKE_LOCATION_FORCED}"
 		FLAKE_LOCATION="${FLAKE_LOCATION_FORCED}"
 
@@ -205,7 +204,7 @@ function dotfiles() {
 
 	cd | dir | pushd)
 
-		popd >/dev/null || return 1
+		popd >/dev/null 2>&1 || return 1
 
 		cd "${DOTFILES_CONFIG}" >/dev/null || {
 			writeLog "ERROR" "Failed to change into ${DOTFILES_CONFIG}"
@@ -290,7 +289,7 @@ function dotfiles() {
 
 			nix flake update || {
 				writeLog "ERROR" "Failed to update Nix flake"
-				popd >/dev/null || return 1
+				popd >/dev/null 2>&1
 				return 1
 			}
 
@@ -300,7 +299,7 @@ function dotfiles() {
 
 			nix flake update || {
 				writeLog "ERROR" "Failed to update Nix flake"
-				popd >/dev/null || return 1
+				popd >/dev/null 2>&1
 				return 1
 			}
 
@@ -318,7 +317,7 @@ function dotfiles() {
 
 			nix-collect-garbage --delete-older-than 1d || {
 				writeLog "ERROR" "Failed to collect Nix garbage"
-				popd >/dev/null || return 1
+				popd >/dev/null 2>&1
 				return 1
 			}
 
@@ -328,7 +327,7 @@ function dotfiles() {
 
 			nix-collect-garbage --delete-older-than 1d || {
 				writeLog "ERROR" "Failed to collect Nix garbage"
-				popd >/dev/null || return 1
+				popd >/dev/null
 				return 1
 			}
 
@@ -347,7 +346,7 @@ function dotfiles() {
 
 	esac
 
-	popd >/dev/null || {
+	popd >/dev/null 2>&1 || {
 		writeLog "ERROR" "Failed to pop the folder stack"
 		return 1
 	}

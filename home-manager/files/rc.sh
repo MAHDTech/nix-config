@@ -270,8 +270,14 @@ export PATH
 writeLog "DEBUG" "New PATH: $PATH"
 
 #########################
-# Yubikey
+# SSH
 #########################
+
+# gnome-keyring should be started via daemon now, verify
+start_gnome_keyring || {
+	writeLog "ERROR" "Failed to start gnome-keyring unable to configure SSH"
+	exit 1
+}
 
 if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then
 

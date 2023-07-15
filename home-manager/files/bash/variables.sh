@@ -20,7 +20,7 @@ export EDITOR="vim"
 # Users
 ########################################
 
-export WIN_USER="mduncan35"
+export WIN_USER="mahdtech"
 export LIN_USER="${USER}"
 
 ########################################
@@ -125,12 +125,16 @@ export LIBGL_ALWAYS_INDIRECT=0
 export QT_QPA_PLATFORM=wayland
 export XDG_SESSION_TYPE=wayland
 
-if [[ ${WSL:-FALSE} == "TRUE" ]]; then
+case "${OS_LAYER:-UNKNOWN}" in
+
+"WSL")
 
 	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}' | head -n1):0.0
 	export DISPLAY
 
-elif [[ ${CROS:-FALSE} == "TRUE" ]]; then
+	;;
+
+"Crostini")
 
 	export DISPLAY=":0"
 	export XAUTHORITY="${HOME}/.Xauthority"
@@ -144,20 +148,28 @@ elif [[ ${CROS:-FALSE} == "TRUE" ]]; then
 	# YOLO allow everybody
 	#xhost +
 
-elif [[ ${ID:-UNKNOWN} == "fedora" ]]; then
+	;;
 
-	export DISPLAY="localhost:0"
-
-elif [[ ${OS_LAYER:-UNKNOWN} == "TOOLBOX" ]]; then
+"TOOLBOX")
 
 	export DISPLAY=":0"
 
-else
+	;;
+
+"Silverblue")
+
+	export DISPLAY="localhost:0"
+
+	;;
+
+*)
 
 	# Default
 	export DISPLAY=":0"
 
-fi
+	;;
+
+esac
 
 ########################################
 # Systemd

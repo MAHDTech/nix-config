@@ -37,7 +37,7 @@ alias python="python3"
 # Golang
 alias gdoc='godoc -v -index -http=:8080 -goroot ${GOPATH}'
 
-# Dates for internation timezones
+# Dates for international timezones
 alias date-utc='date --utc'
 alias date-aus='export TZ=Australia/Sydney && date && export TZ=${TIMEZONE}'
 alias date-dub='export TZ=Europe/Dublin && date && export TZ=${TIMEZONE}'

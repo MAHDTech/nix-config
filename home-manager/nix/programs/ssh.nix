@@ -18,6 +18,20 @@
 #     described below that uses resident sk keys.
 #     https://www.yubico.com/blog/github-now-supports-ssh-security-keys/
 #
+#     For YubiKey with resident keys
+#
+#       - First time setup.
+#           mkdir -p ~/.ssh/
+#           ssh-keygen \
+#             -C MAHDTech@saltlabs.tech \
+#             -t ed25519-sk \
+#             -O resident \
+#             -O verify-required \
+#             -f ~/.ssh/id_ed25519_sk
+#
+#       - On new systems;
+#           ssh-keygen -K
+#
 ##################################################
 {
   programs.ssh = {
@@ -42,6 +56,7 @@
     # These options override any Host settings globally.
     extraOptionOverrides = {
       RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
+      SecurityKeyProvider = "internal";
     };
 
     matchBlocks = {

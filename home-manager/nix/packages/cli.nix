@@ -10,11 +10,11 @@ in {
   home.packages = with pkgs;
     [
       bat
-      blackbox-terminal
-      binutils
+      #blackbox-terminal
+      #binutils
       bottom
       bzip2
-      coreutils
+      #coreutils
       curlFull
       dos2unix
       edid-decode
@@ -25,7 +25,7 @@ in {
       fortune
       hello
       htop
-      inetutils
+      #inetutils
       jq
       libcap
       locale
@@ -35,7 +35,7 @@ in {
       neofetch
       nushell
       ntfs3g
-      openssh
+      #openssh
       pandoc
       pciutils
       powershell

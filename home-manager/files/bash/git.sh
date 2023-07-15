@@ -958,7 +958,7 @@ function git_folder_status() {
 
 	done < <(find . -maxdepth 1 -type d -print0)
 
-	writeLog "INFO" "All folders checked, no files need staging or commiting"
+	writeLog "INFO" "All folders checked, no files need staging or committing"
 	return 0
 
 }

@@ -22,7 +22,6 @@ in {
         vader-vim
         vim-nix
         vim-one
-        vim-one
       ]
       ++ unstablePlugins;
 
@@ -242,88 +241,88 @@ in {
       text = ''
         "######################################################
         " Name: functions.vim
-          " Description: vim functions
-          "######################################################
+        " Description: vim functions
+        "######################################################
 
-          " Clipboard magic - requires vim with +clipboard feature
-          if has('clipboard')
-            if has('unnamedplus')                       " when possible, use + register for copy paste
-              set clipboard=unnamed,unnamedplus
-            else                                        " On MAC and Windows use * register for copy paste
-              set clipboard=unnamed
-            endif
+        " Clipboard magic - requires vim with +clipboard feature
+        if has('clipboard')
+          if has('unnamedplus')                       " when possible, use + register for copy paste
+            set clipboard=unnamed,unnamedplus
+          else                                        " On MAC and Windows use * register for copy paste
+            set clipboard=unnamed
+          endif
+        endif
+
+        " Tab magic
+        " Return indent (all whitespace at start of a line), converted from
+        " tabs to spaces if what = 1, or from spaces to tabs otherwise.
+        " When converting to tabs, result has no redundant spaces.
+        function! Indenting(indent, what, cols)
+
+          let spccol = repeat(' ', a:cols)
+          let result = substitute(a:indent, spccol, '\t', 'g')
+          let result = substitute(result, ' \+\ze\t', ' ', 'g')
+
+          if a:what == 1
+            let result = substitute(result, '\t', spccol, 'g')
           endif
 
-          " Tab magic
-          " Return indent (all whitespace at start of a line), converted from
-          " tabs to spaces if what = 1, or from spaces to tabs otherwise.
-          " When converting to tabs, result has no redundant spaces.
-          function! Indenting(indent, what, cols)
+          return result
 
-            let spccol = repeat(' ', a:cols)
-            let result = substitute(a:indent, spccol, '\t', 'g')
-                  let result = substitute(result, ' \+\ze\t', \'\', 'g')
+        endfunction
 
-            if a:what == 1
-              let result = substitute(result, '\t', spccol, 'g')
+        " Runs Vader tests
+        " Called using :Test from autocmds.vim
+        function! VaderTests()
+
+          if expand('%:e') == 'vim'
+
+            let testfile = printf('%s/%s.vader', expand('%:p:h'),
+            \ tr(expand('%:p:h:t'), '-', '_'))
+
+            if !filereadable(testfile)
+              echoerr 'File does not exist: '. testfile
+              return
             endif
 
-            return result
+            " Source the current file and execute the tests
+            source %
+            execute 'Vader' testfile
 
-          endfunction
+        else
 
-          " Runs Vader tests
-          " Called using :Test from autocmds.vim
-          function! VaderTests()
+          let sourcefile = printf('%s/%s.vim', expand('%:p:h'),
+          \ tr(expand('%:p:h:t'), '-', '_'))
 
-            if expand('%:e') == 'vim'
+          if !filereadable(sourcefile)
+            echoerr 'File does not exist: '. sourcefile
+            return
+          endif
 
-              let testfile = printf('%s/%s.vader', expand('%:p:h'),
-                \ tr(expand('%:p:h:t'), '-', '_'))
+            " Source the current file and execute the tests
+            execute 'source' sourcefile
+            Vader
 
-              if !filereadable(testfile)
-                echoerr 'File does not exist: '. testfile
-                return
-              endif
+          endif
 
-              " Source the current file and execute the tests
-              source %
-              execute 'Vader' testfile
+        endfunction
 
-            else
+        " Convert whitespace used for indenting (before first non-whitespace).
+        " what = 0 (convert spaces to tabs), or 1 (convert tabs to spaces).
+        " cols = string with number of columns per tab, or empty to use 'tabstop'.
+        " The cursor position is restored, but the cursor will be in a different
+        " column when the number of characters in the indent of the line is changed.
+        function! IndentConvert(line1, line2, what, cols)
 
-              let sourcefile = printf('%s/%s.vim', expand('%:p:h'),
-                \ tr(expand('%:p:h:t'), '-', '_'))
+          let savepos = getpos('.')
+          let cols = empty(a:cols) ? &tabstop : a:cols
 
-              if !filereadable(sourcefile)
-                echoerr 'File does not exist: '. sourcefile
-                return
-              endif
+          execute a:line1 . ',' . a:line2 . 's/^\s\+/\=Indenting(submatch(0), a:what, cols)/e'
 
-              " Source the current file and execute the tests
-              execute 'source' sourcefile
-              Vader
+          call histdel('search', -1)
+          call setpos('.', savepos)
 
-            endif
-
-          endfunction
-
-          " Convert whitespace used for indenting (before first non-whitespace).
-          " what = 0 (convert spaces to tabs), or 1 (convert tabs to spaces).
-          " cols = string with number of columns per tab, or empty to use 'tabstop'.
-          " The cursor position is restored, but the cursor will be in a different
-          " column when the number of characters in the indent of the line is changed.
-          function! IndentConvert(line1, line2, what, cols)
-
-            let savepos = getpos('.')
-            let cols = empty(a:cols) ? &tabstop : a:cols
-
-            execute a:line1 . ',' . a:line2 . 's/^\s\+/\=Indenting(submatch(0), a:what, cols)/e'
-
-            call histdel('search', -1)
-            call setpos('.', savepos)
-
-          endfunction
+        endfunction
       '';
     };
     "autocmds.vim" = {
