@@ -4,12 +4,10 @@ name: Nix Flake check
 on:
   push:
     branches:
-      - $default-branch
       - trunk
 
   pull_request:
     branches:
-      - $default-branch
       - "trunk"
 
 permissions:

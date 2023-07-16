@@ -20,6 +20,9 @@ inputs.devenv.lib.mkShell {
         nil
         alejandra
 
+        git
+        difftastic
+
         #sops
         #sops-init-gpg-key
         #sops-import-keys-hook
@@ -29,8 +32,6 @@ inputs.devenv.lib.mkShell {
 
         bash
         bash-completion
-
-        python3
 
         skopeo
       ];
@@ -228,7 +229,7 @@ inputs.devenv.lib.mkShell {
         nix = {enable = true;};
 
         python = {
-          enable = true;
+          enable = false;
           package = pkgs.python3;
 
           poetry = {

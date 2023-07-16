@@ -19,7 +19,7 @@ in {
 
     signing = {
       key = "0x3E520D84C0F43391";
-      signByDefault = true;
+      signByDefault = false;
     };
 
     aliases = {
@@ -87,8 +87,12 @@ in {
 
       # [diff]
       diff = {
-        external = "difft";
+        # Enable an external tool globally.
+        #external = "difft";
+
+        # A custom tool for use occasionally.
         tool = "difftastic";
+
         colorMoved = "zebra";
       };
 
@@ -307,7 +311,6 @@ in {
       "*.out"
       "*.toc"
       "*.fmt"
-      "*.fot"
       "*.cb"
       "*.cb2"
       "*.dvi"
