@@ -7,7 +7,10 @@
       text = ''
         #!/usr/bin/env bash
 
+        clear
         set -euo pipefail
+
+        echo "Cleaning up Docker containers, images and volumes..."
 
         if [[ ''${1-} ]]; then
           FORCE=$1
@@ -20,8 +23,7 @@
           }
         fi
 
-        echo -e "\nBEFORE:\n"
-        docker system df
+        DOCKER_BEFORE=$(docker system df)
 
         # Remove stopped containers
         docker rm $(docker ps -a -q) >/dev/null 2>&1 || {
@@ -35,7 +37,7 @@
 
         # If force was on, remove volumes as well.
         if [[ "''${FORCE:-NONE}" == "FORCE" ]]; then
-          for VOLUME in $(docker volume ls --output json | jq -r .Name);
+          for VOLUME in $(docker volume ls --format json | jq -r .Name);
           do
             echo "Removing volume $VOLUME"
             docker volume rm $VOLUME || {
@@ -44,8 +46,13 @@
           done
         fi
 
+        DOCKER_AFTER=$(docker system df)
+
+        echo -e "\nBEFORE:\n"
+        echo "''${DOCKER_BEFORE}"
+
         echo -e "\nAFTER:\n"
-        docker system df
+        echo "''${DOCKER_AFTER}"
 
         exit 0
       '';
