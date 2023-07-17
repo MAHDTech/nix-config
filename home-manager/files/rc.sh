@@ -223,25 +223,49 @@ shell_options || {
 
 # Enable auto-completion
 if ! shopt -oq posix; then
-	if [[ -f /usr/share/bash-completion/bash_completion ]]; then
-		writeLog "INFO" "Sourcing bash completion from usr share"
-		source /usr/share/bash-completion/bash_completion
-	elif [[ -f /etc/bash_completion ]]; then
+
+	writeLog "INFO" "Enabling programmable completion for bash"
+
+	if [[ -f /etc/bash_completion ]]; then
+
 		writeLog "INFO" "Sourcing bash completion from etc"
-		. /etc/bash_completion
-	elif shopt -q progcomp &>/dev/null; then
-		writeLog "INFO" "Enabling programmable completion for bash"
-		. "@bash-completion@/etc/profile.d/bash_completion.sh"
-		nullglobStatus=$(shopt -p nullglob)
+		source /etc/bash_completion
+
+	elif [[ -f /usr/share/bash-completion/bash_completion ]]; then
+
+		writeLog "INFO" "Sourcing bash completion from /usr/share"
+		source /usr/share/bash-completion/bash_completion
+
+	fi
+
+	if [[ -f /etc/profile.d/bash_completion.sh ]]; then
+
+		writeLog "INFO" "Sourcing bash completion from profile.d"
+		source /etc/profile.d/bash_completion.sh
+	fi
+
+	writeLog "INFO" "Loading bash completion modules"
+
+	if shopt -q progcomp &>/dev/null; then
+
+		NULLGLOB_STATUS=$(shopt -p nullglob)
 		shopt -s nullglob
-		for MODULE in "@out@/etc/bash_completion.d/"* "@out@/share/bash-completion/completions/"*; do
-			. "${MODULE}"
+
+		for BASH_MODULE in "/etc/bash_completion.d/"* "/share/bash-completion/completions/"*; do
+			source "${BASH_MODULE}" || {
+				writeLog "WARN" "Failed to source bash completion module ${BASH_MODULE}"
+			}
 		done
-		eval "$nullglobStatus"
-		unset nullglobStatus p MODULE
+
+		eval "$NULLGLOB_STATUS"
+		unset NULLGLOB_STATUS BASH_MODULE
+
 	else
 		writeLog "WARN" "Unable to source bash completion, is the package installed?"
 	fi
+
+else
+	writeLog "ERROR" "Failed to enable programmable completion for bash"
 fi
 
 if checkBin ls-colors-bash.sh; then
@@ -279,8 +303,7 @@ start_gnome_keyring || {
 	LOAD_SSH="FALSE"
 }
 
-if [[ "${LOAD_SSH:-TRUE}" == "TRUE" ]];
-then
+if [[ ${LOAD_SSH:-TRUE} == "TRUE" ]]; then
 
 	if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then
 

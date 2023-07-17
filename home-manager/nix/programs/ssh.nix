@@ -60,6 +60,11 @@
     };
 
     matchBlocks = {
+      "github.com" = {
+        host = "github.com";
+        user = "git";
+      };
+
       "TT-1" = {
         host = "tt-1";
         hostname = "tt-1.mahdtech.com";
