@@ -35,15 +35,16 @@
           echo "Failed to prune unused images, skipping..."
         }
 
-        # If force was on, remove volumes as well.
+        # Prune all docker volumes (unattached)
+        docker volume prune --force || {
+          echo "Failed to prune unused volumes, skipping..."
+        }
+
+        # If force was on, remove all volumes as well.
         if [[ "''${FORCE:-NONE}" == "FORCE" ]]; then
-          for VOLUME in $(docker volume ls --format json | jq -r .Name);
-          do
-            echo "Removing volume $VOLUME"
-            docker volume rm $VOLUME || {
-              echo "Failed to remove volume $VOLUME, skipping..."
-            }
-          done
+          docker volume prune --all --force || {
+            echo "Failed to prune all volumes, skipping..."
+          }
         fi
 
         DOCKER_AFTER=$(docker system df)
