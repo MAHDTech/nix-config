@@ -1,5 +1,51 @@
 {config, ...}: {
   home.file = {
+    "docker-tags" = {
+      target = "${config.home.homeDirectory}/.local/bin/docker-tags";
+      executable = true;
+
+      text = ''
+        #!/usr/bin/env bash
+
+        IMAGE=$1
+        PAGE_SIZE=100
+        PAGE_INDEX=0
+
+        if [[ -z "''${IMAGE:-}" ]];
+        then
+
+          cat << EOF
+          Usage:
+
+              docker-tags <image>
+
+          Example:
+
+              docker-tags library/ubuntu"
+        EOF
+          exit 0
+
+        fi
+
+        while true;
+        do
+
+          PAGE_INDEX=$((PAGE_INDEX+1))
+
+          RESULTS=$(curl --location --silent "https://registry.hub.docker.com/v2/repositories/''${IMAGE}/tags?page=''${PAGE_INDEX}&page_size=''${PAGE_SIZE}" | jq -r 'select(.results != null) | .results[]["name"]')
+
+          # shellcheck disable=SC2181
+          if [[ $? != 0 ]] || [[ "''${RESULTS:-}" == "" ]];
+          then
+            break
+          fi
+
+          echo "''${RESULTS}"
+
+        done
+      '';
+    };
+
     "docker-destroy" = {
       target = "${config.home.homeDirectory}/.local/bin/docker-destroy";
       executable = true;
@@ -58,6 +104,7 @@
         exit 0
       '';
     };
+
     "direnv-wrapper" = {
       target = "${config.home.homeDirectory}/.local/bin/flatpak/direnv-wrapper";
       executable = true;

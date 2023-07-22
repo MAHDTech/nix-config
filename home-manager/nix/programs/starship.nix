@@ -358,7 +358,6 @@ in {
           Unknown = " ";
           Windows = " ";
           openSUSE = " ";
-          SaltOS = "🧂";
         };
       };
 
