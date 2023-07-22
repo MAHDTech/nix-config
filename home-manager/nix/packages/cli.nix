@@ -22,6 +22,7 @@ in {
       fd
       figlet
       file
+      flatpak
       fortune
       hello
       htop
@@ -63,6 +64,12 @@ in {
       youtube-dl
       zip
       zsa-udev-rules
+
+      # Minikube
+      #libvirt
+      minikube
+      #qemu
+      #qemu_kvm
     ]
     ++ unstablePkgs;
 }

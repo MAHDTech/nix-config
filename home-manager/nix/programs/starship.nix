@@ -195,7 +195,6 @@ in {
 
         success_symbol = "[❯](bold green)";
         error_symbol = "[X](bold red)";
-        vicmd_symbol = "[❮](bold green)";
       };
 
       cmake = {
@@ -359,6 +358,7 @@ in {
           Unknown = " ";
           Windows = " ";
           openSUSE = " ";
+          SaltOS = "🧂";
         };
       };
 
