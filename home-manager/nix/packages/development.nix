@@ -6,7 +6,7 @@
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
   unstablePkgs = with pkgsUnstable; [
-    #hugo
+    hugo
   ];
 in {
   home.packages = with pkgs;
