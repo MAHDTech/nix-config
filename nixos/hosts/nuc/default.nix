@@ -11,7 +11,6 @@
 
     #./desktop/pantheon.nix
     ./desktop/gnome.nix
-    ./desktop/cosmic.nix
 
     # Laptop
     ./battery

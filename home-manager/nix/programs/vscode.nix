@@ -25,9 +25,9 @@ in {
 
   programs = {
     vscode = {
-      enable = false;
+      enable = true;
 
-      package = pkgs.vscode;
+      package = pkgs.vscode.fhs;
 
       enableExtensionUpdateCheck = true;
       enableUpdateCheck = true;

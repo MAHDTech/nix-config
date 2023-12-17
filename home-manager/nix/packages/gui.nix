@@ -14,8 +14,8 @@
 in {
   home.packages = with pkgs;
     [
-      #_1password
-      #_1password-gui
+      _1password
+      _1password-gui
 
       # Shared GTK is needed for GUI apps like VSCode
       gtk3
@@ -26,7 +26,13 @@ in {
 
       #tilix
 
-      #gparted
+      gparted
+
+      discord
+
+      #brave
+      google-chrome
+      #microsoft-edge
     ]
     ++ unstablePkgs;
 }

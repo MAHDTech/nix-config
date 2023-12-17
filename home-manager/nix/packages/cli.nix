@@ -16,6 +16,7 @@ in {
       bzip2
       #coreutils
       curlFull
+      gptfdisk
       dos2unix
       edid-decode
       eza

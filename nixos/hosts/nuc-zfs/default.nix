@@ -10,7 +10,7 @@
     ./video.nix
 
     #./desktop/pantheon.nix
-    ./desktop/gnome.nix
+    #./desktop/gnome.nix
     ./desktop/cosmic.nix
 
     # Laptop

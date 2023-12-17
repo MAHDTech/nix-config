@@ -7,8 +7,7 @@
 
 function checkWakaTime() {
 
-	#local WAKATIME_HOME="${HOME}/.config/wakatime"
-	local WAKATIME_HOME="${HOME}"
+	local WAKATIME_HOME="${WAKATIME_HOME:-$HOME}"
 	local WAKATIME_CONFIG="${WAKATIME_HOME}/.wakatime.cfg"
 
 	if [[ ! -d ${WAKATIME_HOME} ]]; then

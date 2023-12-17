@@ -14,6 +14,7 @@
     vaapi-intel-hybrid
     vaapiVdpau
     vdpauinfo
+    #displaylink
   ];
 
   boot = {
@@ -68,7 +69,10 @@
     ];
   };
 
-  services.xserver.videoDrivers = ["intel"];
+  services.xserver.videoDrivers = [
+    "intel"
+    #"displaylink"
+  ];
 
   environment.variables = {
     VDPAU_DRIVER = "va_gl";
