@@ -7,7 +7,7 @@
 
 clear
 
-set -euoa pipefail
+set -euao pipefail
 
 #########################
 # Variables

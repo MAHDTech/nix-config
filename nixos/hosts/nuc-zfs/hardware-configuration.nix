@@ -9,60 +9,66 @@
 }: {
   imports = [(modulesPath + "/installer/scan/not-detected.nix")];
 
-  boot.initrd.availableKernelModules = ["nvme" "sd_mod" "thunderbolt" "usb_storage" "usbhid" "xhci_pci"];
+  boot = {
+    initrd = {
+      availableKernelModules = ["nvme" "sd_mod" "thunderbolt" "usb_storage" "usbhid" "xhci_pci"];
 
-  boot.initrd.kernelModules = [];
+      kernelModules = [];
+    };
 
-  boot.kernelModules = ["kvm-intel"];
+    kernelModules = ["kvm-intel"];
 
-  boot.extraModulePackages = [];
-
-  fileSystems."/" = {
-    device = "rpool/nixos/root";
-    fsType = "zfs";
-    neededForBoot = true;
-    options = ["zfsutil" "X-mount.mkdir"];
+    extraModulePackages = [];
   };
 
-  fileSystems."/nix" = {
-    device = "rpool/nixos/nix";
-    fsType = "zfs";
-    neededForBoot = true;
-    options = ["zfsutil" "X-mount.mkdir"];
-  };
+  fileSystems = {
+    "/" = {
+      device = "rpool/nixos/root";
+      fsType = "zfs";
+      neededForBoot = true;
+      options = ["zfsutil" "X-mount.mkdir"];
+    };
 
-  fileSystems."/home" = {
-    device = "rpool/nixos/home";
-    fsType = "zfs";
-    neededForBoot = true;
-    options = ["zfsutil" "X-mount.mkdir"];
-  };
+    "/nix" = {
+      device = "rpool/nixos/nix";
+      fsType = "zfs";
+      neededForBoot = true;
+      options = ["zfsutil" "X-mount.mkdir"];
+    };
 
-  fileSystems."/var/lib" = {
-    device = "rpool/nixos/var/lib";
-    fsType = "zfs";
-    neededForBoot = true;
-    options = ["zfsutil" "X-mount.mkdir"];
-  };
+    "/home" = {
+      device = "rpool/nixos/home";
+      fsType = "zfs";
+      neededForBoot = true;
+      options = ["zfsutil" "X-mount.mkdir"];
+    };
 
-  fileSystems."/var/log" = {
-    device = "rpool/nixos/var/log";
-    fsType = "zfs";
-    neededForBoot = true;
-    options = ["zfsutil" "X-mount.mkdir"];
-  };
+    "/var/lib" = {
+      device = "rpool/nixos/var/lib";
+      fsType = "zfs";
+      neededForBoot = true;
+      options = ["zfsutil" "X-mount.mkdir"];
+    };
 
-  fileSystems."/boot" = {
-    device = "bpool/nixos/boot";
-    fsType = "zfs";
-    neededForBoot = true;
-    options = ["zfsutil" "X-mount.mkdir"];
-  };
+    "/var/log" = {
+      device = "rpool/nixos/var/log";
+      fsType = "zfs";
+      neededForBoot = true;
+      options = ["zfsutil" "X-mount.mkdir"];
+    };
 
-  fileSystems."/boot/efi" = {
-    device = "/dev/disk/by-uuid/C7E2-7D81";
-    fsType = "vfat";
-    neededForBoot = true;
+    "/boot" = {
+      device = "bpool/nixos/boot";
+      fsType = "zfs";
+      neededForBoot = true;
+      options = ["zfsutil" "X-mount.mkdir"];
+    };
+
+    "/boot/efi" = {
+      device = "/dev/disk/by-uuid/C7E2-7D81";
+      fsType = "vfat";
+      neededForBoot = true;
+    };
   };
 
   swapDevices = [];

@@ -14,18 +14,20 @@
 
     updateDbusEnvironment = true;
 
-    desktopManager.pantheon.enable = true;
-
     displayManager.lightdm = {
       enable = true;
       greeters.pantheon.enable = true;
     };
 
-    # https://nixos.org/manual/nixos/stable/options.html#opt-services.xserver.desktopManager.pantheon.extraWingpanelIndicators
-    desktopManager.pantheon.extraWingpanelIndicators = [];
+    desktopManager.pantheon = {
+      enable = true;
 
-    # https://nixos.org/manual/nixos/stable/options.html#opt-services.xserver.desktopManager.pantheon.extraSwitchboardPlugs
-    desktopManager.pantheon.extraSwitchboardPlugs = [];
+      # https://nixos.org/manual/nixos/stable/options.html#opt-services.xserver.desktopManager.pantheon.extraWingpanelIndicators
+      extraWingpanelIndicators = [];
+
+      # https://nixos.org/manual/nixos/stable/options.html#opt-services.xserver.desktopManager.pantheon.extraSwitchboardPlugs
+      extraSwitchboardPlugs = [];
+    };
   };
 
   programs.pantheon-tweaks.enable = true;

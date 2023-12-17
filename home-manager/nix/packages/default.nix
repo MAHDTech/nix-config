@@ -1,8 +1,8 @@
 {
   imports = [
-    ./cloud.nix
+    #./cloud.nix
 
-    ./nix.nix
+    #./nix.nix
 
     ./cli.nix
 

@@ -7,39 +7,39 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs;
-    [
-      #awscli
+  #home.packages = with pkgs;
+  #  [
+  #    #awscli
 
-      #azure-cli
-      #azure-storage-azcopy
+  #    #azure-cli
+  #    #azure-storage-azcopy
 
-      #google-cloud-sdk
+  #    #google-cloud-sdk
 
-      #kind
-      #krew
-      #kubectl
-      #kubernetes-helm
-      #kustomize
-      #kustomize-sops
-      #octant
+  #    #kind
+  #    #krew
+  #    #kubectl
+  #    #kubernetes-helm
+  #    #kustomize
+  #    #kustomize-sops
+  #    #octant
 
-      #packer
+  #    #packer
 
-      #pulumi-bin
+  #    #pulumi-bin
 
-      #podman
-      #buildah
-      #skopeo
-      #dive
+  #    #podman
+  #    #buildah
+  #    #skopeo
+  #    #dive
 
-      #terraform
-      #terraform-docs
-      #terraform-ls
-      #tflint
-      #tfsec
+  #    #terraform
+  #    #terraform-docs
+  #    #terraform-ls
+  #    #tflint
+  #    #tfsec
 
-      #nodePackages.wrangler
-    ]
-    ++ unstablePkgs;
+  #    #nodePackages.wrangler
+  #  ]
+  #  ++ unstablePkgs;
 }

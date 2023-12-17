@@ -7,7 +7,7 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs; [] ++ unstablePkgs;
+  #home.packages = with pkgs; [] ++ unstablePkgs;
 
   programs.neovim = {enable = false;};
 }

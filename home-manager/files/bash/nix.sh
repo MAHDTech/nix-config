@@ -372,10 +372,28 @@ function dotfiles_all_the_things() {
 		return 1
 	}
 
-	dotfiles boot || {
-		writeLog "ERROR" "Failed to boot dotfiles"
+	# NixOS
+	if [[ ${OS_NAME:-UNKNOWN} == "nixos" ]]; then
+
+		dotfiles boot || {
+			writeLog "ERROR" "Failed to boot dotfiles"
+			return 1
+		}
+
+	# Debian
+	elif [[ ${OS_NAME:-UNKNOWN} == "debian" ]]; then
+
+		dotfiles switch || {
+			writeLog "ERROR" "Failed to switch dotfiles"
+			return 1
+		}
+
+	else
+
+		writeLog "ERROR" "Unsupported OS ${OS_NAME:-UNKNOWN}"
 		return 1
-	}
+
+	fi
 
 	return 0
 
