@@ -9,9 +9,9 @@
     ./audio.nix
     ./video.nix
 
-    #./desktop/cosmic.nix
     #./desktop/pantheon.nix
-    #./desktop/gnome.nix
+    ./desktop/gnome.nix
+    ./desktop/cosmic.nix
 
     # Laptop
     ./battery
