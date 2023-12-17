@@ -16,27 +16,30 @@
     vdpauinfo
   ];
 
-  boot.initrd.kernelModules = [
-    "i915"
-    "kvm-intel"
-  ];
+  boot = {
+    initrd.kernelModules = [
+      "i915"
+      "kvm-intel"
+    ];
 
-  boot.blacklistedKernelModules = ["nouveau" "nvidia"];
+    blacklistedKernelModules = ["nouveau" "nvidia"];
 
-  # https://dgpu-docs.intel.com/devices/hardware-table.html
-  # https://nixos.wiki/wiki/Intel_Graphics
-  # https://wiki.gentoo.org/wiki/Intel#Feature_support
-  # https://nixos.wiki/wiki/Accelerated_Video_Playback
-  # https://wiki.archlinux.org/title/Intel_graphics#Enable_GuC_/_HuC_firmware_loading
-  # lspci -nn |grep  -Ei 'VGA|DISPLAY'
-  # 00:02.0 VGA compatible controller [0300]: Intel Corporation Alder Lake-P Integrated Graphics Controller [8086:46a6] (rev 0c)
-  # 03:00.0 Display controller [0380]: Intel Corporation DG2 [Arc A730M] [8086:5691] (rev 08)
-  boot.kernelParams = [
-    "i915.force_probe=46a6"
-    "i915.force_probe=5691"
-    "i915.enable_guc=3"
-    "acpi_rev_override=5"
-  ];
+    # https://dgpu-docs.intel.com/devices/hardware-table.html
+    # https://nixos.wiki/wiki/Intel_Graphics
+    # https://wiki.gentoo.org/wiki/Intel#Feature_support
+    # https://nixos.wiki/wiki/Accelerated_Video_Playback
+    # https://wiki.archlinux.org/title/Intel_graphics#Enable_GuC_/_HuC_firmware_loading
+    # lspci -nn |grep  -Ei 'VGA|DISPLAY'
+    # 00:02.0 VGA compatible controller [0300]: Intel Corporation Alder Lake-P Integrated Graphics Controller [8086:46a6] (rev 0c)
+    # 03:00.0 Display controller [0380]: Intel Corporation DG2 [Arc A730M] [8086:5691] (rev 08)
+    kernelParams = [
+      # Pre v6.2 kernel
+      #"i915.force_probe=46a6"
+      #"i915.force_probe=5691"
+      #"i915.enable_guc=3"
+      "acpi_rev_override=5"
+    ];
+  };
 
   hardware.opengl = {
     enable = true;

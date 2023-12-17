@@ -5,7 +5,7 @@
 # Description: Configures a Debian install for Nix.
 #########################
 
-set -euoa pipefail
+set -euao pipefail
 
 # Nix installed locally
 if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
@@ -270,9 +270,9 @@ sudo docker run \
 	--name hello-world \
 	--rm \
 	docker.io/hello-world || {
-		writeLog "ERROR" "Failed to test Docker!"
-		exit 22
-	}
+	writeLog "ERROR" "Failed to test Docker!"
+	exit 22
+}
 
 sudo usermod --append --groups docker "$USER" || {
 	writeLog "ERROR" "Failed to add user $USER to docker group!"

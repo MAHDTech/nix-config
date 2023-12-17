@@ -13,7 +13,7 @@
 
   environment.systemPackages = with pkgs; [];
 
-  services.flatpak = {enable = true;};
+  services.flatpak = {enable = false;};
 
   # If you're not using GNOME, XDG Desktop Portal is needed for flatpaks to work.
   #xdg.portal = {
