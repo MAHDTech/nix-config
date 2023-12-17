@@ -42,9 +42,11 @@ in {
   config = mkIf cfg.enable {
     systemd.user.timers."lowbatt" = {
       description = "check battery level";
-      timerConfig.OnBootSec = "1m";
-      timerConfig.OnUnitInactiveSec = "1m";
-      timerConfig.Unit = "lowbatt.service";
+      timerConfig = {
+        OnBootSec = "1m";
+        OnUnitInactiveSec = "1m";
+        Unit = "lowbatt.service";
+      };
       wantedBy = ["timers.target"];
     };
 

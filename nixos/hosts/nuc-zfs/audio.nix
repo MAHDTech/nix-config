@@ -9,16 +9,18 @@
 
   sound.enable = true;
 
-  hardware.pulseaudio.enable = false;
+  hardware = {
+    pulseaudio.enable = false;
 
-  nixpkgs.config.pulseaudio = false;
+    bluetooth = {
+      enable = true;
+      powerOnBoot = false;
+    };
+  };
+
+  #nixpkgs.config.pulseaudio = false;
 
   security.rtkit.enable = true;
-
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = false;
-  };
 
   services.pipewire = {
     enable = true;

@@ -11,14 +11,18 @@
 
   sound.enable = true;
 
-  hardware.pulseaudio.enable = false;
+  hardware = {
+    pulseaudio.enable = false;
+
+    bluetooth = {
+      enable = true;
+      powerOnBoot = false;
+    };
+  };
 
   nixpkgs.config.pulseaudio = false;
 
   security.rtkit.enable = true;
-
-  hardware.bluetooth.enable = true;
-  hardware.bluetooth.powerOnBoot = false;
 
   services.pipewire = {
     enable = true;
@@ -98,54 +102,56 @@
 
         bluez-monitor = {
           properties = {
-            bluez5.sbc-xq-support = true;
+            bluez5 = {
+              sbc-xq-support = true;
 
-            bluez5.msbc-support = true;
+              msbc-support = true;
 
-            bluez5.enable-faststream = true;
+              enable-faststream = true;
 
-            bluez5.headset-roles = ["hfp_hf"];
+              headset-roles = ["hfp_hf"];
 
-            bluez5.auto-connect = ["a2dp_sink" "hfp_hf"];
+              auto-connect = ["a2dp_sink" "hfp_hf"];
 
-            # http://soundexpert.org/articles/-/blogs/audio-quality-of-sbc-xq-bluetooth-audio-codec
-            # Enabled A2DP codecs (default: all).
-            # NOTES:
-            #   LDAC        Sony 990kbps / 24-bit
-            #   SBC-XQ      SBC-XQ 730kbps / 16-bit (sbc-xq enabled)
-            #   APTX HD     Qualcomm 576 kbps / 24-bit
-            #   APTX        Qualcomm 384 kbps / 16-bit
-            #   AAC         Apple 264 kbps / 16-bit
-            #   SBC         SBC 328 kbps / 16-bit (sbc-xq disabled)
-            bluez5.codecs = [
-              #"aac"
-              #"aptx"
-              #"aptx_hd"
-              #"aptx_ll"
-              #"aptx_ll_duplex"
-              #"faststream"
-              #"faststream_duplex"
-              "ldac"
-              #"sbc"
-              "sbc_xq"
-            ];
+              # http://soundexpert.org/articles/-/blogs/audio-quality-of-sbc-xq-bluetooth-audio-codec
+              # Enabled A2DP codecs (default: all).
+              # NOTES:
+              #   LDAC        Sony 990kbps / 24-bit
+              #   SBC-XQ      SBC-XQ 730kbps / 16-bit (sbc-xq enabled)
+              #   APTX HD     Qualcomm 576 kbps / 24-bit
+              #   APTX        Qualcomm 384 kbps / 16-bit
+              #   AAC         Apple 264 kbps / 16-bit
+              #   SBC         SBC 328 kbps / 16-bit (sbc-xq disabled)
+              codecs = [
+                #"aac"
+                #"aptx"
+                #"aptx_hd"
+                #"aptx_ll"
+                #"aptx_ll_duplex"
+                #"faststream"
+                #"faststream_duplex"
+                "ldac"
+                #"sbc"
+                "sbc_xq"
+              ];
 
-            bluez5.enable-hw-volume = true;
+              enable-hw-volume = true;
 
-            bluez5.hw-volume = [
-              "a2dp_sink"
-              "a2dp_source"
-              #"hfp_ag"
-              "hfp_hf"
-              #"hsp_ag"
-              #"hsp_hs"
-            ];
+              hw-volume = [
+                "a2dp_sink"
+                "a2dp_source"
+                #"hfp_ag"
+                "hfp_hf"
+                #"hsp_ag"
+                #"hsp_hs"
+              ];
 
-            bluez5.a2dp.ldac.quality = "auto";
+              a2dp.ldac.quality = "auto";
+
+              dummy-avrcp-player = true;
+            };
 
             device.profile = "a2dp-sink";
-
-            bluez5.dummy-avrcp-player = true;
           };
 
           rules = [
