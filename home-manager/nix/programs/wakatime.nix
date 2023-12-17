@@ -7,5 +7,11 @@
 }: let
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
-  unstablePkgs = with pkgsUnstable; [wakatime];
-in {home.packages = with pkgs; [] ++ unstablePkgs;}
+  unstablePkgs = with pkgsUnstable; [];
+in {
+  home.packages = with pkgs;
+    [
+      wakatime
+    ]
+    ++ unstablePkgs;
+}

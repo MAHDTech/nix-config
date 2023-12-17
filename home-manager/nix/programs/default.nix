@@ -13,7 +13,7 @@
     ./htop.nix
     ./neovim.nix
     ./python.nix
-    ./salt.nix
+    #./salt.nix
     ./sops-nix.nix
     ./ssh.nix
     ./starship.nix

@@ -26,9 +26,11 @@
       storageDriver = "overlay2";
       logDriver = "journald";
 
-      autoPrune.enable = true;
-      autoPrune.dates = "weekly";
-      autoPrune.flags = ["--all"];
+      autoPrune = {
+        enable = true;
+        dates = "weekly";
+        flags = ["--all"];
+      };
 
       rootless = {
         enable = true;

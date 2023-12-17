@@ -18,7 +18,7 @@ in {
       curlFull
       dos2unix
       edid-decode
-      exa
+      eza
       fd
       figlet
       file
