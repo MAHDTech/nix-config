@@ -65,7 +65,7 @@
     };
 
     "/boot/efi" = {
-      device = "/dev/disk/by-uuid/C7E2-7D81";
+      device = "/dev/disk/by-uuid/DD33-9365";
       fsType = "vfat";
       neededForBoot = true;
     };

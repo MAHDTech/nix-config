@@ -98,6 +98,14 @@ fi
 
 writeLog "DEBUG" "Started ${SCRIPT}, writing log to ${LOG_FILE}"
 
+# Re-run this script as root if required.
+if [[ ${EUID} -ne 0 ]]; then
+	writeLog "INFO" "Elevating script to root user."
+	exec sudo -E -s "$0" "$@"
+else
+	writeLog "INFO" "Executing script as root user."
+fi
+
 echo -e "\n"
 PROMPT="REQUIRED: Enter the flake location and press ENTER. Defaults to the current directory '.' : "
 read -p "${PROMPT}" -n 30 -r FLAKE_LOCATION
