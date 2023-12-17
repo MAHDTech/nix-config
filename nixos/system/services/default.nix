@@ -5,7 +5,6 @@
     ./acpid
     ./autorandr
     ./cron
-    ./dhcpd
     ./dbus
     ./flatpak
     ./gnome-keyring

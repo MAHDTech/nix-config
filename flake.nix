@@ -6,7 +6,7 @@
       type = "github";
       owner = "NixOS";
       repo = "nixpkgs";
-      ref = "nixos-23.05";
+      ref = "nixos-23.11";
       #ref = "nixos-unstable";
       flake = true;
     };
@@ -32,7 +32,7 @@
       owner = "nix-community";
       repo = "home-manager";
       #ref = "master";
-      ref = "release-23.05";
+      ref = "release-23.11";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -76,7 +76,7 @@
   } @ inputs: let
     defaultUsername = "mahdtech";
 
-    globalStateVersion = "23.05";
+    globalStateVersion = "23.11";
 
     buildSystem = "x86_64-linux";
 
@@ -119,10 +119,10 @@
 
     pkgsAllowUnfree = {
       nixpkgs = {
-        config = {
-          allowUnfree = true;
-          allowUnfreePredicate = _: true;
-        };
+        #config = {
+        #  allowUnfree = true;
+        #  allowUnfreePredicate = _: true;
+        #};
       };
     };
 
@@ -235,7 +235,7 @@
           nixos-hardware.nixosModules.common-cpu-intel
           nixos-hardware.nixosModules.common-gpu-intel
 
-          ./nixos/hosts/nuc
+          ./nixos/hosts/nuc-zfs
           {system.stateVersion = globalStateVersion;}
 
           home-manager.nixosModules.home-manager

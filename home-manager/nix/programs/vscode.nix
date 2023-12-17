@@ -17,11 +17,11 @@
     };
   });
 in {
-  home.packages =
-    [
-      #vscode-insiders
-    ]
-    ++ unstablePkgs;
+  #home.packages =
+  #  [
+  #    #vscode-insiders
+  #  ]
+  #  ++ unstablePkgs;
 
   programs = {
     vscode = {

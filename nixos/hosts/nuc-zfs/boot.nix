@@ -15,9 +15,6 @@ in {
   boot = {
     supportedFilesystems = ["zfs"];
 
-    # Latest kernel
-    #kernelPackages = pkgs.linuxPackages_latest;
-
     # ZFS compatible
     kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
 
