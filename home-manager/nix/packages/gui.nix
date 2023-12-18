@@ -33,6 +33,9 @@ in {
       #brave
       google-chrome
       #microsoft-edge
+
+      trezor-suite
+      ledger-live-desktop
     ]
     ++ unstablePkgs;
 }

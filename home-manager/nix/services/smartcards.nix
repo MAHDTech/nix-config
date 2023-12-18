@@ -26,11 +26,7 @@ in {
       pcsclite
       pinentry
 
-      # Ledger
-      ledger-udev-rules
-
       # Trezor
-      trezor-udev-rules
       trezor_agent
 
       # YubiKey

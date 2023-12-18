@@ -37,11 +37,9 @@ in {
       #rust-analyzer
       #rustup
 
-      #shfmt
+      shfmt
 
       #texlive.combined.scheme-full
-
-      zsa-udev-rules
     ]
     ++ unstablePkgs;
 }

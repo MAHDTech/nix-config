@@ -64,13 +64,14 @@ in {
       xxd
       youtube-dl
       zip
-      zsa-udev-rules
 
       # Minikube
       #libvirt
       minikube
       #qemu
       #qemu_kvm
+
+      trezord
     ]
     ++ unstablePkgs;
 }

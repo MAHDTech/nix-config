@@ -7,7 +7,11 @@
 }: {
   imports = [];
 
-  environment.systemPackages = with pkgs; [zsa-udev-rules];
+  environment.systemPackages = with pkgs; [
+    zsa-udev-rules
+    ledger-udev-rules
+    trezor-udev-rules
+  ];
 
   services.udev = {
     enable = true;

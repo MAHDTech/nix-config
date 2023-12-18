@@ -26,6 +26,8 @@
 
       # systemd-network for wired
       unmanaged = [
+        "lo"
+        "docker0"
         "enp61s0"
         "enp7s0u1u4u4"
         "Wired Connection 1"
