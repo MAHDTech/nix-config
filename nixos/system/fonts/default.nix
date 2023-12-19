@@ -8,7 +8,7 @@
   # https://nixos.wiki/wiki/Fonts
 
   fonts = {
-    fonts = with pkgs; [
+    packages = with pkgs; [
       corefonts
       dejavu_fonts
       dina-font

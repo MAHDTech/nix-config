@@ -7,14 +7,14 @@
 }: {
   imports = [];
 
-  environment.systemPackages = with pkgs; [
-    zsa-udev-rules
-    ledger-udev-rules
-    trezor-udev-rules
-  ];
-
   services.udev = {
     enable = true;
+
+    packages = with pkgs; [
+      zsa-udev-rules
+      ledger-udev-rules
+      trezor-udev-rules
+    ];
 
     extraRules = ''
       # Make Thunderbolt docks great again.
