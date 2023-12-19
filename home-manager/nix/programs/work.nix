@@ -14,9 +14,9 @@ in {
 
       #citrix_workspace
 
-      vmware-horizon-client
+      #vmware-horizon-client
 
-      zoom-us
+      #zoom-us
     ]
     ++ unstablePkgs;
 }

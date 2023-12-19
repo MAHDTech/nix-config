@@ -77,9 +77,9 @@
 
     allowReboot = true;
 
-    flake = "$HOME/Projects/GitHub/MAHDTech/nix-config";
+    flake = "$HOME/dotfiles";
 
-    flags = ["--update-input" "nixpkgs" "--commit-lock-file"];
+    flags = ["--impure" "--update-input" "nixpkgs" "--commit-lock-file"];
 
     dates = "00:00";
   };

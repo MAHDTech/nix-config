@@ -30,7 +30,7 @@ in {
 
       discord
 
-      #brave
+      brave
       google-chrome
       #microsoft-edge
 
