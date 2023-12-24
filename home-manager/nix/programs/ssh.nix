@@ -8,7 +8,9 @@
 ##################################################
 # NOTES:
 #
-#   * This configuration now uses OpenSSH Agent
+#   * This configuration now uses 1Password SSH Agent.
+#
+#   * This configuration previously uses the OpenSSH Agent
 #     instead of the GPG Agent for SSH.
 #
 #   * The SSH keys from the smart cards are loaded
@@ -57,8 +59,11 @@
     extraOptionOverrides = {
       RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
       SecurityKeyProvider = "internal";
+      # Use the 1Password SSH Agent.
+      identityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
     };
 
+    # Apply overrides to specific hosts.
     matchBlocks = {
       "github.com" = {
         host = "github.com";

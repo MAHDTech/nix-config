@@ -29,6 +29,7 @@ in {
       gparted
 
       discord
+      telegram-desktop
 
       brave
       google-chrome

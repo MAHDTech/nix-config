@@ -7,14 +7,19 @@
 
 function set_vars_gnome_keyring() {
 
-	# Control
+	# GNOME_KEYRING_CONTROL is set by GNOME Keyring or default to /run/user/<uid>/keyring
 	export GNOME_KEYRING_CONTROL="${GNOME_KEYRING_CONTROL:=/run/user/$(id --user)/keyring}"
 
-	# Local
+	# GNOME_KEYRING_LOCAL is set by GNOME Keyring or default to $HOME/.local/share/keyrings
 	export GNOME_KEYRING_LOCAL="${GNOME_KEYRING_LOCAL:=$HOME/.local/share/keyrings}"
 
-	# SSH
-	export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:=/run/user/$(id --user)/keyring/ssh}"
+	# Is SSH enabled in GNOME Keyring?
+	if [[ -S "${XDG_RUNTIME_DIR}/keyring/ssh" ]]; then
+
+		writeLog "DEBUG" "GNOME Keyring SSH socket is enabled"
+		export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:=/run/user/$(id --user)/keyring/ssh}"
+
+	fi
 
 	# GPG
 	#export GPG_AGENT_INFO="${GPG_AGENT_INFO:=/run/user/$(id --user)/keyring/gpg:0:1}"

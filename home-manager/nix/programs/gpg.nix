@@ -24,7 +24,7 @@ in {
   #home.packages = with pkgs; [] ++ unstablePkgs;
 
   programs.gpg = {
-    enable = true;
+    enable = false;
 
     package = pkgs.gnupg;
 
@@ -144,7 +144,7 @@ in {
     # NOTE:
     #   - PCSCD conflicts with gpg-agent
     #   - gnome-keyring is no longer a wrapper for gpg-agent
-    enable = true;
+    enable = false;
 
     enableBashIntegration = true;
     enableFishIntegration = false;

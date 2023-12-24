@@ -303,6 +303,15 @@ start_gnome_keyring || {
 	LOAD_SSH="FALSE"
 }
 
+# If 1Password SSH Socket is enabled, load it.
+if [[ -S "${HOME}/.1password/agent.sock" ]]; then
+
+	writeLog "INFO" "Using 1Password SSH Agent Socket"
+
+	export SSH_AUTH_SOCK="${HOME}/.1password/agent.sock"
+
+fi
+
 if [[ ${LOAD_SSH:-TRUE} == "TRUE" ]]; then
 
 	if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then

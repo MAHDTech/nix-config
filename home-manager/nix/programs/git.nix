@@ -1,6 +1,7 @@
 {
   inputs,
   pkgs,
+  lib,
   ...
 }: let
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
@@ -18,8 +19,8 @@ in {
     userEmail = "MAHDTech@saltlabs.tech";
 
     signing = {
-      key = "0x3E520D84C0F43391";
-      signByDefault = false;
+      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHLEPFnH5qCksDIv/vcbm7H7p+OWEqiqKyWdAtEo+/UU";
+      signByDefault = true;
     };
 
     aliases = {
@@ -40,6 +41,13 @@ in {
       # Use external diff tool
       dft = ''
         difftool'';
+    };
+
+    difftastic = {
+      enable = true;
+      background = "dark";
+      color = "auto";
+      display = "side-by-side";
     };
 
     extraConfig = {
@@ -78,6 +86,14 @@ in {
           added = "yellow";
           changed = "green";
           untracked = "red";
+        };
+      };
+
+      # [gpg]
+      gpg = {
+        format = "ssh";
+        ssh = {
+          program = "${pkgs._1password-gui}/bin/op-ssh-sign";
         };
       };
 
