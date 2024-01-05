@@ -9,7 +9,7 @@
     nssmdns = true;
 
     ipv4 = true;
-    ipv6 = false;
+    ipv6 = true;
 
     publish = {
       enable = true;

@@ -29,6 +29,7 @@ in {
       gparted
 
       discord
+      signal-desktop
       telegram-desktop
 
       brave
