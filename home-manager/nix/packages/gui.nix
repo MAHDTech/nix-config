@@ -26,6 +26,8 @@ in {
 
       #tilix
 
+      insync
+
       gparted
 
       discord
