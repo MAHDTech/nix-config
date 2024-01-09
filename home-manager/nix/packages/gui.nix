@@ -7,7 +7,7 @@
 
   unstablePkgs = with pkgsUnstable; [
     #brave
-    #lapce
+    lapce
     #logseq
     #microsoft-edge
   ];
@@ -40,6 +40,8 @@ in {
 
       trezor-suite
       ledger-live-desktop
+
+      vlc
     ]
     ++ unstablePkgs;
 }
