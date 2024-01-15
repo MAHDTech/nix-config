@@ -42,6 +42,8 @@ in {
       ledger-live-desktop
 
       vlc
+
+      libsForQt5.kolourpaint
     ]
     ++ unstablePkgs;
 }

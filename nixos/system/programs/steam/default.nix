@@ -1,6 +1,11 @@
 {
   imports = [
     # Install steam using nixpkgs
-    ./nixpkgs.nix
+    #./nixpkgs.nix
   ];
+
+  programs.steam = {
+    enable = false;
+    remotePlay.openFirewall = false;
+  };
 }

@@ -21,7 +21,10 @@
     #../../system/virtualisation/host
 
     # Steam
-    #../../system/programs/steam
+    ../../system/programs/steam
+
+    # macOS
+    ../../system/programs/darling
   ];
 
   networking = {
