@@ -46,7 +46,8 @@ in {
       libsForQt5.kolourpaint
 
       # JetBrains
-      jetbrains.rust-rover
+      #jetbrains.rust-rover
+      #(pkgs.jetbrains.plugins.addPlugins pkgs.jetbrains.rust-rover ["github-copilot"])
       jetbrains-toolbox
     ]
     ++ unstablePkgs;

@@ -34,8 +34,10 @@ in {
 
       #nodejs-16_x
 
-      #rust-analyzer
-      #rustup
+      # Rust
+      rustup
+      clang
+      llvm
 
       shfmt
 

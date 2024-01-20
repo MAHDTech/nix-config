@@ -13,6 +13,7 @@ in {
       #blackbox-terminal
       #binutils
       bottom
+      btop
       bzip2
       #coreutils
       curlFull
