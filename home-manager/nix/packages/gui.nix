@@ -44,6 +44,10 @@ in {
       vlc
 
       libsForQt5.kolourpaint
+
+      # JetBrains
+      jetbrains.rust-rover
+      jetbrains-toolbox
     ]
     ++ unstablePkgs;
 }
