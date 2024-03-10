@@ -57,10 +57,13 @@
 
     # These options override any Host settings globally.
     extraOptionOverrides = {
+
       RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
       SecurityKeyProvider = "internal";
+
       # Use the 1Password SSH Agent.
       identityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
+
     };
 
     # Apply overrides to specific hosts.

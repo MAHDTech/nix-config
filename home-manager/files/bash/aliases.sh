@@ -102,6 +102,22 @@ alias fonts='fc-list --format="%{family[0]}\n" | sort | uniq'
 #alias gpg='gpg-wrapper'
 
 ##################
+# SSH
+##################
+
+if [[ "${OS_LAYER^^}" == "WSL" ]];
+then
+
+    # Use Windows SSH so we can use 1Password Agent.
+    alias ssh='ssh.exe'
+    alias ssh-add='ssh-add.exe'
+    alias ssh-agent='ssh-agent.exe'
+    alias ssh-keyscan='ssh-keyscan.exe'
+    alias ssh-keygen='ssh-keygen.exe'
+
+fi
+
+##################
 # macOS
 ##################
 

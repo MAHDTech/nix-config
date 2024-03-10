@@ -109,6 +109,7 @@ function import_functions_dotfiles() {
 			"os.sh"
 			"variables.sh"
 			"environment.sh"
+			"aliases.sh"
 		)
 
 		for FILE in "${IMPORTS[@]}"; do

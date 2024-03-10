@@ -4,7 +4,8 @@
     ./ansible.nix
     ./bash.nix
     ./command-not-found.nix
-    ./dconf.nix
+    # WSL has no dbus
+    #./dconf.nix
     ./direnv.nix
     ./fzf.nix
     ./git.nix

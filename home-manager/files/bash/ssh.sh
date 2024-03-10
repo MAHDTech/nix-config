@@ -11,7 +11,14 @@ function load_sshSocket() {
 	export _SSH_AUTH_SOCK
 	_SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
 
-	if [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
+	# If 1Password SSH Socket is enabled, load it.
+	if [[ -S "${HOME}/.1password/agent.sock" ]]; then
+
+		writeLog "INFO" "Using 1Password SSH Agent Socket"
+
+		export SSH_AUTH_SOCK="${HOME}/.1password/agent.sock"
+
+	elif [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
 
 		if [[ -S ${_SSH_AUTH_SOCK} ]]; then
 			writeLog "DEBUG" "Updating SSH socket location"
