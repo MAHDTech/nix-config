@@ -11,28 +11,35 @@ function load_sshSocket() {
 	export _SSH_AUTH_SOCK
 	_SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
 
-	# If 1Password SSH Socket is enabled, load it.
-	if [[ -S "${HOME}/.1password/agent.sock" ]]; then
+	# If the 1Password CLI is installed, assume the SSH Agent is enabled.
+	if type op > /dev/null 2>&1; then
 
 		writeLog "INFO" "Using 1Password SSH Agent Socket"
 
-		export SSH_AUTH_SOCK="${HOME}/.1password/agent.sock"
+		export SSH_AUTH_SOCK="${HOME}/.op/ssh-agent.sock"
 
+	# If there was no existing SSH socket, and the default socket exists, use it.
 	elif [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then
 
 		if [[ -S ${_SSH_AUTH_SOCK} ]]; then
+
 			writeLog "DEBUG" "Updating SSH socket location"
 			export SSH_AUTH_SOCK="${_SSH_AUTH_SOCK}"
+
 		else
+
 			writeLog "WARN" "No existing SSH auth socket exists, aborting..."
 			return 1
+
 		fi
 
 	else
+
 		writeLog "DEBUG" "SSH socket already set to ${SSH_AUTH_SOCK}"
+
 	fi
 
-	writeLog "INFO" "SSH socket is set to ${SSH_AUTH_SOCK}"
+	writeLog "INFO" "SSH socket is already set to ${SSH_AUTH_SOCK}"
 	return 0
 
 }
@@ -95,7 +102,7 @@ function load_yubikey() {
 	until [[ ${YUBIKEY_LOADED} == "TRUE" ]]; do
 
 		# Detecting YubiKey.
-		if ! lsusb | grep -i Yubikey >/dev/null; then
+		if ! lsusb | grep -i Yubikey > /dev/null; then
 
 			writeLog "WARN" "YubiKey not detected, unable to load SSH keys."
 

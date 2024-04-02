@@ -41,9 +41,9 @@
 
     compression = true;
 
-    controlMaster = "no";
+    controlMaster = "auto";
     controlPath = "~/.ssh/control-master/%r@%h:%p";
-    controlPersist = "600";
+    controlPersist = "3600";
 
     hashKnownHosts = false;
 
