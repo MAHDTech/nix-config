@@ -73,9 +73,9 @@
         user = "git";
       };
 
-      "talosctl" = {
-        host = "talosctl";
-        hostname = "talosctl.mahdtech.com";
+      "omni" = {
+        host = "omni.saltlabs.cloud";
+        hostname = "omni.saltlabs.cloud";
         user = "khadas";
         addressFamily = "inet";
         forwardAgent = true;
