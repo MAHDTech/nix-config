@@ -38,7 +38,7 @@ export FLAKE_LOCATION
 #########################
 
 # If you want the Nix daemon installed directly.
-export INSTALL_NIX_ON_DEBIAN="${INSTALL_NIX_ON_DEBIAN:-FALSE}"
+export INSTALL_NIX_ON_DEBIAN="${INSTALL_NIX_ON_DEBIAN:-TRUE}"
 
 # The supported old releases to upgrade from.
 export DEBIAN_VERSION_CODENAMES=("buster" "bullseye")
@@ -101,7 +101,8 @@ writeLog "DEBUG" "Started ${SCRIPT}, writing log to ${LOG_FILE}"
 # Re-run this script as root if required.
 if [[ ${EUID} -ne 0 ]]; then
 	writeLog "INFO" "Elevating script to root user."
-	exec sudo -E -s "$0" "$@"
+	#exec sudo -E -s "$0" "$@"
+	sudo --bell --validate
 else
 	writeLog "INFO" "Executing script as root user."
 fi

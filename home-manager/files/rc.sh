@@ -109,6 +109,7 @@ function import_functions_dotfiles() {
 			"os.sh"
 			"variables.sh"
 			"environment.sh"
+			"aliases.sh"
 		)
 
 		for FILE in "${IMPORTS[@]}"; do
@@ -298,10 +299,10 @@ writeLog "DEBUG" "New PATH: $PATH"
 #########################
 
 # gnome-keyring should be started via daemon now, verify
-start_gnome_keyring || {
-	writeLog "ERROR" "Failed to start gnome-keyring unable to configure SSH"
-	LOAD_SSH="FALSE"
-}
+#start_gnome_keyring || {
+#	writeLog "ERROR" "Failed to start gnome-keyring unable to configure SSH"
+#	LOAD_SSH="FALSE"
+#}
 
 # If 1Password SSH Socket is enabled, load it.
 if [[ -S "${HOME}/.1password/agent.sock" ]]; then

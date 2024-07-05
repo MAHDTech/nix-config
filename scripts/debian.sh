@@ -7,24 +7,108 @@
 
 set -euao pipefail
 
+NIX_MULTI_USER=UNKNOWN
+
+INIT_SYSTEM=$(ps --no-headers -o comm 1)
+
+# If this is WSL, we need to give-in and enable systemd :(
+case "${OS_LAYER^^}" in
+
+	"WSL" )
+
+		# Systemd or Init
+		if grep -i init <<< ${INIT_SYSTEM:-unknown};
+		then
+
+			# Need to enable systemd :(
+			sudo tee "/etc/wsl.conf" >/dev/null <<-EOF
+			# WSL Configuration
+			# Reference: https://learn.microsoft.com/en-gb/windows/wsl/wsl-config#wslconf
+
+			[boot]
+			systemd = true
+
+			[automount]
+			enabled = true
+			mountFsTab = true
+			root = "/mnt"
+			options = "metadata,case=off"
+
+			[network]
+			generateHosts = true
+			generateResolvConf = true
+			#hostname = ""
+
+			[interop]
+			enabled = true
+			appendWindowsPath = true
+
+			[user]
+			default = "mahdtech"
+
+			EOF
+
+			writeLog "INFO" "Systemd has now been enabled, run wsl --shutdown and then restart before running this script again."
+
+			exit 0
+
+		elif grep -i systemd <<< ${INIT_SYSTEM:-unknown};
+		then
+
+			writeLog "INFO" "Systemd is already running"
+		
+		fi
+	
+	;;
+
+	* )
+
+		writeLog "INFO" "Not WSL, skipping configuration"
+
+	;;
+
+esac
+
 # Nix installed locally
 if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 
 	# Make sure the Nix bin dirs are in the PATH for this shell.
 	export PATH="${HOME}/.nix-profile/bin:/nix/var/nix/profiles/default/bin:${PATH}"
+	export NIXPKGS_ALLOW_UNFREE=1
 
-	if type nix 1>/dev/null 2>&1; then
+	if type nix 1>/dev/null 2>&1;
+	then
+	
 		writeLog "INFO" "Nix is already installed"
+	
 	else
+
+		writeLog "INFO" "Installing Nix dependencies"
+
+		sudo apt install --yes \
+			dbus \
+			xz-utils || {
+			writeLog "ERROR" "Failed to install dependant debs!"
+			exit 1
+		}
 
 		writeLog "INFO" "Installing Nix"
 
-		sh <(curl -L https://nixos.org/nix/install) --daemon || {
-			writeLog "ERROR" "Failed to install Nix"
+		curl -sf -L https://nixos.org/nix/install -o /tmp/nix-install.sh || {
+			writeLog "ERROR" "Failed to download Nix installer."
 			exit 1
 		}
-	fi
 
+		chmod +x /tmp/nix-install.sh
+		sudo /tmp/nix-install.sh --daemon || {
+			writeLog "ERROR" "Failed to install Nix!"
+			exit 1
+		}
+
+		rm -f /tmp/install.nix
+
+	fi
+	
 	writeLog "INFO" "Enabling Nix flakes"
 
 	mkdir --parents "${HOME}/.config/nix" || {
@@ -32,36 +116,38 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		exit 2
 	}
 
-	cat <<-EOF >"${HOME}/.config/nix/nix.conf"
+	cat <<-EOF > "${HOME}/.config/nix/nix.conf"
 		# Nix CLI configuration for user $USER
 		experimental-features = nix-command flakes
 	EOF
 
+	writeLog "INFO" "Configuring Nix daemon"
+
 	sudo tee "/etc/nix/nix.conf" >/dev/null <<-EOF
-		# Nix daemon configuration
+	# Nix daemon configuration
 
-		allowed-users = *
+	allowed-users = *
 
-		auto-optimise-store = true
+	auto-optimise-store = true
 
-		build-users-group = nixbld
-		builders =
-		cores = 0
-		extra-sandbox-paths = 
-		sandbox-build-dir = /nix/sandbox/build
-		max-jobs = auto
-		require-sigs = true
-		sandbox = true
-		sandbox-fallback = false
+	build-users-group = nixbld
+	builders =
+	cores = 0
+	extra-sandbox-paths = 
+	sandbox-build-dir = /nix/sandbox/build
+	max-jobs = auto
+	require-sigs = true
+	sandbox = true
+	sandbox-fallback = false
 
-		min-free = 10737418240
+	min-free = 10737418240
 
-		keep-outputs = true
-		keep-derivations = true
+	keep-outputs = true
+	keep-derivations = true
 
-		trusted-users = root @sudo $USER 
+	trusted-users = root @sudo $USER 
 
-		experimental-features = nix-command flakes
+	experimental-features = nix-command flakes
 	EOF
 
 	writeLog "INFO" "Restarting Nix daemon"
@@ -167,7 +253,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		writeLog "ERROR" "Failed to switch into Home Manger config for user $USER"
 		exit 16
 	}
-
+	
 	popd 1>/dev/null 2>&1 || true
 
 # Nix via devenv
@@ -193,8 +279,7 @@ for CODENAME in "${DEBIAN_VERSION_CODENAMES[@]}"; do
 	}
 
 	sudo sed -i "s/${CODENAME}/${DEBIAN_VERSION_CODENAME}/g" /etc/apt/sources.list.d/*.list || {
-		writeLog "ERROR" "Failed to update /etc/apt/sources.list"
-		exit 32
+		writeLog "WARN" "Failed to update /etc/apt/sources.list.d/*"
 	}
 
 done
@@ -215,7 +300,7 @@ sudo apt full-upgrade || {
 }
 
 #########################
-# Setup VSCode & Docker
+# Setup Docker
 #########################
 
 sudo apt update || {
@@ -239,15 +324,12 @@ sudo mkdir --parents --mode 0755 /etc/apt/keyrings || {
 	exit 22
 }
 
-wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o packages.microsoft.gpg
 wget -qO- https://download.docker.com/linux/debian/gpg | gpg --dearmor -o docker.gpg
 
-sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
 sudo install -D -o root -g root -m 644 docker.gpg /etc/apt/keyrings/docker.gpg
 
-rm -f packages.microsoft.gpg docker.gpg
+rm -f docker.gpg
 
-sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
 sudo sh -c 'echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list'
 
 sudo apt update || {
@@ -256,7 +338,6 @@ sudo apt update || {
 }
 
 sudo apt install --yes \
-	code \
 	docker-ce \
 	docker-ce-cli \
 	docker-buildx-plugin \
@@ -266,17 +347,76 @@ sudo apt install --yes \
 	exit 21
 }
 
+sudo usermod --append --groups docker "$USER" || {
+	writeLog "ERROR" "Failed to add user $USER to docker group!"
+	exit 23
+}
+
+#########################
+# Setup VSCode
+#########################
+
+# On ChromeOS, install VSCode
+# On WSL, use VSCode on Windows
+
+case "${OS_LAYER^^}" in
+
+
+	"CROSTINI" )
+
+		writeLog "INFO" "Installing VSCode in Debian"
+
+		wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o packages.microsoft.gpg
+
+		sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+
+		sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+		rm -f packages.microsoft.gpg docker.gpg
+
+		sudo apt update || {
+			writeLog "ERROR" "Failed to update apt repo metadata"
+			exit 20
+		}
+
+		sudo apt install --yes \
+			code || {
+			writeLog "ERROR" "Failed to install dependant debs!"
+			exit 21
+		}
+
+	;;
+
+	"WSL" )
+
+		writeLog "INFO" "Skipping VSCode install in favour of using VSCode from Windows"
+
+	;;
+
+	* )
+
+		writeLog "INFO" "Unknown OS Layer ${OS_LAYER}"
+
+	;;
+
+esac
+
+#########################
+# Testing
+#########################
+
+sudo systemctl start docker || {
+
+	writeLog "ERROR" "Failed to start Docker service"
+	exit 250
+
+}
+
 sudo docker run \
 	--name hello-world \
 	--rm \
 	docker.io/hello-world || {
 	writeLog "ERROR" "Failed to test Docker!"
-	exit 22
-}
-
-sudo usermod --append --groups docker "$USER" || {
-	writeLog "ERROR" "Failed to add user $USER to docker group!"
-	exit 23
+	exit 249
 }
 
 #########################

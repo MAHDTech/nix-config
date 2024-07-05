@@ -53,6 +53,10 @@ in {
     extraConfig = {
       # [core]
       core = {
+
+        # HACK: Use ssh from Windows.
+        sshCommand = "ssh.exe";
+
         autocrlf = "input";
         editor = "vim";
         filemore = true;

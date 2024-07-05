@@ -7,7 +7,6 @@
       owner = "NixOS";
       repo = "nixpkgs";
       ref = "nixos-23.11";
-      #ref = "nixos-unstable";
       flake = true;
     };
 
@@ -31,7 +30,6 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      #ref = "master";
       ref = "release-23.11";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
@@ -82,7 +80,7 @@
     # this value at the release version of the first install of this system.
     # Before changing this value read the documentation for this option
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    globalStateVersion = "23.05";
+    globalStateVersion = "23.11";
 
     buildSystem = "x86_64-linux";
 
@@ -125,10 +123,10 @@
 
     pkgsAllowUnfree = {
       nixpkgs = {
-        #config = {
-        #  allowUnfree = true;
-        #  allowUnfreePredicate = _: true;
-        #};
+      #  config = {
+      #    allowUnfree = true;
+      #    allowUnfreePredicate = _: true;
+      #  };
       };
     };
 
@@ -256,21 +254,8 @@
     # Dev Shells
     # nix develop --impure .#${NAME}
     #########################
-    devShells = forAllSystems (_hostPlatform: let
-      # Build Platform
-      system = buildSystem;
 
-      inherit (self.packages.${system}) default;
-      pkgs = pkgsImportSystem system;
-      pkgsUnstable = pkgsImportSystemUnstable system;
-    in {
-      devenv = import ./nix/devshells/devenv {
-        inherit inputs;
-        inherit pkgs;
-        inherit pkgsUnstable;
-      };
+    # TODO: Add more dev shells in the correct syntax.
 
-      default = self.devShells.${system}.devenv;
-    });
   };
 }
