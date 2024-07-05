@@ -41,9 +41,9 @@
 
     compression = true;
 
-    controlMaster = "no";
+    controlMaster = "auto";
     controlPath = "~/.ssh/control-master/%r@%h:%p";
-    controlPersist = "600";
+    controlPersist = "3600";
 
     hashKnownHosts = false;
 
@@ -73,10 +73,10 @@
         user = "git";
       };
 
-      "TT-1" = {
-        host = "tt-1";
-        hostname = "tt-1.mahdtech.com";
-        user = "root";
+      "omni" = {
+        host = "omni.saltlabs.cloud";
+        hostname = "omni.saltlabs.cloud";
+        user = "khadas";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -84,16 +84,6 @@
         identitiesOnly = false;
       };
 
-      "TT-2" = {
-        host = "tt-2";
-        hostname = "tt-2.mahdtech.com";
-        user = "root";
-        addressFamily = "inet";
-        forwardAgent = true;
-        forwardX11 = false;
-        forwardX11Trusted = false;
-        identitiesOnly = false;
-      };
     };
   };
 }

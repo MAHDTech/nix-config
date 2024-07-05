@@ -108,7 +108,7 @@ in {
 
       scan_timeout = 100;
 
-      command_timeout = 1000;
+      command_timeout = 10000;
 
       add_newline = true;
 
