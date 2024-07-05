@@ -102,6 +102,22 @@ alias fonts='fc-list --format="%{family[0]}\n" | sort | uniq'
 #alias gpg='gpg-wrapper'
 
 ##################
+# SSH
+##################
+
+if [[ "${OS_LAYER^^}" == "WSL" ]];
+then
+
+    # Use Windows SSH so we can use 1Password Agent.
+    alias ssh='ssh.exe'
+    alias ssh-add='ssh-add.exe'
+    alias ssh-agent='ssh-agent.exe'
+    alias ssh-keyscan='ssh-keyscan.exe'
+    alias ssh-keygen='ssh-keygen.exe'
+
+fi
+
+##################
 # macOS
 ##################
 
@@ -114,22 +130,22 @@ alias sleepIn90='caffeinate -t 5400 ; say "Sleeping now" ; pmset sleepnow'
 ##################
 
 # Logseq
-alias logseq='
-    logseq \
-        --no-sandbox \
-        --enable-features=UseOzonePlatform,WaylandWindowDecorations \
-        --ozone-platform-hint=auto \
-        --ozone-platform=wayland \
-'
+#alias logseq='
+#    logseq \
+#        --no-sandbox \
+#        --enable-features=UseOzonePlatform,WaylandWindowDecorations \
+#        --ozone-platform-hint=auto \
+#       --ozone-platform=wayland \
+#'
 
 # VSCode
-alias code='
-    code \
-        --no-sandbox \
-        --enable-features=UseOzonePlatform,WaylandWindowDecorations \
-        --ozone-platform-hint=auto \
-        --ozone-platform=wayland \
-        --unity-launch \
-'
+#alias code='
+#    code \
+#        --no-sandbox \
+#        --enable-features=UseOzonePlatform,WaylandWindowDecorations \
+#        --ozone-platform-hint=auto \
+#        --ozone-platform=wayland \
+#        --unity-launch \
+#'
 
 # EOF

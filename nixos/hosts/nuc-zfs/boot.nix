@@ -94,7 +94,8 @@ in {
       requestEncryptionCredentials = true;
 
       # Enable zfsUnstable pkg
-      enableUnstable = false;
+      #package = pkgs.zfs_unstable;
+      package = pkgs.zfs;
 
       extraPools = zfsPoolNames;
 

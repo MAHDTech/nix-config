@@ -64,17 +64,11 @@ function detectOS() {
 
 	# Determine if the OS is running on one of the non-standard setups like WSL, ChromeOS or Silverblue
 
-	if [[ -d "/mnt/c/Users/${WIN_USER:-NONE}" ]]; then
+	if egrep -qi "Microsoft|WSL" /proc/version; then
 
 		OS_LAYER="WSL"
 
-	fi
-
-	if grep -q "Microsoft" /proc/version; then
-
-		OS_LAYER="WSL"
-
-	elif grep -q "Chromium" /proc/version; then
+	elif grep -qi "Chromium" /proc/version; then
 
 		OS_LAYER="Crostini"
 

@@ -17,6 +17,8 @@ env:
   NIXPKGS_ALLOW_UNFREE: 1
   RUST_BACKTRACE: 1
 
+  CACHIX_CACHE_NAME: salt-labs
+
 jobs:
   nix:
     runs-on: ubuntu-latest
@@ -30,9 +32,9 @@ jobs:
 
       - id: cachix
         name: "Enable Cachix ❄️"
-        uses: cachix/cachix-action@v13
+        uses: cachix/cachix-action@v14
         with:
-          name: mahdtech
+          name: ${{ env.CACHIX_CACHE_NAME }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: Nix Flake check

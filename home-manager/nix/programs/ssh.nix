@@ -41,9 +41,9 @@
 
     compression = true;
 
-    controlMaster = "no";
+    controlMaster = "auto";
     controlPath = "~/.ssh/control-master/%r@%h:%p";
-    controlPersist = "600";
+    controlPersist = "3600";
 
     hashKnownHosts = false;
 
@@ -57,10 +57,13 @@
 
     # These options override any Host settings globally.
     extraOptionOverrides = {
+
       RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
       SecurityKeyProvider = "internal";
+
       # Use the 1Password SSH Agent.
       identityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
+
     };
 
     # Apply overrides to specific hosts.
@@ -70,10 +73,10 @@
         user = "git";
       };
 
-      "TT-1" = {
-        host = "tt-1";
-        hostname = "tt-1.mahdtech.com";
-        user = "root";
+      "omni" = {
+        host = "omni.saltlabs.cloud";
+        hostname = "omni.saltlabs.cloud";
+        user = "khadas";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -81,16 +84,6 @@
         identitiesOnly = false;
       };
 
-      "TT-2" = {
-        host = "tt-2";
-        hostname = "tt-2.mahdtech.com";
-        user = "root";
-        addressFamily = "inet";
-        forwardAgent = true;
-        forwardX11 = false;
-        forwardX11Trusted = false;
-        identitiesOnly = false;
-      };
     };
   };
 }
