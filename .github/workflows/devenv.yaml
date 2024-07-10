@@ -64,11 +64,11 @@ jobs:
 
       - id: install_nix
         name: "Install Nix ❄️"
-        uses: cachix/install-nix-action@v26
+        uses: cachix/install-nix-action@v27
 
       - id: cachix
         name: "Enable Cachix ❄️"
-        uses: cachix/cachix-action@v14
+        uses: cachix/cachix-action@v15
         with:
           name: salt-labs
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}

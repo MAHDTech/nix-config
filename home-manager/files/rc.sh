@@ -299,10 +299,10 @@ writeLog "DEBUG" "New PATH: $PATH"
 #########################
 
 # gnome-keyring should be started via daemon now, verify
-#start_gnome_keyring || {
-#	writeLog "ERROR" "Failed to start gnome-keyring unable to configure SSH"
-#	LOAD_SSH="FALSE"
-#}
+start_gnome_keyring || {
+	writeLog "ERROR" "Failed to start gnome-keyring unable to configure SSH"
+	LOAD_SSH="FALSE"
+}
 
 # If 1Password SSH Socket is enabled, load it.
 if [[ -S "${HOME}/.1password/agent.sock" ]]; then
@@ -311,9 +311,8 @@ if [[ -S "${HOME}/.1password/agent.sock" ]]; then
 
 	export SSH_AUTH_SOCK="${HOME}/.1password/agent.sock"
 
-fi
-
-if [[ ${LOAD_SSH:-TRUE} == "TRUE" ]]; then
+# Otherwise, load SSH keys based on the configuration.
+elif [[ ${LOAD_SSH:-TRUE} == "TRUE" ]]; then
 
 	if [[ ${YUBIKEY_ENABLED:-FALSE} == "TRUE" ]]; then
 

@@ -144,6 +144,7 @@ in {
     # NOTE:
     #   - PCSCD conflicts with gpg-agent
     #   - gnome-keyring is no longer a wrapper for gpg-agent
+    #   - 1Password is currently the preferred gpg-agent
     enable = false;
 
     enableBashIntegration = true;
@@ -161,7 +162,7 @@ in {
 
     grabKeyboardAndMouse = true;
 
-    pinentryFlavor = "gnome3";
+    #pinentryFlavor = "gnome3";
 
     # gpg --list-keys --with-keygrip
     sshKeys = [];

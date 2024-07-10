@@ -101,7 +101,7 @@
         if type xdpyinfo 2>/dev/null;
         then
 
-          MONITOR_SCALE_FACTOR=$(xdpyinfo | awk -F'[ x]+' '/resolution/ {printf "%3.0f", $3 / 96; exit}')
+          MONITOR_SCALE_FACTOR=$(xdpyinfo | awk -F'[ x]+' '/resolution/ {printf "%3.0f", $3 / 96; exit}' | tr -d '\n' | tr -d ' ')
 
           # If the command fails and is empty, set this default.
           MONITOR_SCALE_FACTOR="''${MONITOR_SCALE_FACTOR:-1}"
@@ -135,6 +135,17 @@
 
         # Set the scale factor for Sommerlier globally (can be overridden per-app)
         export SOMMELIER_SCALE="''${MONITOR_SCALE_FACTOR}"
+
+        #########################
+        # Environment
+        #########################
+
+        sudo tee /etc/environment.d/sommelierrc.conf > /dev/null <<EOF
+        GDK_SCALE_DPI="''${MONITOR_DPI}"
+        GDK_SCALE="''${MONITOR_SCALE_FACTOR}"
+        GDK_DPI_SCALE="''${MONITOR_SCALE_FACTOR}"
+        SOMMELIER_SCALE="''${MONITOR_SCALE_FACTOR}"
+        EOF
 
         # EOF
       '';

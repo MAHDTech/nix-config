@@ -6,19 +6,23 @@
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
   unstablePkgs = with pkgsUnstable; [
-    #brave
-    lapce
+    #lapce
     #logseq
-    #microsoft-edge
   ];
 in {
   home.packages = with pkgs;
     [
-      _1password
-      _1password-gui
+      # 1Password needs the Nix module so only works on NixOS.
+      # On Debian, use the deb package.
+      #_1password
+      #_1password-gui
 
       # Shared GTK is needed for GUI apps like VSCode
       gtk3
+
+      lapce
+
+      logseq
 
       #inkscape
       #libreoffice
@@ -26,29 +30,29 @@ in {
 
       #tilix
 
-      insync
+      #insync
 
-      gparted
+      #gparted
 
-      discord
-      signal-desktop
-      telegram-desktop
+      #discord
+      #signal-desktop
+      #telegram-desktop
 
-      brave
-      google-chrome
+      #brave
+      #google-chrome
       #microsoft-edge
 
-      trezor-suite
-      ledger-live-desktop
+      #trezor-suite
+      #ledger-live-desktop
 
-      vlc
+      #vlc
 
-      libsForQt5.kolourpaint
+      #libsForQt5.kolourpaint
 
       # JetBrains
       #jetbrains.rust-rover
       #(pkgs.jetbrains.plugins.addPlugins pkgs.jetbrains.rust-rover ["github-copilot"])
-      jetbrains-toolbox
+      #jetbrains-toolbox
     ]
     ++ unstablePkgs;
 }

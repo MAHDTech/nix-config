@@ -16,7 +16,8 @@ function load_sshSocket() {
 
 		writeLog "INFO" "Using 1Password SSH Agent Socket"
 
-		export SSH_AUTH_SOCK="${HOME}/.op/ssh-agent.sock"
+		#export SSH_AUTH_SOCK="${HOME}/.op/ssh-agent.sock"
+		export SSH_AUTH_SOCK="${HOME}/.1password/agent.sock"
 
 	# If there was no existing SSH socket, and the default socket exists, use it.
 	elif [[ ${SSH_AUTH_SOCK:-EMPTY} == "EMPTY" ]]; then

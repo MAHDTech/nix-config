@@ -55,7 +55,7 @@ in {
       core = {
 
         # HACK: Use ssh from Windows.
-        sshCommand = "ssh.exe";
+        #sshCommand = "ssh.exe";
 
         autocrlf = "input";
         editor = "vim";

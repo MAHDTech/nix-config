@@ -6,7 +6,7 @@
 }: let
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
-  unstablePlugins = with pkgsUnstable.vimPlugins; [vim-wakatime];
+  unstablePlugins = with pkgsUnstable.vimPlugins; [];
 in {
   programs.vim = {
     enable = true;
@@ -17,11 +17,13 @@ in {
 
     plugins = with pkgs.vimPlugins;
       [
+        copilot-vim
         rust-vim
         statix
         vader-vim
         vim-nix
         vim-one
+        vim-wakatime
       ]
       ++ unstablePlugins;
 
@@ -219,6 +221,8 @@ in {
         " To install, git submodule add $PLUGIN_REPO ~/.vim/pack/plugins/opt/$PLUGIN_NAME
         " Add :packadd $PLUGIN_NAME below
 
+        " NOTE: Now managed with Nix.
+
         " dotfiles submodule add git@github.com:rakr/vim-one.git .vim/pack/colors/opt/vim-one.vim
         ":packadd vim-one.vim
 
@@ -232,7 +236,7 @@ in {
         ":packadd vim-racer.vim
 
         " dotfiles submodule add git@github.com:wakatime/vim-wakatime.git .vim/pack/plugins/opt/vim-wakatime.vim
-        ":packadd vim-wakatime.vim
+        ":packadd wakatime.vim
       '';
     };
     "functions.vim" = {

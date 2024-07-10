@@ -63,7 +63,6 @@ in {
       xdotool
       xsv
       xxd
-      youtube-dl
       zip
 
       # Minikube

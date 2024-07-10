@@ -73,9 +73,9 @@
         user = "git";
       };
 
-      "omni" = {
-        host = "omni.saltlabs.cloud";
-        hostname = "omni.saltlabs.cloud";
+      "vim3" = {
+        host = "vim3.saltlabs.cloud";
+        hostname = "vim3.saltlabs.cloud";
         user = "khadas";
         addressFamily = "inet";
         forwardAgent = true;

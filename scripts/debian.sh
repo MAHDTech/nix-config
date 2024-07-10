@@ -9,6 +9,8 @@ set -euao pipefail
 
 NIX_MULTI_USER=UNKNOWN
 
+LINUX_USER=$USER
+
 INIT_SYSTEM=$(ps --no-headers -o comm 1)
 
 # If this is WSL, we need to give-in and enable systemd :(
@@ -145,7 +147,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 	keep-outputs = true
 	keep-derivations = true
 
-	trusted-users = root @sudo $USER 
+	trusted-users = root @sudo $LINUX_USER
 
 	experimental-features = nix-command flakes
 	EOF
@@ -183,6 +185,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 
 	rm -f "$HOME/.profile" || true
 	rm -f "$HOME/.bashrc" || true
+	rm -f "$HOME/.sommelierrc" || true
 
 	# There have been issues linking in the past, try both methods.
 	# Method 1: Bootstrap into home-manager environment.
@@ -289,12 +292,12 @@ sudo apt update || {
 	exit 33
 }
 
-sudo apt upgrade --without-new-pkgs || {
+sudo apt upgrade --yes --without-new-pkgs || {
 	writeLog "ERROR" "Failed to perform minimal system upgrade to ${DEBIAN_VERSION_CODENAME}"
 	exit 34
 }
 
-sudo apt full-upgrade || {
+sudo apt full-upgrade --yes || {
 	writeLog "ERROR" "Failed to perform full system upgrade to ${DEBIAN_VERSION_CODENAME}"
 	exit 35
 }
@@ -347,8 +350,8 @@ sudo apt install --yes \
 	exit 21
 }
 
-sudo usermod --append --groups docker "$USER" || {
-	writeLog "ERROR" "Failed to add user $USER to docker group!"
+sudo usermod --append --groups docker "$LINUX_USER" || {
+	writeLog "ERROR" "Failed to add user $LINUX_USER to docker group!"
 	exit 23
 }
 
@@ -360,7 +363,6 @@ sudo usermod --append --groups docker "$USER" || {
 # On WSL, use VSCode on Windows
 
 case "${OS_LAYER^^}" in
-
 
 	"CROSTINI" )
 
@@ -404,7 +406,7 @@ esac
 # Testing
 #########################
 
-sudo systemctl start docker || {
+sudo systemctl enable --now docker || {
 
 	writeLog "ERROR" "Failed to start Docker service"
 	exit 250
@@ -422,3 +424,4 @@ sudo docker run \
 #########################
 # Finished
 #########################
+

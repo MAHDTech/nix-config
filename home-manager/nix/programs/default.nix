@@ -4,12 +4,10 @@
     ./ansible.nix
     ./bash.nix
     ./command-not-found.nix
-    # WSL has no dbus
-    #./dconf.nix
+    ./dconf.nix
     ./direnv.nix
     ./fzf.nix
     ./git.nix
-    ./gnome-keyring.nix
     ./gpg.nix
     ./htop.nix
     ./neovim.nix
@@ -21,7 +19,6 @@
     ./vim.nix
     ./vscode.nix
     ./wakatime.nix
-
     ./work.nix
   ];
 }
