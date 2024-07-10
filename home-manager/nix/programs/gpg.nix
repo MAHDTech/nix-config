@@ -161,7 +161,7 @@ in {
 
     grabKeyboardAndMouse = true;
 
-    pinentryFlavor = "gnome3";
+    #pinentryFlavor = "gnome3";
 
     # gpg --list-keys --with-keygrip
     sshKeys = [];

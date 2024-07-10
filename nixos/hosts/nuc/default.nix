@@ -1,26 +1,26 @@
 {
   imports = [
-    ./hardware-configuration.nix
+    #./hardware-configuration.nix
 
     # System defaults
-    ../../system
+    #../../system
 
-    ./boot.nix
-    ./audio.nix
-    ./video.nix
+    #./boot.nix
+    #./audio.nix
+    #./video.nix
 
     #./desktop/pantheon.nix
-    ./desktop/gnome.nix
+    #./desktop/gnome.nix
 
     # Laptop
-    ./battery
-    ../../system/networking/wireless
+    #./battery
+    #../../system/networking/wireless
 
     # Virtualization
     #../../system/virtualisation/host
 
     # Steam
-    ../../system/programs/steam
+    #../../system/programs/steam
   ];
 
   networking = {

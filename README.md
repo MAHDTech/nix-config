@@ -200,16 +200,6 @@ home-manager \
     --flake 'github:MAHDTech/nix-config'
 ```
 
-## Development Shells
-
-_These are a work in progress..._
-
-|  Shell  | Description                           |
-| :-----: | :------------------------------------ |
-| default | Everything including the kitchen sink |
-|   nix   | For working with Nix and NixOS        |
-|  salt   | SaltStack and python tooling          |
-
 ## Updates
 
 Updating the Nix flake lock file `flake.lock` is done via GitHub Actions.

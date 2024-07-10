@@ -6,7 +6,7 @@
       type = "github";
       owner = "NixOS";
       repo = "nixpkgs";
-      ref = "nixos-23.11";
+      ref = "nixos-24.05";
       flake = true;
     };
 
@@ -30,7 +30,7 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      ref = "release-23.11";
+      ref = "release-24.05";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -80,7 +80,7 @@
     # this value at the release version of the first install of this system.
     # Before changing this value read the documentation for this option
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    globalStateVersion = "23.11";
+    globalStateVersion = "24.05";
 
     buildSystem = "x86_64-linux";
 
@@ -122,12 +122,12 @@
         };
 
     pkgsAllowUnfree = {
-      nixpkgs = {
+      #nixpkgs = {
       #  config = {
       #    allowUnfree = true;
       #    allowUnfreePredicate = _: true;
       #  };
-      };
+      #};
     };
 
     configHome = {username, ...}: {
@@ -230,24 +230,24 @@
     #########################
 
     nixosConfigurations = {
-      nuc = configNixOS {
-        username = defaultUsername;
-        system = "x86_64-linux";
+      #nuc = configNixOS {
+      #  username = defaultUsername;
+      #  system = "x86_64-linux";
 
-        extraModules = [
-          nixos-hardware.nixosModules.common-pc-laptop
-          nixos-hardware.nixosModules.common-cpu-intel
-          nixos-hardware.nixosModules.common-gpu-intel
+      #  extraModules = [
+      #    nixos-hardware.nixosModules.common-pc-laptop
+      #    nixos-hardware.nixosModules.common-cpu-intel
+      #    nixos-hardware.nixosModules.common-gpu-intel
 
-          ./nixos/hosts/nuc-zfs
-          {system.stateVersion = globalStateVersion;}
+      #    ./nixos/hosts/nuc-zfs
+      #    {system.stateVersion = globalStateVersion;}
 
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = configNixOSHomeManager {username = defaultUsername;};
-          }
-        ];
-      };
+      #    home-manager.nixosModules.home-manager
+      #    {
+      #      home-manager = configNixOSHomeManager {username = defaultUsername;};
+      #    }
+      #  ];
+      #};
     };
 
     #########################
