@@ -215,18 +215,25 @@ nix flake update
 
 ## YOLO
 
-The YOLO method for ChromeOS crostini;
+The YOLO method for Crostini/WSL;
 
 ```bash
 PROJECTS="$HOME/Projects"
 NIX_CONFIG_REPO="git@github.com:MAHDTech/nix-config.git"
 NIX_CONFIG_DIR="$HOME/dotfiles"
 
+sudo apt update
+sudo apt install --yes \
+    openssh-client \
+    git \
+    curl \
+    wget
+
 ssh-keygen -t ed25519
 cat ~/.ssh/id_ed25519.pub
 read -rp "Now add temporary SSH key to GitHub..." TEMP
 
-mkdir -p "${PROJECTS}/${NIX_CONFIG_DIR}"
+mkdir -p "${PROJECTS}"
 git clone ${NIX_CONFIG_REPO} "${NIX_CONFIG_DIR}"
 pushd "${NIX_CONFIG_DIR}"
 
