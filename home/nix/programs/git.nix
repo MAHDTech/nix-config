@@ -63,8 +63,8 @@ in {
     extraConfig = {
       # [core]
       core = {
-        # HACK: Use ssh from Windows.
-        #sshCommand = "ssh.exe";
+        # HACK: Use ssh from Windows for WSL.
+        sshCommand = "ssh.exe";
 
         autocrlf = "input";
         editor = "vim";

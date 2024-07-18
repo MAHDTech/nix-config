@@ -58,7 +58,10 @@ case "${OS_LAYER^^}" in
 		then
 
 			writeLog "INFO" "Systemd is already running"
-		
+
+			writeLog "INFO" "Enabling linger for $USER"
+			sudo loginctl enable-linger $USER
+
 		fi
 	
 	;;

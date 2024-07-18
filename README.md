@@ -9,19 +9,20 @@
 <!-- TOC -->
 
 - [Nix config](#nix-config)
-    - [Table of Contents](#table-of-contents)
-    - [Overview](#overview)
-    - [:warning: Warning](#warning-warning)
-        - [Why?](#why)
-    - [Layout](#layout)
-        - [Folders](#folders)
-    - [Setup](#setup)
-        - [Bootstrap](#bootstrap)
-    - [Usage](#usage)
-        - [NixOS](#nixos)
-        - [Home Manager](#home-manager)
-    - [Development Shells](#development-shells)
-    - [Updates](#updates)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [:warning: Warning](#warning-warning)
+    - [Why?](#why)
+  - [Layout](#layout)
+    - [Folders](#folders)
+  - [Setup](#setup)
+    - [Bootstrap](#bootstrap)
+    - [Manual (NixOS)](#manual-nixos)
+  - [Usage](#usage)
+    - [NixOS](#nixos)
+    - [Home Manager](#home-manager)
+  - [Updates](#updates)
+  - [YOLO](#yolo)
 
 <!-- /TOC -->
 
@@ -75,12 +76,12 @@ NixOS might have a steep learning curve, but it's been worth it imo.
 
 ### Folders
 
-| Name    | Description                               |
-| :------ | :---------------------------------------- |
-| home-manager/*    | Home configuration using Home Manager     |
-| nixos/hosts   | Host specific configuration               |
-| nixos/system  | System configurations using Nix           |
-| scripts | Scripts not managed with Nix              |
+| Name            | Description                           |
+| :-------------- | :------------------------------------ |
+| home-manager/\* | Home configuration using Home Manager |
+| nixos/hosts     | Host specific configuration           |
+| nixos/system    | System configurations using Nix       |
+| scripts         | Scripts not managed with Nix          |
 
 ## Setup
 
@@ -224,7 +225,6 @@ NIX_CONFIG_DIR="$HOME/dotfiles"
 
 sudo apt update
 sudo apt install --yes \
-    openssh-client \
     git \
     curl \
     wget
@@ -239,5 +239,10 @@ pushd "${NIX_CONFIG_DIR}"
 
 ./scripts/bootstrap.sh
 
-# Now open a new terminal and delete the temp SSH key.
+# Crostini cleanup just the temp key
+rm ~/.ssh/id_ed25519*
+
+# WSL cleanup all SSH and remove git in favour of home-manager
+rm -rf ~/.ssh
+sudo apt remove git --yes
 ```
