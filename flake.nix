@@ -1,12 +1,12 @@
 {
-  description = "NixOS and Home Manager configuration";
+  description = "Home Manager configuration";
 
   inputs = {
     nixpkgs = {
       type = "github";
-      owner = "NixOS";
-      repo = "nixpkgs";
-      ref = "nixos-24.05";
+      owner = "cachix";
+      repo = "devenv-nixpkgs";
+      ref = "rolling";
       flake = true;
     };
 
@@ -18,11 +18,11 @@
       flake = true;
     };
 
-    nixos-hardware = {
+    systems = {
       type = "github";
-      owner = "NixOS";
-      repo = "nixos-hardware";
-      ref = "master";
+      owner = "nix-systems";
+      repo = "default";
+      ref = "main";
       flake = true;
     };
 
@@ -30,7 +30,7 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      ref = "release-24.05";
+      ref = "release-23.11";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -44,218 +44,269 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # https://devenv.sh/
     devenv = {
       type = "github";
       owner = "cachix";
       repo = "devenv";
       ref = "main";
       flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
+  };
 
-    fenix = {
-      type = "github";
-      owner = "nix-community";
-      repo = "fenix";
-      ref = "main";
-      flake = true;
-    };
+  nixConfig = {
+    extra-trusted-public-keys = "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=";
+    extra-substituters = "https://devenv.cachix.org";
   };
 
   outputs = {
     self,
     nixpkgs,
-    nixpkgs-unstable,
-    nixos-hardware,
+    systems,
     home-manager,
     sops-nix,
     devenv,
     ...
   } @ inputs: let
-    defaultUsername = "mahdtech";
+    globalStateVersion = "23.11";
+    globalUsername = "mahdtech";
 
-    # This value determines the NixOS release from which the default
-    # settings for stateful data, like file locations and database versions
-    # on your system were taken. It's perfectly fine and recommended to leave
-    # this value at the release version of the first install of this system.
-    # Before changing this value read the documentation for this option
-    # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    globalStateVersion = "24.05";
-
-    buildSystem = "x86_64-linux";
-
-    hostSystems = [
-      "aarch64-darwin"
-      "aarch64-linux"
-      "x86_64-darwin"
-      "x86_64-linux"
-    ];
-
-    forAllSystems = f:
-      builtins.listToAttrs (map (name: {
-          inherit name;
-          value = f name;
-        })
-        hostSystems);
-
-    pkgsImportSystem = system:
-      import nixpkgs {
-        inherit system;
-      };
-
-    pkgsImportSystemUnstable = system:
-      import inputs.nixpkgs-unstable {inherit system;};
-
-    _pkgsImportCrossSystem = buildPlatform: hostPlatform:
-      if buildPlatform == hostPlatform
-      then
-        import inputs.nixpkgs {
-          system = buildPlatform;
-          localSystem = buildPlatform;
-          crossSystem = buildPlatform;
-        }
-      else
-        import inputs.nixpkgs {
-          system = buildPlatform;
-          localSystem = buildPlatform;
-          crossSystem = hostPlatform;
-        };
-
-    pkgsAllowUnfree = {
-      #nixpkgs = {
-      #  config = {
-      #    allowUnfree = true;
-      #    allowUnfreePredicate = _: true;
-      #  };
-      #};
-    };
-
-    configHome = {username, ...}: {
-      inherit username;
-      homeDirectory = "/home/${username}";
-      stateVersion = globalStateVersion;
-    };
-
-    #########################
-    # Home Manager
-    #########################
-
-    configHomeManager = {
-      system,
-      username,
-      ...
-    }:
-      home-manager.lib.homeManagerConfiguration {
-        pkgs = pkgsImportSystem system;
-
-        extraSpecialArgs = {
-          inherit inputs;
-          inherit username;
-          inherit globalStateVersion;
-          inherit system;
-        };
-
-        modules = [
-          ./home-manager
-          {
-            home = configHome {inherit username;};
-          }
-
-          pkgsAllowUnfree
-
-          sops-nix.homeManagerModules.sops
-        ];
-      };
-
-    #########################
-    # NixOS
-    #########################
-
-    configNixOS = {
-      system,
-      extraModules,
-      username,
-      ...
-    }:
-      nixpkgs.lib.nixosSystem {
-        pkgs = pkgsImportSystem system;
-
-        specialArgs = {
-          inherit inputs;
-          inherit username;
-          inherit globalStateVersion;
-        };
-
-        modules =
-          [
-            pkgsAllowUnfree
-
-            sops-nix.nixosModules.sops
-          ]
-          ++ extraModules;
-      };
-
-    configNixOSHomeManager = {username}: {
-      useGlobalPkgs = true;
-      useUserPackages = true;
-
-      users.${username} = ./home-manager;
-      extraSpecialArgs = {
-        inherit inputs;
-        #inherit username;
-        inherit globalStateVersion;
-        home = configHome;
-      };
-
-      sharedModules = [
-        pkgsAllowUnfree
-
-        sops-nix.homeManagerModules.sops
-      ];
-    };
+    forEachSystem = nixpkgs.lib.genAttrs (import systems);
   in {
     #########################
-    # Home Manager Standalone
+    # Packages
     #########################
 
-    homeConfigurations = {
-      ${defaultUsername} = configHomeManager {
-        system = "x86_64-linux";
-        username = defaultUsername;
+    packages = forEachSystem (system: {
+      devenv-up = self.devShells.${system}.default.config.procfileScript;
+
+      homeConfigurations = {
+        ${globalUsername} = home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.${system};
+
+          modules = [
+            ./home
+            sops-nix.homeManagerModules.sops
+          ];
+
+          extraSpecialArgs = {
+            inherit inputs;
+            inherit globalStateVersion;
+            inherit globalUsername;
+            inherit system;
+          };
+        };
       };
-    };
+    });
 
     #########################
-    # NixOS Hosts
+    # DevShells
     #########################
 
-    nixosConfigurations = {
-      #nuc = configNixOS {
-      #  username = defaultUsername;
-      #  system = "x86_64-linux";
+    devShells = forEachSystem (system: let
+      pkgs = inputs.nixpkgs.legacyPackages.${system};
+    in {
+      default = devenv.lib.mkShell {
+        inherit inputs;
+        inherit pkgs;
 
-      #  extraModules = [
-      #    nixos-hardware.nixosModules.common-pc-laptop
-      #    nixos-hardware.nixosModules.common-cpu-intel
-      #    nixos-hardware.nixosModules.common-gpu-intel
+        modules = [
+          # https://devenv.sh/reference/options/
+          {
+            name = "dotfiles";
 
-      #    ./nixos/hosts/nuc-zfs
-      #    {system.stateVersion = globalStateVersion;}
+            env = {
+              PROJECT = "dotfiles";
+            };
 
-      #    home-manager.nixosModules.home-manager
-      #    {
-      #      home-manager = configNixOSHomeManager {username = defaultUsername;};
-      #    }
-      #  ];
-      #};
-    };
+            dotenv = {
+              enable = true;
+              disableHint = false;
+            };
 
-    #########################
-    # Dev Shells
-    # nix develop --impure .#${NAME}
-    #########################
+            cachix = {
+              enable = true;
+              push = [
+                "salt-labs"
+              ];
+              pull = [
+                "salt-labs"
+              ];
+            };
 
-    # TODO: Add more dev shells in the correct syntax.
+            packages = with pkgs; [
+              figlet
+            ];
 
+            enterShell = ''
+              figlet -f starwars $PROJECT
+
+              echo Hello $USER, welcome to the $PROJECT project
+            '';
+
+            difftastic = {
+              enable = true;
+            };
+
+            pre-commit = {
+              default_stages = [
+                "pre-commit"
+              ];
+
+              hooks = {
+                alejandra = {
+                  enable = true;
+                };
+
+                beautysh = {
+                  enable = false;
+                };
+
+                check-json = {
+                  enable = true;
+                };
+
+                check-shebang-scripts-are-executable = {
+                  enable = true;
+                };
+
+                check-symlinks = {
+                  enable = true;
+                };
+
+                check-yaml = {
+                  enable = true;
+                };
+
+                convco = {
+                  enable = true;
+                };
+
+                cspell = {
+                  enable = false;
+                };
+
+                deadnix = {
+                  enable = true;
+                };
+
+                dialyzer = {
+                  enable = true;
+                };
+
+                editorconfig-checker = {
+                  enable = true;
+                };
+
+                markdownlint = {
+                  enable = true;
+                  settings = {
+                    configuration = {
+                      MD013 = {
+                        line_length = 180;
+                      };
+                    };
+                  };
+                };
+
+                nil = {
+                  enable = false;
+                };
+
+                pre-commit-hook-ensure-sops = {
+                  enable = true;
+                };
+
+                prettier = {
+                  enable = true;
+                };
+
+                pretty-format-json = {
+                  enable = false;
+                };
+
+                ripsecrets = {
+                  enable = true;
+                  excludes = [
+                  ];
+                };
+
+                shellcheck = {
+                  enable = true;
+                };
+
+                shfmt = {
+                  enable = true;
+                };
+
+                trim-trailing-whitespace = {
+                  enable = true;
+                };
+
+                typos = {
+                  enable = true;
+                };
+
+                yamllint = {
+                  enable = true;
+                  settings = {
+                    configuration = ''
+                      extends: relaxed
+                      rules:
+                        line-length: disable
+                        indentation: enable
+                    '';
+                  };
+                };
+              };
+            };
+
+            starship = {
+              enable = true;
+              config = {
+                enable = false;
+              };
+            };
+
+            devcontainer = {
+              enable = true;
+              settings = {
+                customizations = {
+                  vscode = {
+                    extensions = [
+                      "arrterian.nix-env-selector"
+                      "esbenp.prettier-vscode"
+                      "exiasr.hadolint"
+                      "github.copilot"
+                      "github.copilot-chat"
+                      "github.vscode-github-actions"
+                      "kamadorueda.alejandra"
+                      "mkhl.direnv"
+                      "ms-azuretools.vscode-docker"
+                      "nhoizey.gremlins"
+                      "johnpapa.vscode-peacock"
+                      "pinage404.nix-extension-pack"
+                      "redhat.vscode-yaml"
+                      "streetsidesoftware.code-spell-checker"
+                      "supermaven.supermaven"
+                      "tekumura.typos-vscode"
+                      "timonwong.shellcheck"
+                      "tuxtina.json2yaml"
+                      "vscodevim.vim"
+                      "wakatime.vscode-wakatime"
+                      "yzhang.markdown-all-in-one"
+                    ];
+                  };
+                };
+              };
+            };
+
+            enterTest = ''
+              echo "Running devenv tests..."
+            '';
+          }
+        ];
+      };
+    });
   };
 }
