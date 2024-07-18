@@ -140,7 +140,7 @@
             writeLog "ERROR" "The local projects directory does not exist"
             return 1
           fi
-        
+
           if [[ ! -d "''${PROJECTS_REMOTE}" ]]; then
             writeLog "ERROR" "The remote projects directory does not exist"
             return 1
