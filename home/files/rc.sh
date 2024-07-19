@@ -56,7 +56,7 @@ FOLDERS=(
 )
 
 # A list of required binaries for the dotfiles to work correctly
-REQ_BINS=(
+export REQ_BINS=(
 	awk
 	cat
 	curl
@@ -141,6 +141,7 @@ function import_functions_environment() {
 		# shellcheck source=${HOME}/.config/environment/variables
 		if [[ -f "${ENVFILES}/variables.sh" ]]; then
 
+			# shellcheck disable=SC1091
 			source "${ENVFILES}/variables.sh" || {
 				writeLog "WARN" "Failed to source local environment variable overrides."
 				return 1
@@ -230,11 +231,13 @@ if ! shopt -oq posix; then
 	if [[ -f /etc/bash_completion ]]; then
 
 		writeLog "INFO" "Sourcing bash completion from etc"
+		# shellcheck disable=SC1091
 		source /etc/bash_completion
 
 	elif [[ -f /usr/share/bash-completion/bash_completion ]]; then
 
 		writeLog "INFO" "Sourcing bash completion from /usr/share"
+		# shellcheck disable=SC1091
 		source /usr/share/bash-completion/bash_completion
 
 	fi
@@ -242,6 +245,7 @@ if ! shopt -oq posix; then
 	if [[ -f /etc/profile.d/bash_completion.sh ]]; then
 
 		writeLog "INFO" "Sourcing bash completion from profile.d"
+		# shellcheck disable=SC1091
 		source /etc/profile.d/bash_completion.sh
 	fi
 
@@ -253,6 +257,7 @@ if ! shopt -oq posix; then
 		shopt -s nullglob
 
 		for BASH_MODULE in "/etc/bash_completion.d/"* "/share/bash-completion/completions/"*; do
+			# shellcheck disable=SC1090
 			source "${BASH_MODULE}" || {
 				writeLog "WARN" "Failed to source bash completion module ${BASH_MODULE}"
 			}
@@ -270,6 +275,7 @@ else
 fi
 
 if checkBin ls-colors-bash.sh; then
+	# shellcheck disable=SC1091
 	source ls-colors-bash.sh
 fi
 
@@ -300,7 +306,7 @@ writeLog "DEBUG" "New PATH: $PATH"
 
 # gnome-keyring should be started via daemon now, verify
 start_gnome_keyring || {
-	writeLog "ERROR" "Failed to start gnome-keyring unable to configure SSH"
+	writeLog "ERROR" "Failed to start gnome-keyring"
 	LOAD_SSH="FALSE"
 }
 
@@ -310,6 +316,11 @@ if [[ -S "${HOME}/.1password/agent.sock" ]]; then
 	writeLog "INFO" "Using 1Password SSH Agent Socket"
 
 	export SSH_AUTH_SOCK="${HOME}/.1password/agent.sock"
+
+# If OS_LAYER is WSL or ssh.exe is available, don't load SSH keys.
+elif type ssh.exe >/dev/null 2>&1 || [[ ${OS_LAYER^^} == "WSL" ]]; then
+
+	writeLog "INFO" "Running in WSL, skipping loading SSH keys expecting 1Password to be installed on Windows"
 
 # Otherwise, load SSH keys based on the configuration.
 elif [[ ${LOAD_SSH:-TRUE} == "TRUE" ]]; then
@@ -360,6 +371,7 @@ if [[ ${RUST_ENABLED:-FALSE} == "TRUE" ]]; then
 
 		if [[ -f "${HOME}/.cargo/env" ]]; then
 			writeLog "INFO" "Sourcing Cargo Environment"
+			# shellcheck disable=SC1091
 			. "${HOME}/.cargo/env"
 		fi
 

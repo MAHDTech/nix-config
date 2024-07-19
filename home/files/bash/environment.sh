@@ -39,7 +39,7 @@ export DOMAIN=""
 # SSH
 #########################
 
-# Use Trezor or OpenSSH?
+# Use Trezor, OpenSSH or 1Password?
 export ENABLED_SSH_AGENT="openssh"
 
 # OpenSSH Keys will be named ${OS_PLATFORM^^}_${ENV^^}_${KEY_TYPE^^}
@@ -50,7 +50,7 @@ export KEY_TYPE="ed25519"
 # GPG
 #########################
 
-# Use GnuPG, Trezor, KeepKey, Ledger?
+# Use GnuPG, Trezor, 1Password, KeepKey, Ledger?
 export ENABLED_GPG_AGENT="gnupg"
 
 #########################

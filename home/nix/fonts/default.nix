@@ -10,6 +10,7 @@ in {
   home.packages = with pkgs;
     [
       font-manager
+      fontconfig
 
       corefonts
       dejavu_fonts

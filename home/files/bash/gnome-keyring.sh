@@ -12,7 +12,7 @@ function unlock_gnome_keyring() {
 	echo ""
 	read -rsp "Enter GNOME keyring unlock password: " UNLOCK_PASSWORD
 
-	export $(echo -n "$UNLOCK_PASSWORD" | gnome-keyring-daemon --replace --unlock)
+	export "$(echo -n "$UNLOCK_PASSWORD" | gnome-keyring-daemon --replace --unlock)"
 
 	unset UNLOCK_PASSWORD
 
@@ -50,13 +50,18 @@ function set_vars_gnome_keyring() {
 
 function start_gnome_keyring() {
 
-	local XDG_RUNTIME_DIR="/run/user/$(id --user)"
+	export XDG_RUNTIME_DIR
+	export GNOME_KEYRING_CONTROL
+	export GNOME_KEYRING_LOCAL
+
+	# XDG_RUNTIME_DIR is set by systemd or defaults to /run/user/<uid>
+	XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:=/run/user/$(id --user)}"
 
 	# GNOME_KEYRING_CONTROL is set by GNOME Keyring or defaults to /run/user/<uid>/keyring
-	export GNOME_KEYRING_CONTROL="${GNOME_KEYRING_CONTROL:=$XDG_RUNTIME_DIR/keyring}"
+	GNOME_KEYRING_CONTROL="${GNOME_KEYRING_CONTROL:=$XDG_RUNTIME_DIR/keyring}"
 
 	# GNOME_KEYRING_LOCAL is set by GNOME Keyring or default to $HOME/.local/share/keyrings
-	export GNOME_KEYRING_LOCAL="${GNOME_KEYRING_LOCAL:=$HOME/.local/share/keyrings}"
+	GNOME_KEYRING_LOCAL="${GNOME_KEYRING_LOCAL:=$HOME/.local/share/keyrings}"
 
 	if type gnome-keyring 1>/dev/null 2>&1; then
 
@@ -84,8 +89,8 @@ function start_gnome_keyring() {
 			# Legacy
 			else
 
-				# gpg now no longer offered by gnome-keyring.
-				# ssh now being used from 1password instead of gnome-keyring.
+				# gpg is now no longer offered by gnome-keyring.
+				# ssh is now being used from 1Password instead of gnome-keyring.
 				unlock_gnome_keyring || {
 					writeLog "ERROR" "Failed to start GNOME keyring daemon"
 					return 1

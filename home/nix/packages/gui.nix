@@ -12,9 +12,9 @@
 in {
   home.packages = with pkgs;
     [
-      # 1Password needs the Nix module so only works on NixOS.
-      # On Debian, use the deb package.
-      #_1password
+      # 1Password GUI needs the Nix module so only works on NixOS.
+      # On Debian, use the deb package instead.
+      _1password
       #_1password-gui
 
       # Shared GTK is needed for GUI apps like VSCode

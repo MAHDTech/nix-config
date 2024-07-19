@@ -11,8 +11,14 @@ function load_sshSocket() {
 	export _SSH_AUTH_SOCK
 	_SSH_AUTH_SOCK="/run/user/$(id --user)/keyring/ssh"
 
+	# If running in WSL, don't load SSH keys.
+	if type ssh.exe >/dev/null 2>&1 || [[ ${OS_LAYER^^} == "WSL" ]]; then
+
+		writeLog "INFO" "Running in WSL, skipping loading SSH keys expecting 1Password to be installed on Windows"
+		return 0
+
 	# If the 1Password CLI is installed, assume the SSH Agent is enabled.
-	if type op >/dev/null 2>&1; then
+	elif type op >/dev/null 2>&1; then
 
 		writeLog "INFO" "Using 1Password SSH Agent Socket"
 

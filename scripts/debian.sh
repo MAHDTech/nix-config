@@ -7,23 +7,20 @@
 
 set -euao pipefail
 
-NIX_MULTI_USER=UNKNOWN
-
-LINUX_USER=$USER
+export LINUX_USER="${USER}"
 
 INIT_SYSTEM=$(ps --no-headers -o comm 1)
 
 # If this is WSL, we need to give-in and enable systemd :(
 case "${OS_LAYER^^}" in
 
-	"WSL" )
+"WSL")
 
-		# Systemd or Init
-		if grep -i init <<< ${INIT_SYSTEM:-unknown};
-		then
+	# Systemd or Init
+	if grep -i init <<<"${INIT_SYSTEM:-unknown}"; then
 
-			# Need to enable systemd :(
-			sudo tee "/etc/wsl.conf" >/dev/null <<-EOF
+		# Need to enable systemd :(
+		sudo tee "/etc/wsl.conf" >/dev/null <<-EOF
 			# WSL Configuration
 			# Reference: https://learn.microsoft.com/en-gb/windows/wsl/wsl-config#wslconf
 
@@ -48,27 +45,26 @@ case "${OS_LAYER^^}" in
 			[user]
 			default = "mahdtech"
 
-			EOF
+		EOF
 
-			writeLog "INFO" "Systemd has now been enabled, run wsl --shutdown and then restart before running this script again."
+		writeLog "INFO" "Systemd has now been enabled, run wsl --shutdown and then restart before running this script again."
 
-			exit 0
+		exit 0
 
-		elif grep -i systemd <<< ${INIT_SYSTEM:-unknown};
-		then
+	elif grep -i systemd <<<"${INIT_SYSTEM:-unknown}"; then
 
-			writeLog "INFO" "Systemd is already running"
+		writeLog "INFO" "Systemd is already running"
 
-			writeLog "INFO" "Enabling linger for $USER"
-			sudo loginctl enable-linger $USER
+		writeLog "INFO" "Enabling linger for $LINUX_USER"
+		sudo loginctl enable-linger "$LINUX_USER"
 
-		fi
-	
+	fi
+
 	;;
 
-	* )
+*)
 
-		writeLog "INFO" "Not WSL, skipping configuration"
+	writeLog "INFO" "Not WSL, skipping configuration"
 
 	;;
 
@@ -81,17 +77,18 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 	export PATH="${HOME}/.nix-profile/bin:/nix/var/nix/profiles/default/bin:${PATH}"
 	export NIXPKGS_ALLOW_UNFREE=1
 
-	if type nix 1>/dev/null 2>&1;
-	then
-	
+	if type nix 1>/dev/null 2>&1; then
+
 		writeLog "INFO" "Nix is already installed"
-	
+
 	else
 
 		writeLog "INFO" "Installing Nix dependencies"
 
 		sudo apt install --yes \
 			dbus \
+			dbus-user-session \
+			dconf-service \
 			xz-utils || {
 			writeLog "ERROR" "Failed to install dependant debs!"
 			exit 1
@@ -113,7 +110,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		rm -f /tmp/install.nix
 
 	fi
-	
+
 	writeLog "INFO" "Enabling Nix flakes"
 
 	mkdir --parents "${HOME}/.config/nix" || {
@@ -121,38 +118,38 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		exit 2
 	}
 
-	cat <<-EOF > "${HOME}/.config/nix/nix.conf"
-		# Nix CLI configuration for user $USER
+	cat <<-EOF >"${HOME}/.config/nix/nix.conf"
+		# Nix CLI configuration for user $LINUX_USER
 		experimental-features = nix-command flakes
 	EOF
 
 	writeLog "INFO" "Configuring Nix daemon"
 
 	sudo tee "/etc/nix/nix.conf" >/dev/null <<-EOF
-	# Nix daemon configuration
+		# Nix daemon configuration
 
-	allowed-users = *
+		allowed-users = *
 
-	auto-optimise-store = true
+		auto-optimise-store = true
 
-	build-users-group = nixbld
-	builders =
-	cores = 0
-	extra-sandbox-paths = 
-	sandbox-build-dir = /nix/sandbox/build
-	max-jobs = auto
-	require-sigs = true
-	sandbox = true
-	sandbox-fallback = false
+		build-users-group = nixbld
+		builders =
+		cores = 0
+		extra-sandbox-paths =
+		sandbox-build-dir = /nix/sandbox/build
+		max-jobs = auto
+		require-sigs = true
+		sandbox = true
+		sandbox-fallback = false
 
-	min-free = 10737418240
+		min-free = 10737418240
 
-	keep-outputs = true
-	keep-derivations = true
+		keep-outputs = true
+		keep-derivations = true
 
-	trusted-users = root @sudo $LINUX_USER
+		trusted-users = root @sudo $LINUX_USER
 
-	experimental-features = nix-command flakes
+		experimental-features = nix-command flakes
 	EOF
 
 	writeLog "INFO" "Restarting Nix daemon"
@@ -184,7 +181,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 
 	fi
 
-	writeLog "INFO" "Bootstrap Home Manager user configuration for $USER"
+	writeLog "INFO" "Bootstrap Home Manager user configuration for $LINUX_USER"
 
 	rm -f "$HOME/.profile" || true
 	rm -f "$HOME/.bashrc" || true
@@ -192,12 +189,12 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 
 	# There have been issues linking in the past, try both methods.
 	# Method 1: Bootstrap into home-manager environment.
-	nix run --impure ".#homeConfigurations.${USER}.activationPackage" || {
+	nix run --impure ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
 
-		writeLog "WARN" "Failed to run Home Manager config for user ${USER}, trying backup method"
+		writeLog "WARN" "Failed to run Home Manager config for user ${LINUX_USER}, trying backup method"
 
-		nix build --impure --no-link ".#homeConfigurations.${USER}.activationPackage" || {
-			writeLog "ERROR" "Failed to build Home Manager config for user ${USER}"
+		nix build --impure --no-link ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
+			writeLog "ERROR" "Failed to build Home Manager config for user ${LINUX_USER}"
 			exit 8
 		}
 
@@ -206,8 +203,8 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 			exit 9
 		}
 
-		sudo mkdir --parents --mode 0755 /nix/var/nix/{profiles,gcroots}/per-user/"${USER}" || {
-			writeLog "ERROR" "Failed to create required directories for $USER"
+		sudo mkdir --parents --mode 0755 /nix/var/nix/{profiles,gcroots}/per-user/"${LINUX_USER}" || {
+			writeLog "ERROR" "Failed to create required directories for $LINUX_USER"
 			exit 10
 		}
 
@@ -216,12 +213,12 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 			exit 11
 		}
 
-		sudo chown -R "${USER}:nix-users" /nix/var/nix/{profiles,gcroots}/per-user/"${USER}" || {
-			writeLog "ERROR" "Failed to chown required directories for $USER"
+		sudo chown -R "${LINUX_USER}:nix-users" /nix/var/nix/{profiles,gcroots}/per-user/"${LINUX_USER}" || {
+			writeLog "ERROR" "Failed to chown required directories for $LINUX_USER"
 			exit 12
 		}
 
-		sudo chown -R "${USER}:nix-users" /nix/var/nix/{profiles,gcroots}/per-user/"$(id -u)" || {
+		sudo chown -R "${LINUX_USER}:nix-users" /nix/var/nix/{profiles,gcroots}/per-user/"$(id -u)" || {
 			writeLog "ERROR" "Failed to chown required directories for $(id -u)"
 			exit 13
 		}
@@ -231,7 +228,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 			exit 14
 		}
 
-		"$(nix path-info --impure ".#homeConfigurations.${USER}.activationPackage")"/activate || {
+		"$(nix path-info --impure ".#homeConfigurations.${LINUX_USER}.activationPackage")"/activate || {
 			writeLog "ERROR" "Failed to activate Home Manager"
 			exit 15
 		}
@@ -246,20 +243,20 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		}
 	fi
 
-	writeLog "INFO" "Building the Home Manager environment for user $USER from flake ${FLAKE_LOCATION:-.}"
+	writeLog "INFO" "Building the Home Manager environment for user $LINUX_USER from flake ${FLAKE_LOCATION:-.}"
 
-	home-manager build --impure --flake "${FLAKE_LOCATION:-.}#$USER" || {
-		writeLog "ERROR" "Failed to build Home Manger config for user $USER"
+	home-manager build --impure --flake "${FLAKE_LOCATION:-.}#$LINUX_USER" || {
+		writeLog "ERROR" "Failed to build Home Manger config for user $LINUX_USER"
 		exit 15
 	}
 
-	writeLog "INFO" "Switching into the Home Manager environment for user $USER from flake ${FLAKE_LOCATION:-.}"
+	writeLog "INFO" "Switching into the Home Manager environment for user $LINUX_USER from flake ${FLAKE_LOCATION:-.}"
 
-	home-manager switch --impure --flake "${FLAKE_LOCATION:-.}#$USER" || {
-		writeLog "ERROR" "Failed to switch into Home Manger config for user $USER"
+	home-manager switch --impure --flake "${FLAKE_LOCATION:-.}#$LINUX_USER" || {
+		writeLog "ERROR" "Failed to switch into Home Manger config for user $LINUX_USER"
 		exit 16
 	}
-	
+
 	popd 1>/dev/null 2>&1 || true
 
 # Nix via devenv
@@ -336,7 +333,9 @@ sudo install -D -o root -g root -m 644 docker.gpg /etc/apt/keyrings/docker.gpg
 
 rm -f docker.gpg
 
-sudo sh -c 'echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list'
+sudo tee "/etc/apt/sources.list.d/docker.list" >/dev/null <<-EOF
+	deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable
+EOF
 
 sudo apt update || {
 	writeLog "ERROR" "Failed to update apt repo metadata"
@@ -367,39 +366,42 @@ sudo usermod --append --groups docker "$LINUX_USER" || {
 
 case "${OS_LAYER^^}" in
 
-	"CROSTINI" )
+"CROSTINI")
 
-		writeLog "INFO" "Installing VSCode in Debian"
+	writeLog "INFO" "Installing VSCode in Debian"
 
-		wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o packages.microsoft.gpg
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o packages.microsoft.gpg
 
-		sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
 
-		sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
-		rm -f packages.microsoft.gpg docker.gpg
+	sudo tee "/etc/apt/sources.list.d/vscode.list" >/dev/null <<-EOF
+		deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main
+	EOF
 
-		sudo apt update || {
-			writeLog "ERROR" "Failed to update apt repo metadata"
-			exit 20
-		}
+	rm -f packages.microsoft.gpg docker.gpg
 
-		sudo apt install --yes \
-			code || {
-			writeLog "ERROR" "Failed to install dependant debs!"
-			exit 21
-		}
+	sudo apt update || {
+		writeLog "ERROR" "Failed to update apt repo metadata"
+		exit 20
+	}
 
-	;;
-
-	"WSL" )
-
-		writeLog "INFO" "Skipping VSCode install in favour of using VSCode from Windows"
+	sudo apt install --yes \
+		code || {
+		writeLog "ERROR" "Failed to install dependant debs!"
+		exit 21
+	}
 
 	;;
 
-	* )
+"WSL")
 
-		writeLog "INFO" "Unknown OS Layer ${OS_LAYER}"
+	writeLog "INFO" "Skipping VSCode install in favour of using VSCode from Windows"
+
+	;;
+
+*)
+
+	writeLog "INFO" "Unknown OS Layer ${OS_LAYER}"
 
 	;;
 
@@ -427,4 +429,3 @@ sudo docker run \
 #########################
 # Finished
 #########################
-

@@ -106,8 +106,12 @@ in {
       gpg = {
         format = "ssh";
         ssh = {
-          program = "${pkgs._1password-gui}/bin/op-ssh-sign";
+          # Common
           allowedSignersFile = "~/.config/git/allowed-signers";
+          # WSL
+          program = "/mnt/c/Users/MAHDTech/AppData/Local/1Password/app/8/op-ssh-sign-wsl";
+          # Crostini
+          #program = "${pkgs._1password-gui}/bin/op-ssh-sign";
         };
       };
 
