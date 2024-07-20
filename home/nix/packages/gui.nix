@@ -10,49 +10,48 @@
     #logseq
   ];
 in {
-  home.packages = with pkgs;
-    [
-      # 1Password GUI needs the Nix module so only works on NixOS.
-      # On Debian, use the deb package instead.
-      _1password
-      #_1password-gui
+  home.packages = with pkgs; [
+    # 1Password GUI needs the Nix module so only works on NixOS.
+    # On Debian, use the deb package instead.
+    _1password
+    #_1password-gui
 
-      # Shared GTK is needed for GUI apps like VSCode
-      gtk3
+    # Shared GTK is needed for GUI apps like VSCode
+    gtk3
 
-      lapce
+    lapce
 
-      logseq
+    logseq
 
-      #inkscape
-      #libreoffice
-      #pinta
+    #inkscape
+    #libreoffice
+    #pinta
 
-      #tilix
+    #tilix
 
-      #insync
+    #insync
 
-      #gparted
+    #gparted
 
-      #discord
-      #signal-desktop
-      #telegram-desktop
+    #discord
+    #signal-desktop
+    #telegram-desktop
 
-      #brave
-      #google-chrome
-      #microsoft-edge
+    #brave
+    #google-chrome
+    #microsoft-edge
 
-      #trezor-suite
-      #ledger-live-desktop
+    #trezor-suite
+    #ledger-live-desktop
 
-      #vlc
+    #vlc
 
-      #libsForQt5.kolourpaint
+    #libsForQt5.kolourpaint
 
-      # JetBrains
-      #jetbrains.rust-rover
-      #(pkgs.jetbrains.plugins.addPlugins pkgs.jetbrains.rust-rover ["github-copilot"])
-      #jetbrains-toolbox
-    ]
-    ++ unstablePkgs;
+    # JetBrains
+    #jetbrains.rust-rover
+    #(pkgs.jetbrains.plugins.addPlugins pkgs.jetbrains.rust-rover ["github-copilot"])
+    #jetbrains-toolbox
+  ];
+  #++ unstablePkgs;
 }

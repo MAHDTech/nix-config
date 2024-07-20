@@ -8,7 +8,7 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs; [git git-lfs gh git-filter-repo bfg-repo-cleaner] ++ unstablePkgs;
+  home.packages = with pkgs; [git git-lfs gh git-filter-repo bfg-repo-cleaner]; #++ unstablePkgs;
 
   home.file = {
     "allowed-signers" = {

@@ -7,14 +7,13 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs;
-    [
-      alejandra
-      nil
-      nixos-generators
-      nixpkgs-fmt
-      rnix-lsp
-      cachix
-    ]
-    ++ unstablePkgs;
+  home.packages = with pkgs; [
+    alejandra
+    nil
+    nixos-generators
+    nixpkgs-fmt
+    rnix-lsp
+    cachix
+  ];
+  #++ unstablePkgs;
 }

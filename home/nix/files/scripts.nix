@@ -205,6 +205,7 @@
             --archive \
             --verbose \
             --delete \
+            --force \
             --exclude=".devenv" \
             --exclude=".direnv" \
             "''${PROJECTS_LOCAL}" \

@@ -1,4 +1,4 @@
-{...}: {
+{
   # NOTE: Any services that rely on secrets stored in SOPS need to be setup with:
   #       systemd.user.services.mbsync.Unit.After = [ "sops-nix.service" ];
 

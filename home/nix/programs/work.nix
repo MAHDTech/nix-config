@@ -7,16 +7,15 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs;
-    [
-      #slack
-      #teams
+  home.packages = with pkgs; [
+    #slack
+    #teams
 
-      #citrix_workspace
+    #citrix_workspace
 
-      #vmware-horizon-client
+    #vmware-horizon-client
 
-      #zoom-us
-    ]
-    ++ unstablePkgs;
+    #zoom-us
+  ];
+  #++ unstablePkgs;
 }

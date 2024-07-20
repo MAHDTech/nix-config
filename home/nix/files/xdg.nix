@@ -8,7 +8,7 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs; [xdg-user-dirs xdg-utils] ++ unstablePkgs;
+  home.packages = with pkgs; [xdg-user-dirs xdg-utils]; #++ unstablePkgs;
 
   xdg = {
     enable = true;

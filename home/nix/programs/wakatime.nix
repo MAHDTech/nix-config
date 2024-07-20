@@ -7,9 +7,8 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs;
-    [
-      wakatime
-    ]
-    ++ unstablePkgs;
+  home.packages = with pkgs; [
+    wakatime
+  ];
+  #++ unstablePkgs;
 }

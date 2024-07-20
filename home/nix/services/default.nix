@@ -1,4 +1,4 @@
-{...}: {
+{
   imports = [
     ./gnome-keyring.nix
     ./systemd.nix

@@ -1,4 +1,4 @@
-{...}: {
+{
   imports = [
     ./general.nix
     ./cargo.nix

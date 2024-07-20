@@ -1,5 +1,5 @@
 # binaries.nix
-{...}: {
+{
   home.packages = [
     #(pkgs.callPackage ./tkg.nix {})
 

@@ -7,9 +7,8 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs;
-    [
-      steam
-    ]
-    ++ unstablePkgs;
+  home.packages = with pkgs; [
+    steam
+  ];
+  #++ unstablePkgs;
 }

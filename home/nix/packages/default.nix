@@ -4,7 +4,7 @@
     ./tools.nix
 
     # Games
-    ./games.nix
+    #./games.nix
 
     # Moved to devenv
     #./ansible.nix

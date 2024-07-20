@@ -287,6 +287,12 @@ function dotfiles() {
 
 		"nixos")
 
+			nix-channel --update || {
+				writeLog "ERROR" "Failed to update Nix channel"
+				popd >/dev/null 2>&1
+				return 1
+			}
+
 			nix flake update || {
 				writeLog "ERROR" "Failed to update Nix flake"
 				popd >/dev/null 2>&1
@@ -296,6 +302,12 @@ function dotfiles() {
 			;;
 
 		*)
+			
+			nix-channel --update || {
+				writeLog "ERROR" "Failed to update Nix channel"
+				popd >/dev/null 2>&1
+				return 1
+			}
 
 			nix flake update || {
 				writeLog "ERROR" "Failed to update Nix flake"
@@ -315,7 +327,7 @@ function dotfiles() {
 
 		"nixos")
 
-			nix-collect-garbage --delete-older-than 1d || {
+			nix-collect-garbage --delete-older-than 7d || {
 				writeLog "ERROR" "Failed to collect Nix garbage"
 				popd >/dev/null 2>&1
 				return 1
@@ -325,7 +337,7 @@ function dotfiles() {
 
 		*)
 
-			nix-collect-garbage --delete-older-than 1d || {
+			nix-collect-garbage --delete-older-than 7d || {
 				writeLog "ERROR" "Failed to collect Nix garbage"
 				popd >/dev/null
 				return 1
@@ -394,6 +406,11 @@ function dotfiles_all_the_things() {
 		return 1
 
 	fi
+
+	dotfiles garbage-collect || {
+		writeLog "ERROR" "Failed to collect garbage"
+		return 1
+	}
 
 	return 0
 

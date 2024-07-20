@@ -7,7 +7,7 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs; [bash bash-completion nix-bash-completions] ++ unstablePkgs;
+  home.packages = with pkgs; [bash bash-completion nix-bash-completions]; #++ unstablePkgs;
 
   programs.bash = {
     enable = true;

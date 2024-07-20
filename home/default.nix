@@ -1,4 +1,4 @@
-{...}: {
+{
   # Define imports
   imports = [
     # Home Manager configuration

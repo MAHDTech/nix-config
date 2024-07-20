@@ -7,5 +7,5 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs; [ansible ansible-lint crudini] ++ unstablePkgs;
+  home.packages = with pkgs; [ansible ansible-lint crudini]; #++ unstablePkgs;
 }

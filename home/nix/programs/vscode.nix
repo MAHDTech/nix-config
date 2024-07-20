@@ -16,10 +16,9 @@
   #  };
   #});
 in {
-  home.packages =
-    [
-    ]
-    ++ unstablePkgs;
+  home.packages = [
+  ];
+  #++ unstablePkgs;
 
   programs = {
     vscode = {

@@ -4,9 +4,14 @@
   inputs = {
     nixpkgs = {
       type = "github";
-      owner = "cachix";
-      repo = "devenv-nixpkgs";
-      ref = "rolling";
+      # TODO: Revert when rolling is updated.
+      # https://github.com/cachix/devenv-nixpkgs/issues/2
+      #owner = "cachix";
+      #repo = "devenv-nixpkgs";
+      #ref = "rolling";
+      owner = "NixOS";
+      repo = "nixpkgs";
+      ref = "nixos-24.05";
       flake = true;
     };
 
@@ -30,7 +35,7 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      ref = "release-23.11";
+      ref = "release-24.05";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -72,7 +77,32 @@
     globalUsername = "mahdtech";
 
     forEachSystem = nixpkgs.lib.genAttrs (import systems);
+
+    mkHomeConfigurations = system:
+      home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.${system};
+        modules = [
+          ./home
+          sops-nix.homeManagerModules.sops
+        ];
+        extraSpecialArgs = {
+          inherit inputs;
+          inherit globalStateVersion;
+          inherit globalUsername;
+          inherit system;
+        };
+      };
   in {
+    #########################
+    # Home Manager
+    #########################
+
+    homeConfigurations = let
+      system = builtins.currentSystem;
+    in {
+      ${globalUsername} = mkHomeConfigurations system;
+    };
+
     #########################
     # Packages
     #########################
@@ -80,23 +110,7 @@
     packages = forEachSystem (system: {
       devenv-up = self.devShells.${system}.default.config.procfileScript;
 
-      homeConfigurations = {
-        ${globalUsername} = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.${system};
-
-          modules = [
-            ./home
-            sops-nix.homeManagerModules.sops
-          ];
-
-          extraSpecialArgs = {
-            inherit inputs;
-            inherit globalStateVersion;
-            inherit globalUsername;
-            inherit system;
-          };
-        };
-      };
+      #home-manager = self.homeConfigurations.${globalUsername}.activationPackage.${system};
     });
 
     #########################

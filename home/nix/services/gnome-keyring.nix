@@ -7,8 +7,7 @@
 
   unstablePkgs = with pkgsUnstable; [];
 in {
-  home.packages = with pkgs;
-    [gcr gnome.gnome-keyring gnome.seahorse libsecret] ++ unstablePkgs;
+  home.packages = with pkgs; [gcr gnome.gnome-keyring gnome.seahorse libsecret]; #++ unstablePkgs;
 
   services = {
     gnome-keyring = {

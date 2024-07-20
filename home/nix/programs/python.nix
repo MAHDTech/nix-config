@@ -26,6 +26,5 @@ let
       requests
     ];
 in {
-  home.packages = with pkgs;
-    [(python3.withPackages pythonPackages)] ++ unstablePkgs;
+  home.packages = with pkgs; [(python3.withPackages pythonPackages)]; #++ unstablePkgs;
 }
