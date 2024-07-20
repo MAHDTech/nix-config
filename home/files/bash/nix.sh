@@ -302,7 +302,7 @@ function dotfiles() {
 			;;
 
 		*)
-			
+
 			nix-channel --update || {
 				writeLog "ERROR" "Failed to update Nix channel"
 				popd >/dev/null 2>&1
