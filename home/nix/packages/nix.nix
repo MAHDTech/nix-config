@@ -1,12 +1,4 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
+{pkgs, ...}: {
   home.packages = with pkgs; [
     alejandra
     nil
@@ -14,6 +6,6 @@ in {
     nixpkgs-fmt
     rnix-lsp
     cachix
+    devenv
   ];
-  #++ unstablePkgs;
 }
