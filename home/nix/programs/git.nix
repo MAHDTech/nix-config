@@ -1,14 +1,9 @@
 {
-  inputs,
   pkgs,
   config,
   ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs; [git git-lfs gh git-filter-repo bfg-repo-cleaner]; #++ unstablePkgs;
+}: {
+  home.packages = with pkgs; [git git-lfs gh git-filter-repo bfg-repo-cleaner];
 
   home.file = {
     "allowed-signers" = {
@@ -42,15 +37,21 @@ in {
 
       # Lazy review with vim of all files changed
       review = ''
-        !vim -p $(git files) +"tabdo Gdiff $REVIEW_BRANCH" +"let g:gitgutter_diff_base = '$REVIEW_BRANCH'"'';
+        !vim -p $(git files) +"tabdo Gdiff $REVIEW_BRANCH" +"let g:gitgutter_diff_base = '$REVIEW_BRANCH'"
+      '';
 
       # Lazy review with vim of a single file provided
       reviewone = ''
-        !vim -p +"tabdo Gdiff $REVIEW_BRANCH" +"let g:gitgutter_diff_base = '$REVIEW_BRANCH'"'';
+        !vim -p +"tabdo Gdiff $REVIEW_BRANCH" +"let g:gitgutter_diff_base = '$REVIEW_BRANCH'"
+      '';
 
       # Use external diff tool
-      dft = ''
-        difftool'';
+      dft = ''difftool'';
+
+      # Reset file permissions only
+      reset-permissions = ''
+        !git diff -p -R --no-ext-diff --no-color --diff-filter=M | grep -E "^(diff|(old|new) mode)" --color=never | git apply
+      '';
     };
 
     difftastic = {
