@@ -5,6 +5,146 @@
 # Description: Assorted Nix related functions
 ##################################################
 
+function nix-upgrade-daemon() {
+
+	if [[ ${DOTFILES_CONFIG:-EMPTY} == "EMPTY" ]]; then
+		"Environment variable DOTFILES_CONFIG is empty"
+		return 1
+	fi
+
+	pushd "${DOTFILES_CONFIG}" || {
+		writeLog "ERROR" "Failed to push into dotfiles directory"
+		return 1
+	}
+
+	if type nix 1>/dev/null 2>&1; then
+
+		nix flake update --flake . || {
+			writeLog "ERROR" "Failed to update nix flake"
+			return 1
+		}
+
+		nix-channel --update || {
+			writeLog "ERROR" "Failed to update nix channels"
+			return 1
+		}
+
+		nix profile upgrade cachix || {
+			writeLog "ERROR" "Failed to upgrade cachix profile"
+			return 1
+		}
+
+		nix profile upgrade devenv || {
+			writeLog "ERROR" "Failed to upgrade devenv profile"
+			return 1
+		}
+
+		writeLog "INFO" "Upgrading Nix Daemon"
+
+	else
+
+		writeLog "INFO" "Installing Nix Daemon"
+
+	fi
+
+	writeLog "INFO" "Elevating permissions"
+	sudo --validate || {
+		writeLog "ERROR" "Failed to elevate permissions"
+		return 1
+	}
+
+	# If there is a backup bashrc file, restore it before upgrading.
+	if [[ -f /etc/bash.bashrc.backup-before-nix ]]; then
+		writeLog "WARN" "Restoring /etc/bash.bashrc"
+		sudo rm -f /etc/bash.bashrc || true
+		sudo mv /etc/bash.bashrc.backup-before-nix /etc/bash.bashrc || {
+			writeLog "ERROR" "Failed to restore /etc/bash.bashrc"
+			return 1
+		}
+	fi
+
+	# If there is a backup profile/nix.sh file, restore it before upgrading.
+	if [[ -f /etc/profile.d/nix.sh.backup-before-nix ]]; then
+		writeLog "WARN" "Restoring /etc/profile.d/nix.sh"
+		sudo rm -f /etc/profile.d/nix.sh || true
+		sudo mv /etc/profile.d/nix.sh.backup-before-nix /etc/profile.d/nix.sh || {
+			writeLog "ERROR" "Failed to restore /etc/profile.d/nix.sh"
+			return 1
+		}
+	fi
+
+	# If there is a backup /etc/zshrc file, restore it before upgrading.
+	if [[ -f /etc/zshrc.backup-before-nix ]]; then
+		writeLog "WARN" "Restoring /etc/zshrc"
+		sudo rm -f /etc/zshrc || true
+		sudo mv /etc/zshrc.backup-before-nix /etc/zshrc || {
+			writeLog "ERROR" "Failed to restore /etc/zshrc"
+			return 1
+		}
+	fi
+
+	sudo rm -f /tmp/nix-install.sh || true
+	curl -sf -L https://nixos.org/nix/install -o /tmp/nix-install.sh || {
+		writeLog "ERROR" "Failed to download Nix installer."
+		return 1
+	}
+
+	chmod +x /tmp/nix-install.sh
+	sudo /tmp/nix-install.sh \
+		--daemon \
+		--no-modify-profile \
+		--yes ||
+		{
+			writeLog "ERROR" "Failed to install Nix!"
+			return 1
+		}
+
+	sudo tee "/etc/nix/nix.conf" >/dev/null <<-EOF
+		# Nix daemon configuration
+
+		allowed-users = *
+
+		auto-optimise-store = true
+
+		build-users-group = nixbld
+		builders =
+		cores = 0
+		extra-sandbox-paths =
+		sandbox-build-dir = /nix/sandbox/build
+		max-jobs = auto
+		require-sigs = true
+		sandbox = true
+		sandbox-fallback = false
+
+		min-free = 10737418240
+
+		keep-outputs = true
+		keep-derivations = true
+
+		trusted-users = root @sudo ${USER:-}
+
+		experimental-features = nix-command flakes
+	EOF
+
+	sudo systemctl daemon-reload || {
+		writeLog "ERROR" "Failed to reload systemctl daemon"
+		return 1
+	}
+
+	sudo systemctl restart nix-daemon || {
+		writeLog "ERROR" "Failed to restart nix-daemon"
+		return 1
+	}
+
+	popd || {
+		writeLog "ERROR" "Failed to pop out of dotfiles directory"
+		return 1
+	}
+
+	return 0
+
+}
+
 function nix-uninstall() {
 
 	local NIX_STORE_HOME="/nix"
@@ -17,7 +157,7 @@ function nix-uninstall() {
 		writeLog "INFO" "Uninstalling Nix"
 
 		sudo rm -rf "${HOME}/"{.nix-channels,.nix-defexpr,.nix-profile,.config/nixpkgs} || {
-			writeLog "WARNING" 'Failed to remove all Nix directories in $HOME'
+			writeLog "WARNING" "Failed to remove all Nix directories in HOME"
 		}
 
 		sudo rm -rf /root/{.nix-channels,.nix-defexpr,.nix-profile,.config/nixpkgs} || {
@@ -26,26 +166,54 @@ function nix-uninstall() {
 
 		sudo rm -f /etc/profile.d/nix.sh* || {
 			writeLog "ERROR" "Failed to remove nix.sh profile"
-			return 1
 		}
 
 		sudo rm -rf "${NIX_STORE_HOME}" || {
 			writeLog "ERROR" "Failed to remove Nix Store home"
-			return 1
 		}
 
 		sudo rm -rf "${NIX_STORE_CONFIG}" || {
 			writeLog "ERROR" "Failed to remove Nix Store config"
-			return 1
 		}
 
 		sudo rm -f "${NIX_PROFILE_SCRIPT}" || {
 			writeLog "ERROR" "Failed to remove Nix Profile script"
-			return 1
 		}
+
+		# If there is a backup bashrc file, restore it before upgrading.
+		if [[ -f /etc/bash.bashrc.backup-before-nix ]]; then
+			writeLog "WARN" "Restoring /etc/bash.bashrc"
+			sudo rm -f /etc/bash.bashrc || true
+			sudo mv /etc/bash.bashrc.backup-before-nix /etc/bash.bashrc || {
+				writeLog "ERROR" "Failed to restore /etc/bash.bashrc"
+			}
+		fi
+
+		# If there is a backup profile/nix.sh file, restore it before upgrading.
+		if [[ -f /etc/profile.d/nix.sh.backup-before-nix ]]; then
+			writeLog "WARN" "Restoring /etc/profile.d/nix.sh"
+			sudo rm -f /etc/profile.d/nix.sh || true
+			sudo mv /etc/profile.d/nix.sh.backup-before-nix /etc/profile.d/nix.sh || {
+				writeLog "ERROR" "Failed to restore /etc/profile.d/nix.sh"
+			}
+		fi
+
+		# If there is a backup /etc/zshrc file, restore it before upgrading.
+		if [[ -f /etc/zshrc.backup-before-nix ]]; then
+			writeLog "WARN" "Restoring /etc/zshrc"
+			sudo rm -f /etc/zshrc || true
+			sudo mv /etc/zshrc.backup-before-nix /etc/zshrc || {
+				writeLog "ERROR" "Failed to restore /etc/zshrc"
+			}
+		fi
+
+	else
+
+		writeLog "WARN" "Nix is not installed, skipping uninstall"
 
 	fi
 
+	writeLog "INFO" "Finished Nix uninstall"
 	return 0
 
 }
@@ -74,7 +242,7 @@ function _dotfiles_actions() {
 			"${EXTRA_ARGS[@]}" || {
 
 			writeLog "ERROR" "Failed to perform NixOS ${ACTION,,}"
-			popd >/dev/null 2>&1
+			popd >/dev/null 2>&1 || true
 			return 1
 
 		}
@@ -90,7 +258,7 @@ function _dotfiles_actions() {
 			"${EXTRA_ARGS[@]}" || {
 
 			writeLog "ERROR" "Failed to perform Nix Home Manager ${ACTION,,}"
-			popd >/dev/null 2>&1
+			popd >/dev/null 2>&1 || true
 			return 1
 
 		}
@@ -289,13 +457,13 @@ function dotfiles() {
 
 			nix-channel --update || {
 				writeLog "ERROR" "Failed to update Nix channel"
-				popd >/dev/null 2>&1
+				popd >/dev/null 2>&1 || true
 				return 1
 			}
 
 			nix flake update || {
 				writeLog "ERROR" "Failed to update Nix flake"
-				popd >/dev/null 2>&1
+				popd >/dev/null 2>&1 || true
 				return 1
 			}
 
@@ -305,13 +473,13 @@ function dotfiles() {
 
 			nix-channel --update || {
 				writeLog "ERROR" "Failed to update Nix channel"
-				popd >/dev/null 2>&1
+				popd >/dev/null 2>&1 || true
 				return 1
 			}
 
 			nix flake update || {
 				writeLog "ERROR" "Failed to update Nix flake"
-				popd >/dev/null 2>&1
+				popd >/dev/null 2>&1 || true
 				return 1
 			}
 
@@ -329,7 +497,7 @@ function dotfiles() {
 
 			nix-collect-garbage --delete-older-than 7d || {
 				writeLog "ERROR" "Failed to collect Nix garbage"
-				popd >/dev/null 2>&1
+				popd >/dev/null 2>&1 || true
 				return 1
 			}
 
@@ -339,7 +507,7 @@ function dotfiles() {
 
 			nix-collect-garbage --delete-older-than 7d || {
 				writeLog "ERROR" "Failed to collect Nix garbage"
-				popd >/dev/null
+				popd >/dev/null 2>&1 || true
 				return 1
 			}
 

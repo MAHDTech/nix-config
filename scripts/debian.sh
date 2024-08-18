@@ -11,6 +11,8 @@ export LINUX_USER="${USER}"
 
 INIT_SYSTEM=$(ps --no-headers -o comm 1)
 
+export NIXPKGS_ALLOW_UNFREE=1
+
 # If this is WSL, we need to give-in and enable systemd :(
 case "${OS_LAYER^^}" in
 
@@ -102,10 +104,13 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		}
 
 		chmod +x /tmp/nix-install.sh
-		sudo /tmp/nix-install.sh --daemon || {
-			writeLog "ERROR" "Failed to install Nix!"
-			exit 1
-		}
+		sudo /tmp/nix-install.sh \
+			--daemon \
+			--yes ||
+			{
+				writeLog "ERROR" "Failed to install Nix!"
+				exit 1
+			}
 
 		rm -f /tmp/install.nix
 
@@ -187,19 +192,48 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 	rm -f "$HOME/.bashrc" || true
 	rm -f "$HOME/.sommelierrc" || true
 
+	sudo systemctl restart nix-daemon || {
+		writeLog "ERROR" "Failed to restart nix-daemon"
+		exit 10
+	}
+	sleep 10
+
+	writeLog "INFO" "Adding nixpkgs channel"
+
+	nix-channel --add https://channels.nixos.org/nixpkgs-unstable nixpkgs || {
+		writeLog "ERROR" "Failed to add nixpkgs channel"
+		exit 10
+	}
+
+	nix-channel --update || {
+		writeLog "ERROR" "Failed to update nixpkgs channel"
+		exit 10
+	}
+
 	# There have been issues linking in the past, try both methods.
 	# Method 1: Bootstrap into home-manager environment.
-	nix run --impure ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
+	NIX_BIN=/nix/var/nix/profiles/default/bin/nix
+	$NIX_BIN run --impure ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
 
 		writeLog "WARN" "Failed to run Home Manager config for user ${LINUX_USER}, trying backup method"
 
-		nix build --impure --no-link ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
-			writeLog "ERROR" "Failed to build Home Manager config for user ${LINUX_USER}"
+		sudo groupadd --force nix-users || {
+			writeLog "ERROR" "Failed to create a nix-users group"
+			exit 7
+		}
+
+		sudo usermod --append --groups nix-users "${LINUX_USER}" || {
+			writeLog "ERROR" "Failed to add user ${LINUX_USER} to nix-users group!"
 			exit 8
 		}
 
-		sudo groupadd --force nix-users || {
-			writeLog "ERROR" "Failed to create a nix-users group"
+		sudo mkdir --parents --mode 0777 /nix/var/nix/{profiles,gcroots}/per-user || {
+			writeLog "ERROR" "Failed to create required directories for per-user"
+			exit 9
+		}
+
+		sudo chmod -R 0777 /nix/var/nix/{profiles,gcroots} || {
+			writeLog "ERROR" "Failed to set initial profile and gcroots permissions"
 			exit 9
 		}
 
@@ -213,24 +247,19 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 			exit 11
 		}
 
-		sudo chown -R "${LINUX_USER}:nix-users" /nix/var/nix/{profiles,gcroots}/per-user/"${LINUX_USER}" || {
-			writeLog "ERROR" "Failed to chown required directories for $LINUX_USER"
-			exit 12
-		}
-
-		sudo chown -R "${LINUX_USER}:nix-users" /nix/var/nix/{profiles,gcroots}/per-user/"$(id -u)" || {
-			writeLog "ERROR" "Failed to chown required directories for $(id -u)"
-			exit 13
-		}
-
 		sudo ln -srf /nix/var/nix/profiles/per-user/"$(id -u)" /nix/var/nix/profiles/per-user/"$(id -un)" || {
 			writeLog "ERROR" "Failed to create required symlink from $(id -u) to $(id -un)"
 			exit 14
 		}
 
-		"$(nix path-info --impure ".#homeConfigurations.${LINUX_USER}.activationPackage")"/activate || {
-			writeLog "ERROR" "Failed to activate Home Manager"
+		$NIX_BIN build --impure --no-link ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
+			writeLog "ERROR" "Failed to build Home Manager config for user ${LINUX_USER}"
 			exit 15
+		}
+
+		"$($NIX_BIN path-info --impure ".#homeConfigurations.${LINUX_USER}.activationPackage")"/activate || {
+			writeLog "ERROR" "Failed to activate Home Manager"
+			exit 16
 		}
 
 	}
