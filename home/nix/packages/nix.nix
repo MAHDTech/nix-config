@@ -1,8 +1,8 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
     alejandra
-    cachix
-    devenv
+    #cachix # nix profile...
+    #devenv # nix profile...
     nil
     nixos-generators
     nixpkgs-fmt
