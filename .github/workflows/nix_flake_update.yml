@@ -36,7 +36,7 @@ jobs:
         name: "Enable Cachix ❄️"
         uses: cachix/cachix-action@v15
         with:
-          name: ${{ env.CACHIX_CACHE_NAME }}
+          name: ${{ vars.CACHIX_CACHE_NAME }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           useDaemon: true
           skipPush: false
