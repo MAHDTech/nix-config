@@ -49,14 +49,16 @@ jobs:
         name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@v23
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           sign-commits: false
-          gpg-fingerprint: ${{ secrets.GPG_FINGERPRINT }}
-          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          #gpg-fingerprint: ${{ secrets.GPG_FINGERPRINT }}
+          #gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          #gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           git-author-email: "github-actions@users.noreply.github.com"
           git-author-name: "Nix Flake Bot"
           git-committer-email: "github-actions@users.noreply.github.com"
           git-committer-name: "Nix Flake Bot"
+          pr-title: "Update flake.lock"
 
       - id: print_pr_number
         name: Pull request number
