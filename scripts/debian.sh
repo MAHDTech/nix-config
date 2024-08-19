@@ -133,9 +133,11 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 	sudo tee "/etc/nix/nix.conf" >/dev/null <<-EOF
 		# Nix daemon configuration
 
-		allowed-users = *
+		allowed-users = @nix-users
 
 		auto-optimise-store = true
+
+		allow-dirty = true
 
 		build-users-group = nixbld
 		builders =
@@ -152,7 +154,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		keep-outputs = true
 		keep-derivations = true
 
-		trusted-users = root @sudo $LINUX_USER
+		trusted-users = root @sudo @wheel @nix-users
 
 		experimental-features = nix-command flakes
 	EOF
