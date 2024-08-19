@@ -9,13 +9,12 @@ on:
 
 permissions:
   contents: write
+  packages: read
   pull-requests: write
   statuses: read
 
 env:
   NIXPKGS_ALLOW_UNFREE: 1
-
-  CACHIX_CACHE_NAME: salt-labs
 
 jobs:
   nix:
@@ -25,6 +24,9 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: false
+          submodules: recursive
 
       - id: install_nix
         name: "Install Nix ❄️"
@@ -36,6 +38,12 @@ jobs:
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          useDaemon: true
+          skipPush: false
+
+      - id: cache
+        name: Magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
 
       - id: update_nix_flake
         name: Update flake.lock

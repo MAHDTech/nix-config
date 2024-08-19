@@ -10,21 +10,21 @@ on:
     branches:
       - "trunk"
     paths:
-      - .github/workflows/**
+      - .github/workflows/devenv.yaml
       - devenv.nix
-      - flake.lock
-      - flake.nix
-      - nix/**
-      - nixos/**
-      - scripts/*
+      - devenv.yaml
+      - devenv.lock
+      - devenv/**
 
 permissions:
-  contents: read
-  packages: read
-  pull-requests: read
+  contents: write
+  packages: write
+  pull-requests: write
   statuses: read
 
 env:
+  NIXPKGS_ALLOW_UNFREE: 1
+
   PROJECT: ${{ github.repository }}
 
   BRANCH_NAME_CURRENT: ${{ github.head_ref || github.ref_name }}
@@ -52,7 +52,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
 
     steps:
       - id: checkout_repository
@@ -65,35 +64,34 @@ jobs:
       - id: install_nix
         name: "Install Nix ❄️"
         uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          enable_kvm: true
 
       - id: cachix
         name: "Enable Cachix ❄️"
         uses: cachix/cachix-action@v15
         with:
-          name: salt-labs
+          name: ${{ env.CACHIX_CACHE_NAME }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          useDaemon: true
+          skipPush: false
 
-      - id: configure_nix
-        name: Configure Nix
-        env:
-          NIX_CONFIG_HOME: "~/.config/nix"
-        run: |
-          mkdir -p "$NIX_CONFIG_HOME"
-          cat <<- EOF >> "$NIX_CONFIG_HOME/nix.conf"
-          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-          EOF
+      - id: cache
+        name: Magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - id: install_devenv
-        name: Install devenv
+      - id: devenv_install
+        name: Devenv install
         run: |
-          nix profile install github:cachix/devenv/latest
+          nix profile install nixpkgs#devenv
 
-      - id: devenv_ci
-        name: Devenv CI
+      - id: devenv_gc
+        name: Devenv gc
         run: |
-          devenv ci
+          devenv gc
 
-      - id: devenv_shell
-        name: Devenv Shell
+      - id: devenv_test
+        name: Devenv test
         run: |
-          devenv shell echo "Development environment OK!"
+          devenv test
