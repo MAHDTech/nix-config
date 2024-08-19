@@ -54,6 +54,16 @@ function nix-upgrade-daemon() {
 	}
 
 	# If there is a backup bashrc file, restore it before upgrading.
+	if [[ -f /etc/bashrc.backup-before-nix ]]; then
+		writeLog "WARN" "Restoring /etc/bash.bashrc"
+		sudo rm -f /etc/bashrc || true
+		sudo mv /etc/bashrc.backup-before-nix /etc/bashrc || {
+			writeLog "ERROR" "Failed to restore /etc/bashrc"
+			return 1
+		}
+	fi
+
+	# If there is a backup bash.bashrc file, restore it before upgrading.
 	if [[ -f /etc/bash.bashrc.backup-before-nix ]]; then
 		writeLog "WARN" "Restoring /etc/bash.bashrc"
 		sudo rm -f /etc/bash.bashrc || true
@@ -536,6 +546,11 @@ function dotfiles() {
 }
 
 function dotfiles_all_the_things() {
+
+	nix-channel --update || {
+		writeLog "ERROR" "Failed to update nix channels"
+		return 1
+	}
 
 	dotfiles update || {
 		writeLog "ERROR" "Failed to update dotfiles"
