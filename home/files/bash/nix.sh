@@ -29,15 +29,15 @@ function nix-upgrade-daemon() {
 			return 1
 		}
 
-		nix profile upgrade cachix || {
-			writeLog "ERROR" "Failed to upgrade cachix profile"
-			return 1
-		}
+		#nix profile upgrade cachix || {
+		#	writeLog "ERROR" "Failed to upgrade cachix profile"
+		#	return 1
+		#}
 
-		nix profile upgrade devenv || {
-			writeLog "ERROR" "Failed to upgrade devenv profile"
-			return 1
-		}
+		#nix profile upgrade devenv || {
+		#	writeLog "ERROR" "Failed to upgrade devenv profile"
+		#	return 1
+		#}
 
 		writeLog "INFO" "Upgrading Nix Daemon"
 

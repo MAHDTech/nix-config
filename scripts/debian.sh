@@ -288,19 +288,19 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		exit 16
 	}
 
-	writeLog "INFO" "Installing cachix"
+	#writeLog "INFO" "Installing cachix"
 
-	nix profile install --accept-flake-config nixpkgs#cachix || {
-		writeLog "ERROR" "Failed to install cachix"
-		exit 17
-	}
+	#nix profile install --accept-flake-config nixpkgs#cachix || {
+	#	writeLog "ERROR" "Failed to install cachix"
+	#	exit 17
+	#}
 
-	writeLog "INFO" "Installing devenv"
+	#writeLog "INFO" "Installing devenv"
 
-	nix profile install --accept-flake-config nixpkgs#devenv || {
-		writeLog "ERROR" "Failed to install devenv"
-		exit 18
-	}
+	#nix profile install --accept-flake-config nixpkgs#devenv || {
+	#	writeLog "ERROR" "Failed to install devenv"
+	#	exit 18
+	#}
 
 	popd 1>/dev/null 2>&1 || true
 
