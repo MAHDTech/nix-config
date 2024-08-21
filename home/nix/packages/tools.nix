@@ -1,17 +1,10 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
+{pkgs, ...}: {
   home.packages = with pkgs; [
     bat
     bottom
     btop
     bzip2
+    charasay
     curlFull
     dos2unix
     edid-decode
@@ -44,7 +37,7 @@ in {
     shellcheck
     socat
     sops
-    #tailscale
+    tailscale
     tokei
     tree
     unzip
@@ -56,5 +49,4 @@ in {
     xxd
     zip
   ];
-  #++ unstablePkgs;
 }

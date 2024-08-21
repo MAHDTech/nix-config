@@ -202,8 +202,11 @@
 
           # Run rsync to backup the projects.
           rsync \
+            --progress \
             --archive \
             --verbose \
+            --human-readable \
+            --partial \
             --delete \
             --force \
             --exclude=".devenv" \
@@ -229,8 +232,11 @@
 
           # Run rsync to backup the projects.
           rsync \
+            --progress \
             --archive \
             --verbose \
+            --human-readable \
+            --partial \
             --exclude=".devenv" \
             --exclude=".direnv" \
             "''${PROJECTS_REMOTE}" \

@@ -165,105 +165,72 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		writeLog "ERROR" "Failed to restart the Nix daemon"
 		exit 3
 	}
-
-	if [[ ${CACHIX_AUTH_TOKEN:-EMPTY} != "EMPTY" ]]; then
-		writeLog "INFO" "Install Cachix"
-		nix-env -iA cachix -f https://cachix.org/api/v1/install || {
-			writeLog "ERROR" "Failed to install Cachix"
-			exit 4
-		}
-
-		cachix authtoken "${CACHIX_AUTH_TOKEN}" || {
-			writeLog "ERROR" "Failed to set Cachix auth token"
-			exit 5
-		}
-
-		if [[ ${CACHIX_CACHE_NAME:-EMPTY} != "EMPTY" ]]; then
-
-			cachix use "${CACHIX_CACHE_NAME}" || {
-				writeLog "ERROR" "Failed to run 'cachix use ${CACHIX_CACHE_NAME}"
-				exit 6
-			}
-		fi
-
-	fi
+	sleep 10
 
 	writeLog "INFO" "Bootstrap Home Manager user configuration for $LINUX_USER"
 
 	rm -f "$HOME/.profile" || true
 	rm -f "$HOME/.bashrc" || true
 	rm -f "$HOME/.sommelierrc" || true
+	rm -rf "$HOME/.local/state/nix/profiles/home-manager"* || true
+	rm -rf "$HOME/.local/state/home-manager/gcroots/current-home" || true
 
-	sudo systemctl restart nix-daemon || {
-		writeLog "ERROR" "Failed to restart nix-daemon"
-		exit 10
-	}
-	sleep 10
-
-	writeLog "INFO" "Adding nixpkgs channel"
-
-	nix-channel --add https://channels.nixos.org/nixpkgs-unstable nixpkgs || {
-		writeLog "ERROR" "Failed to add nixpkgs channel"
-		exit 10
+	sudo groupadd --force nix-users || {
+		writeLog "ERROR" "Failed to create a nix-users group"
+		exit 7
 	}
 
-	nix-channel --update || {
-		writeLog "ERROR" "Failed to update nixpkgs channel"
+	sudo usermod --append --groups nix-users "${LINUX_USER}" || {
+		writeLog "ERROR" "Failed to add user ${LINUX_USER} to nix-users group!"
+		exit 8
+	}
+
+	sudo mkdir --parents --mode 0755 /nix/var/nix/{profiles,gcroots}/per-user/"${LINUX_USER}" || {
+		writeLog "ERROR" "Failed to create required directories for $LINUX_USER"
 		exit 10
 	}
 
-	# There have been issues linking in the past, try both methods.
-	# Method 1: Bootstrap into home-manager environment.
-	NIX_BIN=/nix/var/nix/profiles/default/bin/nix
-	$NIX_BIN run --impure ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
+	sudo mkdir --parents --mode 0755 /nix/var/nix/{profiles,gcroots}/per-user/"$(id -u)" || {
+		writeLog "ERROR" "Failed to create required directories for $(id -u)"
+		exit 11
+	}
 
-		writeLog "WARN" "Failed to run Home Manager config for user ${LINUX_USER}, trying backup method"
+	sudo ln -srf /nix/var/nix/profiles/per-user/"$(id -u)" /nix/var/nix/profiles/per-user/"$(id -un)" || {
+		writeLog "ERROR" "Failed to create required symlink from $(id -u) to $(id -un)"
+		exit 14
+	}
 
-		sudo groupadd --force nix-users || {
-			writeLog "ERROR" "Failed to create a nix-users group"
-			exit 7
-		}
+	sudo chown -R "root:nix-users" "/nix" || {
+		writeLog "ERROR" "Failed to change ownership of /nix"
+		exit 15
+	}
 
-		sudo usermod --append --groups nix-users "${LINUX_USER}" || {
-			writeLog "ERROR" "Failed to add user ${LINUX_USER} to nix-users group!"
-			exit 8
-		}
+	sudo chown -R "${LINUX_USER}:${LINUX_USER}" /nix/var/nix/{profiles,gcroots}/per-user/"${LINUX_USER}" || {
+		writeLog "ERROR" "Failed to change ownership of /nix/var/nix/{profiles,gcroots}/per-user/${LINUX_USER}"
+		exit 16
+	}
 
-		sudo mkdir --parents --mode 0777 /nix/var/nix/{profiles,gcroots}/per-user || {
-			writeLog "ERROR" "Failed to create required directories for per-user"
-			exit 9
-		}
+	sudo chown -R "${LINUX_USER}:${LINUX_USER}" /nix/var/nix/{profiles,gcroots}/per-user/"$(id -u)" || {
+		writeLog "ERROR" "Failed to change ownership of /nix/var/nix/{profiles,gcroots}/per-user/$(id -u)"
+		exit 17
+	}
 
-		sudo chmod -R 0777 /nix/var/nix/{profiles,gcroots} || {
-			writeLog "ERROR" "Failed to set initial profile and gcroots permissions"
-			exit 9
-		}
+	# HACK: https://github.com/NixOS/nix/issues/10421
+	sudo chown -R "${LINUX_USER}:${LINUX_USER}" /nix || {
+		writeLog "ERROR" "Failed to change ownership of /nix"
+		exit 18
+	}
 
-		sudo mkdir --parents --mode 0755 /nix/var/nix/{profiles,gcroots}/per-user/"${LINUX_USER}" || {
-			writeLog "ERROR" "Failed to create required directories for $LINUX_USER"
-			exit 10
-		}
+	NIX_BIN="/nix/var/nix/profiles/default/bin/nix"
 
-		sudo mkdir --parents --mode 0755 /nix/var/nix/{profiles,gcroots}/per-user/"$(id -u)" || {
-			writeLog "ERROR" "Failed to create required directories for $(id -u)"
-			exit 11
-		}
+	$NIX_BIN build --impure --no-link ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
+		writeLog "ERROR" "Failed to build Home Manager config for user ${LINUX_USER}"
+		exit 15
+	}
 
-		sudo ln -srf /nix/var/nix/profiles/per-user/"$(id -u)" /nix/var/nix/profiles/per-user/"$(id -un)" || {
-			writeLog "ERROR" "Failed to create required symlink from $(id -u) to $(id -un)"
-			exit 14
-		}
-
-		$NIX_BIN build --impure --no-link ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
-			writeLog "ERROR" "Failed to build Home Manager config for user ${LINUX_USER}"
-			exit 15
-		}
-
-		"$($NIX_BIN path-info --impure ".#homeConfigurations.${LINUX_USER}.activationPackage")"/activate || {
-			writeLog "ERROR" "Failed to activate Home Manager"
-			exit 16
-		}
-
+	"$($NIX_BIN path-info --impure ".#homeConfigurations.${LINUX_USER}.activationPackage")"/activate || {
+		writeLog "ERROR" "Failed to activate Home Manager"
+		exit 16
 	}
 
 	# So nix ignores any flake.nix in the current dir if the location is external.

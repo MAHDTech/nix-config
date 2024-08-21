@@ -387,7 +387,9 @@ if checkBin figlet; then
 	figlet dotfiles
 fi
 
-if checkBin fortune; then
+if checkBin chara && checkBin fortune; then
+	fortune | chara say --bubble-type round --random
+elif checkBin fortune; then
 	fortune
 fi
 
