@@ -48,5 +48,8 @@
     xsv
     xxd
     zip
+
+    # Nix
+    nix-du
   ];
 }
