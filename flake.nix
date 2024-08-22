@@ -1,17 +1,26 @@
 {
   description = "Home Manager configuration";
 
+  nixConfig = {
+    extra-substituters = "https://devenv.cachix.org https://salt-labs.cachix.org";
+    extra-trusted-public-keys = "
+      devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+      salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
+    ";
+    extra-experimental-features = "nix-command flakes";
+  };
+
   inputs = {
     nixpkgs = {
       type = "github";
-      # TODO: Revert when rolling is updated.
+      # TODO: Revert when the rolling branch is updated.
       # https://github.com/cachix/devenv-nixpkgs/issues/2
       #owner = "cachix";
       #repo = "devenv-nixpkgs";
       #ref = "rolling";
       owner = "NixOS";
       repo = "nixpkgs";
-      ref = "nixos-24.05";
+      ref = "nixos-unstable";
       flake = true;
     };
 
@@ -35,7 +44,7 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      ref = "release-24.05";
+      ref = "master";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -57,11 +66,6 @@
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
-  };
-
-  nixConfig = {
-    extra-trusted-public-keys = "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=";
-    extra-substituters = "https://devenv.cachix.org";
   };
 
   outputs = {
@@ -294,11 +298,12 @@
                       "github.copilot"
                       "github.copilot-chat"
                       "github.vscode-github-actions"
+                      "jnoortheen.nix-ide"
+                      "johnpapa.vscode-peacock"
                       "kamadorueda.alejandra"
                       "mkhl.direnv"
                       "ms-azuretools.vscode-docker"
                       "nhoizey.gremlins"
-                      "johnpapa.vscode-peacock"
                       "pinage404.nix-extension-pack"
                       "redhat.vscode-yaml"
                       "streetsidesoftware.code-spell-checker"
