@@ -6,6 +6,7 @@
     bzip2
     charasay
     curlFull
+    complete-alias
     dos2unix
     edid-decode
     eza
