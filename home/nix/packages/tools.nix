@@ -44,6 +44,7 @@
     unzip
     usbutils
     ventoy-full
+    which
     wget
     xdotool
     xsv
