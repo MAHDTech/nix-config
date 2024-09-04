@@ -1,5 +1,4 @@
 {
-  inputs,
   config,
   pkgs,
   ...
@@ -15,16 +14,25 @@
 #     ykman openpgp keys set-touch aut on
 #     ykman openpgp keys set-touch sig on
 #     ykman openpgp keys set-touch enc on
+#
+#     gpg --card-status
+#
+#   For importing from YubiKey;
+#     gpg --card-edit
+#     fetch
+#   Or;
+#     gpg --import key.asc
+#
+#   For WSL v2 nonsense, see
+#     https://learn.microsoft.com/en-us/windows/wsl/connect-usb
+#
 ##################################################
-let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs; []; #++ unstablePkgs;
+{
+  home.packages = with pkgs; [
+  ];
 
   programs.gpg = {
-    enable = false;
+    enable = true;
 
     package = pkgs.gnupg;
 
@@ -44,17 +52,17 @@ in {
       disable-ccid = false;
 
       # Set a name for the reader port (YubiKey 4 or NEO)
-      #reader-port "Yubico Yubikey" ;
+      #reader-port = "Yubico Yubikey" ;
 
       # Set a name for the reader port (YubiKey 5)
-      #reader-port "Yubico Yubi" ;
+      reader-port = "Yubico Yubi";
     };
 
     # Define GPG user settings.
     # gpgconf --list-options gpg-agent
     settings = {
       # Set the default key
-      #default-key = "MAHDTech (Salt Labs) <mahdtech@saltlabs.tech>" ;
+      default-key = "MAHDTech (Salt Labs) <mahdtech@saltlabs.tech>";
 
       # Disable inclusion of the version string in ASCII armored output
       no-emit-version = true;

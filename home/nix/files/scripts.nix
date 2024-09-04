@@ -93,6 +93,11 @@
           echo "Failed to prune unused volumes, skipping..."
         }
 
+        # Prune buildx cache
+        docker buildx prune --force || {
+          echo "Failed to prune buildx cache, skipping..."
+        }
+
         # If force was on, remove all volumes as well.
         if [[ "''${FORCE:-NONE}" == "FORCE" ]]; then
           docker volume prune --all --force || {

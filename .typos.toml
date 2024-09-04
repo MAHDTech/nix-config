@@ -1,0 +1,28 @@
+[default]
+
+locale = "en-au"
+
+extend-ignore-re = [
+    "^[ \t]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*^[ \t]*-----END PGP PUBLIC KEY BLOCK-----"
+]
+
+[default.extend-words]
+
+# Hashicorp is a real company name.
+hashicorp = "hashicorp"
+hashi = "hashi"
+
+guage = "guage"
+customizations = "customizations"
+
+[files]
+
+ignore-vcs = true
+
+extend-exclude = [
+  "*.drawio",
+  ".devenv",
+  ".direnv",
+  ".git",
+  "vendor"
+]
