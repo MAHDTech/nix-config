@@ -47,7 +47,7 @@ jobs:
 
       - id: update_nix_flake
         name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@v23
+        uses: DeterminateSystems/update-flake-lock@v24
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sign-commits: false
