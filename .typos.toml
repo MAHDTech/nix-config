@@ -8,12 +8,11 @@ extend-ignore-re = [
 
 [default.extend-words]
 
-# Hashicorp is a real company name.
-hashicorp = "hashicorp"
-hashi = "hashi"
-
-guage = "guage"
+center = "center"
 customizations = "customizations"
+guage = "guage"
+hashi = "hashi"
+hashicorp = "hashicorp"
 
 [files]
 

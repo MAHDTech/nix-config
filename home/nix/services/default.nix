@@ -1,7 +1,9 @@
 {
   imports = [
     ./gnome-keyring.nix
-    ./systemd.nix
+    #./kwallet.nix
+    ./pass-secret-service.nix
     ./smartcards.nix
+    ./systemd.nix
   ];
 }

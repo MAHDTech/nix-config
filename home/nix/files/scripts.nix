@@ -1,5 +1,46 @@
 {config, ...}: {
   home.file = {
+    "cursor-install" = {
+      target = "${config.home.homeDirectory}/.local/bin/cursor-install";
+      executable = true;
+
+      text = ''
+        #!/usr/bin/env bash
+
+        echo "Installing cursor..."
+
+        sudo apt install --yes libfuse2 libnss3 || {
+          echo "Failed to install dependencies!"
+          exit 1
+        }
+
+        mkdir -p ~/Apps || {
+          echo "Failed to create directory!"
+          exit 2
+        }
+
+        wget \
+          --output-document ~/Apps/cursor.AppImage \
+          "https://downloader.cursor.sh/linux/appImage/x64" || {
+            echo "Failed to download cursor"
+            exit 3
+          }
+
+        chmod +x ~/Apps/cursor.AppImage || {
+          echo "Failed to chmod cursor!"
+          exit 4
+        }
+
+        sudo ln -sf ~/Apps/cursor.AppImage /usr/local/bin/cursor || {
+          echo "Failed to symlink cursor!"
+          exit 5
+        }
+
+        echo "Finished installing cursor!"
+        exit 0
+      '';
+    };
+
     "docker-tags" = {
       target = "${config.home.homeDirectory}/.local/bin/docker-tags";
       executable = true;

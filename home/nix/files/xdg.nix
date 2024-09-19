@@ -1,15 +1,9 @@
 {
-  inputs,
   config,
   pkgs,
   ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs; [xdg-user-dirs xdg-utils]; #++ unstablePkgs;
-
+}: {
+  home.packages = with pkgs; [xdg-user-dirs xdg-utils];
   xdg = {
     enable = true;
 
@@ -39,6 +33,41 @@ in {
           vo=gpu
           profile=gpu-hq
           gpu-context=wayland
+        '';
+      };
+    };
+
+    dataFile = {
+      "1password.desktop" = {
+        target = "applications/1password.desktop";
+
+        text = ''
+          [Desktop Entry]
+          Name=1Password
+          Exec=${config.home.homeDirectory}/.nix-profile/bin/1password %U
+          Terminal=false
+          Type=Application
+          Icon=1password
+          StartupWMClass=1Password
+          Comment=Password manager and secure wallet
+          MimeType=x-scheme-handler/onepassword;
+          Categories=Office;
+        '';
+      };
+
+      "cursor.desktop" = {
+        target = "applications/cursor.desktop";
+
+        text = ''
+          Name=Cursor
+          Exec=/usr/local/bin/cursor --no-sandbox %U
+          Terminal=false
+          Type=Application
+          Icon=cursor
+          StartupWMClass=Cursor
+          Comment=Cursor is an AI-first coding environment.
+          MimeType=x-scheme-handler/cursor;
+          Categories=Utility;
         '';
       };
     };

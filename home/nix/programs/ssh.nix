@@ -65,6 +65,94 @@
         user = "git";
       };
 
+      "ntnx-ahv-1" = {
+        host = "ntnx-ahv-1.saltlabs.cloud";
+        hostname = "ntnx-ahv-1.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-ahv-2" = {
+        host = "ntnx-ahv-2.saltlabs.cloud";
+        hostname = "ntnx-ahv-2.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-ahv-3" = {
+        host = "ntnx-ahv-3.saltlabs.cloud";
+        hostname = "ntnx-ahv-3.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-ahv-4" = {
+        host = "ntnx-ahv-4.saltlabs.cloud";
+        hostname = "ntnx-ahv-4.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-cvm-1" = {
+        host = "ntnx-cvm-1.saltlabs.cloud";
+        hostname = "ntnx-cvm-1.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-cvm-2" = {
+        host = "ntnx-cvm-2.saltlabs.cloud";
+        hostname = "ntnx-cvm-2.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-cvm-3" = {
+        host = "ntnx-cvm-3.saltlabs.cloud";
+        hostname = "ntnx-cvm-3.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-cvm-4" = {
+        host = "ntnx-cvm-4.saltlabs.cloud";
+        hostname = "ntnx-cvm-4.saltlabs.cloud";
+        user = "nutanix";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
       "vim3" = {
         host = "vim3.saltlabs.cloud";
         hostname = "vim3.saltlabs.cloud";

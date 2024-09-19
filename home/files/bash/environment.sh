@@ -54,6 +54,14 @@ export KEY_TYPE="ed25519"
 export ENABLED_GPG_AGENT="gnupg"
 
 #########################
+# Keychain
+#########################
+
+# What keychain is managing local secrets?
+# Options are; home-manager or gnome-keyring
+export ENABLED_KEYRING_AGENT="home-manager"
+
+#########################
 # AWS
 #########################
 

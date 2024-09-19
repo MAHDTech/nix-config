@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##################################################
-# Name: gnome-keyring
-# Description: GNOME Keyring shennanigans.
+# Name: keyring
+# Description: Keyring shennanigans.
 ##################################################
 
 function unlock_gnome_keyring() {
@@ -20,7 +20,7 @@ function unlock_gnome_keyring() {
 
 }
 
-function set_vars_gnome_keyring() {
+function setup_gnome_keyring() {
 
 	if [[ ${GNOME_KEYRING_CONTROL:EMPTY} == "EMPTY" ]]; then
 		writeLog "ERROR" "The variable GNOME_KEYRING_CONTROL is empty!"
@@ -44,12 +44,19 @@ function set_vars_gnome_keyring() {
 		export GPG_AGENT_INFO="${GPG_AGENT_INFO:=$GNOME_KEYRING_CONTROL/gpg:0:1}"
 	fi
 
+	if [[ ! -d ${GNOME_KEYRING_LOCAL} ]]; then
+		mkdir --parents "${GNOME_KEYRING_LOCAL}" || {
+			writeLog "ERROR" "Failed to create local gnome-keyring directory"
+		}
+	fi
+
 	return 0
 
 }
 
-function start_gnome_keyring() {
+function start_keyring() {
 
+	export ENABLED_KEYRING_AGENT="${ENABLED_KEYRING_AGENT:-none}"
 	export XDG_RUNTIME_DIR
 	export GNOME_KEYRING_CONTROL
 	export GNOME_KEYRING_LOCAL
@@ -63,31 +70,38 @@ function start_gnome_keyring() {
 	# GNOME_KEYRING_LOCAL is set by GNOME Keyring or default to $HOME/.local/share/keyrings
 	GNOME_KEYRING_LOCAL="${GNOME_KEYRING_LOCAL:=$HOME/.local/share/keyrings}"
 
-	if type gnome-keyring 1>/dev/null 2>&1; then
+	case "${ENABLED_KEYRING_AGENT,,}" in
 
-		writeLog "DEBUG" "GNOME keyring is installed"
+	"home-manager")
 
-		set_vars_gnome_keyring || {
-			writeLog "ERROR" "Failed to set variables needed for gnome-keyring"
-			return 1
-		}
+		# If home manager is using gnome-keyring, give it a kick in the guts.
+		if type gnome-keyring 1>/dev/null 2>&1; then
 
-		if ! pgrep --full gnome-keyring-daemon >/dev/null; then
+			set_vars_gnome_keyring || {
+				writeLog "ERROR" "Failed to set variables needed for gnome-keyring"
+				return 1
+			}
+			systemctl --user restart gnome-keyring.service || {
+				writeLog "ERROR" "Failed to start the gnome-keyring user service"
+				return 1
+			}
 
-			writeLog "INFO" "Starting GNOME keyring daemon"
+		fi
 
-			# Home Manager now manages gnome-keyring as a systemd unit
-			if type home-manager >/dev/null 2>&1; then
+		;;
 
-				writeLog "DEBUG" "home-manager found, starting systemd unit"
+	"gnome-keyring")
 
-				systemctl --user restart gnome-keyring.service || {
-					writeLog "ERROR" "Failed to start the gnome-keyring user service"
-					return 1
-				}
+		if type gnome-keyring 1>/dev/null 2>&1; then
 
-			# Legacy
-			else
+			setup_gnome_keyring || {
+				writeLog "ERROR" "Failed to set variables needed for gnome-keyring"
+				return 1
+			}
+
+			if ! pgrep --full gnome-keyring-daemon >/dev/null; then
+
+				writeLog "INFO" "Starting GNOME keyring daemon"
 
 				# gpg is now no longer offered by gnome-keyring.
 				# ssh is now being used from 1Password instead of gnome-keyring.
@@ -96,31 +110,33 @@ function start_gnome_keyring() {
 					return 1
 				}
 
+			else
+
+				writeLog "INFO" "GNOME keyring daemon is already running"
+
 			fi
 
 		else
 
-			writeLog "INFO" "GNOME keyring daemon is already running"
+			writeLog "WARNING" "Gnome Keyring is not installed!"
 
 		fi
 
-		if [[ ! -d ${GNOME_KEYRING_LOCAL} ]]; then
-			mkdir --parents "${GNOME_KEYRING_LOCAL}" || {
-				writeLog "ERROR" "Failed to create local gnome-keyring directory"
-			}
-		fi
+		;;
 
-		# It was fucking DBUS!
-		# Don't remove this, took a while to find this fix!
-		dbus-update-activation-environment --systemd DISPLAY || {
-			writeLog "ERROR" "Failed to update dbus for GNOME Keyring"
-		}
+	*)
 
-	else
+		writeLog "WARN" "Unsupported or no keyring set in ENABLED_KEYRING_AGENT variable: ${ENABLED_KEYRING_AGENT}"
 
-		writeLog "WARNING" "Gnome Keyring is not installed!"
+		;;
 
-	fi
+	esac
+
+	# It was fucking DBUS!
+	# Don't remove this, took a while to find this fix!
+	dbus-update-activation-environment --systemd --all || {
+		writeLog "ERROR" "Failed to update dbus for GNOME Keyring"
+	}
 
 	return 0
 

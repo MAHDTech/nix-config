@@ -221,8 +221,9 @@
                   settings = {
                     configuration = {
                       MD013 = {
-                        line_length = 180;
+                        line_length = 200;
                       };
+                      MD033 = false;
                     };
                   };
                 };

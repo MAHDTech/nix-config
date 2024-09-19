@@ -372,51 +372,55 @@ sudo usermod --append --groups docker "$LINUX_USER" || {
 # Setup VSCode
 #########################
 
-# On ChromeOS, install VSCode
-# On WSL, use VSCode on Windows
+if [[ ${INSTALL_VSCODE^^} == "TRUE" ]]; then
 
-case "${OS_LAYER^^}" in
+	# On ChromeOS, install VSCode
+	# On WSL, use VSCode on Windows
 
-"CROSTINI")
+	case "${OS_LAYER^^}" in
 
-	writeLog "INFO" "Installing VSCode in Debian"
+	"CROSTINI")
 
-	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o packages.microsoft.gpg
+		writeLog "INFO" "Installing VSCode in Debian"
 
-	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+		wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o packages.microsoft.gpg
 
-	sudo tee "/etc/apt/sources.list.d/vscode.list" >/dev/null <<-EOF
-		deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main
-	EOF
+		sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
 
-	rm -f packages.microsoft.gpg docker.gpg
+		sudo tee "/etc/apt/sources.list.d/vscode.list" >/dev/null <<-EOF
+			deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main
+		EOF
 
-	sudo apt update || {
-		writeLog "ERROR" "Failed to update apt repo metadata"
-		exit 20
-	}
+		rm -f packages.microsoft.gpg docker.gpg
 
-	sudo apt install --yes \
-		code || {
-		writeLog "ERROR" "Failed to install dependant debs!"
-		exit 21
-	}
+		sudo apt update || {
+			writeLog "ERROR" "Failed to update apt repo metadata"
+			exit 20
+		}
 
-	;;
+		sudo apt install --yes \
+			code || {
+			writeLog "ERROR" "Failed to install dependant debs!"
+			exit 21
+		}
 
-"WSL")
+		;;
 
-	writeLog "INFO" "Skipping VSCode install in favour of using VSCode from Windows"
+	"WSL")
 
-	;;
+		writeLog "INFO" "Skipping VSCode install in favour of using VSCode from Windows"
 
-*)
+		;;
 
-	writeLog "INFO" "Unknown OS Layer ${OS_LAYER}"
+	*)
 
-	;;
+		writeLog "INFO" "Unknown OS Layer ${OS_LAYER}"
 
-esac
+		;;
+
+	esac
+
+fi
 
 #########################
 # Testing
@@ -442,21 +446,21 @@ sudo docker run \
 #########################
 
 sudo apt remove --yes \
-    curl \
-    git \
-    wget || {
-        writeLog "ERROR" "Failed to remove unnecessary packages"
-        exit 250
-    }
+	curl \
+	git \
+	wget || {
+	writeLog "ERROR" "Failed to remove unnecessary packages"
+	exit 250
+}
 
 sudo apt autoremove --yes || {
-    writeLog "ERROR" "Failed to run apt autoremove"
-    exit 251
+	writeLog "ERROR" "Failed to run apt autoremove"
+	exit 251
 }
 
 sudo apt autoclean --yes || {
-    writeLog "ERROR" "Failed to run apt autoclean"
-    exit 252
+	writeLog "ERROR" "Failed to run apt autoclean"
+	exit 252
 }
 
 #########################
