@@ -438,5 +438,27 @@ sudo docker run \
 }
 
 #########################
+# Cleanup
+#########################
+
+sudo apt remove --yes \
+    curl \
+    git \
+    wget || {
+        writeLog "ERROR" "Failed to remove unnecessary packages"
+        exit 250
+    }
+
+sudo apt autoremove --yes || {
+    writeLog "ERROR" "Failed to run apt autoremove"
+    exit 251
+}
+
+sudo apt autoclean --yes || {
+    writeLog "ERROR" "Failed to run apt autoclean"
+    exit 252
+}
+
+#########################
 # Finished
 #########################

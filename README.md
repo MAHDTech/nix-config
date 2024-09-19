@@ -227,7 +227,9 @@ sudo apt update
 sudo apt install --yes \
     git \
     curl \
-    wget
+    wget \
+    mesa-utils \
+    intel-gpu-tools
 
 ssh-keygen -t ed25519
 cat ~/.ssh/id_ed25519.pub
@@ -242,7 +244,7 @@ pushd "${NIX_CONFIG_DIR}"
 # Crostini cleanup just the temp key
 rm ~/.ssh/id_ed25519*
 
-# WSL cleanup all SSH and remove git in favour of home-manager
+# For WSL, cleanup all SSH as ssh.exe is used via aliases.
 rm -rf ~/.ssh
-sudo apt remove git --yes
 ```
+

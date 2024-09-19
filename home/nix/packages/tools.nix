@@ -1,5 +1,7 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
+    _1password-gui
+    _1password
     bat
     bottom
     btop
@@ -14,11 +16,9 @@
     figlet
     file
     fortune
-    glxinfo
     gptfdisk
     hello
     htop
-    intel-gpu-tools
     jq
     libcap
     lolcat
