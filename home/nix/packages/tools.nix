@@ -36,6 +36,7 @@
     rsync
     shadow
     shellcheck
+    signal-desktop
     socat
     sops
     tailscale

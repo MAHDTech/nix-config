@@ -59,6 +59,7 @@
         target = "applications/cursor.desktop";
 
         text = ''
+          [Desktop Entry]
           Name=Cursor
           Exec=/usr/local/bin/cursor --no-sandbox %U
           Terminal=false
@@ -68,6 +69,23 @@
           Comment=Cursor is an AI-first coding environment.
           MimeType=x-scheme-handler/cursor;
           Categories=Utility;
+        '';
+      };
+
+      "signal.desktop" = {
+        target = "applications/signal.desktop";
+
+        text = ''
+          [Desktop Entry]
+          Name=Signal
+          Exec=${pkgs.signal-desktop}/bin/signal-desktop --no-sandbox %U
+          Terminal=false
+          Type=Application
+          Icon=signal-desktop
+          StartupWMClass=signal
+          Comment=Private messaging from your desktop
+          MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
+          Categories=Network;InstantMessaging;Chat;
         '';
       };
     };
