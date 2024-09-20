@@ -36,6 +36,28 @@
           exit 5
         }
 
+        wget \
+          --output-document /tmp/cursor.png \
+          "https://avatars.githubusercontent.com/u/126759922?v=4" || {
+            echo "Failed to download cursor icon!"
+            exit 6
+          }
+
+        sudo cp /tmp/cursor.png /usr/share/icons/hicolor/256x256/apps/cursor.png || {
+          echo "Failed to copy cursor icon!"
+          exit 7
+        }
+
+        rm /tmp/cursor.png || {
+          echo "Failed to remove cursor icon!"
+          exit 8
+        }
+
+        sudo touch /usr/share/applications/.garcon_trigger || {
+          echo "Failed to create garcon trigger!"
+          exit 9
+        }
+
         echo "Finished installing cursor!"
         exit 0
       '';

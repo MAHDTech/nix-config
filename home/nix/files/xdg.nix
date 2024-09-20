@@ -44,10 +44,10 @@
         text = ''
           [Desktop Entry]
           Name=1Password
-          Exec=${config.home.homeDirectory}/.nix-profile/bin/1password %U
+          Exec=${pkgs._1password-gui}/bin/1password %U
           Terminal=false
           Type=Application
-          Icon=1password
+          Icon=${pkgs._1password-gui}/share/icons/hicolor/256x256/apps/1password.png
           StartupWMClass=1Password
           Comment=Password manager and secure wallet
           MimeType=x-scheme-handler/onepassword;
@@ -64,7 +64,7 @@
           Exec=/usr/local/bin/cursor --no-sandbox %U
           Terminal=false
           Type=Application
-          Icon=cursor
+          Icon=/usr/share/icons/hicolor/256x256/apps/cursor.png
           StartupWMClass=Cursor
           Comment=Cursor is an AI-first coding environment.
           MimeType=x-scheme-handler/cursor;
@@ -81,7 +81,7 @@
           Exec=${pkgs.signal-desktop}/bin/signal-desktop --no-sandbox %U
           Terminal=false
           Type=Application
-          Icon=signal-desktop
+          Icon=${pkgs.signal-desktop}/share/icons/hicolor/256x256/apps/signal-desktop.png
           StartupWMClass=signal
           Comment=Private messaging from your desktop
           MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
