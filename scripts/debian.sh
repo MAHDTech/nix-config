@@ -442,6 +442,17 @@ sudo docker run \
 }
 
 #########################
+# Shell
+#########################
+
+sudo usermod \
+	--shell "/home/${LINUX_USER}/.nix-profile/bin/bash" \
+	"${LINUX_USER}" || {
+	writeLog "ERROR" "Failed to change shell for ${LINUX_USER}"
+	exit 1
+}
+
+#########################
 # Cleanup
 #########################
 
