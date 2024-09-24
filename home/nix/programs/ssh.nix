@@ -66,7 +66,7 @@
       };
 
       "ntnx-ahv-1" = {
-        host = "ntnx-ahv-1.saltlabs.cloud";
+        host = "ntnx-ahv-1";
         hostname = "ntnx-ahv-1.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -77,7 +77,7 @@
       };
 
       "ntnx-ahv-2" = {
-        host = "ntnx-ahv-2.saltlabs.cloud";
+        host = "ntnx-ahv-2";
         hostname = "ntnx-ahv-2.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -88,7 +88,7 @@
       };
 
       "ntnx-ahv-3" = {
-        host = "ntnx-ahv-3.saltlabs.cloud";
+        host = "ntnx-ahv-3";
         hostname = "ntnx-ahv-3.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -99,7 +99,7 @@
       };
 
       "ntnx-ahv-4" = {
-        host = "ntnx-ahv-4.saltlabs.cloud";
+        host = "ntnx-ahv-4";
         hostname = "ntnx-ahv-4.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -110,7 +110,7 @@
       };
 
       "ntnx-cvm-1" = {
-        host = "ntnx-cvm-1.saltlabs.cloud";
+        host = "ntnx-cvm-1";
         hostname = "ntnx-cvm-1.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -121,7 +121,7 @@
       };
 
       "ntnx-cvm-2" = {
-        host = "ntnx-cvm-2.saltlabs.cloud";
+        host = "ntnx-cvm-2";
         hostname = "ntnx-cvm-2.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -132,7 +132,7 @@
       };
 
       "ntnx-cvm-3" = {
-        host = "ntnx-cvm-3.saltlabs.cloud";
+        host = "ntnx-cvm-3";
         hostname = "ntnx-cvm-3.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -143,7 +143,7 @@
       };
 
       "ntnx-cvm-4" = {
-        host = "ntnx-cvm-4.saltlabs.cloud";
+        host = "ntnx-cvm-4";
         hostname = "ntnx-cvm-4.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
@@ -154,7 +154,7 @@
       };
 
       "vim3" = {
-        host = "vim3.saltlabs.cloud";
+        host = "vim3";
         hostname = "vim3.saltlabs.cloud";
         user = "khadas";
         addressFamily = "inet";
