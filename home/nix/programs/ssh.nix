@@ -68,7 +68,7 @@
       "ntnx-ahv-1" = {
         host = "ntnx-ahv-1";
         hostname = "ntnx-ahv-1.saltlabs.cloud";
-        user = "nutanix";
+        user = "root";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -79,7 +79,7 @@
       "ntnx-ahv-2" = {
         host = "ntnx-ahv-2";
         hostname = "ntnx-ahv-2.saltlabs.cloud";
-        user = "nutanix";
+        user = "root";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -90,7 +90,7 @@
       "ntnx-ahv-3" = {
         host = "ntnx-ahv-3";
         hostname = "ntnx-ahv-3.saltlabs.cloud";
-        user = "nutanix";
+        user = "root";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -101,6 +101,17 @@
       "ntnx-ahv-4" = {
         host = "ntnx-ahv-4";
         hostname = "ntnx-ahv-4.saltlabs.cloud";
+        user = "root";
+        addressFamily = "inet";
+        forwardAgent = true;
+        forwardX11 = false;
+        forwardX11Trusted = false;
+        identitiesOnly = false;
+      };
+
+      "ntnx-ahv-1-cvm" = {
+        host = "ntnx-ahv-1-cvm";
+        hostname = "ntnx-ahv-1-cvm.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
         forwardAgent = true;
@@ -109,9 +120,9 @@
         identitiesOnly = false;
       };
 
-      "ntnx-cvm-1" = {
-        host = "ntnx-cvm-1";
-        hostname = "ntnx-cvm-1.saltlabs.cloud";
+      "ntnx-ahv-2-cvm" = {
+        host = "ntnx-ahv-2-cvm";
+        hostname = "ntnx-ahv-2-cvm.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
         forwardAgent = true;
@@ -120,9 +131,9 @@
         identitiesOnly = false;
       };
 
-      "ntnx-cvm-2" = {
-        host = "ntnx-cvm-2";
-        hostname = "ntnx-cvm-2.saltlabs.cloud";
+      "ntnx-ahv-3-cvm" = {
+        host = "ntnx-ahv-3-cvm";
+        hostname = "ntnx-ahv-3-cvm.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
         forwardAgent = true;
@@ -131,9 +142,9 @@
         identitiesOnly = false;
       };
 
-      "ntnx-cvm-3" = {
-        host = "ntnx-cvm-3";
-        hostname = "ntnx-cvm-3.saltlabs.cloud";
+      "ntnx-ahv-4-cvm" = {
+        host = "ntnx-ahv-4-cvm";
+        hostname = "ntnx-ahv-4-cvm.saltlabs.cloud";
         user = "nutanix";
         addressFamily = "inet";
         forwardAgent = true;
@@ -142,21 +153,10 @@
         identitiesOnly = false;
       };
 
-      "ntnx-cvm-4" = {
-        host = "ntnx-cvm-4";
-        hostname = "ntnx-cvm-4.saltlabs.cloud";
-        user = "nutanix";
-        addressFamily = "inet";
-        forwardAgent = true;
-        forwardX11 = false;
-        forwardX11Trusted = false;
-        identitiesOnly = false;
-      };
-
-      "vim3" = {
-        host = "vim3";
-        hostname = "vim3.saltlabs.cloud";
-        user = "khadas";
+      "jumpbox" = {
+        host = "jumpbox";
+        hostname = "jumpbox.saltlabs.cloud";
+        user = "linadmin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
