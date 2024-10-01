@@ -1,11 +1,12 @@
 {
-  description = "Home Manager configuration";
+  description = "NixOS and Home Manager configuration";
 
   nixConfig = {
-    extra-substituters = "https://devenv.cachix.org https://salt-labs.cachix.org";
+    extra-substituters = "https://devenv.cachix.org https://salt-labs.cachix.org https://cosmic.cachix.org/";
     extra-trusted-public-keys = "
       devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
       salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
+      cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=
     ";
     extra-experimental-features = "nix-command flakes";
   };
@@ -29,6 +30,14 @@
       owner = "NixOS";
       repo = "nixpkgs";
       ref = "nixos-unstable";
+      flake = true;
+    };
+
+    nixos-hardware = {
+      type = "github";
+      owner = "NixOS";
+      repo = "nixos-hardware";
+      ref = "master";
       flake = true;
     };
 
@@ -66,22 +75,90 @@
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nixos-cosmic = {
+      type = "github";
+      owner = "lilyinstarlight";
+      repo = "nixos-cosmic";
+      ref = "main";
+      flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
     self,
     nixpkgs,
+    nixpkgs-unstable,
+    nixos-hardware,
     systems,
     home-manager,
     sops-nix,
     devenv,
+    nixos-cosmic,
     ...
   } @ inputs: let
-    globalStateVersion = "23.11";
     globalUsername = "mahdtech";
+
+    # This value determines the NixOS release from which the default
+    # settings for stateful data, like file locations and database versions
+    # on your system were taken. It's perfectly fine and recommended to leave
+    # this value at the release version of the first install of this system.
+    # Before changing this value read the documentation for this option
+    # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
+    globalStateVersion = "23.11";  
+
+    #########################
+    # Systems functions
+    #########################
 
     forEachSystem = nixpkgs.lib.genAttrs (import systems);
 
+    #########################
+    # Packages functions
+    #########################
+
+    pkgsImportSystem = system:
+      import nixpkgs {
+        inherit system;
+      };
+
+    pkgsImportSystemUnstable = system:
+      import nixpkgs-unstable {
+        inherit system;
+      };
+
+    #########################
+    # NixOS functions
+    #########################
+    
+    configNixOS = {
+      username,
+      system,
+      extraModules,
+      ...
+    }:
+      nixpkgs.lib.nixosSystem {
+        pkgs = pkgsImportSystem system;
+
+        specialArgs = {
+          inherit inputs;
+          inherit username;
+          inherit globalStateVersion;
+        };
+
+        modules =
+          [
+            sops-nix.nixosModules.sops
+          ]
+          ++ extraModules;
+      };
+
+    #########################
+    # Home Manager functions
+    #########################
+
+    # Home Manager (standalone)
     mkHomeConfigurations = system:
       home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.${system};
@@ -96,7 +173,82 @@
           inherit system;
         };
       };
+
+    # TODO: Fix this, missing 'lib'
+    # Home Manager (NixOS module)
+    mkHomeManagerConfigurationsNixOS = { username, inputs, globalStateVersion }:
+      home-manager.nixosModules.home-manager {
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          extraSpecialArgs = {
+            inherit inputs;
+            inherit globalStateVersion;
+            inherit username;
+          };
+          users.${username} = {
+            imports = [
+              ./home
+              sops-nix.homeManagerModules.sops
+            ];
+          };
+        };
+      };
+
   in {
+
+    #########################
+    # NixOS
+    #########################
+
+    nixosConfigurations = {
+      NUC = configNixOS {
+        username = globalUsername;
+        system = "x86_64-linux";
+
+        specialArgs = { 
+          inherit inputs;
+        }; 
+
+        extraModules = [
+          nixos-hardware.nixosModules.common-pc-laptop
+          nixos-hardware.nixosModules.common-cpu-intel
+          nixos-hardware.nixosModules.common-gpu-intel
+
+          nixos-cosmic.nixosModules.default
+          
+          ./nixos/hosts/nuc
+          { system.stateVersion = globalStateVersion; }
+
+          #(
+          #  mkHomeManagerConfigurationsNixOS {
+          #    username = globalUsername;
+          #    inherit inputs globalStateVersion;
+          #    lib = pkgs.lib;
+          #  }
+          #)
+
+          home-manager.nixosModules.home-manager {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = {
+                inherit inputs;
+                inherit globalStateVersion;
+                inherit globalUsername;
+              };
+              users.${globalUsername} = {
+                imports = [
+                  ./home
+                  sops-nix.homeManagerModules.sops
+                ];
+              };
+            };
+          }
+        ];
+      };
+    };
+
     #########################
     # Home Manager
     #########################
