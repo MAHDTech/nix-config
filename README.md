@@ -142,7 +142,7 @@ sudo nixos-rebuild switch
 ```bash
 export NIXPKGS_ALLOW_UNFREE=1
 
-NIXOS_HOST="nuc"
+NIXOS_HOST="NUC"
 
 nixos-rebuild \
     boot  \
