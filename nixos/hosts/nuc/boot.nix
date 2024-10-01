@@ -16,7 +16,7 @@ in {
     supportedFilesystems = ["zfs"];
 
     initrd = {
-      kernelModules = [ "zfs" ];
+      kernelModules = [];
     };
 
     extraModulePackages = with config.boot.kernelPackages; [acpi_call];

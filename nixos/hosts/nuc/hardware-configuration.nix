@@ -16,10 +16,14 @@
     initrd = {
       availableKernelModules = ["nvme" "sd_mod" "thunderbolt" "usb_storage" "usbhid" "xhci_pci"];
 
-      kernelModules = [];
+      kernelModules = [
+        "zfs"
+      ];
     };
 
-    kernelModules = ["kvm-intel"];
+    kernelModules = [
+      "kvm-intel"
+    ];
 
     extraModulePackages = [];
   };
@@ -27,50 +31,37 @@
   fileSystems."/" =
     { device = "zpool/root";
       fsType = "zfs";
-      neededForBoot = true;
-      options = ["zfsutil" "X-mount.mkdir"];
     };
 
   fileSystems."/boot" =
     { device = "zpool/boot";
       fsType = "zfs";
-      neededForBoot = true;
-      options = ["zfsutil" "X-mount.mkdir"];
     };
 
   fileSystems."/boot/efi" =
     { device = "/dev/disk/by-uuid/ACD0-FD4A";
       fsType = "vfat";
-      neededForBoot = true;
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
   fileSystems."/home" =
     { device = "zpool/home";
       fsType = "zfs";
-      neededForBoot = true;
-      options = ["zfsutil" "X-mount.mkdir"];
     };
 
   fileSystems."/nix" =
     { device = "zpool/nix";
       fsType = "zfs";
-      neededForBoot = true;
-      options = ["zfsutil" "X-mount.mkdir"];
     };
 
   fileSystems."/var" =
     { device = "zpool/var";
       fsType = "zfs";
-      neededForBoot = true;
-      options = ["zfsutil" "X-mount.mkdir"];
     };
 
   fileSystems."/tmp" =
     { device = "zpool/tmp";
       fsType = "zfs";
-      neededForBoot = true;
-      options = ["zfsutil" "X-mount.mkdir"];
     };
 
   swapDevices = [ ];
@@ -87,7 +78,7 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
-  
+
   hardware = {
     cpu.intel.updateMicrocode =
       lib.mkDefault config.hardware.enableRedistributableFirmware;
