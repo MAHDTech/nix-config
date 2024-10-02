@@ -13,6 +13,7 @@ customizations = "customizations"
 guage = "guage"
 hashi = "hashi"
 hashicorp = "hashicorp"
+cros = "cros"
 
 [files]
 

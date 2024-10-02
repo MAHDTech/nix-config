@@ -1,1 +1,1 @@
-{imports = [./networkmanager ./seahorse ./ssh];}
+{imports = [./dconf ./networkmanager ./seahorse ./ssh];}

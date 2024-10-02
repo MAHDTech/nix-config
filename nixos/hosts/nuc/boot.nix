@@ -16,6 +16,9 @@ in {
     supportedFilesystems = ["zfs"];
 
     initrd = {
+      systemd = {
+        enable = true;
+      };
       kernelModules = [];
     };
 
@@ -31,7 +34,17 @@ in {
       "zfs.zfs_arc_max=12884901888"
 
       "usbcore.autosuspend=-1"
+
+      "quiet"
     ];
+
+    plymouth = {
+      enable = true;
+      theme = "matrix";
+      themePackages = with pkgs; [
+        plymouth-matrix-theme
+      ];
+    };
 
     loader = {
       timeout = 3;

@@ -84,18 +84,28 @@
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    flatpaks = {
+      type = "github";
+      owner = "GermanBread";
+      repo = "declarative-flatpak";
+      ref = "dev";
+      flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
-    self,
+    devenv,
+    flatpaks,
+    home-manager,
+    nixos-cosmic,
+    nixos-hardware,
     nixpkgs,
     nixpkgs-unstable,
-    nixos-hardware,
-    systems,
-    home-manager,
+    self,
     sops-nix,
-    devenv,
-    nixos-cosmic,
+    systems,
     ...
   } @ inputs: let
     globalUsername = "mahdtech";
@@ -106,7 +116,7 @@
     # this value at the release version of the first install of this system.
     # Before changing this value read the documentation for this option
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    globalStateVersion = "23.11";  
+    globalStateVersion = "23.11";
 
     #########################
     # Systems functions
@@ -123,7 +133,7 @@
         inherit system;
       };
 
-    pkgsImportSystemUnstable = system:
+    _pkgsImportSystemUnstable = system:
       import nixpkgs-unstable {
         inherit system;
       };
@@ -131,7 +141,7 @@
     #########################
     # NixOS functions
     #########################
-    
+
     configNixOS = {
       username,
       system,
@@ -173,30 +183,31 @@
           inherit system;
         };
       };
-
     # TODO: Fix this, missing 'lib'
     # Home Manager (NixOS module)
-    mkHomeManagerConfigurationsNixOS = { username, inputs, globalStateVersion }:
-      home-manager.nixosModules.home-manager {
-        home-manager = {
-          useGlobalPkgs = true;
-          useUserPackages = true;
-          extraSpecialArgs = {
-            inherit inputs;
-            inherit globalStateVersion;
-            inherit username;
-          };
-          users.${username} = {
-            imports = [
-              ./home
-              sops-nix.homeManagerModules.sops
-            ];
-          };
-        };
-      };
-
+    #mkHomeManagerConfigurationsNixOS = {
+    #  username,
+    #  inputs,
+    #  globalStateVersion,
+    #}:
+    #  home-manager.nixosModules.home-manager {
+    #    home-manager = {
+    #      useGlobalPkgs = true;
+    #      useUserPackages = true;
+    #      extraSpecialArgs = {
+    #        inherit inputs;
+    #        inherit globalStateVersion;
+    #        inherit username;
+    #      };
+    #      users.${username} = {
+    #        imports = [
+    #          ./home
+    #          sops-nix.homeManagerModules.sops
+    #        ];
+    #      };
+    #    };
+    #  };
   in {
-
     #########################
     # NixOS
     #########################
@@ -206,19 +217,24 @@
         username = globalUsername;
         system = "x86_64-linux";
 
-        specialArgs = { 
+        specialArgs = {
           inherit inputs;
-        }; 
+        };
 
         extraModules = [
           nixos-hardware.nixosModules.common-pc-laptop
+          nixos-hardware.nixosModules.common-pc-ssd
           nixos-hardware.nixosModules.common-cpu-intel
           nixos-hardware.nixosModules.common-gpu-intel
 
+          # Enable COSMIC desktop environment.
           nixos-cosmic.nixosModules.default
-          
+
+          # Enable declarative flatpak support.
+          flatpaks.nixosModules.default
+
           ./nixos/hosts/nuc
-          { system.stateVersion = globalStateVersion; }
+          {system.stateVersion = globalStateVersion;}
 
           #(
           #  mkHomeManagerConfigurationsNixOS {
@@ -228,7 +244,8 @@
           #  }
           #)
 
-          home-manager.nixosModules.home-manager {
+          home-manager.nixosModules.home-manager
+          {
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
@@ -358,6 +375,9 @@
 
                 deadnix = {
                   enable = true;
+                  settings = {
+                    noUnderscore = true;
+                  };
                 };
 
                 dialyzer = {
@@ -450,20 +470,15 @@
                     extensions = [
                       "arrterian.nix-env-selector"
                       "esbenp.prettier-vscode"
-                      "exiasr.hadolint"
-                      "github.copilot"
-                      "github.copilot-chat"
                       "github.vscode-github-actions"
                       "jnoortheen.nix-ide"
                       "johnpapa.vscode-peacock"
                       "kamadorueda.alejandra"
                       "mkhl.direnv"
-                      "ms-azuretools.vscode-docker"
                       "nhoizey.gremlins"
                       "pinage404.nix-extension-pack"
                       "redhat.vscode-yaml"
                       "streetsidesoftware.code-spell-checker"
-                      "supermaven.supermaven"
                       "tekumura.typos-vscode"
                       "timonwong.shellcheck"
                       "tuxtina.json2yaml"

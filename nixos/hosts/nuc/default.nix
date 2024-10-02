@@ -1,10 +1,9 @@
 {
-  
   networking = {
-    hostName = "nuc";
+    hostName = "NUC";
     hostId = "def00001";
   };
-  
+
   imports = [
     # Load device specific hardware configuration.
     ./hardware-configuration.nix
@@ -16,6 +15,7 @@
     ./boot.nix
     ./audio.nix
     ./video.nix
+    ./packages.nix
 
     # Load the chosen desktop environment.
     ./desktop/cosmic.nix
@@ -32,5 +32,4 @@
     # Steam
     #../../system/programs/steam
   ];
-
 }

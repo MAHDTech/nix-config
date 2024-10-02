@@ -4,13 +4,12 @@
 {
   config,
   lib,
-  pkgs,
   modulesPath,
   ...
 }: {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  imports = [
+    (modulesPath + "/installer/scan/not-detected.nix")
+  ];
 
   boot = {
     initrd = {
@@ -28,43 +27,45 @@
     extraModulePackages = [];
   };
 
-  fileSystems."/" =
-    { device = "zpool/root";
+  fileSystems = {
+    "/" = {
+      device = "zpool/root";
       fsType = "zfs";
     };
 
-  fileSystems."/boot" =
-    { device = "zpool/boot";
+    "/boot" = {
+      device = "zpool/boot";
       fsType = "zfs";
     };
 
-  fileSystems."/boot/efi" =
-    { device = "/dev/disk/by-uuid/ACD0-FD4A";
+    "/boot/efi" = {
+      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_0347023040002297-0:0-part1";
       fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
+      options = ["fmask=0077" "dmask=0077"];
     };
 
-  fileSystems."/home" =
-    { device = "zpool/home";
+    "/home" = {
+      device = "zpool/home";
       fsType = "zfs";
     };
 
-  fileSystems."/nix" =
-    { device = "zpool/nix";
+    "/nix" = {
+      device = "zpool/nix";
       fsType = "zfs";
     };
 
-  fileSystems."/var" =
-    { device = "zpool/var";
+    "/var" = {
+      device = "zpool/var";
       fsType = "zfs";
     };
 
-  fileSystems."/tmp" =
-    { device = "zpool/tmp";
+    "/tmp" = {
+      device = "zpool/tmp";
       fsType = "zfs";
     };
+  };
 
-  swapDevices = [ ];
+  swapDevices = [];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
@@ -85,5 +86,4 @@
 
     enableRedistributableFirmware = true;
   };
-
 }

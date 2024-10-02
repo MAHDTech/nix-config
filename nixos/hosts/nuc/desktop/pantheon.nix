@@ -1,13 +1,10 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
-  environment.systemPackages = with pkgs; [];
+  programs = {
+    gnome-disks.enable = true;
+    seahorse.enable = true;
+  };
 
   services.xserver = {
     enable = true;
@@ -23,21 +20,57 @@
       enable = true;
 
       # https://nixos.org/manual/nixos/stable/options.html#opt-services.xserver.desktopManager.pantheon.extraWingpanelIndicators
-      extraWingpanelIndicators = [];
+      extraWingpanelIndicators = with pkgs; [
+        monitor
+        wingpanel-indicator-ayatana
+      ];
 
       # https://nixos.org/manual/nixos/stable/options.html#opt-services.xserver.desktopManager.pantheon.extraSwitchboardPlugs
       extraSwitchboardPlugs = [];
     };
   };
 
-  programs.pantheon-tweaks.enable = true;
-
   services.pantheon = {
     apps.enable = true;
     contractor.enable = true;
   };
 
-  environment.pantheon.excludePackages = [
-    #"pkgs.pantheon.elementary-camera"
-  ];
+  environment = {
+    systemPackages = with pkgs; [
+      appeditor
+      celluloid
+      formatter
+      gthumb
+      simple-scan
+      indicator-application-gtk3
+      pantheon.sideload
+      pantheon-tweaks
+      yaru-theme
+    ];
+
+    pathsToLink = [
+      "/libexec"
+    ];
+
+    pantheon.excludePackages = with pkgs.pantheon; [
+      elementary-mail
+      elementary-music
+      elementary-photos
+      elementary-videos
+      epiphany
+    ];
+  };
+
+  systemd.user.services.indicatorapp = {
+    description = "indicator-application-gtk3";
+    wantedBy = [
+      "graphical-session.target"
+    ];
+    partOf = [
+      "graphical-session.target"
+    ];
+    serviceConfig = {
+      ExecStart = "${pkgs.indicator-application-gtk3}/libexec/indicator-application/indicator-application-service";
+    };
+  };
 }

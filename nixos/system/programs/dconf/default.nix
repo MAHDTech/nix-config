@@ -3,5 +3,5 @@
 
   environment.systemPackages = with pkgs; [];
 
-  programs.nm-applet = {enable = true;};
+  programs.dconf = {enable = true;};
 }

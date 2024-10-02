@@ -2,6 +2,7 @@
   home.packages = with pkgs; [
     _1password-gui
     _1password
+    appimage-run
     bat
     bottom
     btop

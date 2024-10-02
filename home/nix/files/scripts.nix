@@ -9,13 +9,16 @@
 
         echo "Installing cursor..."
 
-        sudo apt install --yes libfuse2 libnss3 || {
-          echo "Failed to install dependencies!"
-          exit 1
-        }
+        if type apt 2>/dev/null;
+        then
+          sudo apt install --yes libfuse2 libnss3 || {
+            echo "Failed to install dependencies!"
+            exit 1
+          }
+        fi
 
         mkdir -p ~/Apps || {
-          echo "Failed to create directory!"
+          echo "Failed to create apps home directory!"
           exit 2
         }
 
@@ -31,6 +34,11 @@
           exit 4
         }
 
+        sudo mkdir -p /usr/local/bin || {
+          echo "Failed to create apps system directory!"
+          exit 2
+        }
+
         sudo ln -sf ~/Apps/cursor.AppImage /usr/local/bin/cursor || {
           echo "Failed to symlink cursor!"
           exit 5
@@ -43,7 +51,12 @@
             exit 6
           }
 
-        sudo cp /tmp/cursor.png /usr/share/icons/hicolor/256x256/apps/cursor.png || {
+        mkdir -p $HOME/.local/share/icons/hicolor/256x256/apps || {
+          echo "Failed to create AppImage icons folder for user!"
+          exit 7
+        }
+
+        cp /tmp/cursor.png $HOME/.local/share/icons/hicolor/256x256/apps/cursor.png || {
           echo "Failed to copy cursor icon!"
           exit 7
         }
@@ -53,10 +66,13 @@
           exit 8
         }
 
-        sudo touch /usr/share/applications/.garcon_trigger || {
-          echo "Failed to create garcon trigger!"
-          exit 9
-        }
+        if [[ "''${OS_NAME:-EMPTY}" == "cros" ]];
+        then
+          sudo touch /usr/share/applications/.garcon_trigger || {
+            echo "Failed to create garcon trigger!"
+            exit 9
+          }
+        fi
 
         echo "Finished installing cursor!"
         exit 0
