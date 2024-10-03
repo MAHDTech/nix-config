@@ -3,17 +3,22 @@
 locale = "en-au"
 
 extend-ignore-re = [
-    "^[ \t]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*^[ \t]*-----END PGP PUBLIC KEY BLOCK-----"
+    "^[ \t]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*^[ \t]*-----END PGP PUBLIC KEY BLOCK-----",
+    "^[ \t]*initialHashedPassword[ \t]*=[ \t]*.*$"
 ]
 
 [default.extend-words]
 
+normalization = "normalization"
+recognize = "recognize"
+authorized = "authorized"
+authorised = "authorised"
 center = "center"
+cros = "cros"
 customizations = "customizations"
 guage = "guage"
 hashi = "hashi"
 hashicorp = "hashicorp"
-cros = "cros"
 
 [files]
 
@@ -24,5 +29,6 @@ extend-exclude = [
   ".devenv",
   ".direnv",
   ".git",
+  "secrets",
   "vendor"
 ]

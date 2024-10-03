@@ -1,13 +1,8 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
 
-  programs.seahorse = {enable = true;};
+  # Using seahorse from home-manager instead.
+  programs.seahorse = {enable = false;};
 }

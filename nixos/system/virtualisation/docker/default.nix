@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [
@@ -23,7 +17,8 @@
 
       package = pkgs.docker;
       enableOnBoot = true;
-      storageDriver = "overlay2";
+      #storageDriver = "overlay2";
+      storageDriver = "zfs";
       logDriver = "journald";
 
       autoPrune = {

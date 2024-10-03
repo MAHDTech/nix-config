@@ -1,8 +1,38 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
+    # Password Manager
     _1password-gui
     _1password
+
+    # File management
+    insync
+    restic
+    rclone
+    rsync
+
+    # AppImage
     appimage-run
+
+    # Nix
+    nixos-generators
+    nix-du
+
+    # Shell
+    nushell
+
+    # File Systems
+    btrfs-progs
+    cryptsetup
+    dosfstools
+    exfat
+    gptfdisk
+    lvm2
+    mdadm
+    parted
+    ntfs3g
+    xfsprogs
+
+    # CLI
     bat
     bottom
     btop
@@ -25,19 +55,12 @@
     lolcat
     ncdu
     neofetch
-    nixos-generators
-    ntfs3g
-    nushell
     pandoc
     pciutils
-    rclone
     read-edid
-    restic
     ripgrep
-    rsync
     shadow
     shellcheck
-    signal-desktop
     socat
     sops
     tailscale
@@ -52,8 +75,5 @@
     xsv
     xxd
     zip
-
-    # Nix
-    nix-du
   ];
 }

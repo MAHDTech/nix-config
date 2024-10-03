@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
@@ -12,7 +6,7 @@
   virtualisation = {
     vmware = {
       guest = {
-        enable = true;
+        enable = false;
 
         headless = false;
       };

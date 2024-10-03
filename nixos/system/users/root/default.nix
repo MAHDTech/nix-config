@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   username = "root";
 in {
   users.users.${username} = {
@@ -14,6 +8,6 @@ in {
     isSystemUser = true;
 
     # mkpasswd --method=SHA-512 --stdin
-    initialHashedPassword = "$6$7ndPIiBut62qO.vF$FUAAVaUSFg4oYqgRDuL6se6.EKGRzOL6wca.bd5g2cQ1chuKrl9pIZeBkswWRLazMbXsmPvlhpC9uquQrjhTR1";
+    initialHashedPassword = "$6$ZaC141a/ldxOvTvc$fRUysX6LjlZvnPiRcp4uG.dnm8RZJ1lQIFzWDZjbhkVpJXW2jDHor13rJ0UBTKS.k..3oaVuMi2y8Xog81iBT/";
   };
 }

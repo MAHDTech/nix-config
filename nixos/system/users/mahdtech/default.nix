@@ -7,7 +7,7 @@ in {
     isNormalUser = true;
     createHome = true;
     home = "/home/${username}";
-    shell = pkgs.bash;
+    shell = pkgs.bashInteractive;
     group = username;
 
     # mkpasswd --method=SHA-512 --stdin
@@ -25,13 +25,16 @@ in {
       "networkmanager"
       "pipewire"
       "plugdev"
+      "trezord"
       "video"
       "vmware"
       "wheel"
+      "nixos"
     ];
 
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJkDYJ0EnGd7wkoW4MCz9bjgEHVoGZcwv5veeTr3/Gke"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHLEPFnH5qCksDIv/vcbm7H7p+OWEqiqKyWdAtEo+/UU"
     ];
   };
 

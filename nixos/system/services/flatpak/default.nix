@@ -22,8 +22,18 @@
 
     # <remote name>:<type>/<flatpak ref>/<arch>/<branch>:<commit>
     packages = [
-      "flathub:app/com.google.Chrome//stable"
+      "flathub:app/com.discordapp.Discord//stable"
+      "flathub:app/com.github.PintaProject.Pinta//stable"
       "flathub:app/com.github.tchx84.Flatseal//stable"
+      "flathub:app/com.google.Chrome//stable"
+      "flathub:app/com.logseq.Logseq//stable"
+      "flathub:app/com.obsproject.Studio//stable"
+      "flathub:app/com.slack.Slack//stable"
+      "flathub:app/com.valvesoftware.Steam//stable"
+      "flathub:app/net.codeindustry.MasterPDFEditor//stable"
+      "flathub:app/org.gimp.GIMP//stable"
+      "flathub:app/org.signal.Signal//stable"
+      "flathub:app/org.videolan.VLC//stable"
     ];
 
     remotes = {

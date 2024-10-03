@@ -7,12 +7,17 @@
 
 function nix-upgrade-daemon() {
 
-	if [[ ${DOTFILES_CONFIG:-EMPTY} == "EMPTY" ]]; then
-		"Environment variable DOTFILES_CONFIG is empty"
+	if [[ ${OS_NAME:-EMPTY} != "nixos" ]]; then
+		writeLog "ERROR" "Nix upgrade daemon is only supported on NixOS"
 		return 1
 	fi
 
-	pushd "${DOTFILES_CONFIG}" || {
+	if [[ ${DOTFILES_HOME_CONFIG:-EMPTY} == "EMPTY" ]]; then
+		writeLog "ERROR" "Environment variable DOTFILES_HOME_CONFIG is empty"
+		return 1
+	fi
+
+	pushd "${DOTFILES_HOME_CONFIG}" || {
 		writeLog "ERROR" "Failed to push into dotfiles directory"
 		return 1
 	}
@@ -297,11 +302,16 @@ function dotfiles() {
 	shift
 	local EXTRA_ARGS=("$@")
 
-	local DOTFILES_CONFIG="${DOTFILES_CONFIG:=$HOME/dotfiles}"
+	local DOTFILES_HOME_CONFIG="${DOTFILES_HOME_CONFIG:=$HOME/dotfiles}"
+	local DOTFILES_NIX_CONFIG="${DOTFILES_NIX_CONFIG:=/boot/nix/nix-config}"
 
 	local FLAKE_LOCATION
+	local FLAKE_LOCATION_LOCAL=FALSE
+	local FLAKE_LOCATION_REMOTE=FALSE
+
 	local FLAKE_REMOTE="github:MAHDTech/nix-config"
 	local FLAKE_LOCAL="."
+
 	local FLAKE_HOME_MANAGER
 	#FLAKE_HOME_MANAGER="$(printf '%s\n' "$(whoami)"@"$(hostname)")"
 	FLAKE_HOME_MANAGER="${USER%%@*}"
@@ -347,25 +357,47 @@ function dotfiles() {
 
 	# Change into the dotfiles config directory.
 	if [[ ${FLAKE_LOCATION_FORCED:-NONE} != "NONE" ]]; then
+
 		writeLog "WARN" "Using FORCED dotfiles as flake location is set to ${FLAKE_LOCATION_FORCED}"
 		FLAKE_LOCATION="${FLAKE_LOCATION_FORCED}"
 
-	elif [[ -d ${DOTFILES_CONFIG} ]]; then
+	# Check for 'dotfiles' directory in home first.
+	elif [[ -d ${DOTFILES_HOME_CONFIG} ]]; then
 
-		pushd "${DOTFILES_CONFIG}" >/dev/null || {
-			writeLog "Failed to change into ${DOTFILES_CONFIG}"
+		FLAKE_LOCATION_LOCAL=TRUE
+
+		pushd "${DOTFILES_HOME_CONFIG}" >/dev/null || {
+			writeLog "Failed to change into ${DOTFILES_HOME_CONFIG}"
 			return 1
 		}
 
 		# HACK: allow dirty
 		git add --all || true
 
-		writeLog "WARN" "Using LOCAL dotfiles as the config directory is present ${DOTFILES_CONFIG}"
+		writeLog "WARN" "Using LOCAL dotfiles as the config directory is present ${DOTFILES_HOME_CONFIG}"
 		FLAKE_LOCATION="${FLAKE_LOCAL}"
+		FLAKE_DIRECTORY="${DOTFILES_HOME_CONFIG}"
 
+	# Check for 'dotfiles' directory in system next.
+	elif [[ -d ${DOTFILES_NIX_CONFIG} ]]; then
+
+		FLAKE_LOCATION_LOCAL=TRUE
+
+		pushd "${DOTFILES_NIX_CONFIG}" >/dev/null || {
+			writeLog "Failed to change into ${DOTFILES_NIX_CONFIG}"
+			return 1
+		}
+
+		writeLog "WARN" "Using SYSTEM dotfiles as the config directory is present ${DOTFILES_NIX_CONFIG}"
+		FLAKE_LOCATION="${FLAKE_LOCAL}"
+		FLAKE_DIRECTORY="${DOTFILES_NIX_CONFIG}"
+
+	# Otherwise, use the remote flake.
 	else
 
-		writeLog "WARN" "Using REMOTE dotfiles as the config directory is not present ${DOTFILES_CONFIG}"
+		FLAKE_LOCATION_REMOTE=TRUE
+
+		writeLog "WARN" "Using REMOTE dotfiles as the config directory is not present ${DOTFILES_HOME_CONFIG}"
 		FLAKE_LOCATION="${FLAKE_REMOTE}"
 
 	fi
@@ -387,16 +419,22 @@ function dotfiles() {
 
 	esac
 
-	writeLog "INFO" "Executing ${ACTION} on Nix Flake ${FLAKE_LOCATION}"
+	writeLog "INFO" "Executing ${ACTION} on Nix Flake ${FLAKE_DIRECTORY}"
 
 	case "${ACTION}" in
 
 	cd | dir | pushd)
 
+		# You can't cd into a remote flake.
+		if [[ ${FLAKE_LOCATION_REMOTE} == "TRUE" ]]; then
+			writeLog "ERROR" "You can't cd into a remote flake"
+			return 1
+		fi
+
 		popd >/dev/null 2>&1 || return 1
 
-		cd "${DOTFILES_CONFIG}" >/dev/null || {
-			writeLog "ERROR" "Failed to change into ${DOTFILES_CONFIG}"
+		cd "${FLAKE_DIRECTORY}" >/dev/null || {
+			writeLog "ERROR" "Failed to change into ${FLAKE_DIRECTORY}"
 			return 1
 		}
 
@@ -404,7 +442,8 @@ function dotfiles() {
 
 	info)
 
-		nix flake info || {
+		# When remote the URL is passed, otherwise the local flake is used.
+		nix flake info "${FLAKE_LOCATION}" || {
 			writeLog "ERROR" "Failed to display flake info"
 			return 1
 		}
@@ -413,19 +452,24 @@ function dotfiles() {
 
 	check)
 
+		# When remote the URL is passed, otherwise the local flake is used.
 		nix flake check \
 			--no-build \
 			--keep-going \
 			--impure \
+			"${FLAKE_LOCATION}" \
 			"${EXTRA_ARGS[@]}" || {
 			writeLog "WARN" "Failed flake check!"
 			return 1
 		}
 
-		nix run nixpkgs#statix -- check || {
-			writeLog "WARN" "Failed to run statix!"
-			return 1
-		}
+		# Only works for local flakes
+		if [[ ${FLAKE_LOCATION_LOCAL} == "TRUE" ]]; then
+			nix run nixpkgs#statix -- check || {
+				writeLog "WARN" "Failed to run statix!"
+				return 1
+			}
+		fi
 
 		;;
 
@@ -472,69 +516,27 @@ function dotfiles() {
 
 	update)
 
-		case "${OS_NAME:-EMPTY}" in
+		nix-channel --update || {
+			writeLog "ERROR" "Failed to update Nix channel"
+			popd >/dev/null 2>&1 || true
+			return 1
+		}
 
-		"nixos")
-
-			nix-channel --update || {
-				writeLog "ERROR" "Failed to update Nix channel"
-				popd >/dev/null 2>&1 || true
-				return 1
-			}
-
-			nix flake update || {
-				writeLog "ERROR" "Failed to update Nix flake"
-				popd >/dev/null 2>&1 || true
-				return 1
-			}
-
-			;;
-
-		*)
-
-			nix-channel --update || {
-				writeLog "ERROR" "Failed to update Nix channel"
-				popd >/dev/null 2>&1 || true
-				return 1
-			}
-
-			nix flake update || {
-				writeLog "ERROR" "Failed to update Nix flake"
-				popd >/dev/null 2>&1 || true
-				return 1
-			}
-
-			;;
-
-		esac
+		nix flake update || {
+			writeLog "ERROR" "Failed to update Nix flake"
+			popd >/dev/null 2>&1 || true
+			return 1
+		}
 
 		;;
 
 	garbage-collect)
 
-		case "${OS_NAME:-EMPTY}" in
-
-		"nixos")
-
-			nix-collect-garbage --delete-older-than 7d || {
-				writeLog "ERROR" "Failed to collect Nix garbage"
-				popd >/dev/null 2>&1 || true
-				return 1
-			}
-
-			;;
-
-		*)
-
-			nix-collect-garbage --delete-older-than 7d || {
-				writeLog "ERROR" "Failed to collect Nix garbage"
-				popd >/dev/null 2>&1 || true
-				return 1
-			}
-
-			;;
-
-		esac
+		nix-collect-garbage --delete-older-than 7d || {
+			writeLog "ERROR" "Failed to collect Nix garbage"
+			popd >/dev/null 2>&1 || true
+			return 1
+		}
 
 		;;
 
@@ -557,11 +559,6 @@ function dotfiles() {
 }
 
 function dotfiles_all_the_things() {
-
-	nix-channel --update || {
-		writeLog "ERROR" "Failed to update nix channels"
-		return 1
-	}
 
 	dotfiles update || {
 		writeLog "ERROR" "Failed to update dotfiles"

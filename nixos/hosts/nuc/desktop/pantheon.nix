@@ -3,7 +3,6 @@
 
   programs = {
     gnome-disks.enable = true;
-    seahorse.enable = true;
   };
 
   services.xserver = {

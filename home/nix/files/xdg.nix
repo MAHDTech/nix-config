@@ -71,23 +71,6 @@
           Categories=Utility;
         '';
       };
-
-      "signal.desktop" = {
-        target = "applications/signal.desktop";
-
-        text = ''
-          [Desktop Entry]
-          Name=Signal
-          Exec=${pkgs.signal-desktop}/bin/signal-desktop --no-sandbox %U
-          Terminal=false
-          Type=Application
-          Icon=${pkgs.signal-desktop}/share/icons/hicolor/256x256/apps/signal-desktop.png
-          StartupWMClass=signal
-          Comment=Private messaging from your desktop
-          MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
-          Categories=Network;InstantMessaging;Chat;
-        '';
-      };
     };
 
     # Set default user directories to home directory
@@ -107,6 +90,7 @@
 
       extraConfig = {
         XDG_PROJECTS_DIR = "${config.home.homeDirectory}/Projects";
+        XDG_WORKSPACES_DIR = "${config.home.homeDirectory}/Workspaces";
         XDG_SOFTWARE_DIR = "${config.home.homeDirectory}/Software";
       };
     };

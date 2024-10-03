@@ -13,8 +13,6 @@ in {
   environment.systemPackages = with pkgs; [];
 
   boot = {
-    supportedFilesystems = ["zfs"];
-
     initrd = {
       systemd = {
         enable = true;
@@ -40,9 +38,10 @@ in {
 
     plymouth = {
       enable = true;
-      theme = "matrix";
+      theme = "glowing";
       themePackages = with pkgs; [
         plymouth-matrix-theme
+        adi1090x-plymouth-themes
       ];
     };
 

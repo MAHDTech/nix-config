@@ -12,6 +12,8 @@
   ];
 
   boot = {
+    supportedFilesystems = ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "zfs" "ntfs" "cifs"];
+
     initrd = {
       availableKernelModules = ["nvme" "sd_mod" "thunderbolt" "usb_storage" "usbhid" "xhci_pci"];
 
@@ -44,6 +46,11 @@
       options = ["fmask=0077" "dmask=0077"];
     };
 
+    "/boot/nix" = {
+      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_0347023040002297-0:0-part2";
+      fsType = "xfs";
+    };
+
     "/home" = {
       device = "zpool/home";
       fsType = "zfs";
@@ -56,6 +63,16 @@
 
     "/var" = {
       device = "zpool/var";
+      fsType = "zfs";
+    };
+
+    "/var/lib" = {
+      device = "zpool/var/lib";
+      fsType = "zfs";
+    };
+
+    "/var/lib/docker" = {
+      device = "zpool/var/lib/docker";
       fsType = "zfs";
     };
 

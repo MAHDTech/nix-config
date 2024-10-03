@@ -75,9 +75,9 @@ function start_keyring() {
 	"home-manager")
 
 		# If home manager is using gnome-keyring, give it a kick in the guts.
-		if type gnome-keyring 1>/dev/null 2>&1; then
+		if type gnome-keyring-daemon 1>/dev/null 2>&1; then
 
-			set_vars_gnome_keyring || {
+			setup_gnome_keyring || {
 				writeLog "ERROR" "Failed to set variables needed for gnome-keyring"
 				return 1
 			}
@@ -92,7 +92,7 @@ function start_keyring() {
 
 	"gnome-keyring")
 
-		if type gnome-keyring 1>/dev/null 2>&1; then
+		if type gnome-keyring-daemon 1>/dev/null 2>&1; then
 
 			setup_gnome_keyring || {
 				writeLog "ERROR" "Failed to set variables needed for gnome-keyring"

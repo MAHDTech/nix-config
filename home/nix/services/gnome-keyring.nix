@@ -1,12 +1,12 @@
 {pkgs, ...}: {
-  home.packages = with pkgs; [gcr pkgs.gnome-keyring pkgs.seahorse libsecret];
+  home.packages = with pkgs; [gcr gnome-keyring seahorse libsecret];
 
   services = {
     # NOTE: There can only be one enabled (gnome-keyring vs pass-secret-service)
 
     # Gnome Keyring
     gnome-keyring = {
-      enable = false;
+      enable = true;
 
       # GPG is managed separately as its deprecated in gnome-keyring.
       # https://lists.gnupg.org/pipermail/gnupg-devel/2014-August/028689.html
