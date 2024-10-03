@@ -11,6 +11,7 @@
     ./power
     ./programs
     ./secrets
+    ./security
     ./services
     ./users
     ./virtualisation
