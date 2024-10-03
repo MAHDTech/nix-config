@@ -303,7 +303,7 @@ function dotfiles() {
 	local EXTRA_ARGS=("$@")
 
 	local DOTFILES_HOME_CONFIG="${DOTFILES_HOME_CONFIG:=$HOME/dotfiles}"
-	local DOTFILES_NIX_CONFIG="${DOTFILES_NIX_CONFIG:=/boot/nix/nix-config}"
+	local DOTFILES_NIX_CONFIG="${DOTFILES_NIX_CONFIG:=/boot/nixos/nix-config}"
 
 	local FLAKE_LOCATION
 	local FLAKE_LOCATION_LOCAL=FALSE

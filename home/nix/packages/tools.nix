@@ -32,6 +32,10 @@
     ntfs3g
     xfsprogs
 
+    # Disk imagers
+    unetbootin
+    ventoy-full
+
     # CLI
     bat
     bottom
@@ -68,7 +72,6 @@
     tree
     unzip
     usbutils
-    ventoy-full
     which
     wget
     xdotool

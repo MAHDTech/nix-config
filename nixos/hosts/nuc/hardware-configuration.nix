@@ -41,13 +41,13 @@
     };
 
     "/boot/efi" = {
-      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_0347023040002297-0:0-part1";
+      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part1";
       fsType = "vfat";
       options = ["fmask=0077" "dmask=0077"];
     };
 
-    "/boot/nix" = {
-      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_0347023040002297-0:0-part2";
+    "/boot/nixos" = {
+      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part2";
       fsType = "xfs";
     };
 

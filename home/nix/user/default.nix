@@ -9,7 +9,7 @@
 
       # Dotfiles config
       DOTFILES_HOME_CONFIG = "${config.home.homeDirectory}/dotfiles";
-      DOTFILES_NIX_CONFIG = "$/boot/nix/nix-config";
+      DOTFILES_NIX_CONFIG = "/boot/nixos/nix-config";
 
       # This location is read by direnv to change into the flake dir to launch devShells
       DEVENV_DEVSHELLS_HOME = "${config.home.homeDirectory}/dotfiles";
