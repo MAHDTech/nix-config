@@ -46,7 +46,7 @@
       options = ["fmask=0077" "dmask=0077"];
     };
 
-    "/boot/nixos" = {
+    "/boot/nixos-config" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part2";
       fsType = "xfs";
     };
