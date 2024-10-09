@@ -10,9 +10,6 @@
     rclone
     rsync
 
-    # AppImage
-    appimage-run
-
     # Nix
     nixos-generators
     nix-du

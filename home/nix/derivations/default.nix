@@ -1,6 +1,7 @@
-# binaries.nix
-{
+{pkgs, ...}: {
   home.packages = [
+    (pkgs.callPackage ./cursor.nix {})
+
     #(pkgs.callPackage ./tkg.nix {})
 
     #(pkgs.callPackage ./carvel.nix {})

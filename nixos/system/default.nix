@@ -1,13 +1,10 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./fonts
     ./groups
     ./modules
     ./networking
+    ./nix.nix
     ./power
     ./programs
     ./secrets
@@ -45,43 +42,5 @@
       LC_TELEPHONE = "en_AU.UTF-8";
       LC_TIME = "en_AU.UTF-8";
     };
-  };
-
-  nix = {
-    enable = true;
-
-    settings = {
-      sandbox = true;
-
-      trusted-users = ["root" "mahdtech"];
-    };
-
-    extraOptions = ''
-      # Enable flakes
-      experimental-features = nix-command flakes
-
-      # Keep outputs and derivations during garbage-collect
-      keep-outputs = true
-      keep-derivations = true
-    '';
-
-    nixPath = ["nixpkgs=${inputs.nixpkgs}"];
-
-    registry.nixpkgs.flake = inputs.nixpkgs;
-
-    package = pkgs.nixStable;
-    #package = pkgs.nixUnstable;
-  };
-
-  system.autoUpgrade = {
-    enable = false;
-
-    allowReboot = true;
-
-    flake = "$HOME/dotfiles";
-
-    flags = ["--impure" "--update-input" "nixpkgs" "--commit-lock-file"];
-
-    dates = "00:00";
   };
 }

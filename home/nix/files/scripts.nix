@@ -7,6 +7,11 @@
       text = ''
         #!/usr/bin/env bash
 
+        if [[ "''${OS_NAME:-EMPTY}" == "nixos" ]];
+          echo "No, use appimageTools instead!"
+          exit 1
+        }
+
         echo "Installing cursor..."
 
         if type apt 2>/dev/null;

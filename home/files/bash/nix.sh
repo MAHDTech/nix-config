@@ -372,6 +372,7 @@ function dotfiles() {
 		}
 
 		# HACK: allow dirty
+		writeLog "INFO" "Staging git files"
 		git add --all || true
 
 		writeLog "WARN" "Using LOCAL dotfiles as the config directory is present ${DOTFILES_HOME_CONFIG}"
@@ -387,6 +388,10 @@ function dotfiles() {
 			writeLog "Failed to change into ${DOTFILES_NIX_CONFIG}"
 			return 1
 		}
+
+		# HACK: allow dirty
+		writeLog "INFO" "Staging git files"
+		git add --all || true
 
 		writeLog "WARN" "Using SYSTEM dotfiles as the config directory is present ${DOTFILES_NIX_CONFIG}"
 		FLAKE_LOCATION="${FLAKE_LOCAL}"

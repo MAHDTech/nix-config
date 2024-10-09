@@ -54,23 +54,6 @@
           Categories=Office;
         '';
       };
-
-      "cursor.desktop" = {
-        target = "applications/cursor.desktop";
-
-        text = ''
-          [Desktop Entry]
-          Name=Cursor
-          Exec=appimage-run ${config.home.homeDirectory}/Apps/cursor.AppImage --no-sandbox %U
-          Terminal=false
-          Type=Application
-          Icon=${config.home.homeDirectory}/.local/share/icons/hicolor/256x256/apps/cursor.png
-          StartupWMClass=Cursor
-          Comment=Cursor is an AI-first coding environment.
-          MimeType=x-scheme-handler/cursor;
-          Categories=Utility;
-        '';
-      };
     };
 
     # Set default user directories to home directory

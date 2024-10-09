@@ -8,7 +8,10 @@
 
   imports = [];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [
+    xdg-utils
+    xdg-launch
+  ];
 
   environment.pathsToLink = [
     "/share/xdg-desktop-portal"
@@ -17,8 +20,6 @@
 
   services.flatpak = {
     enable = true;
-
-    flatpak-dir = "/var/lib/flatpak";
 
     # <remote name>:<type>/<flatpak ref>/<arch>/<branch>:<commit>
     packages = [
@@ -31,6 +32,7 @@
       "flathub:app/com.slack.Slack//stable"
       "flathub:app/com.valvesoftware.Steam//stable"
       "flathub:app/net.codeindustry.MasterPDFEditor//stable"
+      "flathub:app/org.ferdium.Ferdium//stable"
       "flathub:app/org.gimp.GIMP//stable"
       "flathub:app/org.signal.Signal//stable"
       "flathub:app/org.videolan.VLC//stable"
@@ -46,13 +48,41 @@
   xdg.portal = {
     enable = true;
 
+    xdgOpenUsePortal = true;
+
     wlr.enable = true;
 
+    config = {
+      common = {
+        default = [
+          "gtk"
+        ];
+      };
+      cosmic = {
+        default = [
+          "cosmic"
+          "gtk"
+        ];
+        "org.freedesktop.impl.portal.Secret" = [
+          "gnome-keyring"
+        ];
+      };
+      pantheon = {
+        default = [
+          "pantheon"
+          "gtk"
+        ];
+        "org.freedesktop.impl.portal.Secret" = [
+          "gnome-keyring"
+        ];
+      };
+    };
+
     extraPortals = with pkgs; [
+      pantheon.xdg-desktop-portal-pantheon
+      xdg-desktop-portal-cosmic
       xdg-desktop-portal-gtk
       xdg-desktop-portal-wlr
-      xdg-desktop-portal-cosmic
-      pantheon.xdg-desktop-portal-pantheon
     ];
   };
 }

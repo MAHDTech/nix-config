@@ -27,6 +27,16 @@ in {
       "acpi_call"
     ];
 
+    # Wiki https://nixos.wiki/wiki/Linux_kernel
+    # Kernel (testing)
+    #kernelPackages = pkgs.linuxPackages_testing;
+    # Kernel (stable)
+    #kernelPackages = pkgs.linuxPackages_latest;
+    # Kernel (ZFS) NOTE: Now points to stable so not needed.
+    #kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+    # Kernel (Pinned version) https://kernel.org/
+    kernelPackages = pkgs.linuxPackages_6_10;
+
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [
       "acpi_osi=Linux"

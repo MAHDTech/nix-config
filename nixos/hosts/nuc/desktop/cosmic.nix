@@ -5,24 +5,33 @@
 }: {
   imports = [];
 
-  # NOTE: cosmic packages now pulled from nixos-cosmic flake.a
+  # NOTE: cosmic packages now pulled from nixos-cosmic flake.
 
   environment.systemPackages = with pkgs; [
-    system76-firmware
+    #system76-firmware
   ];
 
-  hardware.system76.enableAll = true;
+  hardware.system76 = {
+    enableAll = false;
+    power-daemon.enable = false;
+    kernel-modules.enable = false;
+    firmware-daemon.enable = false;
+  };
 
   services = {
+    # COSMIC Desktop
     desktopManager.cosmic.enable = true;
     displayManager.cosmic-greeter.enable = true;
 
-    # Because we use system76-power
-    power-profiles-daemon.enable = false;
+    # Other
+    system76-scheduler.enable = false;
   };
 
   boot.extraModulePackages = with config.boot.kernelPackages; [
-    system76-scheduler
-    system76-power
+    # If using the System76 scheduler
+    #system76-scheduler
+
+    # Disable when using power-profiles daemon or TLP
+    #system76-power
   ];
 }
