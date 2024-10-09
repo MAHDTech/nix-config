@@ -10,6 +10,6 @@
 
     #(pkgs.callPackage ./pivnet.nix {})
 
-    #(pkgs.callPackage ./ls-colors.nix {})
+    (pkgs.callPackage ./ls-colors.nix {})
   ];
 }
