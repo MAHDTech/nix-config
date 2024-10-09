@@ -1,7 +1,15 @@
-{config, ...}: {
+{
+  config,
+  pkgs,
+  ...
+}: {
   imports = [];
 
-  # NOTE: cosmic packages now pulled from nixos-cosmic flake.
+  # NOTE: cosmic packages now pulled from nixos-cosmic flake.a
+
+  environment.systemPackages = with pkgs; [
+    system76-firmware
+  ];
 
   hardware.system76.enableAll = true;
 

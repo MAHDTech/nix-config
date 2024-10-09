@@ -46,7 +46,7 @@
       options = ["fmask=0077" "dmask=0077"];
     };
 
-    "/boot/nixos-config" = {
+    "/boot/nixos" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part2";
       fsType = "xfs";
     };
@@ -98,8 +98,9 @@
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
 
   hardware = {
-    cpu.intel.updateMicrocode =
-      lib.mkDefault config.hardware.enableRedistributableFirmware;
+    cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+
+    enableAllFirmware = true;
 
     enableRedistributableFirmware = true;
   };

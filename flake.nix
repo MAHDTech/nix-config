@@ -131,11 +131,13 @@
     pkgsImportSystem = system:
       import nixpkgs {
         inherit system;
+        config.allowUnfree = true;
       };
 
     _pkgsImportSystemUnstable = system:
       import nixpkgs-unstable {
         inherit system;
+        config.allowUnfree = true;
       };
 
     #########################

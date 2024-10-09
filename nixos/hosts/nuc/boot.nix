@@ -22,8 +22,12 @@ in {
 
     extraModulePackages = with config.boot.kernelPackages; [acpi_call];
 
-    kernelModules = ["acpi_call"];
+    kernelModules = [
+      "kvm_intel"
+      "acpi_call"
+    ];
 
+    # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [
       "acpi_osi=Linux"
       "acpi_backlight=native"

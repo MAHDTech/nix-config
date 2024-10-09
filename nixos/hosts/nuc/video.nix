@@ -7,25 +7,14 @@
   # - Intel ARC needs kernel v6.2 or later.
 
   environment.systemPackages = with pkgs; [
-    glxinfo
+    nvtopPackages.full
     intel-gpu-tools
-    intel-graphics-compiler
-    intel-media-sdk
-    intel-ocl
-    inteltool
-    libva-utils
-    linux-firmware
-    mesa
-    vaapi-intel-hybrid
-    vaapiVdpau
-    vdpauinfo
-    displaylink
+    vulkan-tools
   ];
 
   boot = {
     initrd.kernelModules = [
       "i915"
-      "kvm-intel"
     ];
 
     blacklistedKernelModules = ["nouveau" "nvidia"];
@@ -39,10 +28,10 @@
     # 00:02.0 VGA compatible controller [0300]: Intel Corporation Alder Lake-P Integrated Graphics Controller [8086:46a6] (rev 0c)
     # 03:00.0 Display controller [0380]: Intel Corporation DG2 [Arc A730M] [8086:5691] (rev 08)
     kernelParams = [
+      "acpi_rev_override=5"
+      "i915.enable_guc=3"
       "i915.force_probe=46a6"
       "i915.force_probe=5691"
-      "i915.enable_guc=3"
-      "acpi_rev_override=5"
     ];
   };
 
@@ -50,34 +39,32 @@
     graphics = {
       enable = true;
 
+      # intel-media-driver for LIBVA_DRIVER_NAME=iHD
+      # intel-vaapi-driver for LIB_DRIVER_NAME=i965
+
       extraPackages = with pkgs; [
+        intel-compute-runtime
         intel-media-driver
         intel-ocl
         linux-firmware
         mesa
-        vaapi-intel-hybrid
-        vaapiIntel
-        vaapiVdpau
         vpl-gpu-rt
       ];
 
       extraPackages32 = with pkgs; [
+        intel-compute-runtime
         intel-media-driver
         intel-ocl
         linux-firmware
         mesa
-        vaapi-intel-hybrid
-        vaapiIntel
-        vaapiVdpau
         vpl-gpu-rt
       ];
     };
   };
 
   services.xserver.videoDrivers = [
-    "intel"
     "displaylink"
-    #"modesetting"
+    "intel"
   ];
 
   environment.variables = {
