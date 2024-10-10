@@ -247,8 +247,31 @@
 
           * )
 
-            echo "Unknown OS Layer ''${OS_LAYER:-EMPTY}"
-            exit 1
+            # If not a layer, what OS?
+            case "''${OS_NAME:-EMPTY}" in
+
+              "nixos" )
+
+                # NixOS needs to have insync installed.
+                if ! type insync 2>/dev/null;
+                then
+                  echo "On NixOS, insync needs to be installed"
+                  exit 2
+                fi
+
+                PROJECTS_LOCAL="''${HOME}/Projects/"
+                PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/Google Drive/Projects/Backup/"
+
+              ;;
+
+              * )
+
+                echo "Unknown OS Layer ''${OS_LAYER:-EMPTY} and unsupported OS ''${OS_NAME:-EMPTY}"
+                exit 1
+
+              ;;
+
+            esac
 
           ;;
 
