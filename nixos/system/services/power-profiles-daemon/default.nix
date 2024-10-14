@@ -1,13 +1,7 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
 
-  services.power-profiles-daemon = {enable = false;};
+  services.power-profiles-daemon = {enable = true;};
 }

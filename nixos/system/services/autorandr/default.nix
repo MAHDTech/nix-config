@@ -1,13 +1,7 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
 
-  services.autorandr = {enable = true;};
+  services.autorandr = {enable = false;};
 }

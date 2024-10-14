@@ -1,22 +1,29 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
 
   services.tlp = {
-    enable = true;
+    enable = false;
 
     settings = {
       USB_AUTOSUSPEND = 0;
 
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+
+      CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+      CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+
+      CPU_MIN_PERF_ON_AC = 0;
+      CPU_MAX_PERF_ON_AC = 100;
+      CPU_MIN_PERF_ON_BAT = 0;
+      CPU_MAX_PERF_ON_BAT = 50;
+
+      # Start charging when the battery hits this level.
+      START_CHARGE_THRESH_BAT0 = 50;
+      # Stop charging when the battery hits this level.
+      STOP_CHARGE_THRESH_BAT0 = 80;
 
       # Enable audio power saving for Intel HDA, AC97 devices (timeout in secs).
       # A value of 0 disables, >=1 enables power saving (recommended: 1).

@@ -19,6 +19,7 @@ customizations = "customizations"
 guage = "guage"
 hashi = "hashi"
 hashicorp = "hashicorp"
+hda = "hda"
 
 [files]
 

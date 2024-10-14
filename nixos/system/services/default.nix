@@ -3,6 +3,7 @@
     ./systemd
 
     ./acpid
+    ./auto-cpufreq
     ./autorandr
     ./cron
     ./dbus

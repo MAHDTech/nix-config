@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
@@ -12,7 +6,8 @@
   powerManagement = {
     enable = true;
 
-    powertop = {enable = true;};
+    # Enabling powertop will enable autotune.
+    powertop = {enable = false;};
 
     cpuFreqGovernor = "performance";
 
