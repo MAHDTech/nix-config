@@ -10,7 +10,7 @@
 
   src = fetchurl {
     url = "https://downloader.cursor.sh/linux/appImage/x64";
-    hash = "sha256-WtfyiNGnUn8g1HR0TQPyn3SMJmjqe+otAYeyokMIO+w=";
+    hash = "sha256-HDZ8i/86qZOqrsBcMbgeXGtZ5hmQfeDCqv9scBT1fak=";
   };
 
   # AppImages are type 1 (ISO) or type 2 (ELF)

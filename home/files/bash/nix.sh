@@ -312,9 +312,9 @@ function dotfiles() {
 	local FLAKE_REMOTE="github:MAHDTech/nix-config"
 	local FLAKE_LOCAL="."
 
-	local FLAKE_HOME_MANAGER
+	#local FLAKE_HOME_MANAGER
 	#FLAKE_HOME_MANAGER="$(printf '%s\n' "$(whoami)"@"$(hostname)")"
-	FLAKE_HOME_MANAGER="${USER%%@*}"
+	#FLAKE_HOME_MANAGER="${USER%%@*}"
 
 	local EXECUTE="FALSE"
 
@@ -417,7 +417,8 @@ function dotfiles() {
 
 	*)
 
-		FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
+		#NOTE: Home Manager seems to auto add .${USERNAME}
+		#FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
 		writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
 
 		;;

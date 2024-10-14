@@ -19,7 +19,7 @@ export ENABLE_YOLO_MODE="FALSE"
 export LOG_LEVEL="INFO"
 
 # Override the log destination if required.
-export LOG_DESTINATION="file"
+export LOG_DESTINATION="all"
 
 #########################
 # Common
@@ -40,7 +40,7 @@ export DOMAIN=""
 #########################
 
 # Use Trezor, OpenSSH or 1Password?
-export ENABLED_SSH_AGENT="openssh"
+export ENABLED_SSH_AGENT="1password"
 
 # OpenSSH Keys will be named ${OS_PLATFORM^^}_${ENV^^}_${KEY_TYPE^^}
 #export KEY_TYPE="ed25519-sk"
@@ -51,7 +51,7 @@ export KEY_TYPE="ed25519"
 #########################
 
 # Use GnuPG, Trezor, 1Password, KeepKey, Ledger?
-export ENABLED_GPG_AGENT="gnupg"
+export ENABLED_GPG_AGENT="1password"
 
 #########################
 # Keychain
@@ -78,6 +78,9 @@ export NIX_ENABLED="FALSE"
 export NIX_PROFILE_SCRIPT_USER="${HOME}/.nix-profile/etc/profile.d/nix.sh"
 export NIX_PROFILE_SCRIPT_MACHINE="/etc/profile.d/nix.sh"
 
+# Cachix
+export CACHIX_AUTH_TOKEN=""
+
 #########################
 # Yubikey
 #########################
@@ -89,7 +92,7 @@ export YUBIKEY_ENABLED="FALSE"
 #########################
 
 # Whether to update rust and cargo.
-export RUST_ENABLED="TRUE"
+export RUST_ENABLED="FALSE"
 
 #########################
 # Kubernetes

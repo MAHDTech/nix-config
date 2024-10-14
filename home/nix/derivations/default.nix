@@ -1,6 +1,6 @@
 {pkgs, ...}: {
   home.packages = [
-    (pkgs.callPackage ./cursor.nix {})
+    #(pkgs.callPackage ./cursor.nix {})
 
     #(pkgs.callPackage ./tkg.nix {})
 

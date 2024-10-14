@@ -75,5 +75,8 @@
     xsv
     xxd
     zip
+
+    # GUI
+    code-cursor
   ];
 }
