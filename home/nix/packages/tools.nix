@@ -78,5 +78,6 @@
 
     # GUI
     code-cursor
+    signal-desktop
   ];
 }

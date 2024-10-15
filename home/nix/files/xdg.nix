@@ -54,6 +54,39 @@
           Categories=Office;
         '';
       };
+
+      "cursor.desktop" = {
+        target = "applications/cursor.desktop";
+
+        text = ''
+          [Desktop Entry]
+          Name=Cursor
+          Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
+          Terminal=false
+          Type=Application
+          Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
+          StartupWMClass=Cursor
+          Comment=Cursor is an AI-first coding environment.
+          MimeType=x-scheme-handler/cursor;
+          Categories=Utility;
+        '';
+      };
+
+      "signal.desktop" = {
+        target = "applications/signal.desktop";
+
+        text = ''
+          Name=Signal
+          Exec=${pkgs.signal-desktop}/bin/signal-desktop --no-sandbox %U
+          Terminal=false
+          Type=Application
+          Icon=${pkgs.signal-desktop}/share/icons/hicolor/256x256/apps/signal-desktop.png
+          StartupWMClass=signal
+          Comment=Private messaging from your desktop
+          MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
+          Categories=Network;InstantMessaging;Chat;
+        '';
+      };
     };
 
     # Set default user directories to home directory
