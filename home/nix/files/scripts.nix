@@ -8,9 +8,10 @@
         #!/usr/bin/env bash
 
         if [[ "''${OS_NAME:-EMPTY}" == "nixos" ]];
+        then
           echo "No, use appimageTools instead!"
           exit 1
-        }
+        fi
 
         echo "Installing cursor..."
 
@@ -28,47 +29,15 @@
         }
 
         wget \
-          --output-document ~/Apps/cursor.AppImage \
+          --output-document ~/Apps/cursor.appimage \
           "https://downloader.cursor.sh/linux/appImage/x64" || {
             echo "Failed to download cursor"
             exit 3
           }
 
-        chmod +x ~/Apps/cursor.AppImage || {
+        chmod +x ~/Apps/cursor.appimage || {
           echo "Failed to chmod cursor!"
           exit 4
-        }
-
-        sudo mkdir -p /usr/local/bin || {
-          echo "Failed to create apps system directory!"
-          exit 2
-        }
-
-        sudo ln -sf ~/Apps/cursor.AppImage /usr/local/bin/cursor || {
-          echo "Failed to symlink cursor!"
-          exit 5
-        }
-
-        wget \
-          --output-document /tmp/cursor.png \
-          "https://avatars.githubusercontent.com/u/126759922?v=4" || {
-            echo "Failed to download cursor icon!"
-            exit 6
-          }
-
-        mkdir -p $HOME/.local/share/icons/hicolor/256x256/apps || {
-          echo "Failed to create AppImage icons folder for user!"
-          exit 7
-        }
-
-        cp /tmp/cursor.png $HOME/.local/share/icons/hicolor/256x256/apps/cursor.png || {
-          echo "Failed to copy cursor icon!"
-          exit 7
-        }
-
-        rm /tmp/cursor.png || {
-          echo "Failed to remove cursor icon!"
-          exit 8
         }
 
         if [[ "''${OS_NAME:-EMPTY}" == "cros" ]];

@@ -77,7 +77,7 @@
     zip
 
     # GUI
-    code-cursor
+    #code-cursor
     signal-desktop
   ];
 }

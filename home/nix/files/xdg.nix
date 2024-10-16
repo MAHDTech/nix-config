@@ -61,7 +61,8 @@
         text = ''
           [Desktop Entry]
           Name=Cursor
-          Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
+          #Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
+          Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
           Terminal=false
           Type=Application
           Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
@@ -76,6 +77,7 @@
         target = "applications/signal.desktop";
 
         text = ''
+          [Desktop Entry]
           Name=Signal
           Exec=${pkgs.signal-desktop}/bin/signal-desktop --no-sandbox %U
           Terminal=false
