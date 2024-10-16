@@ -59,7 +59,7 @@ export ENABLED_GPG_AGENT="1password"
 
 # What keychain is managing local secrets?
 # Options are; home-manager or gnome-keyring
-export ENABLED_KEYRING_AGENT="home-manager"
+export ENABLED_KEYRING_AGENT="gnome-keyring"
 
 #########################
 # AWS
