@@ -1,13 +1,16 @@
 {pkgs, ...}: {
   imports = [];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [
+    # Install powertop for analysis but not run autotune.
+    powertop
+  ];
 
   powerManagement = {
     enable = true;
 
     # Enabling powertop will enable autotune.
-    powertop = {enable = false;};
+    powertop.enable = false;
 
     cpuFreqGovernor = "performance";
 

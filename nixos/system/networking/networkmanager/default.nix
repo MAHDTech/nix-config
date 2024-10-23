@@ -8,7 +8,7 @@
   networking = {
     # https://developer-old.gnome.org/NetworkManager/stable/NetworkManager.conf.html
     networkmanager = {
-      enable = true;
+      enable = false;
 
       # "none", "default", "dnsmasq", "unbound", "systemd-resolved"
       dns = "systemd-resolved";

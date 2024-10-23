@@ -9,5 +9,6 @@
 
   environment.systemPackages = with pkgs; [];
 
-  services.throttled = {enable = false;};
+  # Enable fix for Intel CPU throttling.
+  services.throttled = {enable = true;};
 }

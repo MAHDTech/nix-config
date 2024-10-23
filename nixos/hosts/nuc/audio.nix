@@ -8,8 +8,6 @@
     pulseaudio.enable = false;
   };
 
-  #nixpkgs.config.pulseaudio = false;
-
   security.rtkit.enable = true;
 
   services.pipewire = {

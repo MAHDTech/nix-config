@@ -10,8 +10,8 @@
   environment.systemPackages = with pkgs; [];
 
   # Currently using;
-  # - systemd-network for LAN
-  # - NetworkManager for WLAN
+  #   - systemd-network for LAN
+  #   - NetworkManager for WLAN
 
   networking = {
     useNetworkd = true;

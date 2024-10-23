@@ -15,11 +15,11 @@
 
     fallbackDns = ["1.1.1.1" "1.0.0.1"];
 
+    # Local network suffixes
     domains = [
       "mahdtech.com"
-      "saltlabs.tech"
       "saltlabs.cloud"
-      "vmware.local"
+      "saltlabs.tech"
     ];
 
     extraConfig = "";

@@ -48,7 +48,8 @@
           DNS = [];
         };
       in {
-        "40-wired" = {
+        # systemd-networkd handles LAN
+        "10-wired" = {
           enable = true;
           name = "en*";
 
@@ -57,8 +58,8 @@
           dhcpV4Config.RouteMetric = 1000;
         };
 
-        # NetworkManager for WiFi
-        "40-wireless" = {
+        # NetworkManager handles WiFi
+        "20-wireless" = {
           enable = false;
           name = "wl*";
 
@@ -67,7 +68,8 @@
           dhcpV4Config.RouteMetric = 2000;
         };
 
-        "40-tunnel" = {
+        # systemd-networkd handles tunnel interfaces
+        "30-tunnel" = {
           enable = true;
           name = "tun*";
 
@@ -86,25 +88,18 @@
         };
       };
     };
-  };
 
-  services = {
-    /*
-    # Wait for any interface to come online.
-    systemd-networkd-wait-online = {
-
-      serviceConfig = {
-
-        ExecStart = [
-
-          ""
-          "${config.systemd.package}/lib/systemd/systemd-networkd-wait-online --any"
-
-        ];
-
+    services = {
+    
+      # Wait for any interface to come online.
+      systemd-networkd-wait-online = {
+        serviceConfig = {
+          ExecStart = [
+            ""
+            "${config.systemd.package}/lib/systemd/systemd-networkd-wait-online --any"
+          ];
+        };
       };
-
     };
-    */
   };
 }

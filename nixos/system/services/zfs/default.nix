@@ -15,7 +15,8 @@
 
       interval = "weekly";
 
-      pools = [];
+      # Configured per-host.
+      #pools = [];
     };
 
     trim = {

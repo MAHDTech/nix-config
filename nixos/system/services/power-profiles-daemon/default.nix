@@ -3,5 +3,7 @@
 
   environment.systemPackages = with pkgs; [];
 
-  services.power-profiles-daemon = {enable = true;};
+  # Using Power-Profiles Daemon as it works with COSMIC.
+  # But TLP works better :/
+  services.power-profiles-daemon = {enable = false;};
 }

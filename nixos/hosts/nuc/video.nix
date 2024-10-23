@@ -68,7 +68,7 @@
   };
 
   services.xserver.videoDrivers = [
-    "displaylink"
+    #"displaylink"
     "intel"
   ];
 
