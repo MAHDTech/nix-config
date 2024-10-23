@@ -4,6 +4,12 @@
   environment.systemPackages = with pkgs; [];
 
   security.pam = {
+    u2f = {
+      enable = true;
+      settings.cue = true;
+      control = "sufficient";
+    };
+
     services = {
       login.u2fAuth = true;
       sudo.u2fAuth = true;

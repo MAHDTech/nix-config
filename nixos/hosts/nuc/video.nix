@@ -17,7 +17,12 @@
       "i915"
     ];
 
-    blacklistedKernelModules = ["nouveau" "nvidia"];
+    blacklistedKernelModules = [
+      "nouveau"
+      "nvidia"
+      "nvidia_drm"
+      "nvidia_modeset"
+    ];
 
     # https://dgpu-docs.intel.com/devices/hardware-table.html
     # https://nixos.wiki/wiki/Intel_Graphics

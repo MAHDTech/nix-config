@@ -1,15 +1,11 @@
 {pkgs, ...}: {
   imports = [];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [
+  ];
 
   hardware = {
     pulseaudio.enable = false;
-
-    bluetooth = {
-      enable = true;
-      powerOnBoot = true;
-    };
   };
 
   #nixpkgs.config.pulseaudio = false;

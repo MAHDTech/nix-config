@@ -76,6 +76,23 @@
     xxd
     zip
 
+    # Terminal
+    wezterm
+    cool-retro-term
+
+    # Text
+    helix
+
+    # Media Players
+    mpv
+    vlc
+
+    # Image Viewer
+    imv
+
+    # PDF
+    zathura
+
     # GUI
     #code-cursor
     signal-desktop

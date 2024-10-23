@@ -93,6 +93,15 @@
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    wezterm = {
+      type = "github";
+      owner = "wez";
+      repo = "wezterm";
+      ref = "main";
+      flake = true;
+      dir = "nix";
+    };
   };
 
   outputs = {

@@ -12,18 +12,20 @@
     ../../system
 
     # Load device specific configurations.
-    ./boot.nix
     ./audio.nix
-    ./video.nix
+    ./bluetooth.nix
+    ./boot.nix
     ./packages.nix
+    ./video.nix
 
     # Load the chosen desktop environment.
-    ./desktop/cosmic.nix
-    #./desktop/gnome.nix
-    #./desktop/pantheon.nix
+    #../../system/desktop/cosmic.nix
+    #../../system/desktop/gnome.nix
+    #../../system/desktop/pantheon.nix
+    ../../system/desktop/hyprland.nix
 
     # Laptop specific configurations.
-    ./laptop
+    ../../system/laptop
     ../../system/networking/wireless
 
     # Virtualization

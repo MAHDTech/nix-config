@@ -12,7 +12,12 @@
     gc = {
       automatic = true;
       dates = "weekly";
-      options = "--delete-older-than 7d";
+      options = "--delete-older-than 14d";
+    };
+
+    optimise = {
+      automatic = true;
+      dates = ["weekly"];
     };
 
     settings = {
@@ -52,10 +57,12 @@
 
     allowReboot = true;
 
+    operation = "boot";
+
     flake = "/boot/nixos/nix-config";
 
     flags = ["--impure" "--update-input" "nixpkgs" "--commit-lock-file"];
 
-    dates = "00:00";
+    dates = "weekly";
   };
 }

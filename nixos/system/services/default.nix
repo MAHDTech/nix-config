@@ -5,6 +5,7 @@
     ./acpid
     ./auto-cpufreq
     ./autorandr
+    ./clamav
     ./cron
     ./dbus
     ./flatpak

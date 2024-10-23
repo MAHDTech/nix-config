@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [./notifier.nix];
 
   environment.systemPackages = with pkgs; [libnotify];

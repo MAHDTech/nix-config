@@ -13,7 +13,10 @@ in {
   environment.systemPackages = with pkgs; [];
 
   boot = {
+    consoleLogLevel = 4;
+
     initrd = {
+      enable = true;
       systemd = {
         enable = true;
       };
@@ -52,10 +55,14 @@ in {
 
     plymouth = {
       enable = true;
-      theme = "glowing";
+      font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
+      # theme = "glowing";
+      # theme = "matrix";
+      theme = "catppuccin-macchiato";
       themePackages = with pkgs; [
-        plymouth-matrix-theme
         adi1090x-plymouth-themes
+        catppuccin-plymouth
+        plymouth-matrix-theme
       ];
     };
 
