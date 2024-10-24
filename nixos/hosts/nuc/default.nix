@@ -18,7 +18,7 @@
     ./packages.nix
     ./video.nix
 
-    # Load the chosen desktop environment.
+    # Load the chosen desktop environments.
     #../../system/desktop/cosmic.nix
     #../../system/desktop/gnome.nix
     #../../system/desktop/pantheon.nix

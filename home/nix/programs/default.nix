@@ -9,6 +9,7 @@
     ./git.nix
     ./gpg.nix
     ./htop.nix
+    ./hyprland.nix
     ./neovim.nix
     ./password-store.nix
     #./python.nix

@@ -1,5 +1,6 @@
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
+    # Hyprland
     pyprland
     hyprpicker
     hyprcursor
@@ -15,7 +16,6 @@
   ];
 
   services = {
-    
     xserver = {
       enable = true;
       updateDbusEnvironment = true;
@@ -24,12 +24,22 @@
     displayManager = {
       sddm.enable = false;
     };
-  
+
+    # Idle daemon
+    hypridle.enable = true;
   };
 
-  programs.hyprland = {
-    enable = true;
-    xwayland = {
+  programs = {
+    hyprland = {
+      enable = true;
+      xwayland = {
+        enable = true;
+      };
+      portalPackage = pkgs.xdg-desktop-portal-hyprland;
+    };
+
+    # Lock screen utility
+    hyprlock = {
       enable = true;
     };
   };
@@ -60,5 +70,4 @@
       };
     };
   };
-
 }

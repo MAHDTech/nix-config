@@ -77,7 +77,6 @@
     zip
 
     # Terminal
-    wezterm
     cool-retro-term
 
     # Text
