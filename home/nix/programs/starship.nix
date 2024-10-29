@@ -13,7 +13,7 @@
       flavor = "mocha";
     };
 
-    package = pkgsUnstable.starship;
+    package = pkgs.starship;
 
     enableBashIntegration = true;
     enableFishIntegration = false;

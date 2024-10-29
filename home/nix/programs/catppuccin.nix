@@ -10,17 +10,18 @@
     };
   };
 
+  # TODO: Deprecated
   gtk = {
+    enable = false;
     catppuccin = {
-      enable = true;
+      enable = false;
       flavor = "mocha";
       accent = "mauve";
-      gnomeShellTheme = true;
+      gnomeShellTheme = false;
       icon = {
         enable = true;
         flavor = "mocha";
         accent = "mauve";
-        size = "standard";
       };
       tweaks = [];
     };
