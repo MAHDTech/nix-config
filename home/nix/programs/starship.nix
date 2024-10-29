@@ -1,17 +1,17 @@
 {
-  inputs,
   lib,
   pkgs,
   ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs; []; #++ unstablePkgs;
+}: {
+  home.packages = with pkgs; [];
 
   programs.starship = {
     enable = true;
+
+    catppuccin = {
+      enable = true;
+      flavor = "mocha";
+    };
 
     package = pkgsUnstable.starship;
 

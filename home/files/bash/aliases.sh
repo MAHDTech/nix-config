@@ -124,27 +124,4 @@ alias sleepIn30='caffeinate -t 1800 ; say "Sleeping now" ; pmset sleepnow'
 alias sleepIn60='caffeinate -t 3600 ; say "Sleeping now" ; pmset sleepnow'
 alias sleepIn90='caffeinate -t 5400 ; say "Sleeping now" ; pmset sleepnow'
 
-##################
-# Other
-##################
-
-# Logseq
-#alias logseq='
-#    logseq \
-#        --no-sandbox \
-#        --enable-features=UseOzonePlatform,WaylandWindowDecorations \
-#        --ozone-platform-hint=auto \
-#       --ozone-platform=wayland \
-#'
-
-# VSCode
-#alias code='
-#    code \
-#        --no-sandbox \
-#        --enable-features=UseOzonePlatform,WaylandWindowDecorations \
-#        --ozone-platform-hint=auto \
-#        --ozone-platform=wayland \
-#        --unity-launch \
-#'
-
 # EOF

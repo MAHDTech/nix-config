@@ -2,14 +2,15 @@
   imports = [
     ./alacritty.nix
     ./bash.nix
+    ./catppuccin.nix
     ./command-not-found.nix
     ./dconf.nix
     ./direnv.nix
     ./fzf.nix
     ./git.nix
     ./gpg.nix
+    ./btop.nix
     ./htop.nix
-    ./hyprland.nix
     ./neovim.nix
     ./password-store.nix
     #./python.nix
@@ -20,5 +21,9 @@
     ./vscode.nix
     ./wakatime.nix
     ./work.nix
+
+    # Hyprland
+    ./hyprland.nix
+    ./waybar.nix
   ];
 }

@@ -61,8 +61,8 @@
         text = ''
           [Desktop Entry]
           Name=Cursor
-          #Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
-          Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
+          Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
+          #Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
           Terminal=false
           Type=Application
           Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
@@ -108,8 +108,9 @@
 
       extraConfig = {
         XDG_PROJECTS_DIR = "${config.home.homeDirectory}/Projects";
-        XDG_WORKSPACES_DIR = "${config.home.homeDirectory}/Workspaces";
         XDG_SOFTWARE_DIR = "${config.home.homeDirectory}/Software";
+        XDG_WALLPAPERS_DIR = "${config.home.homeDirectory}/Pictures/Wallpapers";
+        XDG_WORKSPACES_DIR = "${config.home.homeDirectory}/Workspaces";
       };
     };
   };

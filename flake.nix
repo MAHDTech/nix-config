@@ -102,9 +102,18 @@
       flake = true;
       dir = "nix";
     };
+
+    catppuccin = {
+      type = "github";
+      owner = "catppuccin";
+      repo = "nix";
+      ref = "main";
+      flake = true;
+    };
   };
 
   outputs = {
+    catppuccin,
     devenv,
     flatpaks,
     home-manager,
@@ -241,6 +250,9 @@
           # Enable COSMIC desktop environment.
           nixos-cosmic.nixosModules.default
 
+          # Enable Catppuccin theme.
+          catppuccin.nixosModules.catppuccin
+
           # Enable declarative flatpak support.
           flatpaks.nixosModules.default
 
@@ -269,6 +281,7 @@
                 imports = [
                   ./home
                   sops-nix.homeManagerModules.sops
+                  catppuccin.homeManagerModules.catppuccin
                 ];
               };
             };

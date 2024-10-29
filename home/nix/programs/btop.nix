@@ -1,9 +1,8 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [];
 
-  programs.neovim = {
-    enable = false;
-
+  programs.btop = {
+    enable = true;
     catppuccin = {
       enable = true;
       flavor = "mocha";

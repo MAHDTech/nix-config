@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   # https://nixos.wiki/wiki/Fonts
 
   fonts = {
@@ -18,7 +12,7 @@
       jetbrains-mono
       liberation_ttf
       noto-fonts
-      noto-fonts-cjk
+      noto-fonts-cjk-sans
       noto-fonts-emoji
       openmoji-color
       roboto

@@ -36,8 +36,6 @@
     # CLI
     bat
     bottom
-    btop
-    bzip2
     charasay
     curlFull
     complete-alias
@@ -93,7 +91,7 @@
     zathura
 
     # GUI
-    #code-cursor
+    code-cursor
     signal-desktop
   ];
 }

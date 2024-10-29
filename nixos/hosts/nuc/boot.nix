@@ -36,7 +36,7 @@ in {
     # Kernel (testing)
     #kernelPackages = pkgs.linuxPackages_testing;
     # Kernel (Pinned version) https://kernel.org/
-    kernelPackages = pkgs.linuxPackages_6_10;
+    kernelPackages = pkgs.linuxPackages_6_6;
 
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [
@@ -56,12 +56,16 @@ in {
       font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
       # theme = "glowing";
       # theme = "matrix";
-      theme = "catppuccin-macchiato";
-      themePackages = with pkgs; [
-        adi1090x-plymouth-themes
-        catppuccin-plymouth
-        plymouth-matrix-theme
-      ];
+      #theme = "catppuccin-mocha";
+      #themePackages = with pkgs; [
+      #  adi1090x-plymouth-themes
+      #  catppuccin-plymouth
+      #  plymouth-matrix-theme
+      #];
+      catppuccin = {
+        enable = true;
+        flavor = "mocha";
+      };
     };
 
     loader = {
@@ -72,7 +76,9 @@ in {
         canTouchEfiVariables = true;
       };
 
-      generationsDir.copyKernels = true;
+      generationsDir = {
+        copyKernels = true;
+      };
 
       systemd-boot = {
         enable = true;
@@ -80,10 +86,16 @@ in {
         graceful = true;
         memtest86.enable = true;
         netbootxyz.enable = false;
+
+        configurationLimit = 10;
       };
 
       grub = {
         enable = false;
+        catppuccin = {
+          enable = true;
+          flavor = "mocha";
+        };
       };
     };
 

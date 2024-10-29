@@ -20,6 +20,9 @@ guage = "guage"
 hashi = "hashi"
 hashicorp = "hashicorp"
 hda = "hda"
+randomize = "randomize"
+optimizations = "optimizations"
+maximize = "maximize"
 
 [files]
 
