@@ -14,6 +14,7 @@
     # System Configuration
     ../../system/config/fonts
     ../../system/config/zfs
+    ../../system/config/theme/catppuccin
 
     # Headless
 

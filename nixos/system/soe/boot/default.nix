@@ -45,10 +45,10 @@
     plymouth = {
       enable = true;
       font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
-      theme = "catppuccin-mocha";
-      themePackages = with pkgs; [
-        catppuccin-plymouth
-      ];
+      catppuccin = {
+        enable = true;
+        flavor = "mocha";
+      };
     };
 
     loader = {

@@ -261,6 +261,9 @@
         };
 
         extraModules = [
+          # Enable Catppuccin theme.
+          catppuccin.nixosModules.catppuccin
+
           ./nixos/hosts/template
           {system.stateVersion = globalStateVersion;}
         ];
