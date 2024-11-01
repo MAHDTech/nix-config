@@ -45,7 +45,7 @@
     plymouth = {
       enable = true;
       font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
-      theme = "catppuccin-macchiato";
+      theme = "catppuccin-mocha";
       themePackages = with pkgs; [
         catppuccin-plymouth
       ];
