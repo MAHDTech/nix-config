@@ -77,10 +77,6 @@ function start_keyring() {
 		# If home manager is using gnome-keyring, give it a kick in the guts.
 		if type gnome-keyring-daemon 1>/dev/null 2>&1; then
 
-			setup_gnome_keyring || {
-				writeLog "ERROR" "Failed to set variables needed for gnome-keyring"
-				return 1
-			}
 			systemctl --user restart gnome-keyring.service || {
 				writeLog "ERROR" "Failed to start the gnome-keyring user service"
 				return 1

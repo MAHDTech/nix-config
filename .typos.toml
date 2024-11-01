@@ -9,10 +9,9 @@ extend-ignore-re = [
 
 [default.extend-words]
 
-normalization = "normalization"
-recognize = "recognize"
-authorized = "authorized"
+ags = "ags"
 authorised = "authorised"
+authorized = "authorized"
 center = "center"
 cros = "cros"
 customizations = "customizations"
@@ -20,9 +19,12 @@ guage = "guage"
 hashi = "hashi"
 hashicorp = "hashicorp"
 hda = "hda"
-randomize = "randomize"
-optimizations = "optimizations"
 maximize = "maximize"
+normalization = "normalization"
+optimizations = "optimizations"
+optimized = "optimized"
+randomize = "randomize"
+recognize = "recognize"
 
 [files]
 

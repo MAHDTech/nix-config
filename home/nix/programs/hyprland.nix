@@ -1,46 +1,29 @@
 {pkgs, ...}: let
-  ##################################################
-  #
-  # If COSMIC and Hyprland had a baby...
-  #
-  # A work-in-progress story...
-  #
-  ##################################################
   packages = with pkgs; [
-    # Text editor
+    brightnessctl
     cosmic-edit
-
-    # Flatpak store
-    cosmic-store
-
-    # Icons
-    cosmic-icons
-
-    # File browser
     cosmic-files
-
-    # Terminal
-    cosmic-term
-
-    # Launcher
+    cosmic-icons
     cosmic-launcher
-    pop-launcher
-
-    # Notifications
-    dunst
-
-    # Wallpaper daemon
-    swww
-
-    # Screenshot tool and dependencies
-    hyprshot
-    hyprpicker
-    jq
+    cosmic-store
+    cosmic-term
     grim
-    slurp
-    wl-clipboard
+    hyprpicker
+    hyprshot
+    jq
     libnotify
     lz4
+    nvd
+    pavucontrol
+    pop-launcher
+    slurp
+    swappy
+    swww
+    wayshot
+    wf-recorder
+    wl-clipboard
+    wl-screenrec
+    wlogout
   ];
 in {
   home.packages = packages;
@@ -750,8 +733,9 @@ in {
       # Open apps on startup
       exec-once = [
         "$terminal"
+        "swww-daemon & sleep 3 && exec random-wallpaper ''$XDG_WALLPAPERS_DIR"
         "pidof insync || insync start"
-        "swww-daemon & sleep 1.0 && exec random-wallpaper ''$XDG_WALLPAPERS_DIR"
+        "ags --bus-name hypr"
       ];
 
       ####################

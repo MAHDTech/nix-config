@@ -1,37 +1,33 @@
 {
   networking = {
     hostName = "NUC";
-    hostId = "def00001";
+    hostId = "def10001";
   };
 
   imports = [
-    # Load device specific hardware configuration.
+    # Load hardware specific configuration.
     ./hardware-configuration.nix
 
-    # Load defaults for all systems.
-    ../../system
+    # Load system standard-operating-environment.
+    ../../system/soe
 
-    # Load device specific configurations.
-    ./audio.nix
-    ./bluetooth.nix
-    ./boot.nix
-    ./packages.nix
-    ./video.nix
+    # System configuration
+    ../../system/config/audio
+    ../../system/config/bluetooth
+    ../../system/config/disk/gparted
+    ../../system/config/fonts
+    ../../system/config/hardware/laptop
+    ../../system/config/network/wireless
+    ../../system/config/power
+    ../../system/config/printing
+    ../../system/config/services
+    ../../system/config/video/intel
 
-    # Load the chosen desktop environments.
-    #../../system/desktop/cosmic.nix
-    #../../system/desktop/gnome.nix
-    #../../system/desktop/pantheon.nix
-    ../../system/desktop/hyprland.nix
+    # Desktop Environment
+    ../../system/config/desktop-environment/hyprland.nix
 
-    # Laptop specific configurations.
-    ../../system/laptop
-    ../../system/networking/wireless
-
-    # Virtualization
-    ../../system/virtualisation/host
-
-    # Steam
-    #../../system/programs/steam
+    # VMware virtualisation and Docker Container Host.
+    ../../system/config/virtualisation/docker
+    ../../system/config/virtualisation/host/vmware
   ];
 }

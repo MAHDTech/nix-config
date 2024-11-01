@@ -23,7 +23,9 @@
     ./work.nix
 
     # Hyprland
+    ./ags.nix
     ./hyprland.nix
-    ./waybar.nix
+    #./dunst.nix
+    #./waybar.nix
   ];
 }

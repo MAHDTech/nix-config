@@ -9,6 +9,7 @@
       cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=
     ";
     extra-experimental-features = "nix-command flakes";
+    warn-dirty = true;
   };
 
   inputs = {
@@ -108,6 +109,22 @@
       owner = "catppuccin";
       repo = "nix";
       ref = "main";
+      flake = true;
+    };
+
+    ags = {
+      type = "github";
+      owner = "Aylur";
+      repo = "ags";
+      ref = "main";
+      flake = true;
+    };
+
+    matugen = {
+      type = "github";
+      owner = "InioX";
+      repo = "matugen";
+      ref = "v2.2.0";
       flake = true;
     };
   };
@@ -233,6 +250,40 @@
     #########################
 
     nixosConfigurations = {
+      # Hostname: TEMPLATE
+      # Description: VMware VM used as a template for new hosts.
+      TEMPLATE = configNixOS {
+        username = globalUsername;
+        system = "x86_64-linux";
+
+        specialArgs = {
+          inherit inputs;
+        };
+
+        extraModules = [
+          ./nixos/hosts/template
+          {system.stateVersion = globalStateVersion;}
+        ];
+      };
+
+      # Hostname: NIXOS-1
+      # Description: VMware VM running NixOS used as a Jump Box.
+      NIXOS-1 = configNixOS {
+        username = globalUsername;
+        system = "x86_64-linux";
+
+        specialArgs = {
+          inherit inputs;
+        };
+
+        extraModules = [
+          ./nixos/hosts/nixos-1
+          {system.stateVersion = globalStateVersion;}
+        ];
+      };
+
+      # Hostname: NUC
+      # Description: Intel X15 NUC Laptop with Intel ARC GPU
       NUC = configNixOS {
         username = globalUsername;
         system = "x86_64-linux";

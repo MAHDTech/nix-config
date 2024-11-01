@@ -17,7 +17,11 @@
 
           // Terminal
           "terminal.integrated.fontFamily": "'Ubuntu Mono', 'JetBrains Mono', 'JetBrains Mono Nerd Font', monospace",
-          "terminal.integrated.fontSize": 14
+          "terminal.integrated.fontSize": 14,
+
+          // Workbench
+          "workbench.colorTheme": "Catppuccin Mocha",
+          "workbench.iconTheme": "catppuccin-mocha"
         }
       '';
     };

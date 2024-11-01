@@ -1,49 +1,7 @@
-{pkgs, ...}: let
-  packages = with pkgs; [
-    dunst
-    nvd
-    swww
-    waybar
-    wlogout
-  ];
-in {
-  home.packages = packages;
-
-  services = {
-    # Notification daemon
-    # Test with;
-    #   notify-send "Test" "This is a test"
-    #   dunstify "Test" "This is a test"
-    dunst = {
-      enable = true;
-
-      catppuccin = {
-        enable = true;
-        flavor = "mocha";
-      };
-
-      settings = {
-        global = {
-          width = 300;
-          height = 300;
-          offset = "30x50";
-          origin = "top-right";
-          transparency = 10;
-          frame_color = "#eceff1";
-          font = "JetBrainsMono Nerd Font Mono 18";
-        };
-        urgency_normal = {
-          background = "#37474f";
-          foreground = "#eceff1";
-          timeout = 10;
-        };
-      };
-    };
-  };
-
+{pkgs, ...}: {
   programs = {
     waybar = {
-      enable = true;
+      enable = false;
 
       catppuccin = {
         enable = true;

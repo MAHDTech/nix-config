@@ -7,41 +7,22 @@
       text = ''
         #!/usr/bin/env bash
 
-        if [[ $# -lt 1 ]] || [[ ! -d $1 ]];
-        then
-          echo "Usage: $0 <dir containing images>"
-          exit 1
-        elif [[ ! -d "$1" ]];
-        then
-          echo "Directory does not exist: $1"
-          exit 1
-        fi
+        set -euo pipefail
 
-        # Make sure only 1 instance of swww_randomize
-        PIDFILE=''$HOME/.local/state/swww-randomize-pidfile.txt
+        #########################
+        # Variables
+        #########################
 
-        if [[ -e "''${PIDFILE}" ]];
-        then
-          OLD_PID="$(<"''${PIDFILE}")"
-          if [[ "X" != "X''${OLD_PID}" ]] && [[ -e "/proc/''${OLD_PID}" ]];
-          then
-            OLD_NAME="$(<"/proc/''${OLD_PID}/comm")"
-            THIS_NAME="$(<"/proc/''${BASHPID}/comm")"
-            if [[ "''${OLD_NAME}" = "''${THIS_NAME}" ]];
-            then
-              echo "old randomize process ''${OLD_PID} is still running"
-              exit 1
-            else
-              echo "process with same ID as old randomize is running: \"''${OLD_NAME}\"@''${OLD_PID}"
-              echo "Replacing old process ID"
-            fi
-          fi
-        fi
-        echo "''${BASHPID}" > "''${PIDFILE}"
+        # SWWWW randomize script settings.
+        SWWW_SCRIPT="''${0##*/}"
+        SWWW_STATE_DIR="''${HOME}/.local/state/swww"
+        SWWW_PIDFILE="''${SWWW_STATE_DIR}/pidfile.txt"
+        SWWW_LIST_FILE="''${SWWW_STATE_DIR}/wallpapers.txt"
 
-        # Edit below to control the images transition
+        # SWWW Settings for image transitions.
         export SWWW_TRANSITION_FPS=60
         export SWWW_TRANSITION_STEP=2
+        export SWWW_TRANSITION_TYPE="random"
 
         # This controls (in seconds) when to switch to the next image
         INTERVAL=300
@@ -52,42 +33,95 @@
         #    -   fit:  Resize the image to fit inside the screen, preserving the original aspect ratio
         RESIZE_TYPE="fit"
 
+        #########################
+        # Pre-flight checks
+        #########################
+
+        if [[ $# -lt 1 ]] || [[ ! -d $1 ]];
+        then
+          echo "Usage: ''${SWWW_SCRIPT} <dir containing images>"
+          exit 1
+        elif [[ ! -d "$1" ]];
+        then
+          echo "Directory does not exist: $1"
+          exit 1
+        fi
+        WALLPAPER_DIR="''${1:-}"
+
+        # Make sure the state directory exists or create it
+        mkdir -p "''${SWWW_STATE_DIR}" || {
+          echo "Failed to create state directory: ''${SWWW_STATE_DIR}"
+          exit 1
+        }
+
+        # Make sure only 1 instance of swww_randomize is running
+        if [[ -e "''${SWWW_PIDFILE}" ]];
+        then
+          OLD_PID="$(<"''${SWWW_PIDFILE}")"
+          if [[ "''${OLD_PID:-EMPTY}" != "EMPTY" ]] && [[ -e "/proc/''${OLD_PID}" ]];
+          then
+            OLD_NAME="$(<"/proc/''${OLD_PID}/comm")"
+            THIS_NAME="$(<"/proc/''${BASHPID}/comm")"
+            if [[ "''${OLD_NAME-OLD_NAME}" == "''${THIS_NAME:-THIS_NAME}" ]];
+            then
+              echo "The old ''${SWWW_SCRIPT} with PID ''${OLD_PID} is still running"
+              exit 1
+            else
+              echo "Another process with the same ID as the old ''${SWWW_SCRIPT} is running: \"''${OLD_NAME}\"@''${OLD_PID}"
+              echo "Replacing the old process ID"
+            fi
+          fi
+        fi
+        echo "''${BASHPID}" > "''${SWWW_PIDFILE}"
+
+        #########################
+        # Functions
+        #########################
+
+        function generate_wallpaper_list() {
+          find \
+            "''${WALLPAPER_DIR}" \
+            -type f \
+            -name "*.jpg" \
+            -o -name "*.png" \
+            -o -name "*.jpeg" \
+            -o -name "*.webp" \
+            -o -name "*.gif" \
+            -o -name "*.bmp" \
+            -o -name "*.tiff" \
+            | shuf \
+            > "''${SWWW_LIST_FILE}"
+        }
+
+        #########################
+        # Main loop
+        #########################
+
         DISPLAY_LIST=$(swww query | grep -Po "^[^:]+")
 
-        while true; do
-          find "$1" -type f \
-            | while read -r img; do
-                echo "$RANDOM:$img"
-              done \
-            | sort -n \
-            | cut -d':' -f2- \
-            | tee ~/.local/state/swww-randomize-list.txt \
-            | while read -r img;
-            do
-              # Set a different image for each display
-              for disp in $DISPLAY_LIST;
-              do
-                # if there is no image try to get one
-                if [ "X" = "X''${img}" ];
-                then
-                  if read -r img;
-                  then
-                    true
-                  else
-                    # if there are no more images, refresh the list
-                    break 2
-                  fi
-                fi
-                swww \
-                  img \
-                  --resize=$RESIZE_TYPE \
-                  --outputs "$disp" \
-                  "$img"
-                # make sure each image is only used once
-                img=""
-              done
-              sleep $INTERVAL
-            done
+        while true;
+        do
+
+          # Generate a new list of wallpapers
+          generate_wallpaper_list
+
+          # Read the wallpaper list
+          exec < "''${SWWW_LIST_FILE}"
+
+          # Set the wallpaper for each display
+          for DISPLAY in ''${DISPLAY_LIST};
+          do
+            read -r IMAGE || break
+            echo "Setting image ''${IMAGE} for display: ''${DISPLAY}"
+            swww \
+              img \
+              --resize="''${RESIZE_TYPE}" \
+              --outputs "''${DISPLAY}" \
+              "''${IMAGE}"
+          done
+
+          sleep "''${INTERVAL}"
+
         done
       '';
     };

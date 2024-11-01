@@ -2,7 +2,7 @@
   home.packages = with pkgs; [
     # Password Manager
     _1password-gui
-    _1password
+    _1password-cli
 
     # File management
     insync
@@ -93,5 +93,12 @@
     # GUI
     code-cursor
     signal-desktop
+
+    # Trezor
+    trezord
+    trezor-suite
+
+    # Ledger
+    ledger-live-desktop
   ];
 }
