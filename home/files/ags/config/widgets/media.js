@@ -140,7 +140,7 @@ function Player(player) {
   );
 }
 
-export function Media() {
+function Media() {
   return Widget.Box({
     vertical: true,
     css: "min-height: 2px; min-width: 2px;", // small hack to make it visible
@@ -148,3 +148,9 @@ export function Media() {
     children: players.as((p) => p.map(Player)),
   });
 }
+
+export const WidgetMedia = Widget.Window({
+  name: "mpris",
+  anchor: ["top", "right"],
+  child: Media(),
+});

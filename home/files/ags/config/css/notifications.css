@@ -1,3 +1,5 @@
+/* Notifications */
+
 window.notification-popups box.notifications {
   padding: 0.5em;
 }
@@ -22,6 +24,7 @@ window.notification-popups box.notifications {
 }
 
 .notification {
+  color: yellow;
   min-width: 350px;
   border-radius: 11px;
   padding: 1em;

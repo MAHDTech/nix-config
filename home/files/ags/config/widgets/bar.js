@@ -1,6 +1,4 @@
-import { DataTime } from "../data/time.js";
-
-const time = DataTime;
+import { DataCurrentTime } from "../data/date.js";
 
 export const WidgetBar = (/** @type {number} */ monitor) =>
   Widget.Window({
@@ -15,7 +13,7 @@ export const WidgetBar = (/** @type {number} */ monitor) =>
       }),
       end_widget: Widget.Label({
         hpack: "center",
-        label: time.bind(),
+        label: DataCurrentTime.bind(),
       }),
     }),
   });

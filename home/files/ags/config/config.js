@@ -1,27 +1,16 @@
-/* Services */
-const hyprland = await Service.import("hyprland");
-const notifications = await Service.import("notifications");
-const mpris = await Service.import("mpris");
-const audio = await Service.import("audio");
-const battery = await Service.import("battery");
-const systemtray = await Service.import("systemtray");
+import GLib from "gi://GLib";
 
-/* Widgets */
-import { WidgetBar } from "./widgets/bar.js";
-import { WidgetAppLauncher } from "./widgets/applauncher.js";
-import { WidgetNotifications } from "./widgets/notifications.js";
+// $XDG_RUNTIME_DIR/ags/run.js
+const main = `${GLib.get_user_runtime_dir()}/ags/run.js`;
 
-App.config({
-  style: App.configDir + "/style/style.css",
+console.log(`Compiling main.ts to ${main}`);
 
-  windows: [
-    // Load the top bar.
-    WidgetBar(0),
+try {
+  await Utils.execAsync(["bun", "build", `${App.configDir}/main.ts`, "--outfile", main, "--external", "resource://*", "--external", "gi://*", "--external", "file://*"]);
 
-    // Load the application launcher.
-    WidgetAppLauncher,
+  await import(`file://${main}`);
+} catch (error) {
+  console.error(error);
 
-    // Load the notifications widget.
-    WidgetNotifications(),
-  ],
-});
+  App.quit();
+}

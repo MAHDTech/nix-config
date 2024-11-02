@@ -1,4 +1,8 @@
+/* Services */
+
 const notifications = await Service.import("notifications");
+
+/* Functions */
 
 /** @param {import('resource:///com/github/Aylur/ags/service/notifications.js').Notification} n */
 function NotificationIcon({ app_entry, app_icon, image }) {
@@ -78,6 +82,8 @@ function Notification(n) {
     ),
   );
 }
+
+/* Widget */
 
 export function WidgetNotifications(monitor = 0) {
   const list = Widget.Box({

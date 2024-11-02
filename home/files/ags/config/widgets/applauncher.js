@@ -1,5 +1,8 @@
+/* Services */
 const { query } = await Service.import("applications");
-const WINDOW_NAME = "applauncher";
+
+/* Constants */
+const WINDOW_NAME = "WidgetAppLauncher";
 
 /** @param {import('resource:///com/github/Aylur/ags/service/applications.js').Application} app */
 const AppItem = (app) =>
@@ -91,6 +94,8 @@ const Applauncher = ({ width = 500, height = 500, spacing = 12 }) => {
       }),
   });
 };
+
+/* Widget */
 
 // there needs to be only one instance
 export const WidgetAppLauncher = Widget.Window({
