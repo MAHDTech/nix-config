@@ -58,14 +58,21 @@
 
     operation = "boot";
 
-    # Single system configuration.
-    #flake = "/boot/nixos/nix-config";
-    #flags = ["--impure" "--update-input" "nixpkgs" "--commit-lock-file"];
-
-    # Multiple system configuration.
     flake = "github:MAHDTech/nix-config";
-    flags = ["--impure"];
 
-    dates = "weekly";
+    flags = [
+      "--accept-flake-config"
+      "--impure"
+      "--show-trace"
+    ];
+
+    dates = "daily";
+
+    rebootWindow = {
+      lower = "01:00";
+      upper = "05:00";
+    };
+
+    randomizedDelaySec = "60min";
   };
 }

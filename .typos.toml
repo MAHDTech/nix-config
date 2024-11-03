@@ -24,6 +24,7 @@ normalization = "normalization"
 optimizations = "optimizations"
 optimized = "optimized"
 randomize = "randomize"
+randomized = "randomized"
 recognize = "recognize"
 
 [files]
