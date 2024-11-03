@@ -5,6 +5,7 @@
     ./network
     ./users
     ./nix
+    ./programs
     ./services
     ./security
   ];
