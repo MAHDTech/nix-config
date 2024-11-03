@@ -1,46 +1,31 @@
-/* Services */
-const hyprland = await Service.import("hyprland");
-const notifications = await Service.import("notifications");
-const mpris = await Service.import("mpris");
-const audio = await Service.import("audio");
-const battery = await Service.import("battery");
-const systemtray = await Service.import("systemtray");
+import "lib/session";
+import "style/style";
+import init from "lib/init";
+import options from "options";
+import Bar from "widget/bar/Bar";
+import Launcher from "widget/launcher/Launcher";
+import NotificationPopups from "widget/notifications/NotificationPopups";
+import OSD from "widget/osd/OSD";
+import Overview from "widget/overview/Overview";
+import PowerMenu from "widget/powermenu/PowerMenu";
+import ScreenCorners from "widget/bar/ScreenCorners";
+import SettingsDialog from "widget/settings/SettingsDialog";
+import Verification from "widget/powermenu/Verification";
+import { forMonitors } from "lib/utils";
+import { setupQuickSettings } from "widget/quicksettings/QuickSettings";
+import { setupDateMenu } from "widget/datemenu/DateMenu";
 
-/* Data */
-import { DataMonitors } from "./data/monitors.js";
-
-/* Widgets */
-import { WidgetBar } from "./widgets/bar.js";
-import { WidgetAppLauncher } from "./widgets/applauncher.js";
-import { WidgetMedia } from "./widgets/media.js";
-import { WidgetNotifications } from "./widgets/notifications.js";
-
-Utils.timeout(1000, () =>
-  Utils.notify({
-    summary: "Notification Service",
-    iconName: "info-symbolic",
-    body: "Loading notification service...",
-    actions: {
-      OK: () => print("AGS Notification Service loaded"),
-    },
-  }),
-);
-
-/* App */
 App.config({
-  style: App.configDir + "/css/main.css",
-
-  windows: [
-    // Load the top bar for each monitor
-    ...DataMonitors().map((monitor) => WidgetBar(monitor)),
-
-    // Load the application launcher
-    WidgetAppLauncher,
-
-    // Load the notifications widget
-    WidgetNotifications(),
-
-    // Load the media widget
-    WidgetMedia,
-  ],
+  onConfigParsed: () => {
+    setupQuickSettings();
+    setupDateMenu();
+    init();
+  },
+  closeWindowDelay: {
+    launcher: options.transition.value,
+    overview: options.transition.value,
+    quicksettings: options.transition.value,
+    datemenu: options.transition.value,
+  },
+  windows: () => [...forMonitors(Bar), ...forMonitors(NotificationPopups), ...forMonitors(ScreenCorners), ...forMonitors(OSD), Launcher(), Overview(), PowerMenu(), SettingsDialog(), Verification()],
 });
