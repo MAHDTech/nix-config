@@ -1,15 +1,4 @@
-{
-  inputs,
-  pkgs,
-  ...
-}:
-# FYI: YubiKey reset instructions.
-# https://support.yubico.com/hc/en-us/articles/360013761339-Resetting-the-OpenPGP-Application-on-the-YubiKey
-let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
+{pkgs, ...}: {
   home.packages = with pkgs; [
     # Common
     ccid
@@ -27,14 +16,14 @@ in {
     trezor_agent
 
     # YubiKey
-    yubico-pam
-    yubico-piv-tool
-    yubihsm-connector
-    yubikey-manager
-    yubikey-manager-qt
-    yubikey-personalization
-    yubikey-personalization-gui
-    yubikey-touch-detector
+    # NOTE: For YubiKey reset instructions see: https://support.yubico.com/hc/en-us/articles/360013761339-Resetting-the-OpenPGP-Application-on-the-YubiKey
+    #yubico-pam
+    #yubico-piv-tool
+    #yubikey-manager
+    #yubikey-manager-qt
+    #yubikey-personalization
+    #yubikey-personalization-gui
+    #yubikey-touch-detector
+    #swig
   ];
-  #++ unstablePkgs;
 }

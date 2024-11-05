@@ -6,6 +6,13 @@
 
       text = ''
         {
+          // Cursor
+          "cursor.chat.alwaysSearchWeb": true,
+          "cursor.chat.defaultNoContext": false,
+          "cursor.chat.premiumChatAutoScrollWhenAtBottom": false,
+          "cursor.chat.showSuggestedFiles": true,
+          "cursor.chat.smoothStreaming": true,
+
           // Window
           "window.commandCenter": true,
           "window.zoomLevel": 1,

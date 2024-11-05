@@ -346,6 +346,63 @@
           }
         ];
       };
+
+      # Hostname: JONS
+      # Description: Jonsplus Desktop
+      JONS = configNixOS {
+        username = globalUsername;
+        system = "x86_64-linux";
+
+        specialArgs = {
+          inherit inputs;
+        };
+
+        extraModules = [
+          nixos-hardware.nixosModules.common-pc-ssd
+          nixos-hardware.nixosModules.common-cpu-amd
+          nixos-hardware.nixosModules.common-gpu-nvidia
+
+          # Enable COSMIC desktop environment.
+          nixos-cosmic.nixosModules.default
+
+          # Enable Catppuccin theme.
+          catppuccin.nixosModules.catppuccin
+
+          # Enable declarative flatpak support.
+          flatpaks.nixosModules.default
+
+          ./nixos/hosts/jons
+          {system.stateVersion = globalStateVersion;}
+
+          #(
+          #  mkHomeManagerConfigurationsNixOS {
+          #    username = globalUsername;
+          #    inherit inputs globalStateVersion;
+          #    lib = pkgs.lib;
+          #  }
+          #)
+
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = {
+                inherit inputs;
+                inherit globalStateVersion;
+                inherit globalUsername;
+              };
+              users.${globalUsername} = {
+                imports = [
+                  ./home
+                  sops-nix.homeManagerModules.sops
+                  catppuccin.homeManagerModules.catppuccin
+                ];
+              };
+            };
+          }
+        ];
+      };
     };
 
     #########################

@@ -77,9 +77,6 @@
     # Terminal
     cool-retro-term
 
-    # Text
-    helix
-
     # Media Players
     mpv
     vlc

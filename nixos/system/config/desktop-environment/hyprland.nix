@@ -6,7 +6,7 @@
 
   environment.systemPackages = with pkgs; [
     # Hyprland
-    pyprland
+    #pyprland
     hyprpicker
     hyprcursor
     hyprlock
@@ -14,7 +14,7 @@
     hyprpaper
 
     # Terminal
-    kitty
+    #kitty
 
     # Greeter
     greetd.tuigreet

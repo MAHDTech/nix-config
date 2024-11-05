@@ -20,9 +20,9 @@
     swappy
     swww
     wayshot
-    wf-recorder
+    #wf-recorder
     wl-clipboard
-    wl-screenrec
+    #wl-screenrec
     wlogout
   ];
 in {
@@ -734,8 +734,8 @@ in {
       exec-once = [
         "$terminal"
         "swww-daemon & sleep 3 && exec random-wallpaper ''$XDG_WALLPAPERS_DIR"
-        "pidof insync || insync start"
         "ags --bus-name hypr"
+        "sleep 60 ; pidof insync || insync start"
       ];
 
       ####################
