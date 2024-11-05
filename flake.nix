@@ -22,7 +22,8 @@
       #ref = "rolling";
       owner = "NixOS";
       repo = "nixpkgs";
-      ref = "nixos-unstable";
+      #ref = "nixos-unstable";
+      ref = "master";
       flake = true;
     };
 
