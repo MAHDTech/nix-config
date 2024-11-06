@@ -1,4 +1,6 @@
 {pkgs, ...}: {
+  # https://nixos.wiki/wiki/Laptop
+
   imports = [];
 
   environment.systemPackages = with pkgs; [
@@ -12,7 +14,7 @@
     # Enabling powertop will enable autotune.
     powertop.enable = false;
 
-    cpuFreqGovernor = "performance";
+    cpuFreqGovernor = "ondemand";
 
     resumeCommands = ''
       echo "Resuming from suspend..."
