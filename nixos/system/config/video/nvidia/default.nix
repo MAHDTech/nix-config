@@ -47,7 +47,7 @@
       forceFullCompositionPipeline = true;
       prime = {
         offload.enable = false;
-        sync.enable = true;
+        sync.enable = false;
         reverseSync.enable = false;
       };
     };
