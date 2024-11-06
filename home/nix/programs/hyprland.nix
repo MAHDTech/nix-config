@@ -702,7 +702,7 @@ in {
       # https://wiki.hyprland.org/Configuring/Variables/#cursor
 
       cursor = {
-        #no_hardware_cursors = true;
+        no_hardware_cursors = true;
       };
 
       #############################
@@ -736,6 +736,7 @@ in {
         "$terminal"
         "swww-daemon & sleep 3 && exec random-wallpaper ''$XDG_WALLPAPERS_DIR"
         "ags --bus-name hypr"
+        "pidof setup-workspaces || setup-workspaces"
         "sleep 60 ; pidof insync || insync start"
       ];
 
