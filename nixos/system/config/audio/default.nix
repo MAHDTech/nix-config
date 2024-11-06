@@ -13,7 +13,7 @@
   services.pipewire = {
     enable = true;
 
-    systemWide = true;
+    systemWide = false;
     socketActivation = true;
 
     wireplumber = {
