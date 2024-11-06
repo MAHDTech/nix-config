@@ -60,7 +60,7 @@
             elif [[ ''${1:0:9} == "workspace" ]]; then
                 WORKSPACE=$(( ''${1:11:13} ))
 
-                if (( $(($WORKSPACE <= $WORKSPACES_LIMIT)) )); then
+                if (( $((WORKSPACE <= WORKSPACES_LIMIT)) )); then
                     hyprctl dispatch moveworkspacetomonitor "$WORKSPACE $MONITOR_1"
                 else
                     hyprctl dispatch moveworkspacetomonitor "$WORKSPACE $MONITOR_2"
@@ -75,7 +75,7 @@
         fi
 
         # Start the socket listener.
-        socat - "UNIX-CONNECT:$XDG_RUNTIME_DIR/hypr/$(echo $HYPRLAND_INSTANCE_SIGNATURE)/workspaces.sock" | \
+        socat - "UNIX-CONNECT:$XDG_RUNTIME_DIR/hypr/''${HYPRLAND_INSTANCE_SIGNATURE}/.socket2.sock" | \
         while read -r LINE; do
             setup_workspaces "$LINE"
         done
