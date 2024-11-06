@@ -17,7 +17,7 @@
       type = "github";
       owner = "NixOS";
       repo = "nixpkgs";
-      ref = "nixos-24.05";
+      ref = "nixos-unstable";
       flake = true;
     };
 
