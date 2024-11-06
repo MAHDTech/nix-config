@@ -75,7 +75,7 @@
         fi
 
         # Start the socket listener.
-        socat - "UNIX-CONNECT:/tmp/hypr/$(echo $HYPRLAND_INSTANCE_SIGNATURE)/.socket2.sock" | \
+        socat - "UNIX-CONNECT:$XDG_RUNTIME_DIR/hypr/$(echo $HYPRLAND_INSTANCE_SIGNATURE)/workspaces.sock" | \
         while read -r LINE; do
             setup_workspaces "$LINE"
         done
