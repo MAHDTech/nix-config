@@ -702,7 +702,7 @@ in {
       # https://wiki.hyprland.org/Configuring/Variables/#cursor
 
       cursor = {
-        no_hardware_cursors = true;
+        #no_hardware_cursors = true;
       };
 
       #############################
