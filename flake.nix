@@ -15,15 +15,9 @@
   inputs = {
     nixpkgs = {
       type = "github";
-      # TODO: Revert when the rolling branch is updated.
-      # https://github.com/cachix/devenv-nixpkgs/issues/2
-      #owner = "cachix";
-      #repo = "devenv-nixpkgs";
-      #ref = "rolling";
       owner = "NixOS";
       repo = "nixpkgs";
-      #ref = "nixos-unstable";
-      ref = "master";
+      ref = "nixos-24.05";
       flake = true;
     };
 
