@@ -14,13 +14,13 @@
       kernelModules = [
         "zfs"
       ];
-
-      kernelParams = [
-      ];
     };
 
     kernelModules = [
       "kvm-amd"
+    ];
+
+    kernelParams = [
     ];
 
     extraModulePackages = [];
