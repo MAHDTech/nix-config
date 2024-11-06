@@ -6,7 +6,7 @@
   imports = [];
 
   # NOTES:
-  #   - NVIDIA QUADRO Workstation GPU
+  #   - NVIDIA QUADRO T400
 
   environment.systemPackages = with pkgs; [
     nvtopPackages.full
@@ -18,6 +18,8 @@
     ];
 
     blacklistedKernelModules = [
+      "amdgpu"
+      "i915"
     ];
 
     kernelParams = [
@@ -36,12 +38,18 @@
     };
 
     nvidia = {
-      prime.offload.enable = false;
       modesetting.enable = true;
+      nvidiaSettings = true;
+      open = false;
+      package = config.boot.kernelPackages.nvidiaPackages.production;
       powerManagement.enable = false;
       powerManagement.finegrained = false;
-      open = false;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      forceFullCompositionPipeline = true;
+      prime = {
+        offload.enable = false;
+        sync.enable = true;
+        reverseSync.enable = false;
+      };
     };
   };
 
