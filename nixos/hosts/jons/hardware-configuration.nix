@@ -14,6 +14,9 @@
       kernelModules = [
         "zfs"
       ];
+
+      kernelParams = [
+      ];
     };
 
     kernelModules = [

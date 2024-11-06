@@ -20,6 +20,9 @@
       "kvm-intel"
     ];
 
+    kernelParams = [
+    ];
+
     extraModulePackages = [];
   };
 
