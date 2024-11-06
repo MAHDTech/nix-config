@@ -8,5 +8,8 @@
 
     # Storj related scripts.
     ./storj.nix
+
+    # Setup Hyprland Workspaces
+    ./setup-workspaces.nix
   ];
 }
