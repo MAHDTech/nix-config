@@ -2,9 +2,7 @@
   imports = [];
 
   # NOTES:
-  #   - DisplayLink driver contains binary blobs, need to pre-fetch into store.
-  #       nix-prefetch-url --name displaylink-600.zip https://www.synaptics.com/sites/default/files/exe_files/2024-05/DisplayLink%20USB%20Graphics%20Software%20for%20Ubuntu6.0-EXE.zip
-  #   - Intel ARC needs kernel v6.2 or later.
+  #     - Intel ARC needs kernel v6.2 or later.
 
   environment.systemPackages = with pkgs; [
     nvtopPackages.full
@@ -18,6 +16,7 @@
     ];
 
     blacklistedKernelModules = [
+      "amdgpu"
       "nouveau"
       "nvidia"
       "nvidia_drm"
@@ -68,7 +67,6 @@
   };
 
   services.xserver.videoDrivers = [
-    "displaylink"
     "intel"
   ];
 

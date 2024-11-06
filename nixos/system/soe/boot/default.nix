@@ -14,11 +14,10 @@
       kernelModules = [];
     };
 
-    extraModulePackages = with config.boot.kernelPackages; [acpi_call];
+    extraModulePackages = with config.boot.kernelPackages; [];
 
     kernelModules = [
       "kvm_intel"
-      "acpi_call"
     ];
 
     # Wiki https://nixos.wiki/wiki/Linux_kernel

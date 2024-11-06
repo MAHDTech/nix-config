@@ -21,6 +21,7 @@
     ../../system/config/power
     ../../system/config/printing
     ../../system/config/services
+    ../../system/config/services/throttled
     ../../system/config/theme/catppuccin
     ../../system/config/video/intel
 
