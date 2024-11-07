@@ -222,6 +222,7 @@ in {
       ];
     };
 
+    # Check if a client is using XWayland with 'hyprctl clients'
     xwayland = {
       enable = true;
     };
@@ -652,13 +653,14 @@ in {
       # Hyprland XWayland
       ###################
 
+      # Check if a client is using XWayland with 'hyprctl clients'
       xwayland = {
         # Allow running apps using X11
         enabled = true;
         # Uses the nearest neighbour filtering.
         use_nearest_neighbor = true;
         # Forces a scale of 1 on xwayland windows on scaled displays.
-        force_zero_scaling = false;
+        force_zero_scaling = true;
       };
 
       ###################
@@ -713,8 +715,10 @@ in {
 
       env = [
         "GDK_SCALE,1"
-        "XCURSOR_SIZE,32"
         "HYPRCURSOR_SIZE,32"
+        "WLR_DRM_NO_ATOMIC,1"
+        "WLR_NO_HARDWARE_CURSORS,1"
+        "XCURSOR_SIZE,32"
       ];
 
       ###################

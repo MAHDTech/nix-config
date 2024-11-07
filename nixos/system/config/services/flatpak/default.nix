@@ -31,6 +31,7 @@
       "flathub:app/com.obsproject.Studio//stable"
       "flathub:app/com.slack.Slack//stable"
       "flathub:app/com.valvesoftware.Steam//stable"
+      "flathub:app/com.valvesoftware.SteamLink//stable"
       "flathub:app/net.codeindustry.MasterPDFEditor//stable"
       "flathub:app/org.ferdium.Ferdium//stable"
       "flathub:app/org.gimp.GIMP//stable"
@@ -82,6 +83,7 @@
       pantheon.xdg-desktop-portal-pantheon
       xdg-desktop-portal-cosmic
       xdg-desktop-portal-gtk
+      xdg-desktop-portal-hyprland
       xdg-desktop-portal-wlr
     ];
   };
