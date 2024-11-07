@@ -1,5 +1,6 @@
 {
   imports = [
     ./htop
+    ./nix-ld
   ];
 }

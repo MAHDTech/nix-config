@@ -39,4 +39,13 @@
       LC_TIME = "en_AU.UTF-8";
     };
   };
+
+  # Symlink /bin/sh to /bin/bash to workaround
+  # bash scripts that don't use /usr/bin/env bash.
+  system.activationScripts.binbash = {
+    deps = ["binsh"];
+    text = ''
+      ln -s /bin/sh /bin/bash
+    '';
+  };
 }
