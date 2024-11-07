@@ -72,6 +72,12 @@ function start_keyring() {
 
 	case "${ENABLED_KEYRING_AGENT,,}" in
 
+	"nixos")
+
+		# Do nothing, it works on NixOS.
+
+		;;
+
 	"home-manager")
 
 		# If home manager is using gnome-keyring, give it a kick in the guts.

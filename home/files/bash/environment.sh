@@ -58,8 +58,11 @@ export ENABLED_GPG_AGENT="1password"
 #########################
 
 # What keychain is managing local secrets?
-# Options are; home-manager or gnome-keyring
-export ENABLED_KEYRING_AGENT="gnome-keyring"
+# Options are;
+# nixos = NixOS is managing gnome-keyring.
+# home-manager = Home Manager is handling gnome-keyring.
+# gnome-keyring = Gnome Keyring is installed from packages.
+export ENABLED_KEYRING_AGENT="nixos"
 
 #########################
 # AWS
