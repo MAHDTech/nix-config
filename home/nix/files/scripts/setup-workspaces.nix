@@ -27,6 +27,10 @@
         # Max number of workspaces on the primary monitor.
         WORKSPACES_LIMIT=5
 
+        function log() {
+            logger -t "setup-workspaces" "$1"
+        }
+
         function check_dependencies() {
 
             # We need hyprctl to be installed.
@@ -41,6 +45,12 @@
                 return 1
             fi
 
+            # We need logger to be installed.
+            if ! command -v logger &> /dev/null; then
+                echo "logger could not be found"
+                return 1
+            fi
+
             return 0
         }
 
@@ -51,8 +61,10 @@
                 WORKSPACE=$(( ''${1:17:19} ))
 
                 if (( $(("$WORKSPACE" <= "$WORKSPACES_LIMIT")) )); then
+                    log "Creating workspace $WORKSPACE on monitor $MONITOR_1"
                     hyprctl dispatch moveworkspacetomonitor "$WORKSPACE $MONITOR_1"
                 else
+                    log "Creating workspace $WORKSPACE on monitor $MONITOR_2"
                     hyprctl dispatch moveworkspacetomonitor "$WORKSPACE $MONITOR_2"
                 fi
 
@@ -61,8 +73,10 @@
                 WORKSPACE=$(( ''${1:11:13} ))
 
                 if (( $((WORKSPACE <= WORKSPACES_LIMIT)) )); then
+                    log "Moving workspace $WORKSPACE to monitor $MONITOR_1"
                     hyprctl dispatch moveworkspacetomonitor "$WORKSPACE $MONITOR_1"
                 else
+                    log "Moving workspace $WORKSPACE to monitor $MONITOR_2"
                     hyprctl dispatch moveworkspacetomonitor "$WORKSPACE $MONITOR_2"
                 fi
             fi
@@ -72,11 +86,15 @@
         # Check if we have the dependencies.
         if ! check_dependencies; then
             exit 1
+        else
+            log "Dependencies checked successfully"
         fi
 
         # Start the socket listener.
+        log "Starting socket listener"
         socat - "UNIX-CONNECT:$XDG_RUNTIME_DIR/hypr/''${HYPRLAND_INSTANCE_SIGNATURE}/.socket2.sock" | \
         while read -r LINE; do
+            log "Received line: $LINE"
             setup_workspaces "$LINE"
         done
       '';
