@@ -22,6 +22,7 @@
     wireplumber = {
       enable = true;
       package = pkgs.wireplumber;
+      # wpctl status
       extraConfig = {
         "10-bluez" = {
           "monitor.bluez.properties" = {
