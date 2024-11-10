@@ -30,7 +30,7 @@ jobs:
 
       - id: install_nix
         name: "Install Nix ❄️"
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v30
 
       - id: cachix
         name: "Enable Cachix ❄️"
@@ -59,6 +59,7 @@ jobs:
           git-committer-email: "github-actions@users.noreply.github.com"
           git-committer-name: "Nix Flake Bot"
           pr-title: "Update flake.lock"
+          nix-options: --accept-flake-config
 
       - id: print_pr_number
         name: Pull request number
