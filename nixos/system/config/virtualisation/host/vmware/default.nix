@@ -7,7 +7,7 @@
   virtualisation = {
     vmware = {
       host = {
-        enable = true;
+        enable = false;
 
         package = pkgs.vmware-workstation;
 
