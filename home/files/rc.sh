@@ -41,6 +41,7 @@ FOLDERS=(
 	"${HOME}/.rvm/bin"
 	"${HOME}/.radicle/bin"
 	"${HOME}/appimage"
+	"${HOME}/Apps"
 	"/var/lib/flatpak/exports/share"
 	"${HOME}/.local/share/flatpak/exports/share"
 	"${HOME}/CodeQL/codeql"
@@ -301,13 +302,21 @@ export PATH
 writeLog "DEBUG" "New PATH: $PATH"
 
 #########################
+# Keyring
+#########################
+
+# Start the configured keyring if not already running.
+start_keyring || {
+	writeLog "ERROR" "Failed to start configured keyring"
+	LOAD_SSH="FALSE"
+}
+
+#########################
 # SSH
 #########################
 
-# gnome-keyring should be started via daemon now, verify
-start_gnome_keyring || {
-	writeLog "ERROR" "Failed to start gnome-keyring"
-	LOAD_SSH="FALSE"
+ssh_control_master || {
+	writeLog "WARN" "Failed to check SSH Control Master directory, skipping"
 }
 
 # If 1Password SSH Socket is enabled, load it.

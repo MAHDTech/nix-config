@@ -5,6 +5,20 @@
 # Description: Contains ssh related functions
 ##################################################
 
+function ssh_control_master() {
+	local SSH_CONTROL_MASTER_DIR="${HOME}/.ssh/control-master"
+
+	if [[ ! -d ${SSH_CONTROL_MASTER_DIR} ]]; then
+		mkdir -p "${SSH_CONTROL_MASTER_DIR}" || {
+			writeLog "ERROR" "Failed to create SSH Control Master"
+			return 1
+		}
+	fi
+
+	return 0
+
+}
+
 function load_sshSocket() {
 
 	# HACK: Manually set SSH_AUTH_SOCK if not already set.

@@ -30,7 +30,7 @@
 
 <p align="center">
 
-<img src="docs/images/nix_logo.png" width="300" height="300"/>
+<img src="docs/images/nix_logo.png" alt="Nix logo" width="300" height="300"/>
 <!--
 <img src="https://raw.githubusercontent.com/MAHDTech/nix-config/trunk/docs/images/nix_logo.png" width="320" height="320"/>
 -->
@@ -56,7 +56,7 @@ The idea behind the configuration layout is split into a few parts;
 
 :dragon: Here be dragons :dragon:
 
-_The author is new to using Nix and Nix flakes, and still on their journey to declarative enlightenment, so don't assume they know wtf they are doing or that this repo resembles best practice in any way, shape or form._
+_The author is still on their journey to declarative enlightenment with Nix, so don't assume they know wtf they are doing or that this repo resembles best practice in any way, shape or form._
 
 EDIT: Over 2 years on I still feel new to Nix and continue to be surprised in ways to use it (that I probably shouldn't).
 
@@ -142,7 +142,7 @@ sudo nixos-rebuild switch
 ```bash
 export NIXPKGS_ALLOW_UNFREE=1
 
-NIXOS_HOST="nuc"
+NIXOS_HOST="NUC"
 
 nixos-rebuild \
     boot  \
@@ -227,7 +227,12 @@ sudo apt update
 sudo apt install --yes \
     git \
     curl \
-    wget
+    wget \
+    mesa-utils \
+    intel-gpu-tools \
+    gnome-keyring
+
+# TODO: Get gnome-keyring working correctlyin home-manger.
 
 ssh-keygen -t ed25519
 cat ~/.ssh/id_ed25519.pub
@@ -242,7 +247,6 @@ pushd "${NIX_CONFIG_DIR}"
 # Crostini cleanup just the temp key
 rm ~/.ssh/id_ed25519*
 
-# WSL cleanup all SSH and remove git in favour of home-manager
+# For WSL, cleanup all SSH as ssh.exe is used via aliases.
 rm -rf ~/.ssh
-sudo apt remove git --yes
 ```

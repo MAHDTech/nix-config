@@ -1,9 +1,41 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
+    # Password Manager
+    _1password-gui
+    _1password-cli
+
+    # File management
+    insync
+    restic
+    rclone
+    rsync
+
+    # Nix
+    nixos-generators
+    nix-du
+
+    # Shell
+    nushell
+
+    # File Systems
+    btrfs-progs
+    cryptsetup
+    dosfstools
+    exfat
+    gptfdisk
+    lvm2
+    mdadm
+    parted
+    ntfs3g
+    xfsprogs
+
+    # Disk imagers
+    unetbootin
+    ventoy-full
+
+    # CLI
     bat
     bottom
-    btop
-    bzip2
     charasay
     curlFull
     complete-alias
@@ -14,26 +46,18 @@
     figlet
     file
     fortune
-    glxinfo
     gptfdisk
     hello
     htop
-    intel-gpu-tools
     jq
     libcap
     lolcat
     ncdu
     neofetch
-    nixos-generators
-    ntfs3g
-    nushell
     pandoc
     pciutils
-    rclone
     read-edid
-    restic
     ripgrep
-    rsync
     shadow
     shellcheck
     socat
@@ -43,7 +67,6 @@
     tree
     unzip
     usbutils
-    ventoy-full
     which
     wget
     xdotool
@@ -51,7 +74,28 @@
     xxd
     zip
 
-    # Nix
-    nix-du
+    # Terminal
+    cool-retro-term
+
+    # Media Players
+    mpv
+    vlc
+
+    # Image Viewer
+    imv
+
+    # PDF
+    zathura
+
+    # GUI
+    code-cursor
+    signal-desktop
+
+    # Trezor
+    trezord
+    trezor-suite
+
+    # Ledger
+    ledger-live-desktop
   ];
 }

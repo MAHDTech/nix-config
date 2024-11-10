@@ -33,6 +33,9 @@ export CACHIX_CACHE_NAME
 # Flake location assumes local but can be overridden
 export FLAKE_LOCATION
 
+# If you are using vscode instead of cursor.
+export INSTALL_VSCODE=FALSE
+
 #########################
 # Debian
 #########################
@@ -85,7 +88,7 @@ export NIX_CONFIG_INST_HOSTNAME
 ##########
 
 if [[ -f "${SCRIPT_DIR}/common.sh" ]]; then
-	# shellcheck source=scripts/common.sh
+	# shellcheck disable=SC1091
 	source "${SCRIPT_DIR}/common.sh"
 else
 	echo "Unable to import common functions from ${SCRIPT_DIR}"
@@ -195,7 +198,7 @@ case "${OS_NAME}" in
 
 "debian")
 
-	# shellcheck source=scripts/debian.sh
+	# shellcheck disable=SC1090
 	source "./${SCRIPT_DIR}/debian.sh"
 
 	;;
@@ -227,7 +230,7 @@ case "${OS_NAME}" in
 		exit 1
 	fi
 
-	# shellcheck source=scripts/nixos.sh
+	# shellcheck disable=SC1090
 	source "./${SCRIPT_DIR}/nixos.sh"
 
 	;;

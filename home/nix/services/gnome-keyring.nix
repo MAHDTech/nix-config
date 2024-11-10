@@ -1,16 +1,18 @@
 {pkgs, ...}: {
-  home.packages = with pkgs; [gcr pkgs.gnome-keyring pkgs.seahorse libsecret]; #++ unstablePkgs;
+  home.packages = with pkgs; [gcr gnome-keyring seahorse libsecret];
+
+  # NOTES:
+  #   - There can only be one enabled (gnome-keyring vs pass-secret-service)
+  #   - Moved to using it with NixOS module.
 
   services = {
     gnome-keyring = {
-      enable = true;
+      enable = false;
 
-      # GPG is managed separately as its deprecated in gnome-keyring.
+      # GPG is managed separately as its deprecated in gnome-keyring
       # https://lists.gnupg.org/pipermail/gnupg-devel/2014-August/028689.html
       # https://github.com/NixOS/nixpkgs/issues/7891
-      #components = ["pkcs11" "secrets" "ssh"];
-
-      # Use 1Password SSH Agent instead of gnome-keyring.
+      # Now SSH and GPG are both using 1Password Agent.
       components = ["pkcs11" "secrets"];
     };
   };

@@ -1,0 +1,43 @@
+{pkgs, ...}: {
+  imports = [];
+
+  # REMEMBER: udevadm control --reload-rules
+
+  services.udev = {
+    enable = true;
+
+    packages = with pkgs; [
+      android-udev-rules
+      game-devices-udev-rules
+      ledger-udev-rules
+      logitech-udev-rules
+      trezor-udev-rules
+      zsa-udev-rules
+    ];
+
+    # https://github.com/spesmilo/electrum/tree/master/contrib/udev
+    extraRules = ''
+      # Make Thunderbolt docks great again.
+      ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
+
+      # KeepKey HID Firmware/Bootloader
+      SUBSYSTEM=="usb", ATTR{idVendor}=="2b24", ATTR{idProduct}=="0001", MODE="0666", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl", SYMLINK+="keepkey%n"
+      KERNEL=="hidraw*", ATTRS{idVendor}=="2b24", ATTRS{idProduct}=="0001",  MODE="0666", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl"
+
+      # KeepKey WebUSB Firmware/Bootloader
+      SUBSYSTEM=="usb", ATTR{idVendor}=="2b24", ATTR{idProduct}=="0002", MODE="0666", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl", SYMLINK+="keepkey%n"
+      KERNEL=="hidraw*", ATTRS{idVendor}=="2b24", ATTRS{idProduct}=="0002",  MODE="0666", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl"
+
+      # HW.1, Nano
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="1b7c|2b7c|3b7c|4b7c", TAG+="uaccess", TAG+="udev-acl"
+
+      # Blue, NanoS, Aramis, HW.2, Nano X, NanoSP, Stax, Ledger Test,
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", TAG+="uaccess", TAG+="udev-acl"
+
+      # Same, but with hidraw-based library (instead of libusb)
+      KERNEL=="hidraw*", ATTRS{idVendor}=="2c97", MODE="0666"
+
+      # EOF
+    '';
+  };
+}

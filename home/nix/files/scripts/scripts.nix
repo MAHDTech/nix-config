@@ -1,5 +1,58 @@
 {config, ...}: {
   home.file = {
+    "cursor-install" = {
+      target = "${config.home.homeDirectory}/.local/bin/cursor-install";
+      executable = true;
+
+      text = ''
+        #!/usr/bin/env bash
+
+        if [[ "''${OS_NAME:-EMPTY}" == "nixos" ]];
+        then
+          echo "No, use appimageTools instead!"
+          exit 1
+        fi
+
+        echo "Installing cursor..."
+
+        if type apt 2>/dev/null;
+        then
+          sudo apt install --yes libfuse2 libnss3 || {
+            echo "Failed to install dependencies!"
+            exit 1
+          }
+        fi
+
+        mkdir -p ~/Apps || {
+          echo "Failed to create apps home directory!"
+          exit 2
+        }
+
+        wget \
+          --output-document ~/Apps/cursor.appimage \
+          "https://downloader.cursor.sh/linux/appImage/x64" || {
+            echo "Failed to download cursor"
+            exit 3
+          }
+
+        chmod +x ~/Apps/cursor.appimage || {
+          echo "Failed to chmod cursor!"
+          exit 4
+        }
+
+        if [[ "''${OS_NAME:-EMPTY}" == "cros" ]];
+        then
+          sudo touch /usr/share/applications/.garcon_trigger || {
+            echo "Failed to create garcon trigger!"
+            exit 9
+          }
+        fi
+
+        echo "Finished installing cursor!"
+        exit 0
+      '';
+    };
+
     "docker-tags" = {
       target = "${config.home.homeDirectory}/.local/bin/docker-tags";
       executable = true;
@@ -163,8 +216,31 @@
 
           * )
 
-            echo "Unknown OS Layer ''${OS_LAYER:-EMPTY}"
-            exit 1
+            # If not a layer, what OS?
+            case "''${OS_NAME:-EMPTY}" in
+
+              "nixos" )
+
+                # NixOS needs to have insync installed.
+                if ! type insync 2>/dev/null;
+                then
+                  echo "On NixOS, insync needs to be installed"
+                  exit 2
+                fi
+
+                PROJECTS_LOCAL="''${HOME}/Projects/"
+                PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/Google Drive/Projects/Backup/"
+
+              ;;
+
+              * )
+
+                echo "Unknown OS Layer ''${OS_LAYER:-EMPTY} and unsupported OS ''${OS_NAME:-EMPTY}"
+                exit 1
+
+              ;;
+
+            esac
 
           ;;
 
@@ -289,6 +365,67 @@
 
         echo "Completed ''${ACTION} of projects"
 
+      '';
+    };
+    "nixos-check-updates" = {
+      target = "${config.home.homeDirectory}/.local/bin/nixos-check-updates";
+      executable = true;
+
+      text = ''
+        #!/usr/bin/env bash
+
+        # This script assumes your flake is in a variable named "DOTFILES_NIX_CONFIG"
+        # and that the required functions are available.
+
+        # Source the required functions.
+        FUNCTIONS_FILES=(
+          ''${HOME}/.config/bash/logging.sh
+          ''${HOME}/.config/bash/nix.sh
+        )
+        for FUNCTIONS_FILE in "''${FUNCTIONS_FILES[@]}";
+        do
+          source "''${FUNCTIONS_FILE}" || {
+            echo "Failed to source ''${FUNCTIONS_FILE}"
+            exit 1
+          }
+        done
+
+        if [[ -z "''${DOTFILES_NIX_CONFIG:-}" ]]; then
+          writeLog "ERROR" "DOTFILES_NIX_CONFIG is not set"
+          exit 1
+        elif [[ ! -d "''${DOTFILES_NIX_CONFIG}" ]]; then
+          writeLog "ERROR" "DOTFILES_NIX_CONFIG directory does not exist"
+          exit 1
+        else
+          pushd ''${DOTFILES_NIX_CONFIG} >/dev/null 2>&1 || {
+            writeLog "ERROR" "Failed to pushd to DOTFILES_NIX_CONFIG"
+            exit 1
+          }
+        fi
+
+        writeLog "INFO" "Checking for NixOS updates"
+
+        dotfiles update
+        dotfiles build
+
+        updates=$(nvd diff /run/current-system ./result | grep -e '\[U' | wc -l)
+
+        alt="updates-pending"
+
+        if [[ $updates -eq 0 ]];
+        then
+
+          alt="up-to-date"
+          tooltip="NixOS up-to-date"
+
+        elif [[ $updates != 0 ]];
+        then
+
+          tooltip=$(cd ''${DOTFILES_NIX_CONFIG} && nvd diff /run/current-system ./result | grep -e '\[U' | awk '{ for (i=3; i<NF; i++) printf $i " "; if (NF >= 3) print $NF; }' ORS='\\n' )
+
+        fi
+
+        echo "{ \"text\":\"$updates\", \"alt\":\"$alt\", \"tooltip\":\"$tooltip\" }"
       '';
     };
   };

@@ -1,17 +1,11 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs; [bash bash-completion nix-bash-completions]; #++ unstablePkgs;
+{pkgs, ...}: {
+  home.packages = with pkgs; [bashInteractive bash-completion nix-bash-completions];
 
   programs.bash = {
     enable = true;
     enableCompletion = true;
+
+    package = pkgs.bashInteractive;
 
     historyControl = ["ignoredups" "ignorespace"];
     historyIgnore = ["sops"];

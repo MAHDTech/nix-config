@@ -1,15 +1,9 @@
 {
-  inputs,
   config,
   pkgs,
   ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs; [xdg-user-dirs xdg-utils]; #++ unstablePkgs;
-
+}: {
+  home.packages = with pkgs; [xdg-user-dirs xdg-utils];
   xdg = {
     enable = true;
 
@@ -43,6 +37,60 @@ in {
       };
     };
 
+    dataFile = {
+      "1password.desktop" = {
+        target = "applications/1password.desktop";
+
+        text = ''
+          [Desktop Entry]
+          Name=1Password
+          Exec=${pkgs._1password-gui}/bin/1password %U
+          Terminal=false
+          Type=Application
+          Icon=${pkgs._1password-gui}/share/icons/hicolor/256x256/apps/1password.png
+          StartupWMClass=1Password
+          Comment=Password manager and secure wallet
+          MimeType=x-scheme-handler/onepassword;
+          Categories=Office;
+        '';
+      };
+
+      "cursor.desktop" = {
+        target = "applications/cursor.desktop";
+
+        text = ''
+          [Desktop Entry]
+          Name=Cursor
+          Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
+          #Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
+          Terminal=false
+          Type=Application
+          Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
+          StartupWMClass=Cursor
+          Comment=Cursor is an AI-first coding environment.
+          MimeType=x-scheme-handler/cursor;
+          Categories=Utility;
+        '';
+      };
+
+      "signal.desktop" = {
+        target = "applications/signal.desktop";
+
+        text = ''
+          [Desktop Entry]
+          Name=Signal
+          Exec=${pkgs.signal-desktop}/bin/signal-desktop --no-sandbox %U
+          Terminal=false
+          Type=Application
+          Icon=${pkgs.signal-desktop}/share/icons/hicolor/256x256/apps/signal-desktop.png
+          StartupWMClass=signal
+          Comment=Private messaging from your desktop
+          MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
+          Categories=Network;InstantMessaging;Chat;
+        '';
+      };
+    };
+
     # Set default user directories to home directory
     userDirs = {
       enable = true;
@@ -61,6 +109,8 @@ in {
       extraConfig = {
         XDG_PROJECTS_DIR = "${config.home.homeDirectory}/Projects";
         XDG_SOFTWARE_DIR = "${config.home.homeDirectory}/Software";
+        XDG_WALLPAPERS_DIR = "${config.home.homeDirectory}/Pictures/Wallpapers";
+        XDG_WORKSPACES_DIR = "${config.home.homeDirectory}/Workspaces";
       };
     };
   };
