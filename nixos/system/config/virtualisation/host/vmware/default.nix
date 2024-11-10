@@ -2,7 +2,6 @@
   imports = [];
 
   environment.systemPackages = with pkgs; [
-    vmware-workstation
   ];
 
   virtualisation = {
