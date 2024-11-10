@@ -61,14 +61,32 @@
         text = ''
           [Desktop Entry]
           Name=Cursor
-          Exec=appimage-run ${config.home.homeDirectory}/Apps/cursor.AppImage --no-sandbox %U
+          Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
+          #Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
           Terminal=false
           Type=Application
-          Icon=${config.home.homeDirectory}/.local/share/icons/hicolor/256x256/apps/cursor.png
+          Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
           StartupWMClass=Cursor
           Comment=Cursor is an AI-first coding environment.
           MimeType=x-scheme-handler/cursor;
           Categories=Utility;
+        '';
+      };
+
+      "signal.desktop" = {
+        target = "applications/signal.desktop";
+
+        text = ''
+          [Desktop Entry]
+          Name=Signal
+          Exec=${pkgs.signal-desktop}/bin/signal-desktop --no-sandbox %U
+          Terminal=false
+          Type=Application
+          Icon=${pkgs.signal-desktop}/share/icons/hicolor/256x256/apps/signal-desktop.png
+          StartupWMClass=signal
+          Comment=Private messaging from your desktop
+          MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
+          Categories=Network;InstantMessaging;Chat;
         '';
       };
     };
@@ -90,8 +108,9 @@
 
       extraConfig = {
         XDG_PROJECTS_DIR = "${config.home.homeDirectory}/Projects";
-        XDG_WORKSPACES_DIR = "${config.home.homeDirectory}/Workspaces";
         XDG_SOFTWARE_DIR = "${config.home.homeDirectory}/Software";
+        XDG_WALLPAPERS_DIR = "${config.home.homeDirectory}/Pictures/Wallpapers";
+        XDG_WORKSPACES_DIR = "${config.home.homeDirectory}/Workspaces";
       };
     };
   };

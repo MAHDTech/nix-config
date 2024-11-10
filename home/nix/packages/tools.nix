@@ -2,16 +2,13 @@
   home.packages = with pkgs; [
     # Password Manager
     _1password-gui
-    _1password
+    _1password-cli
 
     # File management
     insync
     restic
     rclone
     rsync
-
-    # AppImage
-    appimage-run
 
     # Nix
     nixos-generators
@@ -39,8 +36,6 @@
     # CLI
     bat
     bottom
-    btop
-    bzip2
     charasay
     curlFull
     complete-alias
@@ -78,5 +73,29 @@
     xsv
     xxd
     zip
+
+    # Terminal
+    cool-retro-term
+
+    # Media Players
+    mpv
+    vlc
+
+    # Image Viewer
+    imv
+
+    # PDF
+    zathura
+
+    # GUI
+    code-cursor
+    signal-desktop
+
+    # Trezor
+    trezord
+    trezor-suite
+
+    # Ledger
+    ledger-live-desktop
   ];
 }

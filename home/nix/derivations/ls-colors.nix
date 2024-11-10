@@ -2,7 +2,7 @@
   src = pkgs.fetchurl {
     name = "LS_COLORS";
     url = "https://raw.githubusercontent.com/trapd00r/LS_COLORS/master/LS_COLORS";
-    sha256 = "sha256-U9ivaC2JbZ5wOwZyQbbSa3AZxDsGguifqjho6lTmC+Y=";
+    sha256 = "sha256-B79qpolB+QY2WtcEqAH+HwImm0Ykb4Bo4USFXmiSPTs=";
   };
 in
   pkgs.stdenv.mkDerivation {

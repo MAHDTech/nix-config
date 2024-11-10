@@ -1,13 +1,12 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+{pkgs, ...}: {
+  home.packages = with pkgs; [];
 
-  unstablePkgs = with pkgsUnstable; [];
-in {
-  home.packages = with pkgs; []; #++ unstablePkgs;
+  programs.neovim = {
+    enable = false;
 
-  programs.neovim = {enable = false;};
+    catppuccin = {
+      enable = true;
+      flavor = "mocha";
+    };
+  };
 }

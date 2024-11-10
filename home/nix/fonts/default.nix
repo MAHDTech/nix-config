@@ -1,12 +1,4 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-
-  unstablePkgs = with pkgsUnstable; [];
-in {
+{pkgs, ...}: {
   home.packages = with pkgs; [
     font-manager
     fontconfig
@@ -19,8 +11,9 @@ in {
     fira-code-symbols
     jetbrains-mono
     liberation_ttf
+    nerd-font-patcher
     noto-fonts
-    noto-fonts-cjk
+    noto-fonts-cjk-sans
     noto-fonts-emoji
     openmoji-color
     roboto

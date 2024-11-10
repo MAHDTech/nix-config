@@ -68,7 +68,7 @@
       "ntnx-ahv-1" = {
         host = "ntnx-ahv-1";
         hostname = "ntnx-ahv-1.saltlabs.cloud";
-        user = "root";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -79,7 +79,7 @@
       "ntnx-ahv-2" = {
         host = "ntnx-ahv-2";
         hostname = "ntnx-ahv-2.saltlabs.cloud";
-        user = "root";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -90,7 +90,7 @@
       "ntnx-ahv-3" = {
         host = "ntnx-ahv-3";
         hostname = "ntnx-ahv-3.saltlabs.cloud";
-        user = "root";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -101,7 +101,7 @@
       "ntnx-ahv-4" = {
         host = "ntnx-ahv-4";
         hostname = "ntnx-ahv-4.saltlabs.cloud";
-        user = "root";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -112,7 +112,7 @@
       "ntnx-ahv-1-cvm" = {
         host = "ntnx-ahv-1-cvm";
         hostname = "ntnx-ahv-1-cvm.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -123,7 +123,7 @@
       "ntnx-ahv-2-cvm" = {
         host = "ntnx-ahv-2-cvm";
         hostname = "ntnx-ahv-2-cvm.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -134,7 +134,7 @@
       "ntnx-ahv-3-cvm" = {
         host = "ntnx-ahv-3-cvm";
         hostname = "ntnx-ahv-3-cvm.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -145,7 +145,7 @@
       "ntnx-ahv-4-cvm" = {
         host = "ntnx-ahv-4-cvm";
         hostname = "ntnx-ahv-4-cvm.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;
@@ -153,10 +153,10 @@
         identitiesOnly = false;
       };
 
-      "jumpbox" = {
-        host = "jumpbox";
-        hostname = "jumpbox.saltlabs.cloud";
-        user = "linadmin";
+      "ntnx-pc-1" = {
+        host = "ntnx-pc-1";
+        hostname = "ntnx-pc-1.saltlabs.cloud";
+        user = "admin";
         addressFamily = "inet";
         forwardAgent = true;
         forwardX11 = false;

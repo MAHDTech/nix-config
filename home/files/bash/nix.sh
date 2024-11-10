@@ -312,9 +312,9 @@ function dotfiles() {
 	local FLAKE_REMOTE="github:MAHDTech/nix-config"
 	local FLAKE_LOCAL="."
 
-	local FLAKE_HOME_MANAGER
+	#local FLAKE_HOME_MANAGER
 	#FLAKE_HOME_MANAGER="$(printf '%s\n' "$(whoami)"@"$(hostname)")"
-	FLAKE_HOME_MANAGER="${USER%%@*}"
+	#FLAKE_HOME_MANAGER="${USER%%@*}"
 
 	local EXECUTE="FALSE"
 
@@ -372,6 +372,7 @@ function dotfiles() {
 		}
 
 		# HACK: allow dirty
+		writeLog "INFO" "Staging git files"
 		git add --all || true
 
 		writeLog "WARN" "Using LOCAL dotfiles as the config directory is present ${DOTFILES_HOME_CONFIG}"
@@ -387,6 +388,10 @@ function dotfiles() {
 			writeLog "Failed to change into ${DOTFILES_NIX_CONFIG}"
 			return 1
 		}
+
+		# HACK: allow dirty
+		writeLog "INFO" "Staging git files"
+		git add --all || true
 
 		writeLog "WARN" "Using SYSTEM dotfiles as the config directory is present ${DOTFILES_NIX_CONFIG}"
 		FLAKE_LOCATION="${FLAKE_LOCAL}"
@@ -412,7 +417,8 @@ function dotfiles() {
 
 	*)
 
-		FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
+		#NOTE: Home Manager seems to auto add .${USERNAME}
+		#FLAKE_LOCATION="${FLAKE_LOCATION}#${FLAKE_HOME_MANAGER}"
 		writeLog "DEBUG" "Flake location set to ${FLAKE_LOCATION}"
 
 		;;

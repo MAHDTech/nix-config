@@ -2,7 +2,8 @@
   imports = [
     ./general.nix
     ./cargo.nix
-    ./scripts.nix
+    ./cursor.nix
+    ./scripts
     ./xdg.nix
     ./github.nix
   ];
