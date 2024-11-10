@@ -49,7 +49,7 @@ jobs:
         name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@v24
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.MAHDTECH_TOKEN_CREATE_PR }}
           sign-commits: false
           #gpg-fingerprint: ${{ secrets.GPG_FINGERPRINT }}
           #gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
