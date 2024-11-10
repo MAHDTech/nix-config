@@ -15,7 +15,6 @@ permissions:
 
 env:
   NIXPKGS_ALLOW_UNFREE: 1
-  RUST_BACKTRACE: 1
 
 jobs:
   nix:
@@ -31,7 +30,7 @@ jobs:
 
       - id: install_nix
         name: "Install Nix ❄️"
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v30
 
       - id: cachix
         name: "Enable Cachix ❄️"
@@ -49,11 +48,13 @@ jobs:
       - name: Nix Flake check
         run: >-
           nix flake check
+          --accept-flake-config
+          --all-systems
+          --impure
+          --keep-going
           --no-build
           --refresh
-          --keep-going
           --verbose
-          --impure
 
       - name: Statix check
         run: nix run nixpkgs#statix -- check
