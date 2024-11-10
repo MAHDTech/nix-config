@@ -15,7 +15,6 @@ permissions:
 
 env:
   NIXPKGS_ALLOW_UNFREE: 1
-  RUST_BACKTRACE: 1
 
 jobs:
   nix:
@@ -49,11 +48,13 @@ jobs:
       - name: Nix Flake check
         run: >-
           nix flake check
+          --accept-flake-config
+          --all-systems
+          --impure
+          --keep-going
           --no-build
           --refresh
-          --keep-going
           --verbose
-          --impure
 
       - name: Statix check
         run: nix run nixpkgs#statix -- check
