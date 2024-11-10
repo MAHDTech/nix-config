@@ -59,6 +59,7 @@ jobs:
           git-committer-email: "github-actions@users.noreply.github.com"
           git-committer-name: "Nix Flake Bot"
           pr-title: "Update flake.lock"
+          nix-options: --accept-flake-config
 
       - id: print_pr_number
         name: Pull request number
