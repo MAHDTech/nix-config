@@ -322,16 +322,18 @@ in {
         # Snap
         #########################
 
-        snap = {
-          # Enable snapping for floating windows
-          enabled = true;
-          # Minimum gap in pixels between windows for snapping
-          window_gap = 10;
-          # Minimum gap in pixels between windows and edge before snapping
-          monitor_gap = 10;
-          # if true, windows snap such that only one border’s worth of space is between them.
-          border_overlap = false;
-        };
+        # TODO: Enable in v0.45+
+
+        #snap = {
+        # Enable snapping for floating windows
+        #  enabled = true;
+        # Minimum gap in pixels between windows for snapping
+        #  window_gap = 10;
+        # Minimum gap in pixels between windows and edge before snapping
+        #  monitor_gap = 10;
+        # if true, windows snap such that only one border’s worth of space is between them.
+        #  border_overlap = false;
+        #};
       };
 
       #########################
