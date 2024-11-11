@@ -16,11 +16,14 @@
       General = {
         ControllerMode = "dual";
         Enable = "Source,Sink,Media,Socket";
-        Experimental = true;
-        FastConnectable = true;
+        Experimental = "true";
+        FastConnectable = "true";
       };
       Policy = {
-        AutoEnable = true;
+        AutoEnable = "true";
+      };
+      LE = {
+        EnableAdvMonInterleaveScan = "true";
       };
     };
     disabledPlugins = [

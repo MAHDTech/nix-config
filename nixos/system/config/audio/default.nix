@@ -43,21 +43,17 @@
             "bluez5.enable-hw-volume" = true;
             "bluez5.hfphsp-backend" = "native";
             "bluez5.roles" = [
-              # AD2P Audio Sink
+              # AD2P Audio Sink/Source
               "a2dp_sink"
-              # AD2P Audio Source
               "a2dp_source"
-              # LE Audio Basic Audio Profile Sink
+              # Low Energy Audio Sink/Source
               "bap_sink"
-              # LE Audio Basic Audio Profile Source
               "bap_source"
-              # Hands-Free Profile Headset
-              "hsp_hs"
-              # Hands-Free Profile Audio Gateway
+              # Hands-Free Profile Headset/Audio Gateway
+              #"hsp_hs"
               #"hsp_ag"
-              # Headset Profile Hands-Free
-              "hfp_hf"
-              # Headset Profile Audio Gateway
+              # Headset Profile Hands-Free/Audio Gateway
+              #"hfp_hf"
               #"hfp_ag"
             ];
           };

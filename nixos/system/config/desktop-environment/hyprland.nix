@@ -14,7 +14,7 @@
     hyprpaper
 
     # Terminal
-    #kitty
+    kitty
 
     # Greeter
     greetd.tuigreet
