@@ -1,14 +1,25 @@
-# Starter Config
+# Readme
 
-if suggestions don't work, first make sure
-you have TypeScript LSP working in your editor
+AGS is the CLI for Astal.
 
-if you do not want typechecking only suggestions
+## Steps
 
-```json
-// tsconfig.json
-"checkJs": false
+- Initialize the project in the current directory.
+
+```bash
+ags init --directory $(pwd)/ --force
 ```
 
-types are symlinked to:
-/home/mahdtech/.local/share/com.github.Aylur.ags/types
+- Make your changes
+
+- Generate the types
+
+```bash
+ags types --directory $(pwd)/ --tsconfig
+```
+
+- Run the app to test
+
+```bash
+ags run --directory $(pwd)/
+```

@@ -97,6 +97,7 @@
       ref = "main";
       flake = true;
       dir = "nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     catppuccin = {
@@ -105,6 +106,7 @@
       repo = "nix";
       ref = "main";
       flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     ags = {
@@ -113,6 +115,7 @@
       repo = "ags";
       ref = "main";
       flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     matugen = {
@@ -121,6 +124,7 @@
       repo = "matugen";
       ref = "v2.2.0";
       flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 

@@ -1,14 +1,16 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ES2022",
+    "experimentalDecorators": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "/home/mahdtech/.local/share/ags/gtk3",
     "module": "ES2022",
-    "lib": ["ES2022"],
-    "allowJs": true,
-    "checkJs": true,
+    "moduleResolution": "Bundler",
+    "paths": {
+      "astal": ["/home/mahdtech/.local/share/ags"],
+      "astal/*": ["/home/mahdtech/.local/share/ags/*"]
+    },
     "strict": true,
-    "noImplicitAny": false,
-    "baseUrl": ".",
-    "typeRoots": ["./types", "./node_modules/@girs"],
-    "skipLibCheck": true
+    "target": "ES2022"
   }
 }

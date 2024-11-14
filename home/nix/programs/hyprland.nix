@@ -351,18 +351,6 @@ in {
         inactive_opacity = 0.8;
         # Opacity of fullscreen windows (0.0 - 1.0)
         fullscreen_opacity = 0.9;
-        # Enable drop shadows on windows
-        drop_shadow = true;
-        # Shadow range size in px
-        shadow_range = 20;
-        # In what power to render the falloff, higher = faster falloff
-        shadow_render_power = 4;
-        # If true, shadow will be rendered around the window
-        shadow_ignore_window = true;
-        # Shadow colour
-        "col.shadow" = "rgba(1a1a1aee)";
-        # Shadow color (inactive)
-        "col.shadow_inactive" = "rgba(1a1a1aee)";
         # Enable dimming of inactive windows
         dim_inactive = true;
         # How much to dim inactive windows
@@ -407,6 +395,33 @@ in {
           popups = false;
           # How much to blur popups and right-click menus
           popups_ignorealpha = 0.2;
+        };
+
+        #########################
+        # Hyprland Shadow
+        #########################
+
+        # https://wiki.hyprland.org/Configuring/Variables/#shadow
+
+        shadow = {
+          # Whether to enable shadows
+          enabled = true;
+          # Shadow range size in px
+          range = 5;
+          # In what power to render the falloff (more power, the faster the falloff)
+          render_power = 3;
+          # if enabled, will make the shadows sharp, akin to an infinite render power
+          sharp = false;
+          # if true, the shadow will not be rendered behind the window itself, only around it.
+          ignore_window = true;
+          # shadow’s color. Alpha dictates shadow’s opacity.
+          color = "rgba(1a1a1aee)";
+          # inactive shadow color. (if not set, will fall back to color)
+          color_inactive = "rgba(1a1a1aee)";
+          # shadow’s rendering offset.
+          offset = "[0,0]";
+          # shadow’s scale. [0.0 - 1.0]
+          scale = 1.0;
         };
       };
 
