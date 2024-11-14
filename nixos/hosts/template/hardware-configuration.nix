@@ -30,14 +30,9 @@
     };
 
     "/boot/efi" = {
-      device = "/dev/disk/by-uuid/D139-D03C";
+      device = "/dev/disk/by-path/pci-0000:02:00.0-scsi-0:0:0:0-part1";
       fsType = "vfat";
       options = ["fmask=0077" "dmask=0077"];
-    };
-
-    "/boot/nixos" = {
-      device = "/dev/disk/by-uuid/837729b1-b068-49e6-bf8f-0dc437367ac0";
-      fsType = "xfs";
     };
 
     "/home" = {
