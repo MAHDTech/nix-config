@@ -26,7 +26,7 @@
       "flathub:app/com.discordapp.Discord//stable"
       "flathub:app/com.github.PintaProject.Pinta//stable"
       "flathub:app/com.github.tchx84.Flatseal//stable"
-      "flathub:app/com.google.Chrome//stable"
+      # "flathub:app/com.google.Chrome//stable" # Using Google Chrome from nixpkgs instead.
       "flathub:app/com.logseq.Logseq//stable"
       "flathub:app/com.obsproject.Studio//stable"
       "flathub:app/com.slack.Slack//stable"
@@ -35,7 +35,7 @@
       "flathub:app/net.codeindustry.MasterPDFEditor//stable"
       "flathub:app/org.ferdium.Ferdium//stable"
       "flathub:app/org.gimp.GIMP//stable"
-      #"flathub:app/org.signal.Signal//stable"
+      # "flathub:app/org.signal.Signal//stable" # Using Signal from nixpkgs instead.
       "flathub:app/org.videolan.VLC//stable"
     ];
 

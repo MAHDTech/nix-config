@@ -90,6 +90,7 @@
     # GUI
     code-cursor
     signal-desktop
+    google-chrome
 
     # Trezor
     trezord
