@@ -419,7 +419,7 @@ in {
           # inactive shadow color. (if not set, will fall back to color)
           color_inactive = "rgba(1a1a1aee)";
           # shadow’s rendering offset.
-          offset = "[0,0]";
+          offset = "[0, 0]";
           # shadow’s scale. [0.0 - 1.0]
           scale = 1.0;
         };

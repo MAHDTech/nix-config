@@ -90,23 +90,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    wezterm = {
-      type = "github";
-      owner = "wez";
-      repo = "wezterm";
-      ref = "main";
-      flake = true;
-      dir = "nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     catppuccin = {
       type = "github";
       owner = "catppuccin";
       repo = "nix";
       ref = "main";
       flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     ags = {
