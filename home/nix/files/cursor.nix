@@ -28,7 +28,25 @@
 
           // Workbench
           "workbench.colorTheme": "Catppuccin Mocha",
-          "workbench.iconTheme": "catppuccin-mocha"
+          "workbench.iconTheme": "catppuccin-mocha",
+
+          /*
+          Language based settings
+          */
+
+          // YAML
+          "[yaml]": {
+            "editor.insertSpaces": true,
+            "editor.tabSize": 2,
+            "editor.autoIndent": "advanced",
+            "diffEditor.ignoreTrimWhitespace": false
+          },
+
+          // GitHub Actions
+          "[github-actions-workflow]": {
+            "editor.insertSpaces": true,
+            "editor.tabSize": 2
+          }
         }
       '';
     };
