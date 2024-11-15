@@ -1,40 +1,23 @@
-// Astal
-import { App } from "astal/gtk3";
+// Astal.
+import { App, Widget } from "astal/gtk3";
 
-// Style
+// Styles.
 import style from "./style/style.scss";
 
-// Widgets
+// Widgets.
 //import Applauncher from "./widget/Applauncher";
 import Bar from "./widget/Bar";
 //import MprisPlayers from "./widget/MediaPlayer";
 //import NotificationPopups from "./widget/NotificationPopups";
 
 App.start({
-  // The CSS stylesheet.
   css: style,
-
-  // A unique instance name.
-  instanceName: "astal",
-
-  // For handling requests from the astal CLI client.
-  requestHandler(request: string, res: (response: any) => void) {
-    switch (request) {
-      case "say hi":
-        res("hello astal CLI");
-        break;
-      case "launch applauncher":
-        //Applauncher()
-        res("launched applauncher");
-        break;
-      default:
-        res("unknown command");
-        break;
-    }
+  instanceName: "ags",
+  requestHandler(request, res) {
+    print(request);
+    res("ok");
   },
-
-  // Main entry point.
-  main() {
+  main: () => {
     // Initialize bar on all monitors
     App.get_monitors().map(Bar);
 
