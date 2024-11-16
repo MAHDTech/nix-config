@@ -762,7 +762,7 @@ in {
       exec-once = [
         "$terminal"
         "swww-daemon & sleep 3 && exec random-wallpaper ''$XDG_WALLPAPERS_DIR"
-        "ags --bus-name hypr"
+        "ags run"
         "sleep 60 ; pidof insync || insync start"
       ];
 
