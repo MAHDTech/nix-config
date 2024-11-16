@@ -5,10 +5,10 @@ import { App, Widget } from "astal/gtk3";
 import style from "./style/style.scss";
 
 // Widgets.
-//import Applauncher from "./widget/Applauncher";
+import Applauncher from "./widget/Applauncher";
 import Bar from "./widget/Bar";
-//import MprisPlayers from "./widget/MediaPlayer";
-//import NotificationPopups from "./widget/NotificationPopups";
+import MprisPlayers from "./widget/MediaPlayer";
+import NotificationPopups from "./widget/NotificationPopups";
 
 App.start({
   css: style,
@@ -22,12 +22,12 @@ App.start({
     App.get_monitors().map(Bar);
 
     // Initialize applauncher
-    //Applauncher();
+    Applauncher();
 
     // Initialize media player
-    //new Widget.Window({}, MprisPlayers());
+    new Widget.Window({}, MprisPlayers());
 
     // Initialize notification popups on all monitors
-    //App.get_monitors().map(NotificationPopups);
+    App.get_monitors().map(NotificationPopups);
   },
 });
