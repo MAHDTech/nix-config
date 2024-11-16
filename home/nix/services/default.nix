@@ -5,5 +5,6 @@
     #./pass-secret-service.nix
     ./smartcards.nix
     ./systemd.nix
+    #./upower.nix
   ];
 }

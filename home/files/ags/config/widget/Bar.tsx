@@ -1,4 +1,4 @@
-import { App, Astal, Gtk, Gdk } from "astal/gtk3";
+import { Widget, App, Astal, Gtk, Gdk } from "astal/gtk3";
 import { Variable } from "astal";
 
 const time = Variable("").poll(1000, "date");
