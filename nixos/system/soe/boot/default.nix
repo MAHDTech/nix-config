@@ -17,7 +17,6 @@
     extraModulePackages = with config.boot.kernelPackages; [];
 
     kernelModules = [
-      "kvm_intel"
     ];
 
     # Wiki https://nixos.wiki/wiki/Linux_kernel

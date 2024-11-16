@@ -92,7 +92,7 @@ in {
             size = "200, 50";
             position = "0, -80";
             halign = "center";
-            valisng = "center";
+            valign = "center";
             monitor = "";
             dots_center = true;
             fade_on_empty = false;
