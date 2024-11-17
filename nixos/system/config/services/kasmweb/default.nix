@@ -55,10 +55,15 @@
         password = "${config.kasmwebconfig.postgres.password}";
       };
 
-      defaultUserPassword = "kasmweb";
+      # Tokens
       defaultRegistrationToken = "kasmweb";
       defaultManagerToken = "kasmweb";
       defaultGuacToken = "kasmweb";
+      
+      # Passwords
+      # user@kasm.local
+      defaultUserPassword = "kasmweb";
+      # admin@kasm.local
       defaultAdminPassword = "kasmweb";
     };
   };
