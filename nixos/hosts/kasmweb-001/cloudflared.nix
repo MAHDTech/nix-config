@@ -7,12 +7,13 @@
 
     tunnels = {
       "kasmweb" = {
-        default = "http_status:404";
 
         # https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-useful-terms/#credentials-file
         # TLDR;
+        #  nix-shell -p cloudflared
         #  cloudflared tunnel login <token-from-the-dashboard>
         #  cloudflared tunnel create <name>
+        #  cloudflared tunnel route dns <name> <ingress-domain>
         #credentialsFile = "${config.sops.secrets.cloudflared.credentialsFile}";
         credentialsFile = "/home/cloudflared/.secrets/cloudflared.json";
 
@@ -22,8 +23,9 @@
         };
 
         ingress = {
-          "kasmweb.saltlabs.cloud" = "https://kasmweb.saltlabs.cloud";
+          "kasmweb.saltlabs.cloud" = "https://localhost";
         };
+        default = "http_status:404";
 
         originRequest = {
           tlsTimeout = "10s";
