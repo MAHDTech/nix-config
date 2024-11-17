@@ -18,30 +18,30 @@
         credentialsFile = "/home/cloudflared/.secrets/cloudflared.json";
 
         # https://developers.cloudflare.com/cloudflare-one/tutorials/warp-to-tunnel/
-        warp-routing = {
-          enabled = false;
-        };
+        #warp-routing = {
+        #  enabled = false;
+        #};
 
         ingress = {
           "kasmweb.saltlabs.cloud" = "https://localhost";
         };
         default = "http_status:404";
 
-        originRequest = {
-          tlsTimeout = "10s";
-          tcpKeepAlive = "30s";
-          proxyType = "";
-          proxyPort = 0;
-          proxyAddress = "127.0.0.1";
-          originServerName = "kasmweb.saltlabs.cloud";
-          noTLSVerify = false;
-          noHappyEyeballs = false;
-          keepAliveTimeout = "1m30s";
-          keepAliveConnections = 25;
-          httpHostHeader = "kasmweb.saltlabs.cloud";
-          disableChunkedEncoding = false;
-          connectTimeout = "30s";
-        };
+        #originRequest = {
+        #  tlsTimeout = "10s";
+        #  tcpKeepAlive = "30s";
+        #  proxyType = "";
+        #  proxyPort = 0;
+        #  proxyAddress = "127.0.0.1";
+        #  originServerName = "kasmweb.saltlabs.cloud";
+        #  noTLSVerify = false;
+        #  noHappyEyeballs = false;
+        #  keepAliveTimeout = "1m30s";
+        #  keepAliveConnections = 25;
+        #  httpHostHeader = "kasmweb.saltlabs.cloud";
+        #  disableChunkedEncoding = false;
+        #  connectTimeout = "30s";
+        #};
       };
     };
   };
