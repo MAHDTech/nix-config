@@ -26,7 +26,6 @@
         EnableAdvMonInterleaveScan = "true";
       };
     };
-    disabledPlugins = [
-    ];
+    disabledPlugins = [];
   };
 }
