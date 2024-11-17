@@ -10,6 +10,9 @@
         default = "http_status:404";
 
         # https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-useful-terms/#credentials-file
+        # TLDR;
+        #  cloudflared tunnel login <token-from-the-dashboard>
+        #  cloudflared tunnel create <name>
         #credentialsFile = "${config.sops.secrets.cloudflared.credentialsFile}";
         credentialsFile = "/home/cloudflared/.secrets/cloudflared.json";
 
