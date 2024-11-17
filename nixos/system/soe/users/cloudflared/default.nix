@@ -4,8 +4,8 @@ in {
   users.users.${username} = {
     name = username;
     uid = 1001;
-    isNormalUser = false;
-    isSystemUser = true;
+    isNormalUser = true;
+    #isSystemUser = true;
     createHome = true;
     home = "/home/${username}";
     shell = pkgs.bashInteractive;
