@@ -17,7 +17,7 @@
       type = "github";
       owner = "NixOS";
       repo = "nixpkgs";
-      ref = "nixos-unstable";
+      ref = "release-24.11";
       flake = true;
     };
 
@@ -392,6 +392,27 @@
                 ];
               };
             };
+          }
+        ];
+      };
+
+      # Hostname: KASMWEB-001
+      # Description: VMware VM running Kasm Web.
+      KASMWEB-001 = configNixOS {
+        username = globalUsername;
+        system = "x86_64-linux";
+
+        specialArgs = {
+          inherit inputs;
+        };
+
+        extraModules = [
+          # Enable Catppuccin theme.
+          catppuccin.nixosModules.catppuccin
+
+          ./nixos/hosts/kasmweb-001
+          {
+            system.stateVersion = globalStateVersion;
           }
         ];
       };
