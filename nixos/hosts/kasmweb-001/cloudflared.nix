@@ -1,6 +1,6 @@
 {
   services.cloudflared = {
-    enable = false;
+    enable = true;
 
     user = "cloudflared";
     group = "cloudflared";
