@@ -1,5 +1,9 @@
 {
-  imports = [./root ./mahdtech];
+  imports = [
+    ./cloudflared
+    ./mahdtech
+    ./root
+  ];
 
   users.mutableUsers = false;
 }

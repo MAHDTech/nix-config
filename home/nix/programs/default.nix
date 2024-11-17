@@ -14,7 +14,7 @@
     ./neovim.nix
     ./password-store.nix
     #./python.nix
-    ./sops-nix.nix
+    #./sops-nix.nix
     ./ssh.nix
     ./starship.nix
     ./vim.nix

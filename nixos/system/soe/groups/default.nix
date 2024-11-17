@@ -6,8 +6,8 @@
 
     "trezord" = {gid = 10002;};
 
-    "nixos" = {gid = 100000;};
+    "nixos" = {gid = 10003;};
 
-    "adbusers" = {gid = 100001;};
+    "adbusers" = {gid = 10004;};
   };
 }

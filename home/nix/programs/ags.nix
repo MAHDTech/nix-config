@@ -41,7 +41,7 @@
       # Library to control bluez over dbus
       inputs.ags.packages.${pkgs.system}.bluetooth
       # Audio visualizer library using cava
-      inputs.ags.packages.${pkgs.system}.cava
+      #inputs.ags.packages.${pkgs.system}.cava
       # Library and CLI tool for sending requests to greetd
       inputs.ags.packages.${pkgs.system}.greet
       # Library and cli tool for Hyprland IPC socket

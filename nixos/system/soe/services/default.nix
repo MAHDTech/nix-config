@@ -5,6 +5,7 @@
     ./cron
     ./envfs
     ./pam
+    ./pcscd
     ./resolved
     ./sshd
     ./systemd

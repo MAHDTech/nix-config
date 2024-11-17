@@ -49,6 +49,8 @@
       };
     };
 
+    growPartition = true;
+
     loader = {
       timeout = 3;
 

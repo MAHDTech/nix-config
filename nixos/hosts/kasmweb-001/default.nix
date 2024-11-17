@@ -31,6 +31,9 @@
     # Kasm Workspaces Host.
     ../../system/config/services/kasmweb
 
+    # Cloudflare Tunnel.
+    ./cloudflared.nix
+
     # Headless
 
     # VMware virtualisation Guest.

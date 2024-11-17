@@ -45,6 +45,7 @@
     # Read all public keys from this file.
     publicKeys = [{source = "${config.xdg.configFile.pubkeys.source}";}];
 
+    # PCSCD
     # Smart Card Daemon settings.
     # https://www.gnupg.org/documentation/manuals/gnupg/Scdaemon-Options.html
     scdaemonSettings = {
@@ -152,7 +153,8 @@
     # NOTE:
     #   - PCSCD conflicts with gpg-agent
     #   - gnome-keyring is no longer a wrapper for gpg-agent
-    #   - 1Password is currently the preferred gpg-agent
+    #   - 1Password is currently the preferred gpg-agent for git
+    #   - Or use yubikey gpg for everything else.
     enable = false;
 
     enableBashIntegration = true;

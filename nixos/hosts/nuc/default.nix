@@ -29,6 +29,10 @@
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
 
+    # Desktop Applications and Services
+    ../../system/config/programs/1password
+    ../../system/config/services/trezor
+
     # VMware virtualisation and Docker Container Host.
     ../../system/config/virtualisation/docker
     ../../system/config/virtualisation/host/vmware

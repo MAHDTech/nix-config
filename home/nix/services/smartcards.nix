@@ -12,18 +12,15 @@
     pcsclite
     pinentry
 
-    # Trezor
-    trezor_agent
-
     # YubiKey
     # NOTE: For YubiKey reset instructions see: https://support.yubico.com/hc/en-us/articles/360013761339-Resetting-the-OpenPGP-Application-on-the-YubiKey
-    #yubico-pam
-    #yubico-piv-tool
-    #yubikey-manager
-    #yubikey-manager-qt
-    #yubikey-personalization
-    #yubikey-personalization-gui
-    #yubikey-touch-detector
-    #swig
+    yubico-pam
+    yubico-piv-tool
+    yubikey-manager
+    yubikey-manager-qt
+    yubikey-personalization
+    yubikey-personalization-gui
+    yubikey-touch-detector
+    swig
   ];
 }

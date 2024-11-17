@@ -1,10 +1,11 @@
 {pkgs, ...}: let
-  username = "mahdtech";
+  username = "cloudflared";
 in {
   users.users.${username} = {
     name = username;
-    uid = 1000;
-    isNormalUser = true;
+    uid = 1001;
+    isNormalUser = false;
+    isSystemUser = true;
     createHome = true;
     home = "/home/${username}";
     shell = pkgs.bashInteractive;
@@ -14,35 +15,20 @@ in {
     initialHashedPassword = "$6$0fQUL.dlpw4kaVRc$/cbRiuWeR5Pu9yc7uvF2sktWtGOtTjtXviU.mAtWZlOwURJ0Ld1Ccxo5K9yiQ7LqPMU3NCcGGrk3Q7jmiFgS21";
 
     # SOPS
-    #hashedPasswordFile = config.sops.secrets.mahdtech.path;
+    #hashedPasswordFile = config.sops.secrets.cloudflared.path;
 
     extraGroups = [
       username
-      "adbusers"
-      "audio"
-      "disk"
-      "docker"
-      "flatpak"
-      "networkmanager"
-      "nixos"
-      "pipewire"
-      "plugdev"
-      "trezord"
-      "video"
-      "vmware"
-      "wheel"
     ];
 
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJkDYJ0EnGd7wkoW4MCz9bjgEHVoGZcwv5veeTr3/Gke"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHLEPFnH5qCksDIv/vcbm7H7p+OWEqiqKyWdAtEo+/UU"
     ];
   };
 
   users.groups = {
     ${username} = {
       name = username;
-      gid = 1000;
+      gid = 1001;
     };
   };
 }

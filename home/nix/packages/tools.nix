@@ -1,9 +1,5 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    # Password Manager
-    _1password-gui
-    _1password-cli
-
     # File management
     insync
     restic
@@ -61,7 +57,6 @@
     shadow
     shellcheck
     socat
-    sops
     tailscale
     tokei
     tree
@@ -73,6 +68,14 @@
     xsv
     xxd
     zip
+
+    # Sops
+    sops
+    age
+    age-plugin-fido2-hmac
+    age-plugin-ledger
+    age-plugin-tpm
+    age-plugin-yubikey
 
     # Terminal
     cool-retro-term
@@ -93,8 +96,8 @@
     google-chrome
 
     # Trezor
-    trezord
     trezor-suite
+    trezor-agent
 
     # Ledger
     ledger-live-desktop

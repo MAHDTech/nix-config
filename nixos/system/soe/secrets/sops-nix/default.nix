@@ -1,4 +1,11 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  self,
+  ...
+}: let
+  flake = builtins.getFlake ./.;
+in {
   imports = [];
 
   environment.systemPackages = with pkgs; [];
@@ -7,28 +14,26 @@
     # This will add secrets.yml to the nix store
     # You can avoid this by adding a string to the full path instead, i.e.
     # defaultSopsFile = "/root/.sops/secrets/example.yaml";
-    defaultSopsFile = ../../../secrets/secrets.yaml;
+    defaultSopsFile = "${flake}/secrets/secrets.yaml";
     defaultSopsFormat = "yaml";
 
     # NOTE: Only ED25519 keys are supported with age.
     age = {
       sshKeyPaths = [
         "/etc/ssh/ssh_host_ed25519_key"
-        "/home/mahdtech/.ssh/id_ed25519"
       ];
 
       # This is where the key file lives on the local system.
-      keyFile = "/home/mahdtech/.config/sops/age/keys.txt";
+      keyFile = "/var/lib/sops-nix/key.txt";
 
       # This will generate a new key if the key specified above does not exist
-      generateKey = false;
+      generateKey = true;
     };
 
     # NOTE: Only RSA keys are supported with gpg.
     gnupg = {
       sshKeyPaths = [
         "/etc/ssh/ssh_host_rsa_key"
-        "/home/mahdtech/.ssh/id_rsa"
       ];
     };
 
@@ -36,6 +41,20 @@
     # will be available to the system at /run/secrets.d/
     /*
     secrets = {
+
+      cloudflared = {
+        sopsFile = ${flake}/secrets/cloudflared.yaml;
+        format = "yaml";
+        mode = "0400";
+        owner = "${config.users.users.cloudflared.name}";
+        group = "${config.users.users.cloudflared.group}";
+        neededForUsers = false;
+        restartUnits = [
+          "cloudflared.service"
+        ];
+      };
+
+    };
 
     github_token = {
       sopsFile = ../../../secrets/secrets.yaml;

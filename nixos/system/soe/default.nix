@@ -6,6 +6,7 @@
     ./users
     ./nix
     ./programs
+    ./secrets
     ./services
     ./security
   ];
