@@ -49,7 +49,7 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      ref = "master";
+      ref = "release-24.11";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -150,7 +150,7 @@
     # this value at the release version of the first install of this system.
     # Before changing this value read the documentation for this option
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    globalStateVersion = "23.11";
+    globalStateVersion = "24.11";
 
     #########################
     # Systems functions
