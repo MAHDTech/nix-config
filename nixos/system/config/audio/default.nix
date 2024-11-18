@@ -96,7 +96,7 @@
 
     jack.enable = false;
 
-    pulse.enable = false;
+    pulse.enable = true;
 
     # https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/conf_file.html
     wireplumber = {
@@ -202,11 +202,11 @@
               ];
               actions = {
                 update-props = {
-                  #"api.alsa.period-size" = 1024;
-                  #"api.alsa.period-num" = 4;
-                  #"api.alsa.headroom" = 8192;
-                  #"api.alsa.disable-batch" = false;
-                  #"api.alsa.disable-tsched" = false;
+                  "api.alsa.period-size" = 1024;
+                  "api.alsa.period-num" = 4;
+                  "api.alsa.headroom" = 8192;
+                  "api.alsa.disable-batch" = false;
+                  "api.alsa.disable-tsched" = false;
                 };
               };
             }
