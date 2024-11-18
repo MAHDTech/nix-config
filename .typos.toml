@@ -28,6 +28,7 @@ randomize = "randomize"
 randomized = "randomized"
 recognize = "recognize"
 initialize = "initialize"
+analyzer = "analyzer"
 
 [files]
 

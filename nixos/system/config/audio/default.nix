@@ -32,30 +32,71 @@
             "default.clock.allowed-rates" = [96000 48000 44100 32000];
             "default.clock.quantum" = 32;
             "default.clock.min-quantum" = 32;
-            "default.clock.max-quantum" = 8192;
+            "default.clock.max-quantum" = 32;
             "default.clock.quantum-floor" = 32;
-            "default.clock.quantum-limit" = 8192;
+            "default.clock.quantum-limit" = 32;
           };
         };
         "10-resample" = {
           "stream.properties" = {
             "resample.disable" = false;
-            "resample.quality" = 15;
+            "resample.quality" = 10;
           };
         };
       };
+      client-rt = {
+        "10-alsa-linear-volume" = {
+          "alsa.properties" = {
+            "alsa.volume-method" = "linear";
+          };
+        };
+      };
+      pipewire-pulse = {
+        "92-low-latency" = {
+          "context.properties" = [
+            {
+              name = "libpipewire-module-protocol-pulse";
+              args = {};
+            }
+          ];
+          "pulse.properties" = {
+            "pulse.min.req" = "32/48000";
+            "pulse.default.req" = "32/48000";
+            "pulse.max.req" = "32/48000";
+            "pulse.min.quantum" = "32/48000";
+            "pulse.max.quantum" = "32/48000";
+          };
+          "stream.properties" = {
+            "node.latency" = "32/48000";
+            "resample.quality" = 1;
+          };
+        };
+      };
+      pipewire = {
+        "10-clock-rate" = {
+          "context.properties" = {
+            "default.clock.rate" = 96000;
+          };
+        };
+        "11-no-upmixing" = {
+          "stream.properties" = {
+            "channelmix.upmix" = true;
+          };
+        };
+      };
+      jack = {};
     };
 
     alsa = {
-      enable = true;
-      support32Bit = true;
+      enable = false;
+      support32Bit = false;
     };
 
     audio.enable = true;
 
-    jack.enable = true;
+    jack.enable = false;
 
-    pulse.enable = true;
+    pulse.enable = false;
 
     # https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/conf_file.html
     wireplumber = {
@@ -161,10 +202,11 @@
               ];
               actions = {
                 update-props = {
-                  "api.alsa.period-size" = 1024;
-                  "api.alsa.headroom" = 8192;
-                  "api.alsa.disable-batch" = true;
-                  "api.alsa.disable-tsched" = true;
+                  #"api.alsa.period-size" = 1024;
+                  #"api.alsa.period-num" = 4;
+                  #"api.alsa.headroom" = 8192;
+                  #"api.alsa.disable-batch" = false;
+                  #"api.alsa.disable-tsched" = false;
                 };
               };
             }
@@ -209,7 +251,9 @@
   ];
 
   services.udev.extraRules = ''
-    KERNEL=="rtc0", GROUP="audio"
+    DEVPATH=="/devices/virtual/misc/cpu_dma_latency", OWNER="root", GROUP="audio", MODE="0660"
+    DEVPATH=="/devices/virtual/misc/hpet", OWNER="root", GROUP="audio", MODE="0660"
     KERNEL=="hpet", GROUP="audio"
+    KERNEL=="rtc0", GROUP="audio"
   '';
 }

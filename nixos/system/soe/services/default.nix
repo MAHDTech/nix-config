@@ -7,6 +7,7 @@
     ./pam
     ./pcscd
     ./resolved
+    ./scheduler
     ./sshd
     ./systemd
     ./tlp

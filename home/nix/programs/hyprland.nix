@@ -19,6 +19,7 @@
     slurp
     swappy
     swww
+    wayland-pipewire-idle-inhibit
     wayshot
     #wf-recorder
     wl-clipboard

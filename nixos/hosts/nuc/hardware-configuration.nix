@@ -22,6 +22,7 @@
 
     kernelParams = [
       "mitigations=off"
+      "threadirqs"
     ];
 
     extraModulePackages = [];

@@ -3,7 +3,9 @@
   pkgs,
   ...
 }: {
-  imports = [];
+  imports = [
+    ./oomd.nix
+  ];
 
   environment.systemPackages = with pkgs; [];
 

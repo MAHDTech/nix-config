@@ -1,0 +1,36 @@
+{pkgs, ...}: {
+  systemd.services."config-mglru" = {
+    enable = true;
+    after = ["basic.target"];
+    wantedBy = ["sysinit.target"];
+    script = let
+      inherit (pkgs) coreutils;
+    in ''
+      ${coreutils}/bin/echo Y > /sys/kernel/mm/lru_gen/enabled
+      ${coreutils}/bin/echo 1000 > /sys/kernel/mm/lru_gen/min_ttl_ms
+    '';
+  };
+
+  systemd.oomd = {
+    enable = true;
+    enableRootSlice = false;
+    enableSystemSlice = false;
+    enableUserServices = false;
+    extraConfig.DefaultMemoryPressureDurationSec = "10s";
+  };
+
+  systemd.user.slices."app".sliceConfig = {
+    ManagedOOMMemoryPressure = "kill";
+    ManagedOOMMemoryPressureLimit = "15%";
+  };
+
+  systemd.slices."background".sliceConfig = {
+    ManagedOOMMemoryPressure = "kill";
+    ManagedOOMMemoryPressureLimit = "10%";
+  };
+
+  systemd.user.slices."background".sliceConfig = {
+    ManagedOOMMemoryPressure = "kill";
+    ManagedOOMMemoryPressureLimit = "10%";
+  };
+}

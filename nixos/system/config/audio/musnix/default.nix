@@ -11,7 +11,7 @@
       enable = true;
     };
     kernel = {
-      realtime = false;
+      realtime = true;
     };
     das_watchdog = {
       enable = true;

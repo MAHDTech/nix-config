@@ -27,6 +27,7 @@ in {
       "nixos"
       "pipewire"
       "plugdev"
+      "rtkit"
       "trezord"
       "video"
       "vmware"
