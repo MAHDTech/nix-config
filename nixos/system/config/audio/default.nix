@@ -28,13 +28,13 @@
       client = {
         "10-sample-rate" = {
           "context.properties" = {
-            "default.clock.allowed-rates" = [32000 44100 48000 96000 192000];
-            "default.clock.max-quantum" = 16384;
-            "default.clock.min-quantum" = 32;
-            "default.clock.quantum" = 1024;
-            "default.clock.quantum-floor" = 32;
-            "default.clock.quantum-limit" = 16384;
             "default.clock.rate" = 96000;
+            "default.clock.allowed-rates" = [96000 48000 44100 32000];
+            "default.clock.quantum" = 32;
+            "default.clock.min-quantum" = 32;
+            "default.clock.max-quantum" = 8192;
+            "default.clock.quantum-floor" = 32;
+            "default.clock.quantum-limit" = 8192;
           };
         };
         "10-resample" = {
@@ -163,6 +163,8 @@
                 update-props = {
                   "api.alsa.period-size" = 1024;
                   "api.alsa.headroom" = 8192;
+                  "api.alsa.disable-batch" = true;
+                  "api.alsa.disable-tsched" = true;
                 };
               };
             }
