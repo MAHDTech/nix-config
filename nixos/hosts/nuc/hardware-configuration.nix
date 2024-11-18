@@ -21,6 +21,7 @@
     ];
 
     kernelParams = [
+      "mitigations=off"
     ];
 
     extraModulePackages = [];

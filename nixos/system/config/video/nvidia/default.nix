@@ -16,7 +16,11 @@
 
   boot = {
     initrd.kernelModules = [
+      "fbdev"
       "nvidia"
+      "nvidia_drm"
+      "nvidia_modeset"
+      "nvidia_uvm"
     ];
 
     blacklistedKernelModules = [
@@ -25,6 +29,10 @@
     ];
 
     kernelParams = [
+      "nvidia-drm.hdmi_deepcolor=1"
+      "nvidia_drm.fbdev=1"
+      "nvidia_drm.modeset=1"
+      "nvidia_drm.runpm=1"
     ];
   };
 

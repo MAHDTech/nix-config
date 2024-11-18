@@ -28,8 +28,13 @@
       client = {
         "10-sample-rate" = {
           "context.properties" = {
-            "default.clock.rate" = 96000;
             "default.clock.allowed-rates" = [32000 44100 48000 96000 192000];
+            "default.clock.max-quantum" = 16384;
+            "default.clock.min-quantum" = 32;
+            "default.clock.quantum" = 1024;
+            "default.clock.quantum-floor" = 32;
+            "default.clock.quantum-limit" = 16384;
+            "default.clock.rate" = 96000;
           };
         };
         "10-resample" = {
