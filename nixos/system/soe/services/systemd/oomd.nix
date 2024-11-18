@@ -15,7 +15,7 @@
     enable = true;
     enableRootSlice = false;
     enableSystemSlice = false;
-    enableUserServices = false;
+    enableUserSlices = false;
     extraConfig.DefaultMemoryPressureDurationSec = "10s";
   };
 
