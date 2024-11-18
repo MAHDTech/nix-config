@@ -14,7 +14,7 @@
     # Enabling powertop will enable autotune.
     powertop.enable = false;
 
-    cpuFreqGovernor = "ondemand";
+    cpuFreqGovernor = "performance";
 
     resumeCommands = ''
       echo "Resuming from suspend..."

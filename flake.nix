@@ -115,6 +115,15 @@
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    musnix = {
+      type = "github";
+      owner = "musnix";
+      repo = "musnix";
+      ref = "master";
+      flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -122,6 +131,7 @@
     devenv,
     flatpaks,
     home-manager,
+    musnix,
     nixos-cosmic,
     nixos-hardware,
     nixpkgs,
@@ -303,6 +313,9 @@
           # Enable declarative flatpak support.
           flatpaks.nixosModules.default
 
+          # Enable musnix realtime audio support.
+          musnix.nixosModules.default
+
           ./nixos/hosts/nuc
           {system.stateVersion = globalStateVersion;}
 
@@ -359,6 +372,9 @@
 
           # Enable Catppuccin theme.
           catppuccin.nixosModules.catppuccin
+
+          # Enable musnix realtime audio support.
+          musnix.nixosModules.default
 
           # Enable declarative flatpak support.
           flatpaks.nixosModules.default

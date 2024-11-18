@@ -25,7 +25,8 @@
     # Kernel (testing)
     #kernelPackages = pkgs.linuxPackages_testing;
     # Kernel (Pinned version) https://kernel.org/
-    kernelPackages = pkgs.linuxPackages_6_6;
+    #kernelPackages = pkgs.linuxPackages_6_6;
+    # Don't set when using musnix realtime kernel.
 
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [

@@ -262,6 +262,25 @@
         "type": "github"
       }
     },
+    "musnix": {
+      "inputs": {
+        "nixpkgs": ["nixpkgs"]
+      },
+      "locked": {
+        "lastModified": 1730699102,
+        "narHash": "sha256-xkplzGzjywMPOpfTOw5oXbwuH4X14VfXEa3m10aHqrY=",
+        "owner": "musnix",
+        "repo": "musnix",
+        "rev": "3feabdc65fb3466f07f306fa5f4e9c43234186e6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "musnix",
+        "ref": "master",
+        "repo": "musnix",
+        "type": "github"
+      }
+    },
     "nix": {
       "inputs": {
         "flake-compat": ["devenv"],
@@ -429,6 +448,7 @@
         "flatpaks": "flatpaks",
         "home-manager": "home-manager",
         "matugen": "matugen",
+        "musnix": "musnix",
         "nixos-cosmic": "nixos-cosmic",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_3",

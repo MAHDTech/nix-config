@@ -26,10 +26,16 @@
     # https://gitlab.freedesktop.org/pipewire/pipewire/-/wikis/Config-client
     extraConfig = {
       client = {
+        "10-sample-rate" = {
+          "context.properties" = {
+            "default.clock.rate" = 96000;
+            "default.clock.allowed-rates" = [32000 44100 48000 96000 192000];
+          };
+        };
         "10-resample" = {
           "stream.properties" = {
             "resample.disable" = false;
-            "resample.quality" = 14;
+            "resample.quality" = 15;
           };
         };
       };
@@ -63,9 +69,11 @@
             {
               matches = [
                 {
-                  # Match any bluetooth device with ids equal to that of a WH-1000XM5
+                  # Matches Sony WH-1000XM5
+                  # wpctl status to get the device id
+                  # wpctl inspect <device id> to get the match details.
                   "device.name" = "~bluez_card.*";
-                  "device.product.id" = "0x0cd3";
+                  "device.product.id" = "0x0df0";
                   "device.vendor.id" = "usb:054c";
                 }
               ];
@@ -82,10 +90,10 @@
           "monitor.bluez.properties" = {
             "bluez.codecs" = [
               "aac"
-              #"aptx"
-              #"aptx_hd"
-              #"aptx_ll"
-              #"aptx_ll_duplex"
+              "aptx"
+              "aptx_hd"
+              "aptx_ll"
+              "aptx_ll_duplex"
               "ldac"
               "sbc"
               "sbc_hbr"
@@ -112,39 +120,6 @@
             ];
           };
         };
-        "11-bluetooth-policy" = {
-          "wireplumber.settings" = {
-            "bluetooth.autoswitch-to-headset-profile" = false;
-          };
-        };
-        "80-disable-logind" = {
-          "wireplumber.profiles" = {
-            "main" = {
-              "monitor.bluez.seat-monitoring" = "disabled";
-            };
-          };
-        };
-        "51-disable-suspension" = {
-          "monitor.alsa.rules" = [
-            {
-              matches = [
-                {
-                  # Matches all sources
-                  "node.name" = "~alsa_input.*";
-                }
-                {
-                  # Matches all sinks
-                  "node.name" = "~alsa_output.*";
-                }
-              ];
-              actions = {
-                update-props = {
-                  "session.suspend-timeout-seconds" = 0;
-                };
-              };
-            }
-          ];
-        };
         "10-bluez-disable-suspension" = {
           "monitor.bluez.rules" = [
             {
@@ -166,7 +141,68 @@
             }
           ];
         };
+        "11-bluetooth-policy" = {
+          "wireplumber.settings" = {
+            "bluetooth.autoswitch-to-headset-profile" = false;
+          };
+        };
+        "50-alsa-config" = {
+          "monitor.alsa.rules" = [
+            {
+              matches = [
+                {
+                  "node.name" = "~alsa_output.*";
+                }
+              ];
+              actions = {
+                update-props = {
+                  "api.alsa.period-size" = 1024;
+                  "api.alsa.headroom" = 8192;
+                };
+              };
+            }
+          ];
+        };
+        "80-disable-logind" = {
+          "wireplumber.profiles" = {
+            "main" = {
+              "monitor.bluez.seat-monitoring" = "disabled";
+            };
+          };
+        };
       };
     };
   };
+
+  security.pam.loginLimits = [
+    {
+      domain = "@audio";
+      item = "memlock";
+      type = "-";
+      value = "unlimited";
+    }
+    {
+      domain = "@audio";
+      item = "rtprio";
+      type = "-";
+      value = "99";
+    }
+    {
+      domain = "@audio";
+      item = "nofile";
+      type = "soft";
+      value = "99999";
+    }
+    {
+      domain = "@audio";
+      item = "nofile";
+      type = "hard";
+      value = "99999";
+    }
+  ];
+
+  services.udev.extraRules = ''
+    KERNEL=="rtc0", GROUP="audio"
+    KERNEL=="hpet", GROUP="audio"
+  '';
 }

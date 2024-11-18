@@ -737,11 +737,26 @@ in {
       # See https://wiki.hyprland.org/Configuring/Environment-variables/
 
       env = [
+        "CLUTTER_BACKEND,wayland"
+        "GDK_BACKEND,wayland,x11"
         "GDK_SCALE,1"
         "HYPRCURSOR_SIZE,32"
+        "MOZ_DISABLE_RDD_SANDBOX,1"
+        "MOZ_ENABLE_WAYLAND,1"
+        "PROTON_ENABLE_NGX_UPDATER,1"
+        "QT_AUTO_SCREEN_SCALE_FACTOR,1"
+        "QT_QPA_PLATFORM,wayland"
+        "SDL_VIDEODRIVER,wayland"
         "WLR_DRM_NO_ATOMIC,1"
         "WLR_NO_HARDWARE_CURSORS,1"
+        "WLR_RENDERER_ALLOW_SOFTWARE,1"
+        "WLR_USE_LIBINPUT,1"
         "XCURSOR_SIZE,32"
+        "XWAYLAND_NO_GLAMOR,1" # This requires gamescope for gaming
+        "_JAVA_AWT_WM_NONREPARENTING=1"
+        "__GL_GSYNC_ALLOWED,1"
+        "__GL_MaxFramesAllowed,1"
+        "__GL_VRR_ALLOWED,1"
       ];
 
       ###################
