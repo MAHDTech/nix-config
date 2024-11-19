@@ -1,6 +1,7 @@
 {pkgs, ...}: {
   systemd = {
     services = {
+      # Kernel level OOM
       "config-mglru" = {
         enable = true;
         after = ["basic.target"];
@@ -16,10 +17,12 @@
 
     oomd = {
       enable = true;
-      enableRootSlice = false;
-      enableSystemSlice = false;
-      enableUserSlices = false;
-      extraConfig.DefaultMemoryPressureDurationSec = "10s";
+      enableRootSlice = true;
+      enableSystemSlice = true;
+      enableUserSlices = true;
+      extraConfig = {
+        DefaultMemoryPressureDurationSec = "30s";
+      };
     };
 
     slices."background".sliceConfig = {
@@ -29,7 +32,7 @@
 
     user.slices."app".sliceConfig = {
       ManagedOOMMemoryPressure = "kill";
-      ManagedOOMMemoryPressureLimit = "15%";
+      ManagedOOMMemoryPressureLimit = "10%";
     };
 
     user.slices."background".sliceConfig = {
