@@ -13,7 +13,7 @@
     bun
     dart-sass
     fd
-    gtk3
+    #gtk3
     hyprpicker
     networkmanager
     pavucontrol

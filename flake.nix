@@ -311,7 +311,7 @@
           catppuccin.nixosModules.catppuccin
 
           # Enable declarative flatpak support.
-          flatpaks.nixosModules.default
+          flatpaks.nixosModules.declarative-flatpak
 
           # Enable musnix realtime audio support.
           musnix.nixosModules.default
