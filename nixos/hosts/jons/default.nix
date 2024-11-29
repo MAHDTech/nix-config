@@ -26,6 +26,9 @@
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
 
+    # Tailscale
+    ../../system/config/services/tailscale
+
     # Desktop Applications and Services
     ../../system/config/programs/1password
     ../../system/config/services/trezor

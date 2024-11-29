@@ -57,7 +57,6 @@
     shadow
     shellcheck
     socat
-    tailscale
     tokei
     tree
     unzip
