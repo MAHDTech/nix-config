@@ -34,12 +34,18 @@
           Language based settings
           */
 
+          // JSON
+          "[json]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+          },
+
           // YAML
           "[yaml]": {
             "editor.insertSpaces": true,
             "editor.tabSize": 2,
             "editor.autoIndent": "advanced",
-            "diffEditor.ignoreTrimWhitespace": false
+            "diffEditor.ignoreTrimWhitespace": false,
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
           },
 
           // GitHub Actions

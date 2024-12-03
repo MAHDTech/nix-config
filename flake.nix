@@ -377,7 +377,7 @@
           musnix.nixosModules.default
 
           # Enable declarative flatpak support.
-          flatpaks.nixosModules.default
+          flatpaks.nixosModules.declarative-flatpak
 
           ./nixos/hosts/jons
           {system.stateVersion = globalStateVersion;}
