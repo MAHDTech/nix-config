@@ -21,6 +21,8 @@
           "editor.fontFamily": "'JetBrains Mono', 'JetBrains Mono Nerd Font', monospace",
           "editor.fontSize": 14,
           "editor.minimap.enabled": true,
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
 
           // Terminal
           "terminal.integrated.fontFamily": "'Ubuntu Mono', 'JetBrains Mono', 'JetBrains Mono Nerd Font', monospace",
@@ -37,6 +39,7 @@
           // JSON
           "[json]": {
             "editor.defaultFormatter": "esbenp.prettier-vscode"
+            "editor.tabSize": 2
           },
 
           // YAML
