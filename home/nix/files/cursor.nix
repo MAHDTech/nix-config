@@ -6,12 +6,29 @@
 
       text = ''
         {
-          // Cursor
-          "cursor.chat.alwaysSearchWeb": true,
+          // Cursor General
+          "cursor.general.enableShadowWorkspace": true,
+          "cursor.general.gitGraphIndexing": "enabled",
+
+          // Cursor Cloud
+          "cursor-retrieval.canAttemptGithubLogin": true,
+
+          // Cursor Chat
+          "cursor.chat.alwaysSearchWeb": false,
           "cursor.chat.defaultNoContext": false,
           "cursor.chat.premiumChatAutoScrollWhenAtBottom": false,
           "cursor.chat.showSuggestedFiles": true,
           "cursor.chat.smoothStreaming": true,
+
+          // Cursor Composer
+          "cursor.composer.collapsePaneInputBoxPills": true,
+
+          // Cursor Diffs
+          "cursor.cmdk.useThemedDiffBackground": true,
+          "cursor.diffs.useCharacterLevelDiffs": true,
+
+          // Cursor AI Preview
+          "cursor.aipreview.enabled": true,
 
           // Window
           "window.commandCenter": true,
@@ -40,6 +57,11 @@
           "[json]": {
             "editor.defaultFormatter": "esbenp.prettier-vscode",
             "editor.tabSize": 2
+          },
+
+          // Rust
+          "[rust]": {
+            "editor.defaultFormatter": "rust-lang.rust-analyzer"
           },
 
           // YAML
