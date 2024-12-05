@@ -58,8 +58,8 @@
       nvidiaSettings = true;
       open = false;
       package = config.boot.kernelPackages.nvidiaPackages.production;
-      powerManagement.enable = false;
-      powerManagement.finegrained = false;
+      powerManagement.enable = true;
+      powerManagement.finegrained = true;
       forceFullCompositionPipeline = true;
       prime = {
         offload.enable = false;
