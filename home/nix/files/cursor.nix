@@ -50,8 +50,28 @@
           "workbench.iconTheme": "catppuccin-mocha",
 
           /*
+          Linters
+          */
+
+          // ESLint
+          "eslint.format.enable": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": true
+          },
+
+          /*
           Language based settings
           */
+
+          // Javascript
+          "[javascript]": {
+            "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+          },
+
+          // Typescript
+          "[typescript]": {
+            "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+          },
 
           // JSON
           "[json]": {

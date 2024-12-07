@@ -59,7 +59,7 @@
       open = false;
       package = config.boot.kernelPackages.nvidiaPackages.production;
       powerManagement.enable = true;
-      powerManagement.finegrained = true;
+      powerManagement.finegrained = false;
       forceFullCompositionPipeline = true;
       prime = {
         offload.enable = false;
