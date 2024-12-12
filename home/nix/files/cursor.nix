@@ -54,14 +54,29 @@
           */
 
           // ESLint
-          "eslint.format.enable": true,
           "editor.codeActionsOnSave": {
             "source.fixAll.eslint": "always"
           },
+          "eslint.format.enable": true,
+          "eslint.validate": [
+            "javascript",
+            "javascriptreact",
+            "astro",
+            "typescript",
+            "typescriptreact"
+          ],
+
+          // Prettier
+          "prettier.documentSelectors": ["**/*.astro"],
 
           /*
           Language based settings
           */
+
+          // Astro
+          "[astro]": {
+            "editor.defaultFormatter": "astro-build.astro-vscode"
+          },
 
           // Javascript
           "[javascript]": {
@@ -69,6 +84,7 @@
           },
 
           // Typescript
+          "typescript.inlayHints.parameterNames.enabled": "all"
           "[typescript]": {
             "editor.defaultFormatter": "dbaeumer.vscode-eslint"
           },
