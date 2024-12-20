@@ -3,12 +3,6 @@
     waybar = {
       enable = false;
 
-      catppuccin = {
-        enable = true;
-        flavor = "mocha";
-        mode = "prependImport";
-      };
-
       systemd = {
         enable = true;
         target = "graphical-session.target";

@@ -3,10 +3,5 @@
 
   programs.neovim = {
     enable = false;
-
-    catppuccin = {
-      enable = true;
-      flavor = "mocha";
-    };
   };
 }

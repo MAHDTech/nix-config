@@ -33,12 +33,6 @@ in {
     hyprlock = {
       enable = true;
 
-      catppuccin = {
-        enable = true;
-        flavor = "mocha";
-        accent = "mauve";
-      };
-
       # https://wiki.hyprland.org/Hypr-Ecosystem/hyprlock/
       settings = {
         #########################
@@ -197,12 +191,6 @@ in {
 
   wayland.windowManager.hyprland = {
     enable = true;
-
-    catppuccin = {
-      enable = true;
-      flavor = "mocha";
-      accent = "mauve";
-    };
 
     systemd = {
       enable = true;

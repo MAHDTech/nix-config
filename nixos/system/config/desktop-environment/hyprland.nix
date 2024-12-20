@@ -20,35 +20,11 @@
     greetd.tuigreet
   ];
 
-  catppuccin = {
-    enable = true;
-    flavor = "mocha";
-    accent = "mauve";
-  };
-
-  console = {
-    catppuccin = {
-      enable = true;
-      flavor = "mocha";
-    };
-  };
-
   services = {
     xserver = {
       enable = true;
       updateDbusEnvironment = true;
     };
-
-    displayManager = {
-      sddm = {
-        enable = false;
-        catppuccin = {
-          enable = true;
-          flavor = "mocha";
-        };
-      };
-    };
-
     # Idle daemon
     hypridle.enable = true;
   };

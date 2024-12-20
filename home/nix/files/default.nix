@@ -1,5 +1,6 @@
 {
   imports = [
+    ./1password.nix
     ./general.nix
     ./cargo.nix
     ./cursor.nix

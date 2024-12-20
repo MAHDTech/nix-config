@@ -1,7 +1,20 @@
 {
   catppuccin = {
     enable = true;
-    flavor = "mocha";
+
     accent = "mauve";
+    flavor = "mocha";
+
+    plymouth = {
+      enable = true;
+    };
+
+    sddm = {
+      enable = true;
+    };
+
+    tty = {
+      enable = true;
+    };
   };
 }

@@ -8,11 +8,6 @@
   programs.starship = {
     enable = true;
 
-    catppuccin = {
-      enable = true;
-      flavor = "mocha";
-    };
-
     package = pkgs.starship;
 
     enableBashIntegration = true;

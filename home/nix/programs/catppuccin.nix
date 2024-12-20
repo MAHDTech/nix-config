@@ -1,29 +1,61 @@
 {
   catppuccin = {
     enable = true;
-    flavor = "mocha";
-    accent = "mauve";
-    pointerCursor = {
-      enable = false;
-      flavor = "mocha";
-      accent = "mauve";
-    };
-  };
 
-  # TODO: Deprecated
-  gtk = {
-    enable = false;
-    catppuccin = {
-      enable = false;
-      flavor = "mocha";
-      accent = "mauve";
+    accent = "mauve";
+    flavor = "mocha";
+
+    bottom = {
+      enable = true;
+    };
+
+    btop = {
+      enable = true;
+    };
+
+    cursors = {
+      enable = true;
+    };
+
+    delta = {
+      enable = true;
+    };
+
+    dunst = {
+      enable = true;
+    };
+
+    fzf = {
+      enable = true;
+    };
+
+    gtk = {
+      enable = true;
       gnomeShellTheme = false;
-      icon = {
-        enable = true;
-        flavor = "mocha";
-        accent = "mauve";
-      };
-      tweaks = [];
+    };
+
+    hyprland = {
+      enable = true;
+    };
+
+    hyprlock = {
+      enable = true;
+    };
+
+    mpv = {
+      enable = true;
+    };
+
+    nvim = {
+      enable = true;
+    };
+
+    obs = {
+      enable = true;
+    };
+
+    starship = {
+      enable = true;
     };
   };
 }
