@@ -1,7 +1,7 @@
 {config, ...}: {
   home.file = {
     "1password-ssh-agent" = {
-      target = "${config.home.homeDirectory}/.1Password/ssh/agent.toml";
+      target = "${config.home.homeDirectory}/.config/1Password/ssh/agent.toml";
       executable = false;
 
       text = ''
@@ -11,17 +11,13 @@
 
         # Enable all keys in the Private vault
         [[ssh-keys]]
+        account = "my.1password.com"
         vault = "Private"
 
-        # Enable JumpBox Key in the IntelliScope vault
+        # Enable all keys in the IntelliScope vault
         [[ssh-keys]]
+        account = "my.1password.com"
         vault = "IntelliScope"
-        item = "JumpBox SSH Key"
-
-        # Enable GitLab Key in the IntelliScope vault
-        [[ssh-keys]]
-        vault = "IntelliScope"
-        item = "GitLab SSH Key"
       '';
     };
   };

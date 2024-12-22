@@ -219,30 +219,6 @@
           inherit system;
         };
       };
-    # TODO: Fix this, missing 'lib'
-    # Home Manager (NixOS module)
-    #mkHomeManagerConfigurationsNixOS = {
-    #  username,
-    #  inputs,
-    #  globalStateVersion,
-    #}:
-    #  home-manager.nixosModules.home-manager {
-    #    home-manager = {
-    #      useGlobalPkgs = true;
-    #      useUserPackages = true;
-    #      extraSpecialArgs = {
-    #        inherit inputs;
-    #        inherit globalStateVersion;
-    #        inherit username;
-    #      };
-    #      users.${username} = {
-    #        imports = [
-    #          ./home
-    #          sops-nix.homeManagerModules.sops
-    #        ];
-    #      };
-    #    };
-    #  };
   in {
     #########################
     # NixOS

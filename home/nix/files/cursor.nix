@@ -84,7 +84,7 @@
           },
 
           // Typescript
-          "typescript.inlayHints.parameterNames.enabled": "all"
+          "typescript.inlayHints.parameterNames.enabled": "all",
           "[typescript]": {
             "editor.defaultFormatter": "dbaeumer.vscode-eslint"
           },
@@ -98,6 +98,12 @@
           // Rust
           "[rust]": {
             "editor.defaultFormatter": "rust-lang.rust-analyzer"
+          },
+
+          // Go
+          "[go]": {
+            "editor.defaultFormatter": "golang.go",
+            "editor.formatOnSave": true,
           },
 
           // YAML
