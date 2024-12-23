@@ -260,6 +260,19 @@
           };
         };
       }
+
+      # IntelliScope CloudForge
+      {
+        condition = "gitdir/i:**/projects/work/cloudforge/";
+        contentSuffix = "gitconfig_work_cloudforge";
+        contents = {
+          user = {
+            name = "Dev 02";
+            email = "dev_02@example.com";
+            signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAeVzPrwBuCpiyUYeUErStSm+D7yhP6VHNnkPsuj15Cp";
+          };
+        };
+      }
     ];
 
     ignores = [
