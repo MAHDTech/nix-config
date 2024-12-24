@@ -62,16 +62,19 @@
     matchBlocks = {
       "github.com" = {
         host = "github.com";
+        hostname = "github.com";
         user = "git";
       };
 
       "gitlab.com" = {
         host = "gitlab.com";
+        hostname = "gitlab.com";
         user = "git";
       };
 
       "jumpbox-cloudforge" = {
-        host = "52.65.126.176";
+        host = "jumpbox-cloudforge";
+        hostname = "52.65.126.176";
         user = "dev_02";
       };
     };
