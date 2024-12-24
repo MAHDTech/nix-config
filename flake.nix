@@ -135,7 +135,6 @@
     nixos-cosmic,
     nixos-hardware,
     nixpkgs,
-    nixpkgs-unstable,
     self,
     sops-nix,
     systems,
@@ -164,12 +163,6 @@
 
     pkgsImportSystem = system:
       import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-      };
-
-    _pkgsImportSystemUnstable = system:
-      import nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
       };
@@ -210,6 +203,9 @@
         pkgs = nixpkgs.legacyPackages.${system};
         modules = [
           ./home
+
+          catppuccin.homeManagerModules.catppuccin
+          #home-manager.nixosModules.home-manager
           sops-nix.homeManagerModules.sops
         ];
         extraSpecialArgs = {
@@ -236,11 +232,11 @@
         };
 
         extraModules = [
-          # Enable Catppuccin theme.
-          catppuccin.nixosModules.catppuccin
+          {system.stateVersion = globalStateVersion;}
 
           ./nixos/hosts/template
-          {system.stateVersion = globalStateVersion;}
+
+          catppuccin.nixosModules.catppuccin
         ];
       };
 
@@ -255,11 +251,11 @@
         };
 
         extraModules = [
-          # Enable Catppuccin theme.
-          catppuccin.nixosModules.catppuccin
+          {system.stateVersion = globalStateVersion;}
 
           ./nixos/hosts/nixos-1
-          {system.stateVersion = globalStateVersion;}
+
+          catppuccin.nixosModules.catppuccin
         ];
       };
 
@@ -274,36 +270,20 @@
         };
 
         extraModules = [
+          {system.stateVersion = globalStateVersion;}
+
+          ./nixos/hosts/nuc
+
+          catppuccin.nixosModules.catppuccin
+          flatpaks.nixosModules.declarative-flatpak
+          home-manager.nixosModules.home-manager
+          musnix.nixosModules.default
+          nixos-cosmic.nixosModules.default
           nixos-hardware.nixosModules.common-cpu-intel
           nixos-hardware.nixosModules.common-gpu-intel
           nixos-hardware.nixosModules.common-hidpi
           nixos-hardware.nixosModules.common-pc-laptop
           nixos-hardware.nixosModules.common-pc-ssd
-
-          # Enable COSMIC desktop environment.
-          nixos-cosmic.nixosModules.default
-
-          # Enable Catppuccin theme.
-          catppuccin.nixosModules.catppuccin
-
-          # Enable declarative flatpak support.
-          flatpaks.nixosModules.declarative-flatpak
-
-          # Enable musnix realtime audio support.
-          musnix.nixosModules.default
-
-          ./nixos/hosts/nuc
-          {system.stateVersion = globalStateVersion;}
-
-          #(
-          #  mkHomeManagerConfigurationsNixOS {
-          #    username = globalUsername;
-          #    inherit inputs globalStateVersion;
-          #    lib = pkgs.lib;
-          #  }
-          #)
-
-          home-manager.nixosModules.home-manager
           {
             home-manager = {
               useGlobalPkgs = true;
@@ -316,6 +296,7 @@
               users.${globalUsername} = {
                 imports = [
                   ./home
+
                   sops-nix.homeManagerModules.sops
                   catppuccin.homeManagerModules.catppuccin
                 ];
@@ -336,37 +317,21 @@
         };
 
         extraModules = [
+          {system.stateVersion = globalStateVersion;}
+
+          ./nixos/hosts/jons
+
+          catppuccin.nixosModules.catppuccin
+          flatpaks.nixosModules.declarative-flatpak
+          home-manager.nixosModules.home-manager
+          musnix.nixosModules.default
+          nixos-cosmic.nixosModules.default
           nixos-hardware.nixosModules.common-cpu-amd
           nixos-hardware.nixosModules.common-cpu-amd-pstate
           nixos-hardware.nixosModules.common-gpu-nvidia
           nixos-hardware.nixosModules.common-hidpi
           nixos-hardware.nixosModules.common-pc
           nixos-hardware.nixosModules.common-pc-ssd
-
-          # Enable COSMIC desktop environment.
-          nixos-cosmic.nixosModules.default
-
-          # Enable Catppuccin theme.
-          catppuccin.nixosModules.catppuccin
-
-          # Enable musnix realtime audio support.
-          musnix.nixosModules.default
-
-          # Enable declarative flatpak support.
-          flatpaks.nixosModules.declarative-flatpak
-
-          ./nixos/hosts/jons
-          {system.stateVersion = globalStateVersion;}
-
-          #(
-          #  mkHomeManagerConfigurationsNixOS {
-          #    username = globalUsername;
-          #    inherit inputs globalStateVersion;
-          #    lib = pkgs.lib;
-          #  }
-          #)
-
-          home-manager.nixosModules.home-manager
           {
             home-manager = {
               useGlobalPkgs = true;
@@ -379,6 +344,7 @@
               users.${globalUsername} = {
                 imports = [
                   ./home
+
                   sops-nix.homeManagerModules.sops
                   catppuccin.homeManagerModules.catppuccin
                 ];
@@ -399,10 +365,9 @@
         };
 
         extraModules = [
-          # Enable Catppuccin theme.
-          catppuccin.nixosModules.catppuccin
-
           ./nixos/hosts/kasmweb-001
+
+          catppuccin.nixosModules.catppuccin
           {
             system.stateVersion = globalStateVersion;
           }

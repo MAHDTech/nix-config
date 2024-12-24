@@ -221,16 +221,18 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 		exit 18
 	}
 
-	NIX_BIN="/nix/var/nix/profiles/default/bin/nix"
+	#NIX_BIN="/nix/var/nix/profiles/default/bin/nix"
 
-	$NIX_BIN build --impure --no-link ".#homeConfigurations.${LINUX_USER}.activationPackage" || {
-		writeLog "ERROR" "Failed to build Home Manager config for user ${LINUX_USER}"
-		exit 15
+	# Build Home Manager
+	nix run home-manager/release-24.11 -- build --impure --flake "${FLAKE_LOCATION:-.}" || {
+		writeLog "ERROR" "Failed to build home-manager using flake ${FLAKE_LOCATION:-.}"
+		exit 1
 	}
 
-	"$($NIX_BIN path-info --impure ".#homeConfigurations.${LINUX_USER}.activationPackage")"/activate || {
-		writeLog "ERROR" "Failed to activate Home Manager"
-		exit 16
+	# Activate Home Manager
+	nix run home-manager/release-24.11 -- switch --impure --flake "${FLAKE_LOCATION:-.}" || {
+		writeLog "ERROR" "Failed to activate home-manager using flake ${FLAKE_LOCATION:-.}"
+		exit 1
 	}
 
 	# So nix ignores any flake.nix in the current dir if the location is external.
