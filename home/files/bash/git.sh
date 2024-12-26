@@ -178,7 +178,7 @@ function git_squash_branch() {
 	}
 
 	# shellcheck disable=2086
-	git commit --no-verify -am "Squashed branch" "${PARAMS[@]}" || {
+	git commit --no-verify -am "chore: Squashed branch" "${PARAMS[@]}" || {
 		writeLog "ERROR" "Failed to commit changes"
 		return 1
 	}
@@ -259,7 +259,7 @@ function git_remove_submodule() {
 
 		writeLog "INFO" "Committing changes"
 
-		git commit --no-gpg-sign --no-verify -am "Removed submodule" ||
+		git commit --no-gpg-sign --no-verify -am "chore: removed submodule" ||
 			{
 				writeLog "ERROR" "Failed to commit changes"
 				return 1
@@ -531,7 +531,7 @@ function git_reset_branch() {
 	writeLog "INFO" "Initialize new ${BRANCH} branch"
 
 	# shellcheck disable=2086
-	git commit --no-verify --message "Initialize ${BRANCH} branch" "${PARAMS[@]}" ||
+	git commit --no-verify --message "chore: Initialize ${BRANCH} branch" "${PARAMS[@]}" ||
 		{
 			writeLog "ERROR" "Failed to commit files"
 			return 1
