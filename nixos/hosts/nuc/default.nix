@@ -13,7 +13,6 @@
 
     # System configuration
     ../../system/config/audio
-    ../../system/config/audio/musnix
     ../../system/config/bluetooth
     ../../system/config/disk/gparted
     ../../system/config/fonts
