@@ -44,7 +44,9 @@
             PROJECTS_LOCAL="''${HOME}/Projects/"
 
             RSYNC_PROJECTS_REMOTE="/mnt/chromeos/GoogleDrive/MyDrive/Projects/Backup/"
+
             RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
+            RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
 
           ;;
 
@@ -53,7 +55,9 @@
             PROJECTS_LOCAL="''${HOME}/Projects/"
 
             RSYNC_PROJECTS_REMOTE="/mnt/g/My Drive/Projects/Backup/"
+
             RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
+            RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
 
           ;;
 
@@ -74,7 +78,9 @@
                 PROJECTS_LOCAL="''${HOME}/Projects/"
 
                 RSYNC_PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/Google Drive/Projects/Backup/"
+
                 RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
+                RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
 
               ;;
 
@@ -139,7 +145,7 @@
 
         function backupProjectsRclone() {
 
-          read -rp "This will backup using rclone from ''${PROJECTS_LOCAL} to ''${RCLONE_PROJECTS_REMOTE}. Are you sure? (y/n)" -n 1 -r
+          read -rp "This will backup using rclone from ''${PROJECTS_LOCAL} to ''${RCLONE_PROJECTS_REMOTE}. Are you sure? (y/n) " -n 1 -r
           echo
           if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
           then
@@ -156,10 +162,16 @@
           rclone sync \
             "''${PROJECTS_LOCAL}" \
             "''${RCLONE_PROJECTS_REMOTE}" \
+            --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-backup" \
             --checksum \
-            --exclude=".devenv" \
-            --exclude=".direnv" \
-            --dry-run \
+            --ignore-times \
+            --track-renames \
+            --copy-links \
+            --retries-sleep 30s \
+            --exclude=".devenv/**" \
+            --exclude=".direnv/**" \
+            --exclude="node_modules/**" \
+            --verbose \
           || {
             writeLog "ERROR" "Failed to backup projects"
             return 1
@@ -171,7 +183,7 @@
 
         function backupProjectsRsync() {
 
-          read -rp "This will backup using rsync from ''${PROJECTS_LOCAL} to ''${RSYNC_PROJECTS_REMOTE}. Are you sure? (y/n)" -n 1 -r
+          read -rp "This will backup using rsync from ''${PROJECTS_LOCAL} to ''${RSYNC_PROJECTS_REMOTE}. Are you sure? (y/n) " -n 1 -r
           echo
           if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
           then
@@ -196,6 +208,7 @@
             --force \
             --exclude=".devenv" \
             --exclude=".direnv" \
+            --exclude="node_modules" \
             "''${PROJECTS_LOCAL}" \
             "''${PROJECTS_REMOTE}" \
           || {
@@ -225,7 +238,7 @@
 
         function restoreProjectsRclone() {
 
-          read -rp "This will restore using rclone from ''${RCLONE_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n)" -n 1 -r
+          read -rp "This will restore using rclone from ''${RCLONE_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
           echo
           if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
           then
@@ -242,10 +255,16 @@
           rclone sync \
             "''${RCLONE_PROJECTS_REMOTE}" \
             "''${PROJECTS_LOCAL}" \
+            --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-restore" \
             --checksum \
-            --exclude=".devenv" \
-            --exclude=".direnv" \
-            --dry-run \
+            --ignore-times \
+            --track-renames \
+            --copy-links \
+            --retries-sleep 30s \
+            --exclude=".devenv/**" \
+            --exclude=".direnv/**" \
+            --exclude="node_modules/**" \
+            --verbose \
           || {
             writeLog "ERROR" "Failed to restore projects"
             return 1
@@ -255,7 +274,7 @@
 
         function restoreProjectsRsync() {
 
-          read -rp "This will restore using rsync from ''${RSYNC_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n)" -n 1 -r
+          read -rp "This will restore using rsync from ''${RSYNC_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
           echo
           if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
           then
@@ -278,6 +297,8 @@
             --partial \
             --exclude=".devenv" \
             --exclude=".direnv" \
+            --exclude=".git" \
+            --exclude="node_modules" \
             "''${RSYNC_PROJECTS_REMOTE}" \
             "''${PROJECTS_LOCAL}" \
           || {
