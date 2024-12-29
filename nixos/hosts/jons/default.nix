@@ -20,7 +20,6 @@
     ../../system/config/printing
     ../../system/config/services
     ../../system/config/theme/catppuccin
-    ../../system/config/video/nvidia
 
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
@@ -38,5 +37,8 @@
 
     # CPU specific configuration.
     ../../system/config/virtualisation/cpu/amd.nix
+
+    # GPU specific configuration.
+    ../../system/config/video/intel
   ];
 }

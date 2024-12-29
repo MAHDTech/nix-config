@@ -307,7 +307,7 @@
       };
 
       # Hostname: JONS
-      # Description: Jonsplus Desktop
+      # Description: Jonsplus Desktop with AMD CPU and Intel ARC GPU
       JONS = configNixOS {
         username = globalUsername;
         system = "x86_64-linux";
@@ -328,7 +328,7 @@
           nixos-cosmic.nixosModules.default
           nixos-hardware.nixosModules.common-cpu-amd
           nixos-hardware.nixosModules.common-cpu-amd-pstate
-          nixos-hardware.nixosModules.common-gpu-nvidia
+          nixos-hardware.nixosModules.common-gpu-intel
           nixos-hardware.nixosModules.common-hidpi
           nixos-hardware.nixosModules.common-pc
           nixos-hardware.nixosModules.common-pc-ssd

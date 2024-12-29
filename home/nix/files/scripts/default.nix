@@ -11,5 +11,8 @@
 
     # Setup Hyprland Workspaces
     ./setup-workspaces.nix
+
+    # Sync projects.
+    ./sync-projects.nix
   ];
 }

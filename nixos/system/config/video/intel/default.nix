@@ -34,8 +34,6 @@
     kernelParams = [
       "acpi_rev_override=5"
       "i915.enable_guc=3"
-      "i915.force_probe=46a6"
-      "i915.force_probe=5691"
     ];
   };
 

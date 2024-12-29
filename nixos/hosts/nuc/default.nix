@@ -24,7 +24,6 @@
     ../../system/config/services/throttled
     ../../system/config/services/upower
     ../../system/config/theme/catppuccin
-    ../../system/config/video/intel
 
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
@@ -39,5 +38,8 @@
 
     # CPU specific configuration.
     ../../system/config/virtualisation/cpu/intel.nix
+
+    # GPU specific configuration.
+    ../../system/config/video/intel
   ];
 }
