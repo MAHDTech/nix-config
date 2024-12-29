@@ -13,7 +13,7 @@
 
         if [[ "''${ACTION:-EMPTY}" == "EMPTY" ]];
         then
-          echo "Please specify an action of 'backup' or 'restore'"
+          echo "Please specify an action. Valid options are; 'backup', 'restore' or 'bisync'"
           exit 1
         fi
 
@@ -103,6 +103,10 @@
           exit 1
         }
 
+        ##################################################
+        # Functions
+        ##################################################
+
         function checkFolders() {
 
           # Make sure the local and remote directories exist.
@@ -164,9 +168,12 @@
             "''${RCLONE_PROJECTS_REMOTE}" \
             --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-backup" \
             --checksum \
+            --update \
             --ignore-times \
             --track-renames \
             --copy-links \
+            --create-empty-src-dirs \
+            --delete-excluded \
             --retries-sleep 30s \
             --exclude=".devenv/**" \
             --exclude=".direnv/**" \
@@ -257,9 +264,12 @@
             "''${PROJECTS_LOCAL}" \
             --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-restore" \
             --checksum \
+            --update \
             --ignore-times \
             --track-renames \
             --copy-links \
+            --create-empty-src-dirs \
+            --delete-excluded \
             --retries-sleep 30s \
             --exclude=".devenv/**" \
             --exclude=".direnv/**" \
@@ -276,7 +286,7 @@
 
           read -rp "This will restore using rsync from ''${RSYNC_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
           echo
-          if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
+          [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
           then
             writeLog "ERROR" "User cancelled restore"
             return 1
@@ -310,6 +320,30 @@
 
         }
 
+        function bisyncProjects() {
+
+          rclone bisync \
+            "''${PROJECTS_LOCAL}" \
+            "''${RCLONE_PROJECTS_REMOTE}" \
+            --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-bisync" \
+            --compare "size,modtime,checksum" \
+            --create-empty-src-dirs \
+            --delete-excluded \
+            --exclude=".devenv/**" \
+            --exclude=".direnv/**" \
+            --exclude="node_modules/**" \
+            --verbose \
+          || {
+            writeLog "ERROR" "Failed to bi-sync projects"
+            return 1
+          }
+
+        }
+
+        ##################################################
+        # Main
+        ##################################################
+
         # Make sure the folders exist.
         checkFolders || {
           writeLog "ERROR" "Failed to check folders"
@@ -331,6 +365,21 @@
             echo "Starting restore of projects"
             restoreProjects || {
               writeLog "ERROR" "Failed to restore projects"
+              exit 1
+            }
+          ;;
+
+          "bisync" )
+            # Bisync only works with rclone.
+            if [[ "''${RCLONE_ENABLED:-false}" == "false" ]];
+            then
+              echo "Bisync only works with rclone"
+              exit 1
+            fi
+
+            echo "Starting bi-directional sync of projects"
+            bisyncProjects || {
+              writeLog "ERROR" "Failed bi-directional sync of projects"
               exit 1
             }
           ;;
