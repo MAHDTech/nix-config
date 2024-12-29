@@ -246,6 +246,7 @@ in {
       "$screen3" = "Dell Inc. Dell AW3423DW ##GrMYMxgwABgH";
 
       # https://wiki.hyprland.org/Configuring/Monitors/
+      # hyprctl monitors all
       monitor = [
         # Key
         # name, resolution, position, scale
