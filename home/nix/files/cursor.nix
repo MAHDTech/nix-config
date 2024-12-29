@@ -33,7 +33,7 @@
           // Window
           "window.commandCenter": true,
           "window.zoomLevel": 1,
-          "window.titleBarStyle": "native",
+          "window.titleBarStyle": "custom",
 
           // Editor
           "editor.fontFamily": "'JetBrains Mono', 'JetBrains Mono Nerd Font', monospace",
