@@ -119,7 +119,8 @@
 
           if [[ "''${RSYNC_ENABLED:-false}" == "true" ]];
           then
-            if [[ ! -d "''${RSYNC_PROJECTS_REMOTE}" ]]; then
+            if [[ ! -d "''${RSYNC_PROJECTS_REMOTE}" ]];
+            then
               writeLog "ERROR" "The remote projects directory does not exist"
               return 1
             else
@@ -158,7 +159,8 @@
           fi
 
           # Make sure rclone is installed.
-          if ! type rclone >/dev/null 2>&1; then
+          if ! type rclone >/dev/null 2>&1;
+          then
             writeLog "ERROR" "Please install rclone"
             return 1
           fi
@@ -199,7 +201,8 @@
           fi
 
           # Make sure rsync is installed.
-          if ! type rsync >/dev/null 2>&1; then
+          if ! type rsync >/dev/null 2>&1;
+          then
             writeLog "ERROR" "Please install rsync"
             return 1
           fi
@@ -254,7 +257,8 @@
           fi
 
           # Make sure rclone is installed.
-          if ! type rclone >/dev/null 2>&1; then
+          if ! type rclone >/dev/null 2>&1;
+          then
             writeLog "ERROR" "Please install rclone"
             return 1
           fi
@@ -286,14 +290,15 @@
 
           read -rp "This will restore using rsync from ''${RSYNC_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
           echo
-          [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
+          if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
           then
             writeLog "ERROR" "User cancelled restore"
             return 1
           fi
 
           # Make sure rsync is installed.
-          if ! type rsync >/dev/null 2>&1; then
+          if ! type rsync >/dev/null 2>&1;
+          then
             writeLog "ERROR" "Please install rsync"
             return 1
           fi
