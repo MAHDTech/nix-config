@@ -101,6 +101,16 @@
             "editor.defaultFormatter": "rust-lang.rust-analyzer"
           },
 
+          // Terraform
+          "[terraform]": {
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "hashicorp.terraform"
+          },
+          "[terraform-vars]": {
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "hashicorp.terraform"
+          },
+
           // Go
           "[go]": {
             "editor.defaultFormatter": "golang.go",
