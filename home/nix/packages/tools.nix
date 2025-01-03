@@ -3,7 +3,10 @@
   pkgs,
   ...
 }: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs) system;
+    config.allowUnfree = true;
+  };
 
   unstablePkgs = with pkgsUnstable; [
     code-cursor
