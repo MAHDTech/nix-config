@@ -94,7 +94,7 @@
       type = "github";
       owner = "catppuccin";
       repo = "nix";
-      ref = "main";
+      ref = "release-1.x";
       flake = true;
     };
 
