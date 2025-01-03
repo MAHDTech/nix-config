@@ -200,7 +200,7 @@
     # Home Manager (standalone)
     mkHomeConfigurations = system:
       home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = pkgsImportSystem system;
         modules = [
           ./home
 

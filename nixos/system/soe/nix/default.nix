@@ -39,7 +39,6 @@
         "flakes"
         "ca-derivations"
         "auto-allocate-uids"
-        #"configurable-impure-env"
       ];
     };
 
