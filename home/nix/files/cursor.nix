@@ -19,9 +19,11 @@
           "cursor.chat.premiumChatAutoScrollWhenAtBottom": false,
           "cursor.chat.showSuggestedFiles": true,
           "cursor.chat.smoothStreaming": true,
+          "cursor.chat.terminalShowHoverHint": true,
 
           // Cursor Composer
           "cursor.composer.collapsePaneInputBoxPills": true,
+          "cursor.composer.shouldAutoScrollToBottom": false,
 
           // Cursor Diffs
           "cursor.cmdk.useThemedDiffBackground": true,
