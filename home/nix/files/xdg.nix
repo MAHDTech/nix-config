@@ -61,8 +61,8 @@
         text = ''
           [Desktop Entry]
           Name=Cursor
-          Exec=${pkgs.code-cursor}/bin/cursor --no-sandbox %U
           #Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
+          Exec=${config.home.homeDirectory}/.nix-profile/bin/cursor --no-sandbox %U
           Terminal=false
           Type=Application
           Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png

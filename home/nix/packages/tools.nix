@@ -27,6 +27,12 @@ in {
       # Shell
       nushell
 
+      # URL monitoring
+      hey
+      httpstat
+      vegeta
+      httping
+
       # File Systems
       btrfs-progs
       cryptsetup
