@@ -107,6 +107,8 @@
 
       add_newline = true;
 
+      right_format = "";
+
       aws = {
         disabled = false;
 
@@ -156,11 +158,11 @@
       battery = {
         disabled = false;
 
-        full_symbol = "🔋";
+        full_symbol = "●";
         charging_symbol = "⚡";
-        discharging_symbol = "🪫";
-        unknown_symbol = "❓";
-        empty_symbol = "💀";
+        discharging_symbol = "○";
+        unknown_symbol = "⚠️";
+        empty_symbol = "!";
 
         display = [
           {
@@ -188,8 +190,8 @@
       character = {
         disabled = false;
 
-        success_symbol = "[❯](bold green)";
-        error_symbol = "[X](bold red)";
+        success_symbol = "[➜](bold green)";
+        error_symbol = "[✗](bold red)";
       };
 
       cmake = {
@@ -209,10 +211,14 @@
 
       directory = {
         disabled = false;
+        read_only = " 🔒";
+        truncation_length = 4;
+        truncate_to_repo = true;
       };
 
       docker_context = {
         disabled = false;
+        symbol = "�� ";
       };
 
       gcloud = {
@@ -248,6 +254,7 @@
 
       git_branch = {
         disabled = false;
+        symbol = "🌱 ";
       };
 
       git_commit = {
@@ -264,10 +271,22 @@
 
       git_status = {
         disabled = false;
+        format = "([$all_status$ahead_behind]($style)) ";
+        conflicted = "⚔️";
+        ahead = "⇡\${count}";
+        behind = "⇣\${count}";
+        diverged = "⇕⇡\${ahead_count}⇣\${behind_count}";
+        untracked = "？";
+        stashed = "📦";
+        modified = "!";
+        staged = "＋";
+        renamed = "»";
+        deleted = "✘";
       };
 
       golang = {
         disabled = false;
+        symbol = "🐹 ";
       };
 
       helm = {
@@ -296,6 +315,8 @@
           "stage.mahdtech.local" = "staging";
           "prod.mahdtech.local" = "production";
         };
+
+        symbol = "☸️ ";
       };
 
       line_break = {disabled = false;};
@@ -307,52 +328,53 @@
 
       nix_shell = {
         disabled = false;
+        symbol = "❄️ ";
       };
 
       nodejs = {
         disabled = false;
+        symbol = "📦 ";
       };
 
       os = {
         disabled = false;
-
         symbols = {
-          Alpine = " ";
-          Amazon = " ";
-          Android = " ";
-          Arch = " ";
-          CentOS = " ";
-          Debian = " ";
-          DragonFly = " ";
-          Emscripten = " ";
-          EndeavourOS = " ";
-          Fedora = " ";
-          FreeBSD = " ";
-          Garuda = "﯑ ";
-          Gentoo = " ";
-          HardenedBSD = "ﲊ ";
-          Illumos = " ";
-          Linux = " ";
-          Macos = " ";
-          Manjaro = " ";
-          Mariner = " ";
-          MidnightBSD = " ";
-          Mint = " ";
-          NetBSD = " ";
-          NixOS = " ";
-          OpenBSD = " ";
-          OracleLinux = " ";
-          Pop = " ";
-          Raspbian = " ";
-          RedHatEnterprise = " ";
-          Redhat = " ";
-          Redox = " ";
-          SUSE = " ";
-          Solus = "ﴱ ";
-          Ubuntu = " ";
-          Unknown = " ";
-          Windows = " ";
-          openSUSE = " ";
+          Alpine = "🗻 "; # Mountain
+          Amazon = "📦 "; # Package
+          Android = "🤖 "; # Robot
+          Arch = "🏹 "; # Bow and Arrow
+          CentOS = "💠 "; # Diamond
+          Debian = "🌀 "; # Spiral
+          DragonFly = "🐉 "; # Dragon
+          Emscripten = "📝 "; # Memo
+          EndeavourOS = "🚀 "; # Rocket
+          Fedora = "🎩 "; # Top hat
+          FreeBSD = "😈 "; # Smiling face with horns
+          Garuda = "🦅 "; # Eagle
+          Gentoo = "🎭 "; # Performing Arts
+          HardenedBSD = "🛡️ "; # Shield
+          Illumos = "🌟 "; # Glowing Star
+          Linux = "🐧 "; # Penguin
+          Macos = "🍎 "; # Apple
+          Manjaro = "🌿 "; # Herb
+          Mariner = "🚢 "; # Ship
+          MidnightBSD = "🌙 "; # Crescent Moon
+          Mint = "🌱 "; # Seedling
+          NetBSD = "🔮 "; # Crystal Ball
+          NixOS = "❄️ "; # Snowflake
+          OpenBSD = "🐡 "; # Blowfish
+          OracleLinux = "🎯 "; # Direct Hit
+          Pop = "🎨 "; # Artist Palette
+          Raspbian = "🫐 "; # Raspberry
+          RedHatEnterprise = "🎩 "; # Top Hat
+          Redhat = "🎩 "; # Top Hat
+          Redox = "🔄 "; # Arrows in Circle
+          SUSE = "🦎 "; # Lizard
+          Solus = "🌅 "; # Sunrise
+          Ubuntu = "⭕ "; # Circle
+          Unknown = "❓ "; # Question Mark
+          Windows = "🪟 "; # Window
+          openSUSE = "🦎 "; # Lizard
         };
       };
 
@@ -366,6 +388,7 @@
 
       python = {
         disabled = false;
+        symbol = "🐍 ";
       };
 
       ruby = {
@@ -374,6 +397,7 @@
 
       rust = {
         disabled = false;
+        symbol = "🦀 ";
       };
 
       shlvl = {
@@ -386,6 +410,7 @@
 
       status = {
         disabled = false;
+        symbol = "↯";
       };
 
       sudo = {
@@ -398,7 +423,7 @@
 
       time = {
         disabled = false;
-        format = "🕙 [$time]($style) ";
+        format = "⏰ [$time]($style)";
       };
 
       username = {
@@ -423,9 +448,7 @@
           symbol = "🍰 ";
           style = "bold orange";
 
-          format = ''
-            [$symbol$env_value]($style)
-          '';
+          format = "[$symbol$env_value]($style) ";
         };
       };
     };

@@ -3,28 +3,11 @@
 
   fonts = {
     packages = with pkgs; [
+      # Core fonts
       corefonts
-      dejavu_fonts
-      dina-font
       emojione
-      fira-code
-      fira-code-symbols
-      jetbrains-mono
-      liberation_ttf
-      noto-fonts
-      noto-fonts-cjk-sans
-      noto-fonts-emoji
-      openmoji-color
-      roboto
-      roboto-mono
-      source-code-pro
-      source-sans-pro
-      source-serif-pro
-      ttf_bitstream_vera
       twitter-color-emoji
-      ubuntu_font_family
 
-      # Nerd fonts
       (nerdfonts.override {
         fonts = [
           "CascadiaCode"
@@ -55,8 +38,11 @@
     };
 
     fontconfig = {
+      enable = true;
+      useEmbeddedBitmaps = true;
       defaultFonts = {
         monospace = [
+          "JetBrainsMono Nerd Font Regular"
           "Ubuntu Mono Regular"
           "UbuntuMono Nerd Font Regular"
           "Noto Sans Mono"
@@ -64,8 +50,8 @@
           "DejaVu Sans Mono Book"
           "Source Code Pro Regular"
         ];
-
         sansSerif = [
+          "JetBrainsMono Nerd Font Regular"
           "Metropolis"
           "Metropolis Regular"
           "Ubuntu Regular"
@@ -74,8 +60,8 @@
           "DejaVu Sans Book"
           "Source Sans Pro"
         ];
-
         serif = [
+          "JetBrainsMono Nerd Font Regular"
           "Metropolis"
           "Metropolis Regular"
           "Ubuntu Regular"
@@ -83,6 +69,11 @@
           "Noto Serif"
           "DejaVu Serif Book"
           "Source Serif Pro"
+        ];
+        emoji = [
+          "EmojiOne Color"
+          "Twitter Color Emoji"
+          "Noto Color Emoji"
         ];
       };
     };
