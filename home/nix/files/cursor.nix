@@ -112,6 +112,16 @@
             "editor.formatOnSave": true,
             "editor.defaultFormatter": "hashicorp.terraform"
           },
+          "terraform.languageServer": {
+            "enabled": true,
+            "args": []
+          },
+          "terraform.format": {
+            "enable": true,
+            "ignoreExtensionsOnSave": [
+              ".tfvars"
+            ]
+          },
 
           // Go
           "[go]": {
