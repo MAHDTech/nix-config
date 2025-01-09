@@ -65,11 +65,8 @@
         text = ''
           [Desktop Entry]
           Name=Cursor
-          # AppImage
           #Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
-          # NixOS
           Exec=${config.home.homeDirectory}/.nix-profile/bin/cursor --no-sandbox %U
-          # NixOS with direnv context
           Path=${config.home.homeDirectory}/dotfiles
           Terminal=false
           Type=Application

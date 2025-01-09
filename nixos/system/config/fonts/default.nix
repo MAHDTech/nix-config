@@ -1,19 +1,32 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # https://nixos.wiki/wiki/Fonts
 
   fonts = {
     packages = with pkgs; [
       # Core fonts
       corefonts
+      dejavu_fonts
+      liberation_ttf
+      noto-fonts
       emojione
       twitter-color-emoji
+      font-awesome
+
+      # Microsoft fonts
+      vistafonts
+
+      # Popular fonts
+      ubuntu_font_family
+      source-code-pro
+      source-sans
+      source-serif
 
       (nerdfonts.override {
         fonts = [
           "CascadiaCode"
           "DejaVuSansMono"
           "DroidSansMono"
-          "FiraCode"
           "FiraCode"
           "FiraMono"
           "Go-Mono"
