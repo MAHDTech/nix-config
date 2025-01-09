@@ -112,22 +112,24 @@
             "editor.formatOnSave": true,
             "editor.defaultFormatter": "hashicorp.terraform"
           },
-          "terraform.languageServer": {
-            "enabled": true,
-            "args": []
-          },
-          "terraform.format": {
-            "enable": true,
-            "ignoreExtensionsOnSave": [
-              ".tfvars"
-            ]
-          },
+          "terraform.languageServer.enable": true,
+          "terraform.languageServer.args": [
+            "serve"
+          ],
+          "terraform.experimentalFeatures.validateOnSave": true,
+          "terraform.validation.enableEnhancedValidation": true,
 
           // Go
           "[go]": {
             "editor.defaultFormatter": "golang.go",
             "editor.formatOnSave": true,
+            "editor.codeActionsOnSave": {
+              "source.organizeImports": "always"
+            }
           },
+          "go.useLanguageServer": true,
+          "go.formatTool": "goimports",
+          "go.lintTool": "golangci-lint",
 
           // YAML
           "[yaml]": {
