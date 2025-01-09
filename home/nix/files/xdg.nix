@@ -2,8 +2,12 @@
   config,
   pkgs,
   ...
-}: {
-  home.packages = with pkgs; [xdg-user-dirs xdg-utils];
+}:
+{
+  home.packages = with pkgs; [
+    xdg-user-dirs
+    xdg-utils
+  ];
   xdg = {
     enable = true;
 
@@ -14,7 +18,7 @@
 
     systemDirs = {
       # Directory names to add to XDG_CONFIG_DIRS
-      config = [];
+      config = [ ];
 
       # Directory names to add to XDG_DATA_DIRS
       data = [
@@ -61,8 +65,12 @@
         text = ''
           [Desktop Entry]
           Name=Cursor
+          # AppImage
           #Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
+          # NixOS
           Exec=${config.home.homeDirectory}/.nix-profile/bin/cursor --no-sandbox %U
+          # NixOS with direnv context
+          Path=${config.home.homeDirectory}/dotfiles
           Terminal=false
           Type=Application
           Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png

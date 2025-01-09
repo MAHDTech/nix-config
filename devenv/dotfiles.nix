@@ -1,10 +1,34 @@
-{pkgs, ...}:
-# https://devenv.sh/reference/options/
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
+
+let
+  packages = with pkgs; [
+    hello
+  ];
+
+  devPackages = with pkgs; [
+    docker-client
+    figlet
+    go-tools
+    golangci-lint
+    nix
+    pulumi-bin # bundled with plugins.
+    pulumictl
+    yq-go
+    trivy
+    sshuttle
+  ];
+
+in
 {
   name = "dotfiles";
 
   env = {
-    PROJECT = "dotfiles";
+    PROJECT = config.name;
   };
 
   dotenv = {
@@ -22,126 +46,106 @@
     ];
   };
 
-  packages = with pkgs; [
-    figlet
-  ];
+  packages = packages ++ lib.optionals (!config.container.isBuilding) devPackages;
 
   enterShell = ''
     figlet -f starwars $PROJECT
 
-    echo Hello $USER, welcome to the $PROJECT project
+    hello --greeting="Hello ''${USER:-user}, welcome to the $PROJECT project!"
   '';
 
   difftastic = {
     enable = true;
   };
 
-  pre-commit = {
-    default_stages = [
-      "pre-commit"
+  languages = {
+    nix = {
+      enable = true;
+    };
+
+    shell = {
+      enable = true;
+    };
+
+    go = {
+      enable = true;
+    };
+
+    opentofu = {
+      enable = true;
+    };
+  };
+
+  git-hooks = {
+    excludes = [
+      ".cache"
+      ".devenv"
+      ".direnv"
+      "vendor"
     ];
-
     hooks = {
-      alejandra = {
-        enable = true;
-      };
-
-      beautysh = {
-        enable = false;
-      };
-
-      check-json = {
-        enable = true;
-      };
-
-      check-shebang-scripts-are-executable = {
-        enable = true;
-      };
-
-      check-symlinks = {
-        enable = true;
-      };
-
-      check-yaml = {
-        enable = true;
-      };
-
-      convco = {
-        enable = true;
-      };
-
-      cspell = {
-        enable = false;
-      };
-
-      deadnix = {
-        enable = true;
-        settings = {
-          noUnderscore = true;
-        };
-      };
-
-      dialyzer = {
-        enable = true;
-      };
-
-      editorconfig-checker = {
-        enable = true;
-      };
-
+      actionlint.enable = true;
+      check-json.enable = true;
+      check-merge-conflicts.enable = true;
+      check-shebang-scripts-are-executable.enable = true;
+      check-symlinks.enable = true;
+      check-yaml.enable = true;
+      commitizen.enable = true;
+      convco.enable = true;
+      deadnix.enable = true;
+      dialyzer.enable = true;
+      editorconfig-checker.enable = true;
+      gofmt.enable = true;
+      golangci-lint.enable = true;
+      golines.enable = true;
+      gotest.enable = true;
+      govet.enable = true;
+      gptcommit.enable = true;
       markdownlint = {
         enable = true;
         settings = {
           configuration = {
-            MD013 = {
-              line_length = 200;
+            MD007 = {
+              ul_indent = 4;
             };
-            MD033 = false;
+            MD013 = {
+              line_length = 180;
+            };
           };
         };
       };
-
-      nil = {
-        enable = false;
-      };
-
-      pre-commit-hook-ensure-sops = {
-        enable = true;
-      };
-
+      mixed-line-endings.enable = true;
+      nixfmt-rfc-style.enable = true;
+      pre-commit-hook-ensure-sops.enable = true;
       prettier = {
         enable = true;
-      };
-
-      pretty-format-json = {
-        enable = false;
-      };
-
-      ripsecrets = {
-        enable = true;
-        excludes = [
-        ];
-      };
-
-      shellcheck = {
-        enable = true;
-      };
-
-      shfmt = {
-        enable = true;
-      };
-
-      trim-trailing-whitespace = {
-        enable = true;
-      };
-
-      typos = {
-        enable = true;
         settings = {
-          configPath = ".typos.toml";
+          configPath = ".prettierrc.yaml";
         };
       };
-
+      pretty-format-json = {
+        enable = true;
+        args = [
+          "--autofix"
+        ];
+      };
+      revive = {
+        enable = true;
+        fail_fast = false;
+      };
+      ripsecrets.enable = true;
+      shellcheck = {
+        enable = true;
+        args = [
+          "--external-sources"
+        ];
+      };
+      shfmt.enable = true;
+      staticcheck.enable = true;
+      statix.enable = true;
+      trufflehog.enable = true;
+      trim-trailing-whitespace.enable = true;
+      typos.enable = true;
       yamllint = {
         enable = true;
         settings = {
