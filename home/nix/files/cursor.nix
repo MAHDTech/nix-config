@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   home.file = {
     "cursor-settings" = {
       target = "${config.home.homeDirectory}/.config/Cursor/User/settings.json";
@@ -105,10 +106,14 @@
 
           // Terraform
           "[terraform]": {
+            "editor.tabSize": 2,
+            "editor.insertSpaces": true,
             "editor.formatOnSave": true,
             "editor.defaultFormatter": "hashicorp.terraform"
           },
           "[terraform-vars]": {
+            "editor.tabSize": 2,
+            "editor.insertSpaces": true,
             "editor.formatOnSave": true,
             "editor.defaultFormatter": "hashicorp.terraform"
           },
