@@ -2,7 +2,8 @@
   inputs,
   pkgs,
   ...
-}: let
+}:
+let
   pkgsUnstable = import inputs.nixpkgs-unstable {
     inherit (pkgs) system;
     config.allowUnfree = true;
@@ -11,8 +12,10 @@
   unstablePkgs = with pkgsUnstable; [
     code-cursor
   ];
-in {
-  home.packages = with pkgs;
+in
+{
+  home.packages =
+    with pkgs;
     [
       # File management
       insync
@@ -121,6 +124,11 @@ in {
 
       # Ledger
       ledger-live-desktop
+
+      # Development
+      go
+      golangci-lint
+      gotools
     ]
     ++ unstablePkgs;
 }
