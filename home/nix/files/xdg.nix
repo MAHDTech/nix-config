@@ -3,6 +3,14 @@
   pkgs,
   ...
 }:
+let
+
+  env_cursor = pkgs.buildEnv {
+    name = "cursor-env";
+    paths = [ "${pkgs.go}/bin" ];
+  };
+
+in
 {
   home.packages = with pkgs; [
     xdg-user-dirs
@@ -65,8 +73,7 @@
         text = ''
           [Desktop Entry]
           Name=Cursor
-          #Exec=${config.home.homeDirectory}/Apps/cursor.appimage --no-sandbox %U
-          Exec=${config.home.homeDirectory}/.nix-profile/bin/cursor --no-sandbox %U
+          Exec=${env_cursor}/bin/cursor --no-sandbox %U
           Path=${config.home.homeDirectory}/dotfiles
           Terminal=false
           Type=Application
