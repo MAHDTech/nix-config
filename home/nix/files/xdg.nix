@@ -7,7 +7,10 @@ let
 
   env_cursor = pkgs.buildEnv {
     name = "cursor-env";
-    paths = [ "${pkgs.go}/bin" ];
+    paths = [
+      "${pkgs.go}/bin"
+      "${pkgs.golangci-lint}/bin"
+    ];
   };
 
 in
