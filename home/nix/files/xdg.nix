@@ -8,8 +8,10 @@ let
   env_cursor = pkgs.buildEnv {
     name = "cursor-env";
     paths = [
-      "${pkgs.go}/bin"
+      "${pkgs.code-cursor}/bin"
       "${pkgs.golangci-lint}/bin"
+      "${pkgs.go}/bin"
+      "${pkgs.nerdfonts}"
     ];
   };
 
@@ -76,8 +78,8 @@ in
         text = ''
           [Desktop Entry]
           Name=Cursor
-          Exec=${env_cursor}/bin/cursor --no-sandbox %U
-          Path=${config.home.homeDirectory}/dotfiles
+          Exec=${env_cursor}/cursor --no-sandbox %U
+          Path=${env_cursor}
           Terminal=false
           Type=Application
           Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
