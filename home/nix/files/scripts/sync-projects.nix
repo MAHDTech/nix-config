@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   home.file = {
     "sync-projects" = {
       target = "${config.home.homeDirectory}/.local/bin/sync-projects";
@@ -327,7 +328,7 @@
 
         function bisyncProjects() {
 
-          rclone bisync \
+          echo rclone bisync \
             "''${PROJECTS_LOCAL}" \
             "''${RCLONE_PROJECTS_REMOTE}" \
             --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-bisync" \
