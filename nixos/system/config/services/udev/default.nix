@@ -1,5 +1,6 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
   # REMEMBER: udevadm control --reload-rules
 
@@ -36,6 +37,12 @@
 
       # Same, but with hidraw-based library (instead of libusb)
       KERNEL=="hidraw*", ATTRS{idVendor}=="2c97", MODE="0666"
+
+      # Oslo sleepbuds (Qualcomm QCC5141)
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="05c6", ATTRS{idProduct}=="9008", MODE="0666", GROUP="plugdev"
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="0a12", ATTRS{idProduct}=="4007", MODE="0666", GROUP="plugdev"
+      SUBSYSTEMS=="usb", ATTR{idVendor}=="0a12", ATTR{idProduct}=="4007", SYMLINK+="qcc5141"
+      SUBSYSTEMS=="usb", ATTR{idVendor}=="0a12", ATTR{idProduct}=="4007", TAG+="systemd"
 
       # EOF
     '';

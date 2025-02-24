@@ -328,10 +328,9 @@
 
         function bisyncProjects() {
 
-          echo rclone bisync \
+          rclone bisync \
             "''${PROJECTS_LOCAL}" \
             "''${RCLONE_PROJECTS_REMOTE}" \
-            --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-bisync" \
             --compare "size,modtime,checksum" \
             --create-empty-src-dirs \
             --delete-excluded \

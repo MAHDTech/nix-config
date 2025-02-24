@@ -149,7 +149,13 @@
           "[github-actions-workflow]": {
             "editor.insertSpaces": true,
             "editor.tabSize": 2
-          }
+          },
+
+          // Markdown PDF
+          "markdown-pdf.format": "A4",
+          "markdown-pdf.emoji": true,
+          "markdown-pdf.orientation": "landscape"
+
         }
       '';
     };

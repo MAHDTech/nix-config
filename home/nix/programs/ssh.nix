@@ -1,4 +1,4 @@
-{config, ...}:
+{ config, ... }:
 ##################################################
 # NOTES:
 #
@@ -47,7 +47,7 @@
     serverAliveInterval = 60;
 
     # Include any extra files with SSH config.
-    includes = [];
+    includes = [ ];
 
     # These options override any Host settings globally.
     extraOptionOverrides = {
@@ -72,10 +72,14 @@
         user = "git";
       };
 
-      "jumpbox-cloudforge" = {
-        host = "jumpbox-cloudforge";
-        hostname = "52.65.126.176";
-        user = "dev_02";
+      "kvm" = {
+        host = "kvm";
+        hostname = "kvm.saltlabs.cloud";
+        user = "blikvm";
+        extraOptions = {
+          PasswordAuthentication = "yes";
+          PubkeyAuthentication = "no";
+        };
       };
     };
   };

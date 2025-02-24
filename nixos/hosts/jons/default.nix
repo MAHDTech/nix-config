@@ -21,6 +21,9 @@
     ../../system/config/services
     ../../system/config/theme/catppuccin
 
+    # Networking
+    ../../system/config/network/hosts.nix
+
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
 
