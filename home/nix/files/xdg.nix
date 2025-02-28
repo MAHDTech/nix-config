@@ -1,14 +1,19 @@
 {
   config,
+  inputs,
   pkgs,
   ...
 }:
 let
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs) system;
+    config.allowUnfree = true;
+  };
 
   env_cursor = pkgs.buildEnv {
     name = "cursor-env";
     paths = [
-      "${pkgs.code-cursor}/bin"
+      "${pkgsUnstable.code-cursor}/bin"
       "${pkgs.golangci-lint}/bin"
       "${pkgs.go}/bin"
       "${pkgs.nerdfonts}"
@@ -82,7 +87,7 @@ in
           Path=${env_cursor}
           Terminal=false
           Type=Application
-          Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
+          Icon=${pkgsUnstable.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
           StartupWMClass=Cursor
           Comment=Cursor is an AI-first coding environment.
           MimeType=x-scheme-handler/cursor;
