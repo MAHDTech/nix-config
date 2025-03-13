@@ -1,5 +1,11 @@
-{pkgs, ...}: {
-  home.packages = with pkgs; [gcr gnome-keyring seahorse libsecret];
+{ pkgs, ... }:
+{
+  #home.packages = with pkgs; [gcr gnome-keyring seahorse libsecret];
+  home.packages = with pkgs; [
+    gcr
+    gnome-keyring
+    seahorse
+  ];
 
   # NOTES:
   #   - There can only be one enabled (gnome-keyring vs pass-secret-service)
@@ -13,7 +19,10 @@
       # https://lists.gnupg.org/pipermail/gnupg-devel/2014-August/028689.html
       # https://github.com/NixOS/nixpkgs/issues/7891
       # Now SSH and GPG are both using 1Password Agent.
-      components = ["pkcs11" "secrets"];
+      components = [
+        "pkcs11"
+        "secrets"
+      ];
     };
   };
 }
