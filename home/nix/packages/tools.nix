@@ -118,6 +118,9 @@ in
       google-chrome
       remmina
 
+      # Office
+      onlyoffice-desktopeditors
+
       # Trezor
       trezor-suite
       trezor-agent

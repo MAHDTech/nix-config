@@ -1,7 +1,8 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   nix.settings = {
-    substituters = ["https://hyprland.cachix.org"];
-    trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+    substituters = [ "https://hyprland.cachix.org" ];
+    trusted-public-keys = [ "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" ];
   };
 
   environment.systemPackages = with pkgs; [
@@ -58,8 +59,8 @@
     };
     pam = {
       services = {
-        ags = {};
-        hyprlock = {};
+        ags = { };
+        hyprlock = { };
       };
     };
   };
@@ -67,6 +68,7 @@
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
     WLR_NO_HARDWARE_CURSORS = "1";
+    COSMIC_DATA_CONTROL_ENABLED = "1";
   };
 
   # Greeter (GUI)

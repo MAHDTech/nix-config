@@ -2,14 +2,20 @@
   config,
   pkgs,
   ...
-}: {
-  imports = [];
+}:
+{
+  imports = [ ];
 
   # NOTE: cosmic packages now pulled from nixos-cosmic flake.
 
   environment.systemPackages = with pkgs; [
     #system76-firmware
   ];
+
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    COSMIC_DATA_CONTROL_ENABLED = "1";
+  };
 
   hardware.system76 = {
     enableAll = false;
