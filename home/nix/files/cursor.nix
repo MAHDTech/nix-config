@@ -154,7 +154,12 @@
           // Markdown PDF
           "markdown-pdf.format": "A4",
           "markdown-pdf.emoji": true,
-          "markdown-pdf.orientation": "landscape"
+          "markdown-pdf.orientation": "landscape",
+
+          // dotenv
+          "files.associations": {
+            ".env*": "dotenv"
+          }
 
         }
       '';
