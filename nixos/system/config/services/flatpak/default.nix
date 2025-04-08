@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   #########################
   # NOTES:
   #
@@ -6,7 +7,7 @@
   #
   #########################
 
-  imports = [];
+  imports = [ ];
 
   environment.systemPackages = with pkgs; [
     xdg-utils
@@ -38,6 +39,7 @@
       # "flathub:app/org.signal.Signal//stable" # Using Signal from nixpkgs instead.
       "flathub:app/org.videolan.VLC//stable"
       "flathub:app/info.beyondallreason.bar//stable"
+      "flathub:app/com.jgraph.drawio.desktop//stable"
     ];
 
     remotes = {
