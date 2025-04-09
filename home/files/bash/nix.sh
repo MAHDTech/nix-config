@@ -7,8 +7,8 @@
 
 function nix-upgrade-daemon() {
 
-	if [[ ${OS_NAME:-EMPTY} != "nixos" ]]; then
-		writeLog "ERROR" "Nix upgrade daemon is only supported on NixOS"
+	if [[ ${OS_NAME:-EMPTY} == "nixos" ]]; then
+		writeLog "ERROR" "Nix upgrade daemon is not supported on NixOS"
 		return 1
 	fi
 
@@ -121,6 +121,8 @@ function nix-upgrade-daemon() {
 
 		auto-optimise-store = true
 
+		allow-dirty = true
+
 		build-users-group = nixbld
 		builders =
 		cores = 0
@@ -136,7 +138,7 @@ function nix-upgrade-daemon() {
 		keep-outputs = true
 		keep-derivations = true
 
-		trusted-users = root @sudo ${USER:-}
+		trusted-users = root @sudo @wheel @nix-users ${USER:-}
 
 		experimental-features = nix-command flakes
 	EOF
