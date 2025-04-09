@@ -10,7 +10,7 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
-    code-cursor
+    #code-cursor
   ];
 in
 {
@@ -25,7 +25,7 @@ in
 
       # Nix
       nixos-generators
-      nix-du
+      #nix-du
 
       # Shell
       nushell
