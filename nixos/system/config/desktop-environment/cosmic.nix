@@ -47,4 +47,17 @@
     # Disable when using power-profiles daemon or TLP
     #system76-power
   ];
+
+  systemd = {
+    packages = with pkgs; [
+      observatory
+    ];
+    services = {
+      monitord = {
+        wantedBy = [
+          "multi-user.target"
+        ];
+      };
+    }:
+  };
 }
