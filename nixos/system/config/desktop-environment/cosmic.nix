@@ -25,7 +25,7 @@
   };
 
   services = {
-    
+
     # COSMIC Desktop
     desktopManager.cosmic = {
       enable = true;
@@ -33,7 +33,7 @@
         enable = true;
       };
     };
-    
+
     displayManager.cosmic-greeter.enable = true;
 
     # Other
@@ -58,6 +58,6 @@
           "multi-user.target"
         ];
       };
-    }:
+    };
   };
 }

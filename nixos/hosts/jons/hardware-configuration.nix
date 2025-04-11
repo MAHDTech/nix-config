@@ -2,14 +2,32 @@
   config,
   lib,
   ...
-}: {
-  imports = [];
+}:
+{
+  imports = [ ];
 
   boot = {
-    supportedFilesystems = ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "zfs" "ntfs" "cifs" "nfs"];
+    supportedFilesystems = [
+      "btrfs"
+      "reiserfs"
+      "vfat"
+      "f2fs"
+      "xfs"
+      "zfs"
+      "ntfs"
+      "cifs"
+      "nfs"
+    ];
 
     initrd = {
-      availableKernelModules = ["nvme" "sd_mod" "thunderbolt" "usb_storage" "usbhid" "xhci_pci"];
+      availableKernelModules = [
+        "nvme"
+        "sd_mod"
+        "thunderbolt"
+        "usb_storage"
+        "usbhid"
+        "xhci_pci"
+      ];
 
       kernelModules = [
         "zfs"
@@ -25,7 +43,7 @@
       "threadirqs"
     ];
 
-    extraModulePackages = [];
+    extraModulePackages = [ ];
   };
 
   fileSystems = {
@@ -42,7 +60,13 @@
     "/boot/efi" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0360721030005469-0:0-part1";
       fsType = "vfat";
-      options = [ "umask=0077" "dmask=0077" "fmask=0077" "noatime" "nofail" ];
+      options = [
+        "umask=0022"
+        "dmask=0022"
+        "fmask=0022"
+        "noatime"
+        "nofail"
+      ];
     };
 
     "/boot/nixos" = {
@@ -74,7 +98,7 @@
       device = "zpool/var/lib/docker";
       fsType = "zfs";
     };
-    
+
     "/var/lib/containers" = {
       device = "zpool/var/lib/containers";
       fsType = "zfs";
@@ -86,7 +110,7 @@
     };
   };
 
-  swapDevices = [];
+  swapDevices = [ ];
 
   networking.useDHCP = lib.mkDefault true;
 

@@ -1,9 +1,11 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   zfsPoolNames = [
-    "bpool",
-    "zpool",
+    "bpool"
+    "zpool"
   ];
-in {
+in
+{
   boot = {
     zfs = {
       requestEncryptionCredentials = true;
