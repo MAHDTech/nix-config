@@ -35,7 +35,7 @@
     };
 
     "/boot" = {
-      device = "zpool/boot";
+      device = "bpool/boot";
       fsType = "zfs";
     };
 
@@ -45,7 +45,7 @@
       options = [ "umask=0077" "dmask=0077" "fmask=0077" "noatime" "nofail" ];
     };
 
-    "/boot/nixos-config" = {
+    "/boot/nixos" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0360721030005469-0:0-part2";
       fsType = "xfs";
     };
