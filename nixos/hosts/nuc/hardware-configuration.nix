@@ -42,10 +42,10 @@
     "/boot/efi" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part1";
       fsType = "vfat";
-      options = ["fmask=0077" "dmask=0077"];
+      options = [ "umask=0077" "dmask=0077" "fmask=0077" "noatime" "nofail" ];
     };
 
-    "/boot/nixos" = {
+    "/boot/nixos-config" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part2";
       fsType = "xfs";
     };
@@ -72,6 +72,11 @@
 
     "/var/lib/docker" = {
       device = "zpool/var/lib/docker";
+      fsType = "zfs";
+    };
+   
+    "/var/lib/containers" = {
+      device = "zpool/var/lib/containers";
       fsType = "zfs";
     };
 

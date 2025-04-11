@@ -1,5 +1,8 @@
 {pkgs, ...}: let
-  zfsPoolNames = ["zpool"];
+  zfsPoolNames = [
+    "bpool",
+    "zpool",
+  ];
 in {
   boot = {
     zfs = {
