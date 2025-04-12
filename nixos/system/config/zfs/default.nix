@@ -12,6 +12,7 @@ in
 
       package = pkgs.zfs;
 
+      # ZFS auto-import pools.
       extraPools = zfsPoolNames;
 
       devNodes = "/dev/disk/by-partuuid";

@@ -47,17 +47,28 @@
     extraModulePackages = [ ];
   };
 
+  # Legacy mount points
   fileSystems = {
-    "/" = {
-      device = "zpool/root";
-      fsType = "zfs";
-    };
 
-    "/boot" = {
-      device = "bpool/boot";
-      fsType = "zfs";
-    };
+    # Legacy mount point for root using ZFS
+    #"/" = {
+    #  device = "zpool/root";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
 
+    # Legacy mount point for root using ZFS
+    #"/boot" = {
+    #  device = "bpool/boot";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
+
+    # UEFI boot partition on USB
     "/boot/efi" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part1";
       fsType = "vfat";
@@ -70,45 +81,71 @@
       ];
     };
 
+    # NixOS configuration on USB
     "/boot/nixos" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part2";
       fsType = "xfs";
     };
 
-    "/home" = {
-      device = "zpool/home";
-      fsType = "zfs";
-    };
+    # Legacy mount point for home using ZFS
+    #"/home" = {
+    #  device = "zpool/home";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
 
-    "/nix" = {
-      device = "zpool/nix";
-      fsType = "zfs";
-    };
+    # Legacy mount point for nix using ZFS
+    #"/nix" = {
+    #  device = "zpool/nix";
+    #  fsType = "zfs";
+    #};
 
-    "/var" = {
-      device = "zpool/var";
-      fsType = "zfs";
-    };
+    # Legacy mount point for var using ZFS
+    #"/var" = {
+    #  device = "zpool/var";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
 
-    "/var/lib" = {
-      device = "zpool/var/lib";
-      fsType = "zfs";
-    };
+    # Legacy mount point for var/lib using ZFS
+    #"/var/lib" = {
+    #  device = "zpool/var/lib";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
 
-    "/var/lib/docker" = {
-      device = "zpool/var/lib/docker";
-      fsType = "zfs";
-    };
+    # Legacy mount point for var/lib/docker using ZFS
+    #"/var/lib/docker" = {
+    #  device = "zpool/var/lib/docker";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
 
-    "/var/lib/containers" = {
-      device = "zpool/var/lib/containers";
-      fsType = "zfs";
-    };
+    # Legacy mount point for var/lib/containers using ZFS
+    #"/var/lib/containers" = {
+    #  device = "zpool/var/lib/containers";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
 
-    "/tmp" = {
-      device = "zpool/tmp";
-      fsType = "zfs";
-    };
+    # Legacy mount point for tmp using ZFS
+    #"/tmp" = {
+    #  device = "zpool/tmp";
+    #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #};
   };
 
   swapDevices = [ ];
