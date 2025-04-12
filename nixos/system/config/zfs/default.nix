@@ -31,4 +31,15 @@ in
       };
     };
   };
+    
+  systemd = {  
+    services = {
+      zfs-mount = {
+        # Disable the zfs-mount service (native ZFS mounts)
+        # Enable the zfs-mount service (legacy ZFS mounts)
+        enable = false;
+      };
+    };
+  };
+
 }
