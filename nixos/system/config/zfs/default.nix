@@ -8,6 +8,8 @@ in
 {
   boot = {
     zfs = {
+      enabled = true;
+
       requestEncryptionCredentials = true;
 
       package = pkgs.zfs;
@@ -17,6 +19,7 @@ in
 
       devNodes = "/dev/disk/by-partuuid";
 
+      forceImportRoot = true;
       forceImportAll = true;
 
       allowHibernation = false;
