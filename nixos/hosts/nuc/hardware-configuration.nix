@@ -51,13 +51,13 @@
   fileSystems = {
 
     # Legacy mount point for root using ZFS
-    #"/" = {
-    #  device = "zpool/root";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #};
+    "/" = {
+      device = "zpool/root";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+    };
 
     # Legacy mount point for root using ZFS
     #"/boot" = {
