@@ -57,16 +57,18 @@
       options = [
         "zfsutil"
       ];
+      neededForBoot = true;
     };
 
-    # Legacy mount point for root using ZFS
-    #"/boot" = {
-    #  device = "bpool/boot";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #};
+    # Legacy mount point for boot using ZFS
+    "/boot" = {
+      device = "bpool/boot";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
 
     # UEFI boot partition on USB
     "/boot/efi" = {
@@ -79,12 +81,14 @@
         "noatime"
         "nofail"
       ];
+      neededForBoot = true;
     };
 
     # NixOS configuration on USB
     "/boot/nixos" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0364621040007011-0:0-part2";
       fsType = "xfs";
+      neededForBoot = false;
     };
 
     # Legacy mount point for home using ZFS
@@ -94,12 +98,17 @@
     #  options = [
     #    "zfsutil"
     #  ];
+    #  neededForBoot = true;
     #};
 
     # Legacy mount point for nix using ZFS
     #"/nix" = {
     #  device = "zpool/nix";
     #  fsType = "zfs";
+    #  options = [
+    #    "zfsutil"
+    #  ];
+    #  neededForBoot = true;
     #};
 
     # Legacy mount point for var using ZFS
@@ -109,6 +118,7 @@
     #  options = [
     #    "zfsutil"
     #  ];
+    #  neededForBoot = true;
     #};
 
     # Legacy mount point for var/lib using ZFS
@@ -118,6 +128,7 @@
     #  options = [
     #    "zfsutil"
     #  ];
+    #  neededForBoot = true;
     #};
 
     # Legacy mount point for var/lib/docker using ZFS
@@ -127,6 +138,7 @@
     #  options = [
     #    "zfsutil"
     #  ];
+    #  neededForBoot = true;
     #};
 
     # Legacy mount point for var/lib/containers using ZFS
@@ -136,6 +148,7 @@
     #  options = [
     #    "zfsutil"
     #  ];
+    #  neededForBoot = true;
     #};
 
     # Legacy mount point for tmp using ZFS
@@ -145,6 +158,7 @@
     #  options = [
     #    "zfsutil"
     #  ];
+    #  neededForBoot = true;
     #};
   };
 
