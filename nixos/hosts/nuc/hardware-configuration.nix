@@ -92,74 +92,74 @@
     };
 
     # Legacy mount point for home using ZFS
-    #"/home" = {
-    #  device = "zpool/home";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #  neededForBoot = true;
-    #};
+    "/home" = {
+      device = "zpool/home";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
 
     # Legacy mount point for nix using ZFS
-    #"/nix" = {
-    #  device = "zpool/nix";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #  neededForBoot = true;
-    #};
+    "/nix" = {
+      device = "zpool/nix";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
 
     # Legacy mount point for var using ZFS
-    #"/var" = {
-    #  device = "zpool/var";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #  neededForBoot = true;
-    #};
+    "/var" = {
+      device = "zpool/var";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
 
     # Legacy mount point for var/lib using ZFS
-    #"/var/lib" = {
-    #  device = "zpool/var/lib";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #  neededForBoot = true;
-    #};
+    "/var/lib" = {
+      device = "zpool/var/lib";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
 
     # Legacy mount point for var/lib/docker using ZFS
-    #"/var/lib/docker" = {
-    #  device = "zpool/var/lib/docker";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #  neededForBoot = true;
-    #};
+    "/var/lib/docker" = {
+      device = "zpool/var/lib/docker";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
 
     # Legacy mount point for var/lib/containers using ZFS
-    #"/var/lib/containers" = {
-    #  device = "zpool/var/lib/containers";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #  neededForBoot = true;
-    #};
+    "/var/lib/containers" = {
+      device = "zpool/var/lib/containers";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
 
     # Legacy mount point for tmp using ZFS
-    #"/tmp" = {
-    #  device = "zpool/tmp";
-    #  fsType = "zfs";
-    #  options = [
-    #    "zfsutil"
-    #  ];
-    #  neededForBoot = true;
-    #};
+    "/tmp" = {
+      device = "zpool/tmp";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
   };
 
   swapDevices = [ ];

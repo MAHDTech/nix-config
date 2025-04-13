@@ -10,7 +10,7 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
-    #code-cursor
+    code-cursor
   ];
 in
 {

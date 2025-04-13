@@ -50,12 +50,20 @@
     "/" = {
       device = "zpool/root";
       fsType = "zfs";
-    };
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+     };
 
     "/boot" = {
       device = "bpool/boot";
       fsType = "zfs";
-    };
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+     };
 
     "/boot/efi" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0360721030005469-0:0-part1";
@@ -67,46 +75,79 @@
         "noatime"
         "nofail"
       ];
+      neededForBoot = true;
     };
 
     "/boot/nixos" = {
       device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0360721030005469-0:0-part2";
       fsType = "xfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
     };
 
     "/home" = {
       device = "zpool/home";
       fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
     };
 
     "/nix" = {
       device = "zpool/nix";
       fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
     };
 
     "/var" = {
       device = "zpool/var";
       fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
     };
 
     "/var/lib" = {
       device = "zpool/var/lib";
       fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
     };
 
     "/var/lib/docker" = {
       device = "zpool/var/lib/docker";
       fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
     };
 
     "/var/lib/containers" = {
       device = "zpool/var/lib/containers";
       fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
     };
 
     "/tmp" = {
       device = "zpool/tmp";
       fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
     };
   };
 
