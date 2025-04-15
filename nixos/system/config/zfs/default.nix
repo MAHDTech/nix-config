@@ -8,8 +8,6 @@ in
 {
   boot = {
     zfs = {
-      enabled = true;
-
       requestEncryptionCredentials = true;
 
       package = pkgs.zfs;
@@ -34,8 +32,8 @@ in
       };
     };
   };
-    
-  systemd = {  
+
+  systemd = {
     services = {
       zfs-mount = {
         # Disable the zfs-mount service (native ZFS mounts)
