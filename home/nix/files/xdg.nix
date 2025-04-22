@@ -87,7 +87,7 @@ in
           Path=${env_cursor}
           Terminal=false
           Type=Application
-          Icon=${pkgsUnstable.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
+          Icon=${pkgs.code-cursor}/share/icons/hicolor/256x256/apps/cursor.png
           StartupWMClass=Cursor
           Comment=Cursor is an AI-first coding environment.
           MimeType=x-scheme-handler/cursor;

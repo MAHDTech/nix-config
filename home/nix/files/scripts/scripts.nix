@@ -1,7 +1,52 @@
-{config, ...}: {
+{ config, ... }:
+{
   home.file = {
-    "cursor-install" = {
-      target = "${config.home.homeDirectory}/.local/bin/cursor-install";
+
+    "install-windsurf" = {
+      target = "${config.home.homeDirectory}/.local/bin/install-windsurf";
+      executable = true;
+
+      text = ''
+        #!/usr/bin/env bash
+
+        echo "Installing windsurf..."
+
+        if ! type apt 2>/dev/null;
+        then
+          writeLog "ERROR" "Windsurf needs Ubuntu/Debian at this time"
+          exit 1
+        fi
+
+        curl \
+          --fail \
+          --silent \
+          --location \
+          --show-error \
+          "https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/windsurf.gpg" | \
+          sudo gpg --dearmor -o /usr/share/keyrings/windsurf-stable-archive-keyring.gpg
+
+        echo "deb [signed-by=/usr/share/keyrings/windsurf-stable-archive-keyring.gpg arch=amd64] https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt stable main" | \
+        sudo tee /etc/apt/sources.list.d/windsurf.list > /dev/null
+
+        sudo apt update
+
+        sudo apt install windsurf
+
+        if [[ "''${OS_NAME:-EMPTY}" == "cros" ]];
+        then
+          sudo touch /usr/share/applications/.garcon_trigger || {
+            echo "Failed to create garcon trigger!"
+            exit 9
+          }
+        fi
+
+        echo "Finished installing windsurf!"
+        exit 0
+      '';
+    };
+
+    "install-cursor" = {
+      target = "${config.home.homeDirectory}/.local/bin/install-cursor";
       executable = true;
 
       text = ''
