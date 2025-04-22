@@ -1,6 +1,8 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   username = "mahdtech";
-in {
+in
+{
   users.users.${username} = {
     name = username;
     uid = 1000;
@@ -11,7 +13,7 @@ in {
     group = username;
 
     # mkpasswd --method=SHA-512 --stdin
-    initialHashedPassword = "$6$0fQUL.dlpw4kaVRc$/cbRiuWeR5Pu9yc7uvF2sktWtGOtTjtXviU.mAtWZlOwURJ0Ld1Ccxo5K9yiQ7LqPMU3NCcGGrk3Q7jmiFgS21";
+    initialHashedPassword = "$6$0fQUL.dlpw4kaVRc$/cbRiuWeR5Pu9yc7uvF2sktWtGOtTjtXviU.mAtWZlOwURJ0Ld1Ccxo5K9yiQ7LqPMU3NCcGGrk3Q7jmiFgS21"; # spellchecker:disable-line
 
     # SOPS
     #hashedPasswordFile = config.sops.secrets.mahdtech.path;
@@ -29,6 +31,7 @@ in {
       "plugdev"
       "rtkit"
       "trezord"
+      "users"
       "video"
       "vmware"
       "wheel"

@@ -4,7 +4,7 @@ locale = "en-au"
 
 extend-ignore-re = [
     "^[ \t]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*^[ \t]*-----END PGP PUBLIC KEY BLOCK-----",
-    "^[ \t]*initialHashedPassword[ \t]*=[ \t]*.*$"
+    "(?Rm)^.*(#|//)\\s*spellchecker:disable-line$"
 ]
 
 [default.extend-words]
