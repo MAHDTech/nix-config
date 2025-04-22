@@ -68,6 +68,9 @@
         netbootxyz.enable = false;
 
         configurationLimit = 10;
+
+        # Disable bootloader editing for security
+        editor = false;
       };
 
       grub = {

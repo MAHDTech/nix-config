@@ -25,7 +25,7 @@
     };
 
     "/boot" = {
-      device = "zpool/boot";
+      device = "bpool/boot";
       fsType = "zfs";
     };
 

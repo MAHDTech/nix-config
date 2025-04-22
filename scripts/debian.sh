@@ -133,7 +133,7 @@ if [[ ${INSTALL_NIX_ON_DEBIAN:-FALSE} == "TRUE" ]]; then
 	sudo tee "/etc/nix/nix.conf" >/dev/null <<-EOF
 		# Nix daemon configuration
 
-		allowed-users = @nix-users
+		allowed-users = *
 
 		auto-optimise-store = true
 

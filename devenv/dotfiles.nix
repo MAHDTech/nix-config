@@ -92,7 +92,12 @@ in
       check-yaml.enable = true;
       commitizen.enable = true;
       convco.enable = true;
-      deadnix.enable = true;
+      deadnix = {
+        enable = true;
+        settings = {
+          noUnderscore = true;
+        };
+      };
       dialyzer.enable = true;
       editorconfig-checker.enable = true;
       gofmt.enable = true;

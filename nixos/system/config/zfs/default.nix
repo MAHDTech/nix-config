@@ -1,16 +1,23 @@
-{pkgs, ...}: let
-  zfsPoolNames = ["zpool"];
-in {
+{ pkgs, ... }:
+let
+  zfsPoolNames = [
+    "bpool"
+    "zpool"
+  ];
+in
+{
   boot = {
     zfs = {
       requestEncryptionCredentials = true;
 
       package = pkgs.zfs;
 
+      # ZFS auto-import pools.
       extraPools = zfsPoolNames;
 
       devNodes = "/dev/disk/by-partuuid";
 
+      forceImportRoot = true;
       forceImportAll = true;
 
       allowHibernation = false;
@@ -25,4 +32,15 @@ in {
       };
     };
   };
+
+  systemd = {
+    services = {
+      zfs-mount = {
+        # Disable the zfs-mount service (native ZFS mounts)
+        # Enable the zfs-mount service (legacy ZFS mounts)
+        enable = true;
+      };
+    };
+  };
+
 }

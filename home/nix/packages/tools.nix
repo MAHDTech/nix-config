@@ -25,7 +25,7 @@ in
 
       # Nix
       nixos-generators
-      nix-du
+      #nix-du
 
       # Shell
       nushell
@@ -117,6 +117,9 @@ in
       signal-desktop
       google-chrome
       remmina
+
+      # Office
+      onlyoffice-desktopeditors
 
       # Trezor
       trezor-suite

@@ -4,7 +4,7 @@ locale = "en-au"
 
 extend-ignore-re = [
     "^[ \t]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*^[ \t]*-----END PGP PUBLIC KEY BLOCK-----",
-    "^[ \t]*initialHashedPassword[ \t]*=[ \t]*.*$"
+    "(?Rm)^.*(#|//)\\s*spellchecker:disable-line$"
 ]
 
 [default.extend-words]
@@ -20,6 +20,7 @@ hashi = "hashi"
 hashicorp = "hashicorp"
 hda = "hda"
 maximize = "maximize"
+monitord = "monitord"
 normalization = "normalization"
 organize = "organize"
 optimizations = "optimizations"

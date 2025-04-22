@@ -2,8 +2,15 @@
   pkgs,
   config,
   ...
-}: {
-  home.packages = with pkgs; [git git-lfs gh git-filter-repo bfg-repo-cleaner];
+}:
+{
+  home.packages = with pkgs; [
+    git
+    git-lfs
+    gh
+    git-filter-repo
+    bfg-repo-cleaner
+  ];
 
   home.file = {
     "allowed-signers" = {
@@ -77,7 +84,9 @@
 
       # [credential]
       #  git help -a | grep credential-
-      credential = {helper = "cache";};
+      credential = {
+        helper = "cache";
+      };
 
       # [color]
       color = {
@@ -162,27 +171,43 @@
       };
 
       # [fetch]
-      fetch = {prune = true;};
+      fetch = {
+        prune = true;
+      };
 
       # [push]
-      push = {default = "current";};
+      push = {
+        default = "current";
+      };
 
       # [pull]
-      pull = {rebase = true;};
+      pull = {
+        rebase = true;
+      };
 
       # [http]
-      http = {sslVerify = true;};
+      http = {
+        sslVerify = true;
+      };
 
       # [tag]
-      tag = {forceSignAnnotated = true;};
+      tag = {
+        forceSignAnnotated = true;
+      };
 
       # [url]
       url = {
-        "ssh://git@github.com" = {insteadOf = "https://github.com";};
+        "ssh://git@github.com" = {
+          insteadOf = "https://github.com";
+        };
 
-        "ssh://git@gitlab.com" = {insteadOf = "https://gitlab.com";};
+        "ssh://git@gitlab.com" = {
+          insteadOf = "https://gitlab.com";
+        };
 
-        "ssh://git@bitbucket.org" = {insteadOf = "https://bitbucket.org";};
+        "ssh://git@bitbucket.org" = {
+          insteadOf = "https://bitbucket.org";
+        };
       };
     };
 
@@ -343,6 +368,10 @@
       # SSH keys
       ".ssh/id_rsa"
       ".ssh/id_rsa.pub"
+
+      # Golang
+      "!vendor/"
+      "!vendor/**"
 
       # GPG
       ".gnupg"

@@ -2,14 +2,20 @@
   config,
   pkgs,
   ...
-}: {
-  imports = [];
+}:
+{
+  imports = [ ];
 
   # NOTE: cosmic packages now pulled from nixos-cosmic flake.
 
   environment.systemPackages = with pkgs; [
     #system76-firmware
   ];
+
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    COSMIC_DATA_CONTROL_ENABLED = "1";
+  };
 
   hardware.system76 = {
     enableAll = false;
@@ -19,8 +25,15 @@
   };
 
   services = {
+
     # COSMIC Desktop
-    desktopManager.cosmic.enable = true;
+    desktopManager.cosmic = {
+      enable = true;
+      xwayland = {
+        enable = true;
+      };
+    };
+
     displayManager.cosmic-greeter.enable = true;
 
     # Other
@@ -34,4 +47,17 @@
     # Disable when using power-profiles daemon or TLP
     #system76-power
   ];
+
+  systemd = {
+    packages = with pkgs; [
+      observatory
+    ];
+    services = {
+      monitord = {
+        wantedBy = [
+          "multi-user.target"
+        ];
+      };
+    };
+  };
 }

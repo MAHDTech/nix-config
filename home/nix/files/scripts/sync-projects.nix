@@ -43,6 +43,7 @@
           "crostini" )
 
             PROJECTS_LOCAL="''${HOME}/Projects/"
+            BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
             RSYNC_PROJECTS_REMOTE="/mnt/chromeos/GoogleDrive/MyDrive/Projects/Backup/"
 
@@ -54,6 +55,7 @@
           "wsl" )
 
             PROJECTS_LOCAL="''${HOME}/Projects/"
+            BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
             RSYNC_PROJECTS_REMOTE="/mnt/g/My Drive/Projects/Backup/"
 
@@ -109,6 +111,17 @@
         ##################################################
 
         function checkFolders() {
+
+          # Make sure the local backup directories exist.
+          if [[ ! -d "''${BACKUP_LOCAL}" ]]; then
+            writeLog "WARN" "The local backup directory does not exist, creating it"
+            mkdir --parents "''${BACKUP_LOCAL}" || {
+              writeLog "ERROR" "Failed to create backup directory ''${BACKUP_LOCAL}"
+              return 1
+            }
+          else
+            writeLog "DEBUG" "The local backup directory exists"
+          fi
 
           # Make sure the local and remote directories exist.
           if [[ ! -d "''${PROJECTS_LOCAL}" ]]; then
@@ -267,7 +280,7 @@
           rclone sync \
             "''${RCLONE_PROJECTS_REMOTE}" \
             "''${PROJECTS_LOCAL}" \
-            --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-restore" \
+            --backup-dir "''${BACKUP_LOCAL}/$(date +%Y-%m-%d_%H-%M-%S)-restore" \
             --checksum \
             --update \
             --ignore-times \
