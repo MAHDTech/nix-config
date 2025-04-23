@@ -22,7 +22,7 @@
       ]
     }
   },
-  "image": "ghcr.io/cachix/devenv/devcontainer:latest",
+  "image": "ghcr.io/cachix/devenv:latest",
   "overrideCommand": false,
   "updateContentCommand": "devenv test"
 }

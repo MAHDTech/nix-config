@@ -18,7 +18,6 @@
       owner = "NixOS";
       repo = "nixpkgs";
       ref = "release-24.11";
-      #ref = "staging-next-24.11";
       flake = true;
     };
 
