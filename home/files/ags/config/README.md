@@ -15,7 +15,7 @@ ags init --directory $(pwd)/ --force
 - Generate the types
 
 ```bash
-ags types --directory $(pwd)/ --tsconfig
+ags types --directory $(pwd)/ --package
 ```
 
 - Run the app to test

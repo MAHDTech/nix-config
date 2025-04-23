@@ -102,7 +102,7 @@
       type = "github";
       owner = "Aylur";
       repo = "ags";
-      ref = "main";
+      ref = "v2.3.0";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -111,7 +111,7 @@
       type = "github";
       owner = "InioX";
       repo = "matugen";
-      ref = "v2.2.0";
+      ref = "v2.4.1";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };

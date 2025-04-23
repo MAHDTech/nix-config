@@ -1,0 +1,8 @@
+node_modules/
+@girs/
+style.css
+*.css.map
+app.js.map
+traceify/
+/epikshell.js
+/styles/variables.scss
