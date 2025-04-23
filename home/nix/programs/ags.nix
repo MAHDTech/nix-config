@@ -28,6 +28,8 @@
     inputs.ags.packages.${pkgs.system}.astal3
     inputs.ags.packages.${pkgs.system}.astal4
     inputs.ags.packages.${pkgs.system}.io
+
+    # Matugen
     inputs.matugen.packages.${pkgs.system}.default
 
     # Marble
