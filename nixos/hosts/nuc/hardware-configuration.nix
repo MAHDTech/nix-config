@@ -21,6 +21,7 @@
 
     initrd = {
       availableKernelModules = [
+        "ahci"
         "nvme"
         "sd_mod"
         "thunderbolt"
