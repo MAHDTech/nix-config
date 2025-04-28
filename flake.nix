@@ -87,7 +87,6 @@
       repo = "declarative-flatpak";
       ref = "dev";
       flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     catppuccin = {
