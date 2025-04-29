@@ -83,8 +83,10 @@
 
     flatpaks = {
       type = "github";
-      owner = "GermanBread";
+      #owner = "GermanBread";
+      owner = "in-a-dil-emma";
       repo = "declarative-flatpak";
+      #ref = "stable-v3";
       ref = "dev";
       flake = true;
     };
@@ -278,7 +280,7 @@
             ./nixos/hosts/nuc
 
             catppuccin.nixosModules.catppuccin
-            flatpaks.nixosModules.declarative-flatpak
+            flatpaks.nixosModule
             home-manager.nixosModules.home-manager
             musnix.nixosModules.default
             nixos-cosmic.nixosModules.default
@@ -325,7 +327,7 @@
             ./nixos/hosts/jons
 
             catppuccin.nixosModules.catppuccin
-            flatpaks.nixosModules.declarative-flatpak
+            flatpaks.nixosModule
             home-manager.nixosModules.home-manager
             musnix.nixosModules.default
             nixos-cosmic.nixosModules.default

@@ -153,13 +153,13 @@
       "locked": {
         "lastModified": 1745852896,
         "narHash": "sha256-R4zpW9rer0UVG4cxYOwdFYzTiCDYFJlWWTxzbwhkb0E=",
-        "owner": "GermanBread",
+        "owner": "in-a-dil-emma",
         "repo": "declarative-flatpak",
         "rev": "c0c52781785b99eb42cefef6318ed34cd3e56528",
         "type": "github"
       },
       "original": {
-        "owner": "GermanBread",
+        "owner": "in-a-dil-emma",
         "ref": "dev",
         "repo": "declarative-flatpak",
         "type": "github"
