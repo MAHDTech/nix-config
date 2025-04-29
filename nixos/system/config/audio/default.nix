@@ -1,5 +1,6 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
   environment.systemPackages = with pkgs; [
   ];
@@ -11,8 +12,6 @@
   security.rtkit.enable = true;
 
   services = {
-    blueman.enable = true;
-
     pipewire = {
       enable = true;
 
@@ -30,7 +29,12 @@
           "10-sample-rate" = {
             "context.properties" = {
               "default.clock.rate" = 96000;
-              "default.clock.allowed-rates" = [96000 48000 44100 32000];
+              "default.clock.allowed-rates" = [
+                96000
+                48000
+                44100
+                32000
+              ];
               "default.clock.quantum" = 32;
               "default.clock.min-quantum" = 32;
               "default.clock.max-quantum" = 32;
@@ -57,7 +61,7 @@
             "context.properties" = [
               {
                 name = "libpipewire-module-protocol-pulse";
-                args = {};
+                args = { };
               }
             ];
             "pulse.properties" = {
@@ -85,7 +89,7 @@
             };
           };
         };
-        jack = {};
+        jack = { };
       };
 
       alsa = {

@@ -8,6 +8,8 @@
     bluez-tools
   ];
 
+  services.blueman.enable = false; # Use overskride instead
+
   hardware.bluetooth = {
     enable = true;
     package = pkgs.bluez-experimental;
