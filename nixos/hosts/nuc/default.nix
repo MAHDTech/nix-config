@@ -16,17 +16,22 @@
     ../../system/config/bluetooth
     ../../system/config/disk/gparted
     ../../system/config/fonts
-    ../../system/config/hardware/laptop
-    ../../system/config/network/wireless
     ../../system/config/power
     ../../system/config/printing
     ../../system/config/services
+    ../../system/config/theme/catppuccin
+
+    # Laptop
+    ../../system/config/hardware/laptop
+    ../../system/config/network/wireless
     ../../system/config/services/throttled
     ../../system/config/services/upower
-    ../../system/config/theme/catppuccin
 
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
+
+    # Tailscale
+    ../../system/config/services/tailscale
 
     # Desktop Applications and Services
     ../../system/config/programs/1password
