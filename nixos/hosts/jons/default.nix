@@ -21,6 +21,9 @@
     ../../system/config/services
     ../../system/config/theme/catppuccin
 
+    # Desktop
+    ../../system/config/services/upower
+
     # Networking
     ../../system/config/network/hosts.nix
 

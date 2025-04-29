@@ -81,6 +81,16 @@
           PubkeyAuthentication = "no";
         };
       };
+
+      "bingamon-jumpbox" = {
+        host = "bingamon-jumpbox";
+        hostname = "192.168.85.76";
+        user = "linadmin";
+        extraOptions = {
+          PasswordAuthentication = "yes";
+          PubkeyAuthentication = "yes";
+        };
+      };
     };
   };
 }
