@@ -10,33 +10,64 @@
           // Cursor General
           "cursor.general.enableShadowWorkspace": true,
           "cursor.general.gitGraphIndexing": "enabled",
+          "cursor.general.disableHttp2": false,
+          "cursor.general.globalCursorIgnoreList": [
+            "**/.env",
+            "**/.env.*",
+            "**/credentials.json",
+            "**/credentials.*.json",
+            "**/secret.json",
+            "**/secrets.json",
+            "**/*.key",
+            "**/*.pem",
+            "**/*.pfx",
+            "**/*.p12",
+            "**/*.crt",
+            "**/*.cer",
+            "**/id_rsa",
+            "**/id_dsa",
+            "**/.ssh/id_*"
+          ],
+
+          // Cursor in-line code editing.
+          "cursor.cmdk.autoSelect": true,
+          "cursor.cmdk.useThemedDiffBackground2": true,
 
           // Cursor Cloud
           "cursor-retrieval.canAttemptGithubLogin": true,
 
           // Cursor Chat
-          "cursor.chat.alwaysSearchWeb": false,
-          "cursor.chat.defaultNoContext": false,
-          "cursor.chat.premiumChatAutoScrollWhenAtBottom": false,
-          "cursor.chat.showSuggestedFiles": true,
-          "cursor.chat.smoothStreaming": true,
           "cursor.chat.terminalShowHoverHint": true,
+          "cursor.preferNotificationsSameAsChat": true,
+
+          // Cursor Tab
+          "cursor.cpp.disabledLanguages": [
+          ],
+          "cursor.cpp.enablePartialAccepts": false,
 
           // Cursor Composer
+          "cursor.composer.cmdPFilePicker2": false,
           "cursor.composer.collapsePaneInputBoxPills": true,
+          "cursor.composer.shouldAllowCustomModes": true,
+          "cursor.composer.shouldAutoAcceptDiffs": true,
+          "cursor.composer.shouldAutoSaveNonAgent": true,
           "cursor.composer.shouldAutoScrollToBottom": false,
+          "cursor.composer.shouldChimeAfterChatFinishes": true,
+          "cursor.composer.shouldQueueWhenGenerating": true,
+          "cursor.composer.shouldShowMarkdownHoverParticipantActions2": true,
+          "cursor.composer.showSuggestedFiles": true,
 
           // Cursor Diffs
-          "cursor.cmdk.useThemedDiffBackground": true,
           "cursor.diffs.useCharacterLevelDiffs": true,
 
-          // Cursor AI Preview
-          "cursor.aipreview.enabled": true,
+          // Cursor Terminal
+          "cursor.terminal.usePreviewBox": false,
 
           // Window
           "window.commandCenter": true,
-          "window.zoomLevel": 1,
           "window.titleBarStyle": "custom",
+          "window.zoomLevel": 1,
+          "window.zoomPerWindow": true,
 
           // Editor
           "editor.fontFamily": "'JetBrains Mono', 'JetBrains Mono Nerd Font', monospace",
