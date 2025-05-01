@@ -50,6 +50,7 @@ in
 
       # Disk imagers
       unetbootin
+      syslinux
       ventoy-full
 
       # CLI
