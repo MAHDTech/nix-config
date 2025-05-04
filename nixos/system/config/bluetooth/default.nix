@@ -3,9 +3,11 @@
   imports = [ ];
 
   environment.systemPackages = with pkgs; [
-    overskride
     bluez
+    bluez-alsa
+    bluez-experimental
     bluez-tools
+    overskride
   ];
 
   services.blueman.enable = false; # Use overskride instead
@@ -17,12 +19,12 @@
     powerOnBoot = true;
     hsphfpd.enable = false; # conflicts with wireplumber
     # Bluez settings
-    # https://github.com/bluez/bluez/blob/3818b99c764efe84cd3455081f6392c256564085/src/main.conf
+    # https://github.com/bluez/bluez/blob/master/src/main.conf
     settings = {
       General = {
         ControllerMode = "dual"; # Both BR/EDR and LE are enabled
         Enable = "Source,Sink,Media,Socket";
-        Experimental = "false"; # Enable DBUS experimental interfaces
+        Experimental = "true"; # Enable DBUS experimental interfaces
         FastConnectable = "true";
         KernelExperimental = "false"; # Enables kernel experimental features via UUID.
       };
@@ -35,4 +37,12 @@
     };
     disabledPlugins = [ ];
   };
+
+  # Impermanence for Bluetooth
+  # https://nixos.wiki/wiki/Impermanence
+  #environment.persistence."/persistent" = {
+  #  directories = [
+  #    "/var/lib/bluetooth"
+  #  ];
+  #};
 }
