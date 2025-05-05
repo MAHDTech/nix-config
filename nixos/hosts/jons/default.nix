@@ -22,6 +22,7 @@
     ../../system/config/theme/catppuccin
 
     # Desktop
+    ../../system/config/network/wireless
     ../../system/config/services/upower
 
     # Networking
