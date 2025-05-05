@@ -83,11 +83,12 @@
     };
 
     extraPortals = with pkgs; [
-      pantheon.xdg-desktop-portal-pantheon
-      xdg-desktop-portal-cosmic
-      xdg-desktop-portal-gtk
-      xdg-desktop-portal-hyprland
-      xdg-desktop-portal-wlr
+      # Make sure the DE has the portal configured.
+      #pantheon.xdg-desktop-portal-pantheon
+      #xdg-desktop-portal-cosmic
+      #xdg-desktop-portal-gtk
+      #xdg-desktop-portal-hyprland
+      #xdg-desktop-portal-wlr
     ];
   };
 }

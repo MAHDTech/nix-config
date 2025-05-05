@@ -3,6 +3,11 @@
   imports = [ ];
 
   environment.systemPackages = with pkgs; [
+    ffmpeg-full # Includes H.264, VP8, VP9 codecs
+    libva # Hardware acceleration support (if applicable)
+    #gstreamer
+    #gst-plugins-base
+    #gst-plugins-good
   ];
 
   hardware = {
@@ -35,11 +40,9 @@
                 44100
                 32000
               ];
-              "default.clock.quantum" = 32;
-              "default.clock.min-quantum" = 32;
-              "default.clock.max-quantum" = 32;
-              "default.clock.quantum-floor" = 32;
-              "default.clock.quantum-limit" = 32;
+              "default.clock.quantum" = 256;
+              "default.clock.min-quantum" = 256;
+              "default.clock.max-quantum" = 1024;
             };
           };
           "10-resample" = {
@@ -65,11 +68,11 @@
               }
             ];
             "pulse.properties" = {
-              "pulse.min.req" = "32/96000";
-              "pulse.default.req" = "32/96000";
-              "pulse.max.req" = "32/96000";
-              "pulse.min.quantum" = "32/96000";
-              "pulse.max.quantum" = "32/96000";
+              "pulse.min.req" = "256/96000";
+              "pulse.default.req" = "256/96000";
+              "pulse.max.req" = "1024/96000";
+              "pulse.min.quantum" = "256/96000";
+              "pulse.max.quantum" = "1024/96000";
             };
             "stream.properties" = {
               "node.latency" = "32/96000";

@@ -19,6 +19,10 @@
 
     # Greeter
     greetd.tuigreet
+
+    # XDG
+    xdg-utils
+    xdg-launch
   ];
 
   services = {
@@ -34,6 +38,7 @@
     hyprland = {
       enable = true;
       xwayland = {
+        # Needed for screen sharing
         enable = true;
       };
       withUWSM = true;
@@ -51,7 +56,7 @@
     enable = true;
     xdgOpenUsePortal = true;
     extraPortals = with pkgs; [
-      xdg-desktop-portal-gtk
+      #xdg-desktop-portal-gtk
       xdg-desktop-portal-hyprland
     ];
   };
