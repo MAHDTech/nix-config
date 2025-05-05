@@ -182,6 +182,12 @@
             "editor.tabSize": 2
           },
 
+          // Hediet DrawIO
+          "hediet.vscode-drawio.appearance": "dark",
+          "hediet.vscode-drawio.codeLinkActivated": false,
+          "hediet.vscode-drawio.offline": false,
+          "hediet.vscode-drawio.online-url": "https://embed.diagrams.net/",
+
           // Markdown PDF
           "markdown-pdf.format": "A4",
           "markdown-pdf.emoji": true,
