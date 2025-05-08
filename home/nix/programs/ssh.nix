@@ -64,12 +64,20 @@
         host = "github.com";
         hostname = "github.com";
         user = "git";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
       };
 
       "gitlab.com" = {
         host = "gitlab.com";
         hostname = "gitlab.com";
         user = "git";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
       };
 
       "kvm" = {
@@ -88,6 +96,94 @@
         user = "linadmin";
         extraOptions = {
           PasswordAuthentication = "yes";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      #
+      # Nutanix AHV Nodes
+      #
+
+      "ntnx-ahv-1" = {
+        host = "ntnx-ahv-1";
+        hostname = "ntnx-ahv-1.saltlabs.cloud";
+        user = "nutanix";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "ntnx-ahv-2" = {
+        host = "ntnx-ahv-2";
+        hostname = "ntnx-ahv-2.saltlabs.cloud";
+        user = "nutanix";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "ntnx-ahv-3" = {
+        host = "ntnx-ahv-3";
+        hostname = "ntnx-ahv-3.saltlabs.cloud";
+        user = "nutanix";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "ntnx-ahv-4" = {
+        host = "ntnx-ahv-4";
+        hostname = "ntnx-ahv-4.saltlabs.cloud";
+        user = "nutanix";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      #
+      # Nutanix CVM VMs
+      #
+
+      "ntnx-ahv-1-cvm" = {
+        host = "ntnx-ahv-1-cvm";
+        hostname = "ntnx-ahv-1-cvm.saltlabs.cloud";
+        user = "admin";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "ntnx-ahv-2-cvm" = {
+        host = "ntnx-ahv-2-cvm";
+        hostname = "ntnx-ahv-2-cvm.saltlabs.cloud";
+        user = "admin";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "ntnx-ahv-3-cvm" = {
+        host = "ntnx-ahv-3-cvm";
+        hostname = "ntnx-ahv-3-cvm.saltlabs.cloud";
+        user = "admin";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "ntnx-ahv-4-cvm" = {
+        host = "ntnx-ahv-4-cvm";
+        hostname = "ntnx-ahv-4-cvm.saltlabs.cloud";
+        user = "admin";
+        extraOptions = {
+          PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
         };
       };

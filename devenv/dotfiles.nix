@@ -15,12 +15,13 @@ let
     figlet
     go-tools
     golangci-lint
+    nil
     nix
     pulumi-bin # bundled with plugins.
     pulumictl
-    yq-go
-    trivy
     sshuttle
+    trivy
+    yq-go
   ];
 
 in

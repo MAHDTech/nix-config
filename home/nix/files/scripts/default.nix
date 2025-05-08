@@ -12,6 +12,9 @@
     # Setup Hyprland Workspaces
     ./setup-workspaces.nix
 
+    # Hyprland misc scripts
+    ./hyprland.nix
+
     # Sync projects.
     ./sync-projects.nix
   ];
