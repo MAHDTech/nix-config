@@ -107,7 +107,7 @@
       "ntnx-ahv-1" = {
         host = "ntnx-ahv-1";
         hostname = "ntnx-ahv-1.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
@@ -117,7 +117,7 @@
       "ntnx-ahv-2" = {
         host = "ntnx-ahv-2";
         hostname = "ntnx-ahv-2.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
@@ -127,7 +127,7 @@
       "ntnx-ahv-3" = {
         host = "ntnx-ahv-3";
         hostname = "ntnx-ahv-3.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
@@ -137,7 +137,7 @@
       "ntnx-ahv-4" = {
         host = "ntnx-ahv-4";
         hostname = "ntnx-ahv-4.saltlabs.cloud";
-        user = "nutanix";
+        user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
