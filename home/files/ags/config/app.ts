@@ -39,7 +39,7 @@ function patch(proto, prop) {
 }
 var snakeify
 var init_overrides = __esm({
-  async "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/overrides.ts"() {
+  async "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/overrides.ts"() {
     snakeify = (str) =>
       str
         .replace(/([a-z])([A-Z])/g, "$1_$2")
@@ -166,7 +166,7 @@ function mkApp(App) {
   })()
 }
 var init_app = __esm({
-  async "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/_app.ts"() {
+  async "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/_app.ts"() {
     await init_overrides()
   },
 })
@@ -174,7 +174,7 @@ import Gtk2 from "gi://Gtk?version=3.0"
 import Astal from "gi://Astal?version=3.0"
 var app_default
 var init_app2 = __esm({
-  async "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/app.ts"() {
+  async "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/app.ts"() {
     await init_app()
     Gtk2.init(null)
     app_default = mkApp(Astal.Application)
@@ -182,7 +182,7 @@ var init_app2 = __esm({
 })
 var snakeify2, kebabify, Binding, bind, binding_default
 var init_binding = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/binding.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/binding.ts"() {
     snakeify2 = (str) =>
       str
         .replace(/([a-z])([A-Z])/g, "$1_$2")
@@ -254,7 +254,7 @@ function idle(callback) {
 }
 var Time
 var init_time = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/time.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/time.ts"() {
     Time = Astal2.Time
   },
 })
@@ -293,14 +293,14 @@ function execAsync(cmd) {
 }
 var Process
 var init_process = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/process.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/process.ts"() {
     Process = Astal3.Process
   },
 })
 import Astal4 from "gi://AstalIO"
 var VariableWrapper, Variable, derive, variable_default
 var init_variable = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/variable.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/variable.ts"() {
     init_binding()
     init_time()
     init_process()
@@ -579,7 +579,7 @@ function jsx(ctors2, ctor, { children, ...props }) {
 }
 var noImplicitDestroy, setChildren
 var init_astal = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/_astal.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/_astal.ts"() {
     init_variable()
     init_process()
     init_binding()
@@ -707,7 +707,7 @@ function astalify(cls, clsName = cls.name) {
   return Widget5
 }
 var init_astalify = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/astalify.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/astalify.ts"() {
     init_astal()
   },
 })
@@ -740,7 +740,7 @@ function filter(children) {
 }
 var Box, Button, CenterBox, CircularProgress, DrawingArea, Entry, EventBox, Icon, Label, LevelBar, MenuButton, Overlay, Revealer, Scrollable, Slider, Stack, Switch, Window
 var init_widget = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/widget.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/widget.ts"() {
     init_astalify()
     Object.defineProperty(Astal6.Box.prototype, "children", {
       get() {
@@ -928,7 +928,7 @@ import Astal7 from "gi://Astal?version=3.0"
 import Gtk5 from "gi://Gtk?version=3.0"
 import Gdk from "gi://Gdk?version=3.0"
 var init_gtk3 = __esm({
-  async "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/index.ts"() {
+  async "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/index.ts"() {
     init_astalify()
     await init_app2()
     init_widget()
@@ -970,7 +970,7 @@ function monitorFile(path, callback) {
     callback(file, event)
   })
 }
-var init_file = __esm({ "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/file.ts"() {} })
+var init_file = __esm({ "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/file.ts"() {} })
 import GLib2 from "gi://GLib?version=2.0"
 import Gio3 from "gi://Gio?version=2.0"
 async function sh(strings, ...values) {
@@ -1557,7 +1557,7 @@ function defaultValue(declaration) {
 }
 var meta, priv, ParamSpec, ParamFlags, kebabify2
 var init_gobject = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gobject.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gobject.ts"() {
     meta = Symbol("meta")
     priv = Symbol("priv")
     ;({ ParamSpec, ParamFlags } = GObject4)
@@ -1570,7 +1570,7 @@ var init_gobject = __esm({
 })
 import { default as default3 } from "gi://AstalIO?version=0.1"
 var init_gjs = __esm({
-  async "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/index.ts"() {
+  async "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/index.ts"() {
     await init_overrides()
     init_process()
     init_time()
@@ -1585,7 +1585,7 @@ function jsx2(ctor, props) {
 }
 var ctors, jsxs
 var init_jsx_runtime = __esm({
-  "../../../../nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/jsx-runtime.ts"() {
+  "/nix/store/zqn3hxrlyyg9mkd267g0dvxa5rrcrd0c-astal-gjs/share/astal/gjs/gtk3/jsx-runtime.ts"() {
     init_astal()
     init_widget()
     ctors = {
