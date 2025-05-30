@@ -193,6 +193,11 @@
           "markdown-pdf.emoji": true,
           "markdown-pdf.orientation": "landscape",
 
+          // Markdown
+          "files.associations": {
+            "*.mdx": "markdown"
+          },
+
           // dotenv
           "files.associations": {
             ".env*": "dotenv"

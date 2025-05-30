@@ -2,7 +2,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   boot = {
     consoleLogLevel = 4;
 
@@ -11,10 +12,10 @@
       systemd = {
         enable = true;
       };
-      kernelModules = [];
+      kernelModules = [ ];
     };
 
-    extraModulePackages = with config.boot.kernelPackages; [];
+    extraModulePackages = with config.boot.kernelPackages; [ ];
 
     kernelModules = [
     ];
@@ -40,6 +41,11 @@
 
       "quiet"
     ];
+
+    # Increase file watcher limit for all users
+    kernel.sysctl = {
+      "fs.inotify.max_user_watches" = 524288;
+    };
 
     plymouth = {
       enable = true;
