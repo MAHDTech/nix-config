@@ -2,8 +2,9 @@
   config,
   pkgs,
   ...
-}: {
-  imports = [];
+}:
+{
+  imports = [ ];
 
   # NOTES:
   #   - NVIDIA QUADRO T400
@@ -69,9 +70,11 @@
     };
   };
 
-  services.xserver.videoDrivers = [
-    "nvidia"
-  ];
+  services.xserver = {
+    videoDrivers = [
+      "nvidia"
+    ];
+  };
 
   environment.variables = {
     GBM_BACKEND = "nvidia-drm";

@@ -81,6 +81,7 @@
 
   services.xserver = {
     videoDrivers = [
+      "ihd"
       "intel"
     ];
   };
