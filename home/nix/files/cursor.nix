@@ -118,6 +118,11 @@
             "editor.defaultFormatter": "dbaeumer.vscode-eslint"
           },
 
+          // Markdown
+          "[markdown]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode",
+          },
+
           // Typescript
           "typescript.inlayHints.parameterNames.enabled": "all",
           "[typescript]": {
@@ -192,6 +197,11 @@
           "markdown-pdf.format": "A4",
           "markdown-pdf.emoji": true,
           "markdown-pdf.orientation": "landscape",
+
+          // Markdown
+          "files.associations": {
+            "*.mdx": "markdown"
+          },
 
           // dotenv
           "files.associations": {

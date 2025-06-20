@@ -13,23 +13,32 @@
       executable = true;
 
       text = ''
-        #!${pkgs.python3}/bin/bash
+        #!${pkgs.bash}/bin/bash
 
         echo "Forcing hyprlock session unlock"
 
         # Make sure we have the deps in the path.
         type hyprctl 2>/dev/null || {
-          echo "hyprctl not found in the path"
+          echo "hyprctl not found in the path!"
           exit 1
         }
 
+        # Force kill any running hyprlock instances
+        pkill --full hyprlock || true
+
         # Permit screen unlock for this session
-        hyprctl --instance 0 'keyword misc:allow_session_lock_restore 1'
+        hyprctl --instance 0 'keyword misc:allow_session_lock_restore 1' || {
+          echo "Failed to permit screen unlock for this session"
+          exit 1
+        }
 
         # Exec hyprlock
-        hyprctl --instance 0 'dispatch exec hyprlock'
+        hyprctl --instance 0 'dispatch exec hyprlock' || {
+          echo "Failed to exec hyprlock"
+          exit 1
+        }
 
-        echo "hyprlock session unlocked, return to desktop"
+        echo "hyprlock session has been unlocked. You may now return to the desktop."
         exit 0
       '';
     };

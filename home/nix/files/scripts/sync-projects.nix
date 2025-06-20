@@ -42,7 +42,7 @@
 
           "crostini" )
 
-            PROJECTS_LOCAL="''${HOME}/Projects/"
+            PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
             BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
             RSYNC_PROJECTS_REMOTE="/mnt/chromeos/GoogleDrive/MyDrive/Projects/Backup/"
@@ -54,7 +54,7 @@
 
           "wsl" )
 
-            PROJECTS_LOCAL="''${HOME}/Projects/"
+            PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
             BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
             RSYNC_PROJECTS_REMOTE="/mnt/g/My Drive/Projects/Backup/"
@@ -76,11 +76,15 @@
                 then
                   echo "On NixOS, insync needs to be installed"
                   exit 2
+                else
+                  # InSync is used for remote upload.
+                  RCLONE_ENABLED=false
                 fi
 
-                PROJECTS_LOCAL="''${HOME}/Projects/"
+                PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
+                BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
-                RSYNC_PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/Google Drive/Projects/Backup/"
+                RSYNC_PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/gdrive/Projects/Backup/"
 
                 RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
                 RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
@@ -234,7 +238,7 @@
             --exclude=".direnv" \
             --exclude="node_modules" \
             "''${PROJECTS_LOCAL}" \
-            "''${PROJECTS_REMOTE}" \
+            "''${RSYNC_PROJECTS_REMOTE}" \
           || {
             writeLog "ERROR" "Failed to backup projects"
             return 1

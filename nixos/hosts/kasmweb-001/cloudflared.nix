@@ -2,9 +2,6 @@
   services.cloudflared = {
     enable = true;
 
-    user = "cloudflared";
-    group = "cloudflared";
-
     tunnels = {
       "kasmweb" = {
 

@@ -2,7 +2,8 @@
   inputs,
   pkgs,
   ...
-}: {
+}:
+{
   nix = {
     enable = true;
 
@@ -16,7 +17,7 @@
 
     optimise = {
       automatic = true;
-      dates = ["weekly"];
+      dates = [ "weekly" ];
     };
 
     settings = {
@@ -33,7 +34,10 @@
       auto-optimise-store = true;
       keep-outputs = true;
       keep-derivations = true;
-      trusted-users = ["root" "mahdtech"];
+      trusted-users = [
+        "root"
+        "mahdtech"
+      ];
       experimental-features = [
         "nix-command"
         "flakes"
@@ -42,10 +46,9 @@
       ];
     };
 
-    extraOptions = ''
-    '';
+    extraOptions = '''';
 
-    nixPath = ["nixpkgs=${inputs.nixpkgs}"];
+    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
     registry.nixpkgs.flake = inputs.nixpkgs;
   };
@@ -68,8 +71,8 @@
     dates = "daily";
 
     rebootWindow = {
-      lower = "01:00";
-      upper = "05:00";
+      lower = "00:00";
+      upper = "04:00";
     };
 
     randomizedDelaySec = "60min";
