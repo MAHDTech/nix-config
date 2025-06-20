@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   home.file = {
     "random-wallpaper" = {
       target = "${config.home.homeDirectory}/.local/bin/random-wallpaper";
@@ -25,13 +26,43 @@
         export SWWW_TRANSITION_TYPE="random"
 
         # This controls (in seconds) when to switch to the next image
-        INTERVAL=300
+        # 15 minutes
+        INTERVAL=900
 
         # Possible values:
         #    -   no:   Do not resize the image
         #    -   crop: Resize the image to fill the whole screen, cropping out parts that don't fit
         #    -   fit:  Resize the image to fit inside the screen, preserving the original aspect ratio
         RESIZE_TYPE="fit"
+
+        #########################
+        # Functions
+        #########################
+
+        function msg() {
+          CURRENT_TIME=$(date +%Y-%m-%d\ %H:%M:%S)
+
+          echo "''${CURRENT_TIME} - ''${1}"
+
+          return 0
+        }
+
+        function generate_wallpaper_list() {
+          msg "Generating wallpaper list"
+
+          find \
+            "''${WALLPAPER_DIR}/" \
+            -type f \
+            -name "*.jpg" \
+            -o -name "*.png" \
+            -o -name "*.jpeg" \
+            -o -name "*.webp" \
+            -o -name "*.gif" \
+            -o -name "*.bmp" \
+            -o -name "*.tiff" \
+            | shuf \
+            > "''${SWWW_LIST_FILE}"
+        }
 
         #########################
         # Pre-flight checks
@@ -53,6 +84,7 @@
           echo "Failed to create state directory: ''${SWWW_STATE_DIR}"
           exit 1
         }
+        msg "Wallpaper state directory created"
 
         # Make sure only 1 instance of swww_randomize is running
         if [[ -e "''${SWWW_PIDFILE}" ]];
@@ -64,61 +96,58 @@
             THIS_NAME="$(<"/proc/''${BASHPID}/comm")"
             if [[ "''${OLD_NAME-OLD_NAME}" == "''${THIS_NAME:-THIS_NAME}" ]];
             then
-              echo "The old ''${SWWW_SCRIPT} with PID ''${OLD_PID} is still running"
+              msg "The old ''${SWWW_SCRIPT} with PID ''${OLD_PID} is still running"
               exit 1
             else
-              echo "Another process with the same ID as the old ''${SWWW_SCRIPT} is running: \"''${OLD_NAME}\"@''${OLD_PID}"
-              echo "Replacing the old process ID"
+              msg "Another process with the same ID as the old ''${SWWW_SCRIPT} is running: \"''${OLD_NAME}\"@''${OLD_PID}"
+              msg "Replacing the old process ID"
             fi
           fi
         fi
+        msg "Setting new process ID"
         echo "''${BASHPID}" > "''${SWWW_PIDFILE}"
-
-        #########################
-        # Functions
-        #########################
-
-        function generate_wallpaper_list() {
-          find \
-            "''${WALLPAPER_DIR}" \
-            -type f \
-            -name "*.jpg" \
-            -o -name "*.png" \
-            -o -name "*.jpeg" \
-            -o -name "*.webp" \
-            -o -name "*.gif" \
-            -o -name "*.bmp" \
-            -o -name "*.tiff" \
-            | shuf \
-            > "''${SWWW_LIST_FILE}"
-        }
+        msg "Process ID set"
 
         #########################
         # Main loop
         #########################
 
+        msg "Querying displays"
         DISPLAY_LIST=$(swww query | grep -Po "^[^:]+")
+        msg "Found displays:"
+        while IFS= read -r DISPLAY;
+        do
+          [[ -n "''${DISPLAY}" ]] && msg "  - ''${DISPLAY}"
+        done <<< "''${DISPLAY_LIST}"
 
         while true;
         do
 
+          msg "Starting wallpaper loop"
+
           # Generate a new list of wallpapers
           generate_wallpaper_list
 
+          msg "Reading wallpaper list"
+
           # Read the wallpaper list
           exec < "''${SWWW_LIST_FILE}"
+
+          msg "Setting wallpapers"
 
           # Set the wallpaper for each display
           for DISPLAY in ''${DISPLAY_LIST};
           do
             read -r IMAGE || break
-            echo "Setting image ''${IMAGE} for display: ''${DISPLAY}"
+            msg "Setting image ''${IMAGE} for display: ''${DISPLAY}"
             swww \
               img \
               --resize="''${RESIZE_TYPE}" \
               --outputs "''${DISPLAY}" \
               "''${IMAGE}"
           done
+
+          msg "Sleeping for ''${INTERVAL} seconds"
 
           sleep "''${INTERVAL}"
 

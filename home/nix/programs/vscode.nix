@@ -1,12 +1,12 @@
 {
-  inputs,
   pkgs,
   ...
 }:
 let
-  _pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
   _unstablePkgs = with pkgsUnstable; [ ];
+
   # Visual Studio Code Insiders
   #vscode-insiders = (pkgs.vscode.override {isInsiders = true;}).overrideAttrs (_oldAttrs: {
   #  version = "latest";
@@ -20,11 +20,11 @@ in
 {
   home.packages = [
   ];
-  #++ _unstablePkgs;
+  #++ unstablePkgs;
 
   programs = {
     vscode = {
-      enable = false;
+      enable = true;
 
       package = pkgs.vscode.fhs;
 

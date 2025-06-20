@@ -84,6 +84,13 @@
           "workbench.colorTheme": "Catppuccin Mocha",
           "workbench.iconTheme": "catppuccin-mocha",
 
+          // File Watcher excludes
+          "files.watcherExclude": {
+            "**/.git/objects/**": true,
+            "**/.git/subtree-cache/**": true,
+            "**/node_modules/*/**": true
+          },
+
           /*
           Linters
           */
