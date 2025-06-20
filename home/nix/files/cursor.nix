@@ -118,6 +118,11 @@
             "editor.defaultFormatter": "dbaeumer.vscode-eslint"
           },
 
+          // Markdown
+          "[markdown]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode",
+          },
+
           // Typescript
           "typescript.inlayHints.parameterNames.enabled": "all",
           "[typescript]": {

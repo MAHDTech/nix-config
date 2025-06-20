@@ -13,15 +13,15 @@ let
   devPackages = with pkgs; [
     docker-client
     figlet
-    go-tools
-    golangci-lint
+    #go-tools
+    #golangci-lint
     nil
     nix
-    pulumi-bin # bundled with plugins.
-    pulumictl
-    sshuttle
-    trivy
-    yq-go
+    #pulumi-bin # bundled with plugins.
+    #pulumictl
+    #sshuttle
+    #trivy
+    #yq-go
   ];
 
 in
@@ -69,11 +69,11 @@ in
     };
 
     go = {
-      enable = true;
+      enable = false;
     };
 
     opentofu = {
-      enable = true;
+      enable = false;
     };
   };
 
