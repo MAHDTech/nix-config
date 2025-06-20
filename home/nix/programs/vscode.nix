@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   ...
 }:
@@ -7,16 +8,16 @@ let
 
   _unstablePkgs = with pkgsUnstable; [ ];
 
-  # Visual Studio Code Insiders
-  #vscode-insiders = (pkgs.vscode.override {isInsiders = true;}).overrideAttrs (_oldAttrs: {
-  #  version = "latest";
-  #  src = builtins.fetchTarball {
-  #    #url = "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
-  #    url = "file:///nix/store/bxnc6b84x19h0l3q1l19alql0vi6b6yf-code-insider-x64-1685339015.tar.gz";
-  #    sha256 = "sha256:0ykj7jwh5gbx6r695b27258yci3xf001vd28h6w7w5h7d3aaqnhz";
-  #  };
-  #});
 in
+# Visual Studio Code Insiders
+#vscode-insiders = (pkgs.vscode.override {isInsiders = true;}).overrideAttrs (_oldAttrs: {
+#  version = "latest";
+#  src = builtins.fetchTarball {
+#    #url = "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
+#    url = "file:///nix/store/bxnc6b84x19h0l3q1l19alql0vi6b6yf-code-insider-x64-1685339015.tar.gz";
+#    sha256 = "sha256:0ykj7jwh5gbx6r695b27258yci3xf001vd28h6w7w5h7d3aaqnhz";
+#  };
+#});
 {
   home.packages = [
   ];
