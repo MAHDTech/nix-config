@@ -33,6 +33,22 @@ declare module "gi://AstalBluetooth?version=0.1" {
      */
     function get_default(): Bluetooth
     namespace Adapter {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::uuids": (pspec: GObject.ParamSpec) => void
+        "notify::discovering": (pspec: GObject.ParamSpec) => void
+        "notify::modalias": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::class": (pspec: GObject.ParamSpec) => void
+        "notify::address": (pspec: GObject.ParamSpec) => void
+        "notify::discoverable": (pspec: GObject.ParamSpec) => void
+        "notify::pairable": (pspec: GObject.ParamSpec) => void
+        "notify::powered": (pspec: GObject.ParamSpec) => void
+        "notify::alias": (pspec: GObject.ParamSpec) => void
+        "notify::discoverable-timeout": (pspec: GObject.ParamSpec) => void
+        "notify::pairable-timeout": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -133,11 +149,29 @@ declare module "gi://AstalBluetooth?version=0.1" {
       get pairableTimeout(): number
       set pairableTimeout(val: number)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Adapter.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Adapter.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Adapter.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Adapter.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Adapter.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Adapter.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Adapter.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Adapter.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -178,22 +212,17 @@ declare module "gi://AstalBluetooth?version=0.1" {
     }
 
     namespace Bluetooth {
-      // Signal callback interfaces
-
-      interface DeviceAdded {
-        (device: Device): void
-      }
-
-      interface DeviceRemoved {
-        (device: Device): void
-      }
-
-      interface AdapterAdded {
-        (adapter: Adapter): void
-      }
-
-      interface AdapterRemoved {
-        (adapter: Adapter): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "device-added": (arg0: Device) => void
+        "device-removed": (arg0: Device) => void
+        "adapter-added": (arg0: Adapter) => void
+        "adapter-removed": (arg0: Adapter) => void
+        "notify::is-powered": (pspec: GObject.ParamSpec) => void
+        "notify::is-connected": (pspec: GObject.ParamSpec) => void
+        "notify::adapter": (pspec: GObject.ParamSpec) => void
+        "notify::adapters": (pspec: GObject.ParamSpec) => void
+        "notify::devices": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -250,6 +279,15 @@ declare module "gi://AstalBluetooth?version=0.1" {
        */
       get devices(): Device[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Bluetooth.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Bluetooth.ConstructorProps>, ...args: any[])
@@ -260,21 +298,12 @@ declare module "gi://AstalBluetooth?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "device-added", callback: (_source: this, device: Device) => void): number
-      connect_after(signal: "device-added", callback: (_source: this, device: Device) => void): number
-      emit(signal: "device-added", device: Device): void
-      connect(signal: "device-removed", callback: (_source: this, device: Device) => void): number
-      connect_after(signal: "device-removed", callback: (_source: this, device: Device) => void): number
-      emit(signal: "device-removed", device: Device): void
-      connect(signal: "adapter-added", callback: (_source: this, adapter: Adapter) => void): number
-      connect_after(signal: "adapter-added", callback: (_source: this, adapter: Adapter) => void): number
-      emit(signal: "adapter-added", adapter: Adapter): void
-      connect(signal: "adapter-removed", callback: (_source: this, adapter: Adapter) => void): number
-      connect_after(signal: "adapter-removed", callback: (_source: this, adapter: Adapter) => void): number
-      emit(signal: "adapter-removed", adapter: Adapter): void
+      connect<K extends keyof Bluetooth.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Bluetooth.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Bluetooth.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Bluetooth.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Bluetooth.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Bluetooth.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -297,6 +326,26 @@ declare module "gi://AstalBluetooth?version=0.1" {
     }
 
     namespace Device {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::uuids": (pspec: GObject.ParamSpec) => void
+        "notify::connected": (pspec: GObject.ParamSpec) => void
+        "notify::legacy-pairing": (pspec: GObject.ParamSpec) => void
+        "notify::paired": (pspec: GObject.ParamSpec) => void
+        "notify::rssi": (pspec: GObject.ParamSpec) => void
+        "notify::adapter": (pspec: GObject.ParamSpec) => void
+        "notify::address": (pspec: GObject.ParamSpec) => void
+        "notify::icon": (pspec: GObject.ParamSpec) => void
+        "notify::modalias": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::appearance": (pspec: GObject.ParamSpec) => void
+        "notify::class": (pspec: GObject.ParamSpec) => void
+        "notify::connecting": (pspec: GObject.ParamSpec) => void
+        "notify::blocked": (pspec: GObject.ParamSpec) => void
+        "notify::trusted": (pspec: GObject.ParamSpec) => void
+        "notify::alias": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -403,11 +452,29 @@ declare module "gi://AstalBluetooth?version=0.1" {
       get alias(): string
       set alias(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Device.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Device.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Device.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Device.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

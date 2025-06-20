@@ -25,6 +25,14 @@ declare module "gi://AppmenuGLibTranslator?version=24.02" {
      */
 
     namespace Importer {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::action-group": (pspec: GObject.ParamSpec) => void
+        "notify::bus-name": (pspec: GObject.ParamSpec) => void
+        "notify::model": (pspec: GObject.ParamSpec) => void
+        "notify::object-path": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -51,6 +59,15 @@ declare module "gi://AppmenuGLibTranslator?version=24.02" {
       set object_path(val: string)
       set objectPath(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Importer.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Importer.ConstructorProps>, ...args: any[])
@@ -58,6 +75,15 @@ declare module "gi://AppmenuGLibTranslator?version=24.02" {
       _init(...args: any[]): void
 
       static ["new"](bus_name: string, object_path: string): Importer
+
+      // Signals
+
+      connect<K extends keyof Importer.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Importer.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Importer.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Importer.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Importer.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Importer.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     type ImporterClass = typeof Importer

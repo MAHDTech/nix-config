@@ -212,6 +212,11 @@ declare module "gi://GdkX11?version=3.0" {
      */
     function x11_xatom_to_atom_for_display(display: X11Display, xatom: xlib.Atom): Gdk.Atom
     namespace X11AppLaunchContext {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.AppLaunchContext.SignalSignatures {
+        "notify::display": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.AppLaunchContext.ConstructorProps {}
@@ -220,14 +225,38 @@ declare module "gi://GdkX11?version=3.0" {
     class X11AppLaunchContext extends Gdk.AppLaunchContext {
       static $gtype: GObject.GType<X11AppLaunchContext>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11AppLaunchContext.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11AppLaunchContext.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11AppLaunchContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11AppLaunchContext.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11AppLaunchContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11AppLaunchContext.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11AppLaunchContext.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11AppLaunchContext.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11Cursor {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Cursor.SignalSignatures {
+        "notify::cursor-type": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Cursor.ConstructorProps {}
@@ -236,11 +265,29 @@ declare module "gi://GdkX11?version=3.0" {
     class X11Cursor extends Gdk.Cursor {
       static $gtype: GObject.GType<X11Cursor>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11Cursor.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11Cursor.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11Cursor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Cursor.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11Cursor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Cursor.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11Cursor.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11Cursor.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -257,6 +304,25 @@ declare module "gi://GdkX11?version=3.0" {
     }
 
     namespace X11DeviceCore {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Device.SignalSignatures {
+        "notify::associated-device": (pspec: GObject.ParamSpec) => void
+        "notify::axes": (pspec: GObject.ParamSpec) => void
+        "notify::device-manager": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::has-cursor": (pspec: GObject.ParamSpec) => void
+        "notify::input-mode": (pspec: GObject.ParamSpec) => void
+        "notify::input-source": (pspec: GObject.ParamSpec) => void
+        "notify::n-axes": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::num-touches": (pspec: GObject.ParamSpec) => void
+        "notify::product-id": (pspec: GObject.ParamSpec) => void
+        "notify::seat": (pspec: GObject.ParamSpec) => void
+        "notify::tool": (pspec: GObject.ParamSpec) => void
+        "notify::type": (pspec: GObject.ParamSpec) => void
+        "notify::vendor-id": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Device.ConstructorProps {}
@@ -265,14 +331,37 @@ declare module "gi://GdkX11?version=3.0" {
     class X11DeviceCore extends Gdk.Device {
       static $gtype: GObject.GType<X11DeviceCore>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11DeviceCore.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11DeviceCore.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11DeviceCore.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceCore.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11DeviceCore.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceCore.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11DeviceCore.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11DeviceCore.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11DeviceManagerCore {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.DeviceManager.SignalSignatures {
+        "notify::display": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.DeviceManager.ConstructorProps {}
@@ -281,14 +370,40 @@ declare module "gi://GdkX11?version=3.0" {
     class X11DeviceManagerCore extends Gdk.DeviceManager {
       static $gtype: GObject.GType<X11DeviceManagerCore>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11DeviceManagerCore.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11DeviceManagerCore.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11DeviceManagerCore.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceManagerCore.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11DeviceManagerCore.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceManagerCore.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11DeviceManagerCore.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11DeviceManagerCore.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11DeviceManagerXI2 {
+      // Signal signatures
+      interface SignalSignatures extends X11DeviceManagerCore.SignalSignatures {
+        "notify::major": (pspec: GObject.ParamSpec) => void
+        "notify::minor": (pspec: GObject.ParamSpec) => void
+        "notify::opcode": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends X11DeviceManagerCore.ConstructorProps {
@@ -307,14 +422,52 @@ declare module "gi://GdkX11?version=3.0" {
       get minor(): number
       get opcode(): number
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11DeviceManagerXI2.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11DeviceManagerXI2.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11DeviceManagerXI2.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceManagerXI2.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11DeviceManagerXI2.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceManagerXI2.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11DeviceManagerXI2.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11DeviceManagerXI2.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11DeviceXI2 {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Device.SignalSignatures {
+        "notify::device-id": (pspec: GObject.ParamSpec) => void
+        "notify::associated-device": (pspec: GObject.ParamSpec) => void
+        "notify::axes": (pspec: GObject.ParamSpec) => void
+        "notify::device-manager": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::has-cursor": (pspec: GObject.ParamSpec) => void
+        "notify::input-mode": (pspec: GObject.ParamSpec) => void
+        "notify::input-source": (pspec: GObject.ParamSpec) => void
+        "notify::n-axes": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::num-touches": (pspec: GObject.ParamSpec) => void
+        "notify::product-id": (pspec: GObject.ParamSpec) => void
+        "notify::seat": (pspec: GObject.ParamSpec) => void
+        "notify::tool": (pspec: GObject.ParamSpec) => void
+        "notify::type": (pspec: GObject.ParamSpec) => void
+        "notify::vendor-id": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Device.ConstructorProps {
@@ -331,14 +484,35 @@ declare module "gi://GdkX11?version=3.0" {
       get device_id(): number
       get deviceId(): number
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11DeviceXI2.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11DeviceXI2.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11DeviceXI2.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceXI2.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11DeviceXI2.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DeviceXI2.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11DeviceXI2.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11DeviceXI2.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11Display {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Display.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Display.ConstructorProps {}
@@ -347,11 +521,29 @@ declare module "gi://GdkX11?version=3.0" {
     class X11Display extends Gdk.Display {
       static $gtype: GObject.GType<X11Display>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11Display.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11Display.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11Display.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Display.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11Display.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Display.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11Display.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11Display.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -501,6 +693,11 @@ declare module "gi://GdkX11?version=3.0" {
     }
 
     namespace X11DisplayManager {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.DisplayManager.SignalSignatures {
+        "notify::default-display": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.DisplayManager.ConstructorProps {}
@@ -509,14 +706,35 @@ declare module "gi://GdkX11?version=3.0" {
     class X11DisplayManager extends Gdk.DisplayManager {
       static $gtype: GObject.GType<X11DisplayManager>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11DisplayManager.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11DisplayManager.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11DisplayManager.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DisplayManager.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11DisplayManager.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DisplayManager.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11DisplayManager.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11DisplayManager.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11DragContext {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.DragContext.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.DragContext.ConstructorProps {}
@@ -525,14 +743,39 @@ declare module "gi://GdkX11?version=3.0" {
     class X11DragContext extends Gdk.DragContext {
       static $gtype: GObject.GType<X11DragContext>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11DragContext.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11DragContext.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11DragContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DragContext.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11DragContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11DragContext.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11DragContext.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11DragContext.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11GLContext {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.GLContext.SignalSignatures {
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::shared-context": (pspec: GObject.ParamSpec) => void
+        "notify::window": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.GLContext.ConstructorProps {}
@@ -541,14 +784,35 @@ declare module "gi://GdkX11?version=3.0" {
     class X11GLContext extends Gdk.GLContext {
       static $gtype: GObject.GType<X11GLContext>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11GLContext.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11GLContext.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11GLContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11GLContext.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11GLContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11GLContext.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11GLContext.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11GLContext.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace X11Keymap {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Keymap.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Keymap.ConstructorProps {}
@@ -557,11 +821,29 @@ declare module "gi://GdkX11?version=3.0" {
     class X11Keymap extends Gdk.Keymap {
       static $gtype: GObject.GType<X11Keymap>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11Keymap.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11Keymap.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11Keymap.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Keymap.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11Keymap.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Keymap.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11Keymap.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11Keymap.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -587,6 +869,20 @@ declare module "gi://GdkX11?version=3.0" {
     }
 
     namespace X11Monitor {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Monitor.SignalSignatures {
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::geometry": (pspec: GObject.ParamSpec) => void
+        "notify::height-mm": (pspec: GObject.ParamSpec) => void
+        "notify::manufacturer": (pspec: GObject.ParamSpec) => void
+        "notify::model": (pspec: GObject.ParamSpec) => void
+        "notify::refresh-rate": (pspec: GObject.ParamSpec) => void
+        "notify::scale-factor": (pspec: GObject.ParamSpec) => void
+        "notify::subpixel-layout": (pspec: GObject.ParamSpec) => void
+        "notify::width-mm": (pspec: GObject.ParamSpec) => void
+        "notify::workarea": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Monitor.ConstructorProps {}
@@ -595,11 +891,29 @@ declare module "gi://GdkX11?version=3.0" {
     class X11Monitor extends Gdk.Monitor {
       static $gtype: GObject.GType<X11Monitor>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11Monitor.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11Monitor.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11Monitor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Monitor.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11Monitor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Monitor.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11Monitor.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11Monitor.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -607,10 +921,11 @@ declare module "gi://GdkX11?version=3.0" {
     }
 
     namespace X11Screen {
-      // Signal callback interfaces
-
-      interface WindowManagerChanged {
-        (): void
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Screen.SignalSignatures {
+        "window-manager-changed": () => void
+        "notify::font-options": (pspec: GObject.ParamSpec) => void
+        "notify::resolution": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -621,6 +936,15 @@ declare module "gi://GdkX11?version=3.0" {
     class X11Screen extends Gdk.Screen {
       static $gtype: GObject.GType<X11Screen>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11Screen.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11Screen.ConstructorProps>, ...args: any[])
@@ -629,12 +953,12 @@ declare module "gi://GdkX11?version=3.0" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "window-manager-changed", callback: (_source: this) => void): number
-      connect_after(signal: "window-manager-changed", callback: (_source: this) => void): number
-      emit(signal: "window-manager-changed"): void
+      connect<K extends keyof X11Screen.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Screen.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11Screen.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Screen.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11Screen.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11Screen.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -703,6 +1027,9 @@ declare module "gi://GdkX11?version=3.0" {
     }
 
     namespace X11Visual {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Visual.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Visual.ConstructorProps {}
@@ -711,11 +1038,29 @@ declare module "gi://GdkX11?version=3.0" {
     class X11Visual extends Gdk.Visual {
       static $gtype: GObject.GType<X11Visual>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11Visual.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11Visual.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof X11Visual.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Visual.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11Visual.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Visual.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11Visual.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11Visual.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -727,6 +1072,11 @@ declare module "gi://GdkX11?version=3.0" {
     }
 
     namespace X11Window {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Window.SignalSignatures {
+        "notify::cursor": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Window.ConstructorProps {}
@@ -735,6 +1085,15 @@ declare module "gi://GdkX11?version=3.0" {
     class X11Window extends Gdk.Window {
       static $gtype: GObject.GType<X11Window>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: X11Window.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<X11Window.ConstructorProps>, ...args: any[])
@@ -742,6 +1101,15 @@ declare module "gi://GdkX11?version=3.0" {
       _init(...args: any[]): void
 
       static foreign_new_for_display(display: X11Display, window: xlib.Window): X11Window
+
+      // Signals
+
+      connect<K extends keyof X11Window.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Window.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof X11Window.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, X11Window.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof X11Window.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<X11Window.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

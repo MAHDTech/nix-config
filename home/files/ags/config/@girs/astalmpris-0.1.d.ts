@@ -74,14 +74,11 @@ declare module "gi://AstalMpris?version=0.1" {
      */
     function get_default(): Mpris
     namespace Mpris {
-      // Signal callback interfaces
-
-      interface PlayerAdded {
-        (player: Player): void
-      }
-
-      interface PlayerClosed {
-        (player: Player): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "player-added": (arg0: Player) => void
+        "player-closed": (arg0: Player) => void
+        "notify::players": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -104,6 +101,15 @@ declare module "gi://AstalMpris?version=0.1" {
        */
       get players(): Player[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Mpris.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Mpris.ConstructorProps>, ...args: any[])
@@ -114,15 +120,12 @@ declare module "gi://AstalMpris?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "player-added", callback: (_source: this, player: Player) => void): number
-      connect_after(signal: "player-added", callback: (_source: this, player: Player) => void): number
-      emit(signal: "player-added", player: Player): void
-      connect(signal: "player-closed", callback: (_source: this, player: Player) => void): number
-      connect_after(signal: "player-closed", callback: (_source: this, player: Player) => void): number
-      emit(signal: "player-closed", player: Player): void
+      connect<K extends keyof Mpris.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Mpris.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Mpris.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Mpris.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Mpris.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Mpris.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -137,6 +140,46 @@ declare module "gi://AstalMpris?version=0.1" {
     }
 
     namespace Player {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::bus-name": (pspec: GObject.ParamSpec) => void
+        "notify::available": (pspec: GObject.ParamSpec) => void
+        "notify::can-quit": (pspec: GObject.ParamSpec) => void
+        "notify::fullscreen": (pspec: GObject.ParamSpec) => void
+        "notify::can-set-fullscreen": (pspec: GObject.ParamSpec) => void
+        "notify::can-raise": (pspec: GObject.ParamSpec) => void
+        "notify::identity": (pspec: GObject.ParamSpec) => void
+        "notify::entry": (pspec: GObject.ParamSpec) => void
+        "notify::supported-uri-schemes": (pspec: GObject.ParamSpec) => void
+        "notify::supported-mime-types": (pspec: GObject.ParamSpec) => void
+        "notify::loop-status": (pspec: GObject.ParamSpec) => void
+        "notify::rate": (pspec: GObject.ParamSpec) => void
+        "notify::shuffle-status": (pspec: GObject.ParamSpec) => void
+        "notify::volume": (pspec: GObject.ParamSpec) => void
+        "notify::position": (pspec: GObject.ParamSpec) => void
+        "notify::playback-status": (pspec: GObject.ParamSpec) => void
+        "notify::minimum-rate": (pspec: GObject.ParamSpec) => void
+        "notify::maximum-rate": (pspec: GObject.ParamSpec) => void
+        "notify::can-go-next": (pspec: GObject.ParamSpec) => void
+        "notify::can-go-previous": (pspec: GObject.ParamSpec) => void
+        "notify::can-play": (pspec: GObject.ParamSpec) => void
+        "notify::can-pause": (pspec: GObject.ParamSpec) => void
+        "notify::can-seek": (pspec: GObject.ParamSpec) => void
+        "notify::can-control": (pspec: GObject.ParamSpec) => void
+        "notify::metadata": (pspec: GObject.ParamSpec) => void
+        "notify::trackid": (pspec: GObject.ParamSpec) => void
+        "notify::length": (pspec: GObject.ParamSpec) => void
+        "notify::art-url": (pspec: GObject.ParamSpec) => void
+        "notify::album": (pspec: GObject.ParamSpec) => void
+        "notify::album-artist": (pspec: GObject.ParamSpec) => void
+        "notify::artist": (pspec: GObject.ParamSpec) => void
+        "notify::lyrics": (pspec: GObject.ParamSpec) => void
+        "notify::title": (pspec: GObject.ParamSpec) => void
+        "notify::composer": (pspec: GObject.ParamSpec) => void
+        "notify::comments": (pspec: GObject.ParamSpec) => void
+        "notify::cover-art": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -494,6 +537,15 @@ declare module "gi://AstalMpris?version=0.1" {
       get coverArt(): string
       set coverArt(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Player.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Player.ConstructorProps>, ...args: any[])
@@ -501,6 +553,15 @@ declare module "gi://AstalMpris?version=0.1" {
       _init(...args: any[]): void
 
       static ["new"](name: string): Player
+
+      // Signals
+
+      connect<K extends keyof Player.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Player.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Player.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Player.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Player.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Player.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

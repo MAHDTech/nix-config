@@ -1809,6 +1809,27 @@ declare module "gi://Atk?version=1.0" {
       INLINE,
     }
     namespace GObjectAccessible {
+      // Signal signatures
+      interface SignalSignatures extends Object.SignalSignatures {
+        "notify::accessible-component-layer": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-component-mdi-zorder": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-help-text": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-hypertext-nlinks": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-id": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-name": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-parent": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-role": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption-object": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-summary": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-value": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Object.ConstructorProps {}
@@ -1825,11 +1846,29 @@ declare module "gi://Atk?version=1.0" {
     class GObjectAccessible extends Object {
       static $gtype: GObject.GType<GObjectAccessible>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: GObjectAccessible.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<GObjectAccessible.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof GObjectAccessible.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, GObjectAccessible.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof GObjectAccessible.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, GObjectAccessible.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof GObjectAccessible.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<GObjectAccessible.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -1849,10 +1888,13 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace Hyperlink {
-      // Signal callback interfaces
-
-      interface LinkActivated {
-        (): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "link-activated": () => void
+        "notify::end-index": (pspec: GObject.ParamSpec) => void
+        "notify::number-of-anchors": (pspec: GObject.ParamSpec) => void
+        "notify::selected-link": (pspec: GObject.ParamSpec) => void
+        "notify::start-index": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -1899,6 +1941,15 @@ declare module "gi://Atk?version=1.0" {
       get start_index(): number
       get startIndex(): number
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Hyperlink.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Hyperlink.ConstructorProps>, ...args: any[])
@@ -1907,12 +1958,12 @@ declare module "gi://Atk?version=1.0" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "link-activated", callback: (_source: this) => void): number
-      connect_after(signal: "link-activated", callback: (_source: this) => void): number
-      emit(signal: "link-activated"): void
+      connect<K extends keyof Hyperlink.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Hyperlink.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Hyperlink.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Hyperlink.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Hyperlink.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Hyperlink.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -2604,6 +2655,9 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace Misc {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -2618,11 +2672,29 @@ declare module "gi://Atk?version=1.0" {
     class Misc extends GObject.Object {
       static $gtype: GObject.GType<Misc>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Misc.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Misc.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Misc.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Misc.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Misc.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Misc.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Misc.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Misc.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -2677,6 +2749,27 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace NoOpObject {
+      // Signal signatures
+      interface SignalSignatures extends Object.SignalSignatures {
+        "notify::accessible-component-layer": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-component-mdi-zorder": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-help-text": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-hypertext-nlinks": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-id": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-name": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-parent": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-role": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption-object": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-summary": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-value": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps
@@ -2706,6 +2799,15 @@ declare module "gi://Atk?version=1.0" {
     class NoOpObject extends Object implements Action, Component, Document, EditableText, Hypertext, Image, Selection, Table, TableCell, Text, Value, Window {
       static $gtype: GObject.GType<NoOpObject>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: NoOpObject.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<NoOpObject.ConstructorProps>, ...args: any[])
@@ -2713,6 +2815,15 @@ declare module "gi://Atk?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](obj: GObject.Object): NoOpObject
+
+      // Signals
+
+      connect<K extends keyof NoOpObject.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, NoOpObject.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof NoOpObject.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, NoOpObject.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof NoOpObject.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<NoOpObject.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Inherited properties
       get accessible_component_layer(): number
@@ -4063,7 +4174,7 @@ declare module "gi://Atk?version=1.0" {
        * @param offset a character offset within @text
        * @returns the character at @offset or 0 in the case of failure.
        */
-      get_character_at_offset(offset: number): number
+      get_character_at_offset(offset: number): string
       /**
        * Gets the character count.
        * @returns the number of characters or -1 in case of failure.
@@ -4282,7 +4393,7 @@ declare module "gi://Atk?version=1.0" {
        * Gets the specified text.
        * @param offset a character offset within @text
        */
-      vfunc_get_character_at_offset(offset: number): number
+      vfunc_get_character_at_offset(offset: number): string
       /**
        * Gets the character count.
        */
@@ -5280,6 +5391,9 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace NoOpObjectFactory {
+      // Signal signatures
+      interface SignalSignatures extends ObjectFactory.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends ObjectFactory.ConstructorProps {}
@@ -5295,6 +5409,15 @@ declare module "gi://Atk?version=1.0" {
     class NoOpObjectFactory extends ObjectFactory {
       static $gtype: GObject.GType<NoOpObjectFactory>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: NoOpObjectFactory.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<NoOpObjectFactory.ConstructorProps>, ...args: any[])
@@ -5302,45 +5425,114 @@ declare module "gi://Atk?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](): NoOpObjectFactory
+
+      // Signals
+
+      connect<K extends keyof NoOpObjectFactory.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, NoOpObjectFactory.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof NoOpObjectFactory.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, NoOpObjectFactory.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof NoOpObjectFactory.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<NoOpObjectFactory.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace Object {
-      // Signal callback interfaces
-
-      interface ActiveDescendantChanged {
-        (arg1: Object): void
-      }
-
-      interface Announcement {
-        (arg1: string): void
-      }
-
-      interface AttributeChanged {
-        (arg1: string, arg2: string): void
-      }
-
-      interface ChildrenChanged {
-        (arg1: number, arg2: Object): void
-      }
-
-      interface FocusEvent {
-        (arg1: boolean): void
-      }
-
-      interface Notification {
-        (arg1: string, arg2: number): void
-      }
-
-      interface PropertyChange {
-        (arg1: PropertyValues): void
-      }
-
-      interface StateChange {
-        (arg1: string, arg2: boolean): void
-      }
-
-      interface VisibleDataChanged {
-        (): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "active-descendant-changed": (arg0: Object) => void
+        announcement: (arg0: string) => void
+        "attribute-changed": (arg0: string, arg1: string) => void
+        "children-changed": (arg0: number, arg1: Object) => void
+        "focus-event": (arg0: boolean) => void
+        notification: (arg0: string, arg1: number) => void
+        "property-change": (arg0: PropertyValues) => void
+        "state-change": (arg0: string, arg1: boolean) => void
+        "visible-data-changed": () => void
+        "notify::accessible-component-layer": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-component-mdi-zorder": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-help-text": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-hypertext-nlinks": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-id": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-name": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-parent": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-role": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption-object": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-summary": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-value": (pspec: GObject.ParamSpec) => void
+        "active-descendant-changed::accessible-component-layer": (arg0: Object) => void
+        "active-descendant-changed::accessible-component-mdi-zorder": (arg0: Object) => void
+        "active-descendant-changed::accessible-description": (arg0: Object) => void
+        "active-descendant-changed::accessible-help-text": (arg0: Object) => void
+        "active-descendant-changed::accessible-hypertext-nlinks": (arg0: Object) => void
+        "active-descendant-changed::accessible-id": (arg0: Object) => void
+        "active-descendant-changed::accessible-name": (arg0: Object) => void
+        "active-descendant-changed::accessible-parent": (arg0: Object) => void
+        "active-descendant-changed::accessible-role": (arg0: Object) => void
+        "active-descendant-changed::accessible-table-caption": (arg0: Object) => void
+        "active-descendant-changed::accessible-table-caption-object": (arg0: Object) => void
+        "active-descendant-changed::accessible-table-column-description": (arg0: Object) => void
+        "active-descendant-changed::accessible-table-column-header": (arg0: Object) => void
+        "active-descendant-changed::accessible-table-row-description": (arg0: Object) => void
+        "active-descendant-changed::accessible-table-row-header": (arg0: Object) => void
+        "active-descendant-changed::accessible-table-summary": (arg0: Object) => void
+        "active-descendant-changed::accessible-value": (arg0: Object) => void
+        "children-changed::accessible-component-layer": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-component-mdi-zorder": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-description": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-help-text": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-hypertext-nlinks": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-id": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-name": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-parent": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-role": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-table-caption": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-table-caption-object": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-table-column-description": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-table-column-header": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-table-row-description": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-table-row-header": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-table-summary": (arg0: number, arg1: Object) => void
+        "children-changed::accessible-value": (arg0: number, arg1: Object) => void
+        "property-change::accessible-component-layer": (arg0: PropertyValues) => void
+        "property-change::accessible-component-mdi-zorder": (arg0: PropertyValues) => void
+        "property-change::accessible-description": (arg0: PropertyValues) => void
+        "property-change::accessible-help-text": (arg0: PropertyValues) => void
+        "property-change::accessible-hypertext-nlinks": (arg0: PropertyValues) => void
+        "property-change::accessible-id": (arg0: PropertyValues) => void
+        "property-change::accessible-name": (arg0: PropertyValues) => void
+        "property-change::accessible-parent": (arg0: PropertyValues) => void
+        "property-change::accessible-role": (arg0: PropertyValues) => void
+        "property-change::accessible-table-caption": (arg0: PropertyValues) => void
+        "property-change::accessible-table-caption-object": (arg0: PropertyValues) => void
+        "property-change::accessible-table-column-description": (arg0: PropertyValues) => void
+        "property-change::accessible-table-column-header": (arg0: PropertyValues) => void
+        "property-change::accessible-table-row-description": (arg0: PropertyValues) => void
+        "property-change::accessible-table-row-header": (arg0: PropertyValues) => void
+        "property-change::accessible-table-summary": (arg0: PropertyValues) => void
+        "property-change::accessible-value": (arg0: PropertyValues) => void
+        "state-change::accessible-component-layer": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-component-mdi-zorder": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-description": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-help-text": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-hypertext-nlinks": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-id": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-name": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-parent": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-role": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-table-caption": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-table-caption-object": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-table-column-description": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-table-column-header": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-table-row-description": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-table-row-header": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-table-summary": (arg0: string, arg1: boolean) => void
+        "state-change::accessible-value": (arg0: string, arg1: boolean) => void
       }
 
       // Constructor properties interface
@@ -5511,6 +5703,15 @@ declare module "gi://Atk?version=1.0" {
       get accessibleValue(): number
       set accessibleValue(val: number)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Object.SignalSignatures
+
       // Fields
 
       description: string
@@ -5527,36 +5728,12 @@ declare module "gi://Atk?version=1.0" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "active-descendant-changed", callback: (_source: this, arg1: Object) => void): number
-      connect_after(signal: "active-descendant-changed", callback: (_source: this, arg1: Object) => void): number
-      emit(signal: "active-descendant-changed", arg1: Object): void
-      connect(signal: "announcement", callback: (_source: this, arg1: string) => void): number
-      connect_after(signal: "announcement", callback: (_source: this, arg1: string) => void): number
-      emit(signal: "announcement", arg1: string): void
-      connect(signal: "attribute-changed", callback: (_source: this, arg1: string, arg2: string) => void): number
-      connect_after(signal: "attribute-changed", callback: (_source: this, arg1: string, arg2: string) => void): number
-      emit(signal: "attribute-changed", arg1: string, arg2: string): void
-      connect(signal: "children-changed", callback: (_source: this, arg1: number, arg2: Object) => void): number
-      connect_after(signal: "children-changed", callback: (_source: this, arg1: number, arg2: Object) => void): number
-      emit(signal: "children-changed", arg1: number, arg2: Object): void
-      connect(signal: "focus-event", callback: (_source: this, arg1: boolean) => void): number
-      connect_after(signal: "focus-event", callback: (_source: this, arg1: boolean) => void): number
-      emit(signal: "focus-event", arg1: boolean): void
-      connect(signal: "notification", callback: (_source: this, arg1: string, arg2: number) => void): number
-      connect_after(signal: "notification", callback: (_source: this, arg1: string, arg2: number) => void): number
-      emit(signal: "notification", arg1: string, arg2: number): void
-      connect(signal: "property-change", callback: (_source: this, arg1: PropertyValues) => void): number
-      connect_after(signal: "property-change", callback: (_source: this, arg1: PropertyValues) => void): number
-      emit(signal: "property-change", arg1: PropertyValues): void
-      connect(signal: "state-change", callback: (_source: this, arg1: string, arg2: boolean) => void): number
-      connect_after(signal: "state-change", callback: (_source: this, arg1: string, arg2: boolean) => void): number
-      emit(signal: "state-change", arg1: string, arg2: boolean): void
-      connect(signal: "visible-data-changed", callback: (_source: this) => void): number
-      connect_after(signal: "visible-data-changed", callback: (_source: this) => void): number
-      emit(signal: "visible-data-changed"): void
+      connect<K extends keyof Object.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Object.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Object.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Object.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Object.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Object.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -5860,6 +6037,9 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace ObjectFactory {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -5878,11 +6058,29 @@ declare module "gi://Atk?version=1.0" {
     class ObjectFactory extends GObject.Object {
       static $gtype: GObject.GType<ObjectFactory>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: ObjectFactory.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<ObjectFactory.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof ObjectFactory.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, ObjectFactory.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof ObjectFactory.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, ObjectFactory.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof ObjectFactory.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<ObjectFactory.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -5920,6 +6118,27 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace Plug {
+      // Signal signatures
+      interface SignalSignatures extends Object.SignalSignatures {
+        "notify::accessible-component-layer": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-component-mdi-zorder": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-help-text": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-hypertext-nlinks": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-id": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-name": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-parent": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-role": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption-object": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-summary": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-value": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Object.ConstructorProps, Component.ConstructorProps {}
@@ -5933,6 +6152,15 @@ declare module "gi://Atk?version=1.0" {
     class Plug extends Object implements Component {
       static $gtype: GObject.GType<Plug>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Plug.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Plug.ConstructorProps>, ...args: any[])
@@ -5940,6 +6168,15 @@ declare module "gi://Atk?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](): Plug
+
+      // Signals
+
+      connect<K extends keyof Plug.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Plug.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Plug.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Plug.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Plug.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Plug.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -6645,6 +6882,9 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace Registry {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -6665,11 +6905,29 @@ declare module "gi://Atk?version=1.0" {
     class Registry extends GObject.Object {
       static $gtype: GObject.GType<Registry>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Registry.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Registry.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Registry.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Registry.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Registry.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Registry.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Registry.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Registry.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -6699,6 +6957,12 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace Relation {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::relation-type": (pspec: GObject.ParamSpec) => void
+        "notify::target": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -6729,6 +6993,15 @@ declare module "gi://Atk?version=1.0" {
       get target(): GObject.ValueArray
       set target(val: GObject.ValueArray)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Relation.SignalSignatures
+
       // Fields
 
       relationship: RelationType
@@ -6740,6 +7013,15 @@ declare module "gi://Atk?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](targets: Object[], relationship: RelationType): Relation
+
+      // Signals
+
+      connect<K extends keyof Relation.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Relation.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Relation.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Relation.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Relation.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Relation.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -6768,6 +7050,9 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace RelationSet {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -6789,6 +7074,15 @@ declare module "gi://Atk?version=1.0" {
     class RelationSet extends GObject.Object {
       static $gtype: GObject.GType<RelationSet>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: RelationSet.SignalSignatures
+
       // Fields
 
       relations: any[]
@@ -6800,6 +7094,15 @@ declare module "gi://Atk?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](): RelationSet
+
+      // Signals
+
+      connect<K extends keyof RelationSet.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, RelationSet.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof RelationSet.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, RelationSet.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof RelationSet.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<RelationSet.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -6864,6 +7167,27 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace Socket {
+      // Signal signatures
+      interface SignalSignatures extends Object.SignalSignatures {
+        "notify::accessible-component-layer": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-component-mdi-zorder": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-help-text": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-hypertext-nlinks": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-id": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-name": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-parent": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-role": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-caption-object": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-column-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-description": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-row-header": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-table-summary": (pspec: GObject.ParamSpec) => void
+        "notify::accessible-value": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Object.ConstructorProps, Component.ConstructorProps {}
@@ -6900,6 +7224,15 @@ declare module "gi://Atk?version=1.0" {
     class Socket extends Object implements Component {
       static $gtype: GObject.GType<Socket>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Socket.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Socket.ConstructorProps>, ...args: any[])
@@ -6907,6 +7240,15 @@ declare module "gi://Atk?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](): Socket
+
+      // Signals
+
+      connect<K extends keyof Socket.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Socket.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Socket.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Socket.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Socket.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Socket.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -7619,6 +7961,9 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace StateSet {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -7634,6 +7979,15 @@ declare module "gi://Atk?version=1.0" {
     class StateSet extends GObject.Object {
       static $gtype: GObject.GType<StateSet>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: StateSet.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<StateSet.ConstructorProps>, ...args: any[])
@@ -7641,6 +7995,15 @@ declare module "gi://Atk?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](): StateSet
+
+      // Signals
+
+      connect<K extends keyof StateSet.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, StateSet.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof StateSet.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, StateSet.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof StateSet.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<StateSet.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -7723,6 +8086,9 @@ declare module "gi://Atk?version=1.0" {
     }
 
     namespace Util {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -7739,11 +8105,29 @@ declare module "gi://Atk?version=1.0" {
     class Util extends GObject.Object {
       static $gtype: GObject.GType<Util>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Util.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Util.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Util.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Util.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Util.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Util.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Util.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Util.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     type ActionIface = typeof Action
@@ -9638,7 +10022,7 @@ declare module "gi://Atk?version=1.0" {
        * @param offset a character offset within @text
        * @returns the character at @offset or 0 in the case of failure.
        */
-      get_character_at_offset(offset: number): number
+      get_character_at_offset(offset: number): string
       /**
        * Gets the character count.
        * @returns the number of characters or -1 in case of failure.
@@ -9872,7 +10256,7 @@ declare module "gi://Atk?version=1.0" {
        * Gets the specified text.
        * @param offset a character offset within @text
        */
-      vfunc_get_character_at_offset(offset: number): number
+      vfunc_get_character_at_offset(offset: number): string
       /**
        * Gets the character count.
        */

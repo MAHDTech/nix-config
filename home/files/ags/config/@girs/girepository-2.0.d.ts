@@ -1686,6 +1686,9 @@ declare module "gi://GIRepository?version=2.0" {
       THROWS,
     }
     namespace Repository {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -1709,11 +1712,29 @@ declare module "gi://GIRepository?version=2.0" {
     class Repository extends GObject.Object {
       static $gtype: GObject.GType<Repository>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Repository.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Repository.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Repository.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Repository.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Repository.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Repository.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Repository.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Repository.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

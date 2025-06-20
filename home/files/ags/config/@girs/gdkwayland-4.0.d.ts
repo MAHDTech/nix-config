@@ -43,6 +43,26 @@ declare module "gi://GdkWayland?version=4.0" {
       (toplevel: WaylandToplevel, handle: string): void
     }
     namespace WaylandDevice {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Device.SignalSignatures {
+        "notify::caps-lock-state": (pspec: GObject.ParamSpec) => void
+        "notify::direction": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::has-bidi-layouts": (pspec: GObject.ParamSpec) => void
+        "notify::has-cursor": (pspec: GObject.ParamSpec) => void
+        "notify::modifier-state": (pspec: GObject.ParamSpec) => void
+        "notify::n-axes": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::num-lock-state": (pspec: GObject.ParamSpec) => void
+        "notify::num-touches": (pspec: GObject.ParamSpec) => void
+        "notify::product-id": (pspec: GObject.ParamSpec) => void
+        "notify::scroll-lock-state": (pspec: GObject.ParamSpec) => void
+        "notify::seat": (pspec: GObject.ParamSpec) => void
+        "notify::source": (pspec: GObject.ParamSpec) => void
+        "notify::tool": (pspec: GObject.ParamSpec) => void
+        "notify::vendor-id": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Device.ConstructorProps {}
@@ -60,11 +80,29 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandDevice extends Gdk.Device {
       static $gtype: GObject.GType<WaylandDevice>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandDevice.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandDevice.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandDevice.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandDevice.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandDevice.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandDevice.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandDevice.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandDevice.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -88,6 +126,15 @@ declare module "gi://GdkWayland?version=4.0" {
     }
 
     namespace WaylandDisplay {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Display.SignalSignatures {
+        "notify::composited": (pspec: GObject.ParamSpec) => void
+        "notify::dmabuf-formats": (pspec: GObject.ParamSpec) => void
+        "notify::input-shapes": (pspec: GObject.ParamSpec) => void
+        "notify::rgba": (pspec: GObject.ParamSpec) => void
+        "notify::shadow-width": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Display.ConstructorProps {}
@@ -107,11 +154,29 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandDisplay extends Gdk.Display {
       static $gtype: GObject.GType<WaylandDisplay>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandDisplay.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandDisplay.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandDisplay.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandDisplay.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandDisplay.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandDisplay.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandDisplay.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandDisplay.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -155,6 +220,15 @@ declare module "gi://GdkWayland?version=4.0" {
     }
 
     namespace WaylandGLContext {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.GLContext.SignalSignatures {
+        "notify::allowed-apis": (pspec: GObject.ParamSpec) => void
+        "notify::api": (pspec: GObject.ParamSpec) => void
+        "notify::shared-context": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::surface": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.GLContext.ConstructorProps {}
@@ -166,14 +240,49 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandGLContext extends Gdk.GLContext {
       static $gtype: GObject.GType<WaylandGLContext>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandGLContext.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandGLContext.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandGLContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandGLContext.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandGLContext.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandGLContext.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandGLContext.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandGLContext.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace WaylandMonitor {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Monitor.SignalSignatures {
+        "notify::connector": (pspec: GObject.ParamSpec) => void
+        "notify::description": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::geometry": (pspec: GObject.ParamSpec) => void
+        "notify::height-mm": (pspec: GObject.ParamSpec) => void
+        "notify::manufacturer": (pspec: GObject.ParamSpec) => void
+        "notify::model": (pspec: GObject.ParamSpec) => void
+        "notify::refresh-rate": (pspec: GObject.ParamSpec) => void
+        "notify::scale": (pspec: GObject.ParamSpec) => void
+        "notify::scale-factor": (pspec: GObject.ParamSpec) => void
+        "notify::subpixel-layout": (pspec: GObject.ParamSpec) => void
+        "notify::valid": (pspec: GObject.ParamSpec) => void
+        "notify::width-mm": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Monitor.ConstructorProps {}
@@ -189,14 +298,46 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandMonitor extends Gdk.Monitor {
       static $gtype: GObject.GType<WaylandMonitor>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandMonitor.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandMonitor.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandMonitor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandMonitor.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandMonitor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandMonitor.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandMonitor.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandMonitor.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace WaylandPopup {
+      // Signal signatures
+      interface SignalSignatures extends WaylandSurface.SignalSignatures {
+        "notify::cursor": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::frame-clock": (pspec: GObject.ParamSpec) => void
+        "notify::height": (pspec: GObject.ParamSpec) => void
+        "notify::mapped": (pspec: GObject.ParamSpec) => void
+        "notify::scale": (pspec: GObject.ParamSpec) => void
+        "notify::scale-factor": (pspec: GObject.ParamSpec) => void
+        "notify::width": (pspec: GObject.ParamSpec) => void
+        "notify::autohide": (pspec: GObject.ParamSpec) => void
+        "notify::parent": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends WaylandSurface.ConstructorProps, Gdk.Popup.ConstructorProps {}
@@ -208,11 +349,29 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandPopup extends WaylandSurface implements Gdk.Popup {
       static $gtype: GObject.GType<WaylandPopup>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandPopup.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandPopup.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandPopup.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandPopup.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandPopup.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandPopup.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandPopup.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandPopup.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Inherited properties
       /**
@@ -593,6 +752,11 @@ declare module "gi://GdkWayland?version=4.0" {
     }
 
     namespace WaylandSeat {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Seat.SignalSignatures {
+        "notify::display": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Seat.ConstructorProps {}
@@ -608,14 +772,44 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandSeat extends Gdk.Seat {
       static $gtype: GObject.GType<WaylandSeat>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandSeat.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandSeat.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandSeat.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandSeat.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandSeat.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandSeat.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandSeat.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandSeat.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace WaylandSurface {
+      // Signal signatures
+      interface SignalSignatures extends Gdk.Surface.SignalSignatures {
+        "notify::cursor": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::frame-clock": (pspec: GObject.ParamSpec) => void
+        "notify::height": (pspec: GObject.ParamSpec) => void
+        "notify::mapped": (pspec: GObject.ParamSpec) => void
+        "notify::scale": (pspec: GObject.ParamSpec) => void
+        "notify::scale-factor": (pspec: GObject.ParamSpec) => void
+        "notify::width": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gdk.Surface.ConstructorProps {}
@@ -631,14 +825,54 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandSurface extends Gdk.Surface {
       static $gtype: GObject.GType<WaylandSurface>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandSurface.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandSurface.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandSurface.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandSurface.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandSurface.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandSurface.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandSurface.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandSurface.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace WaylandToplevel {
+      // Signal signatures
+      interface SignalSignatures extends WaylandSurface.SignalSignatures {
+        "notify::cursor": (pspec: GObject.ParamSpec) => void
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::frame-clock": (pspec: GObject.ParamSpec) => void
+        "notify::height": (pspec: GObject.ParamSpec) => void
+        "notify::mapped": (pspec: GObject.ParamSpec) => void
+        "notify::scale": (pspec: GObject.ParamSpec) => void
+        "notify::scale-factor": (pspec: GObject.ParamSpec) => void
+        "notify::width": (pspec: GObject.ParamSpec) => void
+        "notify::decorated": (pspec: GObject.ParamSpec) => void
+        "notify::deletable": (pspec: GObject.ParamSpec) => void
+        "notify::fullscreen-mode": (pspec: GObject.ParamSpec) => void
+        "notify::icon-list": (pspec: GObject.ParamSpec) => void
+        "notify::modal": (pspec: GObject.ParamSpec) => void
+        "notify::shortcuts-inhibited": (pspec: GObject.ParamSpec) => void
+        "notify::startup-id": (pspec: GObject.ParamSpec) => void
+        "notify::state": (pspec: GObject.ParamSpec) => void
+        "notify::title": (pspec: GObject.ParamSpec) => void
+        "notify::transient-for": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends WaylandSurface.ConstructorProps, Gdk.Toplevel.ConstructorProps {}
@@ -655,11 +889,29 @@ declare module "gi://GdkWayland?version=4.0" {
     class WaylandToplevel extends WaylandSurface implements Gdk.Toplevel {
       static $gtype: GObject.GType<WaylandToplevel>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: WaylandToplevel.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<WaylandToplevel.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof WaylandToplevel.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandToplevel.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof WaylandToplevel.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, WaylandToplevel.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof WaylandToplevel.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<WaylandToplevel.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

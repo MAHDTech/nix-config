@@ -66,46 +66,25 @@ declare module "gi://AstalWp?version=0.1" {
      */
     function get_default(): Wp | null
     namespace Audio {
-      // Signal callback interfaces
-
-      interface DeviceAdded {
-        (object: Device): void
-      }
-
-      interface DeviceRemoved {
-        (object: Device): void
-      }
-
-      interface MicrophoneAdded {
-        (object: Endpoint): void
-      }
-
-      interface MicrophoneRemoved {
-        (object: Endpoint): void
-      }
-
-      interface RecorderAdded {
-        (object: Endpoint): void
-      }
-
-      interface RecorderRemoved {
-        (object: Endpoint): void
-      }
-
-      interface SpeakerAdded {
-        (object: Endpoint): void
-      }
-
-      interface SpeakerRemoved {
-        (object: Endpoint): void
-      }
-
-      interface StreamAdded {
-        (object: Endpoint): void
-      }
-
-      interface StreamRemoved {
-        (object: Endpoint): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "device-added": (arg0: Device) => void
+        "device-removed": (arg0: Device) => void
+        "microphone-added": (arg0: Endpoint) => void
+        "microphone-removed": (arg0: Endpoint) => void
+        "recorder-added": (arg0: Endpoint) => void
+        "recorder-removed": (arg0: Endpoint) => void
+        "speaker-added": (arg0: Endpoint) => void
+        "speaker-removed": (arg0: Endpoint) => void
+        "stream-added": (arg0: Endpoint) => void
+        "stream-removed": (arg0: Endpoint) => void
+        "notify::default-microphone": (pspec: GObject.ParamSpec) => void
+        "notify::default-speaker": (pspec: GObject.ParamSpec) => void
+        "notify::devices": (pspec: GObject.ParamSpec) => void
+        "notify::microphones": (pspec: GObject.ParamSpec) => void
+        "notify::recorders": (pspec: GObject.ParamSpec) => void
+        "notify::speakers": (pspec: GObject.ParamSpec) => void
+        "notify::streams": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -171,6 +150,15 @@ declare module "gi://AstalWp?version=0.1" {
        */
       get streams(): Endpoint[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Audio.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Audio.ConstructorProps>, ...args: any[])
@@ -181,39 +169,12 @@ declare module "gi://AstalWp?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "device-added", callback: (_source: this, object: Device) => void): number
-      connect_after(signal: "device-added", callback: (_source: this, object: Device) => void): number
-      emit(signal: "device-added", object: Device): void
-      connect(signal: "device-removed", callback: (_source: this, object: Device) => void): number
-      connect_after(signal: "device-removed", callback: (_source: this, object: Device) => void): number
-      emit(signal: "device-removed", object: Device): void
-      connect(signal: "microphone-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "microphone-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "microphone-added", object: Endpoint): void
-      connect(signal: "microphone-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "microphone-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "microphone-removed", object: Endpoint): void
-      connect(signal: "recorder-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "recorder-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "recorder-added", object: Endpoint): void
-      connect(signal: "recorder-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "recorder-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "recorder-removed", object: Endpoint): void
-      connect(signal: "speaker-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "speaker-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "speaker-added", object: Endpoint): void
-      connect(signal: "speaker-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "speaker-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "speaker-removed", object: Endpoint): void
-      connect(signal: "stream-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "stream-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "stream-added", object: Endpoint): void
-      connect(signal: "stream-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "stream-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "stream-removed", object: Endpoint): void
+      connect<K extends keyof Audio.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Audio.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Audio.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Audio.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Audio.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Audio.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -278,6 +239,16 @@ declare module "gi://AstalWp?version=0.1" {
     }
 
     namespace Device {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::active-profile-id": (pspec: GObject.ParamSpec) => void
+        "notify::description": (pspec: GObject.ParamSpec) => void
+        "notify::device-type": (pspec: GObject.ParamSpec) => void
+        "notify::icon": (pspec: GObject.ParamSpec) => void
+        "notify::id": (pspec: GObject.ParamSpec) => void
+        "notify::profiles": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -332,11 +303,29 @@ declare module "gi://AstalWp?version=0.1" {
        */
       get profiles(): Profile[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Device.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Device.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Device.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Device.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -377,6 +366,20 @@ declare module "gi://AstalWp?version=0.1" {
     }
 
     namespace Endpoint {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::description": (pspec: GObject.ParamSpec) => void
+        "notify::icon": (pspec: GObject.ParamSpec) => void
+        "notify::id": (pspec: GObject.ParamSpec) => void
+        "notify::is-default": (pspec: GObject.ParamSpec) => void
+        "notify::lock-channels": (pspec: GObject.ParamSpec) => void
+        "notify::media-class": (pspec: GObject.ParamSpec) => void
+        "notify::mute": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::volume": (pspec: GObject.ParamSpec) => void
+        "notify::volume-icon": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -468,11 +471,29 @@ declare module "gi://AstalWp?version=0.1" {
        */
       get volumeIcon(): string
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Endpoint.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Endpoint.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Endpoint.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Endpoint.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Endpoint.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Endpoint.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Endpoint.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Endpoint.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -523,6 +544,12 @@ declare module "gi://AstalWp?version=0.1" {
     }
 
     namespace Profile {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::description": (pspec: GObject.ParamSpec) => void
+        "notify::index": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -539,11 +566,29 @@ declare module "gi://AstalWp?version=0.1" {
       get description(): string
       get index(): number
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Profile.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Profile.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Profile.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Profile.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Profile.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Profile.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Profile.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Profile.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -552,46 +597,23 @@ declare module "gi://AstalWp?version=0.1" {
     }
 
     namespace Video {
-      // Signal callback interfaces
-
-      interface DeviceAdded {
-        (object: Device): void
-      }
-
-      interface DeviceRemoved {
-        (object: Device): void
-      }
-
-      interface RecorderAdded {
-        (object: Endpoint): void
-      }
-
-      interface RecorderRemoved {
-        (object: Endpoint): void
-      }
-
-      interface SinkAdded {
-        (object: Endpoint): void
-      }
-
-      interface SinkRemoved {
-        (object: Endpoint): void
-      }
-
-      interface SourceAdded {
-        (object: Endpoint): void
-      }
-
-      interface SourceRemoved {
-        (object: Endpoint): void
-      }
-
-      interface StreamAdded {
-        (object: Endpoint): void
-      }
-
-      interface StreamRemoved {
-        (object: Endpoint): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "device-added": (arg0: Device) => void
+        "device-removed": (arg0: Device) => void
+        "recorder-added": (arg0: Endpoint) => void
+        "recorder-removed": (arg0: Endpoint) => void
+        "sink-added": (arg0: Endpoint) => void
+        "sink-removed": (arg0: Endpoint) => void
+        "source-added": (arg0: Endpoint) => void
+        "source-removed": (arg0: Endpoint) => void
+        "stream-added": (arg0: Endpoint) => void
+        "stream-removed": (arg0: Endpoint) => void
+        "notify::devices": (pspec: GObject.ParamSpec) => void
+        "notify::recorders": (pspec: GObject.ParamSpec) => void
+        "notify::sinks": (pspec: GObject.ParamSpec) => void
+        "notify::sources": (pspec: GObject.ParamSpec) => void
+        "notify::streams": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -634,6 +656,15 @@ declare module "gi://AstalWp?version=0.1" {
        */
       get streams(): Endpoint[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Video.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Video.ConstructorProps>, ...args: any[])
@@ -644,39 +675,12 @@ declare module "gi://AstalWp?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "device-added", callback: (_source: this, object: Device) => void): number
-      connect_after(signal: "device-added", callback: (_source: this, object: Device) => void): number
-      emit(signal: "device-added", object: Device): void
-      connect(signal: "device-removed", callback: (_source: this, object: Device) => void): number
-      connect_after(signal: "device-removed", callback: (_source: this, object: Device) => void): number
-      emit(signal: "device-removed", object: Device): void
-      connect(signal: "recorder-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "recorder-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "recorder-added", object: Endpoint): void
-      connect(signal: "recorder-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "recorder-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "recorder-removed", object: Endpoint): void
-      connect(signal: "sink-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "sink-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "sink-added", object: Endpoint): void
-      connect(signal: "sink-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "sink-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "sink-removed", object: Endpoint): void
-      connect(signal: "source-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "source-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "source-added", object: Endpoint): void
-      connect(signal: "source-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "source-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "source-removed", object: Endpoint): void
-      connect(signal: "stream-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "stream-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "stream-added", object: Endpoint): void
-      connect(signal: "stream-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "stream-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "stream-removed", object: Endpoint): void
+      connect<K extends keyof Video.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Video.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Video.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Video.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Video.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Video.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -738,22 +742,19 @@ declare module "gi://AstalWp?version=0.1" {
     }
 
     namespace Wp {
-      // Signal callback interfaces
-
-      interface DeviceAdded {
-        (object: Device): void
-      }
-
-      interface DeviceRemoved {
-        (object: Device): void
-      }
-
-      interface EndpointAdded {
-        (object: Endpoint): void
-      }
-
-      interface EndpointRemoved {
-        (object: Endpoint): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "device-added": (arg0: Device) => void
+        "device-removed": (arg0: Device) => void
+        "endpoint-added": (arg0: Endpoint) => void
+        "endpoint-removed": (arg0: Endpoint) => void
+        "notify::audio": (pspec: GObject.ParamSpec) => void
+        "notify::default-microphone": (pspec: GObject.ParamSpec) => void
+        "notify::default-speaker": (pspec: GObject.ParamSpec) => void
+        "notify::devices": (pspec: GObject.ParamSpec) => void
+        "notify::endpoints": (pspec: GObject.ParamSpec) => void
+        "notify::scale": (pspec: GObject.ParamSpec) => void
+        "notify::video": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -812,6 +813,15 @@ declare module "gi://AstalWp?version=0.1" {
       set scale(val: Scale)
       get video(): Video
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Wp.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Wp.ConstructorProps>, ...args: any[])
@@ -820,21 +830,12 @@ declare module "gi://AstalWp?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "device-added", callback: (_source: this, object: Device) => void): number
-      connect_after(signal: "device-added", callback: (_source: this, object: Device) => void): number
-      emit(signal: "device-added", object: Device): void
-      connect(signal: "device-removed", callback: (_source: this, object: Device) => void): number
-      connect_after(signal: "device-removed", callback: (_source: this, object: Device) => void): number
-      emit(signal: "device-removed", object: Device): void
-      connect(signal: "endpoint-added", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "endpoint-added", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "endpoint-added", object: Endpoint): void
-      connect(signal: "endpoint-removed", callback: (_source: this, object: Endpoint) => void): number
-      connect_after(signal: "endpoint-removed", callback: (_source: this, object: Endpoint) => void): number
-      emit(signal: "endpoint-removed", object: Endpoint): void
+      connect<K extends keyof Wp.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Wp.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Wp.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Wp.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Wp.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Wp.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

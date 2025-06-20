@@ -27,6 +27,9 @@
     ../../system/config/services/throttled
     ../../system/config/services/upower
 
+    # Networking
+    ../../system/config/network/hosts.nix
+
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
 

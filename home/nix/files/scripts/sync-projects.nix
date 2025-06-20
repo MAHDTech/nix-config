@@ -84,7 +84,7 @@
                 PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
                 BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
-                RSYNC_PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/Google Drive/Projects/Backup/"
+                RSYNC_PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/gdrive/Projects/Backup/"
 
                 RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
                 RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"

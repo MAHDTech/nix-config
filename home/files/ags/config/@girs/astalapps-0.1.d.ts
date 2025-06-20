@@ -25,6 +25,20 @@ declare module "gi://AstalApps?version=0.1" {
     const MICRO_VERSION: number
     const VERSION: string
     namespace Application {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::app": (pspec: GObject.ParamSpec) => void
+        "notify::frequency": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::entry": (pspec: GObject.ParamSpec) => void
+        "notify::description": (pspec: GObject.ParamSpec) => void
+        "notify::wm-class": (pspec: GObject.ParamSpec) => void
+        "notify::executable": (pspec: GObject.ParamSpec) => void
+        "notify::icon-name": (pspec: GObject.ParamSpec) => void
+        "notify::keywords": (pspec: GObject.ParamSpec) => void
+        "notify::categories": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -103,11 +117,29 @@ declare module "gi://AstalApps?version=0.1" {
        */
       get categories(): string[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Application.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Application.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Application.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Application.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Application.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Application.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Application.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Application.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -145,6 +177,19 @@ declare module "gi://AstalApps?version=0.1" {
     }
 
     namespace Apps {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::show-hidden": (pspec: GObject.ParamSpec) => void
+        "notify::list": (pspec: GObject.ParamSpec) => void
+        "notify::min-score": (pspec: GObject.ParamSpec) => void
+        "notify::name-multiplier": (pspec: GObject.ParamSpec) => void
+        "notify::entry-multiplier": (pspec: GObject.ParamSpec) => void
+        "notify::executable-multiplier": (pspec: GObject.ParamSpec) => void
+        "notify::description-multiplier": (pspec: GObject.ParamSpec) => void
+        "notify::keywords-multiplier": (pspec: GObject.ParamSpec) => void
+        "notify::categories-multiplier": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -262,6 +307,15 @@ declare module "gi://AstalApps?version=0.1" {
       get categoriesMultiplier(): number
       set categoriesMultiplier(val: number)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Apps.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Apps.ConstructorProps>, ...args: any[])
@@ -269,6 +323,15 @@ declare module "gi://AstalApps?version=0.1" {
       _init(...args: any[]): void
 
       static ["new"](): Apps
+
+      // Signals
+
+      connect<K extends keyof Apps.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Apps.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Apps.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Apps.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Apps.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Apps.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

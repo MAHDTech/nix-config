@@ -373,6 +373,11 @@ declare module "gi://GioUnix?version=2.0" {
       (appinfo: Gio.DesktopAppInfo, pid: GLib.Pid): void
     }
     namespace DesktopAppInfo {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::filename": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps, Gio.AppInfo.ConstructorProps {
@@ -398,6 +403,15 @@ declare module "gi://GioUnix?version=2.0" {
        */
       get filename(): string
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: DesktopAppInfo.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<DesktopAppInfo.ConstructorProps>, ...args: any[])
@@ -409,6 +423,15 @@ declare module "gi://GioUnix?version=2.0" {
       static new_from_filename(filename: string): DesktopAppInfo
 
       static new_from_keyfile(key_file: GLib.KeyFile): DesktopAppInfo
+
+      // Signals
+
+      connect<K extends keyof DesktopAppInfo.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DesktopAppInfo.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof DesktopAppInfo.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DesktopAppInfo.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof DesktopAppInfo.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<DesktopAppInfo.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -1521,6 +1544,11 @@ declare module "gi://GioUnix?version=2.0" {
     }
 
     namespace FDMessage {
+      // Signal signatures
+      interface SignalSignatures extends Gio.SocketControlMessage.SignalSignatures {
+        "notify::fd-list": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gio.SocketControlMessage.ConstructorProps {
@@ -1558,6 +1586,15 @@ declare module "gi://GioUnix?version=2.0" {
        */
       get fdList(): Gio.UnixFDList
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: FDMessage.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<FDMessage.ConstructorProps>, ...args: any[])
@@ -1567,6 +1604,15 @@ declare module "gi://GioUnix?version=2.0" {
       static ["new"](): FDMessage
 
       static new_with_fd_list(fd_list: Gio.UnixFDList): FDMessage
+
+      // Signals
+
+      connect<K extends keyof FDMessage.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, FDMessage.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof FDMessage.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, FDMessage.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof FDMessage.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<FDMessage.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -1614,6 +1660,12 @@ declare module "gi://GioUnix?version=2.0" {
     }
 
     namespace InputStream {
+      // Signal signatures
+      interface SignalSignatures extends Gio.InputStream.SignalSignatures {
+        "notify::close-fd": (pspec: GObject.ParamSpec) => void
+        "notify::fd": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gio.InputStream.ConstructorProps, Gio.PollableInputStream.ConstructorProps, FileDescriptorBased.ConstructorProps {
@@ -1654,6 +1706,15 @@ declare module "gi://GioUnix?version=2.0" {
        */
       get fd(): number
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: InputStream.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<InputStream.ConstructorProps>, ...args: any[])
@@ -1661,6 +1722,15 @@ declare module "gi://GioUnix?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](fd: number, close_fd: boolean): InputStream
+
+      // Signals
+
+      connect<K extends keyof InputStream.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, InputStream.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof InputStream.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, InputStream.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof InputStream.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<InputStream.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -2932,14 +3002,10 @@ declare module "gi://GioUnix?version=2.0" {
     }
 
     namespace MountMonitor {
-      // Signal callback interfaces
-
-      interface MountpointsChanged {
-        (): void
-      }
-
-      interface MountsChanged {
-        (): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "mountpoints-changed": () => void
+        "mounts-changed": () => void
       }
 
       // Constructor properties interface
@@ -2953,6 +3019,15 @@ declare module "gi://GioUnix?version=2.0" {
     class MountMonitor extends GObject.Object {
       static $gtype: GObject.GType<MountMonitor>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: MountMonitor.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<MountMonitor.ConstructorProps>, ...args: any[])
@@ -2963,15 +3038,12 @@ declare module "gi://GioUnix?version=2.0" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "mountpoints-changed", callback: (_source: this) => void): number
-      connect_after(signal: "mountpoints-changed", callback: (_source: this) => void): number
-      emit(signal: "mountpoints-changed"): void
-      connect(signal: "mounts-changed", callback: (_source: this) => void): number
-      connect_after(signal: "mounts-changed", callback: (_source: this) => void): number
-      emit(signal: "mounts-changed"): void
+      connect<K extends keyof MountMonitor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, MountMonitor.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof MountMonitor.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, MountMonitor.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof MountMonitor.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<MountMonitor.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -3002,6 +3074,12 @@ declare module "gi://GioUnix?version=2.0" {
     }
 
     namespace OutputStream {
+      // Signal signatures
+      interface SignalSignatures extends Gio.OutputStream.SignalSignatures {
+        "notify::close-fd": (pspec: GObject.ParamSpec) => void
+        "notify::fd": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Gio.OutputStream.ConstructorProps, Gio.PollableOutputStream.ConstructorProps, FileDescriptorBased.ConstructorProps {
@@ -3042,6 +3120,15 @@ declare module "gi://GioUnix?version=2.0" {
        */
       get fd(): number
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: OutputStream.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<OutputStream.ConstructorProps>, ...args: any[])
@@ -3049,6 +3136,15 @@ declare module "gi://GioUnix?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](fd: number, close_fd: boolean): OutputStream
+
+      // Signals
+
+      connect<K extends keyof OutputStream.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, OutputStream.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof OutputStream.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, OutputStream.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof OutputStream.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<OutputStream.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

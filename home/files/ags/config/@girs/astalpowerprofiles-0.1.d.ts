@@ -26,10 +26,14 @@ declare module "gi://AstalPowerProfiles?version=0.1" {
     const VERSION: string
     function get_default(): PowerProfiles
     namespace PowerProfiles {
-      // Signal callback interfaces
-
-      interface ProfileReleased {
-        (cookie: number): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "profile-released": (arg0: number) => void
+        "notify::active-profile": (pspec: GObject.ParamSpec) => void
+        "notify::icon-name": (pspec: GObject.ParamSpec) => void
+        "notify::actions": (pspec: GObject.ParamSpec) => void
+        "notify::performance-degraded": (pspec: GObject.ParamSpec) => void
+        "notify::version": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -97,6 +101,15 @@ declare module "gi://AstalPowerProfiles?version=0.1" {
        */
       get version(): string
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: PowerProfiles.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<PowerProfiles.ConstructorProps>, ...args: any[])
@@ -107,12 +120,12 @@ declare module "gi://AstalPowerProfiles?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "profile-released", callback: (_source: this, cookie: number) => void): number
-      connect_after(signal: "profile-released", callback: (_source: this, cookie: number) => void): number
-      emit(signal: "profile-released", cookie: number): void
+      connect<K extends keyof PowerProfiles.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, PowerProfiles.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof PowerProfiles.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, PowerProfiles.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof PowerProfiles.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<PowerProfiles.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

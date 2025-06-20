@@ -33,10 +33,16 @@ declare module "gi://AstalRiver?version=0.1" {
       (success: boolean, msg: string): void
     }
     namespace Output {
-      // Signal callback interfaces
-
-      interface Changed {
-        (): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        changed: () => void
+        "notify::focused-tags": (pspec: GObject.ParamSpec) => void
+        "notify::focused-view": (pspec: GObject.ParamSpec) => void
+        "notify::id": (pspec: GObject.ParamSpec) => void
+        "notify::layout-name": (pspec: GObject.ParamSpec) => void
+        "notify::name": (pspec: GObject.ParamSpec) => void
+        "notify::occupied-tags": (pspec: GObject.ParamSpec) => void
+        "notify::urgent-tags": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -116,6 +122,15 @@ declare module "gi://AstalRiver?version=0.1" {
        */
       get urgentTags(): number
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Output.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Output.ConstructorProps>, ...args: any[])
@@ -124,12 +139,12 @@ declare module "gi://AstalRiver?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "changed", callback: (_source: this) => void): number
-      connect_after(signal: "changed", callback: (_source: this) => void): number
-      emit(signal: "changed"): void
+      connect<K extends keyof Output.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Output.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Output.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Output.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Output.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Output.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -176,18 +191,15 @@ declare module "gi://AstalRiver?version=0.1" {
     }
 
     namespace River {
-      // Signal callback interfaces
-
-      interface Changed {
-        (): void
-      }
-
-      interface OutputAdded {
-        (output: string): void
-      }
-
-      interface OutputRemoved {
-        (output: string): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        changed: () => void
+        "output-added": (arg0: string) => void
+        "output-removed": (arg0: string) => void
+        "notify::focused-output": (pspec: GObject.ParamSpec) => void
+        "notify::focused-view": (pspec: GObject.ParamSpec) => void
+        "notify::mode": (pspec: GObject.ParamSpec) => void
+        "notify::outputs": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -235,6 +247,15 @@ declare module "gi://AstalRiver?version=0.1" {
        */
       get outputs(): Output[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: River.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<River.ConstructorProps>, ...args: any[])
@@ -245,18 +266,12 @@ declare module "gi://AstalRiver?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "changed", callback: (_source: this) => void): number
-      connect_after(signal: "changed", callback: (_source: this) => void): number
-      emit(signal: "changed"): void
-      connect(signal: "output-added", callback: (_source: this, output: string) => void): number
-      connect_after(signal: "output-added", callback: (_source: this, output: string) => void): number
-      emit(signal: "output-added", output: string): void
-      connect(signal: "output-removed", callback: (_source: this, output: string) => void): number
-      connect_after(signal: "output-removed", callback: (_source: this, output: string) => void): number
-      emit(signal: "output-removed", output: string): void
+      connect<K extends keyof River.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, River.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof River.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, River.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof River.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<River.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

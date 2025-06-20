@@ -120,6 +120,11 @@ declare module "gi://AstalGreet?version=0.1" {
     function login_with_env(username: string, password: string, cmd: string, env: string[], _callback_?: Gio.AsyncReadyCallback<string> | null): Promise<void> | void
     function login_with_env_finish(_res_: Gio.AsyncResult): void
     namespace Request {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::type-name": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -139,11 +144,29 @@ declare module "gi://AstalGreet?version=0.1" {
       get type_name(): string
       get typeName(): string
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Request.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Request.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Request.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Request.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Request.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Request.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Request.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Request.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -170,6 +193,12 @@ declare module "gi://AstalGreet?version=0.1" {
     }
 
     namespace CreateSession {
+      // Signal signatures
+      interface SignalSignatures extends Request.SignalSignatures {
+        "notify::username": (pspec: GObject.ParamSpec) => void
+        "notify::type-name": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Request.ConstructorProps {
@@ -188,6 +217,15 @@ declare module "gi://AstalGreet?version=0.1" {
       get username(): string
       set username(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: CreateSession.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<CreateSession.ConstructorProps>, ...args: any[])
@@ -196,6 +234,15 @@ declare module "gi://AstalGreet?version=0.1" {
 
       static ["new"](username: string): CreateSession
 
+      // Signals
+
+      connect<K extends keyof CreateSession.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, CreateSession.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof CreateSession.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, CreateSession.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof CreateSession.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<CreateSession.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
+
       // Methods
 
       get_username(): string
@@ -203,6 +250,12 @@ declare module "gi://AstalGreet?version=0.1" {
     }
 
     namespace PostAuthMesssage {
+      // Signal signatures
+      interface SignalSignatures extends Request.SignalSignatures {
+        "notify::response": (pspec: GObject.ParamSpec) => void
+        "notify::type-name": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Request.ConstructorProps {
@@ -222,6 +275,15 @@ declare module "gi://AstalGreet?version=0.1" {
       get response(): string
       set response(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: PostAuthMesssage.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<PostAuthMesssage.ConstructorProps>, ...args: any[])
@@ -230,6 +292,15 @@ declare module "gi://AstalGreet?version=0.1" {
 
       static ["new"](response: string): PostAuthMesssage
 
+      // Signals
+
+      connect<K extends keyof PostAuthMesssage.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, PostAuthMesssage.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof PostAuthMesssage.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, PostAuthMesssage.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof PostAuthMesssage.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<PostAuthMesssage.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
+
       // Methods
 
       get_response(): string
@@ -237,6 +308,13 @@ declare module "gi://AstalGreet?version=0.1" {
     }
 
     namespace StartSession {
+      // Signal signatures
+      interface SignalSignatures extends Request.SignalSignatures {
+        "notify::cmd": (pspec: GObject.ParamSpec) => void
+        "notify::env": (pspec: GObject.ParamSpec) => void
+        "notify::type-name": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Request.ConstructorProps {
@@ -259,6 +337,15 @@ declare module "gi://AstalGreet?version=0.1" {
       get env(): string[]
       set env(val: string[])
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: StartSession.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<StartSession.ConstructorProps>, ...args: any[])
@@ -266,6 +353,15 @@ declare module "gi://AstalGreet?version=0.1" {
       _init(...args: any[]): void
 
       static ["new"](cmd: string[], env: string[]): StartSession
+
+      // Signals
+
+      connect<K extends keyof StartSession.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, StartSession.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof StartSession.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, StartSession.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof StartSession.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<StartSession.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -276,6 +372,11 @@ declare module "gi://AstalGreet?version=0.1" {
     }
 
     namespace CancelSession {
+      // Signal signatures
+      interface SignalSignatures extends Request.SignalSignatures {
+        "notify::type-name": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Request.ConstructorProps {}
@@ -287,6 +388,15 @@ declare module "gi://AstalGreet?version=0.1" {
     class CancelSession extends Request {
       static $gtype: GObject.GType<CancelSession>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: CancelSession.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<CancelSession.ConstructorProps>, ...args: any[])
@@ -294,9 +404,21 @@ declare module "gi://AstalGreet?version=0.1" {
       _init(...args: any[]): void
 
       static ["new"](): CancelSession
+
+      // Signals
+
+      connect<K extends keyof CancelSession.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, CancelSession.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof CancelSession.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, CancelSession.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof CancelSession.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<CancelSession.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace Response {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -308,14 +430,35 @@ declare module "gi://AstalGreet?version=0.1" {
     abstract class Response extends GObject.Object {
       static $gtype: GObject.GType<Response>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Response.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Response.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Response.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Response.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Response.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Response.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Response.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Response.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace Success {
+      // Signal signatures
+      interface SignalSignatures extends Response.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Response.ConstructorProps {}
@@ -327,14 +470,38 @@ declare module "gi://AstalGreet?version=0.1" {
     class Success extends Response {
       static $gtype: GObject.GType<Success>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Success.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Success.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Success.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Success.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Success.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Success.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Success.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Success.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace Error {
+      // Signal signatures
+      interface SignalSignatures extends Response.SignalSignatures {
+        "notify::error-type": (pspec: GObject.ParamSpec) => void
+        "notify::description": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Response.ConstructorProps {
@@ -359,11 +526,29 @@ declare module "gi://AstalGreet?version=0.1" {
       get description(): string
       set description(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Error.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Error.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Error.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Error.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Error.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Error.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Error.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Error.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -372,6 +557,12 @@ declare module "gi://AstalGreet?version=0.1" {
     }
 
     namespace AuthMessage {
+      // Signal signatures
+      interface SignalSignatures extends Response.SignalSignatures {
+        "notify::message-type": (pspec: GObject.ParamSpec) => void
+        "notify::message": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Response.ConstructorProps {
@@ -396,11 +587,29 @@ declare module "gi://AstalGreet?version=0.1" {
       get message(): string
       set message(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: AuthMessage.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<AuthMessage.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof AuthMessage.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, AuthMessage.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof AuthMessage.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, AuthMessage.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof AuthMessage.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<AuthMessage.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

@@ -139,6 +139,9 @@ declare module "gi://PangoOT?version=1.0" {
      */
     function tag_to_script(script_tag: Tag): Pango.Script
     namespace Info {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -147,11 +150,29 @@ declare module "gi://PangoOT?version=1.0" {
     class Info extends GObject.Object {
       static $gtype: GObject.GType<Info>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Info.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Info.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Info.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Info.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Info.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Info.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Info.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Info.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -240,6 +261,9 @@ declare module "gi://PangoOT?version=1.0" {
     }
 
     namespace Ruleset {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -261,6 +285,15 @@ declare module "gi://PangoOT?version=1.0" {
     class Ruleset extends GObject.Object {
       static $gtype: GObject.GType<Ruleset>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Ruleset.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Ruleset.ConstructorProps>, ...args: any[])
@@ -272,6 +305,15 @@ declare module "gi://PangoOT?version=1.0" {
       static new_for(info: Info, script: Pango.Script, language: Pango.Language): Ruleset
 
       static new_from_description(info: Info, desc: RulesetDescription): Ruleset
+
+      // Signals
+
+      connect<K extends keyof Ruleset.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Ruleset.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Ruleset.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Ruleset.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Ruleset.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Ruleset.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

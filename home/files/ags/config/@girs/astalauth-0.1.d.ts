@@ -29,30 +29,16 @@ declare module "gi://AstalAuth?version=0.1" {
     const MINOR_VERSION: number
     const VERSION: string
     namespace Pam {
-      // Signal callback interfaces
-
-      interface AuthError {
-        (msg: string): void
-      }
-
-      interface AuthInfo {
-        (msg: string): void
-      }
-
-      interface AuthPromptHidden {
-        (msg: string): void
-      }
-
-      interface AuthPromptVisible {
-        (msg: string): void
-      }
-
-      interface Fail {
-        (msg: string): void
-      }
-
-      interface Success {
-        (): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "auth-error": (arg0: string) => void
+        "auth-info": (arg0: string) => void
+        "auth-prompt-hidden": (arg0: string) => void
+        "auth-prompt-visible": (arg0: string) => void
+        fail: (arg0: string) => void
+        success: () => void
+        "notify::service": (pspec: GObject.ParamSpec) => void
+        "notify::username": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -109,6 +95,15 @@ declare module "gi://AstalAuth?version=0.1" {
       get username(): string
       set username(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Pam.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Pam.ConstructorProps>, ...args: any[])
@@ -117,27 +112,12 @@ declare module "gi://AstalAuth?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "auth-error", callback: (_source: this, msg: string) => void): number
-      connect_after(signal: "auth-error", callback: (_source: this, msg: string) => void): number
-      emit(signal: "auth-error", msg: string): void
-      connect(signal: "auth-info", callback: (_source: this, msg: string) => void): number
-      connect_after(signal: "auth-info", callback: (_source: this, msg: string) => void): number
-      emit(signal: "auth-info", msg: string): void
-      connect(signal: "auth-prompt-hidden", callback: (_source: this, msg: string) => void): number
-      connect_after(signal: "auth-prompt-hidden", callback: (_source: this, msg: string) => void): number
-      emit(signal: "auth-prompt-hidden", msg: string): void
-      connect(signal: "auth-prompt-visible", callback: (_source: this, msg: string) => void): number
-      connect_after(signal: "auth-prompt-visible", callback: (_source: this, msg: string) => void): number
-      emit(signal: "auth-prompt-visible", msg: string): void
-      connect(signal: "fail", callback: (_source: this, msg: string) => void): number
-      connect_after(signal: "fail", callback: (_source: this, msg: string) => void): number
-      emit(signal: "fail", msg: string): void
-      connect(signal: "success", callback: (_source: this) => void): number
-      connect_after(signal: "success", callback: (_source: this) => void): number
-      emit(signal: "success"): void
+      connect<K extends keyof Pam.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Pam.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Pam.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Pam.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Pam.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Pam.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 

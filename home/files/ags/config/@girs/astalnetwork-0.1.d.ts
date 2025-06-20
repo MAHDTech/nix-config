@@ -105,6 +105,16 @@ declare module "gi://AstalNetwork?version=0.1" {
     function internet_to_string(): string
     function get_default(): Network
     namespace Network {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::client": (pspec: GObject.ParamSpec) => void
+        "notify::wifi": (pspec: GObject.ParamSpec) => void
+        "notify::wired": (pspec: GObject.ParamSpec) => void
+        "notify::primary": (pspec: GObject.ParamSpec) => void
+        "notify::connectivity": (pspec: GObject.ParamSpec) => void
+        "notify::state": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -133,6 +143,15 @@ declare module "gi://AstalNetwork?version=0.1" {
       get connectivity(): Connectivity
       get state(): State
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Network.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Network.ConstructorProps>, ...args: any[])
@@ -140,6 +159,15 @@ declare module "gi://AstalNetwork?version=0.1" {
       _init(...args: any[]): void
 
       static ["new"](): Network
+
+      // Signals
+
+      connect<K extends keyof Network.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Network.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Network.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Network.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Network.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Network.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -156,10 +184,23 @@ declare module "gi://AstalNetwork?version=0.1" {
     }
 
     namespace Wifi {
-      // Signal callback interfaces
-
-      interface StateChanged {
-        (new_state: DeviceState, old_state: DeviceState, reaseon: NM.DeviceStateReason): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "state-changed": (arg0: DeviceState, arg1: DeviceState, arg2: NM.DeviceStateReason) => void
+        "notify::device": (pspec: GObject.ParamSpec) => void
+        "notify::active-connection": (pspec: GObject.ParamSpec) => void
+        "notify::active-access-point": (pspec: GObject.ParamSpec) => void
+        "notify::access-points": (pspec: GObject.ParamSpec) => void
+        "notify::enabled": (pspec: GObject.ParamSpec) => void
+        "notify::internet": (pspec: GObject.ParamSpec) => void
+        "notify::bandwidth": (pspec: GObject.ParamSpec) => void
+        "notify::ssid": (pspec: GObject.ParamSpec) => void
+        "notify::strength": (pspec: GObject.ParamSpec) => void
+        "notify::frequency": (pspec: GObject.ParamSpec) => void
+        "notify::state": (pspec: GObject.ParamSpec) => void
+        "notify::icon-name": (pspec: GObject.ParamSpec) => void
+        "notify::is-hotspot": (pspec: GObject.ParamSpec) => void
+        "notify::scanning": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -229,6 +270,15 @@ declare module "gi://AstalNetwork?version=0.1" {
       get scanning(): boolean
       set scanning(val: boolean)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Wifi.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Wifi.ConstructorProps>, ...args: any[])
@@ -237,12 +287,12 @@ declare module "gi://AstalNetwork?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "state-changed", callback: (_source: this, new_state: DeviceState, old_state: DeviceState, reaseon: NM.DeviceStateReason) => void): number
-      connect_after(signal: "state-changed", callback: (_source: this, new_state: DeviceState, old_state: DeviceState, reaseon: NM.DeviceStateReason) => void): number
-      emit(signal: "state-changed", new_state: DeviceState, old_state: DeviceState, reaseon: NM.DeviceStateReason): void
+      connect<K extends keyof Wifi.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Wifi.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Wifi.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Wifi.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Wifi.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Wifi.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -266,6 +316,15 @@ declare module "gi://AstalNetwork?version=0.1" {
     }
 
     namespace Wired {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::device": (pspec: GObject.ParamSpec) => void
+        "notify::speed": (pspec: GObject.ParamSpec) => void
+        "notify::internet": (pspec: GObject.ParamSpec) => void
+        "notify::state": (pspec: GObject.ParamSpec) => void
+        "notify::icon-name": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -296,6 +355,15 @@ declare module "gi://AstalNetwork?version=0.1" {
       get iconName(): string
       set iconName(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Wired.SignalSignatures
+
       // Fields
 
       connection: NM.ActiveConnection
@@ -305,6 +373,15 @@ declare module "gi://AstalNetwork?version=0.1" {
       constructor(properties?: Partial<Wired.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Wired.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Wired.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Wired.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Wired.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Wired.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Wired.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -317,6 +394,22 @@ declare module "gi://AstalNetwork?version=0.1" {
     }
 
     namespace AccessPoint {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::bandwidth": (pspec: GObject.ParamSpec) => void
+        "notify::bssid": (pspec: GObject.ParamSpec) => void
+        "notify::frequency": (pspec: GObject.ParamSpec) => void
+        "notify::last-seen": (pspec: GObject.ParamSpec) => void
+        "notify::max-bitrate": (pspec: GObject.ParamSpec) => void
+        "notify::strength": (pspec: GObject.ParamSpec) => void
+        "notify::icon-name": (pspec: GObject.ParamSpec) => void
+        "notify::mode": (pspec: GObject.ParamSpec) => void
+        "notify::flags": (pspec: GObject.ParamSpec) => void
+        "notify::rsn-flags": (pspec: GObject.ParamSpec) => void
+        "notify::wpa-flags": (pspec: GObject.ParamSpec) => void
+        "notify::ssid": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -365,11 +458,29 @@ declare module "gi://AstalNetwork?version=0.1" {
       get wpaFlags(): NM.__80211ApSecurityFlags
       get ssid(): string
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: AccessPoint.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<AccessPoint.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof AccessPoint.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, AccessPoint.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof AccessPoint.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, AccessPoint.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof AccessPoint.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<AccessPoint.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

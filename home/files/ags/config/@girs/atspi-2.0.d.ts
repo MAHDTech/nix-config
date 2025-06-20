@@ -2318,14 +2318,10 @@ declare module "gi://Atspi?version=2.0" {
       ALL_WINDOWS,
     }
     namespace Accessible {
-      // Signal callback interfaces
-
-      interface ModeChanged {
-        (arg1: number, why: string): void
-      }
-
-      interface RegionChanged {
-        (arg1: number, arg2: number): void
+      // Signal signatures
+      interface SignalSignatures extends Object.SignalSignatures {
+        "mode-changed": (arg0: number, arg1: string) => void
+        "region-changed": (arg0: number, arg1: number) => void
       }
 
       // Constructor properties interface
@@ -2356,6 +2352,15 @@ declare module "gi://Atspi?version=2.0" {
     class Accessible extends Object implements Action, Collection, Component, Document, EditableText, Hypertext, Image, Selection, Table, TableCell, Text, Value {
       static $gtype: GObject.GType<Accessible>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Accessible.SignalSignatures
+
       // Fields
 
       accessible_parent: Accessible
@@ -2375,15 +2380,12 @@ declare module "gi://Atspi?version=2.0" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "mode-changed", callback: (_source: this, arg1: number, why: string) => void): number
-      connect_after(signal: "mode-changed", callback: (_source: this, arg1: number, why: string) => void): number
-      emit(signal: "mode-changed", arg1: number, why: string): void
-      connect(signal: "region-changed", callback: (_source: this, arg1: number, arg2: number) => void): number
-      connect_after(signal: "region-changed", callback: (_source: this, arg1: number, arg2: number) => void): number
-      emit(signal: "region-changed", arg1: number, arg2: number): void
+      connect<K extends keyof Accessible.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Accessible.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Accessible.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Accessible.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Accessible.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Accessible.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -4100,6 +4102,9 @@ declare module "gi://Atspi?version=2.0" {
     }
 
     namespace Application {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4114,6 +4119,15 @@ declare module "gi://Atspi?version=2.0" {
      */
     class Application extends GObject.Object {
       static $gtype: GObject.GType<Application>
+
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Application.SignalSignatures
 
       // Fields
 
@@ -4130,9 +4144,21 @@ declare module "gi://Atspi?version=2.0" {
       constructor(properties?: Partial<Application.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Application.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Application.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Application.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Application.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Application.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Application.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace Device {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4141,6 +4167,15 @@ declare module "gi://Atspi?version=2.0" {
     class Device extends GObject.Object {
       static $gtype: GObject.GType<Device>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Device.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Device.ConstructorProps>, ...args: any[])
@@ -4148,6 +4183,15 @@ declare module "gi://Atspi?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](): Device
+
+      // Signals
+
+      connect<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Device.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Device.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -4287,6 +4331,9 @@ declare module "gi://Atspi?version=2.0" {
     }
 
     namespace DeviceLegacy {
+      // Signal signatures
+      interface SignalSignatures extends Device.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Device.ConstructorProps {}
@@ -4295,6 +4342,15 @@ declare module "gi://Atspi?version=2.0" {
     class DeviceLegacy extends Device {
       static $gtype: GObject.GType<DeviceLegacy>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: DeviceLegacy.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<DeviceLegacy.ConstructorProps>, ...args: any[])
@@ -4302,9 +4358,21 @@ declare module "gi://Atspi?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](): DeviceLegacy
+
+      // Signals
+
+      connect<K extends keyof DeviceLegacy.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DeviceLegacy.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof DeviceLegacy.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DeviceLegacy.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof DeviceLegacy.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<DeviceLegacy.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace DeviceListener {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4312,6 +4380,15 @@ declare module "gi://Atspi?version=2.0" {
 
     class DeviceListener extends GObject.Object {
       static $gtype: GObject.GType<DeviceListener>
+
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: DeviceListener.SignalSignatures
 
       // Fields
 
@@ -4325,6 +4402,15 @@ declare module "gi://Atspi?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](callback: DeviceListenerCB): DeviceListener
+
+      // Signals
+
+      connect<K extends keyof DeviceListener.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DeviceListener.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof DeviceListener.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DeviceListener.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof DeviceListener.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<DeviceListener.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 
@@ -4346,6 +4432,9 @@ declare module "gi://Atspi?version=2.0" {
     }
 
     namespace DeviceX11 {
+      // Signal signatures
+      interface SignalSignatures extends Device.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Device.ConstructorProps {}
@@ -4354,6 +4443,15 @@ declare module "gi://Atspi?version=2.0" {
     class DeviceX11 extends Device {
       static $gtype: GObject.GType<DeviceX11>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: DeviceX11.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<DeviceX11.ConstructorProps>, ...args: any[])
@@ -4361,9 +4459,21 @@ declare module "gi://Atspi?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](): DeviceX11
+
+      // Signals
+
+      connect<K extends keyof DeviceX11.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DeviceX11.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof DeviceX11.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, DeviceX11.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof DeviceX11.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<DeviceX11.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace EventListener {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4381,6 +4491,15 @@ declare module "gi://Atspi?version=2.0" {
     class EventListener extends GObject.Object {
       static $gtype: GObject.GType<EventListener>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: EventListener.SignalSignatures
+
       // Fields
 
       callback: EventListenerCB
@@ -4394,6 +4513,15 @@ declare module "gi://Atspi?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](callback: EventListenerCB): EventListener
+
+      // Signals
+
+      connect<K extends keyof EventListener.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, EventListener.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof EventListener.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, EventListener.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof EventListener.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<EventListener.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -4529,6 +4657,9 @@ declare module "gi://Atspi?version=2.0" {
     }
 
     namespace Hyperlink {
+      // Signal signatures
+      interface SignalSignatures extends Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends Object.ConstructorProps {}
@@ -4549,11 +4680,29 @@ declare module "gi://Atspi?version=2.0" {
     class Hyperlink extends Object {
       static $gtype: GObject.GType<Hyperlink>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Hyperlink.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Hyperlink.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Hyperlink.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Hyperlink.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Hyperlink.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Hyperlink.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Hyperlink.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Hyperlink.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -4604,6 +4753,9 @@ declare module "gi://Atspi?version=2.0" {
     }
 
     namespace MatchRule {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4615,6 +4767,15 @@ declare module "gi://Atspi?version=2.0" {
      */
     class MatchRule extends GObject.Object {
       static $gtype: GObject.GType<MatchRule>
+
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: MatchRule.SignalSignatures
 
       // Fields
 
@@ -4644,9 +4805,21 @@ declare module "gi://Atspi?version=2.0" {
         interfacematchtype: CollectionMatchType,
         invert: boolean
       ): MatchRule
+
+      // Signals
+
+      connect<K extends keyof MatchRule.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, MatchRule.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof MatchRule.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, MatchRule.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof MatchRule.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<MatchRule.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace Object {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4654,6 +4827,15 @@ declare module "gi://Atspi?version=2.0" {
 
     class Object extends GObject.Object {
       static $gtype: GObject.GType<Object>
+
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Object.SignalSignatures
 
       // Fields
 
@@ -4665,9 +4847,21 @@ declare module "gi://Atspi?version=2.0" {
       constructor(properties?: Partial<Object.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Object.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Object.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Object.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Object.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Object.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Object.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
     }
 
     namespace Relation {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4684,6 +4878,15 @@ declare module "gi://Atspi?version=2.0" {
     class Relation extends GObject.Object {
       static $gtype: GObject.GType<Relation>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Relation.SignalSignatures
+
       // Fields
 
       relation_type: RelationType
@@ -4694,6 +4897,15 @@ declare module "gi://Atspi?version=2.0" {
       constructor(properties?: Partial<Relation.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Relation.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Relation.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Relation.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Relation.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Relation.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Relation.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -4718,6 +4930,9 @@ declare module "gi://Atspi?version=2.0" {
     }
 
     namespace StateSet {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {}
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {}
@@ -4729,6 +4944,15 @@ declare module "gi://Atspi?version=2.0" {
      */
     class StateSet extends GObject.Object {
       static $gtype: GObject.GType<StateSet>
+
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: StateSet.SignalSignatures
 
       // Fields
 
@@ -4742,6 +4966,15 @@ declare module "gi://Atspi?version=2.0" {
       _init(...args: any[]): void
 
       static ["new"](states: StateType[]): StateSet
+
+      // Signals
+
+      connect<K extends keyof StateSet.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, StateSet.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof StateSet.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, StateSet.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof StateSet.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<StateSet.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

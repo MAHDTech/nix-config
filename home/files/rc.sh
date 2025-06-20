@@ -389,6 +389,35 @@ if [[ ${RUST_ENABLED:-FALSE} == "TRUE" ]]; then
 fi
 
 #########################
+# Wallpapers
+#########################
+
+WALLPAPERS_DIR_SOURCE="/home/mahdtech/Insync/mahdtech@gmail.com/gdrive/Pictures/Wallpapers"
+WALLPAPERS_DIR_DEST="${XDG_WALLPAPERS_DIR:-EMPTY}"
+
+if [[ ${WALLPAPERS_DIR_DEST:-EMPTY} != "EMPTY" ]]; then
+	if [[ ! -d ${WALLPAPERS_DIR_DEST} ]]; then
+		mkdir --parents "${WALLPAPERS_DIR_DEST}" || {
+			writeLog "ERROR" "Failed to create ${WALLPAPERS_DIR_DEST}"
+			return 1
+		}
+		writeLog "INFO" "Created ${WALLPAPERS_DIR_DEST}"
+	fi
+
+	# Create a symlink to the wallpapers directory
+	# but only if the source directory exists
+	if [[ -d ${WALLPAPERS_DIR_SOURCE} ]]; then
+		ln -sf "${WALLPAPERS_DIR_SOURCE}" "${WALLPAPERS_DIR_DEST}" || {
+			writeLog "ERROR" "Failed to create symlink from ${WALLPAPERS_DIR_SOURCE} to ${WALLPAPERS_DIR_DEST}"
+			return 1
+		}
+		writeLog "INFO" "Created symlink from ${WALLPAPERS_DIR_SOURCE} to ${WALLPAPERS_DIR_DEST}"
+	fi
+else
+	writeLog "INFO" "Skipping symlink creation for wallpapers as WALLPAPERS_DIR_DEST variable is not set"
+fi
+
+#########################
 # Fortune cookies
 #########################
 

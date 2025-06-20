@@ -119,6 +119,43 @@ declare module "gi://AstalBattery?version=0.1" {
      */
     function get_default(): Device
     namespace Device {
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "notify::device-type": (pspec: GObject.ParamSpec) => void
+        "notify::native-path": (pspec: GObject.ParamSpec) => void
+        "notify::vendor": (pspec: GObject.ParamSpec) => void
+        "notify::model": (pspec: GObject.ParamSpec) => void
+        "notify::serial": (pspec: GObject.ParamSpec) => void
+        "notify::update-time": (pspec: GObject.ParamSpec) => void
+        "notify::power-supply": (pspec: GObject.ParamSpec) => void
+        "notify::online": (pspec: GObject.ParamSpec) => void
+        "notify::energy": (pspec: GObject.ParamSpec) => void
+        "notify::energy-empty": (pspec: GObject.ParamSpec) => void
+        "notify::energy-full": (pspec: GObject.ParamSpec) => void
+        "notify::energy-full-design": (pspec: GObject.ParamSpec) => void
+        "notify::energy-rate": (pspec: GObject.ParamSpec) => void
+        "notify::voltage": (pspec: GObject.ParamSpec) => void
+        "notify::charge-cycles": (pspec: GObject.ParamSpec) => void
+        "notify::luminosity": (pspec: GObject.ParamSpec) => void
+        "notify::time-to-empty": (pspec: GObject.ParamSpec) => void
+        "notify::time-to-full": (pspec: GObject.ParamSpec) => void
+        "notify::percentage": (pspec: GObject.ParamSpec) => void
+        "notify::temperature": (pspec: GObject.ParamSpec) => void
+        "notify::is-present": (pspec: GObject.ParamSpec) => void
+        "notify::state": (pspec: GObject.ParamSpec) => void
+        "notify::is-rechargable": (pspec: GObject.ParamSpec) => void
+        "notify::capacity": (pspec: GObject.ParamSpec) => void
+        "notify::technology": (pspec: GObject.ParamSpec) => void
+        "notify::warning-level": (pspec: GObject.ParamSpec) => void
+        "notify::battery-level": (pspec: GObject.ParamSpec) => void
+        "notify::icon-name": (pspec: GObject.ParamSpec) => void
+        "notify::charging": (pspec: GObject.ParamSpec) => void
+        "notify::is-battery": (pspec: GObject.ParamSpec) => void
+        "notify::battery-icon-name": (pspec: GObject.ParamSpec) => void
+        "notify::device-type-name": (pspec: GObject.ParamSpec) => void
+        "notify::device-type-icon": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends GObject.Object.ConstructorProps {
@@ -488,6 +525,15 @@ declare module "gi://AstalBattery?version=0.1" {
       get deviceTypeIcon(): string
       set deviceTypeIcon(val: string)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Device.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Device.ConstructorProps>, ...args: any[])
@@ -495,6 +541,15 @@ declare module "gi://AstalBattery?version=0.1" {
       _init(...args: any[]): void
 
       static ["new"](path: never): Device
+
+      // Signals
+
+      connect<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Device.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Device.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Device.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Device.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -541,14 +596,17 @@ declare module "gi://AstalBattery?version=0.1" {
     }
 
     namespace UPower {
-      // Signal callback interfaces
-
-      interface DeviceAdded {
-        (device: Device): void
-      }
-
-      interface DeviceRemoved {
-        (device: Device): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "device-added": (arg0: Device) => void
+        "device-removed": (arg0: Device) => void
+        "notify::devices": (pspec: GObject.ParamSpec) => void
+        "notify::display-device": (pspec: GObject.ParamSpec) => void
+        "notify::daemon-version": (pspec: GObject.ParamSpec) => void
+        "notify::on-battery": (pspec: GObject.ParamSpec) => void
+        "notify::lid-is-closed": (pspec: GObject.ParamSpec) => void
+        "notify::lis-is-present": (pspec: GObject.ParamSpec) => void
+        "notify::critical-action": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -625,6 +683,15 @@ declare module "gi://AstalBattery?version=0.1" {
        */
       get criticalAction(): string
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: UPower.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<UPower.ConstructorProps>, ...args: any[])
@@ -635,15 +702,12 @@ declare module "gi://AstalBattery?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "device-added", callback: (_source: this, device: Device) => void): number
-      connect_after(signal: "device-added", callback: (_source: this, device: Device) => void): number
-      emit(signal: "device-added", device: Device): void
-      connect(signal: "device-removed", callback: (_source: this, device: Device) => void): number
-      connect_after(signal: "device-removed", callback: (_source: this, device: Device) => void): number
-      emit(signal: "device-removed", device: Device): void
+      connect<K extends keyof UPower.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, UPower.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof UPower.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, UPower.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof UPower.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<UPower.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

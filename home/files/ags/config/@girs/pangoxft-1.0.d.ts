@@ -144,6 +144,12 @@ declare module "gi://PangoXft?version=1.0" {
       (pattern: fontconfig.Pattern, data?: any | null): void
     }
     namespace Font {
+      // Signal signatures
+      interface SignalSignatures extends PangoFc.Font.SignalSignatures {
+        "notify::fontmap": (pspec: GObject.ParamSpec) => void
+        "notify::pattern": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends PangoFc.Font.ConstructorProps {}
@@ -156,11 +162,29 @@ declare module "gi://PangoXft?version=1.0" {
     class Font extends PangoFc.Font {
       static $gtype: GObject.GType<Font>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Font.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Font.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof Font.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Font.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Font.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Font.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Font.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Font.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 
@@ -175,7 +199,7 @@ declare module "gi://PangoXft?version=1.0" {
        * @param wc Unicode codepoint to look up
        * @returns the glyph index, or 0, if the Unicode  character does not exist in the font.
        */
-      get_glyph(wc: number): number
+      get_glyph(wc: string): number
       /**
        * Returns the index of a glyph suitable for drawing `wc` as an
        * unknown character.
@@ -184,7 +208,7 @@ declare module "gi://PangoXft?version=1.0" {
        * @param wc the Unicode character for which a glyph is needed.
        * @returns a glyph index into @font.
        */
-      get_unknown_glyph(wc: number): Pango.Glyph
+      get_unknown_glyph(wc: string): Pango.Glyph
       /**
        * Determines whether `font` has a glyph for the codepoint `wc`.
        *
@@ -192,10 +216,16 @@ declare module "gi://PangoXft?version=1.0" {
        * @param wc Unicode codepoint to look up
        * @returns %TRUE if @font has the requested codepoint.
        */
-      has_char(wc: number): boolean
+      has_char(wc: string): boolean
     }
 
     namespace FontMap {
+      // Signal signatures
+      interface SignalSignatures extends PangoFc.FontMap.SignalSignatures {
+        "notify::item-type": (pspec: GObject.ParamSpec) => void
+        "notify::n-items": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps<A extends GObject.Object = GObject.Object> extends PangoFc.FontMap.ConstructorProps, Gio.ListModel.ConstructorProps {}
@@ -209,11 +239,29 @@ declare module "gi://PangoXft?version=1.0" {
     class FontMap<A extends GObject.Object = GObject.Object> extends PangoFc.FontMap implements Gio.ListModel<A> {
       static $gtype: GObject.GType<FontMap>
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: FontMap.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<FontMap.ConstructorProps>, ...args: any[])
 
       _init(...args: any[]): void
+
+      // Signals
+
+      connect<K extends keyof FontMap.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, FontMap.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof FontMap.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, FontMap.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof FontMap.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<FontMap.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Inherited methods
       /**
@@ -747,6 +795,12 @@ declare module "gi://PangoXft?version=1.0" {
     }
 
     namespace Renderer {
+      // Signal signatures
+      interface SignalSignatures extends Pango.Renderer.SignalSignatures {
+        "notify::display": (pspec: GObject.ParamSpec) => void
+        "notify::screen": (pspec: GObject.ParamSpec) => void
+      }
+
       // Constructor properties interface
 
       interface ConstructorProps extends Pango.Renderer.ConstructorProps {
@@ -769,6 +823,15 @@ declare module "gi://PangoXft?version=1.0" {
       set display(val: any)
       set screen(val: number)
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Renderer.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Renderer.ConstructorProps>, ...args: any[])
@@ -776,6 +839,15 @@ declare module "gi://PangoXft?version=1.0" {
       _init(...args: any[]): void
 
       static ["new"](display: xlib.Display, screen: number): Renderer
+
+      // Signals
+
+      connect<K extends keyof Renderer.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Renderer.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Renderer.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Renderer.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Renderer.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Renderer.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Virtual methods
 

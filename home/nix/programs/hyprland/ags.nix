@@ -41,7 +41,9 @@
 
   programs.ags = {
     enable = true;
-    configDir = ../../files/ags/config;
+
+    configDir = ../../../files/ags/config;
+
     extraPackages = with pkgs; [
       # Astal Libraries
       # https://aylur.github.io/astal/guide/libraries/references#astal-libraries

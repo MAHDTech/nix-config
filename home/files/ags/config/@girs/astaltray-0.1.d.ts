@@ -57,14 +57,11 @@ declare module "gi://AstalTray?version=0.1" {
      */
     function get_default(): Tray
     namespace Tray {
-      // Signal callback interfaces
-
-      interface ItemAdded {
-        (item_id: string): void
-      }
-
-      interface ItemRemoved {
-        (item_id: string): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        "item-added": (arg0: string) => void
+        "item-removed": (arg0: string) => void
+        "notify::items": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -84,6 +81,15 @@ declare module "gi://AstalTray?version=0.1" {
        */
       get items(): TrayItem[]
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: Tray.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<Tray.ConstructorProps>, ...args: any[])
@@ -94,15 +100,12 @@ declare module "gi://AstalTray?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "item-added", callback: (_source: this, item_id: string) => void): number
-      connect_after(signal: "item-added", callback: (_source: this, item_id: string) => void): number
-      emit(signal: "item-added", item_id: string): void
-      connect(signal: "item-removed", callback: (_source: this, item_id: string) => void): number
-      connect_after(signal: "item-removed", callback: (_source: this, item_id: string) => void): number
-      emit(signal: "item-removed", item_id: string): void
+      connect<K extends keyof Tray.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Tray.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof Tray.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, Tray.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof Tray.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<Tray.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Static methods
 
@@ -122,14 +125,24 @@ declare module "gi://AstalTray?version=0.1" {
     }
 
     namespace TrayItem {
-      // Signal callback interfaces
-
-      interface Changed {
-        (): void
-      }
-
-      interface Ready {
-        (): void
+      // Signal signatures
+      interface SignalSignatures extends GObject.Object.SignalSignatures {
+        changed: () => void
+        ready: () => void
+        "notify::title": (pspec: GObject.ParamSpec) => void
+        "notify::category": (pspec: GObject.ParamSpec) => void
+        "notify::status": (pspec: GObject.ParamSpec) => void
+        "notify::tooltip": (pspec: GObject.ParamSpec) => void
+        "notify::tooltip-markup": (pspec: GObject.ParamSpec) => void
+        "notify::id": (pspec: GObject.ParamSpec) => void
+        "notify::is-menu": (pspec: GObject.ParamSpec) => void
+        "notify::icon-theme-path": (pspec: GObject.ParamSpec) => void
+        "notify::icon-name": (pspec: GObject.ParamSpec) => void
+        "notify::icon-pixbuf": (pspec: GObject.ParamSpec) => void
+        "notify::gicon": (pspec: GObject.ParamSpec) => void
+        "notify::item-id": (pspec: GObject.ParamSpec) => void
+        "notify::menu-model": (pspec: GObject.ParamSpec) => void
+        "notify::action-group": (pspec: GObject.ParamSpec) => void
       }
 
       // Constructor properties interface
@@ -253,6 +266,15 @@ declare module "gi://AstalTray?version=0.1" {
       get action_group(): Gio.ActionGroup
       get actionGroup(): Gio.ActionGroup
 
+      /**
+       * Compile-time signal type information.
+       *
+       * This instance property is generated only for TypeScript type checking.
+       * It is not defined at runtime and should not be accessed in JS code.
+       * @internal
+       */
+      $signals: TrayItem.SignalSignatures
+
       // Constructors
 
       constructor(properties?: Partial<TrayItem.ConstructorProps>, ...args: any[])
@@ -261,15 +283,12 @@ declare module "gi://AstalTray?version=0.1" {
 
       // Signals
 
-      connect(id: string, callback: (...args: any[]) => any): number
-      connect_after(id: string, callback: (...args: any[]) => any): number
-      emit(id: string, ...args: any[]): void
-      connect(signal: "changed", callback: (_source: this) => void): number
-      connect_after(signal: "changed", callback: (_source: this) => void): number
-      emit(signal: "changed"): void
-      connect(signal: "ready", callback: (_source: this) => void): number
-      connect_after(signal: "ready", callback: (_source: this) => void): number
-      emit(signal: "ready"): void
+      connect<K extends keyof TrayItem.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, TrayItem.SignalSignatures[K]>): number
+      connect(signal: string, callback: (...args: any[]) => any): number
+      connect_after<K extends keyof TrayItem.SignalSignatures>(signal: K, callback: GObject.SignalCallback<this, TrayItem.SignalSignatures[K]>): number
+      connect_after(signal: string, callback: (...args: any[]) => any): number
+      emit<K extends keyof TrayItem.SignalSignatures>(signal: K, ...args: GObject.GjsParameters<TrayItem.SignalSignatures[K]> extends [any, ...infer Q] ? Q : never): void
+      emit(signal: string, ...args: any[]): void
 
       // Methods
 

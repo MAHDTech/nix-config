@@ -1,4 +1,11 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  deviceConfig ? {
+    monitorConfig = [ ];
+    extraSettings = { };
+  },
+  ...
+}:
 let
   packages = with pkgs; [
     brightnessctl
@@ -242,33 +249,10 @@ in
       # Hyprland Monitors
       ################
 
-      # Monitor names
-      "$screen1" = "BOE 0x084D";
-      "$screen2" = "KOGAN AUSTRALIA PTY LTD KAMN49QDQUCLA 0000000000000";
-      "$screen3" = "Dell Inc. Dell AW3423DW ##GrMYMxgwABgH";
-
       # https://wiki.hyprland.org/Configuring/Monitors/
       # hyprctl monitors all
-      monitor = [
-        # Key
-        # name, resolution, position, scale
-
-        # Laptop Monitor.
-        #"desc:$screen1,1920x1080@144,0x0,1,bitdepth,10"
-        "desc:$screen1,1920x1080@144,0x0,1.6,bitdepth,10"
-
-        # Kogan Monitor underneath Laptop Monitor.
-        #"desc:$screen2,5120x1440@60,720x1080,1,bitdepth,10"
-        "desc:$screen2,5120x1440@60,450x675,1.6,bitdepth,10"
-
-        # Alienware Monitor to the right of Laptop Monitor.
-        #"desc:$screen3,3440x1440@60,1920x0,1,bitdepth,10"
-        # Raise the Alienware Monitor up just a bit to compensate for the
-        # smaller resolution of the Laptop Monitor.
-        # 1080 - 1440 = 360
-        # 360 / 1.6 = 225
-        "desc:$screen3,3440x1440@60,1200x-225,1.6,bitdepth,10"
-      ];
+      # Monitor configuration loaded dynamically based on hostname
+      monitor = deviceConfig.monitorConfig;
 
       #########################
       # Hyprland General
@@ -281,10 +265,10 @@ in
         border_size = 2;
         # Disable border on floating windows
         no_border_on_floating = false;
-        # Gaps between windows and other windows
-        gaps_in = 4;
-        # Gaps between windows and border
-        gaps_out = 4;
+        # Gaps between windows and other windows - can be overridden by device config
+        gaps_in = deviceConfig.extraSettings.general.gaps_in or 4;
+        # Gaps between windows and border - can be overridden by device config
+        gaps_out = deviceConfig.extraSettings.general.gaps_out or 4;
         # Gaps between workspaces
         gaps_workspaces = 0;
         # Border colour for inactive windows.
@@ -789,6 +773,9 @@ in
         # Don't blur windows with no title or class.
         "noblur,class:^()$,title:^()$"
       ];
+
+      # Device-specific workspace rules (if defined)
+      workspace = deviceConfig.extraSettings.workspace or [ ];
 
       #########################
       # Hyprland Dwindle Layout
