@@ -10,7 +10,11 @@
 {
   monitorConfig = [
     # Let Hyprland automatically detect and configure the monitor
-    ",preferred,auto,1"
+    #",preferred,auto,1"
+
+    # HP 40"
+    "desc:HP Inc. HP Z43 CN49500228,3840x2160@59.99700,0x0,1.6,bitdepth,10"
+
   ];
 
   extraSettings = {
@@ -19,5 +23,12 @@
       gaps_in = 4;
       gaps_out = 4;
     };
+
+    # Workspace rules for multi-monitor setup
+    workspace = [
+      "1, monitor:desc:HP Inc. HP Z43 CN49500228, default:true"
+    ];
+
   };
+
 }
