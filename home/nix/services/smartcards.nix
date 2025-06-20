@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   home.packages = with pkgs; [
     # Common
     ccid
@@ -17,9 +18,8 @@
     yubico-pam
     yubico-piv-tool
     yubikey-manager
-    yubikey-manager-qt
+    yubioath-flutter
     yubikey-personalization
-    yubikey-personalization-gui
     yubikey-touch-detector
     swig
   ];

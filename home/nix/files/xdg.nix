@@ -16,7 +16,7 @@ let
       "${pkgsUnstable.code-cursor}/bin"
       "${pkgs.golangci-lint}/bin"
       "${pkgs.go}/bin"
-      "${pkgs.nerdfonts}"
+      "${pkgs.nerd-fonts.jetbrains-mono}"
     ];
   };
 

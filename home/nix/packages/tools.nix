@@ -51,7 +51,7 @@ in
       # Disk imagers
       unetbootin
       syslinux
-      ventoy-full
+      #ventoy-full
 
       # CLI
       bat
@@ -88,7 +88,7 @@ in
       which
       wget
       xdotool
-      xsv
+      xan
       xxd
       zip
 

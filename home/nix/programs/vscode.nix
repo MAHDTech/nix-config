@@ -2,10 +2,11 @@
   inputs,
   pkgs,
   ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+}:
+let
+  _pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
-  unstablePkgs = with pkgsUnstable; [];
+  _unstablePkgs = with pkgsUnstable; [ ];
   # Visual Studio Code Insiders
   #vscode-insiders = (pkgs.vscode.override {isInsiders = true;}).overrideAttrs (_oldAttrs: {
   #  version = "latest";
@@ -15,10 +16,11 @@
   #    sha256 = "sha256:0ykj7jwh5gbx6r695b27258yci3xf001vd28h6w7w5h7d3aaqnhz";
   #  };
   #});
-in {
+in
+{
   home.packages = [
   ];
-  #++ unstablePkgs;
+  #++ _unstablePkgs;
 
   programs = {
     vscode = {
@@ -26,25 +28,27 @@ in {
 
       package = pkgs.vscode.fhs;
 
-      enableExtensionUpdateCheck = true;
-      enableUpdateCheck = true;
-
       mutableExtensionsDir = true;
 
-      extensions = with pkgs.vscode-extensions; [
-      ];
+      profiles.default = {
+        enableExtensionUpdateCheck = true;
+        enableUpdateCheck = true;
 
-      userSettings = {
+        extensions = with pkgs.vscode-extensions; [
+        ];
+
+        userSettings = {
+        };
+
+        # Careful, these override the vim extension.
+        keybindings = [
+          {
+            key = "ctrl+shift+e";
+            command = "workbench.action.files.openFileFolder";
+            when = "editorTextFocus";
+          }
+        ];
       };
-
-      # Careful, these override the vim extension.
-      keybindings = [
-        {
-          key = "ctrl+shift+e";
-          command = "workbench.action.files.openFileFolder";
-          when = "editorTextFocus";
-        }
-      ];
     };
   };
 }

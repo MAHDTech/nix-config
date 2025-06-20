@@ -20,7 +20,7 @@ let
   # file -k type2.AppImage
   #   (SYSV) (Lepton 3.x), scale 232-60668
   appimageContents = appimageTools.extractType2 {
-    inherit name src;
+    inherit name src version;
   };
 in
 appimageTools.wrapType2 {

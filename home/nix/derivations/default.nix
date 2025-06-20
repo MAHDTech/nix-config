@@ -2,7 +2,7 @@
 {
   home.packages = [
     # Bambu Studio
-    (pkgs.callPackage ./BambuStudio.nix { })
+    #(pkgs.callPackage ./BambuStudio.nix { })
 
     # Cursor
     # On ChromeOS use AppImage directly.

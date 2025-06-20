@@ -10,13 +10,12 @@
     #gst-plugins-good
   ];
 
-  hardware = {
-    pulseaudio.enable = false;
-  };
-
   security.rtkit.enable = true;
 
   services = {
+    # Pulseaudio disabled in favor of PipeWire
+    pulseaudio.enable = false;
+
     pipewire = {
       enable = true;
 
@@ -51,8 +50,6 @@
               "resample.quality" = 10;
             };
           };
-        };
-        client-rt = {
           "10-alsa-linear-volume" = {
             "alsa.properties" = {
               "alsa.volume-method" = "linear";

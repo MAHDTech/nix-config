@@ -15,6 +15,7 @@
 
       # Microsoft fonts
       vistafonts
+      cascadia-code
 
       # Popular fonts
       ubuntu_font_family
@@ -22,28 +23,24 @@
       source-sans
       source-serif
 
-      (nerdfonts.override {
-        fonts = [
-          "CascadiaCode"
-          "DejaVuSansMono"
-          "DroidSansMono"
-          "FiraCode"
-          "FiraMono"
-          "Go-Mono"
-          "Hack"
-          "Inconsolata"
-          "Iosevka"
-          "JetBrainsMono"
-          "Mononoki"
-          "Noto"
-          "RobotoMono"
-          "SourceCodePro"
-          "SpaceMono"
-          "Ubuntu"
-          "UbuntuMono"
-          "VictorMono"
-        ];
-      })
+      # Nerd Fonts
+      nerd-fonts.fira-code
+      nerd-fonts.dejavu-sans-mono
+      nerd-fonts.droid-sans-mono
+      nerd-fonts.fira-mono
+      nerd-fonts.go-mono
+      nerd-fonts.hack
+      nerd-fonts.inconsolata
+      nerd-fonts.iosevka
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.mononoki
+      nerd-fonts.noto
+      nerd-fonts.roboto-mono
+      nerd-fonts.sauce-code-pro
+      nerd-fonts.space-mono
+      nerd-fonts.ubuntu
+      nerd-fonts.ubuntu-mono
+      nerd-fonts.victor-mono
     ];
 
     fontDir = {

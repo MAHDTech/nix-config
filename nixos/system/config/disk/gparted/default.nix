@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = with pkgs; [
     # GNOME Partition Magic and associated tooling.
     gparted
@@ -14,7 +15,6 @@
     lvm2
     nilfs-utils
     ntfs3g
-    reiser4progs
     xfsprogs
   ];
 }
