@@ -392,29 +392,48 @@ fi
 # Wallpapers
 #########################
 
-WALLPAPERS_DIR_SOURCE="/home/mahdtech/Insync/mahdtech@gmail.com/gdrive/Pictures/Wallpapers"
+WALLPAPERS_DIR_SOURCE="${HOME}/Insync/mahdtech@gmail.com/gdrive/Pictures/Wallpapers"
 WALLPAPERS_DIR_DEST="${XDG_WALLPAPERS_DIR:-EMPTY}"
 
-if [[ ${WALLPAPERS_DIR_DEST:-EMPTY} != "EMPTY" ]]; then
-	if [[ ! -d ${WALLPAPERS_DIR_DEST} ]]; then
-		mkdir --parents "${WALLPAPERS_DIR_DEST}" || {
-			writeLog "ERROR" "Failed to create ${WALLPAPERS_DIR_DEST}"
+# If a symlink already exists, then don't create a new one
+if [[ -L ${WALLPAPERS_DIR_DEST} ]]; then
+
+	writeLog "INFO" "Skipping symlink creation for wallpapers as ${WALLPAPERS_DIR_DEST} already exists"
+
+# If the destination directory is not set, then don't create a new one
+elif [[ ${WALLPAPERS_DIR_DEST:-EMPTY} == "EMPTY" ]]; then
+
+	writeLog "INFO" "Skipping symlink creation for wallpapers as WALLPAPERS_DIR_DEST variable is not set"
+
+# Otherwise, create a symlink to the wallpapers directory
+else
+
+	# Create parent directory but not the final destination as it will be a symlink
+	WALLPAPERS_PARENT_DIR=$(dirname "${WALLPAPERS_DIR_DEST}")
+	if [[ ! -d ${WALLPAPERS_PARENT_DIR} ]]; then
+		mkdir --parents "${WALLPAPERS_PARENT_DIR}" || {
+			writeLog "ERROR" "Failed to create ${WALLPAPERS_PARENT_DIR} parent directory"
 			return 1
 		}
-		writeLog "INFO" "Created ${WALLPAPERS_DIR_DEST}"
+		writeLog "INFO" "Created ${WALLPAPERS_PARENT_DIR} parent directory"
 	fi
 
 	# Create a symlink to the wallpapers directory
 	# but only if the source directory exists
 	if [[ -d ${WALLPAPERS_DIR_SOURCE} ]]; then
+
+		# Remove existing destination (file or directory) before creating the symlink
+		rm -rf "${WALLPAPERS_DIR_DEST}" 2>/dev/null
+
 		ln -sf "${WALLPAPERS_DIR_SOURCE}" "${WALLPAPERS_DIR_DEST}" || {
 			writeLog "ERROR" "Failed to create symlink from ${WALLPAPERS_DIR_SOURCE} to ${WALLPAPERS_DIR_DEST}"
 			return 1
 		}
+
 		writeLog "INFO" "Created symlink from ${WALLPAPERS_DIR_SOURCE} to ${WALLPAPERS_DIR_DEST}"
+
 	fi
-else
-	writeLog "INFO" "Skipping symlink creation for wallpapers as WALLPAPERS_DIR_DEST variable is not set"
+
 fi
 
 #########################
