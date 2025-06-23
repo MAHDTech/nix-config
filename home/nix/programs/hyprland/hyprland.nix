@@ -792,7 +792,7 @@ in
 
         # Forces a scale of 1 on xwayland windows on scaled displays.
         # Set to false to fix black screen issues with Steam games
-        force_zero_scaling = false;
+        force_zero_scaling = true;
       };
 
       ###################
@@ -802,8 +802,6 @@ in
       # https://wiki.hyprland.org/Configuring/Variables/#opengl
 
       opengl = {
-        # Reduce flicking on NVIDIA GPUs
-        nvidia_anti_flicker = true;
       };
 
       ###################
@@ -867,9 +865,6 @@ in
         # Enables native Wayland support in Firefox and other Mozilla apps
         "MOZ_ENABLE_WAYLAND,1"
 
-        # Enables NVIDIA NGX feature updater for enhanced gaming in Proton
-        "PROTON_ENABLE_NGX_UPDATER,1"
-
         # Enables automatic DPI scaling for Qt applications
         "QT_AUTO_SCREEN_SCALE_FACTOR,1"
 
@@ -879,34 +874,17 @@ in
         # Sets SDL to use Wayland video driver for games and media apps
         "SDL_VIDEODRIVER,wayland"
 
-        # Disables atomic DRM modesetting for compatibility with older hardware
-        "WLR_DRM_NO_ATOMIC,1"
-
         # Disables hardware cursor rendering (fixes cursor issues on some GPUs)
         "WLR_NO_HARDWARE_CURSORS,1"
 
         # Allows software rendering fallback when hardware acceleration fails
         "WLR_RENDERER_ALLOW_SOFTWARE,1"
 
-        # Forces wlroots to use libinput for input device handling
-        "WLR_USE_LIBINPUT,1"
-
         # Sets cursor size for X11/XWayland applications
         "XCURSOR_SIZE,32"
 
-        # Disable glamor for XWayland.
-        # "XWAYLAND_NO_GLAMOR,1" # Disabled - breaks Steam games
-
         # Fixes Java applications on tiling window managers by disabling reparenting
         "_JAVA_AWT_WM_NONREPARENTING,1"
-
-        # Intel ARC specific optimizations for gaming
-        "MESA_LOADER_DRIVER_OVERRIDE,iris"
-        "ANV_ENABLE_PIPELINE_CACHE,1"
-
-        # Intel ARC graphics optimizations
-        "__GLX_VENDOR_LIBRARY_NAME,mesa"
-        "LIBVA_DRIVER_NAME,iHD"
       ];
 
       ###################

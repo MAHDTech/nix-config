@@ -108,12 +108,19 @@
   };
 
   environment.variables = {
-    VDPAU_DRIVER = "va_gl";
+    # Sets the default driver for VA-API, "iHD" is used for Intel ARC GPUs
     LIBVA_DRIVER_NAME = "iHD";
+
+    # Ensures legacy VDPAU applications can use VA-API for acceleration
+    VDPAU_DRIVER = "va_gl";
+
+    # Ensures X11 applications use Mesa's OpenGL implementation
     __GLX_VENDOR_LIBRARY_NAME = "mesa";
-    # For Intel ARC gaming compatibility
-    MESA_LOADER_DRIVER_OVERRIDE = "iris";
-    # Disable problematic features for gaming
-    __GL_THREADED_OPTIMIZATIONS = "0";
+
+    # General performance enhancement for Vulkan applications by caching pipelines
+    ANV_ENABLE_PIPELINE_CACHE = "1";
+
+    # Allows Mesa's threaded optimizations for better performance, especially in CPU-bound games
+    __GL_THREADED_OPTIMIZATIONS = "1";
   };
 }
