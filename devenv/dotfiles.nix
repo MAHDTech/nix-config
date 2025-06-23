@@ -112,6 +112,7 @@ in
         enable = true;
         settings = {
           configuration = {
+            MD033 = false;
             MD007 = {
               ul_indent = 4;
             };

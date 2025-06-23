@@ -65,6 +65,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    cachix = {
+      type = "github";
+      owner = "cachix";
+      repo = "cachix";
+      ref = "master";
+      flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     devenv = {
       type = "github";
       owner = "cachix";
@@ -85,11 +94,9 @@
 
     flatpaks = {
       type = "github";
-      #owner = "GermanBread";
       owner = "in-a-dil-emma";
       repo = "declarative-flatpak";
-      #ref = "stable-v3";
-      ref = "dev";
+      ref = "stable-v3";
       flake = true;
     };
 
@@ -154,7 +161,7 @@
       # this value at the release version of the first install of this system.
       # Before changing this value read the documentation for this option
       # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-      globalStateVersion = "24.11";
+      globalStateVersion = "24.05";
 
       #########################
       # Systems functions

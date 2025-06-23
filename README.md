@@ -56,9 +56,10 @@ The idea behind the configuration layout is split into a few parts;
 
 :dragon: Here be dragons :dragon:
 
-_The author is still on their journey to declarative enlightenment with Nix, so don't assume they know wtf they are doing or that this repo resembles best practice in any way, shape or form._
+> The author is still on their journey to declarative enlightenment with Nix,
+> so don't assume they know wtf they are doing or that this repo resembles best practice in any way, shape or form.
 
-EDIT: Over 2 years on I still feel new to Nix and continue to be surprised in ways to use it (that I probably shouldn't).
+**EDIT:** Multiple years on using Nix and I still feel like I'm learning new things every day.
 
 ### Why?
 
@@ -146,7 +147,7 @@ NIXOS_HOST="NUC"
 
 nixos-rebuild \
     boot  \
-    --use-remote-sudo \
+    --sudo \
     --upgrade-all \
     --refresh \
     --impure \
@@ -168,7 +169,7 @@ NixOS changes are applied on each boot.
 ```bash
 nixos-rebuild \
     boot  \
-    --use-remote-sudo \
+    --sudo \
     --upgrade-all \
     --refresh \
     --impure \
@@ -180,7 +181,7 @@ Or remotely with;
 ```bash
 nixos-rebuild \
     boot  \
-    --use-remote-sudo \
+    --sudo \
     --upgrade-all \
     --refresh \
     --flake 'github:MAHDTech/nix-config#'
