@@ -53,27 +53,49 @@
 
       enable = true;
       extraPackages = with pkgs; [
+        # OpenCL and Level Zero compute runtime for 12th Gen and newer Intel ARC GPUs
         intel-compute-runtime
+
+        # Hardware video acceleration driver for modern Intel GPUs (supports both iHD and ARC)
         intel-media-driver
+
+        # Legacy VA-API driver for older Intel GPUs (Gen 4.5 to Gen 12)
         #intel-vaapi-driver
-        #vaapiIntel
+
+        # OpenCL ICD loader for Intel GPUs - supports both old and new Intel GPUs
         intel-ocl
+
+        # Linux firmware collection including Intel GPU microcode
         linux-firmware
+
+        # Mesa 3D graphics library with Intel drivers
         mesa
+
+        # Intel Video Processing Library GPU runtime for hardware video processing
         vpl-gpu-rt
+
+        # Vulkan loader for graphics APIs
         vulkan-loader
       ];
 
       enable32Bit = true;
       extraPackages32 = with pkgs; [
+        # OpenCL and Level Zero compute runtime for 12th Gen and newer Intel ARC GPUs (32-bit)
         intel-compute-runtime
-        intel-media-driver
+
+        # Legacy VA-API driver for older Intel GPUs (32-bit)
         #intel-vaapi-driver
-        #vaapiIntel
+
+        # OpenCL ICD loader for Intel GPUs (32-bit)
         intel-ocl
-        #linux-firmware
-        mesa
+
+        # Linux firmware collection (32-bit)
+        linux-firmware
+
+        # Intel Video Processing Library GPU runtime (32-bit)
         vpl-gpu-rt
+
+        # Vulkan loader for graphics APIs (32-bit)
         vulkan-loader
       ];
     };
@@ -81,8 +103,6 @@
 
   services.xserver = {
     videoDrivers = [
-      "ihd"
-      "intel"
       "modesetting"
     ];
   };
