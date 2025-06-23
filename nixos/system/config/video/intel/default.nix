@@ -66,15 +66,15 @@
 
       enable32Bit = true;
       extraPackages32 = with pkgs; [
-        #intel-compute-runtime
-        #intel-media-driver
+        intel-compute-runtime
+        intel-media-driver
         #intel-vaapi-driver
         #vaapiIntel
-        #intel-ocl
+        intel-ocl
         #linux-firmware
-        #mesa
-        #vpl-gpu-rt
-        #vulkan-loader
+        mesa
+        vpl-gpu-rt
+        vulkan-loader
       ];
     };
   };
@@ -83,6 +83,7 @@
     videoDrivers = [
       "ihd"
       "intel"
+      "modesetting"
     ];
   };
 
@@ -90,5 +91,9 @@
     VDPAU_DRIVER = "va_gl";
     LIBVA_DRIVER_NAME = "iHD";
     __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    # For Intel ARC gaming compatibility
+    MESA_LOADER_DRIVER_OVERRIDE = "iris";
+    # Disable problematic features for gaming
+    __GL_THREADED_OPTIMIZATIONS = "0";
   };
 }

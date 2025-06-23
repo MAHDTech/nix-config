@@ -241,6 +241,7 @@ in
     };
 
     # Check if a client is using XWayland with 'hyprctl clients'
+    # XWayland is configured at the system level in NixOS configuration
     xwayland = {
       enable = true;
     };
@@ -786,12 +787,12 @@ in
         # Allow running apps using X11
         enabled = true;
 
-        # Uses the nearest neighbour filtering.
+        # Uses the nearest neighbour filtering for scaling
         use_nearest_neighbor = true;
 
         # Forces a scale of 1 on xwayland windows on scaled displays.
-        # Disable this is steam games launch to a black screen.
-        force_zero_scaling = true;
+        # Set to false to fix black screen issues with Steam games
+        force_zero_scaling = false;
       };
 
       ###################
@@ -832,7 +833,13 @@ in
       # https://wiki.hyprland.org/Configuring/Variables/#cursor
 
       cursor = {
+        # Disable hardware cursors for Intel ARC compatibility
         no_hardware_cursors = true;
+
+        # Additional cursor settings for gaming
+        default_monitor = "";
+        zoom_factor = 1.0;
+        zoom_rigid = false;
       };
 
       #############################
@@ -891,22 +898,15 @@ in
         # "XWAYLAND_NO_GLAMOR,1" # Disabled - breaks Steam games
 
         # Fixes Java applications on tiling window managers by disabling reparenting
-        "_JAVA_AWT_WM_NONREPARENTING=1"
+        "_JAVA_AWT_WM_NONREPARENTING,1"
 
-        # Enables NVIDIA G-Sync support for variable refresh rate
-        "__GL_GSYNC_ALLOWED,1"
+        # Intel ARC specific optimizations for gaming
+        "MESA_LOADER_DRIVER_OVERRIDE,iris"
+        "ANV_ENABLE_PIPELINE_CACHE,1"
 
-        # Sets maximum buffered frames for NVIDIA GPUs (reduces input lag)
-        "__GL_MaxFramesAllowed,1"
-
-        # Enables NVIDIA Variable Refresh Rate (VRR) support
-        "__GL_VRR_ALLOWED,1"
-
-        # Enables NVIDIA threaded optimizations for better gaming performance
-        "__GL_THREADED_OPTIMIZATIONS,1"
-
-        # Enables NVIDIA API support in Proton for Windows games
-        "PROTON_ENABLE_NVAPI,1"
+        # Intel ARC graphics optimizations
+        "__GLX_VENDOR_LIBRARY_NAME,mesa"
+        "LIBVA_DRIVER_NAME,iHD"
       ];
 
       ###################
@@ -965,6 +965,12 @@ in
         "immediate, class:^(gamemode)$"
         "forcergbx, class:^(steam_app_.*)$"
         "fullscreen, class:^(steam_app_.*)$"
+
+        # Additional Steam and gaming fixes
+        "noborder, class:^(steam_app_.*)$"
+        "noshadow, class:^(steam_app_.*)$"
+        "noblur, class:^(steam_app_.*)$"
+        "norounding, class:^(steam_app_.*)$"
       ];
 
       # Device-specific workspace rules (if defined)

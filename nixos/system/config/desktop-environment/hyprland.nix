@@ -37,8 +37,8 @@
   programs = {
     hyprland = {
       enable = true;
+      # XWayland configuration at system level
       xwayland = {
-        # Needed for screen sharing
         enable = true;
       };
       withUWSM = true;
