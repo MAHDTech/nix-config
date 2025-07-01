@@ -5,6 +5,15 @@
 # Description: Contains the git related functions
 ##################################################
 
+export -a _GIT_PROTECTED_BRANCHES=(
+	environment/development
+	environment/production
+	environment/staging
+	main
+	master
+	trunk
+)
+
 function quoteParams() {
 
 	# Takes an array and quotes any strings with spaces.
@@ -25,7 +34,7 @@ function quoteParams() {
 			# Quote the string with spaces
 			#PARAMS[$INDEX]="\"${PARAMS[$INDEX]}\"" # Adds quotes to git log :(
 			#PARAMS[$INDEX]=""${PARAMS[$INDEX]}"" # Adds quotes to git log :(
-			PARAMS[$INDEX]="${PARAMS[$INDEX]}"
+			PARAMS[INDEX]="${PARAMS[$INDEX]}"
 
 			writeLog "DEBUG" "Params after: ${PARAMS[$INDEX]}"
 
@@ -155,7 +164,7 @@ function git_squash_branch() {
 	DEFAULT="${DEFAULT:=trunk}"
 
 	if [ "${BRANCH:-EMPTY}" == "EMPTY" ]; then
-		writeLog "ERROR" 'Please provide a branch to squash as $1'
+		writeLog "ERROR" "Please provide a branch to squash as param 1"
 		return 1
 	fi
 
@@ -207,7 +216,7 @@ function git_remove_submodule() {
 
 	writeLog "INFO" "Remove the section from .gitmodules"
 	vim ".gitmodules"
-	read -p "Press [Enter] to continue....."
+	read -r -p "Press [Enter] to continue....."
 
 	writeLog "INFO" "Stage the changes to .gitmodules"
 	git add .gitmodules ||
@@ -215,11 +224,11 @@ function git_remove_submodule() {
 			writeLog "ERROR" "Failed to stage .gitmodules"
 			return 1
 		}
-	read -p "Press [Enter] to continue....."
+	read -r -p "Press [Enter] to continue....."
 
 	writeLog "INFO" "Remove the section from .git/config"
 	vim ".git/config"
-	read -p "Press [Enter] to continue....."
+	read -r -p "Press [Enter] to continue....."
 
 	writeLog "INFO" "Remove the path from git cache"
 
@@ -289,7 +298,7 @@ function git_prune_large_file() {
 	if [[ "${1-}" ]]; then
 		local FILENAME="${1}"
 	else
-		writeLog "ERROR" 'Please provide the large file path as $1. This should be the relative filename based on the git dir context.'
+		writeLog "ERROR" "Please provide the large file path as param 1. This should be the relative filename based on the git dir context."
 		return 1
 	fi
 
@@ -332,52 +341,89 @@ function git_prune_all() {
 function git_prune_merged() {
 
 	# Prunes local branches that have already been merged into the current branch.
-	# The intention is to checkout master, and then run this post-merge
-	# Any protected branches need to be added to the array below
+	# The intention is to checkout master/main/trunk, and then run this post-merge
+	# Protected branches are defined in the global _GIT_PROTECTED_BRANCHES array
 
-	writeLog "WARN" "TODO: NOT FINISHED YET"
-	return 0
+	local CURRENT_BRANCH
+	local BRANCH
+	local -a BRANCHES_TO_DELETE=()
+	local CONFIRM_DELETE="false"
 
-	local TEMPFILE
-	local BRANCHES_MERGED
-	local -a BRANCHES_PROTECTED=(
-		master
-		main
-		trunk
-		environment/production
-		environment/staging
-		environment/development
-	)
-	local -i BRANCHES_TOTAL
-	local -i BRANCHES_COUNT
+	# Get current branch
+	CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-	writeLog "INFO" "Listing all branches that have been merged into current branch"
+	if [[ ${CURRENT_BRANCH:-EMPTY} == "EMPTY" ]]; then
+		writeLog "ERROR" "Failed to determine current branch"
+		return 1
+	fi
 
-	TEMPFILE=$(mktemp)
+	writeLog "INFO" "Looking for branches merged into ${CURRENT_BRANCH}"
 
-	BRANCHES_MERGED=$(git branch --list --merged)
-	BRANCHES_TOTAL="${#BRANCHES_PROTECTED[*]}"
+	# Get list of merged branches, excluding current branch and protected branches
+	while IFS= read -r BRANCH; do
 
-	echo "${BRANCHES_MERGED}" | for BRANCH in "${BRANCHES_PROTECTED[@]}"; do
+		# Remove leading/trailing whitespace and asterisk
+		BRANCH=$(echo "${BRANCH}" | sed 's/^[* ]*//' | sed 's/[ ]*$//')
 
-		BRANCHES_COUNT=$(("${BRANCHES_COUNT:-0}" + 1))
+		# Skip empty lines
+		[[ -z ${BRANCH} ]] && continue
 
-		if [[ ${BRANCHES_COUNT} -eq ${BRANCHES_TOTAL} ]]; then
+		# Skip current branch
+		[[ ${BRANCH} == "${CURRENT_BRANCH}" ]] && continue
 
-			grep -v "${BRANCH}"
+		# Check if branch is protected
+		local IS_PROTECTED="false"
+		for PROTECTED in "${_GIT_PROTECTED_BRANCHES[@]}"; do
+			if [[ ${BRANCH,,} == "${PROTECTED,,}" ]]; then
+				IS_PROTECTED="true"
+				break
+			fi
+		done
 
-		else
-
-			grep -v "${BRANCH}" \|
-
+		# If not protected, add to deletion list
+		if [[ ${IS_PROTECTED} == "false" ]]; then
+			BRANCHES_TO_DELETE+=("${BRANCH}")
 		fi
 
-	done >"${TEMPFILE}"
+	done < <(git branch --merged)
 
-	vi "${TEMPFILE}" &&
-		xargs git branch -d <"${TEMPFILE}"
+	# Show what we found
+	if [[ ${#BRANCHES_TO_DELETE[@]} -eq 0 ]]; then
+		writeLog "INFO" "No merged branches found that can be safely deleted"
+		return 0
+	fi
 
-	rm -f "${TEMPFILE}"
+	writeLog "INFO" "Found ${#BRANCHES_TO_DELETE[@]} merged branches that can be deleted:"
+	for BRANCH in "${BRANCHES_TO_DELETE[@]}"; do
+		writeLog "INFO" "  - ${BRANCH}"
+	done
+
+	# Ask for confirmation
+	read -r -p "Do you want to delete these branches? (y/N): " CONFIRM_DELETE
+	echo
+
+	if [[ ${CONFIRM_DELETE,,} =~ ^(y|yes)$ ]]; then
+
+		local SUCCESS_COUNT=0
+		local FAILURE_COUNT=0
+
+		for BRANCH in "${BRANCHES_TO_DELETE[@]}"; do
+			writeLog "INFO" "Deleting branch: ${BRANCH}"
+
+			if git branch -d "${BRANCH}" 2>/dev/null; then
+				writeLog "INFO" "Successfully deleted branch: ${BRANCH}"
+				((SUCCESS_COUNT++))
+			else
+				writeLog "WARN" "Failed to delete branch: ${BRANCH} (may have unmerged changes)"
+				((FAILURE_COUNT++))
+			fi
+		done
+
+		writeLog "INFO" "Deletion complete. Successful: ${SUCCESS_COUNT}, Failed: ${FAILURE_COUNT}"
+
+	else
+		writeLog "INFO" "Branch deletion cancelled"
+	fi
 
 	return 0
 
@@ -386,29 +432,123 @@ function git_prune_merged() {
 function git_pull_all() {
 
 	# Pulls every branch from origin using the same name as the local branch
+	# Also optionally creates local tracking branches for remote branches that don't exist locally
 
-	writeLog "WARN" "TODO: NOT FINISHED YET"
-	return 0
+	local CURRENT_BRANCH
+	local BRANCH
+	local REMOTE_BRANCH
+	local CREATE_MISSING="${1:-false}"
+	local SUCCESS_COUNT=0
+	local FAILURE_COUNT=0
+	local CREATED_COUNT=0
 
-	git branch -r | grep -v '\->' |
-		while read -r REMOTE; do
+	# Get current branch to restore later
+	CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-			writeLog "INFO" "Tracking ${REMOTE#origin/} against ${REMOTE}"
-			echo git branch --track "${REMOTE#origin/}" "${REMOTE}"
+	if [[ ${CURRENT_BRANCH:-EMPTY} == "EMPTY" ]]; then
+		writeLog "ERROR" "Failed to determine current branch"
+		return 1
+	fi
 
-		done
+	writeLog "INFO" "Fetching all remotes to get latest information"
 
-	git fetch --all ||
-		{
-			writeLog "ERR" "Failed to git fetch all branches"
-			return 1
-		}
+	# First, fetch all remotes to ensure we have the latest remote information
+	git fetch --all --prune || {
+		writeLog "ERROR" "Failed to fetch from remotes"
+		return 1
+	}
 
-	git pull --all ||
-		{
-			writeLog "ERRO" "Failed to git pull all branches"
-			return 1
-		}
+	writeLog "INFO" "Pulling updates for all local branches"
+
+	# Pull updates for all existing local branches that have remotes
+	while IFS= read -r BRANCH; do
+
+		# Remove leading/trailing whitespace and asterisk
+		BRANCH=$(echo "${BRANCH}" | sed 's/^[* ]*//' | sed 's/[ ]*$//')
+
+		# Skip empty lines
+		[[ -z ${BRANCH} ]] && continue
+
+		writeLog "INFO" "Processing branch: ${BRANCH}"
+
+		# Check if this branch has a remote tracking branch
+		REMOTE_BRANCH=$(git rev-parse --abbrev-ref "${BRANCH}@{upstream}" 2>/dev/null)
+
+		if [[ -n ${REMOTE_BRANCH} ]]; then
+
+			writeLog "INFO" "Pulling ${BRANCH} from ${REMOTE_BRANCH}"
+
+			# Checkout the branch and pull
+			if git checkout "${BRANCH}" >/dev/null 2>&1; then
+
+				if git pull 2>/dev/null; then
+					writeLog "INFO" "Successfully pulled ${BRANCH}"
+					((SUCCESS_COUNT++))
+				else
+					writeLog "WARN" "Failed to pull ${BRANCH}"
+					((FAILURE_COUNT++))
+				fi
+
+			else
+				writeLog "WARN" "Failed to checkout ${BRANCH}"
+				((FAILURE_COUNT++))
+			fi
+
+		else
+			writeLog "INFO" "Branch ${BRANCH} has no upstream tracking branch, skipping"
+		fi
+
+	done < <(git branch --format='%(refname:short)')
+
+	# Optionally create local branches for remote branches that don't exist locally
+	if [[ ${CREATE_MISSING,,} =~ ^(true|yes|y|1)$ ]]; then
+
+		writeLog "INFO" "Creating local tracking branches for remote branches"
+
+		# Get all remote branches (excluding HEAD)
+		while IFS= read -r REMOTE_BRANCH; do
+
+			# Remove leading/trailing whitespace
+			REMOTE_BRANCH=$(echo "${REMOTE_BRANCH}" | sed 's/^[ ]*//' | sed 's/[ ]*$//')
+
+			# Skip empty lines and HEAD references
+			[[ -z ${REMOTE_BRANCH} ]] && continue
+			[[ ${REMOTE_BRANCH} =~ HEAD ]] && continue
+
+			# Extract branch name (remove origin/ prefix)
+			BRANCH="${REMOTE_BRANCH#origin/}"
+
+			# Skip if local branch already exists
+			if git show-ref --verify --quiet "refs/heads/${BRANCH}"; then
+				continue
+			fi
+
+			writeLog "INFO" "Creating local branch ${BRANCH} to track ${REMOTE_BRANCH}"
+
+			if git checkout -b "${BRANCH}" "${REMOTE_BRANCH}" >/dev/null 2>&1; then
+				writeLog "INFO" "Successfully created tracking branch ${BRANCH}"
+				((CREATED_COUNT++))
+			else
+				writeLog "WARN" "Failed to create tracking branch ${BRANCH}"
+			fi
+
+		done < <(git branch -r --format='%(refname:short)')
+
+	fi
+
+	# Return to original branch
+	writeLog "INFO" "Returning to original branch: ${CURRENT_BRANCH}"
+	git checkout "${CURRENT_BRANCH}" >/dev/null 2>&1 || {
+		writeLog "WARN" "Failed to return to original branch ${CURRENT_BRANCH}"
+	}
+
+	# Summary
+	writeLog "INFO" "Pull operation complete:"
+	writeLog "INFO" "  - Successfully pulled: ${SUCCESS_COUNT} branches"
+	writeLog "INFO" "  - Failed to pull: ${FAILURE_COUNT} branches"
+	if [[ ${CREATE_MISSING,,} =~ ^(true|yes|y|1)$ ]]; then
+		writeLog "INFO" "  - Created tracking branches: ${CREATED_COUNT} branches"
+	fi
 
 	return 0
 
@@ -500,7 +640,7 @@ function git_reset_branch() {
 
 	elif [[ ${BRANCH} =~ ^-- ]]; then
 
-		writeLog "INFO" 'Please provide the branch name as $1 and not extra args.'
+		writeLog "INFO" "Please provide the branch name as param 1 and not extra args."
 		return 1
 
 	else
@@ -711,42 +851,30 @@ function git_checkin() {
 	# Removes the branch you have been working on post-PR
 	# git checkin, get it?
 
-	local BRANCH_SOURCE="${1}"
-	local BRANCH_DEST="${2}"
+	local BRANCH_SOURCE
+	local BRANCH_DEST
 
-	local -a BRANCHES_PROTECTED=(
-		master
-		main
-		trunk
-		environment/development
-		environment/staging
-		environment/production
-	)
-
-	if [[ ${BRANCH_SOURCE:-EMPTY} == "EMPTY" ]] || [[ ${BRANCH_SOURCE,,} == "current" ]]; then
-		BRANCH_SOURCE="$(git rev-parse --abbrev-ref HEAD)"
-	fi
+	BRANCH_SOURCE="$(git rev-parse --abbrev-ref HEAD)"
+	BRANCH_DEST="${1}"
 
 	if [[ ${BRANCH_DEST:-EMPTY} == "EMPTY" ]]; then
-
-		BRANCH_DEST="trunk"
-
-		read -p "The source branch \"${BRANCH_SOURCE}\" will be checked into the branch \"${BRANCH_DEST}\". Are you sure? Y/N: " -n 1 -r CHOICE
-		echo -e "\n"
-
-		if [[ ! ${CHOICE} =~ ^[Yy] ]]; then
-			writeLog "INFO" "No changes were made, goodbye!"
-			return 1
-		fi
-
+		writeLog "ERROR" "Please provide the branch name to merge upstream changes into."
+		return 1
 	fi
 
-	for BRANCH_PROTECTED in "${BRANCHES_PROTECTED[@]}"; do
+	read -p "The source branch \"${BRANCH_SOURCE}\" will be checked into the branch \"${BRANCH_DEST}\". Are you sure? Y/N: " -n 1 -r CHOICE
+	echo -e "\n"
+
+	if [[ ! ${CHOICE} =~ ^[Yy] ]]; then
+		writeLog "INFO" "No changes were made, goodbye!"
+		return 1
+	fi
+
+	for BRANCH_PROTECTED in "${_GIT_PROTECTED_BRANCHES[@]}"; do
 		if [ "${BRANCH_SOURCE,,}" == "${BRANCH_PROTECTED,,}" ]; then
 			writeLog "ERROR" "Not removing protected branch ${BRANCH_SOURCE}"
 			return 1
 		fi
-
 	done
 
 	writeLog "INFO" "Checking in completed branch ${BRANCH_SOURCE} and changing over to branch ${BRANCH_DEST}"
@@ -757,7 +885,7 @@ function git_checkin() {
 			return 1
 		}
 
-	git branch --set-upstream-to=origin/${BRANCH_DEST} ${BRANCH_DEST} ||
+	git branch --set-upstream-to=origin/"${BRANCH_DEST}" "${BRANCH_DEST}" ||
 		{
 			writeLog "ERROR" "Failed to set upstream on ${BRANCH_DEST} branch"
 			return 1
@@ -929,7 +1057,7 @@ function git_folder_status() {
 			writeLog "INFO" "Checking current branch ${CURRENT_BRANCH}"
 		fi
 
-		# Is there changes that havn't been staged?
+		# Is there changes that haven't been staged?
 		git diff --exit-code || {
 			writeLog "ERROR" "Failed folder: ${FOLDER}. Please stage, commit and push your changes before trying again."
 			# stay in the dir for quick fix.
@@ -966,6 +1094,7 @@ function git_folder_status() {
 function github_download_release() {
 
 	local GITHUB_ORG_REPO="$1"
+	# shellcheck disable=SC2034
 	local ARCH="$2"
 	local URL
 
@@ -976,7 +1105,7 @@ function github_download_release() {
 
 	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
+		writeLog "ERROR" "Please provide the ORG/REPO as param 1"
 		return 1
 
 	else
@@ -993,7 +1122,7 @@ function github_download_release() {
 			--silent \
 			--location \
 			"${URL_PATH}" |
-			egrep \
+			grep -E \
 				"browser_download_url|tarball_url|zipball_url" |
 			cut \
 				--delim '"' \
@@ -1041,14 +1170,14 @@ function github_delete_workflows() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
+		writeLog "ERROR" "No token is defined. Please set the PAT in param 1"
 		return 1
 
 	fi
 
 	if [[ ${GITHUB_ORG_REPO:-EMPTY} == "EMPTY" ]]; then
 
-		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
+		writeLog "ERROR" "Please provide the ORG/REPO as param 1"
 		return 1
 
 	else
@@ -1075,7 +1204,7 @@ function github_delete_workflows() {
 		COUNTER_FAILURE=0
 		while IFS='' read -r WORKFLOW; do
 
-			writeLog "INFO" "Deleting Worklow ${WORKFLOW}"
+			writeLog "INFO" "Deleting Workflow ${WORKFLOW}"
 
 			RESULT=""
 			RESULT=$(curl --silent --write-out '%{http_code}' --output /dev/null --request DELETE --header "${HEADER_TOKEN}" --header "${HEADER_APP}" "${URL}/${WORKFLOW}")
@@ -1135,7 +1264,7 @@ function github_query_projects() {
 	GITHUB_ORG_REPO="${1}"
 
 	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
-		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
+		writeLog "ERROR" "Please provide the ORG/REPO as param 1"
 		return 1
 	fi
 
@@ -1161,7 +1290,7 @@ function github_query_projects() {
 		writeLog "INFO" "Using authenticated access to GitHub API"
 	else
 		HEADER_TOKEN=""
-		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
+		writeLog "ERROR" "No token is defined. Please set the PAT in param 1"
 		return 1
 	fi
 
@@ -1238,14 +1367,14 @@ function github_delete_packages_old() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
+		writeLog "ERROR" "No token is defined. Please set the PAT in param 1"
 		return 1
 
 	fi
 
 	if [ "${GITHUB_ORG:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" 'Please provide the ORG as $1'
+		writeLog "ERROR" "Please provide the ORG as param 1"
 		return 1
 
 	fi
@@ -1263,7 +1392,15 @@ function github_delete_packages_old() {
 	writeLog "INFO" "Obtaining a list of GitHub Packages"
 
 	PACKAGES=""
-	PACKAGES=$(curl --silent --request POST --head "${HEADER_JSON}" --header "${HEADER_TOKEN}" --data "${GRAPHQL_QUERY}" "${GITHUB_API}" | jq -r '.data.repository.packages.nodes[].versions.nodes[].version')
+	PACKAGES=$(
+		curl \
+			--silent \
+			--request POST \
+			--head "${HEADER_JSON}" \
+			--header "${HEADER_TOKEN}" \
+			--data "${GRAPHQL_QUERY}" \
+			"${GITHUB_API}" | jq -r '.data.repository.packages.nodes[].versions.nodes[].version'
+	)
 
 	if [ "${PACKAGES:-EMPTY}" == "EMPTY" ]; then
 		writeLog "ERROR" "Failed to obtain list of packages from GitHub organization ${ORG}"
@@ -1334,21 +1471,21 @@ function github_get_label() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
+		writeLog "ERROR" "No token is defined. Please set the PAT in param 1"
 		return 1
 
 	fi
 
 	if [[ ${GITHUB_LABEL_NAME:-EMPTY} == "EMPTY" ]]; then
 
-		writeLog "ERROR" 'Please provide a valid label name as $2'
+		writeLog "ERROR" "Please provide a valid label name as param 2"
 		return 1
 
 	fi
 
 	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
+		writeLog "ERROR" "Please provide the ORG/REPO as param 1"
 		return 1
 
 	else
@@ -1405,14 +1542,14 @@ function github_create_label() {
 	else
 
 		HEADER_TOKEN=""
-		writeLog "ERROR" 'No token is defined. Please set the PAT in $GITHUB_TOKEN'
+		writeLog "ERROR" "No token is defined. Please set the PAT in param 1"
 		return 1
 
 	fi
 
 	if [ "${GITHUB_ORG_REPO:-EMPTY}" == "EMPTY" ]; then
 
-		writeLog "ERROR" 'Please provide the ORG/REPO as $1'
+		writeLog "ERROR" "Please provide the ORG/REPO as param 1"
 		return 1
 
 	else
@@ -1423,7 +1560,7 @@ function github_create_label() {
 
 	if [[ ! -f ${GITHUB_LABEL_FILE} ]]; then
 
-		writeLog "ERROR" 'Please provide a valid label.json file as $2'
+		writeLog "ERROR" "Please provide a valid label.json file as param 2"
 		return 1
 
 	fi
