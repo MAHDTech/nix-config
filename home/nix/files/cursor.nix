@@ -127,7 +127,7 @@
 
           // Markdown
           "[markdown]": {
-            "editor.defaultFormatter": "esbenp.prettier-vscode",
+            "editor.defaultFormatter": "yzhang.markdown-all-in-one",
           },
 
           // Typescript
@@ -205,14 +205,10 @@
           "markdown-pdf.emoji": true,
           "markdown-pdf.orientation": "landscape",
 
-          // Markdown
+          // Custom file associations.
           "files.associations": {
+            ".env*": "dotenv",
             "*.mdx": "markdown"
-          },
-
-          // dotenv
-          "files.associations": {
-            ".env*": "dotenv"
           }
 
         }
