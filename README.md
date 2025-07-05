@@ -251,3 +251,13 @@ rm ~/.ssh/id_ed25519*
 # For WSL, cleanup all SSH as ssh.exe is used via aliases.
 rm -rf ~/.ssh
 ```
+
+## Generating ISO images
+
+```bash
+# x86-64
+nixos-generate --show-trace --flake .#NAME --format iso --out-link result --system x86_64-linux
+
+# aarch64
+nixos-generate --show-trace --flake .#NAME --format iso --out-link result --system aarch64-linux
+```

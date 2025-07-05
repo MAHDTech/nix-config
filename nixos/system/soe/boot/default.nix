@@ -56,7 +56,7 @@
     growPartition = true;
 
     loader = {
-      timeout = 3;
+      timeout = 10;
 
       efi = {
         efiSysMountPoint = "/boot/efi";
