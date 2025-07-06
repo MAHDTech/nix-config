@@ -44,6 +44,9 @@
         "ca-derivations"
         "auto-allocate-uids"
       ];
+      extra-platforms = [
+        "aarch64-linux"
+      ];
     };
 
     extraOptions = '''';

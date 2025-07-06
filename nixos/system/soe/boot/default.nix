@@ -7,6 +7,13 @@
   boot = {
     consoleLogLevel = 4;
 
+    # Enable QEMU emulation
+    binfmt = {
+      emulatedSystems = [
+        "aarch64-linux"
+      ];
+    };
+
     initrd = {
       enable = true;
       systemd = {
