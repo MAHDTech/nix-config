@@ -19,6 +19,7 @@
         SWWW_STATE_DIR="''${HOME}/.local/state/swww"
         SWWW_PIDFILE="''${SWWW_STATE_DIR}/pidfile.txt"
         SWWW_LIST_FILE="''${SWWW_STATE_DIR}/wallpapers.txt"
+        SWWW_LOG_FILE="''${SWWW_STATE_DIR}/random-wallpaper.log"
 
         # SWWW Settings for image transitions.
         export SWWW_TRANSITION_FPS=60
@@ -42,7 +43,7 @@
         function msg() {
           CURRENT_TIME=$(date +%Y-%m-%d\ %H:%M:%S)
 
-          echo "''${CURRENT_TIME} - ''${1}"
+          echo "''${CURRENT_TIME} - ''${1}" >> "''${SWWW_LOG_FILE}"
 
           return 0
         }
@@ -78,6 +79,9 @@
           exit 1
         fi
         WALLPAPER_DIR="''${1:-}"
+
+        # Start a new log file
+        rm -f "''${SWWW_LOG_FILE}" || true
 
         # Make sure the state directory exists or create it
         mkdir -p "''${SWWW_STATE_DIR}" || {
