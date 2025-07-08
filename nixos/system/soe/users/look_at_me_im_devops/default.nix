@@ -35,9 +35,6 @@ in
       "video"
       "vmware"
       "wheel"
-
-      # Incus
-      "incus-admin"
     ];
 
     openssh.authorizedKeys.keys = [
