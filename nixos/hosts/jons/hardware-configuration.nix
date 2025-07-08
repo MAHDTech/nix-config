@@ -98,7 +98,7 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = true;
+      neededForBoot = false;
     };
 
     # Legacy mount point for nix using ZFS
@@ -118,7 +118,7 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = true;
+      neededForBoot = false;
     };
 
     # Legacy mount point for var/lib using ZFS
@@ -128,7 +128,7 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = true;
+      neededForBoot = false;
     };
 
     # Legacy mount point for var/lib/docker using ZFS
@@ -138,7 +138,7 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = true;
+      neededForBoot = false;
     };
 
     # Legacy mount point for var/lib/containers using ZFS
@@ -148,7 +148,27 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = true;
+      neededForBoot = false;
+    };
+
+    # Legacy mount point for var/lib/incus using ZFS
+    "/var/lib/incus" = {
+      device = "zpool/var/lib/incus";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
+    };
+
+    # Legacy mount point for var/lib/incus/storage-pools using ZFS
+    "/var/lib/incus/storage-pools" = {
+      device = "zpool/var/lib/incus/storage-pools";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
     };
 
     # Legacy mount point for tmp using ZFS
@@ -158,7 +178,7 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = true;
+      neededForBoot = false;
     };
   };
 

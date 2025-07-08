@@ -45,6 +45,9 @@
     # CPU specific configuration.
     ../../system/config/virtualisation/cpu/amd.nix
 
+    # Incus
+    ../../system/config/virtualisation/incus
+
     # GPU specific configuration.
     ../../system/config/video/intel
   ];
