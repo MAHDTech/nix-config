@@ -18,9 +18,6 @@ extend-ignore-re = [
 
 [default.extend-words]
 
-# HACK: fnd the regex is not working
-#fnd = "fnd"
-
 ags = "ags"
 analyzer = "analyzer"
 authorised = "authorised"
