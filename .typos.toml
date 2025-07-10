@@ -5,9 +5,9 @@ locale = "en-au"
 extend-ignore-re = [
     "^[ \t]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*^[ \t]*-----END PGP PUBLIC KEY BLOCK-----",
     # Ignore current line with spellchecker:ignore-line (HTML comments)
-    "^.*<!--.*spellchecker:ignore-line.*-->.*$",
+    "(?Rm)^.*<!--.*spellchecker:ignore-line.*-->.*$",
     # Ignore current line with spellchecker:ignore-line (bash/shell/C comments)
-    "^.*(#|//).*spellchecker:ignore-line.*$",
+    "(?Rm)^.*(#|//)\\s*spellchecker:ignore-line\\s*$",
     # Ignore next line after spellchecker:ignore-next-line (HTML comments)
     "(?s)<!--\\s*spellchecker:ignore-next-line\\s*-->[^\\n]*\\n[^\\n]*",
     # Ignore next line after spellchecker:ignore-next-line (bash/shell comments)
@@ -19,7 +19,7 @@ extend-ignore-re = [
 [default.extend-words]
 
 # HACK: fnd the regex is not working
-fnd = "fnd"
+#fnd = "fnd"
 
 ags = "ags"
 analyzer = "analyzer"
