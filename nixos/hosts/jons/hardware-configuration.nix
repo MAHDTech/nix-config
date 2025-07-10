@@ -63,6 +63,7 @@
 
     # Legacy mount point for boot using ZFS
     "/boot" = {
+      # TODO: migrate to zpool/boot
       device = "bpool/boot";
       fsType = "zfs";
       options = [
