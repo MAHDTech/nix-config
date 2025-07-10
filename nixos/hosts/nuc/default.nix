@@ -25,7 +25,10 @@
     ../../system/config/power
     ../../system/config/printing
     ../../system/config/services
+
+    # Storage
     ../../system/config/storage/zfs
+    #../../system/config/storage/persistence
 
     # Theme
     ../../system/config/theme/catppuccin

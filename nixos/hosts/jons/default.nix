@@ -28,6 +28,8 @@
     ../../system/config/power
     ../../system/config/printing
     ../../system/config/services
+
+    # Storage
     ../../system/config/storage/zfs
 
     # Theme

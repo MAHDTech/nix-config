@@ -62,11 +62,6 @@
       fsType = "zfs";
     };
 
-    "/usr" = {
-      device = "zpool/usr";
-      fsType = "zfs";
-    };
-
     "/var" = {
       device = "zpool/var";
       fsType = "zfs";

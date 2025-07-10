@@ -3,18 +3,15 @@
 #   https://nixos.wiki/wiki/Impermanence
 ##################################################
 
-{ _ }:
-
-let
-  impermanence = builtins.fetchTarball "https://github.com/nix-community/impermanence/archive/master.tar.gz";
-in
+{ inputs, ... }:
 {
-
-  imports = [ "${impermanence}/nixos.nix" ];
+  imports = [ inputs.impermanence.nixosModules.impermanence ];
 
   environment.persistence."/persistent" = {
     enable = true;
+
     hideMounts = true;
+
     directories = [
       # systemd
       "/var/lib/systemd/coredump"
@@ -26,11 +23,15 @@ in
       # NixOS
       "/var/lib/nixos"
 
-      # The dreaded systemd error "unsupported enviment where /usr/ is not populated"
+      # The dreaded systemd error "unsupported environment where /usr/ is not populated"
       "/usr/"
 
       # Bluetooth configuration
       "/var/lib/bluetooth"
+    ];
+
+    files = [
+      "/etc/machine-id"
     ];
 
   };

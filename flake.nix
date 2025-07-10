@@ -134,6 +134,14 @@
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    impermanence = {
+      type = "github";
+      owner = "nix-community";
+      repo = "impermanence";
+      ref = "master";
+      flake = true;
+    };
   };
 
   outputs =

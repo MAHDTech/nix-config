@@ -6,7 +6,6 @@
     ./network
     ./users
     ./nix
-    #./persistence
     ./programs
     ./secrets
     ./services
