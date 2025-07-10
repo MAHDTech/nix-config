@@ -1,11 +1,24 @@
-{lib, ...}: {
-  imports = [];
+{ lib, ... }:
+{
+  imports = [ ];
 
   boot = {
-    supportedFilesystems = ["vfat" "xfs" "zfs" "cifs" "nfs"];
+    supportedFilesystems = [
+      "vfat"
+      "xfs"
+      "zfs"
+      "cifs"
+      "nfs"
+    ];
 
     initrd = {
-      availableKernelModules = ["ata_piix" "vmw_pvscsi" "ahci" "sd_mod" "sr_mod"];
+      availableKernelModules = [
+        "ata_piix"
+        "vmw_pvscsi"
+        "ahci"
+        "sd_mod"
+        "sr_mod"
+      ];
 
       kernelModules = [
         "zfs"
@@ -15,7 +28,7 @@
     kernelModules = [
     ];
 
-    extraModulePackages = [];
+    extraModulePackages = [ ];
   };
 
   fileSystems = {
@@ -25,14 +38,17 @@
     };
 
     "/boot" = {
-      device = "bpool/boot";
+      device = "zpool/boot";
       fsType = "zfs";
     };
 
     "/boot/efi" = {
       device = "/dev/disk/by-uuid/D139-D03C";
       fsType = "vfat";
-      options = ["fmask=0077" "dmask=0077"];
+      options = [
+        "fmask=0077"
+        "dmask=0077"
+      ];
     };
 
     "/boot/nixos" = {
@@ -71,7 +87,7 @@
     };
   };
 
-  swapDevices = [];
+  swapDevices = [ ];
 
   networking.useDHCP = lib.mkDefault true;
 

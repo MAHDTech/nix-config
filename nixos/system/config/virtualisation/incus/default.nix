@@ -251,5 +251,10 @@ in
     nftables = {
       enable = true;
     };
+    firewall = {
+      trustedInterfaces = [
+        "incusbr0"
+      ];
+    };
   };
 }

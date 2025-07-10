@@ -65,7 +65,7 @@
 
     # Legacy mount point for boot using ZFS
     "/boot" = {
-      device = "bpool/boot";
+      device = "zpool/boot";
       fsType = "zfs";
       options = [
         "zfsutil"
