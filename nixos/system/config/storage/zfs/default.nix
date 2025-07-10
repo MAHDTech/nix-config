@@ -1,7 +1,6 @@
 { pkgs, ... }:
 let
   zfsPoolNames = [
-    "bpool"
     "zpool"
   ];
 in
@@ -36,8 +35,8 @@ in
   systemd = {
     services = {
       zfs-mount = {
-        # Disable the zfs-mount service (native ZFS mounts)
-        # Enable the zfs-mount service (legacy ZFS mounts)
+        # Disable the zfs-mount service (for native ZFS mounts)
+        # Enable the zfs-mount service (for legacy ZFS mounts)
         enable = true;
       };
     };

@@ -13,7 +13,7 @@
 
     # System Configuration
     ../../system/config/fonts
-    ../../system/config/zfs
+    ../../system/config/storage/zfs
 
     # Headless
 

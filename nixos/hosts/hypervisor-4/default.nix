@@ -3,7 +3,7 @@
 }:
 {
   networking = {
-    hostName = "hypervisor-4";
+    hostName = "HYPERVISOR-4";
     hostId = "def90004";
   };
 
@@ -20,6 +20,12 @@
     # GPU specific configuration.
     ../../system/config/video/amd
 
+    # Storage specific configuration.
+    ../../system/config/storage/zfs
+
+    # Theme specific configuration.
+    ../../system/config/theme/catppuccin
+
     # Incus
     (import ../../system/config/virtualisation/incus {
       hostConfig = {
@@ -28,7 +34,7 @@
           # Incus cluster configuration (member server)
           cluster = {
             enabled = true;
-            server_name = "hypervisor-4";
+            server_name = "HYPERVISOR-4";
             https_address = "10.10.200.14:8443";
           };
 
