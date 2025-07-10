@@ -36,6 +36,29 @@
   };
 
   hardware = {
+
+    amdgpu = {
+
+      amdvlk = {
+        enable = true;
+        support32Bit.enable = true;
+        supportExperimental.enable = false;
+        settings = { };
+      };
+
+      initrd = {
+        enable = true;
+      };
+
+      legacySupport = {
+        enable = false;
+      };
+
+      opencl = {
+        enable = true;
+      };
+    };
+
     graphics = {
       enable = true;
       extraPackages = with pkgs; [
