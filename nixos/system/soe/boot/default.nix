@@ -28,14 +28,9 @@
     ];
 
     # Wiki https://nixos.wiki/wiki/Linux_kernel
-    # Kernel (stable)
-    #kernelPackages = pkgs.linuxPackages_latest;
-    # Kernel (testing)
-    #kernelPackages = pkgs.linuxPackages_testing;
+    kernelPackages = pkgs.linuxPackages_latest;
     # Kernel (Pinned version) https://kernel.org/
-    #kernelPackages = pkgs.linuxPackages_6_12;
-    kernelPackages = pkgs.linuxPackages_6_15;
-    # NOTE: Don't set when using musnix realtime kernel.
+    #kernelPackages = pkgs.linuxPackages_6_15;
 
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [
