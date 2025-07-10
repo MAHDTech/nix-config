@@ -37,12 +37,4 @@
     };
     disabledPlugins = [ ];
   };
-
-  # Impermanence for Bluetooth
-  # https://nixos.wiki/wiki/Impermanence
-  #environment.persistence."/persistent" = {
-  #  directories = [
-  #    "/var/lib/bluetooth"
-  #  ];
-  #};
 }

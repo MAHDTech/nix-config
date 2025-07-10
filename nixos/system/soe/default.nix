@@ -1,24 +1,31 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   imports = [
     ./boot
     ./groups
     ./network
     ./users
     ./nix
+    #./persistence
     ./programs
     ./secrets
     ./services
     ./security
   ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
   time.timeZone = "Australia/Canberra";
 
   i18n = {
     defaultLocale = "en_AU.UTF-8";
 
-    supportedLocales = ["all" "en_AU.UTF-8/UTF-8" "en_AU/ISO-8859-1" "en_US.UTF-8/UTF-8"];
+    supportedLocales = [
+      "all"
+      "en_AU.UTF-8/UTF-8"
+      "en_AU/ISO-8859-1"
+      "en_US.UTF-8/UTF-8"
+    ];
 
     extraLocaleSettings = {
       LANGUAGE = "en_AU";
@@ -44,7 +51,7 @@
   # Symlink /bin/sh to /bin/bash to workaround
   # bash scripts that don't use /usr/bin/env bash.
   system.activationScripts.binbash = {
-    deps = ["binsh"];
+    deps = [ "binsh" ];
     text = ''
       ln -s /bin/sh /bin/bash
     '';
