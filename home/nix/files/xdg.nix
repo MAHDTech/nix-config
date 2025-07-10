@@ -25,6 +25,9 @@ in
   home.packages = with pkgs; [
     xdg-user-dirs
     xdg-utils
+
+    # GTK themes
+    adw-gtk3
   ];
   xdg = {
     enable = true;
@@ -55,6 +58,16 @@ in
           vo=gpu
           profile=gpu-hq
           gpu-context=wayland
+        '';
+      };
+
+      # Enable Cosmic theme for GTK applications
+      "gtk-3.0/settings.ini" = {
+        target = "gtk-3.0/settings.ini";
+
+        text = ''
+          [Settings]
+          gtk-theme-name=adw-gtk3
         '';
       };
     };

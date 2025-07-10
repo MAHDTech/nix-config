@@ -23,16 +23,16 @@
     settings = {
       General = {
         ControllerMode = "dual"; # Both BR/EDR and LE are enabled
-        Enable = "Source,Sink,Media,Socket";
+        #Enable = "Source,Sink,Media,Socket";
         Experimental = "true"; # Enable DBUS experimental interfaces
         FastConnectable = "true";
-        KernelExperimental = "false"; # Enables kernel experimental features via UUID.
+        KernelExperimental = "6fbaf188-05e0-496a-9885-d6ddfdb4e03e"; # Enable ISO sockets for BAP
       };
       Policy = {
         AutoEnable = "true";
       };
       LE = {
-        EnableAdvMonInterleaveScan = "true";
+        EnableAdvMonInterleaveScan = 0;
       };
     };
     disabledPlugins = [ ];

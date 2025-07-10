@@ -21,9 +21,9 @@
     initrd = {
       availableKernelModules = [
         "ahci"
+        "mpt3sas"
         "nvme"
         "sd_mod"
-        "thunderbolt"
         "usb_storage"
         "usbhid"
         "xhci_pci"
@@ -33,6 +33,7 @@
         "dm-snapshot"
         "zfs"
       ];
+
     };
 
     kernelModules = [
@@ -46,6 +47,7 @@
     ];
 
     extraModulePackages = [ ];
+
   };
 
   # Legacy mount points
@@ -73,7 +75,7 @@
 
     # UEFI boot partition on USB
     "/boot/efi" = {
-      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0360721030005469-0:0-part1";
+      device = "/dev/disk/by-uuid/12CE-A600";
       fsType = "vfat";
       options = [
         "umask=0022"
@@ -83,13 +85,6 @@
         "nofail"
       ];
       neededForBoot = true;
-    };
-
-    # NixOS configuration on USB
-    "/boot/nixos" = {
-      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0360721030005469-0:0-part2";
-      fsType = "xfs";
-      neededForBoot = false;
     };
 
     # Legacy mount point for home using ZFS

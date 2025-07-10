@@ -8,13 +8,29 @@
 }:
 let
   packages = with pkgs; [
-    brightnessctl
+
+    # Cosmic apps
+    cosmic-applets
+    cosmic-bg
     cosmic-edit
+    cosmic-ext-calculator
+    cosmic-ext-ctl
     cosmic-files
     cosmic-icons
+    cosmic-idle
     cosmic-launcher
+    cosmic-osd
+    cosmic-panel
+    cosmic-player
+    cosmic-randr
+    cosmic-screenshot
+    cosmic-session
+    cosmic-settings
+    cosmic-settings-daemon
     cosmic-store
     cosmic-term
+
+    brightnessctl
     grim
     hyprpicker
     hyprshot
@@ -30,8 +46,8 @@ let
     wayland-pipewire-idle-inhibit
     wayshot
     #wf-recorder
-    wl-clipboard
     #wl-screenrec
+    wl-clipboard
     wlogout
   ];
 in

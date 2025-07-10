@@ -379,14 +379,110 @@
           };
 
           extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
             ./nixos/hosts/kasmweb-001
 
             catppuccin.nixosModules.catppuccin
-            {
-              system.stateVersion = globalStateVersion;
-            }
           ];
         };
+
+        # Hostname: HYPERVISOR-1
+        # Description: Hypervisor Node 1
+        HYPERVISOR-1 = configNixOS {
+          username = globalUsername;
+          system = "x86_64-linux";
+
+          specialArgs = {
+            inherit inputs;
+          };
+
+          extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
+            ./nixos/hosts/hypervisor-1
+
+            catppuccin.nixosModules.catppuccin
+            nixos-hardware.nixosModules.common-cpu-amd
+            nixos-hardware.nixosModules.common-cpu-amd-pstate
+            nixos-hardware.nixosModules.common-gpu-amd
+            nixos-hardware.nixosModules.common-pc
+            nixos-hardware.nixosModules.common-pc-ssd
+          ];
+        };
+
+        # Hostname: HYPERVISOR-2
+        # Description: Hypervisor Node 2
+        HYPERVISOR-2 = configNixOS {
+          username = globalUsername;
+          system = "x86_64-linux";
+
+          specialArgs = {
+            inherit inputs;
+          };
+
+          extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
+            ./nixos/hosts/hypervisor-2
+
+            catppuccin.nixosModules.catppuccin
+            nixos-hardware.nixosModules.common-cpu-amd
+            nixos-hardware.nixosModules.common-cpu-amd-pstate
+            nixos-hardware.nixosModules.common-gpu-amd
+            nixos-hardware.nixosModules.common-pc
+            nixos-hardware.nixosModules.common-pc-ssd
+          ];
+        };
+
+        # Hostname: HYPERVISOR-3
+        # Description: Hypervisor Node 3
+        HYPERVISOR-3 = configNixOS {
+          username = globalUsername;
+          system = "x86_64-linux";
+
+          specialArgs = {
+            inherit inputs;
+          };
+
+          extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
+            ./nixos/hosts/hypervisor-3
+
+            catppuccin.nixosModules.catppuccin
+            nixos-hardware.nixosModules.common-cpu-amd
+            nixos-hardware.nixosModules.common-cpu-amd-pstate
+            nixos-hardware.nixosModules.common-gpu-amd
+            nixos-hardware.nixosModules.common-pc
+            nixos-hardware.nixosModules.common-pc-ssd
+          ];
+        };
+
+        # Hostname: HYPERVISOR-4
+        # Description: Hypervisor Node 4
+        HYPERVISOR-4 = configNixOS {
+          username = globalUsername;
+          system = "x86_64-linux";
+
+          specialArgs = {
+            inherit inputs;
+          };
+
+          extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
+            ./nixos/hosts/hypervisor-4
+
+            catppuccin.nixosModules.catppuccin
+            nixos-hardware.nixosModules.common-cpu-amd
+            nixos-hardware.nixosModules.common-cpu-amd-pstate
+            nixos-hardware.nixosModules.common-gpu-amd
+            nixos-hardware.nixosModules.common-pc
+            nixos-hardware.nixosModules.common-pc-ssd
+          ];
+        };
+
       };
 
       #########################
