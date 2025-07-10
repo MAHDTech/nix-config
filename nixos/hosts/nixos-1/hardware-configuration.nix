@@ -54,11 +54,13 @@
     "/boot/nixos" = {
       device = "/dev/disk/by-uuid/837729b1-b068-49e6-bf8f-0dc437367ac0";
       fsType = "xfs";
+      neededForBoot = false;
     };
 
     "/home" = {
       device = "zpool/home";
       fsType = "zfs";
+      neededForBoot = false;
     };
 
     "/nix" = {

@@ -11,6 +11,12 @@
     # Load hardware specific configuration.
     ./hardware-configuration.nix
 
+    # CPU specific configuration.
+    ../../system/config/virtualisation/cpu/amd.nix
+
+    # GPU specific configuration.
+    ../../system/config/video/intel
+
     # Load system standard-operating-environment.
     ../../system/soe
 
@@ -44,11 +50,5 @@
     # VMware virtualisation and Docker Container Host.
     ../../system/config/virtualisation/docker
     ../../system/config/virtualisation/host/vmware
-
-    # CPU specific configuration.
-    ../../system/config/virtualisation/cpu/amd.nix
-
-    # GPU specific configuration.
-    ../../system/config/video/intel
   ];
 }

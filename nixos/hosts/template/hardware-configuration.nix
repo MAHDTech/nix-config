@@ -54,6 +54,7 @@
     "/home" = {
       device = "zpool/home";
       fsType = "zfs";
+      neededForBoot = false;
     };
 
     "/nix" = {

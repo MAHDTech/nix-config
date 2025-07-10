@@ -124,7 +124,7 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = false;
+      neededForBoot = true;
     };
 
     # Legacy mount point for var/lib using ZFS
@@ -134,7 +134,7 @@
       options = [
         "zfsutil"
       ];
-      neededForBoot = false;
+      neededForBoot = true;
     };
 
     # Legacy mount point for var/lib/docker using ZFS
