@@ -107,6 +107,16 @@
       neededForBoot = true;
     };
 
+    # Legacy mount point for usr using ZFS
+    "/usr" = {
+      device = "zpool/usr";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = true;
+    };
+
     # Legacy mount point for var using ZFS
     "/var" = {
       device = "zpool/var";
