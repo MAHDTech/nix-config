@@ -70,10 +70,6 @@
         vulkan-loader
       ];
     };
-
-    opengl = {
-      enable = true;
-    };
   };
 
   services.xserver = {
