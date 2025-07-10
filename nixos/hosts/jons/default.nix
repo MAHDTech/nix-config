@@ -28,6 +28,9 @@
     ../../system/config/power
     ../../system/config/printing
     ../../system/config/services
+    ../../system/config/storage/zfs
+
+    # Theme
     ../../system/config/theme/catppuccin
 
     # Desktop
