@@ -255,6 +255,9 @@ in
       trustedInterfaces = [
         "incusbr0"
       ];
+      allowedTCPPorts = [
+        8443
+      ];
     };
   };
 }
