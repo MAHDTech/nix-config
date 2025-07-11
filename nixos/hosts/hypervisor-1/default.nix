@@ -31,11 +31,15 @@
       hostConfig = {
         preseed = {
 
+          # Config
+          config = {
+            "core.https_address" = "10.10.200.11:8443";
+          }
+
           # Incus cluster configuration (bootstrap server)
           cluster = {
             enabled = true;
             server_name = "HYPERVISOR-1";
-            https_address = "10.10.200.11:8443";
           };
 
         };

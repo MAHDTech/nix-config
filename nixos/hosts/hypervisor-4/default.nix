@@ -36,6 +36,8 @@
             enabled = true;
             server_name = "HYPERVISOR-4";
             https_address = "10.10.200.14:8443";
+
+            # TODO: Join existing cluster...
           };
 
         };
