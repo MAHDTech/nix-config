@@ -261,3 +261,34 @@ nixos-generate --show-trace --flake .#NAME --format iso --out-link result --syst
 # aarch64
 nixos-generate --show-trace --flake .#NAME --format iso --out-link result --system aarch64-linux
 ```
+
+## Troubleshooting
+
+Some notes on recovering the system when things go bad...
+
+1. Boot the NixOS Live ISO.
+
+1. Mount the ZFS datasets to a temporary altroot.
+
+```bash
+sudo mkdir /mnt/nixos
+
+sudo zpool import -f -R /mnt/nixos zpool
+```
+
+1. Enter the broken NixOS chroot
+
+```bash
+nixos-enter --root /mnt/nixos
+```
+
+1. Re-run the flake after fixing it
+
+```bash
+nixos-rebuild \
+    boot  \
+    --sudo \
+    --upgrade-all \
+    --refresh \
+    --flake 'github:MAHDTech/nix-config#'
+```
