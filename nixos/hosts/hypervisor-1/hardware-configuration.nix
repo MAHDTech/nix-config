@@ -75,7 +75,7 @@
 
     # UEFI boot partition on USB
     "/boot/efi" = {
-      device = "/dev/disk/by-uuid/12CE-A600";
+      device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_0372324070000895-0:0-part1";
       fsType = "vfat";
       options = [
         "umask=0022"
