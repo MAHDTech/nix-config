@@ -27,6 +27,9 @@
         "usb_storage"
         "usbhid"
         "xhci_pci"
+
+        # Intel VMD
+        "vmd"
       ];
 
       kernelModules = [
@@ -37,12 +40,18 @@
 
     kernelModules = [
       "kvm-intel"
+
+      # Intel VMD
+      "vmd"
     ];
 
     kernelParams = [
       "mitigations=off"
       "threadirqs"
       "zfs_force=1"
+
+      # Intel VMD
+      "nvme_load=YES"
     ];
 
     extraModulePackages = [ ];
