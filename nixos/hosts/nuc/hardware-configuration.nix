@@ -9,13 +9,13 @@
   boot = {
     supportedFilesystems = [
       "btrfs"
-      "vfat"
+      "cifs"
       "f2fs"
+      "nfs"
+      "ntfs"
+      "vfat"
       "xfs"
       "zfs"
-      "ntfs"
-      "cifs"
-      "nfs"
     ];
 
     initrd = {
@@ -30,6 +30,7 @@
       ];
 
       kernelModules = [
+        "dm-snapshot"
         "zfs"
       ];
     };
