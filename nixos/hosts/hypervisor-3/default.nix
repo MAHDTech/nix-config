@@ -31,12 +31,14 @@
       hostConfig = {
         preseed = {
 
+          # Config
+          config = {
+            # Management interface.
+            "core.https_address" = "10.10.100.13:8443";
+          };
+
           # Incus cluster configuration (member server)
           cluster = {
-            enabled = true;
-            server_name = "HYPERVISOR-3";
-            https_address = "10.10.200.13:8443";
-
             # TODO: Join existing cluster...
           };
 
