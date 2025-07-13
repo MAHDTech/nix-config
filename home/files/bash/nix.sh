@@ -282,6 +282,7 @@ function _dotfiles_actions() {
 
 		home-manager \
 			"${ACTION}" \
+			--accept-flake-config \
 			--impure \
 			--flake "${FLAKE_LOCATION}" \
 			"${EXTRA_ARGS[@]}" || {
@@ -465,6 +466,7 @@ function dotfiles() {
 		nix flake check \
 			--no-build \
 			--keep-going \
+			--accept-flake-config \
 			--impure \
 			"${FLAKE_LOCATION}" \
 			"${EXTRA_ARGS[@]}" || {

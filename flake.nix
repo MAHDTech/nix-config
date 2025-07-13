@@ -178,6 +178,9 @@
       # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
       globalStateVersion = "24.05";
 
+      # Are we running in GitHub Actions?
+      inGitHubActions = builtins.getEnv "GITHUB_ACTIONS" == "true";
+
       #########################
       # Systems functions
       #########################
@@ -241,6 +244,7 @@
             inherit globalStateVersion;
             inherit globalUsername;
             inherit system;
+            inherit inGitHubActions;
           };
         };
     in
@@ -321,6 +325,7 @@
                   inherit inputs;
                   inherit globalStateVersion;
                   inherit globalUsername;
+                  inherit inGitHubActions;
                 };
                 users.${globalUsername} = {
                   imports = [
@@ -369,6 +374,7 @@
                   inherit inputs;
                   inherit globalStateVersion;
                   inherit globalUsername;
+                  inherit inGitHubActions;
                 };
                 users.${globalUsername} = {
                   imports = [

@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, inGitHubActions, ... }:
 let
   # Get hostname for conditional configuration
   hostname = lib.fileContents /etc/hostname;
@@ -17,9 +17,8 @@ let
 in
 {
   imports = [
-    ./ags.nix
     ./hyprland.nix
-  ];
+  ] ++ lib.optional (!inGitHubActions) ./ags.nix;
 
   # Pass the device configuration to hyprland.nix
   _module.args.deviceConfig = deviceConfig;
