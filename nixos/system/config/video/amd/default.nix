@@ -3,8 +3,6 @@
   imports = [ ];
 
   environment.systemPackages = with pkgs; [
-    # GUI tools for AMD GPU management
-    lact
     # OpenCL info tool for verification
     clinfo
   ];
@@ -99,27 +97,6 @@
     videoDrivers = [
       "amdgpu"
     ];
-  };
-
-  # LACT daemon for GPU management
-  systemd = {
-    packages = with pkgs; [ lact ];
-    services.lactd.wantedBy = [ "multi-user.target" ];
-    # HIP support for compute workloads (Blender, etc.)
-    tmpfiles.rules =
-      let
-        rocmEnv = pkgs.symlinkJoin {
-          name = "rocm-combined";
-          paths = with pkgs.rocmPackages; [
-            rocblas
-            hipblas
-            clr
-          ];
-        };
-      in
-      [
-        "L+    /opt/rocm   -    -    -     -    ${rocmEnv}"
-      ];
   };
 
   environment.variables = {
