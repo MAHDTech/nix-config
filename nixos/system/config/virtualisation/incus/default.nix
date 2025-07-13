@@ -16,7 +16,6 @@ let
     preseed = {
       cluster = null;
       config = {
-        #"core.https_address" = ":8443";
         "images.auto_update_interval" = 6;
       };
       storage_pools = [
