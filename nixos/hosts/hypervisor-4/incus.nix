@@ -21,7 +21,7 @@
             enabled = true;
             server_name = "HYPERVISOR-4";
 
-            server_address = "HYPERVISOR-1.saltlabs.cloud:8443";
+            server_address = "hypervisor-1.saltlabs.cloud:8443";
             cluster_token = "join-token-here";
 
             member_config = {

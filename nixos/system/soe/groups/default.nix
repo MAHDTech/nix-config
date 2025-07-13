@@ -1,13 +1,27 @@
 {
   users.groups = {
-    "plugdev" = {gid = 10000;};
+    "nixos-admins" = {
+      gid = 100000;
+    };
 
-    "vmware" = {gid = 10001;};
+    "plugdev" = {
+      gid = 10000;
+    };
 
-    "trezord" = {gid = 10002;};
+    "vmware" = {
+      gid = 10001;
+    };
 
-    "nixos" = {gid = 10003;};
+    "trezord" = {
+      gid = 10002;
+    };
 
-    "adbusers" = {gid = 10004;};
+    "nixos" = {
+      gid = 10003;
+    };
+
+    "adbusers" = {
+      gid = 10004;
+    };
   };
 }

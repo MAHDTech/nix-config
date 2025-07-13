@@ -25,6 +25,7 @@ in
       "disk"
       "docker"
       "flatpak"
+      "nixos-admins"
       "networkmanager"
       "nixos"
       "pipewire"
