@@ -92,15 +92,7 @@
 
           # 80-iwd (managed by iwd)
 
-          # systemd-networkd handles Bonded Interfaces
-          "100-bonded" = {
-            enable = true;
-            name = "bond*";
-
-            inherit networkConfig;
-
-            dhcpV4Config.RouteMetric = 1000;
-          };
+          # 100-bonded (managed by systemd-networkd per-host)
         };
     };
 

@@ -55,8 +55,11 @@
           };
           networkConfig = {
             LinkLocalAddressing = "no";
-            DHCP = "ipv4";
+            DHCP = "yes";
+            DNSSEC = "yes";
+            DNSOverTLS = "no";
           };
+          dhcpV4Config.RouteMetric = 1000;
         };
 
       };
