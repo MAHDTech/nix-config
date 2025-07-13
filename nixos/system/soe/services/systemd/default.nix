@@ -2,12 +2,13 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   imports = [
     ./oomd.nix
   ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
   systemd = {
     extraConfig = ''
@@ -17,7 +18,7 @@
     '';
 
     timers.suspend-on-low-battery = {
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
 
       timerConfig = {
         OnUnitActiveSec = "120";
@@ -32,59 +33,75 @@
         enable = true;
         anyInterface = true;
         timeout = 120;
-        extraArgs = [];
+        extraArgs = [ ];
       };
 
-      config = {};
+      config = { };
 
-      networks = let
-        networkConfig = {
-          DHCP = "yes";
-          DNSSEC = "yes";
-          DNSOverTLS = "no";
+      networks =
+        let
+          networkConfig = {
+            DHCP = "yes";
+            DNSSEC = "yes";
+            DNSOverTLS = "no";
 
-          DNS = [];
+            DNS = [ ];
+          };
+        in
+        {
+          # systemd-networkd handles LAN
+          "10-wired" = {
+            enable = true;
+            name = "en*";
+
+            inherit networkConfig;
+
+            dhcpV4Config.RouteMetric = 1000;
+          };
+
+          # NetworkManager handles WiFi
+          "20-wireless" = {
+            enable = false;
+            name = "wl*";
+
+            inherit networkConfig;
+
+            dhcpV4Config.RouteMetric = 2000;
+          };
+
+          # systemd-networkd handles tunnel interfaces
+          "30-tunnel" = {
+            enable = true;
+            name = "tun*";
+
+            inherit networkConfig;
+
+            linkConfig.Unmanaged = true;
+          };
+
+          "40-bluetooth" = {
+            enable = true;
+            name = "bn*";
+
+            inherit networkConfig;
+
+            dhcpV4Config.RouteMetric = 3000;
+          };
+
+          # 50-tailscale (managed by Tailscale)
+
+          # 80-iwd (managed by iwd)
+
+          # systemd-networkd handles Bonded Interfaces
+          "100-bonded" = {
+            enable = true;
+            name = "bond*";
+
+            inherit networkConfig;
+
+            dhcpV4Config.RouteMetric = 1000;
+          };
         };
-      in {
-        # systemd-networkd handles LAN
-        "10-wired" = {
-          enable = true;
-          name = "en*";
-
-          inherit networkConfig;
-
-          dhcpV4Config.RouteMetric = 1000;
-        };
-
-        # NetworkManager handles WiFi
-        "20-wireless" = {
-          enable = false;
-          name = "wl*";
-
-          inherit networkConfig;
-
-          dhcpV4Config.RouteMetric = 2000;
-        };
-
-        # systemd-networkd handles tunnel interfaces
-        "30-tunnel" = {
-          enable = true;
-          name = "tun*";
-
-          inherit networkConfig;
-
-          linkConfig.Unmanaged = true;
-        };
-
-        "40-bluetooth" = {
-          enable = true;
-          name = "bn*";
-
-          inherit networkConfig;
-
-          dhcpV4Config.RouteMetric = 3000;
-        };
-      };
     };
 
     services = {

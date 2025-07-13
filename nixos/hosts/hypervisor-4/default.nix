@@ -26,6 +26,9 @@
     # Theme specific configuration.
     ../../system/config/theme/catppuccin
 
+    # Network specific configuration.
+    ./network.nix
+
     # Incus
     (import ../../system/config/virtualisation/incus {
       hostConfig = {
@@ -34,12 +37,13 @@
           # Config
           config = {
             # Management interface.
-            "core.https_address" = "10.10.100.14:8443";
+            "core.https_address" = "10.10.1.14:8443";
           };
 
           # Incus cluster configuration (member server)
           cluster = {
             # TODO: Join existing cluster...
+            server_name = "HYPERVISOR-4";
           };
 
         };
