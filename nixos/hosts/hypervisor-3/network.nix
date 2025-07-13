@@ -43,12 +43,18 @@
 
         "101-enp1s0f0" = {
           matchConfig.Name = "enp1s0f0";
-          networkConfig.Bond = "bond0";
+          networkConfig = {
+            Bond = "bond0";
+            DHCP = "no";
+          };
         };
 
         "102-enp1s0f1" = {
           matchConfig.Name = "enp1s0f1";
-          networkConfig.Bond = "bond0";
+          networkConfig = {
+            Bond = "bond0";
+            DHCP = "no";
+          };
         };
 
         "110-bond0" = {
