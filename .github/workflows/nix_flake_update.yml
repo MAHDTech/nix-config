@@ -35,6 +35,7 @@ jobs:
       - id: cachix
         name: "Enable Cachix ❄️"
         uses: cachix/cachix-action@v16
+        if: ${{ vars.CACHIX_CACHE_NAME != '' }}
         with:
           name: ${{ vars.CACHIX_CACHE_NAME }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
