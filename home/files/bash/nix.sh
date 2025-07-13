@@ -266,6 +266,7 @@ function _dotfiles_actions() {
 			--upgrade-all \
 			--refresh \
 			--impure \
+			--accept-flake-config \
 			--flake "${FLAKE_LOCATION}#" \
 			"${EXTRA_ARGS[@]}" || {
 
