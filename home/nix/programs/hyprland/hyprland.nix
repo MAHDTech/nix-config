@@ -237,6 +237,11 @@ in
   wayland.windowManager.hyprland = {
     enable = true;
 
+    # Use the packages from NixOS instead of home-manager
+    # https://wiki.hypr.land/Nix/Hyprland-on-Home-Manager/#using-the-home-manager-module-with-nixos
+    package = null;
+    portalPackage = null;
+
     systemd = {
       enable = true;
 
@@ -248,7 +253,7 @@ in
       ];
 
       variables = [
-        # "--all"
+        "--all"
         "DISPLAY"
         "HYPRLAND_INSTANCE_SIGNATURE"
         "WAYLAND_DISPLAY"

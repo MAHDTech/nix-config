@@ -39,12 +39,12 @@ appimageTools.wrapType2 {
 
   extraPkgs =
     pkgs: with pkgs; [
-      xdg-desktop-portal-cosmic
-      xdg-desktop-portal-cosmic
-      xdg-desktop-portal-gtk
-      xdg-desktop-portal-wlr
-      xdg-launch
-      xdg-utils
+      #xdg-desktop-portal-cosmic
+      #xdg-desktop-portal-gtk
+      #xdg-desktop-portal-hyprland
+      #xdg-desktop-portal-wlr
+      #xdg-launch
+      #xdg-utils
     ];
 
   meta = {

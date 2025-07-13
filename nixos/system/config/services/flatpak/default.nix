@@ -10,8 +10,8 @@
   imports = [ ];
 
   environment.systemPackages = with pkgs; [
-    xdg-utils
     xdg-launch
+    xdg-utils
   ];
 
   environment.pathsToLink = [
@@ -80,14 +80,20 @@
           "gnome-keyring"
         ];
       };
+      hyprland = {
+        default = [
+          "hyprland"
+          "gtk"
+        ];
+      };
     };
 
     extraPortals = with pkgs; [
       # Make sure the DE has the portal configured.
       #pantheon.xdg-desktop-portal-pantheon
       #xdg-desktop-portal-cosmic
-      #xdg-desktop-portal-gtk
-      #xdg-desktop-portal-hyprland
+      xdg-desktop-portal-gtk
+      xdg-desktop-portal-hyprland
       #xdg-desktop-portal-wlr
     ];
   };
