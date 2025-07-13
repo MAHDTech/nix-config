@@ -7,7 +7,7 @@ AGS is the CLI for Astal.
 - Initialize the project in the current directory.
 
 ```bash
-ags init --directory $(pwd)/ --force
+ags init --directory $(pwd)/ --force --gtk 4
 ```
 
 - Make your changes

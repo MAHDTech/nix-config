@@ -1,6 +1,6 @@
 {
-  "dependencies": {
-    "astal": "/home/mahdtech/.local/share/ags"
-  },
-  "name": "astal-shell"
+    "dependencies": {
+        "astal": "/home/mahdtech/.local/share/ags"
+    },
+    "name": "astal-shell"
 }
