@@ -42,6 +42,10 @@
       enable = true;
     };
 
+    mako = {
+      enable = false;
+    };
+
     mpv = {
       enable = true;
     };

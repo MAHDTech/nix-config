@@ -17,8 +17,7 @@
       type = "github";
       owner = "NixOS";
       repo = "nixpkgs";
-      #ref = "release-25.05";
-      ref = "nixos-unstable";
+      ref = "release-25.05";
       flake = true;
     };
 
@@ -50,8 +49,7 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      #ref = "release-25.05";
-      ref = "master";
+      ref = "release-25.05";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -104,8 +102,7 @@
       type = "github";
       owner = "catppuccin";
       repo = "nix";
-      #ref = "release-1.x";
-      ref = "v1.2.1";
+      ref = "release-1.x";
       flake = true;
     };
 

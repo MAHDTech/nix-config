@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   imports = [
   ];
@@ -8,6 +8,9 @@
   #########################################################
   # Network Configuration
   #########################################################
+
+  # Override the SOE configurations to only apply wired config to enp6s0
+  systemd.network.networks."10-wired".matchConfig.Name = lib.mkForce "enp6s0";
 
   systemd = {
 
@@ -55,8 +58,11 @@
           };
           networkConfig = {
             LinkLocalAddressing = "no";
-            DHCP = "ipv4";
+            DHCP = "yes";
+            DNSSEC = "yes";
+            DNSOverTLS = "no";
           };
+          dhcpV4Config.RouteMetric = 1000;
         };
 
       };
