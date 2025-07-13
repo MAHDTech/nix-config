@@ -1,0 +1,48 @@
+@use "sass:color";
+@use "../variables.scss" as *;
+
+.wallpaperpicker-container {
+  min-height: 150px;
+
+  > box {
+    margin: $window-padding;
+    // margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    label {
+      font-size: 1.2rem;
+
+      &.directory {
+        font-size: 0.95rem;
+        font-weight: 400;
+        font-style: italic;
+      }
+    }
+
+    button {
+      background-color: color.adjust($fg, $alpha: -0.9);
+      padding: 0 0.6rem;
+
+      &:hover {
+        background-color: color.adjust($fg, $alpha: -0.65);
+      }
+    }
+  }
+
+  separator {
+    margin: $window-padding;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  scrolledwindow viewport {
+    > box {
+      margin: $window-padding;
+      margin-top: 6px;
+    }
+  }
+
+  .image {
+    border-radius: $window-border-radius;
+    background-size: contain;
+  }
+}

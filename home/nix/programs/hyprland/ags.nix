@@ -25,7 +25,7 @@
     wl-clipboard
 
     # AGS / Astal
-    #inputs.ags.packages.${pkgs.system}.astal3
+    inputs.ags.packages.${pkgs.system}.astal3
     inputs.ags.packages.${pkgs.system}.astal4
     inputs.ags.packages.${pkgs.system}.io
 
