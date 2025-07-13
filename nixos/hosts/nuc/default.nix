@@ -56,5 +56,8 @@
     #../../system/config/virtualisation/docker
     #../../system/config/virtualisation/host/vmware
     #../../system/config/virtualisation/incus
+
+    # Games
+    ../../system/config/games
   ];
 }

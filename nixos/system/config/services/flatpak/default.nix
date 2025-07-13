@@ -38,7 +38,7 @@
       "flathub:app/org.gimp.GIMP//stable"
       # "flathub:app/org.signal.Signal//stable" # Using Signal from nixpkgs instead.
       "flathub:app/org.videolan.VLC//stable"
-      "flathub:app/info.beyondallreason.bar//stable"
+      # "flathub:app/info.beyondallreason.bar//stable" # Using beyond-all-reason from nixpkgs instead.
       "flathub:app/com.jgraph.drawio.desktop//stable"
     ];
 

@@ -55,5 +55,8 @@
     # VMware virtualisation and Docker Container Host.
     ../../system/config/virtualisation/docker
     ../../system/config/virtualisation/host/vmware
+
+    # Games
+    ../../system/config/games
   ];
 }
