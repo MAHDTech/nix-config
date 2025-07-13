@@ -48,46 +48,46 @@
       # Astal Libraries
       # https://aylur.github.io/astal/guide/libraries/references#astal-libraries
 
-      # Library and cli tool for querying applications
+      # Apps: Library and cli tool for querying applications
       inputs.ags.packages.${pkgs.system}.apps
 
-      # Authentication library using PAM
+      # Auth: Authentication library using PAM
       inputs.ags.packages.${pkgs.system}.auth
 
-      # DBus proxy library for upower daemon
+      # Battery: DBus proxy library for upower daemon
       inputs.ags.packages.${pkgs.system}.battery
 
-      # Library to control bluez over dbus
+      # Bluetooth: Library to control bluez over dbus
       inputs.ags.packages.${pkgs.system}.bluetooth
 
-      # Audio visualizer library using cava
+      # Cava: Audio visualizer library using cava
       #inputs.ags.packages.${pkgs.system}.cava
 
-      # Library and CLI tool for sending requests to greetd
+      # Greet: Library and CLI tool for sending requests to greetd
       inputs.ags.packages.${pkgs.system}.greet
 
-      # Library and cli tool for Hyprland IPC socket
+      # Hyprland: Library and cli tool for Hyprland IPC socket
       inputs.ags.packages.${pkgs.system}.hyprland
 
-      # Library and cli tool for controlling media players
+      # MPRIS: Library and cli tool for controlling media players
       inputs.ags.packages.${pkgs.system}.mpris
 
-      # NetworkManager wrapper library
+      # Network: Wrapper library
       inputs.ags.packages.${pkgs.system}.network
 
-      # A notification daemon library and cli tool
+      # Notifd: A notification daemon library and cli tool
       inputs.ags.packages.${pkgs.system}.notifd
 
-      # Library and cli to control upowerd powerprofiles
+      # Powerprofiles: Library and cli to control upowerd powerprofiles
       inputs.ags.packages.${pkgs.system}.powerprofiles
 
-      # Library and cli tool for getting status information of the river wayland compositor
+      # River: Library and cli tool for getting status information of the river wayland compositor
       inputs.ags.packages.${pkgs.system}.river
 
-      # A systemtray library and cli tool
+      # Tray: A systemtray library and cli tool
       inputs.ags.packages.${pkgs.system}.tray
 
-      # A library for audio control using wireplumber
+      # Wireplumber: A library for audio control using wireplumber
       inputs.ags.packages.${pkgs.system}.wireplumber
     ];
   };
