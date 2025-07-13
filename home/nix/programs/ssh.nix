@@ -60,6 +60,10 @@
 
     # Apply overrides to specific hosts.
     matchBlocks = {
+      #########################
+      # Internet
+      #########################
+
       "github.com" = {
         host = "github.com";
         hostname = "github.com";
@@ -80,6 +84,10 @@
         };
       };
 
+      #########################
+      # Salt Labs
+      #########################
+
       "kvm" = {
         host = "kvm";
         hostname = "kvm.saltlabs.cloud";
@@ -90,19 +98,49 @@
         };
       };
 
-      "bingamon-jumpbox" = {
-        host = "bingamon-jumpbox";
-        hostname = "192.168.85.76";
-        user = "linadmin";
+      #########################
+      # Incus Hypervisor Nodes
+      #########################
+
+      "hypervisor-1" = {
+        host = "hypervisor-1";
+        hostname = "hypervisor-1.saltlabs.cloud";
         extraOptions = {
-          PasswordAuthentication = "yes";
+          PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
         };
       };
 
-      #
+      "hypervisor-2" = {
+        host = "hypervisor-2";
+        hostname = "hypervisor-2.saltlabs.cloud";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "hypervisor-3" = {
+        host = "hypervisor-3";
+        hostname = "hypervisor-3.saltlabs.cloud";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "hypervisor-4" = {
+        host = "hypervisor-4";
+        hostname = "hypervisor-4.saltlabs.cloud";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      #########################
       # Nutanix AHV Nodes
-      #
+      #########################
 
       "ntnx-ahv-1" = {
         host = "ntnx-ahv-1";
@@ -144,9 +182,9 @@
         };
       };
 
-      #
+      #########################
       # Nutanix CVM VMs
-      #
+      #########################
 
       "ntnx-ahv-1-cvm" = {
         host = "ntnx-ahv-1-cvm";
@@ -184,6 +222,20 @@
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      #########################
+      # Bingamon
+      #########################
+
+      "bingamon-jumpbox" = {
+        host = "bingamon-jumpbox";
+        hostname = "192.168.85.76";
+        user = "linadmin";
+        extraOptions = {
+          PasswordAuthentication = "yes";
           PubkeyAuthentication = "yes";
         };
       };
