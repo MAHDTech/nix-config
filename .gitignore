@@ -31,3 +31,7 @@ Cargo.lock
 
 # Ignore the pre-commit hook config
 .pre-commit-config.yaml
+
+# Ignore WIP
+WIP/
+

@@ -9,12 +9,15 @@
   # Network Configuration
   #########################################################
 
-  # Override the SOE configurations to only apply wired config to enp6s0
-  systemd.network.networks."10-wired".matchConfig.Name = lib.mkForce "enp6s0";
-
   systemd = {
 
     network = {
+
+      # Override the SOE to wait for all interfaces to come online.
+      wait-online = {
+        anyInterface = lib.mkForce false;
+        timeout = 180;
+      };
 
       #########################################################
       # Network Devices
@@ -41,6 +44,15 @@
 
       networks = {
 
+        # Override the SOE configurations to only apply wired config to enp6s0.
+        "10-wired" = {
+          matchConfig.Name = lib.mkForce "enp6s0";
+          networkConfig = {
+            DHCP = "yes";
+            DNSSEC = "yes";
+          };
+        };
+
         "101-enp1s0f0" = {
           matchConfig.Name = "enp1s0f0";
           networkConfig = {
@@ -64,11 +76,8 @@
           };
           networkConfig = {
             LinkLocalAddressing = "no";
-            DHCP = "yes";
-            DNSSEC = "yes";
-            DNSOverTLS = "no";
+            DHCP = "ipv4";
           };
-          dhcpV4Config.RouteMetric = 1000;
         };
 
       };

@@ -40,10 +40,10 @@ in
   cachix = {
     enable = true;
     push = [
-      "salt-labs"
+      "mahdtech"
     ];
     pull = [
-      "salt-labs"
+      "mahdtech"
     ];
   };
 
@@ -101,7 +101,9 @@ in
         };
       };
       dialyzer.enable = true;
-      editorconfig-checker.enable = true;
+      editorconfig-checker = {
+        enable = true;
+      };
       gofmt.enable = true;
       golangci-lint.enable = true;
       golines.enable = true;

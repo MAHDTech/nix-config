@@ -12,8 +12,9 @@ in
     shell = pkgs.bashInteractive;
     group = username;
 
+    # NOTE: To generate run;
     # mkpasswd --method=SHA-512 --stdin
-    initialHashedPassword = "$6$0fQUL.dlpw4kaVRc$/cbRiuWeR5Pu9yc7uvF2sktWtGOtTjtXviU.mAtWZlOwURJ0Ld1Ccxo5K9yiQ7LqPMU3NCcGGrk3Q7jmiFgS21"; # spellchecker:disable-line
+    initialHashedPassword = "$6$0fQUL.dlpw4kaVRc$/cbRiuWeR5Pu9yc7uvF2sktWtGOtTjtXviU.mAtWZlOwURJ0Ld1Ccxo5K9yiQ7LqPMU3NCcGGrk3Q7jmiFgS21"; # spellchecker:ignore-line
 
     # SOPS
     #hashedPasswordFile = config.sops.secrets.mahdtech.path;
@@ -38,7 +39,8 @@ in
       "wheel"
 
       # Incus
-      "incus-admin"
+      #"incus" # safe, isolated incus experience.
+      "incus-admin" # full access to incus.
     ];
 
     openssh.authorizedKeys.keys = [

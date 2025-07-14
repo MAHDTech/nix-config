@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -31,9 +32,9 @@
 
       wait-online = {
         enable = true;
-        anyInterface = true;
-        timeout = 120;
-        extraArgs = [ ];
+        anyInterface = lib.mkDefault true;
+        timeout = lib.mkDefault 120;
+        extraArgs = lib.mkDefault [ ];
       };
 
       config = { };
@@ -94,18 +95,6 @@
 
           # 100-bonded (managed by systemd-networkd per-host)
         };
-    };
-
-    services = {
-      # Wait for any interface to come online.
-      systemd-networkd-wait-online = {
-        serviceConfig = {
-          ExecStart = [
-            ""
-            "${config.systemd.package}/lib/systemd/systemd-networkd-wait-online --any"
-          ];
-        };
-      };
     };
 
     targets = {

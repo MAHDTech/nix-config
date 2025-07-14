@@ -3,8 +3,19 @@
     ./polkit
   ];
 
-  security.sudo.configFile = ''
-    %nixos-admins  ALL=(ALL:ALL) NOPASSWD: SETENV: ALL
-  '';
+  security.sudo.extraRules = [
+    {
+      groups = [ "nixos-admins" ];
+      commands = [
+        {
+          command = "ALL";
+          options = [
+            "NOPASSWD"
+            "SETENV"
+          ];
+        }
+      ];
+    }
+  ];
 
 }

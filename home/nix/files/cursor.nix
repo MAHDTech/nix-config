@@ -179,6 +179,12 @@
           "go.formatTool": "goimports",
           "go.lintTool": "golangci-lint",
 
+          // Shell Script
+          "[shellscript]": {
+            "editor.insertSpaces": false,
+            "editor.tabSize": 4,
+          },
+
           // YAML
           "[yaml]": {
             "editor.insertSpaces": true,

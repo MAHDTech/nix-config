@@ -31,5 +31,8 @@
 
     # Incus
     ./incus.nix
+
+    # AppArmor
+    ../../system/config/security/apparmor
   ];
 }

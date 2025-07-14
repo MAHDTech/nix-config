@@ -262,7 +262,7 @@ function _dotfiles_actions() {
 
 		nixos-rebuild \
 			"${ACTION}" \
-			--sudo \
+			--use-remote-sudo \
 			--upgrade-all \
 			--refresh \
 			--impure \
