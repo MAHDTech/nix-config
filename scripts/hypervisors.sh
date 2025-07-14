@@ -46,17 +46,40 @@ git add --all || {
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
 
+	msg "INFO" "Testing sudo access on $HYPERVISOR"
+
+	ssh -t "${HYPERVISOR}.${DOMAIN}" "id && groups && sudo -l" || {
+		msg "ERROR" "Failed to test sudo access on $HYPERVISOR"
+		exit 1
+	}
+
 	msg "INFO" "Upgrading $HYPERVISOR"
 
-	nixos-rebuild boot --use-remote-sudo --flake "path:.#${HYPERVISOR^^}" --accept-flake-config --target-host "${HYPERVISOR}.${DOMAIN}" --build-host "${HYPERVISOR}.${DOMAIN}" || {
+	nixos-rebuild boot \
+		--use-remote-sudo \
+		--accept-flake-config \
+		--flake "path:.#${HYPERVISOR^^}" \
+		--target-host "${HYPERVISOR}.${DOMAIN}" \
+		--build-host "${HYPERVISOR}.${DOMAIN}" || {
 		msg "ERROR" "Failed to upgrade $HYPERVISOR"
 		exit 1
 	}
 
-	msg "INFO" "Restarting $HYPERVISOR"
+	msg "INFO" "Restarting nixos-upgrade on $HYPERVISOR"
 
-	ssh -t "${HYPERVISOR}.saltlabs.cloud" "sudo systemctl reboot" || {
-		msg "ERROR" "Failed to restart $HYPERVISOR"
+	# Use SSH with proper environment preservation
+	ssh -t -o RequestTTY=yes -o SendEnv=USER -o SendEnv=HOME -o SendEnv=LOGNAME "${HYPERVISOR}.${DOMAIN}" \
+		"sudo -n systemctl restart nixos-upgrade" || {
+		msg "ERROR" "Failed to restart nixos-upgrade on $HYPERVISOR"
+		exit 1
+	}
+
+	msg "INFO" "Rebooting $HYPERVISOR"
+
+	# Use SSH with proper environment preservation
+	ssh -t -o RequestTTY=yes -o SendEnv=USER -o SendEnv=HOME -o SendEnv=LOGNAME "${HYPERVISOR}.${DOMAIN}" \
+		"sudo -n systemctl reboot" || {
+		msg "ERROR" "Failed to reboot $HYPERVISOR"
 		exit 1
 	}
 
