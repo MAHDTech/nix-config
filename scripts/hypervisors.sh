@@ -46,13 +46,6 @@ git add --all || {
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
 
-	msg "INFO" "Testing sudo access on $HYPERVISOR"
-
-	ssh -t "${HYPERVISOR}.${DOMAIN}" "id && groups && sudo -l" || {
-		msg "ERROR" "Failed to test sudo access on $HYPERVISOR"
-		exit 1
-	}
-
 	msg "INFO" "Upgrading $HYPERVISOR"
 
 	nixos-rebuild boot \
