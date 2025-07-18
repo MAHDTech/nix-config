@@ -103,7 +103,7 @@ let
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.254";
             "ipv4.nat" = "false";
             "ipv4.ovn.ranges" = "10.10.201.1-10.10.201.25";
-            "ipv4.routes" = "10.10.200.0/24,10.10.202.0/24";
+            "ipv4.routes" = "10.10.202.0/24";
             "ipv4.routing" = "true";
             "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
@@ -913,23 +913,25 @@ in
         ];
         wants = [
           "network-online.target"
-          "systemd-networkd-wait-online.service"
           "ovn-ready.target"
+          "systemd-networkd-wait-online.service"
         ];
         requires = [
           "incus.service"
         ];
         serviceConfig = {
           ExecStartPre = [
-            ""
+            "${pkgs.coreutils}/bin/echo 'Executing pre-start script...'"
             "${pkgs.coreutils}/bin/sleep 60"
 
             # Verify OVN services are actually working
-            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do echo 'Checking OVN Northbound...'; ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do echo 'Checking OVN Southbound...'; ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
 
             # Verify OVS bridge is ready
-            "${pkgs.bash}/bin/bash -c 'for i in {1..10}; do ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 2; done'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..10}; do echo 'Checking OVS bridge...'; ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 2; done'"
+
+            "${pkgs.coreutils}/bin/echo 'Pre-start script completed'"
           ];
           TimeoutStartSec = 900;
           Restart = "on-failure";

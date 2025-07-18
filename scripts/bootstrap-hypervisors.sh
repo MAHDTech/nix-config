@@ -86,6 +86,8 @@ function run_ssh_command() {
 		msg "ERROR" "$ERROR_MSG"
 		exit 1
 	}
+
+	return 0
 }
 
 function show_system_status() {
@@ -108,6 +110,8 @@ function show_system_status() {
 			echo \"No failed systemd services found\";
 		fi" \
 		"Failed to show failed systemd services on $HYPERVISOR"
+
+	return 0
 }
 
 function copy_bootstrap_script() {
@@ -118,6 +122,8 @@ function copy_bootstrap_script() {
 		msg "ERROR" "Failed to copy bootstrap-incus.sh to $HYPERVISOR"
 		exit 1
 	}
+
+	return 0
 }
 
 function reboot_server() {
@@ -250,8 +256,19 @@ function setup_member_server() {
 	# Copy and run bootstrap script
 	copy_bootstrap_script "$HYPERVISOR"
 
-	msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in member mode"
-	run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
+	# Reboot the server
+	if reboot_server "$HYPERVISOR"; then
+
+		# Wait for server to come back online
+		wait_for_server "$HYPERVISOR"
+
+		# Now run the bootstrap script to capture tokens
+		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in member mode"
+		run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
+
+	fi
+
+	return 0
 }
 
 function handle_cluster_destroy() {
