@@ -19,9 +19,11 @@ declare -r YOLO_MODE=${YOLO_MODE:-false}
 
 DOMAIN="saltlabs.cloud"
 
+# The bootstrap server.
 BOOTSTRAP_SERVER="hypervisor-1"
 
-MEMBER_SERVERS=(
+# All hypervisors in the cluster.
+HYPERVISORS=(
 	"hypervisor-1"
 	"hypervisor-2"
 	"hypervisor-3"
@@ -59,27 +61,27 @@ function msg() {
 }
 
 function run_nixos_rebuild() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 
-	msg "INFO" "Running nixos-rebuild boot on $MEMBER_SERVER"
+	msg "INFO" "Running nixos-rebuild boot on $HYPERVISOR"
 
 	nixos-rebuild boot \
 		--use-remote-sudo \
 		--accept-flake-config \
-		--flake "path:.#${MEMBER_SERVER^^}" \
-		--target-host "${MEMBER_SERVER}.${DOMAIN}" \
-		--build-host "${MEMBER_SERVER}.${DOMAIN}" || {
-		msg "ERROR" "Failed to upgrade $MEMBER_SERVER"
+		--flake "path:.#${HYPERVISOR^^}" \
+		--target-host "${HYPERVISOR}.${DOMAIN}" \
+		--build-host "${HYPERVISOR}.${DOMAIN}" || {
+		msg "ERROR" "Failed to upgrade $HYPERVISOR"
 		exit 1
 	}
 }
 
 function run_ssh_command() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 	local COMMAND=$2
 	local ERROR_MSG=$3
 
-	ssh -t -o RequestTTY=yes -o SendEnv=USER -o SendEnv=HOME -o SendEnv=LOGNAME "${MEMBER_SERVER}.${DOMAIN}" \
+	ssh -t -o RequestTTY=yes -o SendEnv=USER -o SendEnv=HOME -o SendEnv=LOGNAME "${HYPERVISOR}.${DOMAIN}" \
 		"$COMMAND" || {
 		msg "ERROR" "$ERROR_MSG"
 		exit 1
@@ -87,13 +89,13 @@ function run_ssh_command() {
 }
 
 function show_system_status() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 
-	msg "INFO" "Showing zpool status on $MEMBER_SERVER"
-	run_ssh_command "$MEMBER_SERVER" "sudo -n zpool status" "Failed to show zpool status on $MEMBER_SERVER"
+	msg "INFO" "Showing zpool status on $HYPERVISOR"
+	run_ssh_command "$HYPERVISOR" "sudo -n zpool status" "Failed to show zpool status on $HYPERVISOR"
 
-	msg "INFO" "Showing failed systemd services on $MEMBER_SERVER"
-	run_ssh_command "$MEMBER_SERVER" \
+	msg "INFO" "Showing failed systemd services on $HYPERVISOR"
+	run_ssh_command "$HYPERVISOR" \
 		"FAILED_UNITS=\$(sudo -n systemctl list-units --state=failed --plain --no-legend | awk '{print \$1}' | grep -v '^$');
 		if [[ -n \"\$FAILED_UNITS\" ]]; then
 			echo \"\$FAILED_UNITS\" | while read -r UNIT; do
@@ -105,78 +107,78 @@ function show_system_status() {
 		else
 			echo \"No failed systemd services found\";
 		fi" \
-		"Failed to show failed systemd services on $MEMBER_SERVER"
+		"Failed to show failed systemd services on $HYPERVISOR"
 }
 
 function copy_bootstrap_script() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 
-	msg "INFO" "Copying bootstrap-incus.sh to $MEMBER_SERVER"
-	rsync -av ./scripts/bootstrap-incus.sh "${MEMBER_SERVER}.${DOMAIN}:/tmp/bootstrap-incus.sh" || {
-		msg "ERROR" "Failed to copy bootstrap-incus.sh to $MEMBER_SERVER"
+	msg "INFO" "Copying bootstrap-incus.sh to $HYPERVISOR"
+	rsync -av ./scripts/bootstrap-incus.sh "${HYPERVISOR}.${DOMAIN}:/tmp/bootstrap-incus.sh" || {
+		msg "ERROR" "Failed to copy bootstrap-incus.sh to $HYPERVISOR"
 		exit 1
 	}
 }
 
 function reboot_server() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 	local SLEEP_TIME=15
 
 	if [[ ${YOLO_MODE^^} == "FALSE" ]]; then
-		read -rp "Reboot $MEMBER_SERVER? (y/n): " REPLY
+		read -rp "Reboot $HYPERVISOR? (y/n): " REPLY
 	else
 		REPLY="Y"
 	fi
 
 	if [[ ${REPLY^^} != "Y" ]]; then
-		msg "INFO" "Skipping reboot for $MEMBER_SERVER"
+		msg "INFO" "Skipping reboot for $HYPERVISOR"
 		return 1
 	else
-		msg "INFO" "Rebooting $MEMBER_SERVER"
-		run_ssh_command "$MEMBER_SERVER" "sudo -n systemctl reboot" "Failed to reboot $MEMBER_SERVER"
+		msg "INFO" "Rebooting $HYPERVISOR"
+		run_ssh_command "$HYPERVISOR" "sudo -n systemctl reboot" "Failed to reboot $HYPERVISOR"
 		sleep "$SLEEP_TIME" || echo "Failed to sleep for $SLEEP_TIME seconds"
 		return 0
 	fi
 }
 
 function wait_for_server() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 	local MAX_ATTEMPTS=30
 	local ATTEMPT=0
 	local SLEEP_TIME=15
 
-	msg "INFO" "Waiting for $MEMBER_SERVER to come back online..."
+	msg "INFO" "Waiting for $HYPERVISOR to come back online..."
 	sleep "$SLEEP_TIME" || echo "Failed to sleep for $SLEEP_TIME seconds"
 
 	while [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; do
 		ATTEMPT=$((ATTEMPT + 1))
-		msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if $MEMBER_SERVER is online..."
+		msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if $HYPERVISOR is online..."
 
 		# First check if the host is reachable with ping
-		if ping -c 1 -W 5 "${MEMBER_SERVER}.${DOMAIN}" &>/dev/null; then
+		if ping -c 1 -W 5 "${HYPERVISOR}.${DOMAIN}" &>/dev/null; then
 			msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: Host is reachable, testing SSH..."
 
 			# Then test SSH connection with more lenient settings
-			if ssh -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 "${MEMBER_SERVER}.${DOMAIN}" "echo 'SSH connection OK!'" &>/dev/null; then
-				msg "INFO" "$MEMBER_SERVER is back online"
+			if ssh -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 "${HYPERVISOR}.${DOMAIN}" "echo 'SSH connection OK!'" &>/dev/null; then
+				msg "INFO" "$HYPERVISOR is back online"
 				return 0
 			fi
 		fi
 
 		if [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; then
-			msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: $MEMBER_SERVER not ready yet, waiting ${SLEEP_TIME}s..."
+			msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: $HYPERVISOR not ready yet, waiting ${SLEEP_TIME}s..."
 			sleep "$SLEEP_TIME" || echo "Failed to sleep for $SLEEP_TIME seconds"
 		fi
 	done
 
-	msg "ERROR" "$MEMBER_SERVER did not come back online within expected time"
+	msg "ERROR" "$HYPERVISOR did not come back online within expected time"
 	exit 1
 }
 
 function setup_bootstrap_server() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 
-	msg "INFO" "Setting up bootstrap server: $MEMBER_SERVER"
+	msg "INFO" "Setting up bootstrap server: $HYPERVISOR"
 
 	# Show notice to update flake
 	cat <<-EOF
@@ -184,9 +186,9 @@ function setup_bootstrap_server() {
 		                    IMPORTANT
 		##################################################
 
-		Update the nix flake now with the following for $MEMBER_SERVER:
+		Update the nix flake now with the following for $HYPERVISOR:
 
-		bootstrapped = true
+		    bootstrapped = true
 
 		Only this hypervisor needs to be updated for now.
 
@@ -195,30 +197,31 @@ function setup_bootstrap_server() {
 	read -rp "Press enter to continue..."
 
 	# Run nixos-rebuild
-	run_nixos_rebuild "$MEMBER_SERVER"
+	run_nixos_rebuild "$HYPERVISOR"
 
 	# Show system status
-	show_system_status "$MEMBER_SERVER"
+	show_system_status "$HYPERVISOR"
 
 	# Copy and run bootstrap script (but don't run it yet)
-	copy_bootstrap_script "$MEMBER_SERVER"
+	copy_bootstrap_script "$HYPERVISOR"
 
 	# Reboot the server
-	if reboot_server "$MEMBER_SERVER"; then
+	if reboot_server "$HYPERVISOR"; then
 
 		# Wait for server to come back online
-		wait_for_server "$MEMBER_SERVER"
+		wait_for_server "$HYPERVISOR"
 
 		# Now run the bootstrap script to capture tokens
-		msg "INFO" "Running bootstrap-incus.sh on $MEMBER_SERVER to capture cluster tokens"
-		run_ssh_command "$MEMBER_SERVER" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $MEMBER_SERVER"
+		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR to capture cluster tokens"
+		run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
+
 	fi
 }
 
 function setup_member_server() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 
-	msg "INFO" "Setting up member server: $MEMBER_SERVER"
+	msg "INFO" "Setting up member server: $HYPERVISOR"
 
 	# Show notice to update flake with cluster token
 	cat <<-EOF
@@ -226,9 +229,9 @@ function setup_member_server() {
 		                    IMPORTANT
 		##################################################
 
-		Update the nix flake now with the following for $MEMBER_SERVER:
+		Update the nix flake now with the following for $HYPERVISOR:
 
-		clusterToken = <token>
+		    clusterToken = <token>
 
 		This token can be obtained from the bootstrap server output.
 
@@ -239,30 +242,30 @@ function setup_member_server() {
 	read -rp "Press enter to continue..."
 
 	# Run nixos-rebuild
-	run_nixos_rebuild "$MEMBER_SERVER"
+	run_nixos_rebuild "$HYPERVISOR"
 
 	# Show system status
-	show_system_status "$MEMBER_SERVER"
+	show_system_status "$HYPERVISOR"
 
 	# Copy and run bootstrap script
-	copy_bootstrap_script "$MEMBER_SERVER"
+	copy_bootstrap_script "$HYPERVISOR"
 
-	msg "INFO" "Running bootstrap-incus.sh on $MEMBER_SERVER in member mode"
-	run_ssh_command "$MEMBER_SERVER" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $MEMBER_SERVER"
+	msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in member mode"
+	run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
 }
 
 function handle_cluster_destroy() {
-	local MEMBER_SERVER=$1
+	local HYPERVISOR=$1
 
-	msg "INFO" "Running bootstrap-incus.sh on $MEMBER_SERVER in destroy mode"
+	msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in destroy mode"
 
 	# Show system status
-	show_system_status "$MEMBER_SERVER"
+	show_system_status "$HYPERVISOR"
 
 	# Copy and run bootstrap script in destroy mode
-	copy_bootstrap_script "$MEMBER_SERVER"
+	copy_bootstrap_script "$HYPERVISOR"
 
-	run_ssh_command "$MEMBER_SERVER" "sudo -n bash /tmp/bootstrap-incus.sh --incus-destroy-cluster" "Failed to run bootstrap-incus.sh on $MEMBER_SERVER"
+	run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh --incus-destroy-cluster" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
 }
 
 #########################
@@ -289,37 +292,37 @@ nix flake check \
 }
 
 msg "DEBUG" "Debug information:"
-msg "DEBUG" "MEMBER_SERVERS: ${MEMBER_SERVERS[*]}"
+msg "DEBUG" "HYPERVISORS: ${HYPERVISORS[*]}"
 msg "DEBUG" "DOMAIN: $DOMAIN"
 msg "DEBUG" "INCUS_CLUSTER_DESTROY: ${INCUS_CLUSTER_DESTROY^^}"
 msg "DEBUG" "INCUS_CLUSTER_BOOTSTRAPPED: ${INCUS_CLUSTER_BOOTSTRAPPED^^}"
 
-for MEMBER_SERVER in "${MEMBER_SERVERS[@]}"; do
-	msg "INFO" "Processing $MEMBER_SERVER"
+for HYPERVISOR in "${HYPERVISORS[@]}"; do
+	msg "INFO" "Processing $HYPERVISOR"
 
 	if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
 		# Handle cluster destroy mode
-		handle_cluster_destroy "$MEMBER_SERVER"
+		handle_cluster_destroy "$HYPERVISOR"
 
 	elif [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" ]]; then
 		# Handle cluster setup mode
-		if [[ ${MEMBER_SERVER} == "${BOOTSTRAP_SERVER}" ]]; then
-			setup_bootstrap_server "$MEMBER_SERVER"
+		if [[ ${HYPERVISOR} == "${BOOTSTRAP_SERVER}" ]]; then
+			setup_bootstrap_server "$HYPERVISOR"
 		else
-			setup_member_server "$MEMBER_SERVER"
+			setup_member_server "$HYPERVISOR"
 		fi
 	else
 		# Normal upgrade mode
-		msg "INFO" "Upgrading $MEMBER_SERVER"
-		run_nixos_rebuild "$MEMBER_SERVER"
-		show_system_status "$MEMBER_SERVER"
-		copy_bootstrap_script "$MEMBER_SERVER"
+		msg "INFO" "Upgrading $HYPERVISOR"
+		run_nixos_rebuild "$HYPERVISOR"
+		show_system_status "$HYPERVISOR"
+		copy_bootstrap_script "$HYPERVISOR"
 
 		# Reboot if needed
-		reboot_server "$MEMBER_SERVER"
+		reboot_server "$HYPERVISOR"
 
 		# Wait for server to come back online
-		wait_for_server "$MEMBER_SERVER"
+		wait_for_server "$HYPERVISOR"
 	fi
 done
 
@@ -331,16 +334,23 @@ if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" ]]; then
 		                    IMPORTANT
 		##################################################
 
-		Now that all servers have been set up, update the nix flake
-		for all MEMBER servers (not the bootstrap server) with:
+		Now that the initial setup has completed here are the next steps.
 
-		bootstrapped = true
+		- Verify that the member servers have joined the cluster
 
-		Additionall set INCUS_CLUSTER_BOOTSTRAPPED=true
+		    incus cluster list
 
-		Then re-run this script a final time.
+		- Set the following environment variable in your shell:
 
-		This completes the cluster setup process.
+		    INCUS_CLUSTER_BOOTSTRAPPED=true
+
+		- Update the nix flake with the following for all member servers:
+
+		    bootstrapped = true
+
+		- Re-run this script for a final time.
+
+		This completes the cluster setup process!
 
 		##################################################
 	EOF
