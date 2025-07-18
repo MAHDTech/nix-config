@@ -14,7 +14,7 @@
       dates = "weekly";
       options = "--delete-older-than 14d";
       persistent = true;
-      randomisedDelaySec = "1h";
+      randomizedDelaySec = "1h";
     };
 
     optimise = {
