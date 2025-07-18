@@ -143,9 +143,9 @@ function reboot_server() {
 
 function wait_for_server() {
 	local HYPERVISOR=$1
-	local MAX_ATTEMPTS=30
+	local MAX_ATTEMPTS=100
 	local ATTEMPT=0
-	local SLEEP_TIME=15
+	local SLEEP_TIME=30
 
 	msg "INFO" "Waiting for $HYPERVISOR to come back online..."
 	sleep "$SLEEP_TIME" || echo "Failed to sleep for $SLEEP_TIME seconds"

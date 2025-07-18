@@ -13,6 +13,8 @@
       automatic = true;
       dates = "weekly";
       options = "--delete-older-than 14d";
+      persistent = true;
+      randomisedDelaySec = "1h";
     };
 
     optimise = {
@@ -74,10 +76,10 @@
     dates = "daily";
 
     rebootWindow = {
-      lower = "00:00";
+      lower = "02:00";
       upper = "04:00";
     };
 
-    randomizedDelaySec = "60min";
+    randomizedDelaySec = "1h";
   };
 }
