@@ -165,19 +165,22 @@ function ovs_cleanup() {
 
 	# Stop OVS services temporarily for clean reset
 	log "INFO" "Stopping OVS services for cleanup..."
-	sudo systemctl stop ovs-vswitchd.service ovsdb.service || {
-		log "WARN" "Failed to stop some OVS services"
-	}
+	sudo systemctl stop \
+		ovn-controller.service \
+		ovn-nb-ovsdb.service \
+		ovn-northd.service \
+		ovn-sb-ovsdb.service \
+		ovs-vswitchd.service \
+		ovsdb.service ||
+		{
+			log "WARN" "Failed to stop some OVS services"
+		}
 
-	# Remove incusbr0 bridge if it exists
-	sudo ovs-vsctl --if-exists del-br incusbr0 || {
-		log "WARN" "Failed to remove incusbr0 bridge from OVS"
-	}
-
-	# Remove br-int bridge if it exists
-	sudo ovs-vsctl --if-exists del-br br-int || {
-		log "WARN" "Failed to remove br-int bridge from OVS"
-	}
+	# Remove all bridges.
+	for bridge in $(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null || true); do
+		log "DEBUG" "Deleting bridge: $bridge"
+		sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock --if-exists del-br "$bridge"
+	done
 
 	# Clear external_ids that might interfere with OVN
 	sudo ovs-vsctl --if-exists clear open_vswitch . external_ids || {
@@ -195,14 +198,62 @@ function ovs_cleanup() {
 		log "WARN" "Failed to clear OVS manager options"
 	}
 
-	# Restart OVS services with clean state
-	log "INFO" "Restarting OVS services..."
-	sudo systemctl start ovsdb.service ovs-vswitchd.service || {
-		log "WARN" "Failed to restart some OVS services"
+	# Clear the OVS database.
+	sudo rm -f /var/lib/openvswitch/conf.db* || {
+		log "WARN" "Failed to remove OVS database"
+	}
+	sudo rm -f /etc/openvswitch/conf.db* || {
+		log "WARN" "Failed to remove OVS database"
 	}
 
-	# Wait for services to stabilize
-	sleep 3
+	# Re-create the OVS database.
+	log "INFO" "Recreating OVS database..."
+
+	# Ensure the directory exists
+	sudo mkdir -p /var/lib/openvswitch || {
+		log "ERROR" "Failed to create OVS database directory"
+		return 1
+	}
+
+	declare OVS_SCHEMA_PATH
+	OVS_SCHEMA_PATH=$(find /nix/store -name "vswitch.ovsschema" -path "*/share/openvswitch/*" 2>/dev/null | head -1) || {
+		log "ERROR" "Could not find OVS schema file"
+		return 1
+	}
+
+	if [ "${OVS_SCHEMA_PATH:-EMPTY}" = "EMPTY" ]; then
+		log "ERROR" "Could not find OVS schema file, unable to recreate the OVS database"
+		exit 1
+	fi
+
+	log "DEBUG" "Using schema: $OVS_SCHEMA_PATH"
+	sudo ovsdb-tool create /var/lib/openvswitch/conf.db "$OVS_SCHEMA_PATH" || {
+		log "ERROR" "Failed to create OVS database"
+		exit 1
+	}
+
+	# Restart OVS services with clean state
+	log "INFO" "Restarting OVS services..."
+	sudo systemctl start \
+		ovn-controller.service \
+		ovn-nb-ovsdb.service \
+		ovn-northd.service \
+		ovn-sb-ovsdb.service \
+		ovs-vswitchd.service \
+		ovsdb.service ||
+		{
+			log "WARN" "Failed to restart some OVS services"
+		}
+
+	# Wait for OVS services to be ready.
+	for i in {1..30}; do
+		if sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock show >/dev/null 2>&1; then
+			log "INFO" "OVS is ready!"
+			break
+		fi
+		log "DEBUG" "Waiting... ($i/30)"
+		sleep 3
+	done
 
 	# Set fresh external_ids for the hypervisor
 	sudo ovs-vsctl set open_vswitch . "external_ids:system-id=$(hostname)" || {
