@@ -155,13 +155,13 @@ in
 
         general = {
           # Lock command
-          lock_cmd = "pidof hyprlock || hyprlock";
+          lock_cmd = "notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
 
           # Unlock command
           #unlock_cmd = "";
 
           # Before sleep command
-          before_sleep_cmd = "loginctl lock-session";
+          before_sleep_cmd = "hyprlock";
 
           # Preparing to sleep command
           after_sleep_cmd = "hyprctl dispatch dpms on";
@@ -187,9 +187,11 @@ in
             # How long to wait until activation of monitor sleep.
             timeout = 900;
 
-            on-timeout = "hyprctl dispatch dpms off";
+            # Power off monitors.
+            on-timeout = "notify-send 'Sleeping...' ; hyprctl dispatch dpms off";
 
-            on-resume = "hyprctl dispatch dpms on";
+            # Power on monitors.
+            on-resume = "notify-send 'Resuming...' ; hyprctl dispatch dpms on";
           }
         ];
       };
