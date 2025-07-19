@@ -1,4 +1,15 @@
 { pkgs, lib, ... }:
+let
+
+  defaultNetworkConfig = {
+    DHCP = "yes";
+    DNSSEC = "yes";
+    DNSOverTLS = "no";
+    DNS = [ ];
+    LinkLocalAddressing = "yes";
+  };
+
+in
 {
   imports = [
   ];
@@ -13,10 +24,10 @@
 
     network = {
 
-      # Override the SOE to wait for all interfaces to come online.
       wait-online = {
-        anyInterface = lib.mkForce false;
+        enable = true;
         timeout = lib.mkForce 180;
+        extraArgs = [ ];
       };
 
       #########################################################
@@ -45,12 +56,10 @@
       networks = {
 
         # Override the SOE configurations to only apply wired config to enp6s0.
+        # which is the management interface.
         "10-wired" = {
           matchConfig.Name = lib.mkForce "enp6s0";
-          networkConfig = {
-            DHCP = "yes";
-            DNSSEC = "yes";
-          };
+          networkConfig = defaultNetworkConfig;
         };
 
         "101-enp1s0f0" = {
@@ -74,9 +83,9 @@
           linkConfig = {
             RequiredForOnline = "carrier";
           };
-          networkConfig = {
-            LinkLocalAddressing = "no";
-            DHCP = "ipv4";
+          networkConfig = defaultNetworkConfig;
+          dhcpV4Config = {
+            RouteMetric = 100;
           };
         };
 
