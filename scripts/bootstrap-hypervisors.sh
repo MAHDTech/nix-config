@@ -343,8 +343,8 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 	fi
 done
 
-# Show final notice for member servers
-if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" ]]; then
+# Show final notice for member servers but not in destroy mode
+if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" && ${INCUS_CLUSTER_DESTROY^^} == "FALSE" ]]; then
 	cat <<-EOF
 
 		##################################################
