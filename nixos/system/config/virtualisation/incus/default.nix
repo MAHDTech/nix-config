@@ -457,33 +457,15 @@ let
             }
             {
               entity = "storage-pool";
-              name = "default";
-              key = "source.wipe";
-              value = true;
-            }
-            {
-              entity = "storage-pool";
               name = "instances";
               key = "source";
               value = sourceInstances;
             }
             {
               entity = "storage-pool";
-              name = "instances";
-              key = "source.wipe";
-              value = true;
-            }
-            {
-              entity = "storage-pool";
               name = "iso";
               key = "source";
               value = sourceIso;
-            }
-            {
-              entity = "storage-pool";
-              name = "iso";
-              key = "source.wipe";
-              value = true;
             }
             #########################################################
             # Networks
