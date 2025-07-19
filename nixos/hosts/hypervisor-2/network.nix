@@ -85,7 +85,7 @@ in
           };
           networkConfig = defaultNetworkConfig;
           dhcpV4Config = {
-            RouteMetric = 100;
+            RouteMetric = 1000;
           };
         };
 

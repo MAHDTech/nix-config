@@ -103,7 +103,7 @@ let
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.254";
             "ipv4.nat" = "false";
             "ipv4.ovn.ranges" = "10.10.201.1-10.10.201.25";
-            "ipv4.routes" = "10.10.202.0/24";
+            "ipv4.routes" = "10.10.201.0/24,10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
             "ipv4.routing" = "false";
             "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
