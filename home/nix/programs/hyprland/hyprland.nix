@@ -179,12 +179,14 @@ in
 
         listener = [
           {
-            # How long to wait until activation of lockscreen.
+            # Lock the screen after 5 mins.
             timeout = 300;
+
+            # Lock screen after timeout.
             on-timeout = "notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
           }
           {
-            # How long to wait until activation of monitor sleep.
+            # Turn off the monitors after 15 mins.
             timeout = 900;
 
             # Power off monitors.
