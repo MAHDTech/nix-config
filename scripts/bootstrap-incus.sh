@@ -5,9 +5,9 @@ set -euo pipefail
 # Name: bootstrap-incus.sh
 # Description: Bootstrap Incus nodes based on hostname.
 
-#########################
+##################################################
 # Variables
-#########################
+##################################################
 
 declare INCUS_NODENAME
 INCUS_NODENAME=$(hostname)
@@ -37,9 +37,9 @@ declare -r FIREWALL_PORTS=(
 	"9443"
 )
 
-#########################
+##################################################
 # Functions
-#########################
+##################################################
 
 function log() {
 	local LEVEL="${1}"
@@ -153,7 +153,9 @@ function incus_cleanup() {
 
 	incus profile device rm default root || true
 	incus profile device rm default eth0 || true
+
 	incus network rm incusbr0 || true
+
 	incus storage rm default || true
 
 	return 0
@@ -161,55 +163,65 @@ function incus_cleanup() {
 }
 
 function ovs_cleanup() {
-	log "INFO" "Cleaning up OpenVSwitch configuration..."
+	log "INFO" "Cleaning up Open vSwitch configuration..."
 
-	# Stop OVS services temporarily for clean reset
-	log "INFO" "Stopping OVS services for cleanup..."
-	sudo systemctl stop \
-		ovn-controller.service \
-		ovn-nb-ovsdb.service \
-		ovn-northd.service \
-		ovn-sb-ovsdb.service \
+	log "INFO" "Restarting OVS services to ensure clean state..."
+	sudo systemctl restart \
 		ovs-vswitchd.service \
-		ovsdb.service ||
-		{
-			log "WARN" "Failed to stop some OVS services"
-		}
+		ovsdb.service || {
+		log "WARN" "Failed to restart some OVS services"
+		return 1
+	}
 
-	# Remove all bridges.
+	log "INFO" "Removing all OVS bridges..."
 	for bridge in $(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null || true); do
-		log "DEBUG" "Deleting bridge: $bridge"
+		log "INFO" "Deleting bridge: $bridge"
 		sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock --if-exists del-br "$bridge"
 	done
 
-	# Clear external_ids that might interfere with OVN
+	log "INFO" "Clearing OVS external_ids..."
 	sudo ovs-vsctl --if-exists clear open_vswitch . external_ids || {
 		log "WARN" "Failed to clear OVS external_ids"
 	}
 
-	# Remove any existing ports that might conflict
 	log "INFO" "Removing any residual OVS ports..."
 	sudo ovs-vsctl --if-exists del-port bond0 || {
 		log "DEBUG" "No bond0 port to remove from OVS"
 	}
 
-	# Clear any manager connections
+	log "INFO" "Clearing OVS manager options..."
 	sudo ovs-vsctl --if-exists clear open_vswitch . manager_options || {
 		log "WARN" "Failed to clear OVS manager options"
 	}
 
-	# Clear the OVS database.
+	log "INFO" "Stopping OVN services that interface with OVS..."
+	sudo systemctl stop \
+		ovn-controller.service \
+		ovn-nb-ovsdb.service \
+		ovn-northd.service \
+		ovn-sb-ovsdb.service || {
+		log "WARN" "Failed to stop some OVS services"
+	}
+
+	log "INFO" "Stopping OVS services..."
+	sudo systemctl stop \
+		ovs-vswitchd.service \
+		ovsdb.service || {
+		log "WARN" "Failed to stop some OVS services"
+	}
+
+	log "INFO" "Clearing OVS database..."
 	sudo rm -f /var/lib/openvswitch/conf.db* || {
 		log "WARN" "Failed to remove OVS database"
 	}
+
+	log "INFO" "Clearing OVS database..."
 	sudo rm -f /etc/openvswitch/conf.db* || {
 		log "WARN" "Failed to remove OVS database"
 	}
 
-	# Re-create the OVS database.
 	log "INFO" "Recreating OVS database..."
 
-	# Ensure the directory exists
 	sudo mkdir -p /var/lib/openvswitch || {
 		log "ERROR" "Failed to create OVS database directory"
 		return 1
@@ -227,23 +239,18 @@ function ovs_cleanup() {
 	fi
 
 	log "DEBUG" "Using schema: $OVS_SCHEMA_PATH"
+
 	sudo ovsdb-tool create /var/lib/openvswitch/conf.db "$OVS_SCHEMA_PATH" || {
 		log "ERROR" "Failed to create OVS database"
 		exit 1
 	}
 
-	# Restart OVS services with clean state
-	log "INFO" "Restarting OVS services..."
+	log "INFO" "Starting OVS services..."
 	sudo systemctl start \
-		ovn-controller.service \
-		ovn-nb-ovsdb.service \
-		ovn-northd.service \
-		ovn-sb-ovsdb.service \
 		ovs-vswitchd.service \
-		ovsdb.service ||
-		{
-			log "WARN" "Failed to restart some OVS services"
-		}
+		ovsdb.service || {
+		log "WARN" "Failed to stop some OVS services"
+	}
 
 	# Wait for OVS services to be ready.
 	for i in {1..30}; do
@@ -260,66 +267,56 @@ function ovs_cleanup() {
 		log "WARN" "Failed to set system-id in OVS"
 	}
 
-	log "INFO" "OpenVSwitch cleanup completed"
+	log "INFO" "Starting OVN services that interface with OVS..."
+	sudo systemctl start \
+		ovn-controller.service \
+		ovn-nb-ovsdb.service \
+		ovn-northd.service \
+		ovn-sb-ovsdb.service || {
+		log "WARN" "Failed to start some OVN services"
+	}
+
+	log "INFO" "Open vSwitch cleanup completed"
 	return 0
 }
 
 function ovn_cleanup() {
 	log "INFO" "Cleaning up Open Virtual Network configuration..."
 
-	# Stop OVN services to prevent interference (if they exist and are running)
-	if systemctl is-active --quiet ovn-controller.service 2>/dev/null; then
-		sudo systemctl stop ovn-controller.service || {
-			log "WARN" "Failed to stop ovn-controller service"
-		}
-	else
-		log "DEBUG" "ovn-controller.service not running, skipping stop"
-	fi
+	log "INFO" "Restarting OVN services to ensure clean state..."
+	sudo systemctl restart \
+		ovn-controller.service \
+		ovn-nb-ovsdb.service \
+		ovn-northd.service \
+		ovn-sb-ovsdb.service || {
+		log "WARN" "Failed to restart some OVN services"
+	}
 
-	if systemctl is-active --quiet ovn-northd.service 2>/dev/null; then
-		sudo systemctl stop ovn-northd.service || {
-			log "WARN" "Failed to stop ovn-northd service"
-		}
-	else
-		log "DEBUG" "ovn-northd.service not running, skipping stop"
-	fi
-
-	# Clear OVN databases
 	log "INFO" "Clearing OVN Northbound database..."
 	sudo ovn-nbctl --if-exists ls-del incusbr0 || {
 		log "WARN" "Failed to remove incusbr0 logical switch from OVN NB"
 	}
 
-	# Remove chassis from southbound database
 	log "INFO" "Clearing OVN Southbound chassis entries..."
 	sudo ovn-sbctl --if-exists chassis-del "$(hostname)" || {
 		log "WARN" "Failed to remove chassis from OVN SB"
 	}
 
-	# Restart OVN services to get clean state
-	log "INFO" "Restarting OVN services for clean state..."
-	sudo systemctl start ovn-nb-ovsdb.service ovn-sb-ovsdb.service || {
-		log "WARN" "Failed to start OVN database services"
+	log "INFO" "Restarting OVS services..."
+	sudo systemctl restart \
+		ovs-vswitchd.service \
+		ovsdb.service || {
+		log "WARN" "Failed to restart some OVS services"
 	}
 
-	sleep 5
-
-	# Only start services if they are enabled
-	if systemctl is-enabled ovn-northd.service &>/dev/null; then
-		sudo systemctl start ovn-northd.service || {
-			log "WARN" "Failed to start ovn-northd service"
-		}
-	else
-		log "DEBUG" "ovn-northd.service not enabled, skipping start"
-	fi
-
-	if systemctl is-enabled ovn-controller.service &>/dev/null; then
-		sudo systemctl start ovn-controller.service || {
-			log "WARN" "Failed to start ovn-controller service"
-		}
-	else
-		log "DEBUG" "ovn-controller.service not enabled, skipping start"
-	fi
+	log "INFO" "Restarting OVN services..."
+	sudo systemctl restart \
+		ovn-controller.service \
+		ovn-nb-ovsdb.service \
+		ovn-northd.service \
+		ovn-sb-ovsdb.service || {
+		log "WARN" "Failed to restart some OVS services"
+	}
 
 	log "INFO" "Open Virtual Network cleanup completed"
 	return 0
@@ -328,20 +325,15 @@ function ovn_cleanup() {
 function network_services_cleanup() {
 	log "INFO" "Performing network services cleanup..."
 
-	# Stop Incus to prevent conflicts
-	sudo systemctl stop incus.service incus-preseed.service incus.socket || {
-		log "WARN" "Failed to stop some Incus services"
-	}
-
-	# Perform OVS cleanup
-	ovs_cleanup || {
-		log "ERROR" "OVS cleanup failed"
+	log "INFO" "Performing Open Virtual Network cleanup..."
+	ovn_cleanup || {
+		log "ERROR" "OVN cleanup failed"
 		return 1
 	}
 
-	# Perform OVN cleanup
-	ovn_cleanup || {
-		log "ERROR" "OVN cleanup failed"
+	log "INFO" "Performing Open vSwitch cleanup..."
+	ovs_cleanup || {
+		log "ERROR" "OVS cleanup failed"
 		return 1
 	}
 
@@ -432,7 +424,10 @@ function incus_destroy_cluster() {
 
 	log "INFO" "Stopping incus services..."
 
-	sudo systemctl stop incus.service incus-preseed.service incus.socket || {
+	sudo systemctl stop \
+		incus-preseed.service \
+		incus.service \
+		incus.socket || {
 		log "ERROR" "Failed to stop incus services"
 		return 1
 	}
@@ -515,9 +510,9 @@ function parse_flags() {
 	return 0
 }
 
-#########################
+##################################################
 # Pre-flight checks
-#########################
+##################################################
 
 log "INFO" "Starting bootstrap process for node: ${INCUS_NODENAME^^}"
 
@@ -545,12 +540,13 @@ if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
 	exit 0
 fi
 
-#########################
+##################################################
 # Main
-#########################
+##################################################
 
 # If this node is the bootstrap node, bootstrap the cluster.
 if [[ ${INCUS_NODENAME^^} == "${INCUS_CLUSTER_BOOTSTRAP_NODE^^}" ]]; then
+
 	log "INFO" "Bootstrapping new incus cluster from node: ${INCUS_NODENAME^^}"
 
 	incus_bootstrap "$INCUS_NODENAME" "BOOTSTRAP" || {

@@ -40,7 +40,8 @@ Notes from setting up the Incus cluster.
 
 ### Steps to destroy
 
-1. Update the flake with `bootstrapped = false` and clear out any `clusterToken`
+1. Update the flake with `bootstrapped = false`
+1. Remove any `clusterToken` from the config.
 1. Export the variable `INCUS_CLUSTER_DESTROY=true`
 1. Run the `./scripts/bootstrap-hypervisors.sh` script.
 

@@ -20,7 +20,7 @@ let
 
   # TODO: SOPS encryption when this test is working.
   # The cluster token obtained during the bootstrap process. Only used if bootstrapped is true.
-  clusterToken = "";
+  clusterToken = "eyJzZXJ2ZXJfbmFtZSI6IkhZUEVSVklTT1ItMiIsImZpbmdlcnByaW50IjoiNGU4NGI3ODAwZmZkMDYxZjIxNThhM2FkM2I0YTU2NzNhN2ZkYmE3OTVhMDliM2Q4YTVkZmRlMzFjZDc1NDBlMCIsImFkZHJlc3NlcyI6WyIxMC4xMC4yMDAuMTE6OTQ0MyJdLCJzZWNyZXQiOiJhM2FjZjdkNjc0N2FlZTMwMmRhOWI5MDBmMTU3NTA3NGMwNGU5NmE3ODc5MjI5NmRmZTdlZTk4NzI1NDMzM2MzIiwiZXhwaXJlc19hdCI6IjIwMjUtMDctMjBUMTU6MDc6MTQuNTMxMDY1MzcrMTA6MDAifQ==";
 in
 {
   imports = [

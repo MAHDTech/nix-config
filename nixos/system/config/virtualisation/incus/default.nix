@@ -1,5 +1,5 @@
 {
-  bootstrapped,
+  bootstrapped ? false,
   clusterToken ? null,
   hypervisorClusterAddress,
   hypervisorManagementAddress,
@@ -498,11 +498,11 @@ let
           config =
             if bootstrapped then
               {
-                # Config for when the cluster is bootstrapped.
+                # bootstrapped: true
               }
             else
               {
-                # Config for when the cluster is not yet bootstrapped.
+                # bootstrapped: false
                 source = sourceDefault;
                 "source.wipe" = true;
               };
@@ -517,11 +517,11 @@ let
           config =
             if bootstrapped then
               {
-                # Config for when the cluster is bootstrapped.
+                # bootstrapped: true
               }
             else
               {
-                # Config for when the cluster is not yet bootstrapped.
+                # bootstrapped: false
                 source = sourceInstances;
                 "source.wipe" = true;
               };
@@ -536,11 +536,11 @@ let
           config =
             if bootstrapped then
               {
-                # Config for when the cluster is bootstrapped.
+                # bootstrapped: true
               }
             else
               {
-                # Config for when the cluster is not yet bootstrapped.
+                # bootstrapped: false
                 source = sourceIso;
                 "source.wipe" = true;
               };
@@ -904,7 +904,6 @@ in
         serviceConfig = {
           ExecStartPre = [
             "${pkgs.coreutils}/bin/echo 'Executing pre-start script...'"
-            "${pkgs.coreutils}/bin/sleep 60"
 
             # Check OVN Northbound
             "${pkgs.coreutils}/bin/echo 'Checking OVN Northbound...'"
@@ -916,7 +915,7 @@ in
 
             # Check OVS bridge
             "${pkgs.coreutils}/bin/echo 'Checking OVS bridge...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..10}; do ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 2; done'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 5; done'"
 
             "${pkgs.coreutils}/bin/echo 'Pre-start script completed'"
           ];

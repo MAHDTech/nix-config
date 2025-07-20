@@ -24,15 +24,24 @@ BOOTSTRAP_SERVER="hypervisor-1"
 
 # All hypervisors in the cluster.
 HYPERVISORS=(
-	"hypervisor-1"
+	#"hypervisor-1"
 	"hypervisor-2"
-	"hypervisor-3"
-	"hypervisor-4"
+	#"hypervisor-3"
+	#"hypervisor-4"
 )
 
 #########################
 # Functions
 #########################
+
+function print_header() {
+	local HEADER=$1
+
+	echo -e "\033[32m##################################################\033[0m"
+	echo -e "\033[32m$HEADER\033[0m"
+	echo -e "\033[32m##################################################\033[0m"
+
+}
 
 function msg() {
 	local LOG_LEVEL=$1
@@ -317,29 +326,47 @@ msg "DEBUG" "INCUS_CLUSTER_BOOTSTRAPPED: ${INCUS_CLUSTER_BOOTSTRAPPED^^}"
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
 	msg "INFO" "Processing $HYPERVISOR"
 
+	# DESTROY MODE
 	if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
-		# Handle cluster destroy mode
+
+		print_header "MODE: Destroy"
+
+		# Apply the `bootstrapped = false` flag on next boot.
+		run_nixos_rebuild "$HYPERVISOR"
+
+		# Blow away the cluster and all data.
 		handle_cluster_destroy "$HYPERVISOR"
 
+		# Reboot server without waiting for it to come back online
+		reboot_server "$HYPERVISOR"
+
+	# BOOTSTRAP MODE
 	elif [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" ]]; then
+
+		print_header "MODE: Bootstrap"
+
 		# Handle cluster setup mode
 		if [[ ${HYPERVISOR} == "${BOOTSTRAP_SERVER}" ]]; then
 			setup_bootstrap_server "$HYPERVISOR"
 		else
 			setup_member_server "$HYPERVISOR"
 		fi
+
+	# UPGRADE MODE
 	else
-		# Normal upgrade mode
-		msg "INFO" "Upgrading $HYPERVISOR"
+
+		print_header "MODE: Upgrade"
+
 		run_nixos_rebuild "$HYPERVISOR"
+
 		show_system_status "$HYPERVISOR"
+
 		copy_bootstrap_script "$HYPERVISOR"
 
-		# Reboot if needed
 		reboot_server "$HYPERVISOR"
 
-		# Wait for server to come back online
 		wait_for_server "$HYPERVISOR"
+
 	fi
 done
 
