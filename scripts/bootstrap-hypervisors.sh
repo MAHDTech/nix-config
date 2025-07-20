@@ -24,10 +24,10 @@ BOOTSTRAP_SERVER="hypervisor-1"
 
 # All hypervisors in the cluster.
 HYPERVISORS=(
-	#"hypervisor-1"
+	"hypervisor-1"
 	"hypervisor-2"
-	#"hypervisor-3"
-	#"hypervisor-4"
+	"hypervisor-3"
+	"hypervisor-4"
 )
 
 #########################

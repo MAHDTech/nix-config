@@ -504,7 +504,6 @@ let
               {
                 # bootstrapped: false
                 source = sourceDefault;
-                "source.wipe" = true;
               };
         }
 
@@ -523,7 +522,6 @@ let
               {
                 # bootstrapped: false
                 source = sourceInstances;
-                "source.wipe" = true;
               };
         }
 
@@ -542,7 +540,6 @@ let
               {
                 # bootstrapped: false
                 source = sourceIso;
-                "source.wipe" = true;
               };
         }
 
