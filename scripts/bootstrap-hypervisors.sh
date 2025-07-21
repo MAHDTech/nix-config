@@ -168,7 +168,7 @@ function wait_for_server() {
 	local MAX_ATTEMPTS=60
 	local ATTEMPT=0
 	local SLEEP_TIME=60
-	local UPTIME_THRESHOLD=300 # 5 minutes in seconds
+	local UPTIME_THRESHOLD=300 # 5 minutes
 	local UPTIME_SECONDS
 
 	msg "INFO" "Waiting for $HYPERVISOR to come back online after reboot..."
@@ -204,7 +204,7 @@ function wait_for_server() {
 				msg "DEBUG" "${HYPERVISOR} uptime: $UPTIME_SECONDS seconds"
 
 				if [[ $UPTIME_SECONDS -lt $UPTIME_THRESHOLD ]]; then
-					msg "INFO" "$HYPERVISOR is back online with fresh uptime ($UPTIME_SECONDS seconds)"
+					msg "INFO" "$HYPERVISOR uptime is $UPTIME_SECONDS seconds which is less than the threshold of $UPTIME_THRESHOLD seconds"
 
 					# Edge case: Wait an additional period of time to ensure all services are back online once SSH is working.
 					sleep ${SLEEP_TIME} || echo "Failed to sleep for $SLEEP_TIME seconds"
