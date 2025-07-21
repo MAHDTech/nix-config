@@ -131,7 +131,7 @@ let
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.254";
             "ipv4.nat" = "false";
             "ipv6.address" = "none";
-            "network" = "incusbr0";
+            #"network" = "incusbr0";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
           };
@@ -150,108 +150,104 @@ let
         ###########################
         # Default profile
         ###########################
-        #{
-        #  name = "default";
-        #  description = "Default profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 2;
-        #    "limits.memory" = "2GiB";
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "default";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
+        {
+          name = "default";
+          description = "Default profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 2;
+            "limits.memory" = "2GiB";
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "default";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              network = "incusbr0";
+              type = "nic";
+            };
+          };
+        }
 
         ###########################
         # System Containers
         ###########################
-        #{
-        #  name = "system-containers";
-        #  description = "System Containers profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 2;
-        #    "limits.memory" = "2GiB";
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
+        {
+          name = "system-containers";
+          description = "System Containers profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 2;
+            "limits.memory" = "2GiB";
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "instances";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              network = "incusbr0";
+              type = "nic";
+            };
+          };
+        }
 
         ###########################
         # Application Containers
         ###########################
-        #{
-        #  name = "application-containers";
-        #  description = "Application Containers profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 2;
-        #    "limits.memory" = "2GiB";
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
+        {
+          name = "application-containers";
+          description = "Application Containers profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 2;
+            "limits.memory" = "2GiB";
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "instances";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              network = "incusbr0";
+              type = "nic";
+            };
+          };
+        }
 
         ###########################
         # Virtual Machines
         ###########################
-        #{
-        #  name = "virtual-machines";
-        #  description = "Virtual Machines profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 4;
-        #    "limits.memory" = "4GiB";
-        #    "security.nesting" = false;
-        #    "security.secureboot" = false;
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
+        {
+          name = "virtual-machines";
+          description = "Virtual Machines profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 4;
+            "limits.memory" = "4GiB";
+            "security.nesting" = false;
+            "security.secureboot" = false;
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "instances";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              network = "incusbr0";
+              type = "nic";
+            };
+          };
+        }
 
         #########################################################
         # Nutanix Project Profiles
@@ -260,34 +256,32 @@ let
         ###########################
         # Hypervisors profile
         ###########################
-        #{
-        #  name = "hypervisors";
-        #  description = "Profile for nested hypervisors";
-        #  project = "nutanix";
-        #  config = {
-        #    "limits.cpu" = 8;
-        #    "limits.memory" = "32GiB";
-        #    "security.nesting" = true;
-        #    "security.secureboot" = false;
-        #    "security.syscalls.intercept.mknod" = true;
-        #    "security.syscalls.intercept.setxattr" = true;
-        #    "security.syscalls.intercept.sysinfo" = true;
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    # TODO: enable when nutanix-vpc is working
-        #    #eth0 = {
-        #    #  name = "eth0";
-        #    #  #network = "nutanix-vpc";
-        #    #  network = "";
-        #    #  type = "nic";
-        #    #};
-        #  };
-        #}
+        {
+          name = "hypervisors";
+          description = "Profile for nested hypervisors";
+          project = "nutanix";
+          config = {
+            "limits.cpu" = 8;
+            "limits.memory" = "32GiB";
+            "security.nesting" = true;
+            "security.secureboot" = false;
+            "security.syscalls.intercept.mknod" = true;
+            "security.syscalls.intercept.setxattr" = true;
+            "security.syscalls.intercept.sysinfo" = true;
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "instances";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              network = "nutanix-vpc";
+              type = "nic";
+            };
+          };
+        }
       ];
 
       #########################################################
@@ -700,7 +694,10 @@ in
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
         ];
-        wantedBy = [ "multi-user.target" ];
+        wantedBy = [
+          "multi-user.target"
+          "ovn-ready.target"
+        ];
 
         serviceConfig = {
           Type = "forking";
@@ -739,7 +736,10 @@ in
       ovn-nb-ovsdb = {
         description = "OVN Northbound DB";
         after = [ "network.target" ];
-        wantedBy = [ "multi-user.target" ];
+        wantedBy = [
+          "multi-user.target"
+          "ovn-ready.target"
+        ];
 
         serviceConfig = {
           Type = "forking";
@@ -775,7 +775,10 @@ in
       ovn-sb-ovsdb = {
         description = "OVN Southbound DB";
         after = [ "network.target" ];
-        wantedBy = [ "multi-user.target" ];
+        wantedBy = [
+          "multi-user.target"
+          "ovn-ready.target"
+        ];
 
         serviceConfig = {
           Type = "forking";
@@ -823,7 +826,10 @@ in
           "ovn-sb-ovsdb.service"
         ];
         wants = [ "ovn-northd.service" ];
-        wantedBy = [ "multi-user.target" ];
+        wantedBy = [
+          "multi-user.target"
+          "ovn-ready.target"
+        ];
 
         serviceConfig = {
           Type = "forking";
@@ -861,6 +867,9 @@ in
           # Point OVN to the OVN Southbound DB
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/run/ovn/ovnsb_db.sock"
 
+          # Set additional OVN configuration
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-bridge=br-int"
+
           # Create the main OVS integration bridge
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --may-exist add-br br-int
 
@@ -877,7 +886,21 @@ in
             fi
             sleep 2
           done
+
+          # Ensure the chassis is properly registered
+          ${pkgs.ovn}/bin/ovn-sbctl --timeout=10 list chassis | ${pkgs.gnugrep}/bin/grep -q "${hypervisorName}" || {
+            ${pkgs.coreutils}/bin/echo "Chassis not found, waiting for registration..."
+            sleep 10
+          }
         '';
+      };
+
+      #########################################################
+      # Incus Service Override
+      #########################################################
+      incus = {
+        after = [ "incus-preseed.service" ];
+        wants = [ "incus-preseed.service" ];
       };
 
       #########################################################
@@ -885,7 +908,6 @@ in
       #########################################################
       incus-preseed = {
         after = [
-          "incus.service"
           "network-online.target"
           "ovn-ready.target"
           "systemd-networkd-wait-online.service"
@@ -895,27 +917,46 @@ in
           "ovn-ready.target"
           "systemd-networkd-wait-online.service"
         ];
-        requires = [
-          "incus.service"
-        ];
+        before = [ "incus.service" ];
+        wantedBy = [ "multi-user.target" ];
         serviceConfig = {
+          Type = "oneshot";
           ExecStartPre = [
             "${pkgs.coreutils}/bin/echo 'Executing pre-start script...'"
 
             # Check OVN Northbound
             "${pkgs.coreutils}/bin/echo 'Checking OVN Northbound...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 2; done'"
 
             # Check OVN Southbound
             "${pkgs.coreutils}/bin/echo 'Checking OVN Southbound...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 2; done'"
 
             # Check OVS bridge
             "${pkgs.coreutils}/bin/echo 'Checking OVS bridge...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 5; done'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 2; done'"
+
+            # Check chassis registration
+            "${pkgs.coreutils}/bin/echo 'Checking chassis registration...'"
+            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list chassis | ${pkgs.gnugrep}/bin/grep -q \"${hypervisorName}\" && break; sleep 2; done'"
+
+            # Debug OVN state
+            "${pkgs.coreutils}/bin/echo 'Debugging OVN state...'"
+            "${pkgs.ovn}/bin/ovn-nbctl show"
+            "${pkgs.ovn}/bin/ovn-sbctl list chassis"
+
+            # Debug OVS configuration
+            "${pkgs.coreutils}/bin/echo 'Debugging OVS configuration...'"
+            "${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock show"
+
+            # Final wait to ensure everything is ready
+            "${pkgs.coreutils}/bin/echo 'Final wait to ensure everything is ready...'"
+            "${pkgs.coreutils}/bin/sleep 5"
 
             "${pkgs.coreutils}/bin/echo 'Pre-start script completed'"
           ];
+          ExecStart = "${pkgs.coreutils}/bin/true";
+          RemainAfterExit = true;
           TimeoutStartSec = 900;
           Restart = "on-failure";
           RestartSec = 60;

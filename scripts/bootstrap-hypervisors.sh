@@ -137,7 +137,6 @@ function copy_bootstrap_script() {
 
 function reboot_server() {
 	local HYPERVISOR=$1
-	local SLEEP_TIME=15
 
 	if [[ ${YOLO_MODE^^} == "FALSE" ]]; then
 		read -rp "Reboot $HYPERVISOR? (y/n): " REPLY
@@ -146,26 +145,34 @@ function reboot_server() {
 	fi
 
 	if [[ ${REPLY^^} != "Y" ]]; then
+
 		msg "INFO" "Skipping reboot for $HYPERVISOR"
-		return 1
-	else
-		msg "INFO" "Rebooting $HYPERVISOR"
-		run_ssh_command "$HYPERVISOR" "sudo -n systemctl reboot" "Failed to reboot $HYPERVISOR"
-		sleep "$SLEEP_TIME" || echo "Failed to sleep for $SLEEP_TIME seconds"
 		return 0
+
+	else
+
+		msg "INFO" "Rebooting $HYPERVISOR"
+		run_ssh_command "$HYPERVISOR" "sudo -n systemctl reboot" "Failed to reboot $HYPERVISOR" || {
+			msg "ERROR" "Failed to reboot $HYPERVISOR"
+			return 1
+		}
+
+		return 0
+
 	fi
+
 }
 
 function wait_for_server() {
 	local HYPERVISOR=$1
-	local MAX_ATTEMPTS=100
+	local MAX_ATTEMPTS=60
 	local ATTEMPT=0
-	local SLEEP_TIME=30
+	local SLEEP_TIME=60
 
 	msg "INFO" "Waiting for $HYPERVISOR to come back online..."
-	sleep "$SLEEP_TIME" || echo "Failed to sleep for $SLEEP_TIME seconds"
 
 	while [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; do
+
 		ATTEMPT=$((ATTEMPT + 1))
 		msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if $HYPERVISOR is online..."
 
@@ -176,6 +183,10 @@ function wait_for_server() {
 			# Then test SSH connection with more lenient settings
 			if ssh -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 "${HYPERVISOR}.${DOMAIN}" "echo 'SSH connection OK!'" &>/dev/null; then
 				msg "INFO" "$HYPERVISOR is back online"
+
+				# Edge case: Wait an additional period of time to ensure all services are back online once SSH is working.
+				sleep ${SLEEP_TIME} || echo "Failed to sleep for $SLEEP_TIME seconds"
+
 				return 0
 			fi
 		fi
@@ -230,6 +241,11 @@ function setup_bootstrap_server() {
 		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR to capture cluster tokens"
 		run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
 
+	else
+
+		msg "ERROR" "Failed to reboot $HYPERVISOR"
+		exit 1
+
 	fi
 }
 
@@ -274,6 +290,11 @@ function setup_member_server() {
 		# Now run the bootstrap script to capture tokens
 		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in member mode"
 		run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
+
+	else
+
+		msg "ERROR" "Failed to reboot $HYPERVISOR"
+		exit 1
 
 	fi
 
@@ -338,7 +359,10 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 		handle_cluster_destroy "$HYPERVISOR"
 
 		# Reboot server without waiting for it to come back online
-		reboot_server "$HYPERVISOR"
+		reboot_server "$HYPERVISOR" || {
+			msg "ERROR" "Failed to reboot $HYPERVISOR"
+			exit 1
+		}
 
 	# BOOTSTRAP MODE
 	elif [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" ]]; then
@@ -363,9 +387,12 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 
 		copy_bootstrap_script "$HYPERVISOR"
 
-		reboot_server "$HYPERVISOR"
-
-		wait_for_server "$HYPERVISOR"
+		if reboot_server "$HYPERVISOR"; then
+			wait_for_server "$HYPERVISOR"
+		else
+			msg "ERROR" "Failed to reboot $HYPERVISOR"
+			exit 1
+		fi
 
 	fi
 done
