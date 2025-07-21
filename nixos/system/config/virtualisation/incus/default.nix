@@ -933,14 +933,14 @@ in
 
           preStart = ''
             ${pkgs.coreutils}/bin/echo "Waiting for OVN chassis '${hypervisorName}' to be registered..."
-            for i in {1..30}; do
+            for i in {1..90}; do
               if ${pkgs.ovn}/bin/ovn-sbctl --timeout=3 list chassis | ${pkgs.gnugrep}/bin/grep -q '"${hypervisorName}"'; then
                 ${pkgs.coreutils}/bin/echo "OVN chassis found. Proceeding with Incus start."
-                sleep 5
+                sleep 10
                 exit 0
               fi
-              ${pkgs.coreutils}/bin/echo "Attempt $i: OVN chassis not yet found, waiting 3s..."
-              sleep 3
+              ${pkgs.coreutils}/bin/echo "Attempt $i: OVN chassis not yet found, waiting 10s..."
+              sleep 10
             done
             ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for OVN chassis. Incus may still fail to initialize networks."
           '';
