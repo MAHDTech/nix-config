@@ -168,8 +168,10 @@ function wait_for_server() {
 	local MAX_ATTEMPTS=60
 	local ATTEMPT=0
 	local SLEEP_TIME=60
+	local UPTIME_THRESHOLD=120 # 2 minutes in seconds
+	local UPTIME_SECONDS=0
 
-	msg "INFO" "Waiting for $HYPERVISOR to come back online..."
+	msg "INFO" "Waiting for $HYPERVISOR to come back online after reboot..."
 
 	while [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; do
 
@@ -182,12 +184,28 @@ function wait_for_server() {
 
 			# Then test SSH connection with more lenient settings
 			if ssh -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 "${HYPERVISOR}.${DOMAIN}" "echo 'SSH connection OK!'" &>/dev/null; then
-				msg "INFO" "$HYPERVISOR is back online"
+				msg "DEBUG" "SSH is available, checking uptime..."
 
-				# Edge case: Wait an additional period of time to ensure all services are back online once SSH is working.
-				sleep ${SLEEP_TIME} || echo "Failed to sleep for $SLEEP_TIME seconds"
+				# Get uptime in seconds
+				UPTIME_SECONDS=$(
+					ssh \
+						-o ConnectTimeout=15 \
+						-o ServerAliveInterval=5 \
+						-o ServerAliveCountMax=3 \
+						"${HYPERVISOR}.${DOMAIN}" \
+						"cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1" 2>/dev/null
+				)
 
-				return 0
+				if [[ $UPTIME_SECONDS -lt $UPTIME_THRESHOLD ]]; then
+					msg "INFO" "$HYPERVISOR is back online with fresh uptime ($UPTIME_SECONDS seconds)"
+
+					# Edge case: Wait an additional period of time to ensure all services are back online once SSH is working.
+					sleep ${SLEEP_TIME} || echo "Failed to sleep for $SLEEP_TIME seconds"
+
+					return 0
+				else
+					msg "DEBUG" "Uptime is $UPTIME_SECONDS seconds (greater than threshold $UPTIME_THRESHOLD), likely still the old session - waiting..."
+				fi
 			fi
 		fi
 

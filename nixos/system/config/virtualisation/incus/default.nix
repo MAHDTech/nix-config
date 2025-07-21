@@ -693,13 +693,21 @@ in
       ovn-northd = {
         description = "OVN northd";
         after = [
+          # Wait for Network
           "network.target"
+
+          # Wait for Open vSwitch
           "ovs-vswitchd.service"
+
+          # Wait for OVN Databases
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
         ];
         requires = [
+          # Requires Open vSwitch
           "ovs-vswitchd.service"
+
+          # Requires OVN Databases
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
         ];
@@ -823,14 +831,22 @@ in
       ovn-controller = {
         description = "OVN Controller";
         after = [
+          # Wait for Network
           "network.target"
+
+          # Wait for Open vSwitch
           "ovs-vswitchd.service"
+
+          # Wait for OVN Services
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
           "ovn-northd.service"
         ];
         requires = [
+          # Requires Open vSwitch
           "ovs-vswitchd.service"
+
+          # Requires OVN Databases
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
         ];
@@ -910,10 +926,15 @@ in
       incus-preseed = lib.mkIf (config.virtualisation.incus.preseed != null) {
         description = lib.mkForce "Incus preseed (customised)";
         after = [
+          # Wait for Incus
           "incus.service"
+
+          # Wait for Network
           "network-online.target"
-          "sdn-ready.target"
           "systemd-networkd-wait-online.service"
+
+          # Wait for SDN
+          "sdn-ready.target"
         ];
       };
 
