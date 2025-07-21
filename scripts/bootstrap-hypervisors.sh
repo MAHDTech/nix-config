@@ -252,8 +252,7 @@ function wait_for_server() {
 						;;
 
 					*) # Unhandled state
-						msg "WARNING" "System is in an unhandled state ($SYSTEM_STATE), skipping wait..."
-						return 0
+						msg "WARNING" "System is in an unhandled state ($SYSTEM_STATE), retrying..."
 						;;
 
 					esac
