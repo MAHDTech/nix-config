@@ -926,24 +926,24 @@ in
       incus = lib.mkMerge [
         (lib.mkIf (config.virtualisation.incus.preseed != null) {
 
+          description = lib.mkForce "Incus Container and Virtual Machine Management Daemon (customised)";
+
           after = lib.mkAfter [ "sdn-ready.target" ];
           wants = lib.mkAfter [ "sdn-ready.target" ];
 
-          serviceConfig = {
-            preStart = ''
-              ${pkgs.coreutils}/bin/echo "Waiting for OVN chassis '${hypervisorName}' to be registered..."
-              for i in {1..30}; do
-                if ${pkgs.ovn}/bin/ovn-sbctl --timeout=3 list chassis | ${pkgs.gnugrep}/bin/grep -q '"${hypervisorName}"'; then
-                  ${pkgs.coreutils}/bin/echo "OVN chassis found. Proceeding with Incus start."
-                  sleep 5
-                  exit 0
-                fi
-                ${pkgs.coreutils}/bin/echo "Attempt $i: OVN chassis not yet found, waiting 3s..."
-                sleep 3
-              done
-              ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for OVN chassis. Incus may still fail to initialize networks."
-            '';
-          };
+          preStart = ''
+            ${pkgs.coreutils}/bin/echo "Waiting for OVN chassis '${hypervisorName}' to be registered..."
+            for i in {1..30}; do
+              if ${pkgs.ovn}/bin/ovn-sbctl --timeout=3 list chassis | ${pkgs.gnugrep}/bin/grep -q '"${hypervisorName}"'; then
+                ${pkgs.coreutils}/bin/echo "OVN chassis found. Proceeding with Incus start."
+                sleep 5
+                exit 0
+              fi
+              ${pkgs.coreutils}/bin/echo "Attempt $i: OVN chassis not yet found, waiting 3s..."
+              sleep 3
+            done
+            ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for OVN chassis. Incus may still fail to initialize networks."
+          '';
         })
       ];
 
@@ -953,24 +953,24 @@ in
       incus-preseed = lib.mkMerge [
         (lib.mkIf (config.virtualisation.incus.preseed != null) {
 
+          description = lib.mkForce "Incus initialization with preseed file (customised)";
+
           after = lib.mkAfter [ "sdn-ready.target" ];
           wants = lib.mkAfter [ "sdn-ready.target" ];
 
-          serviceConfig = {
-            preStart = ''
-              ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
-              ${pkgs.coreutils}/bin/echo "Verifying that Incus daemon is active before preseeding..."
-              # Wait up to 30s for incus daemon to be fully responsive.
-              for i in {1..10}; do
-                if ${pkgs.incus}/bin/incus admin waitready --timeout=3; then
-                  ${pkgs.coreutils}/bin/echo "Incus daemon is ready."
-                  exit 0
-                fi
-                sleep 3
-              done
-              ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for Incus daemon to be ready. Preseed may fail."
-            '';
-          };
+          preStart = ''
+            ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
+            ${pkgs.coreutils}/bin/echo "Verifying that Incus daemon is active before preseeding..."
+            # Wait up to 30s for incus daemon to be fully responsive.
+            for i in {1..10}; do
+              if ${pkgs.incus}/bin/incus admin waitready --timeout=3; then
+                ${pkgs.coreutils}/bin/echo "Incus daemon is ready."
+                exit 0
+              fi
+              sleep 3
+            done
+            ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for Incus daemon to be ready. Preseed may fail."
+          '';
         })
       ];
 
