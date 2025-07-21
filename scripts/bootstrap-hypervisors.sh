@@ -200,7 +200,7 @@ function wait_for_server() {
 						-o ServerAliveCountMax=3 \
 						"${HYPERVISOR}.${DOMAIN}" \
 						"cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1" 2>/dev/null
-				)
+				) || true
 
 				msg "DEBUG" "${HYPERVISOR} uptime: $UPTIME_SECONDS seconds"
 
@@ -214,7 +214,7 @@ function wait_for_server() {
 				else
 
 					# Check if the system is in shutdown state
-					msg "DEBUG" "Checking if ${HYPERVISOR} is in a stopping state..."
+					msg "DEBUG" "Checking if ${HYPERVISOR} is still rebooting..."
 
 					SYSTEM_STATE=$(
 						ssh \
@@ -223,7 +223,7 @@ function wait_for_server() {
 							-o ServerAliveCountMax=3 \
 							"${HYPERVISOR}.${DOMAIN}" \
 							"sudo -n systemctl is-system-running" 2>/dev/null
-					)
+					) || true
 
 					msg "DEBUG" "${HYPERVISOR} state: ${SYSTEM_STATE}"
 
