@@ -921,6 +921,35 @@ in
       };
 
       #########################################################
+      # Incus
+      #########################################################
+      incus = lib.mkIf (config.virtualisation.incus.preseed != null) {
+        description = lib.mkForce "Incus Container and Virtual Machine Management Daemon (customised)";
+        after = [
+          # Wait for Network
+          "network-online.target"
+          "systemd-networkd-wait-online.service"
+
+          # Wait for SDN
+          "sdn-ready.target"
+        ];
+        requires = [
+          # Requires Network
+          "network-online.target"
+          "systemd-networkd-wait-online.service"
+
+          # Requires SDN
+          "sdn-ready.target"
+
+          # Requires Incus Socket
+          "incus.socket"
+
+          # Requires LXC
+          "lxcfs.service"
+        ];
+      };
+
+      #########################################################
       # Incus Preseed
       #########################################################
       incus-preseed = lib.mkIf (config.virtualisation.incus.preseed != null) {
