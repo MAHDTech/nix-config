@@ -908,7 +908,7 @@ in
       # Incus Preseed
       #########################################################
       incus-preseed = lib.mkIf (config.virtualisation.incus.preseed != null) {
-        description = "Incus preseed (customised)";
+        description = lib.mkForce "Incus preseed (customised)";
         after = [
           "incus.service"
           "network-online.target"
