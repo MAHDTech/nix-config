@@ -4,9 +4,9 @@ clear
 
 set -euo pipefail
 
-#########################
+##################################################
 # Variables
-#########################
+##################################################
 
 # Set this to wipe the incus cluster on each node.
 declare -r INCUS_CLUSTER_DESTROY=${INCUS_CLUSTER_DESTROY:-false}
@@ -30,9 +30,9 @@ HYPERVISORS=(
 	"hypervisor-4"
 )
 
-#########################
+##################################################
 # Functions
-#########################
+##################################################
 
 function print_header() {
 	local HEADER=$1
@@ -241,12 +241,12 @@ function wait_for_server() {
 						msg "WARNING" "System is in maintenance, waiting..."
 						;;
 
-					DEGRADED) # System is degraded, but might have rebooted
+					DEGRADED) # System is degraded, but might have rebooted so OK to proceed.
 						msg "WARNING" "System is degraded, skipping wait..."
 						return 0
 						;;
 
-					RUNNING) # System is running
+					RUNNING) # System is running, OK to proceed.
 						msg "INFO" "System is running, skipping wait..."
 						return 0
 						;;
@@ -385,9 +385,11 @@ function handle_cluster_destroy() {
 	run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh --incus-destroy-cluster" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
 }
 
-#########################
-# Main
-#########################
+##################################################
+# Pre-flight checks
+##################################################
+
+msg "INFO" "Starting pre-flight checks..."
 
 git add --all || {
 	msg "ERROR" "Failed to stage git changes"
@@ -413,6 +415,35 @@ msg "DEBUG" "HYPERVISORS: ${HYPERVISORS[*]}"
 msg "DEBUG" "DOMAIN: $DOMAIN"
 msg "DEBUG" "INCUS_CLUSTER_DESTROY: ${INCUS_CLUSTER_DESTROY^^}"
 msg "DEBUG" "INCUS_CLUSTER_BOOTSTRAPPED: ${INCUS_CLUSTER_BOOTSTRAPPED^^}"
+
+# Before starting, ensure all servers are reachable.
+
+msg "INFO" "Checking if all servers are reachable..."
+
+for HYPERVISOR in "${HYPERVISORS[@]}"; do
+	msg "INFO" "Checking if $HYPERVISOR is reachable (ping)..."
+
+	ping -c 1 -W 5 "${HYPERVISOR}.${DOMAIN}" &>/dev/null || {
+		msg "ERROR" "$HYPERVISOR is not reachable"
+		exit 1
+	}
+
+	msg "INFO" "Checking if $HYPERVISOR is reachable (SSH)..."
+
+	ssh -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 "${HYPERVISOR}.${DOMAIN}" "echo 'SSH connection OK!'" &>/dev/null || {
+		msg "ERROR" "$HYPERVISOR is not reachable"
+		exit 1
+	}
+
+done
+
+msg "INFO" "Pre-flight checks completed successfully"
+
+##################################################
+# Main
+##################################################
+
+msg "INFO" "Starting bootstrap process..."
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
 	msg "INFO" "Processing $HYPERVISOR"
