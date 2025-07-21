@@ -169,7 +169,8 @@ function wait_for_server() {
 	local ATTEMPT=0
 	local SLEEP_TIME=60
 	local UPTIME_THRESHOLD=300 # 5 minutes
-	local UPTIME_SECONDS
+	local UPTIME_SECONDS=0
+	local SYSTEM_STATE="unknown"
 
 	msg "INFO" "Waiting for $HYPERVISOR to come back online after reboot..."
 
@@ -199,7 +200,7 @@ function wait_for_server() {
 						-o ServerAliveCountMax=3 \
 						"${HYPERVISOR}.${DOMAIN}" \
 						"cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1" 2>/dev/null
-				) || UPTIME_SECONDS=0
+				)
 
 				msg "DEBUG" "${HYPERVISOR} uptime: $UPTIME_SECONDS seconds"
 
@@ -211,7 +212,10 @@ function wait_for_server() {
 
 					return 0
 				else
+
 					# Check if the system is in shutdown state
+					msg "DEBUG" "Checking if ${HYPERVISOR} is in a stopping state..."
+
 					SYSTEM_STATE=$(
 						ssh \
 							-o ConnectTimeout=15 \
@@ -219,18 +223,27 @@ function wait_for_server() {
 							-o ServerAliveCountMax=3 \
 							"${HYPERVISOR}.${DOMAIN}" \
 							"sudo -n systemctl is-system-running" 2>/dev/null
-					) || SYSTEM_STATE="unknown"
+					)
 
-					msg "DEBUG" "${HYPERVISOR} is in a ${SYSTEM_STATE} state"
+					msg "DEBUG" "${HYPERVISOR} state: ${SYSTEM_STATE}"
 
 					case "${SYSTEM_STATE^^}" in
 
 					STOPPING) # Reboot in progress
-						msg "INFO" "System is in stopping state (reboot in progress) - waiting..."
+						msg "INFO" "System is in stopping state (reboot in progress), waiting..."
 						;;
 
-					UNKNOWN) # Unknown state
-						msg "INFO" "System is in an unknown state ($SYSTEM_STATE), retrying..."
+					INITIALIZING) # System is still initializing after reboot
+						msg "INFO" "System is initializing, waiting..."
+						;;
+
+					MAINTENANCE) # System is in maintenance
+						msg "WARNING" "System is in maintenance, waiting..."
+						;;
+
+					DEGRADED) # System is degraded, but might have rebooted
+						msg "WARNING" "System is degraded, skipping wait..."
+						return 0
 						;;
 
 					RUNNING) # System is running
