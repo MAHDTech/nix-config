@@ -168,7 +168,7 @@ function wait_for_server() {
 	local MAX_ATTEMPTS=60
 	local ATTEMPT=0
 	local SLEEP_TIME=60
-	local UPTIME_THRESHOLD=120 # 2 minutes in seconds
+	local UPTIME_THRESHOLD=300 # 5 minutes in seconds
 	local UPTIME_SECONDS
 
 	msg "INFO" "Waiting for $HYPERVISOR to come back online after reboot..."
@@ -199,7 +199,9 @@ function wait_for_server() {
 						-o ServerAliveCountMax=3 \
 						"${HYPERVISOR}.${DOMAIN}" \
 						"cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1" 2>/dev/null
-				)
+				) || UPTIME_SECONDS=0
+
+				msg "DEBUG" "${HYPERVISOR} uptime: $UPTIME_SECONDS seconds"
 
 				if [[ $UPTIME_SECONDS -lt $UPTIME_THRESHOLD ]]; then
 					msg "INFO" "$HYPERVISOR is back online with fresh uptime ($UPTIME_SECONDS seconds)"
@@ -209,7 +211,31 @@ function wait_for_server() {
 
 					return 0
 				else
-					msg "DEBUG" "Uptime is $UPTIME_SECONDS seconds (greater than threshold $UPTIME_THRESHOLD), likely still the old session - waiting..."
+					# Check if the system is in shutdown state
+					SYSTEM_STATE=$(
+						ssh \
+							-o ConnectTimeout=15 \
+							-o ServerAliveInterval=5 \
+							-o ServerAliveCountMax=3 \
+							"${HYPERVISOR}.${DOMAIN}" \
+							"systemctl is-system-running" 2>/dev/null
+					) || SYSTEM_STATE="unknown"
+
+					msg "DEBUG" "${HYPERVISOR} is in a ${SYSTEM_STATE} state"
+
+					case "${SYSTEM_STATE^^}" in
+
+					STOPPING) # Reboot in progress
+						msg "INFO" "System is in stopping state (reboot in progress) - waiting..."
+						;;
+
+					*) # Unknown state
+						msg "WARNING" "System is in an unknown state ($SYSTEM_STATE), skipping wait..."
+						return 0
+						;;
+
+					esac
+
 				fi
 			fi
 		fi
