@@ -204,7 +204,7 @@ function wait_for_server() {
 				msg "DEBUG" "${HYPERVISOR} uptime: $UPTIME_SECONDS seconds"
 
 				if [[ $UPTIME_SECONDS -lt $UPTIME_THRESHOLD ]]; then
-					msg "INFO" "$HYPERVISOR uptime is $UPTIME_SECONDS seconds which is less than the threshold of $UPTIME_THRESHOLD seconds"
+					msg "INFO" "$HYPERVISOR uptime is $UPTIME_SECONDS seconds, system has recently rebooted"
 
 					# Edge case: Wait an additional period of time to ensure all services are back online once SSH is working.
 					sleep ${SLEEP_TIME} || echo "Failed to sleep for $SLEEP_TIME seconds"
@@ -229,8 +229,17 @@ function wait_for_server() {
 						msg "INFO" "System is in stopping state (reboot in progress) - waiting..."
 						;;
 
-					*) # Unknown state
-						msg "WARNING" "System is in an unknown state ($SYSTEM_STATE), skipping wait..."
+					UNKNOWN) # Unknown state
+						msg "INFO" "System is in an unknown state ($SYSTEM_STATE), retrying..."
+						;;
+
+					RUNNING) # System is running
+						msg "INFO" "System is running, skipping wait..."
+						return 0
+						;;
+
+					*) # Unhandled state
+						msg "WARNING" "System is in an unhandled state ($SYSTEM_STATE), skipping wait..."
 						return 0
 						;;
 
