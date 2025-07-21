@@ -169,13 +169,18 @@ function wait_for_server() {
 	local ATTEMPT=0
 	local SLEEP_TIME=60
 	local UPTIME_THRESHOLD=120 # 2 minutes in seconds
-	local UPTIME_SECONDS=0
+	local UPTIME_SECONDS
 
 	msg "INFO" "Waiting for $HYPERVISOR to come back online after reboot..."
 
 	while [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; do
 
+		# Reset UPTIME_SECONDS
+		UPTIME_SECONDS=0
+
+		# Increment attempt counter
 		ATTEMPT=$((ATTEMPT + 1))
+
 		msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if $HYPERVISOR is online..."
 
 		# First check if the host is reachable with ping

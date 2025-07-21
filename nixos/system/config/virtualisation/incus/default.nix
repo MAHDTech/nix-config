@@ -926,15 +926,28 @@ in
       incus-preseed = lib.mkIf (config.virtualisation.incus.preseed != null) {
         description = lib.mkForce "Incus preseed (customised)";
         after = [
-          # Wait for Incus
-          "incus.service"
-
           # Wait for Network
           "network-online.target"
           "systemd-networkd-wait-online.service"
 
           # Wait for SDN
           "sdn-ready.target"
+
+          # Wait for Incus
+          "incus.service"
+
+        ];
+
+        requires = [
+          # Requires Network
+          "network-online.target"
+          "systemd-networkd-wait-online.service"
+
+          # Requires SDN
+          "sdn-ready.target"
+
+          # Requires Incus
+          "incus.service"
         ];
       };
 
