@@ -649,20 +649,29 @@ in
     '';
 
     # Custom target for coordinating OVN and Incus startup
+    # Make sure all OVN and OVS services are ready before starting Incus.
     targets = {
-      ovn-ready = {
+      sdn-ready = {
         description = "OVN services are ready";
         after = [
+          # OVN services
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
           "ovn-northd.service"
           "ovn-controller.service"
+
+          # OVS services
+          "ovs-vswitchd.service"
         ];
         wants = [
+          # OVN services
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
           "ovn-northd.service"
           "ovn-controller.service"
+
+          # OVS services
+          "ovs-vswitchd.service"
         ];
         wantedBy = [ "multi-user.target" ];
       };
@@ -696,7 +705,7 @@ in
         ];
         wantedBy = [
           "multi-user.target"
-          "ovn-ready.target"
+          "sdn-ready.target"
         ];
 
         serviceConfig = {
@@ -738,7 +747,7 @@ in
         after = [ "network.target" ];
         wantedBy = [
           "multi-user.target"
-          "ovn-ready.target"
+          "sdn-ready.target"
         ];
 
         serviceConfig = {
@@ -777,7 +786,7 @@ in
         after = [ "network.target" ];
         wantedBy = [
           "multi-user.target"
-          "ovn-ready.target"
+          "sdn-ready.target"
         ];
 
         serviceConfig = {
@@ -828,7 +837,7 @@ in
         wants = [ "ovn-northd.service" ];
         wantedBy = [
           "multi-user.target"
-          "ovn-ready.target"
+          "sdn-ready.target"
         ];
 
         serviceConfig = {
@@ -896,71 +905,16 @@ in
       };
 
       #########################################################
-      # Incus Service Override
-      #########################################################
-      incus = {
-        after = [ "incus-preseed.service" ];
-        wants = [ "incus-preseed.service" ];
-      };
-
-      #########################################################
       # Incus Preseed
       #########################################################
-      incus-preseed = {
+      incus-preseed = lib.mkIf (config.virtualisation.incus.preseed != null) {
+        description = "Incus preseed (customised)";
         after = [
+          "incus.service"
           "network-online.target"
-          "ovn-ready.target"
+          "sdn-ready.target"
           "systemd-networkd-wait-online.service"
         ];
-        wants = [
-          "network-online.target"
-          "ovn-ready.target"
-          "systemd-networkd-wait-online.service"
-        ];
-        before = [ "incus.service" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStartPre = [
-            "${pkgs.coreutils}/bin/echo 'Executing pre-start script...'"
-
-            # Check OVN Northbound
-            "${pkgs.coreutils}/bin/echo 'Checking OVN Northbound...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 2; done'"
-
-            # Check OVN Southbound
-            "${pkgs.coreutils}/bin/echo 'Checking OVN Southbound...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 2; done'"
-
-            # Check OVS bridge
-            "${pkgs.coreutils}/bin/echo 'Checking OVS bridge...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 2; done'"
-
-            # Check chassis registration
-            "${pkgs.coreutils}/bin/echo 'Checking chassis registration...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..30}; do ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list chassis | ${pkgs.gnugrep}/bin/grep -q \"${hypervisorName}\" && break; sleep 2; done'"
-
-            # Debug OVN state
-            "${pkgs.coreutils}/bin/echo 'Debugging OVN state...'"
-            "${pkgs.ovn}/bin/ovn-nbctl show"
-            "${pkgs.ovn}/bin/ovn-sbctl list chassis"
-
-            # Debug OVS configuration
-            "${pkgs.coreutils}/bin/echo 'Debugging OVS configuration...'"
-            "${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock show"
-
-            # Final wait to ensure everything is ready
-            "${pkgs.coreutils}/bin/echo 'Final wait to ensure everything is ready...'"
-            "${pkgs.coreutils}/bin/sleep 5"
-
-            "${pkgs.coreutils}/bin/echo 'Pre-start script completed'"
-          ];
-          ExecStart = "${pkgs.coreutils}/bin/true";
-          RemainAfterExit = true;
-          TimeoutStartSec = 900;
-          Restart = "on-failure";
-          RestartSec = 60;
-        };
       };
 
     };
