@@ -218,7 +218,7 @@ function wait_for_server() {
 							-o ServerAliveInterval=5 \
 							-o ServerAliveCountMax=3 \
 							"${HYPERVISOR}.${DOMAIN}" \
-							"systemctl is-system-running" 2>/dev/null
+							"sudo -n systemctl is-system-running" 2>/dev/null
 					) || SYSTEM_STATE="unknown"
 
 					msg "DEBUG" "${HYPERVISOR} is in a ${SYSTEM_STATE} state"
