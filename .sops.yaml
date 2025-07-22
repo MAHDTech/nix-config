@@ -40,6 +40,11 @@ keys:
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
+      #####################################################################
+      # NOTE: Do NOT include the '-' before more than 1 key type.
+      #       This will cause sops to require multiple keys (shamir secret sharing)
+      #       to decrypt a secret, which breaks normal sops-nix usage.
+      #####################################################################
       - age:
           # Local
           - *admin_mahdtech_nuc_age
@@ -53,8 +58,7 @@ creation_rules:
           - *system_hypervisor_2_age
           - *system_hypervisor_3_age
           - *system_hypervisor_4_age
-
-      - pgp:
+        pgp:
           # Users
           - *admin_mahdtech_yubikey_gpg
           # Systems
