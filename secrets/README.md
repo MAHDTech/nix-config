@@ -6,10 +6,10 @@
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [Environment Variables](#environment-variables)
-  - [Generating the Keys file](#generating-the-keys-file)
   - [Editing the keystore](#editing-the-keystore)
   - [Obtaining Keys](#obtaining-keys)
     - [Age](#age)
+    - [SSH to Age](#ssh-to-age)
 
 ## Overview
 
@@ -22,13 +22,8 @@ Notes to remember as I use `sops` so infrequently.
 - Set the `SOPS_AGE_KEY_FILE` environment variable to the path of the `age` keys file.
 
 ```bash
-SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-```
-
-## Generating the Keys file
-
-```bash
-nix-shell -p age --run "age-keygen -o ${SOPS_AGE_KEY_FILE}"
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+export SOPS_AGE_PUB_FILE=~/.config/sops/age/keys.pub
 ```
 
 ## Editing the keystore
@@ -52,6 +47,14 @@ nix-shell -p sops --run "sops updatekeys secrets/keystore.yaml"
 ## Obtaining Keys
 
 ### Age
+
+- If you want to generate a new `age` key, run the following command:
+
+```bash
+nix-shell -p age --run "age-keygen -o ${SOPS_AGE_KEY_FILE}"
+```
+
+### SSH to Age
 
 - To obtain the `age` _public_ key for a host, run the following command:
 

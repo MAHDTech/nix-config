@@ -1,12 +1,15 @@
 {
+  _,
+}:
+let
+  flake = builtins.getFlake ./.;
+in
+{
   # NOTE: Any services that rely on secrets stored in SOPS need to be setup with:
   #       systemd.user.services.XXX.Unit.After = [ "sops-nix.service" ];
 
   sops = {
-    # This will add secrets.yml to the nix store
-    # You can avoid this by adding a string to the full path instead, i.e.
-    # defaultSopsFile = "/root/.sops/secrets/example.yaml";
-    defaultSopsFile = ../../../secrets/secrets.yaml;
+    defaultSopsFile = "${flake}/secrets/keystore.yaml";
     defaultSopsFormat = "yaml";
 
     # NOTE: Only ED25519 keys are supported with age.
@@ -32,27 +35,27 @@
     # This is the actual specification of the secrets that
     # will be available to the system at /run/secrets.d/
     /*
-    secrets = {
+      secrets = {
 
-      github_token = {
-        sopsFile = ../../../secrets/secrets.yaml;
-        format = "yaml";
-        mode = "0400";
-        owner = config.users.users.mahdtech.name;
-        group = config.users.users.mahdtech.group;
-        neededForUsers = false;
+        github_token = {
+          sopsFile = ../../../secrets/secrets.yaml;
+          format = "yaml";
+          mode = "0400";
+          owner = config.users.users.mahdtech.name;
+          group = config.users.users.mahdtech.group;
+          neededForUsers = false;
+        };
+
+        wakatime_token = {
+          sopsFile = ../../../secrets/secrets.yaml;
+          format = "yaml";
+          mode = "0400";
+          owner = config.users.users.mahdtech.name;
+          group = config.users.users.mahdtech.group;
+          neededForUsers = false;
+        };
+
       };
-
-      wakatime_token = {
-        sopsFile = ../../../secrets/secrets.yaml;
-        format = "yaml";
-        mode = "0400";
-        owner = config.users.users.mahdtech.name;
-        group = config.users.users.mahdtech.group;
-        neededForUsers = false;
-      };
-
-    };
     */
   };
 }

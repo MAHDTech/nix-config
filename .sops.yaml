@@ -8,6 +8,9 @@
 ##################################################
 
 keys:
+  # Users (AGE, local)
+  - &admin_mahdtech_nuc_age age1t6p4lhlmqk7gkmp4hxccnqf5g0qu2xecef04hyn4cxlc3gs8fecqhvxmfg
+
   # Users (AGE)
   - &admin_mahdtech_1password_age age127h9hx8p5tc5chldkhek9a7f4qje25qmngd99y4unl3tyzayr3yq0jp3xn
 
@@ -37,6 +40,20 @@ keys:
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
+      - age:
+          # Local
+          - *admin_mahdtech_nuc_age
+          # Users
+          - *admin_mahdtech_1password_age
+          # Systems
+          - *system_jons_age
+          - *system_nuc_age
+          # Hypervisors
+          - *system_hypervisor_1_age
+          - *system_hypervisor_2_age
+          - *system_hypervisor_3_age
+          - *system_hypervisor_4_age
+
       - pgp:
           # Users
           - *admin_mahdtech_gpg
@@ -48,15 +65,3 @@ creation_rules:
           - *system_hypervisor_2_gpg
           - *system_hypervisor_3_gpg
           - *system_hypervisor_4_gpg
-
-        age:
-          # Users
-          - *admin_mahdtech_1password_age
-          # Systems
-          - *system_jons_age
-          - *system_nuc_age
-          # Hypervisors
-          - *system_hypervisor_1_age
-          - *system_hypervisor_2_age
-          - *system_hypervisor_3_age
-          - *system_hypervisor_4_age

@@ -120,7 +120,7 @@
           allowedSignersFile = "~/.config/git/allowed-signers";
           # WSL
           #program = "/mnt/c/Users/MAHDTech/AppData/Local/1Password/app/8/op-ssh-sign-wsl";
-          # Crostini
+          # NixOS and Crostini.
           program = "${pkgs._1password-gui}/bin/op-ssh-sign";
         };
       };

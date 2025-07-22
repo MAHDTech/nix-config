@@ -46,8 +46,8 @@ let
         "acme.email" = "acme@saltlabs.cloud";
         "acme.provider" = "cloudflare";
         "acme.provider.environment" = ''
-          CLOUDFLARE_EMAIL=acme@saltlabs.cloud
-          CLOUEFLARE_API_KEY=XXX
+          CLOUDFLARE_EMAIL=
+          CLOUEFLARE_API_KEY=
 
         '';
         "acme.provider.resolvers" = "1.1.1.1,1.0.0.1";

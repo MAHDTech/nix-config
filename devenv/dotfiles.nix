@@ -86,6 +86,7 @@ in
       "^\\.git(/.*)?$"
       "^home/files/ags/config/.*$"
       "^secrets/keys/.*\\.asc$"
+      "^secrets/keystore.yaml$"
       "^vendor(/.*)?$"
     ];
     hooks = {
