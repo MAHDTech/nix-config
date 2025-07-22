@@ -1,9 +1,10 @@
 {
+  config,
   pkgs,
   ...
 }:
 let
-  flake = builtins.getFlake ./.;
+  keystoreFile = ../../../../.. + "/secrets/keystore.yaml";
 in
 {
   imports = [ ];
@@ -11,7 +12,8 @@ in
   environment.systemPackages = with pkgs; [ ];
 
   sops = {
-    defaultSopsFile = "${flake}/secrets/keystore.yaml";
+    # This option expects a value of type `path`.
+    defaultSopsFile = keystoreFile;
     defaultSopsFormat = "yaml";
 
     # NOTE: Only ED25519 keys are supported with age.
@@ -34,44 +36,57 @@ in
       ];
     };
 
-    # This is the actual specification of the secrets that
-    # will be available to the system at /run/secrets.d/
-    /*
-      secrets = {
+    #########################################################
+    # Secrets
+    #
+    # Defined secrets are available to the system at /run/secrets/
+    #
+    #########################################################
 
-        cloudflared = {
-          sopsFile = ${flake}/secrets/cloudflared.yaml;
-          format = "yaml";
-          mode = "0400";
-          owner = "${config.users.users.cloudflared.name}";
-          group = "${config.users.users.cloudflared.group}";
-          neededForUsers = false;
-          restartUnits = [
-            "cloudflared.service"
-          ];
-        };
+    secrets = {
 
-      };
-
-      github_token = {
-        sopsFile = ../../../secrets/secrets.yaml;
+      # Cloudflare Email for ACME.
+      "incus/acme/cloudflare/email" = {
+        sopsFile = keystoreFile;
         format = "yaml";
         mode = "0400";
-        owner = config.users.users.mahdtech.name;
-        group = config.users.users.mahdtech.group;
+        owner = "root";
+        group = "root";
         neededForUsers = false;
+        restartUnits = [
+          "incus-preseed.service"
+        ];
       };
 
-      wakatime_token = {
-        sopsFile = ../../../secrets/secrets.yaml;
+      # Cloudflare API Key for ACME.
+      "incus/acme/cloudflare/apiKey" = {
+        sopsFile = keystoreFile;
         format = "yaml";
         mode = "0400";
-        owner = config.users.users.mahdtech.name;
-        group = config.users.users.mahdtech.group;
+        owner = "root";
+        group = "root";
         neededForUsers = false;
+        restartUnits = [
+          "incus-preseed.service"
+        ];
       };
+    };
 
+    #########################################################
+    # Templates
+    #
+    # Templates are used to populate placeholder values in files at runtime.
+    #
+    #########################################################
+
+    templates = {
+      "incus-acme.env" = {
+        owner = "root";
+        content = ''
+          CLOUDFLARE_EMAIL="${config.sops.placeholder."incus/acme/cloudflare/email"}"
+          CLOUDFLARE_API_KEY="${config.sops.placeholder."incus/acme/cloudflare/apiKey"}"
+        '';
       };
-    */
+    };
   };
 }

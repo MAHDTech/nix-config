@@ -1,12 +1,12 @@
 let
-  flake = builtins.getFlake ./.;
+  keystoreFile = ../../../../.. + "/secrets/keystore.yaml";
 in
 {
   # NOTE: Any services that rely on secrets stored in SOPS need to be setup with:
   #       systemd.user.services.XXX.Unit.After = [ "sops-nix.service" ];
 
   sops = {
-    defaultSopsFile = "${flake}/secrets/keystore.yaml";
+    defaultSopsFile = keystoreFile;
     defaultSopsFormat = "yaml";
 
     # NOTE: Only ED25519 keys are supported with age.

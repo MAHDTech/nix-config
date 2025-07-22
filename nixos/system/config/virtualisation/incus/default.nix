@@ -45,11 +45,11 @@ let
         "acme.domain" = "saltlabs.cloud";
         "acme.email" = "acme@saltlabs.cloud";
         "acme.provider" = "cloudflare";
-        "acme.provider.environment" = ''
-          CLOUDFLARE_EMAIL=
-          CLOUEFLARE_API_KEY=
-
-        '';
+        # Passed via systemd service override.
+        #"acme.provider.environment" = ''
+        #  CLOUDFLARE_EMAIL="$(cat ${config.sops.secrets."incus/acme/cloudflare/email".path})"
+        #  CLOUDFLARE_API_KEY="$(cat ${config.sops.secrets."incus/acme/cloudflare/apiKey".path})"
+        #'';
         "acme.provider.resolvers" = "1.1.1.1,1.0.0.1";
 
         # Images
@@ -946,8 +946,19 @@ in
 
           description = lib.mkForce "Incus Container and Virtual Machine Management Daemon (customised)";
 
-          after = lib.mkAfter [ "sdn-ready.target" ];
-          wants = lib.mkAfter [ "sdn-ready.target" ];
+          after = lib.mkAfter [
+            "sdn-ready.target"
+
+            # Requires SOPS
+            "sops-nix.service"
+          ];
+          wants = lib.mkAfter [
+            "sdn-ready.target"
+          ];
+
+          serviceConfig = {
+            EnvironmentFile = config.sops.templates."incus-acme.env".path;
+          };
 
           preStart = ''
             ${pkgs.coreutils}/bin/echo "Waiting for OVN chassis '${hypervisorName}' to be registered..."
@@ -976,8 +987,19 @@ in
 
           description = lib.mkForce "Incus initialization with preseed file (customised)";
 
-          after = lib.mkAfter [ "sdn-ready.target" ];
-          wants = lib.mkAfter [ "sdn-ready.target" ];
+          after = lib.mkAfter [
+            "sdn-ready.target"
+
+            # Requires SOPS
+            "sops-nix.service"
+          ];
+          wants = lib.mkAfter [
+            "sdn-ready.target"
+          ];
+
+          serviceConfig = {
+            EnvironmentFile = config.sops.templates."incus-acme.env".path;
+          };
 
           preStart = ''
             ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
