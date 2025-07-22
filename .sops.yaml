@@ -15,7 +15,7 @@ keys:
   - &admin_mahdtech_1password_age age127h9hx8p5tc5chldkhek9a7f4qje25qmngd99y4unl3tyzayr3yq0jp3xn
 
   # Users (GPG)
-  - &admin_mahdtech_gpg 521A973C9426E8F4EE1C48FB3E520D84C0F43391
+  - &admin_mahdtech_yubikey_gpg C8007116A87DB942310AD5FC218703275A091016
 
   # Systems (AGE)
   - &system_jons_age age1l4zs9vmtnsck7t2nqhqt7rnpske9eajlwqr5zr2ggjrf2cfjds4sx6y2rf
@@ -56,7 +56,7 @@ creation_rules:
 
       - pgp:
           # Users
-          - *admin_mahdtech_gpg
+          - *admin_mahdtech_yubikey_gpg
           # Systems
           - *system_jons_gpg
           - *system_nuc_gpg
