@@ -1,6 +1,3 @@
-{
-  _,
-}:
 let
   flake = builtins.getFlake ./.;
 in
