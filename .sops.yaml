@@ -10,21 +10,29 @@
 keys:
   # Users (AGE)
   - &admin_mahdtech_1password_age age127h9hx8p5tc5chldkhek9a7f4qje25qmngd99y4unl3tyzayr3yq0jp3xn
-  - &admin_mahdtech_nuc_age age1g9watu56msn7xlqfsxhteppv7uvrm9wte7zn7lhul4nw9y7pys9s6wldan
 
   # Users (GPG)
   - &admin_mahdtech_gpg 521A973C9426E8F4EE1C48FB3E520D84C0F43391
 
   # Systems (AGE)
-  - &system_jons_age age16juxmyv5728eyr3sw45ycg8wj5lzl3mqekwz2lx7r2ykmqr9g3lsm5zt8n
-  - &system_kasm001_age age13wqvdp74vkkjqv9mruc06qene64rfzpm4wkemnpjxkgpmyac8v6q295fdz
-  - &system_nuc_age age1atpe6jwhjgzajhpn9ky28d36tedm6ccu2t2w4vna78k7kwkwwycsprq800
-  - &system_penguin_age age14qny4gehy8fkga9vha5khn26ywuutm5d3w5urawwaz68pr5py5nsl6xj8u
+  - &system_jons_age age1l4zs9vmtnsck7t2nqhqt7rnpske9eajlwqr5zr2ggjrf2cfjds4sx6y2rf
+  - &system_nuc_age age12m5c674qsrm4l8kszzm9mtfcc6x4gf0lj2dn8m7pau2alafduvmsmffndy
+
+  # Systems (AGE, Hypervisors)
+  - &system_hypervisor_1_age age17rjkqy28e0kkk05egnexxgwdrw7lmuyamu4slrevqqwfqa38tesq7r0e07
+  - &system_hypervisor_2_age age1qte2qxa430rxrkluwkte6m5aswv677y6e6q8hqj5f44lkc0459esq8vyz3
+  - &system_hypervisor_3_age age1k636za8dsevlkpgk3srjumu2ztpzx4urava8kk297rnsu0flhpcs2gp02p
+  - &system_hypervisor_4_age age1c0t3c9ccpx596f0k4fgxpldqg0a83khez3jxf9r3x80lsqw64s2qtugca7
 
   # Systems (GPG)
-  - &system_jons_gpg 008fae6072d5753c273de5f80ae595eeb3d73fbd
-  - &system_nuc_gpg 3427c11a2069c301130939caeef52927134a6d84
-  - &system_penguin_gpg 21ba9b4c175dda9f5f3519532e51b9ac938f3a69
+  - &system_jons_gpg 058a30ccc32bdbd8c1f83f913724ced5ed967743
+  - &system_nuc_gpg 67e8f2311d5b7f5177852cfcb82d6aff07651e96
+
+  # Systems (GPG, Hypervisors)
+  - &system_hypervisor_1_gpg c43b5a46ce32e067759f3e3de5bb85adfc127a22
+  - &system_hypervisor_2_gpg c53378b986854f6f766400b7ce0e0e1c6190fb9f
+  - &system_hypervisor_3_gpg c11cb07960e989964b0e3b1dfec9424778b55a19
+  - &system_hypervisor_4_gpg 2a103f0194cb2e495d8454ca77f992e1a386c4e2
 
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
@@ -35,14 +43,20 @@ creation_rules:
           # Systems
           - *system_jons_gpg
           - *system_nuc_gpg
-          - *system_penguin_gpg
+          # Hypervisors
+          - *system_hypervisor_1_gpg
+          - *system_hypervisor_2_gpg
+          - *system_hypervisor_3_gpg
+          - *system_hypervisor_4_gpg
 
         age:
           # Users
-          - *admin_mahdtech_nuc_age
           - *admin_mahdtech_1password_age
           # Systems
           - *system_jons_age
-          - *system_kasm001_age
           - *system_nuc_age
-          - *system_penguin_age
+          # Hypervisors
+          - *system_hypervisor_1_age
+          - *system_hypervisor_2_age
+          - *system_hypervisor_3_age
+          - *system_hypervisor_4_age

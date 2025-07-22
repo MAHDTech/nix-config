@@ -7,6 +7,11 @@
 
       text = ''
         {
+          // Disable Telemetry
+          "editor.experimental.treeSitterTelemetry": false,
+          "telemetry.feedback.enabled": false,
+          "redhat.telemetry.enabled": false,
+
           // Cursor General
           "cursor.general.enableShadowWorkspace": true,
           "cursor.general.gitGraphIndexing": "enabled",
