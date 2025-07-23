@@ -45,8 +45,8 @@ in
 
     secrets = {
 
-      # Cloudflare Email for ACME.
-      "incus/acme/cloudflare/email" = {
+      # Cloudflare DNS API Token for ACME.
+      "incus/acme/cloudflare/dnsApiToken" = {
         sopsFile = keystoreFile;
         format = "yaml";
         mode = "0400";
@@ -58,18 +58,6 @@ in
         ];
       };
 
-      # Cloudflare API Key for ACME.
-      "incus/acme/cloudflare/apiKey" = {
-        sopsFile = keystoreFile;
-        format = "yaml";
-        mode = "0400";
-        owner = "root";
-        group = "root";
-        neededForUsers = false;
-        restartUnits = [
-          "incus-preseed.service"
-        ];
-      };
     };
 
     #########################################################
@@ -80,13 +68,17 @@ in
     #########################################################
 
     templates = {
+
+      # Cloudflare credentials for ACME.
       "incus-acme.env" = {
         owner = "root";
         content = ''
-          CLOUDFLARE_EMAIL="${config.sops.placeholder."incus/acme/cloudflare/email"}"
-          CLOUDFLARE_API_KEY="${config.sops.placeholder."incus/acme/cloudflare/apiKey"}"
+          CLOUDFLARE_DNS_API_TOKEN="${config.sops.placeholder."incus/acme/cloudflare/dnsApiToken"}"
         '';
       };
+
     };
+
   };
+
 }

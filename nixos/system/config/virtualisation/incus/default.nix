@@ -45,11 +45,6 @@ let
         "acme.domain" = "saltlabs.cloud";
         "acme.email" = "acme@saltlabs.cloud";
         "acme.provider" = "cloudflare";
-        # Passed via systemd service override.
-        #"acme.provider.environment" = ''
-        #  CLOUDFLARE_EMAIL="$(cat ${config.sops.secrets."incus/acme/cloudflare/email".path})"
-        #  CLOUDFLARE_API_KEY="$(cat ${config.sops.secrets."incus/acme/cloudflare/apiKey".path})"
-        #'';
         "acme.provider.resolvers" = "1.1.1.1,1.0.0.1";
 
         # Images
@@ -116,10 +111,10 @@ let
             "bridge.driver" = "openvswitch";
             "dns.domain" = "incus.local";
             "dns.nameservers" = "10.10.200.254";
-            "ipv4.address" = "10.10.201.254/24";
+            "ipv4.address" = "10.10.201.1/24";
             "ipv4.dhcp" = "true";
             "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.200";
-            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.254";
+            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
             "ipv4.nat" = "false";
             "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
             "ipv4.routing" = "false";
@@ -143,13 +138,12 @@ let
           config = {
             "dns.domain" = "nutanix.local";
             "dns.nameservers" = "10.10.200.254";
-            "ipv4.address" = "10.10.202.254/24";
+            "ipv4.address" = "10.10.202.1/24";
             "ipv4.dhcp" = "true";
             "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
-            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.254";
+            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
             "ipv4.nat" = "false";
             "ipv6.address" = "none";
-            #"network" = "incusbr0";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
           };
@@ -628,6 +622,10 @@ in
     incus = {
       enable = true;
 
+      # Current LTS (6.0.4) doesn't work with Lego.
+      #package = pkgs.incus-lts;
+      package = pkgs.incus;
+
       startTimeout = 900; # 15 minutes
       socketActivation = false;
       softDaemonRestart = true;
@@ -961,8 +959,33 @@ in
           };
 
           preStart = ''
-            ${pkgs.coreutils}/bin/echo "Waiting for OVN chassis '${hypervisorName}' to be registered..."
+            # Show the Incus version
+            ${pkgs.coreutils}/bin/echo "Starting Incus version: $(incus --version)"
+
+            # Check for lego in the PATH
+            ${pkgs.coreutils}/bin/echo "Checking for lego in the PATH..."
+            ${pkgs.coreutils}/bin/echo "lego: $(${pkgs.which}/bin/which lego)"
+            ${pkgs.coreutils}/bin/echo "$(lego --version || ${pkgs.coreutils}/bin/echo "lego not found")"
+
+            # Verify Cloudflare credentials are properly configured
+            ${pkgs.coreutils}/bin/echo "Checking Cloudflare credentials..."
+
+            # Check for DNS API Token (preferred method)
+            if [[ "''${CLOUDFLARE_DNS_API_TOKEN:-EMPTY}" != "EMPTY" ]]; then
+              ${pkgs.coreutils}/bin/echo "✓ Using Cloudflare DNS API Token (length: ''${#CLOUDFLARE_DNS_API_TOKEN} characters)"
+            # Check for Email + API Key (legacy method)
+            elif [[ "''${CLOUDFLARE_EMAIL:-EMPTY}" != "EMPTY" && "''${CLOUDFLARE_API_KEY:-EMPTY}" != "EMPTY" ]]; then
+              ${pkgs.coreutils}/bin/echo "✓ Using Cloudflare Email + API Key method"
+              ${pkgs.coreutils}/bin/echo "  Email: ''${CLOUDFLARE_EMAIL}"
+              ${pkgs.coreutils}/bin/echo "  API Key: (length: ''${#CLOUDFLARE_API_KEY} characters)"
+            else
+              ${pkgs.coreutils}/bin/echo "⚠️  WARNING: No Cloudflare credentials have been set!"
+              ${pkgs.coreutils}/bin/echo "   Either set CLOUDFLARE_DNS_API_TOKEN (recommended)"
+              ${pkgs.coreutils}/bin/echo "   Or set both CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY"
+            fi
+
             # Wait up to 15 minutes for the chassis to appear.
+            ${pkgs.coreutils}/bin/echo "Waiting for OVN chassis '${hypervisorName}' to be registered..."
             for i in {1..90}; do
               CHASSIS_FOUND=false
               CHASSIS_FOUND=$( (${pkgs.ovn}/bin/ovn-sbctl --format=json --timeout=3 list chassis | ${pkgs.jq}/bin/jq -r '.data[][] | select(type=="string")' | ${pkgs.gnugrep}/bin/grep -q -x "${hypervisorName}") || true )
@@ -1002,9 +1025,8 @@ in
           };
 
           preStart = ''
-            ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
-            ${pkgs.coreutils}/bin/echo "Verifying that Incus daemon is active before preseeding..."
             # Wait up to 30s for incus daemon to be fully responsive.
+            ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
             for i in {1..10}; do
               if ${pkgs.incus}/bin/incus admin waitready --timeout=3; then
                 ${pkgs.coreutils}/bin/echo "Incus daemon is ready."
