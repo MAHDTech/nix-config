@@ -109,11 +109,12 @@ let
           project = "default";
           config = {
             "bridge.driver" = "openvswitch";
-            "dns.mode" = "none"; # No DNS management
-            "ipv4.address" = "none"; # No bridge IP
-            "ipv4.dhcp" = "false"; # External DHCP
-            "ipv4.nat" = "false"; # No NAT
-            "ipv6.address" = "none"; # No IPv6
+            "dns.mode" = "none";
+            "ipv4.address" = "none";
+            "ipv4.dhcp" = "false";
+            "ipv4.nat" = "false";
+            "ipv4.routing" = "false";
+            "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
           };
@@ -134,8 +135,8 @@ let
             "ipv4.dhcp" = "true";
             "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.200";
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
-            "ipv4.nat" = "false";
             #"ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
+            "ipv4.nat" = "false";
             "ipv4.routing" = "true";
             "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
@@ -1076,7 +1077,7 @@ in
             chain forward {
               type filter hook forward priority 0; policy accept;
 
-              # Allow forwarding from bond0 to both bridges (inbound to instances)
+              # Allow forwarding from bond0 to bridges (inbound to instances)
               iifname "bond0" oifname "incusbr0" accept  # Transparent bridge
               iifname "bond0" oifname "incusbr1" accept  # Routed bridge
 
