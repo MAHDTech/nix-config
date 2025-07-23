@@ -1,7 +1,7 @@
 let
   # Flag to indicate if the cluster has been bootstrapped.
   # Set to true once the member has joined the cluster.
-  bootstrapped = true;
+  bootstrapped = false;
 
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-3";
@@ -20,7 +20,7 @@ let
 
   # TODO: SOPS encryption when this test is working.
   # The cluster token obtained during the bootstrap process. Only used if bootstrapped is true.
-  clusterToken = "eyJzZXJ2ZXJfbmFtZSI6IkhZUEVSVklTT1ItMyIsImZpbmdlcnByaW50IjoiMjFlM2NjNjg1OTgxZTdlYjUzYjk2Yjg0MWU0ZWYxZjNlNGY4MDYxMjM4NDZhMDliYTY2NzMzOWRmNmI3YjBmZCIsImFkZHJlc3NlcyI6WyIxMC4xMC4yMDAuMTE6OTQ0MyJdLCJzZWNyZXQiOiJjZDY4Y2Y3NTU3NmVlMTA1N2E0YmZjNzgxOTgwMzQ3MGJkNjZhMjAzMTdlMzkwYWQyMDEwZDU5ZGMyOWQ2NzU4IiwiZXhwaXJlc19hdCI6IjIwMjUtMDctMjRUMDQ6Mjc6MjIuOTU3NDU2NjE5KzEwOjAwIn0=";
+  clusterToken = "";
 in
 {
   imports = [
