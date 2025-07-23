@@ -155,6 +155,7 @@ function incus_cleanup() {
 	incus profile device rm default eth0 || true
 
 	incus network rm incusbr0 || true
+	incus network rm incusbr1 || true
 
 	incus storage rm default || true
 
@@ -292,9 +293,14 @@ function ovn_cleanup() {
 		log "WARN" "Failed to restart some OVN services"
 	}
 
-	log "INFO" "Clearing OVN Northbound database..."
+	log "INFO" "Removing incus bridge 0..."
 	sudo ovn-nbctl --if-exists ls-del incusbr0 || {
 		log "WARN" "Failed to remove incusbr0 logical switch from OVN NB"
+	}
+
+	log "INFO" "Removing incus bridge 1..."
+	sudo ovn-nbctl --if-exists ls-del incusbr1 || {
+		log "WARN" "Failed to remove incusbr1 logical switch from OVN NB"
 	}
 
 	log "INFO" "Clearing OVN Southbound chassis entries..."
@@ -346,7 +352,7 @@ function verify_cleanup() {
 
 	# Check OVS bridges
 	local OVS_BRIDGES
-	OVS_BRIDGES=$(sudo ovs-vsctl list-br 2>/dev/null | grep -E "incusbr0|br-int" || true)
+	OVS_BRIDGES=$(sudo ovs-vsctl list-br 2>/dev/null | grep -E "incusbr0|incusbr1|br-int" || true)
 	if [[ -n ${OVS_BRIDGES} ]]; then
 		log "WARN" "Some OVS bridges still exist: ${OVS_BRIDGES}"
 	else
@@ -355,7 +361,7 @@ function verify_cleanup() {
 
 	# Check OVN logical switches
 	local OVN_SWITCHES
-	OVN_SWITCHES=$(sudo ovn-nbctl ls-list 2>/dev/null | grep incusbr0 || true)
+	OVN_SWITCHES=$(sudo ovn-nbctl ls-list 2>/dev/null | grep -E "incusbr0|incusbr1" || true)
 	if [[ -n ${OVN_SWITCHES} ]]; then
 		log "WARN" "Some OVN logical switches still exist: ${OVN_SWITCHES}"
 	else
@@ -373,7 +379,7 @@ function verify_cleanup() {
 
 	# Check Incus network state
 	local INCUS_NETWORKS
-	INCUS_NETWORKS=$(incus network list --format compact 2>/dev/null | grep incusbr0 || true)
+	INCUS_NETWORKS=$(incus network list --format compact 2>/dev/null | grep -E "incusbr0|incusbr1" || true)
 	if [[ -n ${INCUS_NETWORKS} ]]; then
 		log "WARN" "Incus network still exists: ${INCUS_NETWORKS}"
 	else

@@ -508,7 +508,6 @@ if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" && ${INCUS_CLUSTER_DESTROY^^} =
 
 		Now that the initial setup has completed here are the next steps.
 
-		# TODO: Remove this?
 		- Verify that the member servers have joined the cluster
 
 		    incus cluster list
