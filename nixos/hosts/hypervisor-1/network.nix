@@ -60,6 +60,9 @@ in
         "10-wired" = {
           matchConfig.Name = lib.mkForce "enp6s0";
           networkConfig = defaultNetworkConfig;
+          dhcpV4Config = {
+            RouteMetric = lib.mkForce 2000; # Lower priority than bond0
+          };
         };
 
         "101-enp1s0f0" = {
@@ -85,50 +88,8 @@ in
           };
           networkConfig = defaultNetworkConfig;
           dhcpV4Config = {
-            RouteMetric = 1000;
+            RouteMetric = 1000; # Higher priority than management
           };
-          routes = [
-            # incusbr0
-            {
-              routeConfig = {
-                Destination = "10.10.201.0/24";
-                Gateway = "10.10.201.1";
-                Metric = 100;
-              };
-            }
-            # nutanix-vpc
-            {
-              routeConfig = {
-                Destination = "10.10.202.0/24";
-                Gateway = "10.10.201.1";
-                Metric = 100;
-              };
-            }
-            # ?-vpc
-            {
-              routeConfig = {
-                Destination = "10.10.203.0/24";
-                Gateway = "10.10.201.1";
-                Metric = 100;
-              };
-            }
-            # ?-vpc
-            {
-              routeConfig = {
-                Destination = "10.10.204.0/24";
-                Gateway = "10.10.201.1";
-                Metric = 100;
-              };
-            }
-            # ?-vpc
-            {
-              routeConfig = {
-                Destination = "10.10.205.0/24";
-                Gateway = "10.10.201.1";
-                Metric = 100;
-              };
-            }
-          ];
         };
 
       };

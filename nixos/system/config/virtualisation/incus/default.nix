@@ -109,7 +109,6 @@ let
           project = "default";
           config = {
             "bridge.driver" = "openvswitch";
-            "bridge.external_interfaces" = "bond0";
             "dns.domain" = "incus.local";
             "dns.nameservers" = "10.10.200.254";
             "ipv4.address" = "10.10.201.1/24";
@@ -477,9 +476,12 @@ let
             #########################################################
             # Networks
             #########################################################
-
-            # TODO: Add host specific network configuration here.
-
+            {
+              entity = "network";
+              name = "incusbr0";
+              key = "bridge.external_interfaces";
+              value = "bond0";
+            }
           ];
         }
         // lib.optionalAttrs (hypervisorRole == "bootstrap") {
@@ -1068,18 +1070,63 @@ in
             }
           '';
         };
+        incus = {
+          family = "ip";
+          content = ''
+            chain input {
+              type filter hook input priority 0; policy accept;
+
+              # Allow Incus dataplane traffic from all nodes
+              ip saddr 10.10.200.0/24 tcp dport 9443 accept
+            }
+          '';
+        };
+        management = {
+          family = "ip";
+          content = ''
+            chain input {
+              type filter hook input priority 0; policy accept;
+
+              # YOLO allow all traffic from management network (10.10.1.0/24)
+              ip saddr 10.10.1.0/24 accept
+
+              # Allow ICMP from management
+              ip saddr 10.10.1.0/24 ip protocol icmp accept
+
+              # Allow SSH from management
+              ip saddr 10.10.1.0/24 tcp dport 22 accept
+
+              # Allow HTTP from management
+              ip saddr 10.10.1.0/24 tcp dport 80 accept
+
+              # Allow HTTPS from management
+              ip saddr 10.10.1.0/24 tcp dport 443 accept
+
+              # Allow Incus API ports from management
+              ip saddr 10.10.1.0/24 tcp dport 8443 accept
+              ip saddr 10.10.1.0/24 tcp dport 9443 accept
+            }
+          '';
+        };
       };
     };
     firewall = {
       enable = true;
       trustedInterfaces = [
-        "incusbr0"
-        "bond0"
+        "lo" # Loopback
+        "enp6s0" # Management interface
+        "incusbr0" # Incus bridge
+        "bond0" # Bond interface
       ];
       allowedTCPPorts = [
-        8443
-        9443
+        22 # SSH
+        80 # HTTP
+        443 # HTTPS
+        8443 # Incus API
+        9443 # Incus UI
       ];
+      # Allow ICMP globally
+      allowPing = true;
     };
   };
 
