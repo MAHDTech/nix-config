@@ -87,6 +87,48 @@ in
           dhcpV4Config = {
             RouteMetric = 1000;
           };
+          routes = [
+            # incusbr0
+            {
+              routeConfig = {
+                Destination = "10.10.201.0/24";
+                Gateway = "10.10.201.1";
+                Metric = 100;
+              };
+            }
+            # nutanix-vpc
+            {
+              routeConfig = {
+                Destination = "10.10.202.0/24";
+                Gateway = "10.10.201.1";
+                Metric = 100;
+              };
+            }
+            # ?-vpc
+            {
+              routeConfig = {
+                Destination = "10.10.203.0/24";
+                Gateway = "10.10.201.1";
+                Metric = 100;
+              };
+            }
+            # ?-vpc
+            {
+              routeConfig = {
+                Destination = "10.10.204.0/24";
+                Gateway = "10.10.201.1";
+                Metric = 100;
+              };
+            }
+            # ?-vpc
+            {
+              routeConfig = {
+                Destination = "10.10.205.0/24";
+                Gateway = "10.10.201.1";
+                Metric = 100;
+              };
+            }
+          ];
         };
 
       };

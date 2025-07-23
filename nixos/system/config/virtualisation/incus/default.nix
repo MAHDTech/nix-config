@@ -109,6 +109,7 @@ let
           project = "default";
           config = {
             "bridge.driver" = "openvswitch";
+            "bridge.external_interfaces" = "bond0";
             "dns.domain" = "incus.local";
             "dns.nameservers" = "10.10.200.254";
             "ipv4.address" = "10.10.201.1/24";
@@ -117,7 +118,7 @@ let
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
             "ipv4.nat" = "false";
             "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
-            "ipv4.routing" = "false";
+            "ipv4.routing" = "true";
             "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
@@ -1046,6 +1047,28 @@ in
   networking = {
     nftables = {
       enable = true;
+      tables = {
+        forwarding = {
+          family = "ip";
+          content = ''
+            chain forward {
+              type filter hook forward priority 0; policy accept;
+
+              # Allow forwarding from bond0 to incusbr0 (inbound to instances)
+              iifname "bond0" oifname "incusbr0" accept
+
+              # Allow forwarding from incusbr0 to bond0 (outbound from instances, established/related)
+              iifname "incusbr0" oifname "bond0" ct state established,related accept
+
+              # Allow forwarding from incusbr0 to enp6s0 (incus to management interface)
+              iifname "incusbr0" oifname "enp6s0" accept
+
+              # Allow forwarding from enp6s0 to incusbr0 (management interface to incus)
+              iifname "enp6s0" oifname "incusbr0" accept
+            }
+          '';
+        };
+      };
     };
     firewall = {
       enable = true;
