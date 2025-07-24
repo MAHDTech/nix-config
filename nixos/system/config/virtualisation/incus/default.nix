@@ -37,15 +37,16 @@ let
         # Core
         "core.shutdown_timeout" = 5;
 
+        # TODO: Debug ACME configuration with Cloudflare.
         # ACME
-        "acme.agree_tos" = true;
+        #"acme.agree_tos" = true;
         #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
-        "acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
-        "acme.challenge" = "DNS-01";
-        "acme.domain" = "saltlabs.cloud";
-        "acme.email" = "acme@saltlabs.cloud";
-        "acme.provider" = "cloudflare";
-        "acme.provider.resolvers" = "1.1.1.1,1.0.0.1";
+        #"acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
+        #"acme.challenge" = "DNS-01";
+        #"acme.domain" = "saltlabs.cloud";
+        #"acme.email" = "acme@saltlabs.cloud";
+        #"acme.provider" = "cloudflare";
+        #"acme.provider.resolvers" = "1.1.1.1,1.0.0.1";
 
         # Images
         "images.auto_update_interval" = 6;

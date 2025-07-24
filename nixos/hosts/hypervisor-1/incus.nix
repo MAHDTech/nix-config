@@ -1,7 +1,7 @@
 let
   # Flag to indicate if the cluster has been bootstrapped.
   # Set to true once all members have joined the cluster.
-  bootstrapped = false;
+  bootstrapped = true;
 
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-1";
