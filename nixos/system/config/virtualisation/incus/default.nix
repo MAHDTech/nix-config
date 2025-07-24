@@ -1134,20 +1134,12 @@ in
             chain input {
               type filter hook input priority 0; policy accept;
 
+              # TODO: Lockdown when done testing.
               # YOLO allow all traffic from management network (10.10.1.0/24)
               ip saddr 10.10.1.0/24 accept
 
-              # Allow ICMP from management
-              ip saddr 10.10.1.0/24 ip protocol icmp accept
-
               # Allow SSH from management
               ip saddr 10.10.1.0/24 tcp dport 22 accept
-
-              # Allow HTTP from management
-              ip saddr 10.10.1.0/24 tcp dport 80 accept
-
-              # Allow HTTPS from management
-              ip saddr 10.10.1.0/24 tcp dport 443 accept
 
               # Allow Incus API ports from management
               ip saddr 10.10.1.0/24 tcp dport 8443 accept
@@ -1164,20 +1156,12 @@ in
             chain input {
               type filter hook input priority 0; policy accept;
 
+              # TODO: Lockdown when done testing.
               # YOLO allow all traffic from platform network (10.10.100.0/24)
               ip saddr 10.10.100.0/24 accept
 
-              # Allow ICMP from platform
-              ip saddr 10.10.100.0/24 ip protocol icmp accept
-
               # Allow SSH from platform
               ip saddr 10.10.100.0/24 tcp dport 22 accept
-
-              # Allow HTTP from platform
-              ip saddr 10.10.100.0/24 tcp dport 80 accept
-
-              # Allow HTTPS from platform
-              ip saddr 10.10.100.0/24 tcp dport 443 accept
 
               # Allow Incus API ports from platform
               ip saddr 10.10.100.0/24 tcp dport 8443 accept
@@ -1194,14 +1178,11 @@ in
             chain input {
               type filter hook input priority 0; policy accept;
 
-              # Allow ICMP from anywhere for debugging
-              ip saddr 0.0.0.0/0 ip protocol icmp accept
+              # Allow HTTP from anywhere for exposed applications on bond0 only
+              iifname "bond0" ip saddr 0.0.0.0/0 tcp dport 80 accept
 
-              # Allow HTTP from anywhere for exposed applications
-              ip saddr 0.0.0.0/0 tcp dport 80 accept
-
-              # Allow HTTPS from anywhere for exposed applications
-              ip saddr 0.0.0.0/0 tcp dport 443 accept
+              # Allow HTTPS from anywhere for exposed applications on bond0 only
+              iifname "bond0" ip saddr 0.0.0.0/0 tcp dport 443 accept
             }
           '';
         };
