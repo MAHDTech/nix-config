@@ -206,12 +206,11 @@ function wait_for_server() {
 				msg "DEBUG" "${HYPERVISOR} uptime: $UPTIME_SECONDS seconds"
 
 				if [[ $UPTIME_SECONDS -lt $UPTIME_THRESHOLD ]]; then
-					msg "INFO" "$HYPERVISOR uptime is $UPTIME_SECONDS seconds, system has recently rebooted"
+					msg "INFO" "$HYPERVISOR uptime is $UPTIME_SECONDS seconds, system has recently rebooted, waiting..."
 
 					# Edge case: Wait an additional period of time to ensure all services are back online once SSH is working.
 					sleep ${SLEEP_TIME} || echo "Failed to sleep for $SLEEP_TIME seconds"
 
-					return 0
 				else
 
 					# Check if the system is in shutdown state
