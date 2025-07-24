@@ -19,6 +19,14 @@ declare -r INCUS_CLUSTER_MEMBER_NODES=(
 	"hypervisor-4"
 )
 
+declare -r REQUIRED_TOOLS=(
+	"incus"
+	"jq"
+	"ovn-nbctl"
+	"ovn-sbctl"
+	"ovs-vsctl"
+)
+
 # The ZFS pool name.
 declare -r ZFS_POOL_NAME="zpool"
 
@@ -73,33 +81,13 @@ function log() {
 	return 0
 }
 
-function incus_check() {
-	local INCUS_TOOLS=(
-		"incus"
-	)
+function check_for_required_tools() {
 
-	# Make sure we have the required incus tools available.
-	for TOOL in "${INCUS_TOOLS[@]}"; do
+	# Make sure we have the required tools available in the PATH.
+	for TOOL in "${REQUIRED_TOOLS[@]}"; do
 		if ! command -v "${TOOL}" &>/dev/null; then
-			log "ERROR" "Required Incus tool not found: ${TOOL}"
+			log "ERROR" "Required tool not found: ${TOOL}"
 			return 1
-		fi
-	done
-
-	return 0
-}
-
-function network_tools_check() {
-	local NETWORK_TOOLS=(
-		"ovs-vsctl"
-		"ovn-nbctl"
-		"ovn-sbctl"
-	)
-
-	# Make sure we have the required network tools available.
-	for TOOL in "${NETWORK_TOOLS[@]}"; do
-		if ! command -v "${TOOL}" &>/dev/null; then
-			log "WARN" "Network tool not found: ${TOOL} (network cleanup may be limited)"
 		fi
 	done
 
@@ -113,16 +101,8 @@ function incus_bootstrap() {
 	case "${TYPE^^}" in
 
 	"BOOTSTRAP")
-		log "INFO" "Bootstrapping new incus cluster on node: ${NODE^^}"
 
-		# Preseed is automatically applied NixOS, restart the service to ensure it's been run.
-		log "INFO" "Pre-seeding the incus cluster..."
-		sudo systemctl restart incus-preseed || {
-			log "ERROR" "Failed to run incus-preseed"
-			journalctl -u incus-preseed -n 25 -o cat --no-pager
-			return 1
-		}
-		sleep 30
+		log "INFO" "Bootstrapping new incus cluster on node: ${NODE^^}"
 
 		# Request join tokens for all member nodes.
 		for NODE in "${INCUS_CLUSTER_MEMBER_NODES[@]}"; do
@@ -133,18 +113,19 @@ function incus_bootstrap() {
 			}
 		done
 
-		log "WARN" "########## IMPORTANT ##########"
-		log "WARN" "Capture and save the join tokens for all nodes in the cluster."
-		log "WARN" "########## IMPORTANT ##########"
+		log "WARN" "#################### IMPORTANT ####################"
+		log "WARN" "Capture and save the join tokens for all nodes in the cluster"
+		log "WARN" "#################### IMPORTANT ####################"
 
 		read -rp "Press enter to continue..." || true
 
 		;;
 
 	"JOIN")
-		log "WARN" "########## IMPORTANT ##########"
-		log "WARN" "If you haven't already, now update the nix flake using the token for node: ${NODE^^}"
-		log "WARN" "########## IMPORTANT ##########"
+
+		log "WARN" "#################### IMPORTANT ####################"
+		log "WARN" "If you haven't already, update the nix flake with the token for node ${NODE^^} now!"
+		log "WARN" "#################### IMPORTANT ####################"
 
 		read -rp "Press enter to continue..." || true
 
@@ -184,6 +165,7 @@ function ovs_cleanup() {
 		log "WARN" "Failed to restart some OVS services"
 		return 1
 	}
+	sleep 10
 
 	log "INFO" "Removing all OVS bridges..."
 	for bridge in $(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null || true); do
@@ -295,45 +277,112 @@ function ovs_cleanup() {
 function ovn_cleanup() {
 	log "INFO" "Cleaning up Open Virtual Network configuration..."
 
-	log "INFO" "Restarting OVN services to ensure clean state..."
-	sudo systemctl restart \
-		ovn-controller.service \
-		ovn-nb-ovsdb.service \
-		ovn-northd.service \
-		ovn-sb-ovsdb.service || {
-		log "WARN" "Failed to restart some OVN services"
-	}
-
-	log "INFO" "Removing incus bridge 0..."
-	sudo ovn-nbctl --if-exists ls-del incusbr0 || {
-		log "WARN" "Failed to remove incusbr0 logical switch from OVN NB"
-	}
-
-	log "INFO" "Removing incus bridge 1..."
-	sudo ovn-nbctl --if-exists ls-del incusbr1 || {
-		log "WARN" "Failed to remove incusbr1 logical switch from OVN NB"
-	}
-
-	log "INFO" "Clearing OVN Southbound chassis entries..."
-	sudo ovn-sbctl --if-exists chassis-del "$(hostname)" || {
-		log "WARN" "Failed to remove chassis from OVN SB"
-	}
-
-	log "INFO" "Restarting OVS services..."
-	sudo systemctl restart \
-		ovs-vswitchd.service \
-		ovsdb.service || {
-		log "WARN" "Failed to restart some OVS services"
-	}
-
+	# Restart all OVN services first to ensure a clean state
 	log "INFO" "Restarting OVN services..."
 	sudo systemctl restart \
 		ovn-controller.service \
-		ovn-nb-ovsdb.service \
 		ovn-northd.service \
+		ovn-nb-ovsdb.service \
 		ovn-sb-ovsdb.service || {
-		log "WARN" "Failed to restart some OVS services"
+		log "WARN" "Failed to restart some OVN services"
 	}
+	sleep 10
+
+	# Get all logical switches and delete them
+	for ls in $(sudo ovn-nbctl --timeout=10 ls-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
+		log "INFO" "Removing logical switch: $ls"
+		sudo ovn-nbctl --timeout=10 --if-exists ls-del "$ls" || {
+			log "WARN" "Failed to remove logical switch: $ls"
+		}
+	done
+
+	# Get all logical routers and delete them
+	log "INFO" "Removing all logical routers from OVN NB..."
+	for lr in $(sudo ovn-nbctl --timeout=10 lr-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
+		log "INFO" "Removing logical router: $lr"
+		sudo ovn-nbctl --timeout=10 --if-exists lr-del "$lr" || {
+			log "WARN" "Failed to remove logical router: $lr"
+		}
+	done
+
+	# Stop services for database recreation
+	log "INFO" "Stopping OVN services for database cleanup..."
+	sudo systemctl stop \
+		ovn-controller.service \
+		ovn-northd.service \
+		ovn-nb-ovsdb.service \
+		ovn-sb-ovsdb.service || {
+		log "WARN" "Failed to stop some OVN services"
+	}
+
+	# Remove OVN database files completely
+	log "INFO" "Removing OVN database files..."
+	sudo rm -f /var/lib/ovn/ovnnb_db.db* || {
+		log "WARN" "Failed to remove OVN NB database"
+	}
+	sudo rm -f /var/lib/ovn/ovnsb_db.db* || {
+		log "WARN" "Failed to remove OVN SB database"
+	}
+
+	# Ensure OVN database directory exists
+	sudo mkdir -p /var/lib/ovn || {
+		log "ERROR" "Failed to create OVN database directory"
+		return 1
+	}
+
+	# Find OVN schema files
+	declare OVN_NB_SCHEMA_PATH OVN_SB_SCHEMA_PATH
+	OVN_NB_SCHEMA_PATH=$(find /nix/store -name "ovn-nb.ovsschema" -path "*/share/ovn/*" 2>/dev/null | head -1) || {
+		log "ERROR" "Could not find OVN NB schema file"
+		return 1
+	}
+	OVN_SB_SCHEMA_PATH=$(find /nix/store -name "ovn-sb.ovsschema" -path "*/share/ovn/*" 2>/dev/null | head -1) || {
+		log "ERROR" "Could not find OVN SB schema file"
+		return 1
+	}
+
+	if [ "${OVN_NB_SCHEMA_PATH:-EMPTY}" = "EMPTY" ] || [ "${OVN_SB_SCHEMA_PATH:-EMPTY}" = "EMPTY" ]; then
+		log "ERROR" "Could not find OVN schema files, unable to recreate the OVN databases"
+		return 1
+	fi
+
+	log "DEBUG" "Using OVN NB schema: $OVN_NB_SCHEMA_PATH"
+	log "DEBUG" "Using OVN SB schema: $OVN_SB_SCHEMA_PATH"
+
+	# Recreate OVN databases
+	log "INFO" "Recreating OVN NB database..."
+	sudo ovsdb-tool create /var/lib/ovn/ovnnb_db.db "$OVN_NB_SCHEMA_PATH" || {
+		log "ERROR" "Failed to create OVN NB database"
+		return 1
+	}
+
+	log "INFO" "Recreating OVN SB database..."
+	sudo ovsdb-tool create /var/lib/ovn/ovnsb_db.db "$OVN_SB_SCHEMA_PATH" || {
+		log "ERROR" "Failed to create OVN SB database"
+		return 1
+	}
+
+	# Restart all OVN services
+	log "INFO" "Restarting OVN services..."
+	sudo systemctl start \
+		ovn-nb-ovsdb.service \
+		ovn-sb-ovsdb.service \
+		ovn-northd.service \
+		ovn-controller.service || {
+		log "WARN" "Failed to start some OVN services"
+	}
+
+	# Wait for OVN services to be ready
+	log "INFO" "Waiting for OVN services to be ready..."
+	for i in {1..30}; do
+		if sudo ovn-nbctl --timeout=5 list nb_global >/dev/null 2>&1 &&
+			sudo ovn-sbctl --timeout=5 list sb_global >/dev/null 2>&1; then
+			log "INFO" "OVN services are ready!"
+			break
+		fi
+		log "DEBUG" "Waiting for OVN services... ($i/30)"
+		sleep 2
+	done
 
 	log "INFO" "Open Virtual Network cleanup completed"
 	return 0
@@ -358,47 +407,61 @@ function network_services_cleanup() {
 	return 0
 }
 
-function verify_cleanup() {
+function cleanup_verification() {
 	log "INFO" "Verifying cleanup status..."
 
 	# Check OVS bridges
-	local OVS_BRIDGES
-	OVS_BRIDGES=$(sudo ovs-vsctl list-br 2>/dev/null | grep -E "incusbr0|incusbr1|br-int" || true)
-	if [[ -n ${OVS_BRIDGES} ]]; then
-		log "WARN" "Some OVS bridges still exist: ${OVS_BRIDGES}"
-	else
+	declare ovs_bridges_count
+	ovs_bridges_count=$(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null | wc -l || echo "0")
+	if [ "$ovs_bridges_count" -eq 0 ]; then
 		log "INFO" "✓ OVS bridges cleaned successfully"
+	else
+		declare remaining_bridges
+		remaining_bridges=$(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null | tr '\n' ' ' || echo "none")
+		log "WARN" "Some OVS bridges still exist: $remaining_bridges"
 	fi
 
 	# Check OVN logical switches
-	local OVN_SWITCHES
-	OVN_SWITCHES=$(sudo ovn-nbctl ls-list 2>/dev/null | grep -E "incusbr0|incusbr1" || true)
-	if [[ -n ${OVN_SWITCHES} ]]; then
-		log "WARN" "Some OVN logical switches still exist: ${OVN_SWITCHES}"
-	else
+	declare ovn_ls_count
+	ovn_ls_count=$(sudo ovn-nbctl --timeout=5 ls-list 2>/dev/null | wc -l || echo "0")
+	if [ "$ovn_ls_count" -eq 0 ]; then
 		log "INFO" "✓ OVN logical switches cleaned successfully"
+	else
+		declare remaining_ls
+		remaining_ls=$(sudo ovn-nbctl --timeout=5 ls-list 2>/dev/null | awk '{print $2}' | grep -v '^$' | tr '\n' ' ' || echo "none")
+		log "WARN" "Some OVN logical switches still exist: $remaining_ls"
 	fi
 
-	# Check for chassis entries
-	local CHASSIS_ENTRIES
-	CHASSIS_ENTRIES=$(sudo ovn-sbctl chassis-list 2>/dev/null | grep "$(hostname)" || true)
-	if [[ -n ${CHASSIS_ENTRIES} ]]; then
-		log "INFO" "✓ Chassis entry exists (expected for active node): $(hostname)"
+	# Check OVN logical routers
+	declare ovn_lr_count
+	ovn_lr_count=$(sudo ovn-nbctl --timeout=5 lr-list 2>/dev/null | wc -l || echo "0")
+	if [ "$ovn_lr_count" -eq 0 ]; then
+		log "INFO" "✓ OVN logical routers cleaned successfully"
 	else
+		declare remaining_lr
+		remaining_lr=$(sudo ovn-nbctl --timeout=5 lr-list 2>/dev/null | awk '{print $2}' | grep -v '^$' | tr '\n' ' ' || echo "none")
+		log "WARN" "Some OVN logical routers still exist: $remaining_lr"
+	fi
+
+	# Check OVN chassis entries
+	declare chassis_count
+	chassis_count=$(sudo ovn-sbctl --timeout=5 list chassis 2>/dev/null | grep -c "^_uuid" || echo "0")
+	if [ "$chassis_count" -eq 0 ]; then
 		log "INFO" "✓ No chassis entries found"
+	else
+		log "WARN" "Some chassis entries still exist (count: $chassis_count)"
 	fi
 
-	# Check Incus network state
-	local INCUS_NETWORKS
-	INCUS_NETWORKS=$(incus network list --format compact 2>/dev/null | grep -E "incusbr0|incusbr1" || true)
-	if [[ -n ${INCUS_NETWORKS} ]]; then
-		log "WARN" "Incus network still exists: ${INCUS_NETWORKS}"
-	else
+	# Check Incus networks
+	declare incus_networks_count
+	incus_networks_count=$(incus query /1.0/networks 2>/dev/null | jq -r '.[]' | grep -c "incusbr" || echo "0")
+	if [ "$incus_networks_count" -eq 0 ]; then
 		log "INFO" "✓ Incus networks cleaned successfully"
+	else
+		log "WARN" "Some Incus networks still exist"
 	fi
 
 	log "INFO" "Cleanup verification completed"
-	return 0
 }
 
 function incus_destroy_cluster() {
@@ -481,6 +544,13 @@ function incus_destroy_cluster() {
 		return 1
 	}
 
+	# Verify the database files were removed
+	if [[ -f /var/lib/incus/database/global ]] ||
+		[[ -f /var/lib/incus/database/local.db ]]; then
+		log "ERROR" "Database files still exist"
+		exit 1
+	fi
+
 	log "INFO" "Removing incus certificates..."
 
 	sudo rm -rf /var/lib/incus/{cluster.crt,cluster.key,server.crt,server.key} || {
@@ -489,7 +559,7 @@ function incus_destroy_cluster() {
 	}
 
 	# Verify cleanup was successful
-	verify_cleanup || {
+	cleanup_verification || {
 		log "WARN" "Cleanup verification encountered issues"
 	}
 
@@ -538,13 +608,9 @@ parse_flags "$@" || {
 	exit 1
 }
 
-incus_check || {
-	log "ERROR" "Incus tools not found"
+check_for_required_tools || {
+	log "ERROR" "Required tools not found"
 	exit 1
-}
-
-network_tools_check || {
-	log "WARN" "Some network tools not found, cleanup may be limited"
 }
 
 ##################################################
@@ -563,8 +629,6 @@ fi
 
 # If this node is the bootstrap node, bootstrap the cluster.
 if [[ ${INCUS_NODENAME^^} == "${INCUS_CLUSTER_BOOTSTRAP_NODE^^}" ]]; then
-
-	log "INFO" "Bootstrapping new incus cluster from node: ${INCUS_NODENAME^^}"
 
 	incus_bootstrap "$INCUS_NODENAME" "BOOTSTRAP" || {
 		log "ERROR" "Failed to bootstrap cluster on node: ${INCUS_NODENAME^^}"
@@ -597,9 +661,9 @@ fi
 for PORT in "${FIREWALL_PORTS[@]}"; do
 	log "INFO" "Verifying firewall port ${PORT}"
 	sudo nft list ruleset | grep -q "${PORT}" || {
-		log "WARN" "##### IMPORTANT #####"
+		log "WARN" "#################### IMPORTANT ####################"
 		log "WARN" "You seem to be missing a firewall rule to allow TCP ${PORT} traffic. Don't forget to add it!"
-		log "WARN" "##### IMPORTANT #####"
+		log "WARN" "#################### IMPORTANT ####################"
 	}
 done
 

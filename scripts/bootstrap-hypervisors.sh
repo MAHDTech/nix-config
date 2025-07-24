@@ -30,6 +30,15 @@ HYPERVISORS=(
 	"hypervisor-4"
 )
 
+declare -r REQUIRED_NIXPKGS=(
+	"incus"
+	"jq"
+	"nftables"
+	"openvswitch"
+	"ovn"
+	"zfs"
+)
+
 ##################################################
 # Functions
 ##################################################
@@ -72,7 +81,7 @@ function msg() {
 function run_nixos_rebuild() {
 	local HYPERVISOR=$1
 
-	msg "INFO" "Running nixos-rebuild boot on $HYPERVISOR"
+	msg "INFO" "Running nixos-rebuild boot on ${HYPERVISOR}"
 
 	nixos-rebuild boot \
 		--use-remote-sudo \
@@ -80,7 +89,7 @@ function run_nixos_rebuild() {
 		--flake "path:.#${HYPERVISOR^^}" \
 		--target-host "${HYPERVISOR}.${DOMAIN}" \
 		--build-host "${HYPERVISOR}.${DOMAIN}" || {
-		msg "ERROR" "Failed to upgrade $HYPERVISOR"
+		msg "ERROR" "Failed to upgrade ${HYPERVISOR}"
 		exit 1
 	}
 }
@@ -102,11 +111,11 @@ function run_ssh_command() {
 function show_system_status() {
 	local HYPERVISOR=$1
 
-	msg "INFO" "Showing zpool status on $HYPERVISOR"
-	run_ssh_command "$HYPERVISOR" "sudo -n zpool status" "Failed to show zpool status on $HYPERVISOR"
+	msg "INFO" "Showing zpool status on ${HYPERVISOR}"
+	run_ssh_command "${HYPERVISOR}" "sudo -n zpool status" "Failed to show zpool status on ${HYPERVISOR}"
 
-	msg "INFO" "Showing failed systemd services on $HYPERVISOR"
-	run_ssh_command "$HYPERVISOR" \
+	msg "INFO" "Showing failed systemd services on ${HYPERVISOR}"
+	run_ssh_command "${HYPERVISOR}" \
 		"FAILED_UNITS=\$(sudo -n systemctl list-units --state=failed --plain --no-legend | awk '{print \$1}' | grep -v '^$');
 		if [[ -n \"\$FAILED_UNITS\" ]]; then
 			echo \"\$FAILED_UNITS\" | while read -r UNIT; do
@@ -118,7 +127,7 @@ function show_system_status() {
 		else
 			echo \"No failed systemd services found\";
 		fi" \
-		"Failed to show failed systemd services on $HYPERVISOR"
+		"Failed to show failed systemd services on ${HYPERVISOR}"
 
 	return 0
 }
@@ -126,9 +135,9 @@ function show_system_status() {
 function copy_bootstrap_script() {
 	local HYPERVISOR=$1
 
-	msg "INFO" "Copying bootstrap-incus.sh to $HYPERVISOR"
+	msg "INFO" "Copying bootstrap-incus.sh to ${HYPERVISOR}"
 	rsync -av ./scripts/bootstrap-incus.sh "${HYPERVISOR}.${DOMAIN}:/tmp/bootstrap-incus.sh" || {
-		msg "ERROR" "Failed to copy bootstrap-incus.sh to $HYPERVISOR"
+		msg "ERROR" "Failed to copy bootstrap-incus.sh to ${HYPERVISOR}"
 		exit 1
 	}
 
@@ -139,21 +148,21 @@ function reboot_server() {
 	local HYPERVISOR=$1
 
 	if [[ ${YOLO_MODE^^} == "FALSE" ]]; then
-		read -rp "Reboot $HYPERVISOR? (y/n): " REPLY
+		read -rp "Reboot ${HYPERVISOR}? (y/n): " REPLY
 	else
 		REPLY="Y"
 	fi
 
 	if [[ ${REPLY^^} != "Y" ]]; then
 
-		msg "INFO" "Skipping reboot for $HYPERVISOR"
+		msg "INFO" "Skipping reboot for ${HYPERVISOR}"
 		return 0
 
 	else
 
-		msg "INFO" "Rebooting $HYPERVISOR"
-		run_ssh_command "$HYPERVISOR" "sudo -n systemctl reboot" "Failed to reboot $HYPERVISOR" || {
-			msg "ERROR" "Failed to reboot $HYPERVISOR"
+		msg "INFO" "Rebooting ${HYPERVISOR}"
+		run_ssh_command "${HYPERVISOR}" "sudo -n systemctl reboot" "Failed to reboot ${HYPERVISOR}" || {
+			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
 			return 1
 		}
 
@@ -172,7 +181,7 @@ function wait_for_server() {
 	local UPTIME_SECONDS=0
 	local SYSTEM_STATE="unknown"
 
-	msg "INFO" "Waiting for $HYPERVISOR to come back online after reboot..."
+	msg "INFO" "Waiting for ${HYPERVISOR} to come back online after reboot..."
 
 	while [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; do
 
@@ -182,7 +191,7 @@ function wait_for_server() {
 		# Increment attempt counter
 		ATTEMPT=$((ATTEMPT + 1))
 
-		msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if $HYPERVISOR is online..."
+		msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking if ${HYPERVISOR} is online..."
 
 		# First check if the host is reachable with ping
 		if ping -c 1 -W 5 "${HYPERVISOR}.${DOMAIN}" &>/dev/null; then
@@ -205,7 +214,7 @@ function wait_for_server() {
 				msg "DEBUG" "${HYPERVISOR} uptime: $UPTIME_SECONDS seconds"
 
 				if [[ $UPTIME_SECONDS -lt $UPTIME_THRESHOLD ]]; then
-					msg "INFO" "$HYPERVISOR uptime is $UPTIME_SECONDS seconds, system has recently rebooted, waiting..."
+					msg "INFO" "${HYPERVISOR} uptime is $UPTIME_SECONDS seconds, system has recently rebooted, waiting..."
 
 					# Edge case: Wait an additional period of time to ensure all services are back online once SSH is working.
 					sleep ${SLEEP_TIME} || echo "Failed to sleep for $SLEEP_TIME seconds"
@@ -261,12 +270,12 @@ function wait_for_server() {
 		fi
 
 		if [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; then
-			msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: $HYPERVISOR not ready yet, waiting ${SLEEP_TIME}s..."
+			msg "DEBUG" "Attempt $ATTEMPT/$MAX_ATTEMPTS: ${HYPERVISOR} not ready yet, waiting ${SLEEP_TIME}s..."
 			sleep "$SLEEP_TIME" || echo "Failed to sleep for $SLEEP_TIME seconds"
 		fi
 	done
 
-	msg "ERROR" "$HYPERVISOR did not come back online within expected time"
+	msg "ERROR" "${HYPERVISOR} did not come back online within expected time"
 	exit 1
 }
 
@@ -274,10 +283,41 @@ function setup_server() {
 	local HYPERVISOR=$1
 	local SERVER_TYPE
 
-	if [[ ${HYPERVISOR} == "${BOOTSTRAP_SERVER}" ]]; then
+	##################################################
+	# Common tasks for all server types
+	##################################################
+
+	# Copy across the bootstrap script
+	copy_bootstrap_script "${HYPERVISOR}"
+
+	# Run nixos-rebuild
+	run_nixos_rebuild "${HYPERVISOR}"
+
+	# Show system status
+	show_system_status "${HYPERVISOR}"
+
+	##################################################
+	# Server type specific tasks
+	##################################################
+
+	if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
 
 		# Bootstrap server
 		SERVER_TYPE="bootstrap"
+
+		# TODO: Remove this once the process is solid!!!
+		# TODO: Make the process solid!!! lol :D
+		# Show notice to update flake with cluster token
+		cat <<-EOF
+			##################################################
+			                    IMPORTANT
+			##################################################
+
+			CHECK: Last chance to back out before bootstrapping ${HYPERVISOR}
+
+			##################################################
+		EOF
+		read -rp "Press enter to continue..."
 
 	else
 
@@ -290,7 +330,7 @@ function setup_server() {
 			                    IMPORTANT
 			##################################################
 
-			Update the nix flake now with the following for $HYPERVISOR:
+			Update the nix flake now with the following for ${HYPERVISOR}:
 
 			    clusterToken = <token>
 
@@ -304,33 +344,17 @@ function setup_server() {
 
 	fi
 
-	msg "INFO" "Setting up ${SERVER_TYPE} server: $HYPERVISOR"
-
-	# Run nixos-rebuild
-	run_nixos_rebuild "$HYPERVISOR"
-
-	# Show system status
-	show_system_status "$HYPERVISOR"
-
-	# Copy across the bootstrap script
-	copy_bootstrap_script "$HYPERVISOR"
-
-	# Reboot the server
-	if reboot_server "$HYPERVISOR"; then
-
-		# Wait for server to come back online
-		wait_for_server "$HYPERVISOR"
-
-		# Now run the bootstrap script
-		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in ${SERVER_TYPE} mode"
-		run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
-
+	# Reboot the server and wait for it to come back online
+	if reboot_server "${HYPERVISOR}"; then
+		wait_for_server "${HYPERVISOR}"
 	else
-
-		msg "ERROR" "Failed to reboot $HYPERVISOR"
+		msg "ERROR" "Failed to reboot ${SERVER_TYPE} server: ${HYPERVISOR}"
 		exit 1
-
 	fi
+
+	# Run the bootstrap script inside a nix-shell with the required tools.
+	msg "INFO" "Running bootstrap-incus.sh on ${HYPERVISOR} in ${SERVER_TYPE} mode"
+	run_ssh_command "${HYPERVISOR}" "sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/bootstrap-incus.sh'" "Failed to run bootstrap-incus.sh on ${HYPERVISOR}"
 
 	return 0
 }
@@ -338,15 +362,17 @@ function setup_server() {
 function handle_cluster_destroy() {
 	local HYPERVISOR=$1
 
-	msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in destroy mode"
+	msg "INFO" "Running bootstrap-incus.sh on ${HYPERVISOR} in destroy mode"
 
 	# Show system status
-	show_system_status "$HYPERVISOR"
+	show_system_status "${HYPERVISOR}"
 
 	# Copy and run bootstrap script in destroy mode
-	copy_bootstrap_script "$HYPERVISOR"
+	copy_bootstrap_script "${HYPERVISOR}"
 
-	run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh --incus-destroy-cluster" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
+	# Run the bootstrap script inside a nix-shell with the required tools.
+	msg "INFO" "Running bootstrap-incus.sh on ${HYPERVISOR} in destroy mode"
+	run_ssh_command "${HYPERVISOR}" "sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/bootstrap-incus.sh --incus-destroy-cluster'" "Failed to run bootstrap-incus.sh on ${HYPERVISOR}"
 }
 
 ##################################################
@@ -385,17 +411,17 @@ msg "DEBUG" "INCUS_CLUSTER_BOOTSTRAPPED: ${INCUS_CLUSTER_BOOTSTRAPPED^^}"
 msg "INFO" "Checking if all servers are reachable..."
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
-	msg "INFO" "Checking if $HYPERVISOR is reachable (ping)..."
+	msg "INFO" "Checking if ${HYPERVISOR} is reachable (ping)..."
 
 	ping -c 1 -W 5 "${HYPERVISOR}.${DOMAIN}" &>/dev/null || {
-		msg "ERROR" "$HYPERVISOR is not reachable"
+		msg "ERROR" "${HYPERVISOR} is not reachable"
 		exit 1
 	}
 
-	msg "INFO" "Checking if $HYPERVISOR is reachable (SSH)..."
+	msg "INFO" "Checking if ${HYPERVISOR} is reachable (SSH)..."
 
 	ssh -o ConnectTimeout=15 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 "${HYPERVISOR}.${DOMAIN}" "echo 'SSH connection OK!'" &>/dev/null || {
-		msg "ERROR" "$HYPERVISOR is not reachable"
+		msg "ERROR" "${HYPERVISOR} is not reachable"
 		exit 1
 	}
 
@@ -415,7 +441,7 @@ else
 fi
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
-	msg "INFO" "Processing $HYPERVISOR"
+	msg "INFO" "Processing ${HYPERVISOR}"
 
 	# DESTROY MODE
 	if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
@@ -423,14 +449,14 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 		print_header "MODE: Destroy"
 
 		# Apply the `bootstrapped = false` flag on next boot.
-		run_nixos_rebuild "$HYPERVISOR"
+		run_nixos_rebuild "${HYPERVISOR}"
 
 		# Blow away the cluster and all data.
-		handle_cluster_destroy "$HYPERVISOR"
+		handle_cluster_destroy "${HYPERVISOR}"
 
 		# Reboot server without waiting for it to come back online
-		reboot_server "$HYPERVISOR" || {
-			msg "ERROR" "Failed to reboot $HYPERVISOR"
+		reboot_server "${HYPERVISOR}" || {
+			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
 			exit 1
 		}
 
@@ -440,23 +466,23 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 		print_header "MODE: Bootstrap"
 
 		# Handle cluster setup mode
-		setup_server "$HYPERVISOR"
+		setup_server "${HYPERVISOR}"
 
 	# UPGRADE MODE
 	else
 
 		print_header "MODE: Upgrade"
 
-		run_nixos_rebuild "$HYPERVISOR"
+		run_nixos_rebuild "${HYPERVISOR}"
 
-		show_system_status "$HYPERVISOR"
+		show_system_status "${HYPERVISOR}"
 
-		copy_bootstrap_script "$HYPERVISOR"
+		copy_bootstrap_script "${HYPERVISOR}"
 
-		if reboot_server "$HYPERVISOR"; then
-			wait_for_server "$HYPERVISOR"
+		if reboot_server "${HYPERVISOR}"; then
+			wait_for_server "${HYPERVISOR}"
 		else
-			msg "ERROR" "Failed to reboot $HYPERVISOR"
+			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
 			exit 1
 		fi
 
