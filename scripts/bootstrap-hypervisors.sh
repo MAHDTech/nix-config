@@ -169,7 +169,7 @@ function wait_for_server() {
 	local MAX_ATTEMPTS=60
 	local ATTEMPT=0
 	local SLEEP_TIME=60
-	local UPTIME_THRESHOLD=300 # 5 minutes
+	local UPTIME_THRESHOLD=60 # 1 minute
 	local UPTIME_SECONDS=0
 	local SYSTEM_STATE="unknown"
 
@@ -522,7 +522,7 @@ if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" && ${INCUS_CLUSTER_DESTROY^^} =
 
 		    INCUS_CLUSTER_BOOTSTRAPPED=true
 
-		- Update the nix flake with the following for all member servers:
+		- Update the nix flake with the following for all servers (bootstrap and members):
 
 		    bootstrapped = true
 
