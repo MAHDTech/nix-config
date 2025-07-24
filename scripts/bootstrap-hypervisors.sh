@@ -276,22 +276,6 @@ function setup_bootstrap_server() {
 
 	msg "INFO" "Setting up bootstrap server: $HYPERVISOR"
 
-	# Show notice to update flake
-	cat <<-EOF
-		##################################################
-		                    IMPORTANT
-		##################################################
-
-		Update the nix flake now with the following for $HYPERVISOR:
-
-		    bootstrapped = true
-
-		Only this hypervisor needs to be updated for now.
-
-		##################################################
-	EOF
-	read -rp "Press enter to continue..."
-
 	# Run nixos-rebuild
 	run_nixos_rebuild "$HYPERVISOR"
 
@@ -336,7 +320,7 @@ function setup_member_server() {
 
 		This token can be obtained from the bootstrap server output.
 
-		Do not change the bootstrapped flag yet for this member server.
+		Do not change the bootstrapped flag yet!
 
 		##################################################
 	EOF
