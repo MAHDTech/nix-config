@@ -1,7 +1,7 @@
 let
   # Flag to indicate if the cluster has been bootstrapped.
   # Set to true once all members have joined the cluster.
-  bootstrapped = true;
+  bootstrapped = false;
 
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-1";
@@ -10,7 +10,7 @@ let
   hypervisorRole = "bootstrap";
 
   # The address of the hypervisor.
-  hypervisorManagementAddress = "10.10.1.11:8443";
+  hypervisorManagementAddress = "10.10.100.11:8443";
   hypervisorClusterAddress = "10.10.200.11:9443";
 
   # ZFS dataset sources.

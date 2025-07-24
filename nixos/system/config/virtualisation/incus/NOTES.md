@@ -12,11 +12,7 @@
   - [Network Layout](#network-layout)
     - [Hypervisor Networks](#hypervisor-networks)
     - [IP Assignments](#ip-assignments)
-  - [Key Configuration](#key-configuration)
-    - [Incus Bridge](#incus-bridge)
-    - [Hypervisor](#hypervisor)
   - [External Router Configuration](#external-router-configuration)
-  - [Network Flow](#network-flow)
   - [Diagram](#diagram)
 
 ## Overview
@@ -49,7 +45,8 @@ Notes from setting up the Incus cluster.
 
 The configuration implements a **routed setup** where:
 
-- Hypervisors get IPs from external network (`10.10.200.0/24`)
+- Hypervisors get _management_ IP addresses from the "Platform" network (`10.10.100.0/24`)
+- Hyperviros get _data_ IP addresses from the "Applications" network (`10.10.200.0/24`)
 - VMs get IPs from isolated internal network (`10.10.201.0/24`)
 - Traffic is routed between networks without NAT
 - VMs are directly accessible from external network
@@ -58,31 +55,19 @@ The configuration implements a **routed setup** where:
 
 ### Hypervisor Networks
 
-- **Management**: `10.10.1.0/24` via `enp6s0`
+- **Management**: `10.10.100.0/24` via `enp6s0`
 - **Cluster**: `10.10.200.0/24` via `bond0` (DHCP from Unifi)
-- **VM Network**: `10.10.201.0/24` via `incusbr0` (Internal DHCP)
+- **VM Network**: `10.10.201.0/24` via `incusbr1` (Internal DHCP)
+- **Transparent Bridge**: `incusbr0` (No IP)
 
 ### IP Assignments
 
-- **HYPERVISOR-1**: `10.10.200.11`
-- **HYPERVISOR-2**: `10.10.200.12`
-- **HYPERVISOR-3**: `10.10.200.13`
-- **HYPERVISOR-4**: `10.10.200.14`
-
-## Key Configuration
-
-### Incus Bridge
-
-- **Type**: OVS bridge (no external interfaces)
-- **IP**: `10.10.201.254/24`
-- **DHCP**: Enabled (`10.10.201.100-200`)
-- **NAT**: Disabled
-- **Routing**: Enabled
-
-### Hypervisor
-
-- **IP Forwarding**: Enabled
-- **Trusted Interfaces**: `bond0`, `incusbr0`
+| Hypervisor   | Management     | Applications   |
+| ------------ | -------------- | -------------- |
+| HYPERVISOR-1 | `10.10.100.11` | `10.10.200.11` |
+| HYPERVISOR-2 | `10.10.100.12` | `10.10.200.12` |
+| HYPERVISOR-3 | `10.10.100.13` | `10.10.200.13` |
+| HYPERVISOR-4 | `10.10.100.14` | `10.10.200.14` |
 
 ## External Router Configuration
 
@@ -95,23 +80,6 @@ Added static routes on Unifi router:
 10.10.201.0/24 via 10.10.200.14
 ```
 
-## Network Flow
-
-1. **External → VM**:
-
-   - `10.10.200.x` → Unifi Router → `10.10.200.11` → Hypervisor routes → `10.10.201.100`
-
-2. **VM → External**:
-
-   - `10.10.201.100` → Hypervisor routes → `10.10.200.11` → Unifi Router → `10.10.200.x`
-
-3. **VM → VM** (same hypervisor):
-
-   - Direct via `incusbr0` bridge
-
-4. **VM → VM** (different hypervisor):
-   - `10.10.201.100` → `10.10.200.11` → Unifi Router → `10.10.200.12` → `10.10.201.101`
-
 ## Diagram
 
 ```mermaid
@@ -122,7 +90,7 @@ graph TD
 
     %% External Network
     UNIFI["Unifi Router<br/>10.10.200.254<br/>DHCP Server"]
-    MGMT["Management Network<br/>10.10.1.0/24"]
+    MGMT["Management Network<br/>10.10.100.0/24"]
 
     %% Hypervisors
     HV1["HYPERVISOR-1"]
@@ -144,7 +112,7 @@ graph TD
 
     %% Hypervisors
     subgraph HV1
-        MGT1["enp6s0<br/>10.10.1.11/24"]
+        MGT1["enp6s0<br/>10.10.100.11/24"]
         BOND1["bond0<br/>10.10.200.11/24<br/>via DHCP"]
         BRIDGE1["incusbr0<br/>10.10.201.254/24<br/>OVS + DHCP Server"]
         VM1

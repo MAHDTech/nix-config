@@ -61,7 +61,7 @@ in
           matchConfig.Name = lib.mkForce "enp6s0";
           networkConfig = defaultNetworkConfig;
           dhcpV4Config = {
-            RouteMetric = lib.mkForce 2000; # Lower priority than bond0
+            RouteMetric = 1000;
           };
         };
 
