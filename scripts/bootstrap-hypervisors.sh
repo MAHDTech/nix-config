@@ -24,6 +24,7 @@ BOOTSTRAP_SERVER="hypervisor-1"
 
 # All hypervisors in the cluster.
 HYPERVISORS=(
+	# TODO: Add back in the other hypervisors when testing is complete.
 	"hypervisor-1"
 	#"hypervisor-2"
 	#"hypervisor-3"
