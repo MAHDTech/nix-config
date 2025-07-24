@@ -270,60 +270,41 @@ function wait_for_server() {
 	exit 1
 }
 
-function setup_bootstrap_server() {
+function setup_server() {
 	local HYPERVISOR=$1
+	local SERVER_TYPE
 
-	msg "INFO" "Setting up bootstrap server: $HYPERVISOR"
+	if [[ ${HYPERVISOR} == "${BOOTSTRAP_SERVER}" ]]; then
 
-	# Run nixos-rebuild
-	run_nixos_rebuild "$HYPERVISOR"
-
-	# Show system status
-	show_system_status "$HYPERVISOR"
-
-	# Copy and run bootstrap script
-	copy_bootstrap_script "$HYPERVISOR"
-
-	# Reboot the server
-	if reboot_server "$HYPERVISOR"; then
-
-		# Wait for server to come back online
-		wait_for_server "$HYPERVISOR"
-
-		# Now run the bootstrap script to capture tokens
-		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR to capture cluster tokens"
-		run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
+		# Bootstrap server
+		SERVER_TYPE="bootstrap"
 
 	else
 
-		msg "ERROR" "Failed to reboot $HYPERVISOR"
-		exit 1
+		# Member server
+		SERVER_TYPE="member"
+
+		# Show notice to update flake with cluster token
+		cat <<-EOF
+			##################################################
+			                    IMPORTANT
+			##################################################
+
+			Update the nix flake now with the following for $HYPERVISOR:
+
+			    clusterToken = <token>
+
+			This token can be obtained from the bootstrap server output.
+
+			Do not change the bootstrapped flag yet!
+
+			##################################################
+		EOF
+		read -rp "Press enter to continue..."
 
 	fi
-}
 
-function setup_member_server() {
-	local HYPERVISOR=$1
-
-	msg "INFO" "Setting up member server: $HYPERVISOR"
-
-	# Show notice to update flake with cluster token
-	cat <<-EOF
-		##################################################
-		                    IMPORTANT
-		##################################################
-
-		Update the nix flake now with the following for $HYPERVISOR:
-
-		    clusterToken = <token>
-
-		This token can be obtained from the bootstrap server output.
-
-		Do not change the bootstrapped flag yet!
-
-		##################################################
-	EOF
-	read -rp "Press enter to continue..."
+	msg "INFO" "Setting up ${SERVER_TYPE} server: $HYPERVISOR"
 
 	# Run nixos-rebuild
 	run_nixos_rebuild "$HYPERVISOR"
@@ -331,7 +312,7 @@ function setup_member_server() {
 	# Show system status
 	show_system_status "$HYPERVISOR"
 
-	# Copy and run bootstrap script
+	# Copy across the bootstrap script
 	copy_bootstrap_script "$HYPERVISOR"
 
 	# Reboot the server
@@ -340,8 +321,8 @@ function setup_member_server() {
 		# Wait for server to come back online
 		wait_for_server "$HYPERVISOR"
 
-		# Now run the bootstrap script to capture tokens
-		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in member mode"
+		# Now run the bootstrap script
+		msg "INFO" "Running bootstrap-incus.sh on $HYPERVISOR in ${SERVER_TYPE} mode"
 		run_ssh_command "$HYPERVISOR" "sudo -n bash /tmp/bootstrap-incus.sh" "Failed to run bootstrap-incus.sh on $HYPERVISOR"
 
 	else
@@ -459,11 +440,7 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 		print_header "MODE: Bootstrap"
 
 		# Handle cluster setup mode
-		if [[ ${HYPERVISOR} == "${BOOTSTRAP_SERVER}" ]]; then
-			setup_bootstrap_server "$HYPERVISOR"
-		else
-			setup_member_server "$HYPERVISOR"
-		fi
+		setup_server "$HYPERVISOR"
 
 	# UPGRADE MODE
 	else
