@@ -4,7 +4,7 @@
   hypervisorClusterAddress,
   hypervisorManagementAddress,
   hypervisorName,
-  hypervisorRole,
+  hypervisorRole ? "member",
   sourceDefault,
   sourceInstances,
   sourceIso,

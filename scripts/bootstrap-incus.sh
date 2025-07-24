@@ -454,8 +454,9 @@ function cleanup_verification() {
 
 	# Check Incus networks
 	declare incus_networks_count
-	incus_networks_count=$(incus query /1.0/networks 2>/dev/null | jq -r '.[]' | grep -c "incusbr" || echo "0")
-	if [ "$incus_networks_count" -eq 0 ]; then
+	incus_networks_count=$(incus query /1.0/networks 2>/dev/null | jq -r '.[]' | grep -c "incusbr" 2>/dev/null || echo "0")
+	incus_networks_count=$(echo "${incus_networks_count}" | tr -d '[:space:]')
+	if [ "${incus_networks_count:-0}" -eq 0 ]; then
 		log "INFO" "✓ Incus networks cleaned successfully"
 	else
 		log "WARN" "Some Incus networks still exist"
