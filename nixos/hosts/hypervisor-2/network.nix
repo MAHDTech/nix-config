@@ -56,10 +56,13 @@ in
       networks = {
 
         # Override the SOE configurations to only apply wired config to enp6s0.
-        # Disable DHCP to prevent default route creation on management interface
+        # which is the management interface.
         "10-wired" = {
           matchConfig.Name = lib.mkForce "enp6s0";
           networkConfig = defaultNetworkConfig;
+          dhcpV4Config = {
+            RouteMetric = lib.mkForce 2000; # Lower priority than bond0
+          };
         };
 
         "101-enp1s0f0" = {
@@ -87,6 +90,14 @@ in
           dhcpV4Config = {
             RouteMetric = 1000;
           };
+          routes = [
+            # Reach incus routed networks via incusbr1
+            {
+              Destination = "10.10.201.0/24";
+              Gateway = "10.10.201.1";
+              Metric = 100;
+            }
+          ];
         };
 
       };
