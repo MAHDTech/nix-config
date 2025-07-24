@@ -284,19 +284,6 @@ function setup_server() {
 	local SERVER_TYPE
 
 	##################################################
-	# Common tasks for all server types
-	##################################################
-
-	# Copy across the bootstrap script
-	copy_bootstrap_script "${HYPERVISOR}"
-
-	# Run nixos-rebuild
-	run_nixos_rebuild "${HYPERVISOR}"
-
-	# Show system status
-	show_system_status "${HYPERVISOR}"
-
-	##################################################
 	# Server type specific tasks
 	##################################################
 
@@ -305,15 +292,17 @@ function setup_server() {
 		# Bootstrap server
 		SERVER_TYPE="bootstrap"
 
-		# TODO: Remove this once the process is solid!!!
-		# TODO: Make the process solid!!! lol :D
-		# Show notice to update flake with cluster token
+		# Show notice to update flake with bootstrapped = true
 		cat <<-EOF
 			##################################################
 			                    IMPORTANT
 			##################################################
 
-			CHECK: Last chance to back out before bootstrapping ${HYPERVISOR}
+			Update the nix flake now with the following for ${HYPERVISOR}:
+
+			    bootstrapped = true
+
+			Do not update any other servers yet!
 
 			##################################################
 		EOF
@@ -344,6 +333,18 @@ function setup_server() {
 
 	fi
 
+	##################################################
+	# Common tasks for all server types
+	##################################################
+
+	# Copy across the bootstrap script
+	copy_bootstrap_script "${HYPERVISOR}"
+
+	# Run nixos-rebuild
+	run_nixos_rebuild "${HYPERVISOR}"
+
+	# Show system status
+	show_system_status "${HYPERVISOR}"
 	# Reboot the server and wait for it to come back online
 	if reboot_server "${HYPERVISOR}"; then
 		wait_for_server "${HYPERVISOR}"

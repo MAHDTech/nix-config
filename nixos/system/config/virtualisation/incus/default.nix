@@ -134,7 +134,7 @@ let
             "dns.nameservers" = "10.10.200.254";
             "ipv4.address" = "10.10.201.1/24";
             "ipv4.dhcp" = "true";
-            "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.200";
+            "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.150";
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
             "ipv4.nat" = "false";
             "ipv4.ovn.ranges" = "10.10.201.2-10.10.201.50";
@@ -201,7 +201,7 @@ let
             };
             eth0 = {
               name = "eth0";
-              network = "incusbr0";
+              network = "incusbr1";
               type = "nic";
             };
           };
@@ -226,7 +226,7 @@ let
             };
             eth0 = {
               name = "eth0";
-              network = "incusbr0";
+              network = "incusbr1";
               type = "nic";
             };
           };
@@ -251,7 +251,7 @@ let
             };
             eth0 = {
               name = "eth0";
-              network = "incusbr0";
+              network = "incusbr1";
               type = "nic";
             };
           };
@@ -278,7 +278,7 @@ let
             };
             eth0 = {
               name = "eth0";
-              network = "incusbr0";
+              network = "incusbr1";
               type = "nic";
             };
           };
