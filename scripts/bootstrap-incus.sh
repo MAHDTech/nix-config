@@ -19,13 +19,20 @@ declare -r INCUS_CLUSTER_MEMBER_NODES=(
 	"hypervisor-4"
 )
 
+# The ZFS pool name.
 declare -r ZFS_POOL_NAME="zpool"
-declare -r ZFS_DATASET_NAME="zpool/var/lib/incus/storage-pools"
-declare -r ZFS_DATASET_PATH="${ZFS_DATASET_NAME#"${ZFS_POOL_NAME}"}"
+
+# The ZFS dataset names
+declare -r ZFS_DATASET_NAME_INCUS="${ZFS_POOL_NAME}/var/lib/incus"
+declare -r ZFS_DATASET_NAME_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS}/storage-pools"
+
+# The path where the ZFS dataset is mounted.
+declare -r ZFS_DATASET_PATH_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS#"${ZFS_POOL_NAME}"}"
 
 # Passed via argument.
 declare INCUS_CLUSTER_DESTROY=false
 
+# The incus storage pools to destroy during cleanup.
 declare -r INCUS_STORAGE_POOLS=(
 	"default"
 	"instances"
@@ -452,17 +459,17 @@ function incus_destroy_cluster() {
 
 	for POOL in "${INCUS_STORAGE_POOLS[@]}"; do
 		log "INFO" "Removing incus storage pool: ${POOL}"
-		sudo zfs destroy -r "${ZFS_DATASET_NAME}/${POOL}" || {
-			log "WARN" "Failed to remove incus storage pool: ${POOL} in ZFS Dataset: ${ZFS_DATASET_NAME}"
+		sudo zfs destroy -r "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${POOL}" || {
+			log "WARN" "Failed to remove incus storage pool: ${POOL} in ZFS Dataset: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
 		}
 
-		if [[ -d "${ZFS_DATASET_PATH}/${POOL}" ]]; then
-			log "INFO" "Removing incus directory: ${ZFS_DATASET_PATH}/${POOL}"
-			sudo rm -rf "${ZFS_DATASET_PATH}/${POOL}" || {
-				log "WARN" "Failed to remove incus directory: ${ZFS_DATASET_PATH}/${POOL}"
+		if [[ -d "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}" ]]; then
+			log "INFO" "Removing incus directory: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}"
+			sudo rm -rf "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}" || {
+				log "WARN" "Failed to remove incus directory: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}"
 			}
 		else
-			log "INFO" "No incus directory found for pool ${POOL} at path: ${ZFS_DATASET_PATH}/${POOL}, skipping removal"
+			log "INFO" "No incus directory found for pool ${POOL} at path: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}, skipping removal"
 		fi
 
 	done
