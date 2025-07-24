@@ -25,9 +25,9 @@ BOOTSTRAP_SERVER="hypervisor-1"
 # All hypervisors in the cluster.
 HYPERVISORS=(
 	"hypervisor-1"
-	"hypervisor-2"
-	"hypervisor-3"
-	"hypervisor-4"
+	#"hypervisor-2"
+	#"hypervisor-3"
+	#"hypervisor-4"
 )
 
 ##################################################
@@ -298,7 +298,7 @@ function setup_bootstrap_server() {
 	# Show system status
 	show_system_status "$HYPERVISOR"
 
-	# Copy and run bootstrap script (but don't run it yet)
+	# Copy and run bootstrap script
 	copy_bootstrap_script "$HYPERVISOR"
 
 	# Reboot the server
