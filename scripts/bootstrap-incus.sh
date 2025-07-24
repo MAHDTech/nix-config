@@ -109,13 +109,13 @@ function incus_bootstrap() {
 		log "INFO" "Bootstrapping new incus cluster on node: ${NODE^^}"
 
 		# Preseed is automatically applied NixOS, restart the service to ensure it's been run.
-		#log "INFO" "Pre-seeding the incus cluster..."
-		#sudo systemctl restart incus-preseed || {
-		#	log "ERROR" "Failed to run incus-preseed"
-		#	journalctl -u incus-preseed -n 25 -o cat --no-pager
-		#	return 1
-		#}
-		#sleep 30
+		log "INFO" "Pre-seeding the incus cluster..."
+		sudo systemctl restart incus-preseed || {
+			log "ERROR" "Failed to run incus-preseed"
+			journalctl -u incus-preseed -n 25 -o cat --no-pager
+			return 1
+		}
+		sleep 30
 
 		# Request join tokens for all member nodes.
 		for NODE in "${INCUS_CLUSTER_MEMBER_NODES[@]}"; do
@@ -126,16 +126,20 @@ function incus_bootstrap() {
 			}
 		done
 
-		log "WARN" "##### IMPORTANT #####"
+		log "WARN" "########## IMPORTANT ##########"
 		log "WARN" "Capture and save the join tokens for all nodes in the cluster."
-		log "WARN" "##### IMPORTANT #####"
+		log "WARN" "########## IMPORTANT ##########"
+
+		read -rp "Press enter to continue..." || true
 
 		;;
 
 	"JOIN")
-		log "WARN" "##### IMPORTANT #####"
-		log "WARN" "Capture the token in the output from ${INCUS_CLUSTER_BOOTSTRAP_NODE^^} and update the nix flake for node: ${NODE^^}" log "WARN" "##### IMPORTANT #####"
-		log "WARN" "##### IMPORTANT #####"
+		log "WARN" "########## IMPORTANT ##########"
+		log "WARN" "If you haven't already, now update the nix flake using the token for node: ${NODE^^}"
+		log "WARN" "########## IMPORTANT ##########"
+
+		read -rp "Press enter to continue..." || true
 
 		;;
 	esac
@@ -536,6 +540,10 @@ network_tools_check || {
 	log "WARN" "Some network tools not found, cleanup may be limited"
 }
 
+##################################################
+# Main
+##################################################
+
 if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
 	incus_destroy_cluster || {
 		log "ERROR" "Failed to destroy incus cluster"
@@ -545,10 +553,6 @@ if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
 	log "INFO" "The incus cluster has been destroyed. Please unset the INCUS_CLUSTER_DESTROY variable and re-run the script to bootstrap a new cluster."
 	exit 0
 fi
-
-##################################################
-# Main
-##################################################
 
 # If this node is the bootstrap node, bootstrap the cluster.
 if [[ ${INCUS_NODENAME^^} == "${INCUS_CLUSTER_BOOTSTRAP_NODE^^}" ]]; then
