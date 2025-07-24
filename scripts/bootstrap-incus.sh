@@ -109,13 +109,13 @@ function incus_bootstrap() {
 		log "INFO" "Bootstrapping new incus cluster on node: ${NODE^^}"
 
 		# Preseed is automatically applied NixOS, restart the service to ensure it's been run.
-		log "INFO" "Pre-seeding the incus cluster..."
-		sudo systemctl restart incus-preseed || {
-			log "ERROR" "Failed to run incus-preseed"
-			journalctl -u incus-preseed -n 25 -o cat --no-pager
-			return 1
-		}
-		sleep 30
+		#log "INFO" "Pre-seeding the incus cluster..."
+		#sudo systemctl restart incus-preseed || {
+		#	log "ERROR" "Failed to run incus-preseed"
+		#	journalctl -u incus-preseed -n 25 -o cat --no-pager
+		#	return 1
+		#}
+		#sleep 30
 
 		# Request join tokens for all member nodes.
 		for NODE in "${INCUS_CLUSTER_MEMBER_NODES[@]}"; do

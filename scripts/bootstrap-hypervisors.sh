@@ -443,7 +443,12 @@ msg "INFO" "Pre-flight checks completed successfully"
 # Main
 ##################################################
 
-msg "INFO" "Starting bootstrap process..."
+# Different message for destroy mode
+if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
+	msg "INFO" "Starting cluster destroy process..."
+else
+	msg "INFO" "Starting bootstrap process..."
+fi
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
 	msg "INFO" "Processing $HYPERVISOR"
@@ -528,4 +533,9 @@ if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" && ${INCUS_CLUSTER_DESTROY^^} =
 	EOF
 fi
 
-msg "INFO" "Bootstrap process completed successfully"
+# Different message for destroy mode
+if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
+	msg "INFO" "Cluster destroy process completed successfully"
+else
+	msg "INFO" "Bootstrap process completed successfully"
+fi

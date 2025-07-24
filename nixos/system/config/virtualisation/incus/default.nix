@@ -531,11 +531,14 @@ let
             if bootstrapped then
               {
                 # bootstrapped: true
+                "zfs.clone_copy" = "true";
               }
             else
               {
                 # bootstrapped: false
-                source = sourceDefault;
+                "source" = sourceDefault;
+                "source.wipe" = "true";
+                "zfs.clone_copy" = "true";
               };
         }
 
@@ -549,11 +552,14 @@ let
             if bootstrapped then
               {
                 # bootstrapped: true
+                "zfs.clone_copy" = "true";
               }
             else
               {
                 # bootstrapped: false
-                source = sourceInstances;
+                "source" = sourceInstances;
+                "source.wipe" = "true";
+                "zfs.clone_copy" = "true";
               };
         }
 
@@ -567,11 +573,14 @@ let
             if bootstrapped then
               {
                 # bootstrapped: true
+                "zfs.clone_copy" = "true";
               }
             else
               {
                 # bootstrapped: false
-                source = sourceIso;
+                "source" = sourceIso;
+                "source.wipe" = "true";
+                "zfs.clone_copy" = "true";
               };
         }
 
