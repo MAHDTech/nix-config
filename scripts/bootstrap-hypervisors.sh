@@ -509,9 +509,9 @@ if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" && ${INCUS_CLUSTER_DESTROY^^} =
 
 		    bootstrapped = true
 
-		- Re-run this script for a final time.
+		- Re-run this script for a final time to complete the cluster setup.
 
-		This completes the cluster setup process!
+		    ./scripts/bootstrap-hypervisors.sh
 
 		##################################################
 	EOF
