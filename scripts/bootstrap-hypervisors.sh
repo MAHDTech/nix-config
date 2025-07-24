@@ -345,6 +345,7 @@ function setup_server() {
 
 	# Show system status
 	show_system_status "${HYPERVISOR}"
+
 	# Reboot the server and wait for it to come back online
 	if reboot_server "${HYPERVISOR}"; then
 		wait_for_server "${HYPERVISOR}"
