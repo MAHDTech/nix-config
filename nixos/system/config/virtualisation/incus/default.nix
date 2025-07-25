@@ -471,52 +471,51 @@ let
       #########################################################
       # Cluster configuration.
       #########################################################
-      cluster =
-        {
-          enabled = true;
-          server_address = hypervisorClusterAddress;
-          member_config = [
-            #########################################################
-            # Storage Pools
-            #########################################################
-            {
-              entity = "storage-pool";
-              name = "default";
-              key = "source";
-              value = sourceDefault;
-            }
-            {
-              entity = "storage-pool";
-              name = "instances";
-              key = "source";
-              value = sourceInstances;
-            }
-            {
-              entity = "storage-pool";
-              name = "iso";
-              key = "source";
-              value = sourceIso;
-            }
-            #########################################################
-            # Networks
-            #########################################################
-            # Bridge Network (transparent bridge)
-            {
-              entity = "network";
-              name = "incusbr0";
-              key = "bridge.external_interfaces";
-              value = "bond0";
-            }
-          ];
-        }
-        // lib.optionalAttrs (hypervisorRole == "bootstrap") {
-          # The bootstrap server node requires a server_name.
-          server_name = hypervisorName;
-        }
-        // lib.optionalAttrs (hypervisorRole == "member" && !joined) {
-          # The cluster token is only needed for initial bootstrap.
-          cluster_token = clusterToken;
-        };
+      cluster = {
+        enabled = true;
+        server_address = hypervisorClusterAddress;
+        member_config = [
+          #########################################################
+          # Storage Pools
+          #########################################################
+          {
+            entity = "storage-pool";
+            name = "default";
+            key = "source";
+            value = sourceDefault;
+          }
+          {
+            entity = "storage-pool";
+            name = "instances";
+            key = "source";
+            value = sourceInstances;
+          }
+          {
+            entity = "storage-pool";
+            name = "iso";
+            key = "source";
+            value = sourceIso;
+          }
+          #########################################################
+          # Networks
+          #########################################################
+          # Bridge Network (transparent bridge)
+          {
+            entity = "network";
+            name = "incusbr0";
+            key = "bridge.external_interfaces";
+            value = "bond0";
+          }
+        ];
+      }
+      // lib.optionalAttrs (hypervisorRole == "bootstrap") {
+        # The bootstrap server node requires a server_name.
+        server_name = hypervisorName;
+      }
+      // lib.optionalAttrs (hypervisorRole == "member" && !joined) {
+        # The cluster token is only needed for initial bootstrap.
+        cluster_token = clusterToken;
+      };
 
       #########################################################
       # Storage pools configuration.
@@ -657,7 +656,7 @@ in
     #########################################################
 
     incus = {
-      enable = true;
+      enable = false;
 
       # Current LTS (6.0.4) doesn't work with Lego.
       #package = pkgs.incus-lts;
