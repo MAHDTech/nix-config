@@ -1,5 +1,6 @@
 {
   bootstrapped ? false,
+  joined ? false,
   clusterToken ? null,
   hypervisorClusterAddress,
   hypervisorManagementAddress,
@@ -512,7 +513,7 @@ let
           # The bootstrap server node requires a server_name.
           server_name = hypervisorName;
         }
-        // lib.optionalAttrs (hypervisorRole == "member" && !bootstrapped) {
+        // lib.optionalAttrs (hypervisorRole == "member" && !joined) {
           # The cluster token is only needed for initial bootstrap.
           cluster_token = clusterToken;
         };

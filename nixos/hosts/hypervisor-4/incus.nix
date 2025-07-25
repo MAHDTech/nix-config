@@ -1,7 +1,11 @@
 let
   # Flag to indicate if the cluster has been bootstrapped.
-  # Set to true once the member has joined the cluster.
+  # Set to true when prompted by the bootstrap script.
   bootstrapped = false;
+
+  # Flag to indicate if the hypervisor has joined the cluster.
+  # Set to true once the hypervisor has joined the cluster.
+  joined = false;
 
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-4";
@@ -20,12 +24,13 @@ let
 
   # TODO: SOPS encryption when this test is working.
   # The cluster token obtained during the bootstrap process. Only used if bootstrapped is true.
-  clusterToken = "";
+  clusterToken = "eyJzZXJ2ZXJfbmFtZSI6IkhZUEVSVklTT1ItNCIsImZpbmdlcnByaW50IjoiNzFmMDhlZGZhNDFiMDBiYmZkNThkZmZkYzllOTg3M2QzM2E1NDljMzAxNjdhZTc0MjRjYzZjZTUzZTVmYmIwMiIsImFkZHJlc3NlcyI6WyIxMC4xMC4yMDAuMTE6OTQ0MyJdLCJzZWNyZXQiOiIwZDJlM2Q0Yzc3MTNhNDhkMDBhOGMwNDBiNzQ2MTFhZTg3MWIzY2EzNThhNGVhMmQwZWE3YmQwMTNlNzVkYzMzIiwiZXhwaXJlc19hdCI6IjIwMjUtMDctMjVUMTI6NTU6NDEuNzc1ODYzNzcrMTA6MDAifQ==";
 in
 {
   imports = [
     (import ../../system/config/virtualisation/incus {
       inherit bootstrapped;
+      inherit joined;
       inherit hypervisorName;
       inherit hypervisorRole;
       inherit hypervisorManagementAddress;
