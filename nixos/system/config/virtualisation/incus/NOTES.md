@@ -29,15 +29,16 @@ Notes from setting up the Incus cluster.
 1. Run `./scripts/bootstrap-hypervisors.sh` script.
 1. Update the flake with `bootstrapped = true` for the bootstrap server when prompted.
 1. Update the nix flake with the `clusterToken` for the member servers when prompted.
-1. Once the script has completed, update the nix flake with `bootstrapped = true` for all member servers in the config.
+1. Once the script has completed, update the nix flake with `joined = true` for all member servers.
 1. Run `export INCUS_CLUSTER_BOOTSTRAPPED=true`
 1. Run `./scripts/bootstrap-hypervisors.sh` script a final time.
 1. Access the Incus Web API and configure your client certificate.
 
 ### Steps to destroy
 
-1. Update the flake with `bootstrapped = false`
-1. Remove any `clusterToken` from the config.
+1. Update the flake with `bootstrapped = false` for all servers
+1. Update the flake with `joined = false` for all member servers
+1. Remove any `clusterToken` from the config for all member servers
 1. Export the variable `INCUS_CLUSTER_DESTROY=true`
 1. Run the `./scripts/bootstrap-hypervisors.sh` script.
 
