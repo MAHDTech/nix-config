@@ -40,13 +40,6 @@ declare -r ZFS_DATASET_PATH_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS_STORAG
 # Passed via argument.
 declare INCUS_CLUSTER_DESTROY=false
 
-# The incus storage pools to destroy during cleanup.
-declare -r INCUS_STORAGE_POOLS=(
-	"default"
-	"instances"
-	"iso"
-)
-
 declare -r FIREWALL_PORTS=(
 	"8443"
 	"9443"
@@ -123,11 +116,7 @@ function incus_bootstrap() {
 
 	"JOIN")
 
-		log "WARN" "#################### IMPORTANT ####################"
-		log "WARN" "If you haven't already, update the nix flake with the token for node ${NODE^^} now!"
-		log "WARN" "#################### IMPORTANT ####################"
-
-		read -rp "Press enter to continue..." || true
+		log "INFO" "Joining is performed by incus-preseed automatically..."
 
 		;;
 	esac
@@ -521,22 +510,23 @@ function incus_destroy_cluster() {
 
 	log "INFO" "Removing incus storage pools..."
 
-	for POOL in "${INCUS_STORAGE_POOLS[@]}"; do
-		log "INFO" "Removing incus storage pool: ${POOL}"
-		sudo zfs destroy -r "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${POOL}" || {
-			log "WARN" "Failed to remove incus storage pool: ${POOL} in ZFS Dataset: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
+	# Remove all ZFS datasets recursively.
+	if sudo zfs list "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}" >/dev/null 2>&1; then
+		log "INFO" "Destroying all ZFS datasets under: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
+		sudo zfs destroy -rf "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}" || {
+			log "WARN" "Failed to destroy storage pools directory: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
 		}
+	else
+		log "INFO" "Incus storage pools dataset does not exist: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
+	fi
 
-		if [[ -d "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}" ]]; then
-			log "INFO" "Removing incus directory: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}"
-			sudo rm -rf "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}" || {
-				log "WARN" "Failed to remove incus directory: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}"
-			}
-		else
-			log "INFO" "No incus directory found for pool ${POOL} at path: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${POOL}, skipping removal"
-		fi
-
-	done
+	# Remove the mount point for the incus storage pools.
+	if [[ -d ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS} ]]; then
+		log "INFO" "Removing incus storage pools mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}"
+		sudo rm -rf "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}" || {
+			log "WARN" "Failed to remove incus storage pools mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}"
+		}
+	fi
 
 	log "INFO" "Removing incus database files..."
 

@@ -26,6 +26,7 @@ Notes from setting up the Incus cluster.
 1. Run `export INCUS_CLUSTER_DESTROY=false`
 1. Run `export INCUS_CLUSTER_BOOTSTRAPPED=false`
 1. Update the nix flake with `bootstrapped = false` for ALL servers in the config.
+1. Update the nix flake with `joined = false` for ALL member servers in the config.
 1. Run `./scripts/bootstrap-hypervisors.sh` script.
 1. Update the flake with `bootstrapped = true` for the bootstrap server when prompted.
 1. Update the nix flake with the `clusterToken` for the member servers when prompted.
