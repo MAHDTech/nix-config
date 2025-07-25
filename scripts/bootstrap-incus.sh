@@ -37,6 +37,13 @@ declare -r ZFS_DATASET_NAME_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS}/stora
 # The path where the ZFS dataset is mounted.
 declare -r ZFS_DATASET_PATH_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS#"${ZFS_POOL_NAME}"}"
 
+# The ZFS dataset names that will be destroyed during cleanup.
+declare -r ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS=(
+	"default"
+	"instances"
+	"iso"
+)
+
 # Passed via argument.
 declare INCUS_CLUSTER_DESTROY=false
 
@@ -510,15 +517,17 @@ function incus_destroy_cluster() {
 
 	log "INFO" "Removing incus storage pools..."
 
-	# Remove all ZFS datasets recursively.
-	if sudo zfs list "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}" >/dev/null 2>&1; then
-		log "INFO" "Destroying all ZFS datasets under: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
-		sudo zfs destroy -rf "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}" || {
-			log "WARN" "Failed to destroy storage pools directory: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
-		}
-	else
-		log "INFO" "Incus storage pools dataset does not exist: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}"
-	fi
+	# For each ZFS dataset name, recursively destroy the ZFS dataset.
+	for ZFS_DATASET_NAME in "${ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS[@]}"; do
+
+		# If the ZFS dataset exists, destroy it recursively.
+		if sudo zfs list "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" >/dev/null 2>&1; then
+			log "INFO" "Destroying ZFS dataset: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
+			sudo zfs destroy -rf "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" || {
+				log "WARN" "Failed to destroy ZFS dataset: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
+			}
+		fi
+	done
 
 	# Remove the mount point for the incus storage pools.
 	if [[ -d ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS} ]]; then

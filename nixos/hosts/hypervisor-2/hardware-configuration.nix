@@ -127,26 +127,6 @@
       neededForBoot = true;
     };
 
-    # Legacy mount point for var/lib/docker using ZFS
-    "/var/lib/docker" = {
-      device = "zpool/var/lib/docker";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # Legacy mount point for var/lib/containers using ZFS
-    "/var/lib/containers" = {
-      device = "zpool/var/lib/containers";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
     # Legacy mount point for var/lib/incus using ZFS
     "/var/lib/incus" = {
       device = "zpool/var/lib/incus";
