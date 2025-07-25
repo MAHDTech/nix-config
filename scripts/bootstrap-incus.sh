@@ -527,15 +527,16 @@ function incus_destroy_cluster() {
 				log "WARN" "Failed to destroy ZFS dataset: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
 			}
 		fi
-	done
 
-	# Remove the mount point for the incus storage pools.
-	if [[ -d ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS} ]]; then
-		log "INFO" "Removing incus storage pools mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}"
-		sudo rm -rf "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}" || {
-			log "WARN" "Failed to remove incus storage pools mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}"
-		}
-	fi
+		# If the mount point exists, remove the folder
+		if [[ -d "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" ]]; then
+			log "INFO" "Removing mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
+			sudo rm -rf "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" || {
+				log "WARN" "Failed to remove mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
+			}
+		fi
+
+	done
 
 	log "INFO" "Removing incus database files..."
 
