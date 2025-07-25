@@ -656,7 +656,7 @@ in
     #########################################################
 
     incus = {
-      enable = false;
+      enable = true;
 
       # Current LTS (6.0.4) doesn't work with Lego.
       #package = pkgs.incus-lts;
