@@ -321,11 +321,12 @@ function setup_server() {
 
 			Update the nix flake now with the following for ${HYPERVISOR}:
 
+			    bootstrapped = true
 			    clusterToken = <token>
 
-			This token can be obtained from the bootstrap server output.
+			The token can be obtained from the bootstrap server output.
 
-			Do not change the bootstrapped flag yet!
+			Do not change the 'joined' flag yet!
 
 			##################################################
 		EOF
@@ -509,9 +510,9 @@ if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" && ${INCUS_CLUSTER_DESTROY^^} =
 
 		    INCUS_CLUSTER_BOOTSTRAPPED=true
 
-		- Update the nix flake with the following for all servers (bootstrap and members):
+		- Update the nix flake with the following for all member servers:
 
-		    bootstrapped = true
+		    joined = true
 
 		- Re-run this script for a final time to complete the cluster setup.
 
