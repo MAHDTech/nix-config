@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-# Name: bootstrap-incus.sh
-# Description: Bootstrap Incus nodes based on hostname.
+# Name: incus-cluster-destroy.sh
+# Description: Destroy Incus cluster on nodes.
 
 ##################################################
 # Variables
@@ -13,11 +13,6 @@ declare INCUS_NODENAME
 INCUS_NODENAME=$(hostname)
 
 declare -r INCUS_CLUSTER_BOOTSTRAP_NODE="hypervisor-1"
-declare -r INCUS_CLUSTER_MEMBER_NODES=(
-	"hypervisor-2"
-	"hypervisor-3"
-	"hypervisor-4"
-)
 
 declare -r REQUIRED_TOOLS=(
 	"incus"
@@ -38,18 +33,11 @@ declare -r ZFS_DATASET_NAME_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS}/stora
 declare -r ZFS_DATASET_PATH_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS#"${ZFS_POOL_NAME}"}"
 
 # The ZFS dataset names that will be destroyed during cleanup.
+# These can also be pools if created in error.
 declare -r ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS=(
 	"default"
 	"instances"
 	"iso"
-)
-
-# Passed via argument.
-declare INCUS_CLUSTER_DESTROY=false
-
-declare -r FIREWALL_PORTS=(
-	"8443"
-	"9443"
 )
 
 ##################################################
@@ -94,58 +82,25 @@ function check_for_required_tools() {
 	return 0
 }
 
-function incus_bootstrap() {
-	local NODE=$1
-	local TYPE=$2
-
-	case "${TYPE^^}" in
-
-	"BOOTSTRAP")
-
-		log "INFO" "Bootstrapping new incus cluster on node: ${NODE^^}"
-
-		# Request join tokens for all member nodes.
-		for NODE in "${INCUS_CLUSTER_MEMBER_NODES[@]}"; do
-			log "INFO" "Requesting join token for node: ${NODE^^}"
-			incus cluster add "${NODE^^}" --force-local 2>/dev/null || {
-				log "ERROR" "Failed to request join token for node: ${NODE^^}"
-				return 1
-			}
-		done
-
-		log "WARN" "#################### IMPORTANT ####################"
-		log "WARN" "Capture and save the join tokens for all nodes in the cluster"
-		log "WARN" "#################### IMPORTANT ####################"
-
-		read -rp "Press enter to continue..." || true
-
-		;;
-
-	"JOIN")
-
-		log "INFO" "Joining is performed by incus-preseed automatically..."
-
-		;;
-	esac
-
-	return 0
-}
-
 function incus_cleanup() {
 
 	log "INFO" "Stopping all incus containers..."
 
-	incus stop --all
+	incus stop --all || {
+		log "WARN" "Failed to stop all incus containers"
+	}
 
 	log "INFO" "Cleaning up incus configuration..."
 
-	incus profile device rm default root || true
-	incus profile device rm default eth0 || true
+	incus profile device remove default root || true
+	incus profile device remove default eth0 || true
 
-	incus network rm incusbr0 || true
-	incus network rm incusbr1 || true
+	incus network delete incusbr0 || true
+	incus network delete incusbr1 || true
 
-	incus storage rm default || true
+	incus storage delete default || true
+	incus storage delete instances || true
+	incus storage delete iso || true
 
 	return 0
 
@@ -225,14 +180,14 @@ function ovs_cleanup() {
 
 	if [ "${OVS_SCHEMA_PATH:-EMPTY}" = "EMPTY" ]; then
 		log "ERROR" "Could not find OVS schema file, unable to recreate the OVS database"
-		exit 1
+		return 1
 	fi
 
 	log "DEBUG" "Using schema: $OVS_SCHEMA_PATH"
 
 	sudo ovsdb-tool create /var/lib/openvswitch/conf.db "$OVS_SCHEMA_PATH" || {
 		log "ERROR" "Failed to create OVS database"
-		exit 1
+		return 1
 	}
 
 	log "INFO" "Starting OVS services..."
@@ -486,7 +441,7 @@ function incus_destroy_cluster() {
 		fi
 
 		log "WARN" "Removing incus node: ${NODE^^}"
-		incus cluster remove --force "${NODE^^}" || {
+		incus cluster remove --yes --force "${NODE^^}" || {
 			log "WARN" "Failed to remove incus node: ${NODE^^}"
 		}
 	done
@@ -494,7 +449,7 @@ function incus_destroy_cluster() {
 	# Now that all member nodes have been removed, remove the bootstrap server.
 	if [[ ${FOUND_BOOTSTRAP_NODE^^} == "TRUE" ]]; then
 		log "WARN" "Removing bootstrap server: ${INCUS_NODENAME^^}"
-		incus cluster remove --force "${INCUS_NODENAME^^}" || {
+		incus cluster remove --yes --force "${INCUS_NODENAME^^}" || {
 			log "WARN" "Failed to remove bootstrap server: ${INCUS_NODENAME^^}"
 		}
 	fi
@@ -517,6 +472,44 @@ function incus_destroy_cluster() {
 
 	log "INFO" "Removing incus storage pools..."
 
+	zfs_cleanup || {
+		log "ERROR" "Failed to cleanup ZFS"
+		return 1
+	}
+
+	log "INFO" "Removing incus database files..."
+
+	sudo rm -rf /var/lib/incus/database/{global,local.db} || {
+		log "ERROR" "Failed to remove database files"
+		return 1
+	}
+
+	# Verify the database files were removed
+	if [[ -f /var/lib/incus/database/global ]] ||
+		[[ -f /var/lib/incus/database/local.db ]]; then
+		log "ERROR" "Database files still exist"
+		return 1
+	fi
+
+	log "INFO" "Removing incus certificates..."
+
+	sudo rm -rf /var/lib/incus/{cluster.crt,cluster.key,server.crt,server.key} || {
+		log "ERROR" "Failed to remove incus certificates"
+		return 1
+	}
+
+	# Verify cleanup was successful
+	cleanup_verification || {
+		log "WARN" "Cleanup verification encountered issues"
+	}
+
+	return 0
+
+}
+
+function zfs_cleanup() {
+	log "INFO" "Performing ZFS cleanup..."
+
 	# For each ZFS dataset name, recursively destroy the ZFS dataset.
 	for ZFS_DATASET_NAME in "${ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS[@]}"; do
 
@@ -538,134 +531,37 @@ function incus_destroy_cluster() {
 
 	done
 
-	log "INFO" "Removing incus database files..."
-
-	sudo rm -rf /var/lib/incus/database/{global,local.db} || {
-		log "ERROR" "Failed to remove database files"
-		return 1
-	}
-
-	# Verify the database files were removed
-	if [[ -f /var/lib/incus/database/global ]] ||
-		[[ -f /var/lib/incus/database/local.db ]]; then
-		log "ERROR" "Database files still exist"
-		exit 1
-	fi
-
-	log "INFO" "Removing incus certificates..."
-
-	sudo rm -rf /var/lib/incus/{cluster.crt,cluster.key,server.crt,server.key} || {
-		log "ERROR" "Failed to remove incus certificates"
-		return 1
-	}
-
-	# Verify cleanup was successful
-	cleanup_verification || {
-		log "WARN" "Cleanup verification encountered issues"
-	}
-
-	return 0
-
-}
-
-function parse_flags() {
-	local FLAGS=("$@")
-
-	for FLAG in "${FLAGS[@]}"; do
-
-		log "DEBUG" "Parsing flag: ${FLAG}"
-
-		case "${FLAG,,}" in
-
-		"--incus-destroy-cluster")
-
-			INCUS_CLUSTER_DESTROY=true
-			log "WARN" "Incus cluster destruction is enabled"
-
-			;;
-
-		*)
-
-			log "WARN" "Unknown flag: ${FLAG}"
-			exit 1
-
-			;;
-
-		esac
-
+	# If there was a mistake during the creation of the cluster
+	# Then pools may have been created instead of datasets.
+	# If any of these exist as pools, when they should be datasets, destroy them.
+	for ZPOOL in "${ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS[@]}"; do
+		if sudo zpool status "${ZPOOL}" >/dev/null 2>&1; then
+			log "INFO" "Destroying ZFS pool: ${ZPOOL}"
+			sudo zpool destroy -f "${ZPOOL}" || {
+				log "WARN" "Failed to destroy ZFS pool: ${ZPOOL}"
+			}
+		else
+			log "DEBUG" "ZFS pool does not exist: ${ZPOOL}"
+		fi
 	done
 
 	return 0
-}
-
-##################################################
-# Pre-flight checks
-##################################################
-
-log "INFO" "Starting bootstrap process for node: ${INCUS_NODENAME^^}"
-
-parse_flags "$@" || {
-	log "ERROR" "Failed to parse flags"
-	exit 1
-}
-
-check_for_required_tools || {
-	log "ERROR" "Required tools not found"
-	exit 1
 }
 
 ##################################################
 # Main
 ##################################################
 
-if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
-	incus_destroy_cluster || {
-		log "ERROR" "Failed to destroy incus cluster"
-		exit 1
-	}
+log "INFO" "Starting incus cluster destruction for node: ${INCUS_NODENAME^^}"
 
-	log "INFO" "The incus cluster has been destroyed. Please unset the INCUS_CLUSTER_DESTROY variable and re-run the script to bootstrap a new cluster."
-	exit 0
-fi
+check_for_required_tools || {
+	log "ERROR" "Required tools not found"
+	exit 1
+}
 
-# If this node is the bootstrap node, bootstrap the cluster.
-if [[ ${INCUS_NODENAME^^} == "${INCUS_CLUSTER_BOOTSTRAP_NODE^^}" ]]; then
+incus_destroy_cluster || {
+	log "ERROR" "Failed to destroy incus cluster"
+	exit 1
+}
 
-	incus_bootstrap "$INCUS_NODENAME" "BOOTSTRAP" || {
-		log "ERROR" "Failed to bootstrap cluster on node: ${INCUS_NODENAME^^}"
-		exit 1
-	}
-
-else
-
-	# If this node is one of the member nodes, join the cluster.
-	MATCH=false
-	for NODE in "${INCUS_CLUSTER_MEMBER_NODES[@]}"; do
-		if [[ ${INCUS_NODENAME^^} == "${NODE^^}" ]]; then
-			log "INFO" "Joining incus cluster on node: ${INCUS_NODENAME^^} as a member node"
-
-			incus_bootstrap "$INCUS_NODENAME" "JOIN" || {
-				log "ERROR" "Failed to join cluster on node: ${INCUS_NODENAME^^}"
-				exit 1
-			}
-			MATCH=true
-		fi
-	done
-
-	if [[ ${MATCH^^} == "FALSE" ]]; then
-		log "WARN" "Skipping cluster join for unknown node: ${INCUS_NODENAME^^}"
-		exit 1
-	fi
-
-fi
-
-for PORT in "${FIREWALL_PORTS[@]}"; do
-	log "INFO" "Verifying firewall port ${PORT}"
-	sudo nft list ruleset | grep -q "${PORT}" || {
-		log "WARN" "#################### IMPORTANT ####################"
-		log "WARN" "You seem to be missing a firewall rule to allow TCP ${PORT} traffic. Don't forget to add it!"
-		log "WARN" "#################### IMPORTANT ####################"
-	}
-done
-
-log "INFO" "Bootstrap complete for node: ${INCUS_NODENAME^^}"
+log "INFO" "The incus cluster has been destroyed on node: ${INCUS_NODENAME^^}."

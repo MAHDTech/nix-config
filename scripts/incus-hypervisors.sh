@@ -8,22 +8,13 @@ set -euo pipefail
 # Variables
 ##################################################
 
-# Set this to wipe the incus cluster on each node.
-declare -r INCUS_CLUSTER_DESTROY=${INCUS_CLUSTER_DESTROY:-false}
-
-# Set this when the cluster has been bootstrapped.
-declare -r INCUS_CLUSTER_BOOTSTRAPPED=${INCUS_CLUSTER_BOOTSTRAPPED:-true}
-
-# Don't ask for confirmation if enabled.
-declare -r YOLO_MODE=${YOLO_MODE:-false}
-
-DOMAIN="saltlabs.cloud"
+declare -r DOMAIN="saltlabs.cloud"
 
 # The bootstrap server.
-BOOTSTRAP_SERVER="hypervisor-1"
+declare -r BOOTSTRAP_SERVER="hypervisor-1"
 
 # All hypervisors in the cluster.
-HYPERVISORS=(
+declare -r HYPERVISORS=(
 	"hypervisor-1"
 	"hypervisor-2"
 	"hypervisor-3"
@@ -42,6 +33,21 @@ declare -r REQUIRED_NIXPKGS=(
 ##################################################
 # Functions
 ##################################################
+
+function print_usage() {
+	cat <<-EOF
+		Usage: $0 [--create|--join|--destroy|--apply]
+
+		Options:
+
+		    --create    Create a new incus cluster
+		    --join      Join an existing incus cluster
+		    --destroy   Destroy an incus cluster
+		    --apply     Apply changes to an incus cluster
+
+		If no options are provided, the script will default to --apply.
+	EOF
+}
 
 function print_header() {
 	local HEADER=$1
@@ -80,29 +86,27 @@ function msg() {
 
 function run_nixos_rebuild() {
 	local HYPERVISOR=$1
+	local ACTION=${2:-boot}
 
-	msg "INFO" "Running nixos-rebuild boot on ${HYPERVISOR}"
+	msg "INFO" "Running nixos-rebuild ${ACTION} on ${HYPERVISOR}"
 
-	nixos-rebuild boot \
+	nixos-rebuild "${ACTION}" \
 		--use-remote-sudo \
 		--accept-flake-config \
 		--flake "path:.#${HYPERVISOR^^}" \
 		--target-host "${HYPERVISOR}.${DOMAIN}" \
 		--build-host "${HYPERVISOR}.${DOMAIN}" || {
-		msg "ERROR" "Failed to upgrade ${HYPERVISOR}"
-		exit 1
+		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
+		return 1
 	}
 }
 
 function run_ssh_command() {
 	local HYPERVISOR=$1
 	local COMMAND=$2
-	local ERROR_MSG=$3
 
-	ssh -t -o RequestTTY=yes -o SendEnv=USER -o SendEnv=HOME -o SendEnv=LOGNAME "${HYPERVISOR}.${DOMAIN}" \
-		"$COMMAND" || {
-		msg "ERROR" "$ERROR_MSG"
-		exit 1
+	ssh -t -o RequestTTY=yes -o SendEnv=USER -o SendEnv=HOME -o SendEnv=LOGNAME "${HYPERVISOR}.${DOMAIN}" "$COMMAND" || {
+		return 1
 	}
 
 	return 0
@@ -111,8 +115,16 @@ function run_ssh_command() {
 function show_system_status() {
 	local HYPERVISOR=$1
 
+	msg "INFO" "Upgrading zpool on ${HYPERVISOR}"
+	run_ssh_command "${HYPERVISOR}" "sudo -n zpool upgrade zpool" || {
+		msg "WARNING" "Failed to upgrade zpool on ${HYPERVISOR}"
+	}
+
 	msg "INFO" "Showing zpool status on ${HYPERVISOR}"
-	run_ssh_command "${HYPERVISOR}" "sudo -n zpool status" "Failed to show zpool status on ${HYPERVISOR}"
+	run_ssh_command "${HYPERVISOR}" "sudo -n zpool status" || {
+		msg "ERROR" "Failed to show zpool status on ${HYPERVISOR}"
+		return 1
+	}
 
 	msg "INFO" "Showing failed systemd services on ${HYPERVISOR}"
 	run_ssh_command "${HYPERVISOR}" \
@@ -126,18 +138,21 @@ function show_system_status() {
 			done
 		else
 			echo \"No failed systemd services found\";
-		fi" \
-		"Failed to show failed systemd services on ${HYPERVISOR}"
+		fi" || {
+		msg "ERROR" "Failed to show failed systemd services on ${HYPERVISOR}"
+		return 1
+	}
 
 	return 0
 }
 
-function copy_bootstrap_script() {
-	local HYPERVISOR=$1
+function copy_script() {
+	local SCRIPT=$1
+	local HYPERVISOR=$2
 
-	msg "INFO" "Copying bootstrap-incus.sh to ${HYPERVISOR}"
-	rsync -av ./scripts/bootstrap-incus.sh "${HYPERVISOR}.${DOMAIN}:/tmp/bootstrap-incus.sh" || {
-		msg "ERROR" "Failed to copy bootstrap-incus.sh to ${HYPERVISOR}"
+	msg "INFO" "Copying ${SCRIPT} to ${HYPERVISOR}"
+	rsync -av "./scripts/${SCRIPT}" "${HYPERVISOR}.${DOMAIN}:/tmp/${SCRIPT}" || {
+		msg "ERROR" "Failed to copy ${SCRIPT} to ${HYPERVISOR}"
 		exit 1
 	}
 
@@ -161,7 +176,7 @@ function reboot_server() {
 	else
 
 		msg "INFO" "Rebooting ${HYPERVISOR}"
-		run_ssh_command "${HYPERVISOR}" "sudo -n systemctl reboot" "Failed to reboot ${HYPERVISOR}" || {
+		run_ssh_command "${HYPERVISOR}" "sudo -n systemctl reboot" || {
 			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
 			return 1
 		}
@@ -279,104 +294,209 @@ function wait_for_server() {
 	exit 1
 }
 
+function apply_changes() {
+	local HYPERVISOR=$1
+	local REBOOT=${2:-}
+
+	# Default to true if not set.
+	REBOOT=${REBOOT:-true}
+
+	msg "INFO" "Applying changes to ${HYPERVISOR}"
+
+	run_nixos_rebuild "${HYPERVISOR}" boot || {
+		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
+		return 1
+	}
+
+	show_system_status "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to show system status on ${HYPERVISOR}"
+		return 1
+	}
+
+	if [[ ${REBOOT^^} == "TRUE" ]]; then
+		if reboot_server "${HYPERVISOR}"; then
+			wait_for_server "${HYPERVISOR}"
+		else
+			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
+			exit 1
+		fi
+		msg "INFO" "Changes applied and rebooted ${HYPERVISOR}"
+	else
+		msg "INFO" "Changes applied to ${HYPERVISOR} without reboot"
+	fi
+
+	return 0
+
+}
+
 function setup_server() {
 	local HYPERVISOR=$1
 	local SERVER_TYPE
 
-	##################################################
-	# Server type specific tasks
-	##################################################
-
 	if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
-
-		# Bootstrap server
 		SERVER_TYPE="bootstrap"
-
-		# Show notice to update flake with bootstrapped = true
-		cat <<-EOF
-			##################################################
-			                    IMPORTANT
-			##################################################
-
-			Update the nix flake now with the following for ${HYPERVISOR}:
-
-			    bootstrapped = true
-
-			Do not update any other servers yet!
-
-			##################################################
-		EOF
-		read -rp "Press enter to continue..."
-
 	else
-
-		# Member server
 		SERVER_TYPE="member"
-
-		# Show notice to update flake with cluster token
-		cat <<-EOF
-			##################################################
-			                    IMPORTANT
-			##################################################
-
-			Update the nix flake now with the following for ${HYPERVISOR}:
-
-			    bootstrapped = true
-			    clusterToken = <token>
-
-			The token can be obtained from the bootstrap server output.
-
-			Do not change the 'joined' flag yet!
-
-			##################################################
-		EOF
-		read -rp "Press enter to continue..."
-
 	fi
 
-	##################################################
-	# Common tasks for all server types
-	##################################################
+	# Apply Nix changes on reboot.
+	apply_changes "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
+		return 1
+	}
 
-	# Copy across the bootstrap script
-	copy_bootstrap_script "${HYPERVISOR}"
+	# Copy across the incus cluster creation script.
+	copy_script "incus-cluster-create.sh" "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to copy incus-cluster-create.sh to ${HYPERVISOR}"
+		return 1
+	}
 
-	# Run nixos-rebuild
-	run_nixos_rebuild "${HYPERVISOR}"
-
-	# Show system status
-	show_system_status "${HYPERVISOR}"
-
-	# Reboot the server and wait for it to come back online
-	if reboot_server "${HYPERVISOR}"; then
-		wait_for_server "${HYPERVISOR}"
-	else
-		msg "ERROR" "Failed to reboot ${SERVER_TYPE} server: ${HYPERVISOR}"
-		exit 1
-	fi
-
-	# Run the bootstrap script inside a nix-shell with the required tools.
-	msg "INFO" "Running bootstrap-incus.sh on ${HYPERVISOR} in ${SERVER_TYPE} mode"
-	run_ssh_command "${HYPERVISOR}" "sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/bootstrap-incus.sh'" "Failed to run bootstrap-incus.sh on ${HYPERVISOR}"
+	# Run the cluster creation script inside a nix-shell with the required tools.
+	msg "INFO" "Running incus-cluster-create.sh on ${HYPERVISOR} in ${SERVER_TYPE} mode"
+	run_ssh_command "${HYPERVISOR}" \
+		"sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/incus-cluster-create.sh'" || {
+		msg "ERROR" "Failed to run incus-cluster-create.sh on ${HYPERVISOR}"
+		return 1
+	}
 
 	return 0
 }
 
-function handle_cluster_destroy() {
+function join_server() {
 	local HYPERVISOR=$1
 
-	msg "INFO" "Running bootstrap-incus.sh on ${HYPERVISOR} in destroy mode"
+	msg "INFO" "Joining ${HYPERVISOR} to the cluster"
 
-	# Show system status
-	show_system_status "${HYPERVISOR}"
+	run_nixos_rebuild "${HYPERVISOR}" switch || {
+		msg "WARNING" "Failed to run nixos-rebuild switch on ${HYPERVISOR}, some changes may not have been applied"
+	}
 
-	# Copy and run bootstrap script in destroy mode
-	copy_bootstrap_script "${HYPERVISOR}"
+	run_ssh_command "${HYPERVISOR}" \
+		"sudo -n systemctl restart incus-preseed.service" || {
+		msg "ERROR" "Failed to restart incus-preseed.service on ${HYPERVISOR}"
+		return 1
+	}
+
+	return 0
+
+}
+
+function destroy_server() {
+	local HYPERVISOR=$1
+
+	# Apply Nix changes on reboot.
+	apply_changes "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
+		return 1
+	}
+
+	# Copy across the incus cluster destruction script.
+	copy_script "incus-cluster-destroy.sh" "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to copy incus-cluster-destroy.sh to ${HYPERVISOR}"
+		return 1
+	}
 
 	# Run the bootstrap script inside a nix-shell with the required tools.
-	msg "INFO" "Running bootstrap-incus.sh on ${HYPERVISOR} in destroy mode"
-	run_ssh_command "${HYPERVISOR}" "sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/bootstrap-incus.sh --incus-destroy-cluster'" "Failed to run bootstrap-incus.sh on ${HYPERVISOR}"
+	msg "INFO" "Running incus-cluster-destroy.sh on ${HYPERVISOR} in destroy mode"
+	run_ssh_command "${HYPERVISOR}" \
+		"sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/incus-cluster-destroy.sh'" || {
+		msg "ERROR" "Failed to run incus-cluster-destroy.sh on ${HYPERVISOR}"
+		return 1
+	}
+
+	# Reboot the server and wait for it to come back online after the destroy.
+	if reboot_server "${HYPERVISOR}"; then
+		wait_for_server "${HYPERVISOR}"
+	else
+		msg "ERROR" "Failed to reboot ${SERVER_TYPE} server: ${HYPERVISOR}"
+		return 1
+	fi
+
+	return 0
 }
+
+##################################################
+# Argument Parsing
+##################################################
+
+# Use getopt to parse arguments
+OPTS=$(getopt -o "cjday" --long "create,join,destroy,apply,help,yolo" -n "$0" -- "$@")
+# shellcheck disable=SC2181
+if [ $? != 0 ]; then
+	print_usage
+	exit 1
+fi
+
+eval set -- "$OPTS"
+
+# Initialize flags
+declare INCUS_CLUSTER_CREATE=false
+declare INCUS_CLUSTER_JOIN=false
+declare INCUS_CLUSTER_DESTROY=false
+declare INCUS_CLUSTER_APPLY=false
+declare YOLO_MODE=false
+declare MODE=""
+
+while true; do
+
+	case "$1" in
+	-c | --create)
+		INCUS_CLUSTER_CREATE=true
+		MODE="create"
+		shift
+		;;
+	-j | --join)
+		INCUS_CLUSTER_JOIN=true
+		MODE="join"
+		shift
+		;;
+	-d | --destroy)
+		INCUS_CLUSTER_DESTROY=true
+		MODE="destroy"
+		shift
+		;;
+	-a | --apply)
+		INCUS_CLUSTER_APPLY=true
+		MODE="apply"
+		shift
+		;;
+	-y | --yolo)
+		YOLO_MODE=true
+		shift
+		;;
+	--help)
+		print_usage
+		exit 0
+		;;
+	--)
+		shift
+		break
+		;;
+	*)
+		msg "ERROR" "Invalid argument: $1"
+		print_usage
+		exit 1
+		;;
+	esac
+done
+
+# Ensure exactly one mode is selected (mutual exclusivity)
+MODE_COUNT=0
+[[ $INCUS_CLUSTER_CREATE == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+[[ $INCUS_CLUSTER_JOIN == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+[[ $INCUS_CLUSTER_DESTROY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+[[ $INCUS_CLUSTER_APPLY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+
+if [ $MODE_COUNT -gt 1 ]; then
+	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, or --apply)."
+	print_usage
+	exit 1
+elif [ $MODE_COUNT -eq 0 ]; then
+	# Default to apply if no mode specified
+	INCUS_CLUSTER_APPLY=true
+	MODE="apply"
+	msg "INFO" "No mode specified; defaulting to --apply."
+fi
 
 ##################################################
 # Pre-flight checks
@@ -403,14 +523,6 @@ nix flake check \
 	exit 1
 }
 
-msg "DEBUG" "Debug information:"
-msg "DEBUG" "HYPERVISORS: ${HYPERVISORS[*]}"
-msg "DEBUG" "DOMAIN: $DOMAIN"
-msg "DEBUG" "INCUS_CLUSTER_DESTROY: ${INCUS_CLUSTER_DESTROY^^}"
-msg "DEBUG" "INCUS_CLUSTER_BOOTSTRAPPED: ${INCUS_CLUSTER_BOOTSTRAPPED^^}"
-
-# Before starting, ensure all servers are reachable.
-
 msg "INFO" "Checking if all servers are reachable..."
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
@@ -436,95 +548,54 @@ msg "INFO" "Pre-flight checks completed successfully"
 # Main
 ##################################################
 
-# Different message for destroy mode
-if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
-	msg "INFO" "Starting cluster destroy process..."
-else
-	msg "INFO" "Starting bootstrap process..."
-fi
+msg "INFO" "Starting cluster ${MODE} process..."
 
 for HYPERVISOR in "${HYPERVISORS[@]}"; do
-	msg "INFO" "Processing ${HYPERVISOR}"
 
-	# DESTROY MODE
-	if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
+	print_header "Starting ${MODE} process for ${HYPERVISOR}"
 
-		print_header "MODE: Destroy"
+	case "${MODE^^}" in
 
-		# Apply the `bootstrapped = false` flag on next boot.
-		run_nixos_rebuild "${HYPERVISOR}"
-
-		# Blow away the cluster and all data.
-		handle_cluster_destroy "${HYPERVISOR}"
-
-		# Reboot server without waiting for it to come back online
-		reboot_server "${HYPERVISOR}" || {
-			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
+	"DESTROY")
+		destroy_server "${HYPERVISOR}" || {
+			msg "ERROR" "Failed to destroy server ${HYPERVISOR}"
 			exit 1
 		}
+		;;
 
-	# BOOTSTRAP MODE
-	elif [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" ]]; then
-
-		print_header "MODE: Bootstrap"
-
-		# Handle cluster setup mode
-		setup_server "${HYPERVISOR}"
-
-	# UPGRADE MODE
-	else
-
-		print_header "MODE: Upgrade"
-
-		run_nixos_rebuild "${HYPERVISOR}"
-
-		show_system_status "${HYPERVISOR}"
-
-		copy_bootstrap_script "${HYPERVISOR}"
-
-		if reboot_server "${HYPERVISOR}"; then
-			wait_for_server "${HYPERVISOR}"
-		else
-			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
+	"CREATE")
+		setup_server "${HYPERVISOR}" || {
+			msg "ERROR" "Failed to setup server ${HYPERVISOR}"
 			exit 1
-		fi
+		}
+		;;
 
-	fi
+	"JOIN")
+		# If it's the bootstrap server, don't attempt to join it.
+		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
+			msg "INFO" "Skipping join for bootstrap server ${HYPERVISOR}"
+		else
+			join_server "${HYPERVISOR}" || {
+				msg "ERROR" "Failed to join server ${HYPERVISOR}"
+				exit 1
+			}
+		fi
+		;;
+
+	"APPLY")
+		apply_changes "${HYPERVISOR}" || {
+			msg "ERROR" "Failed to apply changes to server ${HYPERVISOR}"
+			exit 1
+		}
+		;;
+
+	*)
+		msg "ERROR" "Invalid mode: ${MODE^^}"
+		exit 1
+		;;
+
+	esac
+
 done
 
-# Show final notice for member servers but not in destroy mode
-if [[ ${INCUS_CLUSTER_BOOTSTRAPPED^^} == "FALSE" && ${INCUS_CLUSTER_DESTROY^^} == "FALSE" ]]; then
-	cat <<-EOF
-
-		##################################################
-		                    IMPORTANT
-		##################################################
-
-		Now that the initial setup has completed here are the next steps.
-
-		- Verify that the member servers have joined the cluster
-
-		    incus cluster list
-
-		- Set the following environment variable in your shell:
-
-		    INCUS_CLUSTER_BOOTSTRAPPED=true
-
-		- Update the nix flake with the following for all member servers:
-
-		    joined = true
-
-		- Re-run this script for a final time to complete the cluster setup.
-
-		    ./scripts/bootstrap-hypervisors.sh
-
-		##################################################
-	EOF
-fi
-
-# Different message for destroy mode
-if [[ ${INCUS_CLUSTER_DESTROY^^} == "TRUE" ]]; then
-	msg "INFO" "Cluster destroy process completed successfully"
-else
-	msg "INFO" "Bootstrap process completed successfully"
-fi
+msg "INFO" "Cluster ${MODE} process completed successfully"

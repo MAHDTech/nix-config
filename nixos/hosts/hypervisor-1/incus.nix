@@ -1,8 +1,4 @@
 let
-  # Flag to indicate if the cluster has been bootstrapped.
-  # Set to true when prompted by the bootstrap script.
-  bootstrapped = false;
-
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-1";
 
@@ -21,7 +17,6 @@ in
 {
   imports = [
     (import ../../system/config/virtualisation/incus {
-      inherit bootstrapped;
       inherit hypervisorName;
       inherit hypervisorRole;
       inherit hypervisorManagementAddress;

@@ -1,11 +1,10 @@
 {
-  bootstrapped ? false,
-  joined ? false,
   clusterToken ? null,
   hypervisorClusterAddress,
   hypervisorManagementAddress,
   hypervisorName,
   hypervisorRole ? "member",
+  joined ? false,
   sourceDefault,
   sourceInstances,
   sourceIso,
@@ -329,7 +328,7 @@ let
         # Default Project Storage Volumes
         #########################################################
 
-        # TODO: Storage volumes for default project if required.
+        # None required.
 
         #########################################################
         # Nutanix Project Storage Volumes
@@ -486,15 +485,33 @@ let
           }
           {
             entity = "storage-pool";
+            name = "default";
+            key = "source.wipe";
+            value = "true";
+          }
+          {
+            entity = "storage-pool";
             name = "instances";
             key = "source";
             value = sourceInstances;
           }
           {
             entity = "storage-pool";
+            name = "instances";
+            key = "source.wipe";
+            value = "true";
+          }
+          {
+            entity = "storage-pool";
             name = "iso";
             key = "source";
             value = sourceIso;
+          }
+          {
+            entity = "storage-pool";
+            name = "iso";
+            key = "source.wipe";
+            value = "true";
           }
           #########################################################
           # Networks
@@ -528,19 +545,9 @@ let
         {
           name = "default";
           driver = "zfs";
-          config =
-            if bootstrapped then
-              {
-                # bootstrapped: true
-                "zfs.clone_copy" = "true";
-              }
-            else
-              {
-                # bootstrapped: false
-                "source" = sourceDefault;
-                "source.wipe" = "true";
-                "zfs.clone_copy" = "true";
-              };
+          config = {
+            "zfs.clone_copy" = "true";
+          };
         }
 
         #########################
@@ -549,19 +556,9 @@ let
         {
           name = "instances";
           driver = "zfs";
-          config =
-            if bootstrapped then
-              {
-                # bootstrapped: true
-                "zfs.clone_copy" = "true";
-              }
-            else
-              {
-                # bootstrapped: false
-                "source" = sourceInstances;
-                "source.wipe" = "true";
-                "zfs.clone_copy" = "true";
-              };
+          config = {
+            "zfs.clone_copy" = "true";
+          };
         }
 
         #########################
@@ -570,19 +567,9 @@ let
         {
           name = "iso";
           driver = "zfs";
-          config =
-            if bootstrapped then
-              {
-                # bootstrapped: true
-                "zfs.clone_copy" = "true";
-              }
-            else
-              {
-                # bootstrapped: false
-                "source" = sourceIso;
-                "source.wipe" = "true";
-                "zfs.clone_copy" = "true";
-              };
+          config = {
+            "zfs.clone_copy" = "true";
+          };
         }
 
       ];
@@ -1061,16 +1048,74 @@ in
           };
 
           preStart = ''
-            # Wait up to 30s for incus daemon to be fully responsive.
+            # Wait up to 60s for incus daemon to be fully responsive.
             ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
+            READY=false
             for i in {1..10}; do
-              if ${pkgs.incus}/bin/incus admin waitready --timeout=3; then
+              if ${pkgs.incus}/bin/incus admin waitready --timeout=6; then
                 ${pkgs.coreutils}/bin/echo "Incus daemon is ready."
-                exit 0
+                READY=true
+                break
               fi
-              sleep 3
+              sleep 6
             done
-            ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for Incus daemon to be ready. Preseed may fail."
+            if [ "$READY" != "true" ]; then
+              ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for Incus daemon to be ready. Preseed may fail."
+            fi
+
+            # If this is a member node joining the cluster, wipe existing data
+            if [ "${hypervisorRole}" = "member" ] && [ "${lib.boolToString joined}" != "true" ]; then
+              ${pkgs.coreutils}/bin/echo "Wiping existing Incus data for clean cluster join..."
+
+              # Temporarily stop Incus to release resources
+              ${pkgs.coreutils}/bin/echo "Stopping Incus service to release locks..."
+              systemctl stop incus.service || true
+              sleep 5
+
+              # Stop all instances (if any)
+              ${pkgs.coreutils}/bin/echo "Stopping all instances..."
+              ${pkgs.incus}/bin/incus stop --all --force-local || true
+
+              # Delete all instances
+              ${pkgs.coreutils}/bin/echo "Deleting all instances..."
+              for instance in $(${pkgs.incus}/bin/incus list -c n --format csv --force-local); do
+                ${pkgs.incus}/bin/incus delete --force "$instance" --force-local || true
+              done
+
+              # Remove default profile devices
+              ${pkgs.coreutils}/bin/echo "Removing default profile devices..."
+              ${pkgs.incus}/bin/incus profile device remove default root --force-local || true
+              ${pkgs.incus}/bin/incus profile device remove default eth0 --force-local || true
+
+              # Delete networks
+              ${pkgs.coreutils}/bin/echo "Deleting networks..."
+              ${pkgs.incus}/bin/incus network delete incusbr0 --force-local || true
+              ${pkgs.incus}/bin/incus network delete incusbr1 --force-local || true
+
+              # Delete storage pools
+              ${pkgs.coreutils}/bin/echo "Deleting storage pools..."
+              ${pkgs.incus}/bin/incus storage delete default --force-local || true
+              ${pkgs.incus}/bin/incus storage delete instances --force-local || true
+              ${pkgs.incus}/bin/incus storage delete iso --force-local || true
+
+              # Unset addresses
+              ${pkgs.coreutils}/bin/echo "Unsetting addresses..."
+              ${pkgs.incus}/bin/incus config unset core.https_address --force-local || true
+              ${pkgs.incus}/bin/incus config unset cluster.https_address --force-local || true
+
+              # Clean up any remaining ZFS datasets if needed
+              ${pkgs.coreutils}/bin/echo "Cleaning up ZFS datasets..."
+              zfs destroy -r zpool/var/lib/incus/storage-pools/default || true
+              zfs destroy -r zpool/var/lib/incus/storage-pools/instances || true
+              zfs destroy -r zpool/var/lib/incus/storage-pools/iso || true
+
+              # Restart Incus after wipe
+              ${pkgs.coreutils}/bin/echo "Restarting Incus service..."
+              systemctl start incus.service || true
+              sleep 10
+
+              ${pkgs.coreutils}/bin/echo "Incus data wiped successfully."
+            fi
           '';
         })
       ];

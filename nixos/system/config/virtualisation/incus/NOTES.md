@@ -7,6 +7,10 @@
   - [Overview](#overview)
   - [Deployment](#deployment)
     - [Steps to deploy](#steps-to-deploy)
+      - [Stage 1 (Cluster Creation)](#stage-1-cluster-creation)
+      - [Stage 2 (Cluster Joining)](#stage-2-cluster-joining)
+      - [Stage 3 (Finalise)](#stage-3-finalise)
+      - [Stage 4. (Login and configure)](#stage-4-login-and-configure)
     - [Steps to destroy](#steps-to-destroy)
   - [Network Configuration](#network-configuration)
   - [Network Layout](#network-layout)
@@ -23,25 +27,37 @@ Notes from setting up the Incus cluster.
 
 ### Steps to deploy
 
-1. Run `export INCUS_CLUSTER_DESTROY=false`
-1. Run `export INCUS_CLUSTER_BOOTSTRAPPED=false`
-1. Update the nix flake with `bootstrapped = false` for ALL servers in the config.
-1. Update the nix flake with `joined = false` for ALL member servers in the config.
-1. Run `./scripts/bootstrap-hypervisors.sh` script.
-1. Update the flake with `bootstrapped = true` for the bootstrap server when prompted.
-1. Update the nix flake with the `clusterToken` for the member servers when prompted.
-1. Once the script has completed, update the nix flake with `joined = true` for all member servers.
-1. Run `export INCUS_CLUSTER_BOOTSTRAPPED=true`
-1. Run `./scripts/bootstrap-hypervisors.sh` script a final time.
+_A multi-stage saga._
+
+#### Stage 1 (Cluster Creation)
+
+Obtain the Cluster tokens by running the following;
+
+1. Run `./scripts/incus-hypervisors.sh --create` script.
+
+#### Stage 2 (Cluster Joining)
+
+Join the cluster using the tokens by running the following;
+
+1. Update the nix flake with the `clusterToken` for the member servers captured from stage 1.
+1. Run `./scripts/incus-hypervisors.sh --join` script.
+
+#### Stage 3 (Finalise)
+
+1. Update the nix flake with `joined = true` for ALL member servers in the config.
+1. Run `./scripts/incus-hypervisors.sh --apply` script.
+
+#### Stage 4. (Login and configure)
+
 1. Access the Incus Web API and configure your client certificate.
 
 ### Steps to destroy
 
-1. Update the flake with `bootstrapped = false` for all servers
+_One shot to destroy them all._
+
 1. Update the flake with `joined = false` for all member servers
 1. Remove any `clusterToken` from the config for all member servers
-1. Export the variable `INCUS_CLUSTER_DESTROY=true`
-1. Run the `./scripts/bootstrap-hypervisors.sh` script.
+1. Run the `./scripts/incus-hypervisors.sh --destroy` script.
 
 ## Network Configuration
 

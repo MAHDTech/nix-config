@@ -68,6 +68,9 @@
           // Cursor Terminal
           "cursor.terminal.usePreviewBox": false,
 
+          // Git
+          "git.autofetch": true,
+
           // Window
           "window.commandCenter": true,
           "window.titleBarStyle": "custom",
