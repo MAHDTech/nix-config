@@ -1,5 +1,6 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
   environment.systemPackages = with pkgs; [
     docker
@@ -10,7 +11,9 @@
   ];
 
   virtualisation = {
-    oci-containers = {backend = "docker";};
+    oci-containers = {
+      backend = "docker";
+    };
 
     docker = {
       enable = true;
@@ -21,10 +24,14 @@
       storageDriver = "zfs";
       logDriver = "journald";
 
+      extraOptions = ''
+        --iptables=false
+      '';
+
       autoPrune = {
         enable = true;
         dates = "weekly";
-        flags = ["--all"];
+        flags = [ "--all" ];
       };
 
       rootless = {

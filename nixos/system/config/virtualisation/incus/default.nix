@@ -1175,6 +1175,9 @@ in
 
               # Allow Incus dataplane traffic from all nodes
               ip saddr 10.10.200.0/24 tcp dport 9443 accept
+
+              # Allow ICMP traffic from all nodes
+              ip saddr 10.10.200.0/24 ip protocol icmp accept
             }
           '';
         };
@@ -1197,6 +1200,9 @@ in
               # Allow Incus API ports from management
               ip saddr 10.10.1.0/24 tcp dport 8443 accept
               ip saddr 10.10.1.0/24 tcp dport 9443 accept
+
+              # Allow ICMP traffic from management
+              ip saddr 10.10.1.0/24 ip protocol icmp accept
             }
           '';
         };
@@ -1219,6 +1225,9 @@ in
               # Allow Incus API ports from platform
               ip saddr 10.10.100.0/24 tcp dport 8443 accept
               ip saddr 10.10.100.0/24 tcp dport 9443 accept
+
+              # Allow ICMP traffic from platform
+              ip saddr 10.10.100.0/24 ip protocol icmp accept
             }
           '';
         };
@@ -1242,7 +1251,7 @@ in
       };
     };
     firewall = {
-      enable = true;
+      enable = false;
       trustedInterfaces = [
         "lo" # Loopback
         "enp6s0" # Management interface

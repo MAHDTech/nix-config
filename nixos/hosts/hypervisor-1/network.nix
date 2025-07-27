@@ -88,16 +88,9 @@ in
           };
           networkConfig = defaultNetworkConfig;
           dhcpV4Config = {
-            RouteMetric = 2000; # Lower priority.
+            RouteMetric = 1000;
           };
-          routes = [
-            # Reach incus routed networks via incusbr1
-            {
-              Destination = "10.10.201.0/24";
-              Gateway = "10.10.201.1";
-              Metric = 1000;
-            }
-          ];
+          routes = [ ];
         };
 
       };
