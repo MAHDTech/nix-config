@@ -517,12 +517,14 @@ let
           # Networks
           #########################################################
           # Bridge Network (transparent bridge)
-          {
-            entity = "network";
-            name = "incusbr0";
-            key = "bridge.external_interfaces";
-            value = "bond0";
-          }
+          /*
+            {
+              entity = "network";
+              name = "incusbr0";
+              key = "bridge.external_interfaces";
+              value = "bond0";
+            }
+          */
         ];
       }
       // lib.optionalAttrs (hypervisorRole == "bootstrap") {
@@ -914,11 +916,11 @@ in
 
         preStart = ''
           # Wait for OVS to be fully ready
-          for i in {1..60}; do
+          for i in {1..30}; do
             if ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 show >/dev/null 2>&1; then
               break
             fi
-            sleep 2
+            sleep 10
           done
 
           # Set a system ID for OVN
@@ -937,9 +939,6 @@ in
           # Create the main OVS integration bridge
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --may-exist add-br br-int
 
-          # Wait for the bridge to be fully initialized
-          sleep 5
-
           # Ensure the bridge is properly configured
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set bridge br-int fail_mode=secure
 
@@ -948,14 +947,18 @@ in
             if ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list chassis >/dev/null 2>&1; then
               break
             fi
-            sleep 2
+            sleep 10
           done
 
-          # Ensure the chassis is properly registered
-          ${pkgs.ovn}/bin/ovn-sbctl --timeout=10 list chassis | ${pkgs.gnugrep}/bin/grep -q "${hypervisorName}" || {
-            ${pkgs.coreutils}/bin/echo "Chassis not found, waiting for registration..."
+          # Ensure the chassis is properly registered or wait for timeout.
+          for i in {1..30}; do
+            if ${pkgs.ovn}/bin/ovn-sbctl --timeout=10 list chassis | ${pkgs.gnugrep}/bin/grep -q "${hypervisorName}"; then
+              ${pkgs.coreutils}/bin/echo "OVN chassis found. Proceeding with Incus start."
+              break
+            fi
+            ${pkgs.coreutils}/bin/echo "OVN chassis not found, waiting for registration..."
             sleep 10
-          }
+          done
         '';
       };
 
@@ -1162,7 +1165,7 @@ in
           '';
         };
         #########################################################
-        # Incus Dataplane Rules
+        # Incus Dataplane Rules (10.10.200.0/24)
         #########################################################
         incus = {
           family = "ip";
@@ -1176,7 +1179,7 @@ in
           '';
         };
         #########################################################
-        # Management Network Rules
+        # Management Network Rules (10.10.1.0/24)
         #########################################################
         management = {
           family = "ip";
@@ -1198,7 +1201,7 @@ in
           '';
         };
         #########################################################
-        # Platform Network Rules
+        # Platform Network Rules (10.10.100.0/24)
         #########################################################
         platform = {
           family = "ip";
@@ -1220,7 +1223,7 @@ in
           '';
         };
         #########################################################
-        # Applications Network Rules
+        # Applications Network Rules (via bond0 to 10.10.201.0/24-10.10.205.0/24)
         #########################################################
         applications = {
           family = "ip";

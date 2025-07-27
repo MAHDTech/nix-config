@@ -40,10 +40,11 @@ function print_usage() {
 
 		Options:
 
+		    --destroy   Destroy an incus cluster
 		    --create    Create a new incus cluster
 		    --join      Join an existing incus cluster
-		    --destroy   Destroy an incus cluster
 		    --apply     Apply changes to an incus cluster
+		    --configure Configure an incus cluster
 
 		If no options are provided, the script will default to --apply.
 	EOF
@@ -396,12 +397,33 @@ function destroy_server() {
 	return 0
 }
 
+function configure_server() {
+	local HYPERVISOR=$1
+
+	# Copy across the incus cluster configuration script.
+	copy_script "incus-cluster-configure.sh" "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to copy incus-cluster-configure.sh to ${HYPERVISOR}"
+		return 1
+	}
+
+	# Run the cluster configuration script inside a nix-shell with the required tools.
+	# This script must NOT be run using sudo, and the user must be in the 'incus-admin' group.
+	msg "INFO" "Running incus-cluster-configure.sh on ${HYPERVISOR} as user ${USER}"
+	run_ssh_command "${HYPERVISOR}" \
+		"nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/incus-cluster-configure.sh'" || {
+		msg "ERROR" "Failed to run incus-cluster-configure.sh on ${HYPERVISOR}"
+		return 1
+	}
+
+	return 0
+}
+
 ##################################################
 # Argument Parsing
 ##################################################
 
 # Use getopt to parse arguments
-OPTS=$(getopt -o "cjday" --long "create,join,destroy,apply,help,yolo" -n "$0" -- "$@")
+OPTS=$(getopt -o "cjdahyo" --long "create,join,destroy,apply,help,yolo,configure" -n "$0" -- "$@")
 # shellcheck disable=SC2181
 if [ $? != 0 ]; then
 	print_usage
@@ -415,6 +437,7 @@ declare INCUS_CLUSTER_CREATE=false
 declare INCUS_CLUSTER_JOIN=false
 declare INCUS_CLUSTER_DESTROY=false
 declare INCUS_CLUSTER_APPLY=false
+declare INCUS_CLUSTER_CONFIGURE=false
 declare YOLO_MODE=false
 declare MODE=""
 
@@ -445,7 +468,12 @@ while true; do
 		YOLO_MODE=true
 		shift
 		;;
-	--help)
+	-o | --configure)
+		INCUS_CLUSTER_CONFIGURE=true
+		MODE="configure"
+		shift
+		;;
+	-h | --help)
 		print_usage
 		exit 0
 		;;
@@ -467,9 +495,10 @@ MODE_COUNT=0
 [[ $INCUS_CLUSTER_JOIN == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_DESTROY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_APPLY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+[[ $INCUS_CLUSTER_CONFIGURE == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 
 if [ $MODE_COUNT -gt 1 ]; then
-	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, or --apply)."
+	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, --apply, or --configure)."
 	print_usage
 	exit 1
 elif [ $MODE_COUNT -eq 0 ]; then
@@ -584,6 +613,21 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 			msg "ERROR" "Failed to apply changes to server ${HYPERVISOR}"
 			exit 1
 		}
+
+		;;
+
+	# Configure the incus cluster on all servers.
+	"CONFIGURE")
+
+		# If it's the bootstrap server, run the configuration script on it.
+		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
+			configure_server "${HYPERVISOR}" || {
+				msg "ERROR" "Failed to setup server ${HYPERVISOR}"
+				exit 1
+			}
+		else
+			msg "INFO" "Skipping cluster creation for non-bootstrap server ${HYPERVISOR}"
+		fi
 
 		;;
 

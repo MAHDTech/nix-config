@@ -50,6 +50,7 @@ Join the cluster using the tokens by running the following;
 #### Stage 4. (Login and configure)
 
 1. Access the Incus Web API and configure your client certificate.
+2. Optionally, run `./scripts/incus-hypervisors.sh --configure` script to configure some default incus settings that can't be done via preseed.
 
 ### Steps to destroy
 
