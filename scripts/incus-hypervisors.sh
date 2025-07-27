@@ -362,25 +362,6 @@ function setup_server() {
 	return 0
 }
 
-function join_server() {
-	local HYPERVISOR=$1
-
-	msg "INFO" "Joining ${HYPERVISOR} to the cluster"
-
-	run_nixos_rebuild "${HYPERVISOR}" switch || {
-		msg "WARNING" "Failed to run nixos-rebuild switch on ${HYPERVISOR}, some changes may not have been applied"
-	}
-
-	run_ssh_command "${HYPERVISOR}" \
-		"sudo -n systemctl restart incus-preseed.service" || {
-		msg "ERROR" "Failed to restart incus-preseed.service on ${HYPERVISOR}"
-		return 1
-	}
-
-	return 0
-
-}
-
 function destroy_server() {
 	local HYPERVISOR=$1
 
@@ -556,42 +537,61 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 
 	case "${MODE^^}" in
 
+	# Destroy incus on all servers.
 	"DESTROY")
+
 		destroy_server "${HYPERVISOR}" || {
 			msg "ERROR" "Failed to destroy server ${HYPERVISOR}"
 			exit 1
 		}
+
 		;;
 
+	# Create the incus cluster on the bootstrap server only.
 	"CREATE")
-		setup_server "${HYPERVISOR}" || {
-			msg "ERROR" "Failed to setup server ${HYPERVISOR}"
-			exit 1
-		}
+
+		# If it's the bootstrap server, don't attempt to join it.
+		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
+			setup_server "${HYPERVISOR}" || {
+				msg "ERROR" "Failed to setup server ${HYPERVISOR}"
+				exit 1
+			}
+		else
+			msg "INFO" "Skipping cluster creation for non-bootstrap server ${HYPERVISOR}"
+		fi
+
 		;;
 
+	# Join the incus cluster from member servers only.
 	"JOIN")
+
 		# If it's the bootstrap server, don't attempt to join it.
 		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
 			msg "INFO" "Skipping join for bootstrap server ${HYPERVISOR}"
 		else
-			join_server "${HYPERVISOR}" || {
+			apply_changes "${HYPERVISOR}" || {
 				msg "ERROR" "Failed to join server ${HYPERVISOR}"
 				exit 1
 			}
 		fi
+
 		;;
 
+	# Apply changes to all servers.
 	"APPLY")
+
 		apply_changes "${HYPERVISOR}" || {
 			msg "ERROR" "Failed to apply changes to server ${HYPERVISOR}"
 			exit 1
 		}
+
 		;;
 
 	*)
+
 		msg "ERROR" "Invalid mode: ${MODE^^}"
 		exit 1
+
 		;;
 
 	esac

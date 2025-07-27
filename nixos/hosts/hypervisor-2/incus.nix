@@ -1,7 +1,7 @@
 let
   # Flag to indicate if the hypervisor has joined the cluster.
   # Set to true once the hypervisor has joined the cluster.
-  joined = false;
+  joined = true;
 
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-2";
@@ -20,7 +20,7 @@ let
 
   # TODO: SOPS encryption when this test is working.
   # The cluster token obtained during the bootstrap process. Only used if bootstrapped is true.
-  clusterToken = "eyJzZXJ2ZXJfbmFtZSI6IkhZUEVSVklTT1ItMiIsImZpbmdlcnByaW50IjoiZTc1ZjZmMWVhMTEwNTg5NDkzOTE0ZjY4NDRlZDYwMGEzNzc5OTU3ODFkYWZiZDIzNzBlYTUyZmM3NzZjZGNkOSIsImFkZHJlc3NlcyI6WyIxMC4xMC4yMDAuMTE6OTQ0MyJdLCJzZWNyZXQiOiJmODE2YTA4YjAxZmE0OGE1Yjk0MDQ5OTIwYzgzMzk1NThiNWNlYTBiNDRkZTI5ZTRiZjRhZGUzNDhiYTNlMTcwIiwiZXhwaXJlc19hdCI6IjIwMjUtMDctMjdUMDM6MjU6MDAuNTYwMjk4MDQzKzEwOjAwIn0=";
+  clusterToken = "eyJzZXJ2ZXJfbmFtZSI6IkhZUEVSVklTT1ItMiIsImZpbmdlcnByaW50IjoiMjYxYTE5M2UxNzFhN2M5MDBmODA5YjE1ODdhMTg4NjkyY2M3OTRhODI1MDhkMDY4MzgzMGYyYTRmZDYxOTVhOCIsImFkZHJlc3NlcyI6WyIxMC4xMC4yMDAuMTE6OTQ0MyJdLCJzZWNyZXQiOiJjN2Q3YWFlODkxMzdkZDQ0MDMxMjNlMTM5NGQ3NTA0MGM0Y2UzZjc4YmY5ZTdmMTVhZDUzNjZlNTg0Y2MxZGRjIiwiZXhwaXJlc19hdCI6IjIwMjUtMDctMjdUMTM6MTc6NDguMjk1MTQyNzQyKzEwOjAwIn0=";
 in
 {
   imports = [

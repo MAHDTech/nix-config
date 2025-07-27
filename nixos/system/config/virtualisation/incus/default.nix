@@ -1048,6 +1048,16 @@ in
           };
 
           preStart = ''
+            # Wait for Network to be ready.
+            ${pkgs.coreutils}/bin/echo "Waiting for network to be ready..."
+            for i in {1..60}; do
+              if [ -n "$(${pkgs.systemd}/bin/networkctl status --no-pager | ${pkgs.gnugrep}/bin/grep -E '[[:space:]]*Online state: (online|partial)')" ]; then
+                ${pkgs.coreutils}/bin/echo "Network is ready."
+                break
+              fi
+              ${pkgs.coreutils}/bin/sleep 1
+            done
+
             # Wait up to 60s for incus daemon to be fully responsive.
             ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
             READY=false
@@ -1064,13 +1074,9 @@ in
             fi
 
             # If this is a member node joining the cluster, wipe existing data
-            if [ "${hypervisorRole}" = "member" ] && [ "${lib.boolToString joined}" != "true" ]; then
+            if [ "${hypervisorRole}" = "member" ] && [ "${lib.boolToString joined}" != "true" ];
+            then
               ${pkgs.coreutils}/bin/echo "Wiping existing Incus data for clean cluster join..."
-
-              # Temporarily stop Incus to release resources
-              ${pkgs.coreutils}/bin/echo "Stopping Incus service to release locks..."
-              systemctl stop incus.service || true
-              sleep 5
 
               # Stop all instances (if any)
               ${pkgs.coreutils}/bin/echo "Stopping all instances..."
@@ -1105,16 +1111,14 @@ in
 
               # Clean up any remaining ZFS datasets if needed
               ${pkgs.coreutils}/bin/echo "Cleaning up ZFS datasets..."
-              zfs destroy -r zpool/var/lib/incus/storage-pools/default || true
-              zfs destroy -r zpool/var/lib/incus/storage-pools/instances || true
-              zfs destroy -r zpool/var/lib/incus/storage-pools/iso || true
-
-              # Restart Incus after wipe
-              ${pkgs.coreutils}/bin/echo "Restarting Incus service..."
-              systemctl start incus.service || true
-              sleep 10
+              ${pkgs.zfs}/bin/zfs destroy -r ${sourceDefault} || true
+              ${pkgs.zfs}/bin/zfs destroy -r ${sourceInstances} || true
+              ${pkgs.zfs}/bin/zfs destroy -r ${sourceIso} || true
 
               ${pkgs.coreutils}/bin/echo "Incus data wiped successfully."
+            else
+              ${pkgs.coreutils}/bin/echo "Already joined to cluster, skipping data wipe."
+              exit 0
             fi
           '';
         })
