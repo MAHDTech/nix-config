@@ -1,4 +1,8 @@
 let
+  # Flag to indicate if the hypervisor has joined the cluster.
+  # Set to true once the hypervisor has joined the cluster.
+  joined = false;
+
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-1";
 
@@ -8,6 +12,11 @@ let
   # The address of the hypervisor.
   hypervisorManagementAddress = "10.10.100.11:8443";
   hypervisorClusterAddress = "10.10.200.11:9443";
+  hypervisorClusterPeerAddresses = [
+    "10.10.200.12:6642"
+    "10.10.200.13:6642"
+    "10.10.200.14:6642"
+  ];
 
   # ZFS dataset sources.
   sourceDefault = "zpool/var/lib/incus/storage-pools/default";
@@ -17,10 +26,12 @@ in
 {
   imports = [
     (import ../../system/config/virtualisation/incus {
+      inherit joined;
       inherit hypervisorName;
       inherit hypervisorRole;
       inherit hypervisorManagementAddress;
       inherit hypervisorClusterAddress;
+      inherit hypervisorClusterPeerAddresses;
       inherit sourceDefault sourceInstances sourceIso;
     })
   ];

@@ -1,7 +1,7 @@
 let
   # Flag to indicate if the hypervisor has joined the cluster.
   # Set to true once the hypervisor has joined the cluster.
-  joined = true;
+  joined = false;
 
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-3";
@@ -12,6 +12,11 @@ let
   # The address of the hypervisor.
   hypervisorManagementAddress = "10.10.100.13:8443";
   hypervisorClusterAddress = "10.10.200.13:9443";
+  hypervisorClusterPeerAddresses = [
+    "10.10.200.11:6642"
+    "10.10.200.12:6642"
+    "10.10.200.14:6642"
+  ];
 
   # ZFS dataset sources.
   sourceDefault = "zpool/var/lib/incus/storage-pools/default";
@@ -20,7 +25,7 @@ let
 
   # TODO: SOPS encryption when this test is working.
   # The cluster token obtained during the bootstrap process. Only used if bootstrapped is true.
-  clusterToken = "eyJzZXJ2ZXJfbmFtZSI6IkhZUEVSVklTT1ItMyIsImZpbmdlcnByaW50IjoiMjYxYTE5M2UxNzFhN2M5MDBmODA5YjE1ODdhMTg4NjkyY2M3OTRhODI1MDhkMDY4MzgzMGYyYTRmZDYxOTVhOCIsImFkZHJlc3NlcyI6WyIxMC4xMC4yMDAuMTE6OTQ0MyJdLCJzZWNyZXQiOiI1ZDIwZGNjMWQ5ZWIzMzg1MDYyZGE5ZmFkZWJiNWJlOTZhMzk4YTAxM2QwMTVmMmNjMTdkNmZhMmNiMTBlY2U3IiwiZXhwaXJlc19hdCI6IjIwMjUtMDctMjdUMTM6MTc6NDguMzQwMDQ4MDk5KzEwOjAwIn0=";
+  clusterToken = "";
 in
 {
   imports = [
@@ -30,6 +35,7 @@ in
       inherit hypervisorRole;
       inherit hypervisorManagementAddress;
       inherit hypervisorClusterAddress;
+      inherit hypervisorClusterPeerAddresses;
       inherit sourceDefault sourceInstances sourceIso;
       inherit clusterToken;
     })

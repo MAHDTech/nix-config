@@ -44,7 +44,9 @@ Join the cluster using the tokens by running the following;
 
 #### Stage 3 (Finalise)
 
-1. Update the nix flake with `joined = true` for ALL member servers in the config.
+After verifying the members have joined successfully, run the following;
+
+1. Update the nix flake with `joined = true` for **ALL** servers in the config.
 1. Run `./scripts/incus-hypervisors.sh --apply` script.
 
 #### Stage 4. (Login and configure)

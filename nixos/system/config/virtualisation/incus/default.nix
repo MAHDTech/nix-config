@@ -1,6 +1,7 @@
 {
   clusterToken ? null,
   hypervisorClusterAddress,
+  hypervisorClusterPeerAddresses ? "",
   hypervisorManagementAddress,
   hypervisorName,
   hypervisorRole ? "member",
@@ -18,6 +19,13 @@
 let
   # Strip the port from the cluster address.
   hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
+
+  # Join the cluster addresses with commas and prefix tcp:
+  hypervisorClusterAddressList =
+    if hypervisorClusterPeerAddresses != "" then
+      lib.strings.concatStringsSep "," (lib.map (addr: "tcp:${addr}") hypervisorClusterPeerAddresses)
+    else
+      "";
 
   #########################################################
   # Global configuration
@@ -50,6 +58,9 @@ let
 
         # Images
         "images.auto_update_interval" = 6;
+
+        # Allow OVN controller to send logs to incus.
+        "core.syslog_socket" = true;
 
       };
 
@@ -103,6 +114,8 @@ let
 
         ###########################
         # Bridge Network (transparent bridge)
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
         ###########################
         {
           name = "incusbr0";
@@ -110,7 +123,7 @@ let
           project = "default";
           config = {
             "bridge.driver" = "openvswitch";
-            "dns.mode" = "none";
+            "dns.mode" = "none"; # none, managed, dynamic
             "ipv4.address" = "none";
             "ipv4.dhcp" = "false";
             "ipv4.nat" = "false";
@@ -123,6 +136,8 @@ let
 
         ###########################
         # Bridge Network (routed bridge)
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
         ###########################
         {
           name = "incusbr1";
@@ -130,6 +145,7 @@ let
           project = "default";
           config = {
             "bridge.driver" = "openvswitch";
+            "dns.mode" = "managed"; # none, managed, dynamic
             "dns.domain" = "incus.local";
             "dns.nameservers" = "10.10.200.254";
             "ipv4.address" = "10.10.201.1/24";
@@ -152,6 +168,8 @@ let
 
         ###########################
         # Nutanix VPC
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
         ###########################
         {
           name = "nutanix-vpc";
@@ -201,7 +219,8 @@ let
             };
             eth0 = {
               name = "eth0";
-              network = "incusbr1";
+              # Network and nictype are mutually exclusive.
+              network = "incusbr0";
               type = "nic";
             };
           };
@@ -226,6 +245,7 @@ let
             };
             eth0 = {
               name = "eth0";
+              # Network and nictype are mutually exclusive.
               network = "incusbr1";
               type = "nic";
             };
@@ -251,6 +271,7 @@ let
             };
             eth0 = {
               name = "eth0";
+              # Network and nictype are mutually exclusive.
               network = "incusbr1";
               type = "nic";
             };
@@ -278,6 +299,7 @@ let
             };
             eth0 = {
               name = "eth0";
+              # Network and nictype are mutually exclusive.
               network = "incusbr1";
               type = "nic";
             };
@@ -312,6 +334,7 @@ let
             };
             eth0 = {
               name = "eth0";
+              # Network and nictype are mutually exclusive.
               network = "nutanix-vpc";
               type = "nic";
             };
@@ -477,6 +500,9 @@ let
           #########################################################
           # Storage Pools
           #########################################################
+          #########################
+          # Default storage pool
+          #########################
           {
             entity = "storage-pool";
             name = "default";
@@ -489,6 +515,9 @@ let
             key = "source.wipe";
             value = "true";
           }
+          #########################
+          # Instances storage pool
+          #########################
           {
             entity = "storage-pool";
             name = "instances";
@@ -501,6 +530,9 @@ let
             key = "source.wipe";
             value = "true";
           }
+          #########################
+          # ISO storage pool
+          #########################
           {
             entity = "storage-pool";
             name = "iso";
@@ -517,14 +549,12 @@ let
           # Networks
           #########################################################
           # Bridge Network (transparent bridge)
-          /*
-            {
-              entity = "network";
-              name = "incusbr0";
-              key = "bridge.external_interfaces";
-              value = "bond0";
-            }
-          */
+          #{
+          #  entity = "network";
+          #  name = "incusbr0";
+          #  key = "bridge.external_interfaces";
+          #  value = "bond0";
+          #}
         ];
       }
       // lib.optionalAttrs (hypervisorRole == "bootstrap") {
@@ -547,9 +577,25 @@ let
         {
           name = "default";
           driver = "zfs";
-          config = {
-            "zfs.clone_copy" = "true";
-          };
+          config =
+            lib.recursiveUpdate
+              {
+                # Common configuration
+                "zfs.clone_copy" = "true";
+                "zfs.export" = "false";
+              }
+              (
+                if !joined || clusterToken == "" then
+                  {
+                    # Global config
+                    source = sourceDefault;
+                    "source.wipe" = "true";
+                  }
+                else
+                  {
+                    # Member config
+                  }
+              );
         }
 
         #########################
@@ -558,9 +604,25 @@ let
         {
           name = "instances";
           driver = "zfs";
-          config = {
-            "zfs.clone_copy" = "true";
-          };
+          config =
+            lib.recursiveUpdate
+              {
+                # Common configuration
+                "zfs.clone_copy" = "true";
+                "zfs.export" = "false";
+              }
+              (
+                if !joined || clusterToken == "" then
+                  {
+                    # Global config
+                    source = sourceInstances;
+                    "source.wipe" = "true";
+                  }
+                else
+                  {
+                    # Member config
+                  }
+              );
         }
 
         #########################
@@ -569,9 +631,25 @@ let
         {
           name = "iso";
           driver = "zfs";
-          config = {
-            "zfs.clone_copy" = "true";
-          };
+          config =
+            lib.recursiveUpdate
+              {
+                # Common configuration
+                "zfs.clone_copy" = "true";
+                "zfs.export" = "false";
+              }
+              (
+                if !joined || clusterToken == "" then
+                  {
+                    # Global config
+                    source = sourceIso;
+                    "source.wipe" = "true";
+                  }
+                else
+                  {
+                    # Member config
+                  }
+              );
         }
 
       ];
@@ -619,6 +697,7 @@ in
   # Set Open vSwitch environment variables for correct socket paths
   environment.variables = {
     OVS_RUNDIR = "/run/openvswitch";
+    OVN_RUNDIR = "/run/ovn";
   };
 
   programs = {
@@ -696,20 +775,20 @@ in
         description = "OVN services are ready";
         after = [
           # OVN services
+          "ovn-controller.service"
+          "ovn-northd.service"
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
-          "ovn-northd.service"
-          "ovn-controller.service"
 
           # OVS services
           "ovs-vswitchd.service"
         ];
         wants = [
           # OVN services
+          "ovn-controller.service"
+          "ovn-northd.service"
           "ovn-nb-ovsdb.service"
           "ovn-sb-ovsdb.service"
-          "ovn-northd.service"
-          "ovn-controller.service"
 
           # OVS services
           "ovs-vswitchd.service"
@@ -759,16 +838,18 @@ in
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/run/ovn/ovn-northd.pid --detach --log-file=/var/log/ovn/ovn-northd.log --ovnnb-db=unix:/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/run/ovn/ovnsb_db.sock";
+          ExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/run/ovn/ovn-northd.pid --detach --log-file=/var/log/ovn/ovn-northd.log --ovnnb-db=unix:/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/run/ovn/ovnsb_db.sock --ovn-encap-ip=${hypervisorClusterIP}";
           PIDFile = "/run/ovn/ovn-northd.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
           LogsDirectory = "ovn";
           LogsDirectoryMode = "0755";
           TimeoutStartSec = 60;
           Restart = "on-failure";
           RestartSec = 5;
+          Environment = [ "OVN_RUNDIR=/run/ovn" ];
         };
 
         preStart = ''
@@ -806,6 +887,7 @@ in
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
           StateDirectory = "ovn";
           StateDirectoryMode = "0755";
           LogsDirectory = "ovn";
@@ -813,6 +895,7 @@ in
           TimeoutStartSec = 60;
           Restart = "on-failure";
           RestartSec = 5;
+          Environment = [ "OVN_RUNDIR=/run/ovn" ];
         };
 
         preStart = ''
@@ -840,11 +923,13 @@ in
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-sb-db.ctl --pidfile=/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/run/ovn/ovnsb_db.sock --remote=ptcp:6642:127.0.0.1 /var/lib/ovn/ovnsb_db.db";
+          #ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-sb-db.ctl --pidfile=/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/run/ovn/ovnsb_db.sock --remote=ptcp:6642:127.0.0.1 /var/lib/ovn/ovnsb_db.db";
+          ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-sb-db.ctl --pidfile=/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/run/ovn/ovnsb_db.sock --remote=ptcp:6642:0.0.0.0 /var/lib/ovn/ovnsb_db.db";
           PIDFile = "/run/ovn/ovnsb_db.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
           StateDirectory = "ovn";
           StateDirectoryMode = "0755";
           LogsDirectory = "ovn";
@@ -852,6 +937,7 @@ in
           TimeoutStartSec = 60;
           Restart = "on-failure";
           RestartSec = 5;
+          Environment = [ "OVN_RUNDIR=/run/ovn" ];
         };
 
         preStart = ''
@@ -904,6 +990,7 @@ in
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
           LogsDirectory = "ovn";
           LogsDirectoryMode = "0755";
           TimeoutStartSec = 60;
@@ -911,17 +998,22 @@ in
           RestartSec = 10;
           Environment = [
             "OVS_RUNDIR=/var/run/openvswitch"
+
+            # Allow OVN controller to send logs to incus.
+            "OVN_CTL_OPTS=--ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
           ];
         };
 
         preStart = ''
           # Wait for OVS to be fully ready
           for i in {1..30}; do
+            ${pkgs.coreutils}/bin/echo "Waiting for OVS to be ready..."
             if ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 show >/dev/null 2>&1; then
               break
             fi
             sleep 10
           done
+          ${pkgs.coreutils}/bin/echo "OVS is ready."
 
           # Set a system ID for OVN
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:system-id=${hypervisorName}"
@@ -931,7 +1023,14 @@ in
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-type=geneve"
 
           # Point OVN to the OVN Southbound DB
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/run/ovn/ovnsb_db.sock"
+          if [[ -n "${hypervisorClusterAddressList}" ]];
+          then
+            ${pkgs.coreutils}/bin/echo "Setting OVN to use remote DB: ${hypervisorClusterAddressList}"
+            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=${hypervisorClusterAddressList}"
+          else
+            ${pkgs.coreutils}/bin/echo "Setting OVN to use local DB: unix:/run/ovn/ovnsb_db.sock"
+            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/run/ovn/ovnsb_db.sock"
+          fi
 
           # Set additional OVN configuration
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-bridge=br-int"
@@ -939,26 +1038,31 @@ in
           # Create the main OVS integration bridge
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --may-exist add-br br-int
 
+          # Bring up the integration bridge
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set interface br-int admin_state=up
+
           # Ensure the bridge is properly configured
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set bridge br-int fail_mode=secure
 
-          # Wait for OVN Southbound to be ready
+          # Wait for OVN Northbound database socket to be available
           for i in {1..30}; do
-            if ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list chassis >/dev/null 2>&1; then
+            ${pkgs.coreutils}/bin/echo "Waiting for OVN Northbound database socket to be available..."
+            if [ -S /run/ovn/ovnnb_db.sock ]; then
               break
             fi
             sleep 10
           done
+          ${pkgs.coreutils}/bin/echo "OVN Northbound database socket is available."
 
-          # Ensure the chassis is properly registered or wait for timeout.
+          # Wait for OVN Southbound database socket to be available
           for i in {1..30}; do
-            if ${pkgs.ovn}/bin/ovn-sbctl --timeout=10 list chassis | ${pkgs.gnugrep}/bin/grep -q "${hypervisorName}"; then
-              ${pkgs.coreutils}/bin/echo "OVN chassis found. Proceeding with Incus start."
+            ${pkgs.coreutils}/bin/echo "Waiting for OVN Southbound database socket to be available..."
+            if [ -S /run/ovn/ovnsb_db.sock ]; then
               break
             fi
-            ${pkgs.coreutils}/bin/echo "OVN chassis not found, waiting for registration..."
             sleep 10
           done
+          ${pkgs.coreutils}/bin/echo "OVN Southbound database socket is available."
         '';
       };
 
@@ -1051,6 +1155,12 @@ in
           };
 
           preStart = ''
+            # Clean up any ZFS pools created in error.
+            ${pkgs.coreutils}/bin/echo "Cleaning up invalid ZFS pools..."
+            ${pkgs.zfs}/bin/zfs destroy -r default 2>/dev/null || ${pkgs.coreutils}/bin/echo "Pool not found default"
+            ${pkgs.zfs}/bin/zfs destroy -r instances 2>/dev/null || ${pkgs.coreutils}/bin/echo "Pool not found instances"
+            ${pkgs.zfs}/bin/zfs destroy -r iso 2>/dev/null || ${pkgs.coreutils}/bin/echo "Pool not found iso"
+
             # Wait for Network to be ready.
             ${pkgs.coreutils}/bin/echo "Waiting for network to be ready..."
             for i in {1..60}; do
@@ -1083,7 +1193,7 @@ in
 
               # Stop all instances (if any)
               ${pkgs.coreutils}/bin/echo "Stopping all instances..."
-              ${pkgs.incus}/bin/incus stop --all --force-local || true
+              ${pkgs.incus}/bin/incus stop --all --force-local --timeout=300 || true
 
               # Delete all instances
               ${pkgs.coreutils}/bin/echo "Deleting all instances..."
@@ -1111,12 +1221,6 @@ in
               ${pkgs.coreutils}/bin/echo "Unsetting addresses..."
               ${pkgs.incus}/bin/incus config unset core.https_address --force-local || true
               ${pkgs.incus}/bin/incus config unset cluster.https_address --force-local || true
-
-              # Clean up any remaining ZFS datasets if needed
-              ${pkgs.coreutils}/bin/echo "Cleaning up ZFS datasets..."
-              ${pkgs.zfs}/bin/zfs destroy -r ${sourceDefault} || true
-              ${pkgs.zfs}/bin/zfs destroy -r ${sourceInstances} || true
-              ${pkgs.zfs}/bin/zfs destroy -r ${sourceIso} || true
 
               ${pkgs.coreutils}/bin/echo "Incus data wiped successfully."
             else
@@ -1265,6 +1369,7 @@ in
         443 # HTTPS
         8443 # Incus API
         9443 # Incus UI
+        6642 # OVN SB DB
       ];
       # Allow ICMP globally
       allowPing = true;

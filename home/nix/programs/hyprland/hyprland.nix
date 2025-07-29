@@ -17,7 +17,7 @@ let
     cosmic-ext-ctl
     cosmic-files
     cosmic-icons
-    cosmic-idle
+    #cosmic-idle
     cosmic-launcher
     cosmic-osd
     cosmic-panel
@@ -190,10 +190,10 @@ in
             timeout = 900;
 
             # Power off monitors.
-            on-timeout = "notify-send 'Sleeping...' ; hyprctl dispatch dpms off";
+            on-timeout = "notify-send 'Sleeping...' ; hyprctl dispatch dpms off, all";
 
             # Power on monitors.
-            on-resume = "notify-send 'Resuming...' ; hyprctl dispatch dpms on";
+            on-resume = "notify-send 'Resuming...' ; hyprctl dispatch dpms on, all";
           }
         ];
       };
@@ -1167,6 +1167,11 @@ in
         "$mainMod, XF86AudioPause, exec, playerctl play-pause"
         "$mainMod, XF86AudioPlay, exec, playerctl play-pause"
       ];
+    };
+
+    systemd.user.services.hypridle = {
+      Install.WantedBy = [ "hyprland-session.target" ];
+      Unit.BindsTo = [ "hyprland-session.target" ];
     };
 
     extraConfig = '''';

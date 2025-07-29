@@ -86,7 +86,7 @@ function incus_cleanup() {
 
 	log "INFO" "Stopping all incus containers..."
 
-	incus stop --all || {
+	incus stop --all --force-local --timeout=300 || {
 		log "WARN" "Failed to stop all incus containers"
 	}
 
@@ -454,15 +454,14 @@ function incus_destroy_cluster() {
 		}
 	fi
 
-	log "INFO" "Stopping incus services..."
+	log "INFO" "Stopping and disabling incus services..."
 
+	# Stop Incus completely
 	sudo systemctl stop \
 		incus-preseed.service \
+		incus-startup.service \
 		incus.service \
-		incus.socket || {
-		log "ERROR" "Failed to stop incus services"
-		return 1
-	}
+		incus.socket || true
 
 	# Perform network services cleanup (OVS/OVN)
 	network_services_cleanup || {
@@ -479,7 +478,7 @@ function incus_destroy_cluster() {
 
 	log "INFO" "Removing incus database files..."
 
-	sudo rm -rf /var/lib/incus/database/{global,local.db} || {
+	sudo rm -rf /var/lib/incus/database || {
 		log "ERROR" "Failed to remove database files"
 		return 1
 	}
@@ -493,7 +492,7 @@ function incus_destroy_cluster() {
 
 	log "INFO" "Removing incus certificates..."
 
-	sudo rm -rf /var/lib/incus/{cluster.crt,cluster.key,server.crt,server.key} || {
+	sudo rm -rf /var/lib/incus/{cluster.*,server.*} || {
 		log "ERROR" "Failed to remove incus certificates"
 		return 1
 	}

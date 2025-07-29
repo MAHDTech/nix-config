@@ -316,7 +316,11 @@ function apply_changes() {
 
 	if [[ ${REBOOT^^} == "TRUE" ]]; then
 		if reboot_server "${HYPERVISOR}"; then
-			wait_for_server "${HYPERVISOR}"
+			if [[ ${FORCE_REBOOT^^} == "FALSE" ]]; then
+				wait_for_server "${HYPERVISOR}"
+			else
+				msg "INFO" "Force reboot enabled, skipping wait for ${HYPERVISOR}"
+			fi
 		else
 			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
 			exit 1
@@ -366,12 +370,6 @@ function setup_server() {
 function destroy_server() {
 	local HYPERVISOR=$1
 
-	# Apply Nix changes on reboot.
-	apply_changes "${HYPERVISOR}" || {
-		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
-		return 1
-	}
-
 	# Copy across the incus cluster destruction script.
 	copy_script "incus-cluster-destroy.sh" "${HYPERVISOR}" || {
 		msg "ERROR" "Failed to copy incus-cluster-destroy.sh to ${HYPERVISOR}"
@@ -386,9 +384,19 @@ function destroy_server() {
 		return 1
 	}
 
+	# Apply Nix changes on reboot.
+	apply_changes "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
+		return 1
+	}
+
 	# Reboot the server and wait for it to come back online after the destroy.
 	if reboot_server "${HYPERVISOR}"; then
-		wait_for_server "${HYPERVISOR}"
+		if [[ ${FORCE_REBOOT^^} == "FALSE" ]]; then
+			wait_for_server "${HYPERVISOR}"
+		else
+			msg "INFO" "Force reboot enabled, skipping wait for ${HYPERVISOR}"
+		fi
 	else
 		msg "ERROR" "Failed to reboot ${SERVER_TYPE} server: ${HYPERVISOR}"
 		return 1
@@ -423,7 +431,7 @@ function configure_server() {
 ##################################################
 
 # Use getopt to parse arguments
-OPTS=$(getopt -o "cjdahyo" --long "create,join,destroy,apply,help,yolo,configure" -n "$0" -- "$@")
+OPTS=$(getopt -o "cjdahyof" --long "create,join,destroy,apply,help,yolo,configure,force-reboot" -n "$0" -- "$@")
 # shellcheck disable=SC2181
 if [ $? != 0 ]; then
 	print_usage
@@ -439,6 +447,7 @@ declare INCUS_CLUSTER_DESTROY=false
 declare INCUS_CLUSTER_APPLY=false
 declare INCUS_CLUSTER_CONFIGURE=false
 declare YOLO_MODE=false
+declare FORCE_REBOOT=false
 declare MODE=""
 
 while true; do
@@ -477,6 +486,10 @@ while true; do
 		print_usage
 		exit 0
 		;;
+	-f | --force-reboot)
+		FORCE_REBOOT=true
+		shift
+		;;
 	--)
 		shift
 		break
@@ -496,6 +509,12 @@ MODE_COUNT=0
 [[ $INCUS_CLUSTER_DESTROY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_APPLY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_CONFIGURE == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+
+if [[ ${FORCE_REBOOT^^} == "TRUE" ]]; then
+	msg "INFO" "Force reboot enabled"
+else
+	msg "INFO" "Force reboot disabled"
+fi
 
 if [ $MODE_COUNT -gt 1 ]; then
 	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, --apply, or --configure)."
@@ -579,15 +598,10 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 	# Create the incus cluster on the bootstrap server only.
 	"CREATE")
 
-		# If it's the bootstrap server, don't attempt to join it.
-		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
-			setup_server "${HYPERVISOR}" || {
-				msg "ERROR" "Failed to setup server ${HYPERVISOR}"
-				exit 1
-			}
-		else
-			msg "INFO" "Skipping cluster creation for non-bootstrap server ${HYPERVISOR}"
-		fi
+		setup_server "${HYPERVISOR}" || {
+			msg "ERROR" "Failed to setup server ${HYPERVISOR}"
+			exit 1
+		}
 
 		;;
 
@@ -598,6 +612,7 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
 			msg "INFO" "Skipping join for bootstrap server ${HYPERVISOR}"
 		else
+			# Apply changes to the server and reboot.
 			apply_changes "${HYPERVISOR}" || {
 				msg "ERROR" "Failed to join server ${HYPERVISOR}"
 				exit 1
