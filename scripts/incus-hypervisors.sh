@@ -154,7 +154,7 @@ function copy_script() {
 	msg "INFO" "Copying ${SCRIPT} to ${HYPERVISOR}"
 	rsync -av "./scripts/${SCRIPT}" "${HYPERVISOR}.${DOMAIN}:/tmp/${SCRIPT}" || {
 		msg "ERROR" "Failed to copy ${SCRIPT} to ${HYPERVISOR}"
-		exit 1
+		return 1
 	}
 
 	return 0
@@ -176,7 +176,7 @@ function reboot_server() {
 
 	else
 
-		msg "INFO" "Rebooting ${HYPERVISOR}"
+		msg "INFO" "Starting reboot of ${HYPERVISOR}..."
 		run_ssh_command "${HYPERVISOR}" "sudo -n systemctl reboot" || {
 			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
 			return 1
@@ -292,7 +292,7 @@ function wait_for_server() {
 	done
 
 	msg "ERROR" "${HYPERVISOR} did not come back online within expected time"
-	exit 1
+	return 1
 }
 
 function apply_changes() {
@@ -323,7 +323,7 @@ function apply_changes() {
 			fi
 		else
 			msg "ERROR" "Failed to reboot ${HYPERVISOR}"
-			exit 1
+			return 1
 		fi
 		msg "INFO" "Changes applied and rebooted ${HYPERVISOR}"
 	else
@@ -344,8 +344,8 @@ function setup_server() {
 		SERVER_TYPE="member"
 	fi
 
-	# Apply Nix changes on reboot.
-	apply_changes "${HYPERVISOR}" || {
+	# Apply Nix changes on reboot and trigger a reboot now.
+	apply_changes "${HYPERVISOR}" true || {
 		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
 		return 1
 	}
@@ -384,23 +384,11 @@ function destroy_server() {
 		return 1
 	}
 
-	# Apply Nix changes on reboot.
-	apply_changes "${HYPERVISOR}" || {
+	# Apply Nix changes on reboot and trigger a reboot now.
+	apply_changes "${HYPERVISOR}" true || {
 		msg "ERROR" "Failed to apply changes to ${HYPERVISOR}"
 		return 1
 	}
-
-	# Reboot the server and wait for it to come back online after the destroy.
-	if reboot_server "${HYPERVISOR}"; then
-		if [[ ${FORCE_REBOOT^^} == "FALSE" ]]; then
-			wait_for_server "${HYPERVISOR}"
-		else
-			msg "INFO" "Force reboot enabled, skipping wait for ${HYPERVISOR}"
-		fi
-	else
-		msg "ERROR" "Failed to reboot ${SERVER_TYPE} server: ${HYPERVISOR}"
-		return 1
-	fi
 
 	return 0
 }
@@ -612,8 +600,8 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
 			msg "INFO" "Skipping join for bootstrap server ${HYPERVISOR}"
 		else
-			# Apply changes to the server and reboot.
-			apply_changes "${HYPERVISOR}" || {
+			# Apply changes to the server and reboot now.
+			apply_changes "${HYPERVISOR}" true || {
 				msg "ERROR" "Failed to join server ${HYPERVISOR}"
 				exit 1
 			}
@@ -624,7 +612,7 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 	# Apply changes to all servers.
 	"APPLY")
 
-		apply_changes "${HYPERVISOR}" || {
+		apply_changes "${HYPERVISOR}" true || {
 			msg "ERROR" "Failed to apply changes to server ${HYPERVISOR}"
 			exit 1
 		}

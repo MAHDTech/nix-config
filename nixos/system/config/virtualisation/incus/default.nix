@@ -17,6 +17,10 @@
   ...
 }:
 let
+  #########################################################
+  # Variables
+  #########################################################
+
   # Strip the port from the cluster address.
   hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
 
@@ -26,6 +30,9 @@ let
       lib.strings.concatStringsSep "," (lib.map (addr: "tcp:${addr}") hypervisorClusterPeerAddresses)
     else
       "";
+
+  # A string used in bash comparisons to determine if we are joining the cluster.
+  joiningCluster = if clusterToken != null then "true" else "false";
 
   #########################################################
   # Global configuration
@@ -40,428 +47,448 @@ let
       #########################################################
       # Configuration.
       #########################################################
-      config = {
+      config =
+        if joined then
+          {
 
-        # Core
-        "core.shutdown_timeout" = 5;
+            # Core
+            "core.shutdown_timeout" = 5;
 
-        # TODO: Debug ACME configuration with Cloudflare.
-        # ACME
-        #"acme.agree_tos" = true;
-        #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
-        #"acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
-        #"acme.challenge" = "DNS-01";
-        #"acme.domain" = "saltlabs.cloud";
-        #"acme.email" = "acme@saltlabs.cloud";
-        #"acme.provider" = "cloudflare";
-        #"acme.provider.resolvers" = "1.1.1.1,1.0.0.1";
+            # TODO: Debug ACME configuration with Cloudflare.
+            # ACME
+            #"acme.agree_tos" = true;
+            #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
+            #"acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
+            #"acme.challenge" = "DNS-01";
+            #"acme.domain" = "saltlabs.cloud";
+            #"acme.email" = "acme@saltlabs.cloud";
+            #"acme.provider" = "cloudflare";
+            #"acme.provider.resolvers" = "1.1.1.1,1.0.0.1";
 
-        # Images
-        "images.auto_update_interval" = 6;
+            # Images
+            "images.auto_update_interval" = 6;
 
-        # Allow OVN controller to send logs to incus.
-        "core.syslog_socket" = true;
+            # Allow OVN controller to send logs to incus.
+            "core.syslog_socket" = true;
 
-      };
+          }
+        else
+          { };
 
       #########################################################
       # Projects
       #########################################################
-      projects = [
+      projects =
+        if joined then
+          [
 
-        #########################################################
-        # Default project.
-        #########################################################
-        {
-          name = "default";
-          description = "Default Incus project";
-          config = {
-            "features.images" = "true";
-            "features.networks" = "true";
-            "features.networks.zones" = "true";
-            "features.profiles" = "true";
-            "features.storage.buckets" = "true";
-            "features.storage.volumes" = "true";
-          };
-        }
+            #########################################################
+            # Default project.
+            #########################################################
+            {
+              name = "default";
+              description = "Default Incus project";
+              config = {
+                "features.images" = "true";
+                "features.networks" = "true";
+                "features.networks.zones" = "true";
+                "features.profiles" = "true";
+                "features.storage.buckets" = "true";
+                "features.storage.volumes" = "true";
+              };
+            }
 
-        #########################################################
-        # Nutanix project.
-        #########################################################
-        {
-          name = "nutanix";
-          description = "Nutanix Community Edition";
-          config = {
-            "features.images" = "true";
-            "features.networks" = "true";
-            "features.networks.zones" = "true";
-            "features.profiles" = "true";
-            "features.storage.buckets" = "true";
-            "features.storage.volumes" = "true";
-            "restricted" = "false";
-          };
-        }
-      ];
+            #########################################################
+            # Nutanix project.
+            #########################################################
+            {
+              name = "nutanix";
+              description = "Nutanix Community Edition";
+              config = {
+                "features.images" = "true";
+                "features.networks" = "true";
+                "features.networks.zones" = "true";
+                "features.profiles" = "true";
+                "features.storage.buckets" = "true";
+                "features.storage.volumes" = "true";
+                "restricted" = "false";
+              };
+            }
+          ]
+        else
+          [ ];
 
       #########################################################
       # Networks.
       #########################################################
-      networks = [
+      networks =
+        if joined then
+          [
 
-        #########################################################
-        # Default Project Networks
-        #########################################################
+            #########################################################
+            # Default Project Networks
+            #########################################################
 
-        ###########################
-        # Bridge Network (transparent bridge)
-        #
-        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
-        ###########################
-        {
-          name = "incusbr0";
-          type = "bridge";
-          project = "default";
-          config = {
-            "bridge.driver" = "openvswitch";
-            "dns.mode" = "none"; # none, managed, dynamic
-            "ipv4.address" = "none";
-            "ipv4.dhcp" = "false";
-            "ipv4.nat" = "false";
-            "ipv4.routing" = "false";
-            "ipv6.address" = "none";
-            "security.acls.default.egress.action" = "allow";
-            "security.acls.default.ingress.action" = "allow";
-          };
-        }
+            ###########################
+            # Bridge Network (transparent bridge)
+            #
+            # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
+            ###########################
+            {
+              name = "incusbr0";
+              type = "bridge";
+              project = "default";
+              config = {
+                "bridge.driver" = "openvswitch";
+                "dns.mode" = "none"; # none, managed, dynamic
+                "ipv4.address" = "none";
+                "ipv4.dhcp" = "false";
+                "ipv4.nat" = "false";
+                "ipv4.routing" = "false";
+                "ipv6.address" = "none";
+                "security.acls.default.egress.action" = "allow";
+                "security.acls.default.ingress.action" = "allow";
+              };
+            }
 
-        ###########################
-        # Bridge Network (routed bridge)
-        #
-        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
-        ###########################
-        {
-          name = "incusbr1";
-          type = "bridge";
-          project = "default";
-          config = {
-            "bridge.driver" = "openvswitch";
-            "dns.mode" = "managed"; # none, managed, dynamic
-            "dns.domain" = "incus.local";
-            "dns.nameservers" = "10.10.200.254";
-            "ipv4.address" = "10.10.201.1/24";
-            "ipv4.dhcp" = "true";
-            "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.150";
-            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
-            "ipv4.nat" = "false";
-            "ipv4.ovn.ranges" = "10.10.201.2-10.10.201.50";
-            "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
-            "ipv4.routing" = "true";
-            "ipv6.address" = "none";
-            "security.acls.default.egress.action" = "allow";
-            "security.acls.default.ingress.action" = "allow";
-          };
-        }
+            ###########################
+            # Bridge Network (routed bridge)
+            #
+            # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
+            ###########################
+            {
+              name = "incusbr1";
+              type = "bridge";
+              project = "default";
+              config = {
+                "bridge.driver" = "openvswitch";
+                "dns.mode" = "managed"; # none, managed, dynamic
+                "dns.domain" = "incus.local";
+                "dns.nameservers" = "10.10.200.254";
+                "ipv4.address" = "10.10.201.1/24";
+                "ipv4.dhcp" = "true";
+                "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.150";
+                "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
+                "ipv4.nat" = "false";
+                "ipv4.ovn.ranges" = "10.10.201.2-10.10.201.50";
+                "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
+                "ipv4.routing" = "true";
+                "ipv6.address" = "none";
+                "security.acls.default.egress.action" = "allow";
+                "security.acls.default.ingress.action" = "allow";
+              };
+            }
 
-        #########################################################
-        # Nutanix Project Networks
-        #########################################################
+            #########################################################
+            # Nutanix Project Networks
+            #########################################################
 
-        ###########################
-        # Nutanix VPC
-        #
-        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
-        ###########################
-        {
-          name = "nutanix-vpc";
-          type = "ovn";
-          project = "nutanix";
-          config = {
-            "dns.domain" = "nutanix.local";
-            "dns.nameservers" = "10.10.200.254";
-            "ipv4.address" = "10.10.202.1/24";
-            "ipv4.dhcp" = "true";
-            "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
-            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
-            "ipv4.nat" = "false";
-            "ipv6.address" = "none";
-            "network" = "incusbr1";
-            "security.acls.default.egress.action" = "allow";
-            "security.acls.default.ingress.action" = "allow";
-          };
-        }
-      ];
+            ###########################
+            # Nutanix VPC
+            #
+            # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
+            ###########################
+            {
+              name = "nutanix-vpc";
+              type = "ovn";
+              project = "nutanix";
+              config = {
+                "dns.domain" = "nutanix.local";
+                "dns.nameservers" = "10.10.200.254";
+                "ipv4.address" = "10.10.202.1/24";
+                "ipv4.dhcp" = "true";
+                "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
+                "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
+                "ipv4.nat" = "false";
+                "ipv6.address" = "none";
+                "network" = "incusbr1";
+                "security.acls.default.egress.action" = "allow";
+                "security.acls.default.ingress.action" = "allow";
+              };
+            }
+          ]
+        else
+          [ ];
 
       #########################################################
       # Profiles.
       #########################################################
-      profiles = [
+      profiles =
+        if joined then
+          [
 
-        #########################################################
-        # Default Project Profiles
-        #########################################################
+            #########################################################
+            # Default Project Profiles
+            #########################################################
 
-        ###########################
-        # Default profile
-        ###########################
-        {
-          name = "default";
-          description = "Default profile";
-          project = "default";
-          config = {
-            "limits.cpu" = 2;
-            "limits.memory" = "2GiB";
-          };
-          devices = {
-            root = {
-              path = "/";
-              pool = "default";
-              type = "disk";
-            };
-            eth0 = {
-              name = "eth0";
-              # Network and nictype are mutually exclusive.
-              network = "incusbr0";
-              type = "nic";
-            };
-          };
-        }
+            ###########################
+            # Default profile
+            ###########################
+            {
+              name = "default";
+              description = "Default profile";
+              project = "default";
+              config = {
+                "limits.cpu" = 2;
+                "limits.memory" = "2GiB";
+              };
+              devices = {
+                root = {
+                  path = "/";
+                  pool = "default";
+                  type = "disk";
+                };
+                eth0 = {
+                  name = "eth0";
+                  # Network and nictype are mutually exclusive.
+                  network = "incusbr0";
+                  type = "nic";
+                };
+              };
+            }
 
-        ###########################
-        # System Containers
-        ###########################
-        {
-          name = "system-containers";
-          description = "System Containers profile";
-          project = "default";
-          config = {
-            "limits.cpu" = 2;
-            "limits.memory" = "2GiB";
-          };
-          devices = {
-            root = {
-              path = "/";
-              pool = "instances";
-              type = "disk";
-            };
-            eth0 = {
-              name = "eth0";
-              # Network and nictype are mutually exclusive.
-              network = "incusbr1";
-              type = "nic";
-            };
-          };
-        }
+            ###########################
+            # System Containers
+            ###########################
+            {
+              name = "system-containers";
+              description = "System Containers profile";
+              project = "default";
+              config = {
+                "limits.cpu" = 2;
+                "limits.memory" = "2GiB";
+              };
+              devices = {
+                root = {
+                  path = "/";
+                  pool = "instances";
+                  type = "disk";
+                };
+                eth0 = {
+                  name = "eth0";
+                  # Network and nictype are mutually exclusive.
+                  network = "incusbr1";
+                  type = "nic";
+                };
+              };
+            }
 
-        ###########################
-        # Application Containers
-        ###########################
-        {
-          name = "application-containers";
-          description = "Application Containers profile";
-          project = "default";
-          config = {
-            "limits.cpu" = 2;
-            "limits.memory" = "2GiB";
-          };
-          devices = {
-            root = {
-              path = "/";
-              pool = "instances";
-              type = "disk";
-            };
-            eth0 = {
-              name = "eth0";
-              # Network and nictype are mutually exclusive.
-              network = "incusbr1";
-              type = "nic";
-            };
-          };
-        }
+            ###########################
+            # Application Containers
+            ###########################
+            {
+              name = "application-containers";
+              description = "Application Containers profile";
+              project = "default";
+              config = {
+                "limits.cpu" = 2;
+                "limits.memory" = "2GiB";
+              };
+              devices = {
+                root = {
+                  path = "/";
+                  pool = "instances";
+                  type = "disk";
+                };
+                eth0 = {
+                  name = "eth0";
+                  # Network and nictype are mutually exclusive.
+                  network = "incusbr1";
+                  type = "nic";
+                };
+              };
+            }
 
-        ###########################
-        # Virtual Machines
-        ###########################
-        {
-          name = "virtual-machines";
-          description = "Virtual Machines profile";
-          project = "default";
-          config = {
-            "limits.cpu" = 4;
-            "limits.memory" = "4GiB";
-            "security.nesting" = false;
-            "security.secureboot" = false;
-          };
-          devices = {
-            root = {
-              path = "/";
-              pool = "instances";
-              type = "disk";
-            };
-            eth0 = {
-              name = "eth0";
-              # Network and nictype are mutually exclusive.
-              network = "incusbr1";
-              type = "nic";
-            };
-          };
-        }
+            ###########################
+            # Virtual Machines
+            ###########################
+            {
+              name = "virtual-machines";
+              description = "Virtual Machines profile";
+              project = "default";
+              config = {
+                "limits.cpu" = 4;
+                "limits.memory" = "4GiB";
+                "security.nesting" = false;
+                "security.secureboot" = false;
+              };
+              devices = {
+                root = {
+                  path = "/";
+                  pool = "instances";
+                  type = "disk";
+                };
+                eth0 = {
+                  name = "eth0";
+                  # Network and nictype are mutually exclusive.
+                  network = "incusbr1";
+                  type = "nic";
+                };
+              };
+            }
 
-        #########################################################
-        # Nutanix Project Profiles
-        #########################################################
+            #########################################################
+            # Nutanix Project Profiles
+            #########################################################
 
-        ###########################
-        # Hypervisors profile
-        ###########################
-        {
-          name = "hypervisors";
-          description = "Profile for nested hypervisors";
-          project = "nutanix";
-          config = {
-            "limits.cpu" = 8;
-            "limits.memory" = "32GiB";
-            "security.nesting" = true;
-            "security.secureboot" = false;
-            "security.syscalls.intercept.mknod" = true;
-            "security.syscalls.intercept.setxattr" = true;
-            "security.syscalls.intercept.sysinfo" = true;
-          };
-          devices = {
-            root = {
-              path = "/";
-              pool = "instances";
-              type = "disk";
-            };
-            eth0 = {
-              name = "eth0";
-              # Network and nictype are mutually exclusive.
-              network = "nutanix-vpc";
-              type = "nic";
-            };
-          };
-        }
-      ];
+            ###########################
+            # Hypervisors profile
+            ###########################
+            {
+              name = "hypervisors";
+              description = "Profile for nested hypervisors";
+              project = "nutanix";
+              config = {
+                "limits.cpu" = 8;
+                "limits.memory" = "32GiB";
+                "security.nesting" = true;
+                "security.secureboot" = false;
+                "security.syscalls.intercept.mknod" = true;
+                "security.syscalls.intercept.setxattr" = true;
+                "security.syscalls.intercept.sysinfo" = true;
+              };
+              devices = {
+                root = {
+                  path = "/";
+                  pool = "instances";
+                  type = "disk";
+                };
+                eth0 = {
+                  name = "eth0";
+                  # Network and nictype are mutually exclusive.
+                  network = "nutanix-vpc";
+                  type = "nic";
+                };
+              };
+            }
+          ]
+        else
+          [ ];
 
       #########################################################
       # Storage volumes.
       #########################################################
-      storage_volumes = [
+      storage_volumes =
+        if joined then
+          [
 
-        #########################################################
-        # Default Project Storage Volumes
-        #########################################################
+            #########################################################
+            # Default Project Storage Volumes
+            #########################################################
 
-        # None required.
+            # None required.
 
-        #########################################################
-        # Nutanix Project Storage Volumes
-        #########################################################
+            #########################################################
+            # Nutanix Project Storage Volumes
+            #########################################################
 
-        ###########################
-        # NCE-01 Storage Volumes (HYPERVISOR-1)
-        ###########################
-        {
-          name = "NCE-01-CVM";
-          type = "custom";
-          description = "NCE-01 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-01-DATA";
-          type = "custom";
-          description = "NCE-01 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
+            ###########################
+            # NCE-01 Storage Volumes (HYPERVISOR-1)
+            ###########################
+            {
+              name = "NCE-01-CVM";
+              type = "custom";
+              description = "NCE-01 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-01-DATA";
+              type = "custom";
+              description = "NCE-01 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
-        ###########################
-        # NCE-02 Storage Volumes (HYPERVISOR-2)
-        ###########################
-        {
-          name = "NCE-02-CVM";
-          type = "custom";
-          description = "NCE-02 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-02-DATA";
-          type = "custom";
-          description = "NCE-02 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
+            ###########################
+            # NCE-02 Storage Volumes (HYPERVISOR-2)
+            ###########################
+            {
+              name = "NCE-02-CVM";
+              type = "custom";
+              description = "NCE-02 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-02-DATA";
+              type = "custom";
+              description = "NCE-02 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
-        ###########################
-        # NCE-03 Storage Volumes (HYPERVISOR-3)
-        ###########################
-        {
-          name = "NCE-03-CVM";
-          type = "custom";
-          description = "NCE-03 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-03-DATA";
-          type = "custom";
-          description = "NCE-03 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
+            ###########################
+            # NCE-03 Storage Volumes (HYPERVISOR-3)
+            ###########################
+            {
+              name = "NCE-03-CVM";
+              type = "custom";
+              description = "NCE-03 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-03-DATA";
+              type = "custom";
+              description = "NCE-03 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
-        ###########################
-        # NCE-04 Storage Volumes (HYPERVISOR-4)
-        ###########################
-        {
-          name = "NCE-04-CVM";
-          type = "custom";
-          description = "NCE-04 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-04-DATA";
-          type = "custom";
-          description = "NCE-04 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
+            ###########################
+            # NCE-04 Storage Volumes (HYPERVISOR-4)
+            ###########################
+            {
+              name = "NCE-04-CVM";
+              type = "custom";
+              description = "NCE-04 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-04-DATA";
+              type = "custom";
+              description = "NCE-04 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
-      ];
+          ]
+        else
+          [ ];
 
     };
 
@@ -493,169 +520,132 @@ let
       #########################################################
       # Cluster configuration.
       #########################################################
-      cluster = {
-        enabled = true;
-        server_address = hypervisorClusterAddress;
-        member_config = [
-          #########################################################
-          # Storage Pools
-          #########################################################
-          #########################
-          # Default storage pool
-          #########################
+      cluster =
+        if joined then
           {
-            entity = "storage-pool";
-            name = "default";
-            key = "source";
-            value = sourceDefault;
+            enabled = true;
+            server_address = hypervisorClusterAddress;
+            member_config = [
+              #########################################################
+              # Storage Pools
+              #########################################################
+              #########################
+              # Default storage pool
+              #########################
+              {
+                entity = "storage-pool";
+                name = "default";
+                key = "source";
+                value = sourceDefault;
+              }
+              {
+                entity = "storage-pool";
+                name = "default";
+                key = "source.wipe";
+                value = "true";
+              }
+              #########################
+              # Instances storage pool
+              #########################
+              {
+                entity = "storage-pool";
+                name = "instances";
+                key = "source";
+                value = sourceInstances;
+              }
+              {
+                entity = "storage-pool";
+                name = "instances";
+                key = "source.wipe";
+                value = "true";
+              }
+              #########################
+              # ISO storage pool
+              #########################
+              {
+                entity = "storage-pool";
+                name = "iso";
+                key = "source";
+                value = sourceIso;
+              }
+              {
+                entity = "storage-pool";
+                name = "iso";
+                key = "source.wipe";
+                value = "true";
+              }
+              #########################################################
+              # Networks
+              #########################################################
+              # Bridge Network (transparent bridge)
+              #{
+              #  entity = "network";
+              #  name = "incusbr0";
+              #  key = "bridge.external_interfaces";
+              #  value = "bond0";
+              #}
+            ];
           }
+          // lib.optionalAttrs (hypervisorRole == "bootstrap") {
+            # The bootstrap server node requires a server_name.
+            server_name = hypervisorName;
+          }
+          // lib.optionalAttrs (hypervisorRole == "member" && clusterToken != null) {
+            # The cluster token is only needed for the initial bootstrap.
+            cluster_token = clusterToken;
+          }
+        else
           {
-            entity = "storage-pool";
-            name = "default";
-            key = "source.wipe";
-            value = "true";
-          }
-          #########################
-          # Instances storage pool
-          #########################
-          {
-            entity = "storage-pool";
-            name = "instances";
-            key = "source";
-            value = sourceInstances;
-          }
-          {
-            entity = "storage-pool";
-            name = "instances";
-            key = "source.wipe";
-            value = "true";
-          }
-          #########################
-          # ISO storage pool
-          #########################
-          {
-            entity = "storage-pool";
-            name = "iso";
-            key = "source";
-            value = sourceIso;
-          }
-          {
-            entity = "storage-pool";
-            name = "iso";
-            key = "source.wipe";
-            value = "true";
-          }
-          #########################################################
-          # Networks
-          #########################################################
-          # Bridge Network (transparent bridge)
-          #{
-          #  entity = "network";
-          #  name = "incusbr0";
-          #  key = "bridge.external_interfaces";
-          #  value = "bond0";
-          #}
-        ];
-      }
-      // lib.optionalAttrs (hypervisorRole == "bootstrap") {
-        # The bootstrap server node requires a server_name.
-        server_name = hypervisorName;
-      }
-      // lib.optionalAttrs (hypervisorRole == "member" && !joined) {
-        # The cluster token is only needed for initial bootstrap.
-        cluster_token = clusterToken;
-      };
+            enabled = false;
+          };
 
       #########################################################
       # Storage pools configuration.
       #########################################################
-      storage_pools = [
+      storage_pools =
+        if joined then
+          [
 
-        #########################
-        # Default storage pool.
-        #########################
-        {
-          name = "default";
-          driver = "zfs";
-          config =
-            lib.recursiveUpdate
-              {
-                # Common configuration
+            #########################
+            # Default storage pool.
+            #########################
+            {
+              name = "default";
+              driver = "zfs";
+              config = {
                 "zfs.clone_copy" = "true";
                 "zfs.export" = "false";
-              }
-              (
-                if !joined || clusterToken == "" then
-                  {
-                    # Global config
-                    source = sourceDefault;
-                    "source.wipe" = "true";
-                  }
-                else
-                  {
-                    # Member config
-                  }
-              );
-        }
+              };
+            }
 
-        #########################
-        # Instances storage pool.
-        #########################
-        {
-          name = "instances";
-          driver = "zfs";
-          config =
-            lib.recursiveUpdate
-              {
-                # Common configuration
+            #########################
+            # Instances storage pool.
+            #########################
+            {
+              name = "instances";
+              driver = "zfs";
+              config = {
                 "zfs.clone_copy" = "true";
                 "zfs.export" = "false";
-              }
-              (
-                if !joined || clusterToken == "" then
-                  {
-                    # Global config
-                    source = sourceInstances;
-                    "source.wipe" = "true";
-                  }
-                else
-                  {
-                    # Member config
-                  }
-              );
-        }
+              };
+            }
 
-        #########################
-        # ISO storage pool.
-        #########################
-        {
-          name = "iso";
-          driver = "zfs";
-          config =
-            lib.recursiveUpdate
-              {
-                # Common configuration
+            #########################
+            # ISO storage pool.
+            #########################
+            {
+              name = "iso";
+              driver = "zfs";
+              config = {
                 "zfs.clone_copy" = "true";
                 "zfs.export" = "false";
-              }
-              (
-                if !joined || clusterToken == "" then
-                  {
-                    # Global config
-                    source = sourceIso;
-                    "source.wipe" = "true";
-                  }
-                else
-                  {
-                    # Member config
-                  }
-              );
-        }
+              };
+            }
 
-      ];
-
+          ]
+        else
+          [ ];
     };
-
   };
 
   #########################################################
@@ -1005,6 +995,20 @@ in
         };
 
         preStart = ''
+          # Set variables based on cluster membership status
+          if [[ "${lib.boolToString joined}" == "true" ]];
+          then
+            if [[ -n "${hypervisorClusterAddressList}" ]];
+            then
+              OVN_SOUTHBOUND_USE_REMOTE=true
+            else
+              OVN_SOUTHBOUND_USE_REMOTE=false
+            fi
+          else
+            OVN_SOUTHBOUND_USE_REMOTE=false
+          fi
+          ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ''${OVN_SOUTHBOUND_USE_REMOTE}"
+
           # Wait for OVS to be fully ready
           for i in {1..30}; do
             ${pkgs.coreutils}/bin/echo "Waiting for OVS to be ready..."
@@ -1022,13 +1026,13 @@ in
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-ip=${hypervisorClusterIP}"
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-type=geneve"
 
-          # Point OVN to the OVN Southbound DB
-          if [[ -n "${hypervisorClusterAddressList}" ]];
+          # Point OVN to the correct OVN Southbound DB
+          if [[ "''${OVN_SOUTHBOUND_USE_REMOTE}" == "true" ]];
           then
-            ${pkgs.coreutils}/bin/echo "Setting OVN to use remote DB: ${hypervisorClusterAddressList}"
+            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ${hypervisorClusterAddressList}"
             ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=${hypervisorClusterAddressList}"
           else
-            ${pkgs.coreutils}/bin/echo "Setting OVN to use local DB: unix:/run/ovn/ovnsb_db.sock"
+            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local: unix:/run/ovn/ovnsb_db.sock"
             ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/run/ovn/ovnsb_db.sock"
           fi
 
@@ -1047,7 +1051,8 @@ in
           # Wait for OVN Northbound database socket to be available
           for i in {1..30}; do
             ${pkgs.coreutils}/bin/echo "Waiting for OVN Northbound database socket to be available..."
-            if [ -S /run/ovn/ovnnb_db.sock ]; then
+            if [ -S /run/ovn/ovnnb_db.sock ];
+            then
               break
             fi
             sleep 10
@@ -1057,7 +1062,8 @@ in
           # Wait for OVN Southbound database socket to be available
           for i in {1..30}; do
             ${pkgs.coreutils}/bin/echo "Waiting for OVN Southbound database socket to be available..."
-            if [ -S /run/ovn/ovnsb_db.sock ]; then
+            if [ -S /run/ovn/ovnsb_db.sock ];
+            then
               break
             fi
             sleep 10
@@ -1186,10 +1192,10 @@ in
               ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for Incus daemon to be ready. Preseed may fail."
             fi
 
-            # If this is a member node joining the cluster, wipe existing data
-            if [ "${hypervisorRole}" = "member" ] && [ "${lib.boolToString joined}" != "true" ];
+            # If this is a member node joining the cluster, wipe existing data.
+            if [[ "${joiningCluster}" == "true" ]];
             then
-              ${pkgs.coreutils}/bin/echo "Wiping existing Incus data for clean cluster join..."
+              ${pkgs.coreutils}/bin/echo "Preparing for cluster member join, wiping existing data..."
 
               # Stop all instances (if any)
               ${pkgs.coreutils}/bin/echo "Stopping all instances..."
@@ -1224,7 +1230,7 @@ in
 
               ${pkgs.coreutils}/bin/echo "Incus data wiped successfully."
             else
-              ${pkgs.coreutils}/bin/echo "Already joined to cluster, skipping data wipe."
+              ${pkgs.coreutils}/bin/echo "Not joining a cluster at this time, skipping data wipe."
               exit 0
             fi
           '';

@@ -23,9 +23,9 @@ let
   sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
   sourceIso = "zpool/var/lib/incus/storage-pools/iso";
 
-  # TODO: SOPS encryption when this test is working.
-  # The cluster token obtained during the bootstrap process. Only used if bootstrapped is true.
-  clusterToken = "";
+  # The cluster token is only needed for initial bootstrap.
+  # Once joined, the cluster token can be removed.
+  clusterToken = null;
 in
 {
   imports = [

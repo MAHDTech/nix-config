@@ -33,20 +33,33 @@ _A multi-stage saga._
 
 Obtain the Cluster tokens by running the following;
 
-1. Run `./scripts/incus-hypervisors.sh --create` script.
+1. Update the nix flake with `joined = true` for **ONLY** the bootstrap server.
+1. Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
+
+NOTES:
+
+- Bootstrap server should have no errors in the `incus-preseed` service
+- Member servers are expected to complain about `missing ServerName` at this stage.
 
 #### Stage 2 (Cluster Joining)
 
-Join the cluster using the tokens by running the following;
+Join the member servers to the cluster using the tokens by running the following;
 
-1. Update the nix flake with the `clusterToken` for the member servers captured from stage 1.
+1. Update the nix flake with `joined = true` for **ALL** member servers in the config.
+1. Update the nix flake with the `clusterToken = "..."` for the member servers captured from stage 1.
 1. Run `./scripts/incus-hypervisors.sh --join` script.
+
+NOTES:
+
+- Bootstrap server should have no errors in the `incus-preseed` service
+- Member servers will perform a data wipe prior to joining the cluster.
+- Verify cluster membership by running `incus cluster list` on the bootstrap server.
 
 #### Stage 3 (Finalise)
 
 After verifying the members have joined successfully, run the following;
 
-1. Update the nix flake with `joined = true` for **ALL** servers in the config.
+1. Update the nix flake with `clusterToken = null` for all member servers
 1. Run `./scripts/incus-hypervisors.sh --apply` script.
 
 #### Stage 4. (Login and configure)
@@ -58,9 +71,9 @@ After verifying the members have joined successfully, run the following;
 
 _One shot to destroy them all._
 
-1. Update the flake with `joined = false` for all member servers
-1. Remove any `clusterToken` from the config for all member servers
-1. Run the `./scripts/incus-hypervisors.sh --destroy` script.
+1. Update the nix flake with `joined = false` for all servers
+1. Update the nix flake with `clusterToken = null` for all member servers
+1. Run the `./scripts/incus-hypervisors.sh --yolo --destroy --force-reboot` script.
 
 ## Network Configuration
 

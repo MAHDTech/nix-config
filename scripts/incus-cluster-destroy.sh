@@ -84,6 +84,11 @@ function check_for_required_tools() {
 
 function incus_cleanup() {
 
+	if ! incus info >/dev/null 2>&1; then
+		log "WARN" "Incus daemon is not running, skipping cleanup of Incus resources."
+		return 0
+	fi
+
 	log "INFO" "Stopping all incus containers..."
 
 	incus stop --all --force-local --timeout=300 || {
@@ -397,7 +402,7 @@ function cleanup_verification() {
 	# Check OVN chassis entries
 	declare chassis_count
 	chassis_count=$(sudo ovn-sbctl --timeout=5 list chassis 2>/dev/null | grep -c "^_uuid" || echo "0")
-	if [ "$chassis_count" -eq 0 ]; then
+	if [[ ${chassis_count:-0} -eq 0 ]]; then
 		log "INFO" "✓ No chassis entries found"
 	else
 		log "WARN" "Some chassis entries still exist (count: $chassis_count)"

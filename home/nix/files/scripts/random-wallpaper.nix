@@ -61,6 +61,7 @@
             -o -name "*.gif" \
             -o -name "*.bmp" \
             -o -name "*.tiff" \
+            | uniq \
             | shuf \
             > "''${SWWW_LIST_FILE}"
         }
@@ -69,16 +70,16 @@
         # Pre-flight checks
         #########################
 
-        if [[ $# -lt 1 ]] || [[ ! -d $1 ]];
+        WALLPAPER_DIR="''${1:-}"
+        if [[ "''${WALLPAPER_DIR:-EMPTY}" == "EMPTY" ]];
         then
           echo "Usage: ''${SWWW_SCRIPT} <dir containing images>"
           exit 1
-        elif [[ ! -d "$1" ]];
+        elif [[ ! -d "''${WALLPAPER_DIR}" ]];
         then
-          echo "Directory does not exist: $1"
+          echo "Directory does not exist: ''${WALLPAPER_DIR}"
           exit 1
         fi
-        WALLPAPER_DIR="''${1:-}"
 
         # Start a new log file
         rm -f "''${SWWW_LOG_FILE}" || true
@@ -108,9 +109,9 @@
             fi
           fi
         fi
-        msg "Setting new process ID"
+        msg "Recording process ID for swww"
         echo "''${BASHPID}" > "''${SWWW_PIDFILE}"
-        msg "Process ID set"
+        msg "Process ID recorded"
 
         #########################
         # Main loop

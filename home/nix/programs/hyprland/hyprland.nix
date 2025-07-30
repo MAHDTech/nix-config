@@ -935,7 +935,7 @@ in
         "sleep 30 ; pidof swww-daemon || swww-daemon"
 
         # Set a random wallpaper
-        "sleep 60 ; exec random-wallpaper ''$XDG_WALLPAPERS_DIR"
+        "sleep 60 ; exec notify-send 'Setting random wallpaper...' ; random-wallpaper ''$XDG_WALLPAPERS_DIR"
 
         # Start ags
         "ags run"
@@ -1169,11 +1169,12 @@ in
       ];
     };
 
-    systemd.user.services.hypridle = {
-      Install.WantedBy = [ "hyprland-session.target" ];
-      Unit.BindsTo = [ "hyprland-session.target" ];
-    };
-
     extraConfig = '''';
+  };
+
+  # Override the hypridle service to ensure it starts after hyprland-session.target
+  systemd.user.services.hypridle = {
+    Install.WantedBy = [ "hyprland-session.target" ];
+    Unit.BindsTo = [ "hyprland-session.target" ];
   };
 }
