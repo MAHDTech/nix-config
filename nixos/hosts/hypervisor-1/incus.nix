@@ -1,7 +1,7 @@
 let
   # Flag to indicate if the hypervisor has joined the cluster.
   # Set to true once the hypervisor has joined the cluster.
-  joined = false;
+  joined = true;
 
   # The name of the hypervisor.
   hypervisorName = "HYPERVISOR-1";

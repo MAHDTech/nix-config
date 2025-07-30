@@ -34,12 +34,7 @@ _A multi-stage saga._
 Obtain the Cluster tokens by running the following;
 
 1. Update the nix flake with `joined = true` for **ONLY** the bootstrap server.
-1. Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
-
-NOTES:
-
-- Bootstrap server should have no errors in the `incus-preseed` service
-- Member servers are expected to complain about `missing ServerName` at this stage.
+2. Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
 
 #### Stage 2 (Cluster Joining)
 
@@ -51,7 +46,6 @@ Join the member servers to the cluster using the tokens by running the following
 
 NOTES:
 
-- Bootstrap server should have no errors in the `incus-preseed` service
 - Member servers will perform a data wipe prior to joining the cluster.
 - Verify cluster membership by running `incus cluster list` on the bootstrap server.
 
@@ -61,6 +55,10 @@ After verifying the members have joined successfully, run the following;
 
 1. Update the nix flake with `clusterToken = null` for all member servers
 1. Run `./scripts/incus-hypervisors.sh --apply` script.
+
+NOTES:
+
+- Verify all servers are reporting as `online` in the `incus cluster list` output.
 
 #### Stage 4. (Login and configure)
 

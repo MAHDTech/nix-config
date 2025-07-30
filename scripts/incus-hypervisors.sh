@@ -193,7 +193,7 @@ function wait_for_server() {
 	local MAX_ATTEMPTS=60
 	local ATTEMPT=0
 	local SLEEP_TIME=60
-	local UPTIME_THRESHOLD=60 # 1 minute
+	local UPTIME_THRESHOLD=180 # 3 minutes
 	local UPTIME_SECONDS=0
 	local SYSTEM_STATE="unknown"
 
@@ -586,10 +586,16 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 	# Create the incus cluster on the bootstrap server only.
 	"CREATE")
 
-		setup_server "${HYPERVISOR}" || {
-			msg "ERROR" "Failed to setup server ${HYPERVISOR}"
-			exit 1
-		}
+		# If it's the bootstrap server, create the cluster.
+		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
+			msg "INFO" "Creating cluster on bootstrap server ${HYPERVISOR}"
+			setup_server "${HYPERVISOR}" || {
+				msg "ERROR" "Failed to setup server ${HYPERVISOR}"
+				exit 1
+			}
+		else
+			msg "INFO" "Skipping cluster creation for non-bootstrap server ${HYPERVISOR}"
+		fi
 
 		;;
 
