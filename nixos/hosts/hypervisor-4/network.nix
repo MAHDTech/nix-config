@@ -85,6 +85,7 @@ in
           matchConfig.Name = "bond0";
           linkConfig = {
             RequiredForOnline = "carrier";
+            MTUBytes = "9000";
           };
           networkConfig = defaultNetworkConfig;
           dhcpV4Config = {

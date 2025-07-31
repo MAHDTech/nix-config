@@ -1,17 +1,17 @@
 {
   hypervisor ? {
     name = null;
-    role = null;
-    managementAddress = null;
-    clusterAddress = null;
-    clusterPeerAddresses = [ ];
   },
   incus ? {
     joined = false;
+    role = null;
+    managementAddress = null;
+    clusterAddress = null;
     clusterToken = null;
   },
   ovn ? {
     joined = false;
+    clusterAddresses = [ ];
   },
   zfs ? {
     sourceDefault = null;
@@ -34,33 +34,32 @@ let
   # Hypervisor configuration
   #########################
 
-  inherit (hypervisor)
-    name
-    role
-    managementAddress
-    clusterAddress
-    clusterPeerAddresses
-    ;
+  inherit (hypervisor) name;
   hypervisorName = name;
-  hypervisorRole = role;
-  hypervisorManagementAddress = managementAddress;
-  hypervisorClusterAddress = clusterAddress;
-  hypervisorClusterPeerAddresses = clusterPeerAddresses;
-
-  # Strip the port from the cluster address.
-  hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
 
   #########################
   # Incus configuration
   #########################
 
-  incusJoined = incus.joined;
-  inherit (incus) clusterToken;
+  inherit (incus)
+    joined
+    role
+    managementAddress
+    clusterAddress
+    clusterToken
+    ;
+  incusJoined = joined;
+  hypervisorRole = role;
+  hypervisorManagementAddress = managementAddress;
+  hypervisorClusterAddress = clusterAddress;
 
-  # Bootstrap IP for member nodes (extracted from first peer address)
+  # Strip the port from the cluster address.
+  hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
+
+  # Bootstrap IP for member nodes (extracted from first cluster address where role is bootstrap)
   bootstrapIP =
-    if hypervisorRole == "member" && hypervisorClusterPeerAddresses != [ ] then
-      builtins.head hypervisorClusterPeerAddresses
+    if hypervisorRole == "member" && ovn.clusterAddresses != [ ] then
+      builtins.head ovn.clusterAddresses # Use first cluster member as bootstrap
     else
       null;
 
@@ -80,8 +79,8 @@ let
   # OVN configuration
   #########################
 
-  inherit (ovn) joined;
-  ovnJoined = joined;
+  ovnJoined = ovn.joined;
+  ovnClusterAddresses = ovn.clusterAddresses;
 
   ovnConfig = {
 
@@ -89,7 +88,7 @@ let
     northbound = {
       port = 6641;
       addressList = lib.strings.concatStringsSep "," (
-        lib.map (addr: "tcp:${addr}:${toString ovnConfig.northbound.port}") hypervisorClusterPeerAddresses
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.northbound.port}") ovnClusterAddresses
       );
 
       # Use different database files for local vs cluster mode
@@ -98,8 +97,8 @@ let
       # Local mode: simple standalone database
       localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovnConfig.northbound.dbFile}";
 
-      # Cluster mode: clustered database with TCP remote
-      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock --remote=ptcp:${toString ovnConfig.northbound.port}:0.0.0.0 ${ovnConfig.northbound.dbFile}";
+      # Cluster mode: clustered database (TCP handled by RAFT internally)
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovnConfig.northbound.dbFile}";
     };
 
     # OVN Central configuration.
@@ -107,15 +106,15 @@ let
       # Local mode: connect to local Unix socket
       localExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/var/run/ovn/ovn-central.pid --detach --log-file=/var/log/ovn/ovn-central.log --ovnnb-db=unix:/var/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/var/run/ovn/ovnsb_db.sock";
 
-      # Cluster mode: connect to local Unix sockets (same as local for central service)
-      clusterExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/var/run/ovn/ovn-central.pid --detach --log-file=/var/log/ovn/ovn-central.log --ovnnb-db=unix:/var/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/var/run/ovn/ovnsb_db.sock";
+      # Cluster mode: connect to cluster addresses for HA
+      clusterExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/var/run/ovn/ovn-central.pid --detach --log-file=/var/log/ovn/ovn-central.log --ovnnb-db=${ovnConfig.northbound.addressList} --ovnsb-db=${ovnConfig.southbound.addressList}";
     };
 
     # OVN Southbound configuration.
     southbound = {
       port = 6642;
       addressList = lib.strings.concatStringsSep "," (
-        lib.map (addr: "tcp:${addr}:${toString ovnConfig.southbound.port}") hypervisorClusterPeerAddresses
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.southbound.port}") ovnClusterAddresses
       );
 
       # Use different database files for local vs cluster mode
@@ -124,8 +123,8 @@ let
       # Local mode: simple standalone database
       localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovnConfig.southbound.dbFile}";
 
-      # Cluster mode: clustered database with TCP remote
-      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock --remote=ptcp:${toString ovnConfig.southbound.port}:0.0.0.0 ${ovnConfig.southbound.dbFile}";
+      # Cluster mode: clustered database (TCP handled by RAFT internally)
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovnConfig.southbound.dbFile}";
     };
 
   };
@@ -780,13 +779,17 @@ in
 
   imports = [ ];
 
-  environment.systemPackages = with pkgs; [
-  ];
+  environment = {
+    systemPackages = with pkgs; [
+      # Include the OVN CLI tools.
+      pkgs.ovn
+    ];
 
-  # Set Open vSwitch environment variables for correct socket paths
-  environment.variables = {
-    OVN_RUNDIR = "/run/ovn";
-    OVS_RUNDIR = "/run/openvswitch";
+    # Set Open vSwitch environment variables for correct socket paths
+    variables = {
+      OVN_RUNDIR = "/run/ovn";
+      OVS_RUNDIR = "/run/openvswitch";
+    };
   };
 
   programs = {
@@ -1060,6 +1063,8 @@ in
       # OVN Central
       #
       # This service syncs from northbound to southbound databases.
+      # This is the service that runs northd.
+      # In cluster mode this runs as active/standby with auto-failover.
       #
       ###############################
       ovn-central = {
@@ -1105,23 +1110,30 @@ in
 
         preStart = ''
           ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn
-          # Wait for database services to be fully ready
+
+          # In cluster mode, ovn-northd will handle cluster connectivity automatically
+          if [[ "${lib.boolToString ovnJoined}" == "true" ]]; then
+            ${pkgs.coreutils}/bin/echo "Cluster mode: ovn-northd will connect to cluster addresses"
+            ${pkgs.coreutils}/bin/echo "Northbound cluster: ${ovnConfig.northbound.addressList}"
+            ${pkgs.coreutils}/bin/echo "Southbound cluster: ${ovnConfig.southbound.addressList}"
+          else
+            # Local mode: Wait for local database services to be ready
           for i in {1..30}; do
-            ${pkgs.coreutils}/bin/echo "Waiting for OVN Northbound and Southbound databases..."
+              ${pkgs.coreutils}/bin/echo "Waiting for local OVN databases..."
             if ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 list nb_global >/dev/null 2>&1 && \
               ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list sb_global >/dev/null 2>&1; then
               break
             fi
             sleep 10
           done
+          fi
         '';
       };
 
       ###############################
       # OVN Controller
       #
-      # The local controller connects to the
-      # southbound database.
+      # Controller that interfaces from OVN to OVS.
       #
       ###############################
       ovn-controller = {
@@ -1134,9 +1146,9 @@ in
           "ovs-vswitchd.service"
 
           # Wait for OVN Services
+          "ovn-central.service"
           "ovn-northbound-db.service"
           "ovn-southbound-db.service"
-          "ovn-central.service"
         ];
         requires = [
           # Requires Open vSwitch
