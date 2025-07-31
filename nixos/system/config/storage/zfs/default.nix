@@ -10,6 +10,7 @@ in
       requestEncryptionCredentials = true;
 
       package = pkgs.zfs;
+      #package = pkgs.zfs_unstable; # Experimental
 
       # ZFS auto-import pools.
       extraPools = zfsPoolNames;

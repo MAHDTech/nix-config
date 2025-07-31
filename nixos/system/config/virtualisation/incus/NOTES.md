@@ -33,16 +33,22 @@ _A multi-stage saga._
 
 Obtain the Cluster tokens by running the following;
 
-1. Update the nix flake with `joined = true` for **ONLY** the bootstrap server.
-2. Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
+1. Update the nix flake with `joined = true` for **ALL** servers.
+1. Run `./scripts/incus-hypervisors.sh --create --force-reboot` script to bootstrap the cluster.
+1. Run `./scripts/incus-hypervisors.sh --health` script to verify the bootstrap server is working before continuing.
+
+NOTES:
+
+- The bootstrap server will be the only server in the 'incus' cluster
+- The OVN cluster will be created on the bootstrap server and the member servers will join it.
 
 #### Stage 2 (Cluster Joining)
 
-Join the member servers to the cluster using the tokens by running the following;
+Join the member servers to the incus cluster using the tokens by running the following;
 
-1. Update the nix flake with `joined = true` for **ALL** member servers in the config.
 1. Update the nix flake with the `clusterToken = "..."` for the member servers captured from stage 1.
 1. Run `./scripts/incus-hypervisors.sh --join` script.
+1. Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
 
 NOTES:
 
@@ -55,6 +61,7 @@ After verifying the members have joined successfully, run the following;
 
 1. Update the nix flake with `clusterToken = null` for all member servers
 1. Run `./scripts/incus-hypervisors.sh --apply` script.
+1. Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
 
 NOTES:
 

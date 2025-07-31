@@ -36,7 +36,7 @@ declare -r REQUIRED_NIXPKGS=(
 
 function print_usage() {
 	cat <<-EOF
-		Usage: $0 [--create|--join|--destroy|--apply]
+		Usage: $0 [--create|--join|--destroy|--apply|--health]
 
 		Options:
 
@@ -45,6 +45,7 @@ function print_usage() {
 		    --join      Join an existing incus cluster
 		    --apply     Apply changes to an incus cluster
 		    --configure Configure an incus cluster
+		    --health    Check health of all services
 
 		If no options are provided, the script will default to --apply.
 	EOF
@@ -414,12 +415,32 @@ function configure_server() {
 	return 0
 }
 
+function health_check_server() {
+	local HYPERVISOR=$1
+
+	# Copy across the incus cluster health check script.
+	copy_script "incus-cluster-health.sh" "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to copy incus-cluster-health.sh to ${HYPERVISOR}"
+		return 1
+	}
+
+	# Run the health check script inside a nix-shell with the required tools.
+	msg "INFO" "Running incus-cluster-health.sh on ${HYPERVISOR}"
+	run_ssh_command "${HYPERVISOR}" \
+		"sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} --command 'bash /tmp/incus-cluster-health.sh'" || {
+		msg "ERROR" "Failed to run incus-cluster-health.sh on ${HYPERVISOR}"
+		return 1
+	}
+
+	return 0
+}
+
 ##################################################
 # Argument Parsing
 ##################################################
 
 # Use getopt to parse arguments
-OPTS=$(getopt -o "cjdahyof" --long "create,join,destroy,apply,help,yolo,configure,force-reboot" -n "$0" -- "$@")
+OPTS=$(getopt -o "cjdahyofe" --long "create,join,destroy,apply,help,yolo,configure,force-reboot,health" -n "$0" -- "$@")
 # shellcheck disable=SC2181
 if [ $? != 0 ]; then
 	print_usage
@@ -434,6 +455,7 @@ declare INCUS_CLUSTER_JOIN=false
 declare INCUS_CLUSTER_DESTROY=false
 declare INCUS_CLUSTER_APPLY=false
 declare INCUS_CLUSTER_CONFIGURE=false
+declare INCUS_CLUSTER_HEALTH=false
 declare YOLO_MODE=false
 declare FORCE_REBOOT=false
 declare MODE=""
@@ -470,6 +492,11 @@ while true; do
 		MODE="configure"
 		shift
 		;;
+	-e | --health)
+		INCUS_CLUSTER_HEALTH=true
+		MODE="health"
+		shift
+		;;
 	-h | --help)
 		print_usage
 		exit 0
@@ -497,6 +524,7 @@ MODE_COUNT=0
 [[ $INCUS_CLUSTER_DESTROY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_APPLY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_CONFIGURE == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+[[ $INCUS_CLUSTER_HEALTH == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 
 if [[ ${FORCE_REBOOT^^} == "TRUE" ]]; then
 	msg "INFO" "Force reboot enabled"
@@ -505,7 +533,7 @@ else
 fi
 
 if [ $MODE_COUNT -gt 1 ]; then
-	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, --apply, or --configure)."
+	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, --apply, --configure, or --health)."
 	print_usage
 	exit 1
 elif [ $MODE_COUNT -eq 0 ]; then
@@ -588,13 +616,18 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 
 		# If it's the bootstrap server, create the cluster.
 		if [[ ${HYPERVISOR^^} == "${BOOTSTRAP_SERVER^^}" ]]; then
-			msg "INFO" "Creating cluster on bootstrap server ${HYPERVISOR}"
+			msg "INFO" "Bootstrapping incus cluster on server ${HYPERVISOR}"
 			setup_server "${HYPERVISOR}" || {
 				msg "ERROR" "Failed to setup server ${HYPERVISOR}"
 				exit 1
 			}
 		else
-			msg "INFO" "Skipping cluster creation for non-bootstrap server ${HYPERVISOR}"
+			msg "INFO" "Joining OVN cluster on server ${HYPERVISOR}"
+			# Apply changes to the server and reboot now.
+			apply_changes "${HYPERVISOR}" true || {
+				msg "ERROR" "Failed to join server ${HYPERVISOR}"
+				exit 1
+			}
 		fi
 
 		;;
@@ -637,6 +670,16 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 		else
 			msg "INFO" "Skipping cluster creation for non-bootstrap server ${HYPERVISOR}"
 		fi
+
+		;;
+
+	# Check health of all services on all servers.
+	"HEALTH")
+
+		health_check_server "${HYPERVISOR}" || {
+			msg "ERROR" "Health check failed for server ${HYPERVISOR}"
+			exit 1
+		}
 
 		;;
 

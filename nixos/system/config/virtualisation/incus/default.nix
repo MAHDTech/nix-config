@@ -5,6 +5,7 @@
   hypervisorManagementAddress,
   hypervisorName,
   hypervisorRole ? "member",
+  bootstrapIP ? null,
   joined ? false,
   sourceDefault,
   sourceInstances,
@@ -24,15 +25,56 @@ let
   # Strip the port from the cluster address.
   hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
 
-  # Join the cluster addresses with commas and prefix tcp:
-  hypervisorClusterAddressList =
-    if hypervisorClusterPeerAddresses != "" then
-      lib.strings.concatStringsSep "," (lib.map (addr: "tcp:${addr}") hypervisorClusterPeerAddresses)
-    else
-      "";
-
   # A string used in bash comparisons to determine if we are joining the cluster.
   joiningCluster = if clusterToken != null then "true" else "false";
+
+  # OVN configuration.
+  ovn = {
+
+    # OVN Northbound configuration.
+    northbound = {
+      port = 6641;
+      addressList = lib.strings.concatStringsSep "," (
+        lib.map (addr: "tcp:${addr}:${toString ovn.northbound.port}") hypervisorClusterPeerAddresses
+      );
+
+      # Use different database files for local vs cluster mode
+      dbFile = if joined then "/var/lib/ovn/ovnnb_db-cluster.db" else "/var/lib/ovn/ovnnb_db-local.db";
+
+      # Local mode: simple standalone database
+      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovn.northbound.dbFile}";
+
+      # Cluster mode: clustered database with TCP remote
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock --remote=ptcp:${toString ovn.northbound.port}:0.0.0.0 ${ovn.northbound.dbFile}";
+    };
+
+    # OVN Central configuration.
+    central = {
+      # Local mode: connect to local Unix socket
+      localExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/var/run/ovn/ovn-central.pid --detach --log-file=/var/log/ovn/ovn-central.log --ovnnb-db=unix:/var/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/var/run/ovn/ovnsb_db.sock";
+
+      # Cluster mode: connect to local Unix sockets (same as local for central service)
+      clusterExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/var/run/ovn/ovn-central.pid --detach --log-file=/var/log/ovn/ovn-central.log --ovnnb-db=unix:/var/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/var/run/ovn/ovnsb_db.sock";
+    };
+
+    # OVN Southbound configuration.
+    southbound = {
+      port = 6642;
+      addressList = lib.strings.concatStringsSep "," (
+        lib.map (addr: "tcp:${addr}:${toString ovn.southbound.port}") hypervisorClusterPeerAddresses
+      );
+
+      # Use different database files for local vs cluster mode
+      dbFile = if joined then "/var/lib/ovn/ovnsb_db-cluster.db" else "/var/lib/ovn/ovnsb_db-local.db";
+
+      # Local mode: simple standalone database
+      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovn.southbound.dbFile}";
+
+      # Cluster mode: clustered database with TCP remote
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock --remote=ptcp:${toString ovn.southbound.port}:0.0.0.0 ${ovn.southbound.dbFile}";
+    };
+
+  };
 
   #########################################################
   # Global configuration
@@ -70,6 +112,10 @@ let
 
             # Allow OVN controller to send logs to incus.
             "core.syslog_socket" = true;
+
+            # Incus OVN configuration.
+            "network.ovn.northbound_connection" =
+              if ovn.northbound.addressList != "" then "${ovn.northbound.addressList}" else "";
 
           }
         else
@@ -188,24 +234,24 @@ let
             #
             # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
             ###########################
-            {
-              name = "nutanix-vpc";
-              type = "ovn";
-              project = "nutanix";
-              config = {
-                "dns.domain" = "nutanix.local";
-                "dns.nameservers" = "10.10.200.254";
-                "ipv4.address" = "10.10.202.1/24";
-                "ipv4.dhcp" = "true";
-                "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
-                "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
-                "ipv4.nat" = "false";
-                "ipv6.address" = "none";
-                "network" = "incusbr1";
-                "security.acls.default.egress.action" = "allow";
-                "security.acls.default.ingress.action" = "allow";
-              };
-            }
+            #{
+            #  name = "nutanix-vpc";
+            #  type = "ovn";
+            #  project = "nutanix";
+            #  config = {
+            #    "dns.domain" = "nutanix.local";
+            #    "dns.nameservers" = "10.10.200.254";
+            #    "ipv4.address" = "10.10.202.1/24";
+            #    "ipv4.dhcp" = "true";
+            #    "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
+            #    "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
+            #    "ipv4.nat" = "false";
+            #    "ipv6.address" = "none";
+            #    "network" = "incusbr1";
+            #    "security.acls.default.egress.action" = "allow";
+            #    "security.acls.default.ingress.action" = "allow";
+            #  };
+            #}
           ]
         else
           [ ];
@@ -334,33 +380,33 @@ let
             ###########################
             # Hypervisors profile
             ###########################
-            {
-              name = "hypervisors";
-              description = "Profile for nested hypervisors";
-              project = "nutanix";
-              config = {
-                "limits.cpu" = 8;
-                "limits.memory" = "32GiB";
-                "security.nesting" = true;
-                "security.secureboot" = false;
-                "security.syscalls.intercept.mknod" = true;
-                "security.syscalls.intercept.setxattr" = true;
-                "security.syscalls.intercept.sysinfo" = true;
-              };
-              devices = {
-                root = {
-                  path = "/";
-                  pool = "instances";
-                  type = "disk";
-                };
-                eth0 = {
-                  name = "eth0";
-                  # Network and nictype are mutually exclusive.
-                  network = "nutanix-vpc";
-                  type = "nic";
-                };
-              };
-            }
+            #{
+            #  name = "hypervisors";
+            #  description = "Profile for nested hypervisors";
+            #  project = "nutanix";
+            #  config = {
+            #    "limits.cpu" = 8;
+            #    "limits.memory" = "32GiB";
+            #    "security.nesting" = true;
+            #    "security.secureboot" = false;
+            #    "security.syscalls.intercept.mknod" = true;
+            #    "security.syscalls.intercept.setxattr" = true;
+            #    "security.syscalls.intercept.sysinfo" = true;
+            #  };
+            #  devices = {
+            #    root = {
+            #      path = "/";
+            #      pool = "instances";
+            #      type = "disk";
+            #    };
+            #    eth0 = {
+            #      name = "eth0";
+            #      # Network and nictype are mutually exclusive.
+            #      network = "nutanix-vpc";
+            #      type = "nic";
+            #    };
+            #  };
+            #}
           ]
         else
           [ ];
@@ -385,106 +431,106 @@ let
             ###########################
             # NCE-01 Storage Volumes (HYPERVISOR-1)
             ###########################
-            {
-              name = "NCE-01-CVM";
-              type = "custom";
-              description = "NCE-01 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-01-DATA";
-              type = "custom";
-              description = "NCE-01 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-01-CVM";
+            #  type = "custom";
+            #  description = "NCE-01 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-01-DATA";
+            #  type = "custom";
+            #  description = "NCE-01 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-02 Storage Volumes (HYPERVISOR-2)
             ###########################
-            {
-              name = "NCE-02-CVM";
-              type = "custom";
-              description = "NCE-02 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-02-DATA";
-              type = "custom";
-              description = "NCE-02 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-02-CVM";
+            #  type = "custom";
+            #  description = "NCE-02 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-02-DATA";
+            #  type = "custom";
+            #  description = "NCE-02 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-03 Storage Volumes (HYPERVISOR-3)
             ###########################
-            {
-              name = "NCE-03-CVM";
-              type = "custom";
-              description = "NCE-03 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-03-DATA";
-              type = "custom";
-              description = "NCE-03 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-03-CVM";
+            #  type = "custom";
+            #  description = "NCE-03 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-03-DATA";
+            #  type = "custom";
+            #  description = "NCE-03 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-04 Storage Volumes (HYPERVISOR-4)
             ###########################
-            {
-              name = "NCE-04-CVM";
-              type = "custom";
-              description = "NCE-04 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-04-DATA";
-              type = "custom";
-              description = "NCE-04 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-04-CVM";
+            #  type = "custom";
+            #  description = "NCE-04 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-04-DATA";
+            #  type = "custom";
+            #  description = "NCE-04 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
           ]
         else
@@ -681,7 +727,6 @@ in
   imports = [ ];
 
   environment.systemPackages = with pkgs; [
-    ovn
   ];
 
   # Set Open vSwitch environment variables for correct socket paths
@@ -765,20 +810,20 @@ in
         description = "OVN services are ready";
         after = [
           # OVN services
+          "ovn-central.service"
           "ovn-controller.service"
-          "ovn-northd.service"
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
 
           # OVS services
           "ovs-vswitchd.service"
         ];
         wants = [
           # OVN services
+          "ovn-central.service"
           "ovn-controller.service"
-          "ovn-northd.service"
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
 
           # OVS services
           "ovs-vswitchd.service"
@@ -794,75 +839,13 @@ in
       #########################################################
 
       ###############################
-      # OVN Northd
-      #
-      # This service translates high-level OVN configuration
-      # into logical configuration for ovn-controller
-      #
-      ###############################
-      ovn-northd = {
-        description = "OVN northd";
-        after = [
-          # Wait for Network
-          "network.target"
-
-          # Wait for Open vSwitch
-          "ovs-vswitchd.service"
-
-          # Wait for OVN Databases
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-        ];
-        requires = [
-          # Requires Open vSwitch
-          "ovs-vswitchd.service"
-
-          # Requires OVN Databases
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-        ];
-        wantedBy = [
-          "multi-user.target"
-          "sdn-ready.target"
-        ];
-
-        serviceConfig = {
-          Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/run/ovn/ovn-northd.pid --detach --log-file=/var/log/ovn/ovn-northd.log --ovnnb-db=unix:/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/run/ovn/ovnsb_db.sock --ovn-encap-ip=${hypervisorClusterIP}";
-          PIDFile = "/run/ovn/ovn-northd.pid";
-          User = "root";
-          RuntimeDirectory = "ovn";
-          RuntimeDirectoryMode = "0755";
-          RuntimeDirectoryPreserve = "yes";
-          LogsDirectory = "ovn";
-          LogsDirectoryMode = "0755";
-          TimeoutStartSec = 60;
-          Restart = "on-failure";
-          RestartSec = 5;
-          Environment = [ "OVN_RUNDIR=/run/ovn" ];
-        };
-
-        preStart = ''
-          ${pkgs.coreutils}/bin/mkdir -p /run/ovn
-          # Wait for database services to be fully ready
-          for i in {1..30}; do
-            if ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 list nb_global >/dev/null 2>&1 && \
-              ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list sb_global >/dev/null 2>&1; then
-              break
-            fi
-            sleep 2
-          done
-        '';
-      };
-
-      ###############################
-      # OVN Northbound
+      # OVN Northbound DB
       #
       # This database is the interface between
       # OVN and Incus.
       #
       ###############################
-      ovn-nb-ovsdb = {
+      ovn-northbound-db = {
         description = "OVN Northbound DB";
         after = [ "network.target" ];
         wantedBy = [
@@ -872,8 +855,8 @@ in
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-nb-db.ctl --pidfile=/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/run/ovn/ovnnb_db.sock --remote=ptcp:6641:127.0.0.1 /var/lib/ovn/ovnnb_db.db";
-          PIDFile = "/run/ovn/ovnnb_db.pid";
+          ExecStart = if joined then ovn.northbound.clusterExecStart else ovn.northbound.localExecStart;
+          PIDFile = "/var/run/ovn/ovnnb_db.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
@@ -889,11 +872,51 @@ in
         };
 
         preStart = ''
-          ${pkgs.coreutils}/bin/mkdir -p /run/ovn
-          if [ ! -f /var/lib/ovn/ovnnb_db.db ]; then
-            ${pkgs.ovn}/bin/ovsdb-tool create /var/lib/ovn/ovnnb_db.db ${pkgs.ovn}/share/ovn/ovn-nb.ovsschema
+          ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn /var/lib/ovn
+
+          # Create initial database if it doesn't exist
+          if [ ! -f ${ovn.northbound.dbFile} ]; then
+            ${pkgs.ovn}/bin/ovsdb-tool create ${ovn.northbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-nb.ovsschema
           fi
-        '';
+        ''
+        + (
+          if joined then
+            ''
+              # Cluster mode: Handle clustering based on role and current database state
+              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovn.northbound.dbFile}; then
+            ''
+            + (
+              if hypervisorRole == "bootstrap" then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to a cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovn.northbound.dbFile}.new ${ovn.northbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovn.northbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovn.northbound.dbFile}.new ${ovn.northbound.dbFile}
+                ''
+              else if bootstrapIP != null then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to join cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovn.northbound.dbFile}.new OVN_Northbound tcp:${hypervisorClusterIP}:${toString ovn.northbound.port} tcp:${bootstrapIP}:${toString ovn.northbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovn.northbound.dbFile}.new ${ovn.northbound.dbFile}
+                ''
+              else
+                ''
+                  ${pkgs.coreutils}/bin/echo "Standalone Northbound DB, not forming a cluster."
+                ''
+            )
+            + ''
+              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovn.northbound.dbFile}; then
+                ${pkgs.coreutils}/bin/echo "Northbound DB is already clustered, skipping cluster setup."
+              else
+                ${pkgs.coreutils}/bin/echo "Unknown Northbound DB state, proceeding with caution."
+              fi
+            ''
+          else
+            ''
+              # Local mode: No clustering setup needed
+              ${pkgs.coreutils}/bin/echo "Running Northbound DB in local standalone mode."
+            ''
+        )
+        + '''';
       };
 
       ###############################
@@ -903,7 +926,7 @@ in
       # consumed by ovn-controller.
       #
       ###############################
-      ovn-sb-ovsdb = {
+      ovn-southbound-db = {
         description = "OVN Southbound DB";
         after = [ "network.target" ];
         wantedBy = [
@@ -913,9 +936,8 @@ in
 
         serviceConfig = {
           Type = "forking";
-          #ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-sb-db.ctl --pidfile=/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/run/ovn/ovnsb_db.sock --remote=ptcp:6642:127.0.0.1 /var/lib/ovn/ovnsb_db.db";
-          ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-sb-db.ctl --pidfile=/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/run/ovn/ovnsb_db.sock --remote=ptcp:6642:0.0.0.0 /var/lib/ovn/ovnsb_db.db";
-          PIDFile = "/run/ovn/ovnsb_db.pid";
+          ExecStart = if joined then ovn.southbound.clusterExecStart else ovn.southbound.localExecStart;
+          PIDFile = "/var/run/ovn/ovnsb_db.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
@@ -931,10 +953,110 @@ in
         };
 
         preStart = ''
-          ${pkgs.coreutils}/bin/mkdir -p /run/ovn
-          if [ ! -f /var/lib/ovn/ovnsb_db.db ]; then
-            ${pkgs.ovn}/bin/ovsdb-tool create /var/lib/ovn/ovnsb_db.db ${pkgs.ovn}/share/ovn/ovn-sb.ovsschema
+          ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn /var/lib/ovn
+
+          # Create initial database if it doesn't exist
+          if [ ! -f ${ovn.southbound.dbFile} ]; then
+            ${pkgs.ovn}/bin/ovsdb-tool create ${ovn.southbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-sb.ovsschema
           fi
+        ''
+        + (
+          if joined then
+            ''
+              # Cluster mode: Handle clustering based on role and current database state
+              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovn.southbound.dbFile}; then
+            ''
+            + (
+              if hypervisorRole == "bootstrap" then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to a cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovn.southbound.dbFile}.new ${ovn.southbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovn.southbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovn.southbound.dbFile}.new ${ovn.southbound.dbFile}
+                ''
+              else if bootstrapIP != null then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to join cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovn.southbound.dbFile}.new OVN_Southbound tcp:${hypervisorClusterIP}:${toString ovn.southbound.port} tcp:${bootstrapIP}:${toString ovn.southbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovn.southbound.dbFile}.new ${ovn.southbound.dbFile}
+                ''
+              else
+                ''
+                  ${pkgs.coreutils}/bin/echo "Standalone Southbound DB, not forming a cluster."
+                ''
+            )
+            + ''
+              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovn.southbound.dbFile}; then
+                ${pkgs.coreutils}/bin/echo "Southbound DB is already clustered, skipping cluster setup."
+              else
+                ${pkgs.coreutils}/bin/echo "Unknown Southbound DB state, proceeding with caution."
+              fi
+            ''
+          else
+            ''
+              # Local mode: No clustering setup needed
+              ${pkgs.coreutils}/bin/echo "Running Southbound DB in local standalone mode."
+            ''
+        )
+        + '''';
+      };
+
+      ###############################
+      # OVN Central
+      #
+      # This service syncs from northbound to southbound databases.
+      #
+      ###############################
+      ovn-central = {
+        description = "OVN Central";
+        after = [
+          "network.target"
+          "ovs-vswitchd.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+        ];
+        requires = [
+          "ovs-vswitchd.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+        ];
+        wantedBy = [
+          "multi-user.target"
+          "sdn-ready.target"
+        ];
+
+        serviceConfig = {
+          Type = "forking";
+          ExecStart = if joined then ovn.central.clusterExecStart else ovn.central.localExecStart;
+          PIDFile = "/var/run/ovn/ovn-central.pid";
+          User = "root";
+          RuntimeDirectory = "ovn";
+          RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
+          LogsDirectory = "ovn";
+          LogsDirectoryMode = "0755";
+          TimeoutStartSec = 60;
+          Restart = "on-failure";
+          RestartSec = 5;
+          Environment = [
+            "OVN_RUNDIR=/var/run/ovn"
+            "OVN_CTL_OPTS=\
+              --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+              --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+              --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
+          ];
+        };
+
+        preStart = ''
+          ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn
+          # Wait for database services to be fully ready
+          for i in {1..30}; do
+            ${pkgs.coreutils}/bin/echo "Waiting for OVN Northbound and Southbound databases..."
+            if ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 list nb_global >/dev/null 2>&1 && \
+              ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list sb_global >/dev/null 2>&1; then
+              break
+            fi
+            sleep 10
+          done
         '';
       };
 
@@ -955,19 +1077,19 @@ in
           "ovs-vswitchd.service"
 
           # Wait for OVN Services
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-          "ovn-northd.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+          "ovn-central.service"
         ];
         requires = [
           # Requires Open vSwitch
           "ovs-vswitchd.service"
 
           # Requires OVN Databases
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
         ];
-        wants = [ "ovn-northd.service" ];
+        wants = [ "ovn-central.service" ];
         wantedBy = [
           "multi-user.target"
           "sdn-ready.target"
@@ -975,8 +1097,8 @@ in
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovn-controller --pidfile=/run/ovn/ovn-controller.pid --detach --log-file=/var/log/ovn/ovn-controller.log unix:/run/openvswitch/db.sock";
-          PIDFile = "/run/ovn/ovn-controller.pid";
+          ExecStart = "${pkgs.ovn}/bin/ovn-controller --pidfile=/var/run/ovn/ovn-controller.pid --detach --log-file=/var/log/ovn/ovn-controller.log unix:/run/openvswitch/db.sock";
+          PIDFile = "/var/run/ovn/ovn-controller.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
@@ -988,9 +1110,8 @@ in
           RestartSec = 10;
           Environment = [
             "OVS_RUNDIR=/var/run/openvswitch"
-
-            # Allow OVN controller to send logs to incus.
-            "OVN_CTL_OPTS=--ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
+            "OVN_CTL_OPTS=\
+              --ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
           ];
         };
 
@@ -998,7 +1119,7 @@ in
           # Set variables based on cluster membership status
           if [[ "${lib.boolToString joined}" == "true" ]];
           then
-            if [[ -n "${hypervisorClusterAddressList}" ]];
+            if [[ -n "${ovn.southbound.addressList}" ]];
             then
               OVN_SOUTHBOUND_USE_REMOTE=true
             else
@@ -1029,11 +1150,11 @@ in
           # Point OVN to the correct OVN Southbound DB
           if [[ "''${OVN_SOUTHBOUND_USE_REMOTE}" == "true" ]];
           then
-            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ${hypervisorClusterAddressList}"
-            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=${hypervisorClusterAddressList}"
+            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ${ovn.southbound.addressList}"
+            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=${ovn.southbound.addressList}"
           else
-            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local: unix:/run/ovn/ovnsb_db.sock"
-            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/run/ovn/ovnsb_db.sock"
+            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local: unix:/var/run/ovn/ovnsb_db.sock"
+            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock"
           fi
 
           # Set additional OVN configuration
@@ -1051,7 +1172,7 @@ in
           # Wait for OVN Northbound database socket to be available
           for i in {1..30}; do
             ${pkgs.coreutils}/bin/echo "Waiting for OVN Northbound database socket to be available..."
-            if [ -S /run/ovn/ovnnb_db.sock ];
+            if [ -S /var/run/ovn/ovnnb_db.sock ];
             then
               break
             fi
@@ -1062,7 +1183,7 @@ in
           # Wait for OVN Southbound database socket to be available
           for i in {1..30}; do
             ${pkgs.coreutils}/bin/echo "Waiting for OVN Southbound database socket to be available..."
-            if [ -S /run/ovn/ovnsb_db.sock ];
+            if [ -S /var/run/ovn/ovnsb_db.sock ];
             then
               break
             fi
@@ -1375,7 +1496,10 @@ in
         443 # HTTPS
         8443 # Incus API
         9443 # Incus UI
-        6642 # OVN SB DB
+      ]
+      ++ lib.optionals joined [
+        ovn.northbound.port # OVN NB DB (Northbound)
+        ovn.southbound.port # OVN SB DB (Southbound)
       ];
       # Allow ICMP globally
       allowPing = true;

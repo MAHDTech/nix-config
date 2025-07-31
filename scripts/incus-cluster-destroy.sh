@@ -82,7 +82,7 @@ function check_for_required_tools() {
 	return 0
 }
 
-function incus_cleanup() {
+function cleanup_incus() {
 
 	if ! incus info >/dev/null 2>&1; then
 		log "WARN" "Incus daemon is not running, skipping cleanup of Incus resources."
@@ -111,323 +111,8 @@ function incus_cleanup() {
 
 }
 
-function ovs_cleanup() {
-	log "INFO" "Cleaning up Open vSwitch configuration..."
-
-	log "INFO" "Restarting OVS services to ensure clean state..."
-	sudo systemctl restart \
-		ovs-vswitchd.service \
-		ovsdb.service || {
-		log "WARN" "Failed to restart some OVS services"
-		return 1
-	}
-	sleep 10
-
-	log "INFO" "Removing all OVS bridges..."
-	for bridge in $(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null || true); do
-		log "INFO" "Deleting bridge: $bridge"
-		sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock --if-exists del-br "$bridge"
-	done
-
-	log "INFO" "Clearing OVS external_ids..."
-	sudo ovs-vsctl --if-exists clear open_vswitch . external_ids || {
-		log "WARN" "Failed to clear OVS external_ids"
-	}
-
-	log "INFO" "Removing any residual OVS ports..."
-	sudo ovs-vsctl --if-exists del-port bond0 || {
-		log "DEBUG" "No bond0 port to remove from OVS"
-	}
-
-	log "INFO" "Clearing OVS manager options..."
-	sudo ovs-vsctl --if-exists clear open_vswitch . manager_options || {
-		log "WARN" "Failed to clear OVS manager options"
-	}
-
-	log "INFO" "Stopping OVN services that interface with OVS..."
-	sudo systemctl stop \
-		ovn-controller.service \
-		ovn-nb-ovsdb.service \
-		ovn-northd.service \
-		ovn-sb-ovsdb.service || {
-		log "WARN" "Failed to stop some OVS services"
-	}
-
-	log "INFO" "Stopping OVS services..."
-	sudo systemctl stop \
-		ovs-vswitchd.service \
-		ovsdb.service || {
-		log "WARN" "Failed to stop some OVS services"
-	}
-
-	log "INFO" "Clearing OVS database..."
-	sudo rm -f /var/lib/openvswitch/conf.db* || {
-		log "WARN" "Failed to remove OVS database"
-	}
-
-	log "INFO" "Clearing OVS database..."
-	sudo rm -f /etc/openvswitch/conf.db* || {
-		log "WARN" "Failed to remove OVS database"
-	}
-
-	log "INFO" "Recreating OVS database..."
-
-	sudo mkdir -p /var/lib/openvswitch || {
-		log "ERROR" "Failed to create OVS database directory"
-		return 1
-	}
-
-	declare OVS_SCHEMA_PATH
-	OVS_SCHEMA_PATH=$(find /nix/store -name "vswitch.ovsschema" -path "*/share/openvswitch/*" 2>/dev/null | head -1) || {
-		log "ERROR" "Could not find OVS schema file"
-		return 1
-	}
-
-	if [ "${OVS_SCHEMA_PATH:-EMPTY}" = "EMPTY" ]; then
-		log "ERROR" "Could not find OVS schema file, unable to recreate the OVS database"
-		return 1
-	fi
-
-	log "DEBUG" "Using schema: $OVS_SCHEMA_PATH"
-
-	sudo ovsdb-tool create /var/lib/openvswitch/conf.db "$OVS_SCHEMA_PATH" || {
-		log "ERROR" "Failed to create OVS database"
-		return 1
-	}
-
-	log "INFO" "Starting OVS services..."
-	sudo systemctl start \
-		ovs-vswitchd.service \
-		ovsdb.service || {
-		log "WARN" "Failed to stop some OVS services"
-	}
-
-	# Wait for OVS services to be ready.
-	for i in {1..30}; do
-		if sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock show >/dev/null 2>&1; then
-			log "INFO" "OVS is ready!"
-			break
-		fi
-		log "DEBUG" "Waiting... ($i/30)"
-		sleep 3
-	done
-
-	# Set fresh external_ids for the hypervisor
-	sudo ovs-vsctl set open_vswitch . "external_ids:system-id=$(hostname)" || {
-		log "WARN" "Failed to set system-id in OVS"
-	}
-
-	log "INFO" "Starting OVN services that interface with OVS..."
-	sudo systemctl start \
-		ovn-controller.service \
-		ovn-nb-ovsdb.service \
-		ovn-northd.service \
-		ovn-sb-ovsdb.service || {
-		log "WARN" "Failed to start some OVN services"
-	}
-
-	log "INFO" "Open vSwitch cleanup completed"
-	return 0
-}
-
-function ovn_cleanup() {
-	log "INFO" "Cleaning up Open Virtual Network configuration..."
-
-	# Restart all OVN services first to ensure a clean state
-	log "INFO" "Restarting OVN services..."
-	sudo systemctl restart \
-		ovn-controller.service \
-		ovn-northd.service \
-		ovn-nb-ovsdb.service \
-		ovn-sb-ovsdb.service || {
-		log "WARN" "Failed to restart some OVN services"
-	}
-	sleep 10
-
-	# Get all logical switches and delete them
-	for ls in $(sudo ovn-nbctl --timeout=10 ls-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
-		log "INFO" "Removing logical switch: $ls"
-		sudo ovn-nbctl --timeout=10 --if-exists ls-del "$ls" || {
-			log "WARN" "Failed to remove logical switch: $ls"
-		}
-	done
-
-	# Get all logical routers and delete them
-	log "INFO" "Removing all logical routers from OVN NB..."
-	for lr in $(sudo ovn-nbctl --timeout=10 lr-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
-		log "INFO" "Removing logical router: $lr"
-		sudo ovn-nbctl --timeout=10 --if-exists lr-del "$lr" || {
-			log "WARN" "Failed to remove logical router: $lr"
-		}
-	done
-
-	# Stop services for database recreation
-	log "INFO" "Stopping OVN services for database cleanup..."
-	sudo systemctl stop \
-		ovn-controller.service \
-		ovn-northd.service \
-		ovn-nb-ovsdb.service \
-		ovn-sb-ovsdb.service || {
-		log "WARN" "Failed to stop some OVN services"
-	}
-
-	# Remove OVN database files completely
-	log "INFO" "Removing OVN database files..."
-	sudo rm -f /var/lib/ovn/ovnnb_db.db* || {
-		log "WARN" "Failed to remove OVN NB database"
-	}
-	sudo rm -f /var/lib/ovn/ovnsb_db.db* || {
-		log "WARN" "Failed to remove OVN SB database"
-	}
-
-	# Ensure OVN database directory exists
-	sudo mkdir -p /var/lib/ovn || {
-		log "ERROR" "Failed to create OVN database directory"
-		return 1
-	}
-
-	# Find OVN schema files
-	declare OVN_NB_SCHEMA_PATH OVN_SB_SCHEMA_PATH
-	OVN_NB_SCHEMA_PATH=$(find /nix/store -name "ovn-nb.ovsschema" -path "*/share/ovn/*" 2>/dev/null | head -1) || {
-		log "ERROR" "Could not find OVN NB schema file"
-		return 1
-	}
-	OVN_SB_SCHEMA_PATH=$(find /nix/store -name "ovn-sb.ovsschema" -path "*/share/ovn/*" 2>/dev/null | head -1) || {
-		log "ERROR" "Could not find OVN SB schema file"
-		return 1
-	}
-
-	if [ "${OVN_NB_SCHEMA_PATH:-EMPTY}" = "EMPTY" ] || [ "${OVN_SB_SCHEMA_PATH:-EMPTY}" = "EMPTY" ]; then
-		log "ERROR" "Could not find OVN schema files, unable to recreate the OVN databases"
-		return 1
-	fi
-
-	log "DEBUG" "Using OVN NB schema: $OVN_NB_SCHEMA_PATH"
-	log "DEBUG" "Using OVN SB schema: $OVN_SB_SCHEMA_PATH"
-
-	# Recreate OVN databases
-	log "INFO" "Recreating OVN NB database..."
-	sudo ovsdb-tool create /var/lib/ovn/ovnnb_db.db "$OVN_NB_SCHEMA_PATH" || {
-		log "ERROR" "Failed to create OVN NB database"
-		return 1
-	}
-
-	log "INFO" "Recreating OVN SB database..."
-	sudo ovsdb-tool create /var/lib/ovn/ovnsb_db.db "$OVN_SB_SCHEMA_PATH" || {
-		log "ERROR" "Failed to create OVN SB database"
-		return 1
-	}
-
-	# Restart all OVN services
-	log "INFO" "Restarting OVN services..."
-	sudo systemctl start \
-		ovn-nb-ovsdb.service \
-		ovn-sb-ovsdb.service \
-		ovn-northd.service \
-		ovn-controller.service || {
-		log "WARN" "Failed to start some OVN services"
-	}
-
-	# Wait for OVN services to be ready
-	log "INFO" "Waiting for OVN services to be ready..."
-	for i in {1..30}; do
-		if sudo ovn-nbctl --timeout=5 list nb_global >/dev/null 2>&1 &&
-			sudo ovn-sbctl --timeout=5 list sb_global >/dev/null 2>&1; then
-			log "INFO" "OVN services are ready!"
-			break
-		fi
-		log "DEBUG" "Waiting for OVN services... ($i/30)"
-		sleep 2
-	done
-
-	log "INFO" "Open Virtual Network cleanup completed"
-	return 0
-}
-
-function network_services_cleanup() {
-	log "INFO" "Performing network services cleanup..."
-
-	log "INFO" "Performing Open Virtual Network cleanup..."
-	ovn_cleanup || {
-		log "ERROR" "OVN cleanup failed"
-		return 1
-	}
-
-	log "INFO" "Performing Open vSwitch cleanup..."
-	ovs_cleanup || {
-		log "ERROR" "OVS cleanup failed"
-		return 1
-	}
-
-	log "INFO" "Network services cleanup completed"
-	return 0
-}
-
-function cleanup_verification() {
-	log "INFO" "Verifying cleanup status..."
-
-	# Check OVS bridges
-	declare ovs_bridges_count
-	ovs_bridges_count=$(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null | wc -l || echo "0")
-	if [ "$ovs_bridges_count" -eq 0 ]; then
-		log "INFO" "✓ OVS bridges cleaned successfully"
-	else
-		declare remaining_bridges
-		remaining_bridges=$(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null | tr '\n' ' ' || echo "none")
-		log "WARN" "Some OVS bridges still exist: $remaining_bridges"
-	fi
-
-	# Check OVN logical switches
-	declare ovn_ls_count
-	ovn_ls_count=$(sudo ovn-nbctl --timeout=5 ls-list 2>/dev/null | wc -l || echo "0")
-	if [ "$ovn_ls_count" -eq 0 ]; then
-		log "INFO" "✓ OVN logical switches cleaned successfully"
-	else
-		declare remaining_ls
-		remaining_ls=$(sudo ovn-nbctl --timeout=5 ls-list 2>/dev/null | awk '{print $2}' | grep -v '^$' | tr '\n' ' ' || echo "none")
-		log "WARN" "Some OVN logical switches still exist: $remaining_ls"
-	fi
-
-	# Check OVN logical routers
-	declare ovn_lr_count
-	ovn_lr_count=$(sudo ovn-nbctl --timeout=5 lr-list 2>/dev/null | wc -l || echo "0")
-	if [ "$ovn_lr_count" -eq 0 ]; then
-		log "INFO" "✓ OVN logical routers cleaned successfully"
-	else
-		declare remaining_lr
-		remaining_lr=$(sudo ovn-nbctl --timeout=5 lr-list 2>/dev/null | awk '{print $2}' | grep -v '^$' | tr '\n' ' ' || echo "none")
-		log "WARN" "Some OVN logical routers still exist: $remaining_lr"
-	fi
-
-	# Check OVN chassis entries
-	declare chassis_count
-	chassis_count=$(sudo ovn-sbctl --timeout=5 list chassis 2>/dev/null | grep -c "^_uuid" || echo "0")
-	if [[ ${chassis_count:-0} -eq 0 ]]; then
-		log "INFO" "✓ No chassis entries found"
-	else
-		log "WARN" "Some chassis entries still exist (count: $chassis_count)"
-	fi
-
-	# Check Incus networks
-	declare incus_networks_count
-	incus_networks_count=$(incus query /1.0/networks 2>/dev/null | jq -r '.[]' | grep -c "incusbr" 2>/dev/null || echo "0")
-	incus_networks_count=$(echo "${incus_networks_count}" | tr -d '[:space:]')
-	if [ "${incus_networks_count:-0}" -eq 0 ]; then
-		log "INFO" "✓ Incus networks cleaned successfully"
-	else
-		log "WARN" "Some Incus networks still exist"
-	fi
-
-	log "INFO" "Cleanup verification completed"
-}
-
-function incus_destroy_cluster() {
+function cleanup_incus_cluster() {
 	local FOUND_BOOTSTRAP_NODE=false
-
-	incus_cleanup || {
-		log "ERROR" "Failed to cleanup incus"
-		return 1
-	}
 
 	log "INFO" "Removing all incus nodes from cluster..."
 
@@ -468,12 +153,6 @@ function incus_destroy_cluster() {
 		incus.service \
 		incus.socket || true
 
-	# Perform network services cleanup (OVS/OVN)
-	network_services_cleanup || {
-		log "ERROR" "Failed to cleanup network services"
-		return 1
-	}
-
 	log "INFO" "Removing incus storage pools..."
 
 	zfs_cleanup || {
@@ -500,11 +179,6 @@ function incus_destroy_cluster() {
 	sudo rm -rf /var/lib/incus/{cluster.*,server.*} || {
 		log "ERROR" "Failed to remove incus certificates"
 		return 1
-	}
-
-	# Verify cleanup was successful
-	cleanup_verification || {
-		log "WARN" "Cleanup verification encountered issues"
 	}
 
 	return 0
@@ -552,6 +226,124 @@ function zfs_cleanup() {
 	return 0
 }
 
+function cleanup_ovn() {
+	log "INFO" "Cleaning up Open Virtual Network configuration..."
+
+	# Restart all OVN services first to ensure a clean state
+	log "INFO" "Restarting OVN services..."
+	sudo systemctl restart \
+		ovn-controller.service \
+		ovn-central.service \
+		ovn-northbound-db.service \
+		ovn-southbound-db.service || {
+		log "WARN" "Failed to restart some OVN services"
+	}
+	sleep 10
+
+	# Get all logical switches and delete them
+	for ls in $(sudo ovn-nbctl --timeout=10 ls-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
+		log "INFO" "Removing logical switch: $ls"
+		sudo ovn-nbctl --timeout=10 --if-exists ls-del "$ls" || {
+			log "WARN" "Failed to remove logical switch: $ls"
+		}
+	done
+
+	# Get all logical routers and delete them
+	log "INFO" "Removing all logical routers from OVN NB..."
+	for lr in $(sudo ovn-nbctl --timeout=10 lr-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
+		log "INFO" "Removing logical router: $lr"
+		sudo ovn-nbctl --timeout=10 --if-exists lr-del "$lr" || {
+			log "WARN" "Failed to remove logical router: $lr"
+		}
+	done
+
+	# Stop services for database recreation
+	log "INFO" "Stopping OVN services for database cleanup..."
+	sudo systemctl stop \
+		ovn-controller.service \
+		ovn-central.service \
+		ovn-northbound-db.service \
+		ovn-southbound-db.service || {
+		log "WARN" "Failed to stop some OVN services"
+	}
+
+	# Remove OVN database files completely
+	log "INFO" "Removing OVN files..."
+	sudo rm -f /var/lib/ovn/ovn* || {
+		log "WARN" "Failed to remove OVN files"
+	}
+	log "INFO" "Removing OVN run files..."
+	sudo rm -f /var/run/ovn/.ovn* || {
+		log "WARN" "Failed to remove OVN run files"
+	}
+
+	log "INFO" "Open Virtual Network cleanup completed"
+	return 0
+}
+
+function cleanup_ovs() {
+	log "INFO" "Cleaning up Open vSwitch configuration..."
+
+	log "INFO" "Restarting OVS services to ensure clean state..."
+	sudo systemctl restart \
+		ovs-vswitchd.service \
+		ovsdb.service || {
+		log "WARN" "Failed to restart some OVS services"
+		return 1
+	}
+	sleep 10
+
+	log "INFO" "Removing all OVS bridges..."
+	for bridge in $(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null || true); do
+		log "INFO" "Deleting bridge: $bridge"
+		sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock --if-exists del-br "$bridge"
+	done
+
+	log "INFO" "Clearing OVS external_ids..."
+	sudo ovs-vsctl --if-exists clear open_vswitch . external_ids || {
+		log "WARN" "Failed to clear OVS external_ids"
+	}
+
+	log "INFO" "Removing any residual OVS ports..."
+	sudo ovs-vsctl --if-exists del-port bond0 || {
+		log "DEBUG" "No bond0 port to remove from OVS"
+	}
+
+	log "INFO" "Clearing OVS manager options..."
+	sudo ovs-vsctl --if-exists clear open_vswitch . manager_options || {
+		log "WARN" "Failed to clear OVS manager options"
+	}
+
+	log "INFO" "Stopping OVN services that interface with OVS..."
+	sudo systemctl stop \
+		ovn-controller.service \
+		ovn-northbound-db.service \
+		ovn-central.service \
+		ovn-southbound-db.service || {
+		log "WARN" "Failed to stop some OVS services"
+	}
+
+	log "INFO" "Stopping OVS services..."
+	sudo systemctl stop \
+		ovs-vswitchd.service \
+		ovsdb.service || {
+		log "WARN" "Failed to stop some OVS services"
+	}
+
+	log "INFO" "Clearing OVS database..."
+	sudo rm -f /var/lib/openvswitch/conf.db* || {
+		log "WARN" "Failed to remove OVS database"
+	}
+
+	log "INFO" "Clearing OVS database..."
+	sudo rm -f /etc/openvswitch/conf.db* || {
+		log "WARN" "Failed to remove OVS database"
+	}
+
+	log "INFO" "Open vSwitch cleanup completed"
+	return 0
+}
+
 ##################################################
 # Main
 ##################################################
@@ -563,9 +355,24 @@ check_for_required_tools || {
 	exit 1
 }
 
-incus_destroy_cluster || {
+cleanup_incus || {
+	log "ERROR" "Failed to cleanup incus"
+	exit 2
+}
+
+cleanup_incus_cluster || {
 	log "ERROR" "Failed to destroy incus cluster"
-	exit 1
+	exit 3
+}
+
+cleanup_ovn || {
+	log "ERROR" "Failed to cleanup OVN"
+	exit 4
+}
+
+cleanup_ovs || {
+	log "ERROR" "Failed to cleanup OVS"
+	exit 5
 }
 
 log "INFO" "The incus cluster has been destroyed on node: ${INCUS_NODENAME^^}."

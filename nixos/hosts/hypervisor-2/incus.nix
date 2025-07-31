@@ -9,13 +9,16 @@ let
   # The role the hypervisor is playing in the cluster.
   hypervisorRole = "member";
 
+  # Bootstrap node IP for joining the cluster
+  bootstrapIP = "10.10.200.11";
+
   # The address of the hypervisor.
   hypervisorManagementAddress = "10.10.100.12:8443";
   hypervisorClusterAddress = "10.10.200.12:9443";
   hypervisorClusterPeerAddresses = [
-    "10.10.200.11:6642"
-    "10.10.200.13:6642"
-    "10.10.200.14:6642"
+    "10.10.200.11"
+    "10.10.200.13"
+    "10.10.200.14"
   ];
 
   # ZFS dataset sources.
@@ -30,14 +33,15 @@ in
 {
   imports = [
     (import ../../system/config/virtualisation/incus {
-      inherit joined;
-      inherit hypervisorName;
-      inherit hypervisorRole;
-      inherit hypervisorManagementAddress;
+      inherit bootstrapIP;
+      inherit clusterToken;
       inherit hypervisorClusterAddress;
       inherit hypervisorClusterPeerAddresses;
+      inherit hypervisorManagementAddress;
+      inherit hypervisorName;
+      inherit hypervisorRole;
+      inherit joined;
       inherit sourceDefault sourceInstances sourceIso;
-      inherit clusterToken;
     })
   ];
 }

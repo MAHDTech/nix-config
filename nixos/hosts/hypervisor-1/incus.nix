@@ -13,9 +13,9 @@ let
   hypervisorManagementAddress = "10.10.100.11:8443";
   hypervisorClusterAddress = "10.10.200.11:9443";
   hypervisorClusterPeerAddresses = [
-    "10.10.200.12:6642"
-    "10.10.200.13:6642"
-    "10.10.200.14:6642"
+    "10.10.200.12"
+    "10.10.200.13"
+    "10.10.200.14"
   ];
 
   # ZFS dataset sources.
