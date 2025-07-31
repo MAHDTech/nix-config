@@ -1,47 +1,48 @@
 let
-  # Flag to indicate if the hypervisor has joined the cluster.
-  # Set to true once the hypervisor has joined the cluster.
-  joined = true;
 
-  # The name of the hypervisor.
-  hypervisorName = "HYPERVISOR-4";
+  # Common configuration used across Incus and OVN.
+  hypervisor = {
+    name = "HYPERVISOR-4";
+    role = "member";
+    managementAddress = "10.10.100.14:8443";
+    clusterAddress = "10.10.200.14:9443";
+    clusterPeerAddresses = [
+      "10.10.200.11"
+      "10.10.200.12"
+      "10.10.200.13"
+    ];
+  };
 
-  # The role the hypervisor is playing in the cluster.
-  hypervisorRole = "member";
+  # Incus configuration.
+  incus = {
+    # Flag to indicate if the hypervisor has joined the incus cluster.
+    joined = false;
 
-  # Bootstrap node IP for joining the cluster
-  bootstrapIP = "10.10.200.11";
+    # The cluster token is only needed for initial bootstrap.
+    # Once joined, the cluster token can be removed.
+    clusterToken = null;
+  };
 
-  # The address of the hypervisor.
-  hypervisorManagementAddress = "10.10.100.14:8443";
-  hypervisorClusterAddress = "10.10.200.14:9443";
-  hypervisorClusterPeerAddresses = [
-    "10.10.200.11"
-    "10.10.200.12"
-    "10.10.200.13"
-  ];
+  # OVN configuration.
+  ovn = {
+    # Flag to indicate if the hypervisor has joined the ovn cluster.
+    joined = false;
+  };
 
-  # ZFS dataset sources.
-  sourceDefault = "zpool/var/lib/incus/storage-pools/default";
-  sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
-  sourceIso = "zpool/var/lib/incus/storage-pools/iso";
-
-  # The cluster token is only needed for initial bootstrap.
-  # Once joined, the cluster token can be removed.
-  clusterToken = null;
+  # ZFS configuration.
+  zfs = {
+    sourceDefault = "zpool/var/lib/incus/storage-pools/default";
+    sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
+    sourceIso = "zpool/var/lib/incus/storage-pools/iso";
+  };
 in
 {
   imports = [
     (import ../../system/config/virtualisation/incus {
-      inherit bootstrapIP;
-      inherit clusterToken;
-      inherit hypervisorClusterAddress;
-      inherit hypervisorClusterPeerAddresses;
-      inherit hypervisorManagementAddress;
-      inherit hypervisorName;
-      inherit hypervisorRole;
-      inherit joined;
-      inherit sourceDefault sourceInstances sourceIso;
+      inherit hypervisor;
+      inherit incus;
+      inherit ovn;
+      inherit zfs;
     })
   ];
 }

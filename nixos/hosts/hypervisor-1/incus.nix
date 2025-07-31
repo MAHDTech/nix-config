@@ -1,38 +1,47 @@
 let
-  # Flag to indicate if the hypervisor has joined the cluster.
-  # Set to true once the hypervisor has joined the cluster.
-  joined = true;
 
-  # The name of the hypervisor.
-  hypervisorName = "HYPERVISOR-1";
+  # Common configuration used across Incus and OVN.
+  hypervisor = {
+    name = "HYPERVISOR-1";
+    role = "bootstrap";
+    managementAddress = "10.10.100.11:8443";
+    clusterAddress = "10.10.200.11:9443";
+    clusterPeerAddresses = [
+      "10.10.200.12"
+      "10.10.200.13"
+      "10.10.200.14"
+    ];
+  };
 
-  # The role the hypervisor is playing in the cluster.
-  hypervisorRole = "bootstrap";
+  # Incus configuration.
+  incus = {
+    # Flag to indicate if the hypervisor has joined the incus cluster.
+    joined = false;
 
-  # The address of the hypervisor.
-  hypervisorManagementAddress = "10.10.100.11:8443";
-  hypervisorClusterAddress = "10.10.200.11:9443";
-  hypervisorClusterPeerAddresses = [
-    "10.10.200.12"
-    "10.10.200.13"
-    "10.10.200.14"
-  ];
+    # The bootstrap server never needs a cluster token.
+    clusterToken = null;
+  };
 
-  # ZFS dataset sources.
-  sourceDefault = "zpool/var/lib/incus/storage-pools/default";
-  sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
-  sourceIso = "zpool/var/lib/incus/storage-pools/iso";
+  # OVN configuration.
+  ovn = {
+    # Flag to indicate if the hypervisor has joined the ovn cluster.
+    joined = false;
+  };
+
+  # ZFS configuration.
+  zfs = {
+    sourceDefault = "zpool/var/lib/incus/storage-pools/default";
+    sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
+    sourceIso = "zpool/var/lib/incus/storage-pools/iso";
+  };
 in
 {
   imports = [
     (import ../../system/config/virtualisation/incus {
-      inherit joined;
-      inherit hypervisorName;
-      inherit hypervisorRole;
-      inherit hypervisorManagementAddress;
-      inherit hypervisorClusterAddress;
-      inherit hypervisorClusterPeerAddresses;
-      inherit sourceDefault sourceInstances sourceIso;
+      inherit hypervisor;
+      inherit incus;
+      inherit ovn;
+      inherit zfs;
     })
   ];
 }

@@ -1,15 +1,23 @@
 {
-  clusterToken ? null,
-  hypervisorClusterAddress,
-  hypervisorClusterPeerAddresses ? "",
-  hypervisorManagementAddress,
-  hypervisorName,
-  hypervisorRole ? "member",
-  bootstrapIP ? null,
-  joined ? false,
-  sourceDefault,
-  sourceInstances,
-  sourceIso,
+  hypervisor ? {
+    name = null;
+    role = null;
+    managementAddress = null;
+    clusterAddress = null;
+    clusterPeerAddresses = [ ];
+  },
+  incus ? {
+    joined = false;
+    clusterToken = null;
+  },
+  ovn ? {
+    joined = false;
+  },
+  zfs ? {
+    sourceDefault = null;
+    sourceInstances = null;
+    sourceIso = null;
+  },
 }:
 {
   config,
@@ -22,30 +30,76 @@ let
   # Variables
   #########################################################
 
+  #########################
+  # Hypervisor configuration
+  #########################
+
+  inherit (hypervisor)
+    name
+    role
+    managementAddress
+    clusterAddress
+    clusterPeerAddresses
+    ;
+  hypervisorName = name;
+  hypervisorRole = role;
+  hypervisorManagementAddress = managementAddress;
+  hypervisorClusterAddress = clusterAddress;
+  hypervisorClusterPeerAddresses = clusterPeerAddresses;
+
   # Strip the port from the cluster address.
   hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
 
-  # A string used in bash comparisons to determine if we are joining the cluster.
-  joiningCluster = if clusterToken != null then "true" else "false";
+  #########################
+  # Incus configuration
+  #########################
 
-  # OVN configuration.
-  ovn = {
+  incusJoined = incus.joined;
+  inherit (incus) clusterToken;
+
+  # Bootstrap IP for member nodes (extracted from first peer address)
+  bootstrapIP =
+    if hypervisorRole == "member" && hypervisorClusterPeerAddresses != [ ] then
+      builtins.head hypervisorClusterPeerAddresses
+    else
+      null;
+
+  # A string used in bash comparisons to determine if we are joining the cluster.
+  joiningIncusCluster = if clusterToken != null then "true" else "false";
+
+  #########################
+  # ZFS sources
+  #########################
+
+  inherit (zfs) sourceDefault sourceInstances sourceIso;
+  zfsSourceDefault = sourceDefault;
+  zfsSourceInstances = sourceInstances;
+  zfsSourceIso = sourceIso;
+
+  #########################
+  # OVN configuration
+  #########################
+
+  inherit (ovn) joined;
+  ovnJoined = joined;
+
+  ovnConfig = {
 
     # OVN Northbound configuration.
     northbound = {
       port = 6641;
       addressList = lib.strings.concatStringsSep "," (
-        lib.map (addr: "tcp:${addr}:${toString ovn.northbound.port}") hypervisorClusterPeerAddresses
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.northbound.port}") hypervisorClusterPeerAddresses
       );
 
       # Use different database files for local vs cluster mode
-      dbFile = if joined then "/var/lib/ovn/ovnnb_db-cluster.db" else "/var/lib/ovn/ovnnb_db-local.db";
+      dbFile = if ovnJoined then "/var/lib/ovn/ovnnb_db-cluster.db" else "/var/lib/ovn/ovnnb_db-local.db";
 
       # Local mode: simple standalone database
-      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovn.northbound.dbFile}";
+      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovnConfig.northbound.dbFile}";
 
       # Cluster mode: clustered database with TCP remote
-      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock --remote=ptcp:${toString ovn.northbound.port}:0.0.0.0 ${ovn.northbound.dbFile}";
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock --remote=ptcp:${toString ovnConfig.northbound.port}:0.0.0.0 ${ovnConfig.northbound.dbFile}";
     };
 
     # OVN Central configuration.
@@ -61,17 +115,17 @@ let
     southbound = {
       port = 6642;
       addressList = lib.strings.concatStringsSep "," (
-        lib.map (addr: "tcp:${addr}:${toString ovn.southbound.port}") hypervisorClusterPeerAddresses
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.southbound.port}") hypervisorClusterPeerAddresses
       );
 
       # Use different database files for local vs cluster mode
-      dbFile = if joined then "/var/lib/ovn/ovnsb_db-cluster.db" else "/var/lib/ovn/ovnsb_db-local.db";
+      dbFile = if ovnJoined then "/var/lib/ovn/ovnsb_db-cluster.db" else "/var/lib/ovn/ovnsb_db-local.db";
 
       # Local mode: simple standalone database
-      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovn.southbound.dbFile}";
+      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovnConfig.southbound.dbFile}";
 
       # Cluster mode: clustered database with TCP remote
-      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock --remote=ptcp:${toString ovn.southbound.port}:0.0.0.0 ${ovn.southbound.dbFile}";
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock --remote=ptcp:${toString ovnConfig.southbound.port}:0.0.0.0 ${ovnConfig.southbound.dbFile}";
     };
 
   };
@@ -90,7 +144,7 @@ let
       # Configuration.
       #########################################################
       config =
-        if joined then
+        if incusJoined then
           {
 
             # Core
@@ -115,7 +169,7 @@ let
 
             # Incus OVN configuration.
             "network.ovn.northbound_connection" =
-              if ovn.northbound.addressList != "" then "${ovn.northbound.addressList}" else "";
+              if ovnConfig.northbound.addressList != "" then "${ovnConfig.northbound.addressList}" else "";
 
           }
         else
@@ -125,7 +179,7 @@ let
       # Projects
       #########################################################
       projects =
-        if joined then
+        if incusJoined then
           [
 
             #########################################################
@@ -168,7 +222,7 @@ let
       # Networks.
       #########################################################
       networks =
-        if joined then
+        if incusJoined then
           [
 
             #########################################################
@@ -260,7 +314,7 @@ let
       # Profiles.
       #########################################################
       profiles =
-        if joined then
+        if incusJoined then
           [
 
             #########################################################
@@ -415,7 +469,7 @@ let
       # Storage volumes.
       #########################################################
       storage_volumes =
-        if joined then
+        if incusJoined then
           [
 
             #########################################################
@@ -567,7 +621,7 @@ let
       # Cluster configuration.
       #########################################################
       cluster =
-        if joined then
+        if incusJoined then
           {
             enabled = true;
             server_address = hypervisorClusterAddress;
@@ -582,7 +636,7 @@ let
                 entity = "storage-pool";
                 name = "default";
                 key = "source";
-                value = sourceDefault;
+                value = zfsSourceDefault;
               }
               {
                 entity = "storage-pool";
@@ -597,7 +651,7 @@ let
                 entity = "storage-pool";
                 name = "instances";
                 key = "source";
-                value = sourceInstances;
+                value = zfsSourceInstances;
               }
               {
                 entity = "storage-pool";
@@ -612,7 +666,7 @@ let
                 entity = "storage-pool";
                 name = "iso";
                 key = "source";
-                value = sourceIso;
+                value = zfsSourceIso;
               }
               {
                 entity = "storage-pool";
@@ -649,7 +703,7 @@ let
       # Storage pools configuration.
       #########################################################
       storage_pools =
-        if joined then
+        if incusJoined then
           [
 
             #########################
@@ -731,8 +785,8 @@ in
 
   # Set Open vSwitch environment variables for correct socket paths
   environment.variables = {
-    OVS_RUNDIR = "/run/openvswitch";
     OVN_RUNDIR = "/run/ovn";
+    OVS_RUNDIR = "/run/openvswitch";
   };
 
   programs = {
@@ -855,7 +909,8 @@ in
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = if joined then ovn.northbound.clusterExecStart else ovn.northbound.localExecStart;
+          ExecStart =
+            if ovnJoined then ovnConfig.northbound.clusterExecStart else ovnConfig.northbound.localExecStart;
           PIDFile = "/var/run/ovn/ovnnb_db.pid";
           User = "root";
           RuntimeDirectory = "ovn";
@@ -875,28 +930,28 @@ in
           ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn /var/lib/ovn
 
           # Create initial database if it doesn't exist
-          if [ ! -f ${ovn.northbound.dbFile} ]; then
-            ${pkgs.ovn}/bin/ovsdb-tool create ${ovn.northbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-nb.ovsschema
+          if [ ! -f ${ovnConfig.northbound.dbFile} ]; then
+            ${pkgs.ovn}/bin/ovsdb-tool create ${ovnConfig.northbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-nb.ovsschema
           fi
         ''
         + (
-          if joined then
+          if ovnJoined then
             ''
               # Cluster mode: Handle clustering based on role and current database state
-              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovn.northbound.dbFile}; then
+              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovnConfig.northbound.dbFile}; then
             ''
             + (
               if hypervisorRole == "bootstrap" then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to a cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovn.northbound.dbFile}.new ${ovn.northbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovn.northbound.port}
-                  ${pkgs.coreutils}/bin/mv ${ovn.northbound.dbFile}.new ${ovn.northbound.dbFile}
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovnConfig.northbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile}
                 ''
               else if bootstrapIP != null then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to join cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovn.northbound.dbFile}.new OVN_Northbound tcp:${hypervisorClusterIP}:${toString ovn.northbound.port} tcp:${bootstrapIP}:${toString ovn.northbound.port}
-                  ${pkgs.coreutils}/bin/mv ${ovn.northbound.dbFile}.new ${ovn.northbound.dbFile}
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.northbound.dbFile}.new OVN_Northbound tcp:${hypervisorClusterIP}:${toString ovnConfig.northbound.port} tcp:${bootstrapIP}:${toString ovnConfig.northbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile}
                 ''
               else
                 ''
@@ -904,7 +959,7 @@ in
                 ''
             )
             + ''
-              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovn.northbound.dbFile}; then
+              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovnConfig.northbound.dbFile}; then
                 ${pkgs.coreutils}/bin/echo "Northbound DB is already clustered, skipping cluster setup."
               else
                 ${pkgs.coreutils}/bin/echo "Unknown Northbound DB state, proceeding with caution."
@@ -936,7 +991,8 @@ in
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = if joined then ovn.southbound.clusterExecStart else ovn.southbound.localExecStart;
+          ExecStart =
+            if ovnJoined then ovnConfig.southbound.clusterExecStart else ovnConfig.southbound.localExecStart;
           PIDFile = "/var/run/ovn/ovnsb_db.pid";
           User = "root";
           RuntimeDirectory = "ovn";
@@ -956,28 +1012,28 @@ in
           ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn /var/lib/ovn
 
           # Create initial database if it doesn't exist
-          if [ ! -f ${ovn.southbound.dbFile} ]; then
-            ${pkgs.ovn}/bin/ovsdb-tool create ${ovn.southbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-sb.ovsschema
+          if [ ! -f ${ovnConfig.southbound.dbFile} ]; then
+            ${pkgs.ovn}/bin/ovsdb-tool create ${ovnConfig.southbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-sb.ovsschema
           fi
         ''
         + (
-          if joined then
+          if ovnJoined then
             ''
               # Cluster mode: Handle clustering based on role and current database state
-              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovn.southbound.dbFile}; then
+              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovnConfig.southbound.dbFile}; then
             ''
             + (
               if hypervisorRole == "bootstrap" then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to a cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovn.southbound.dbFile}.new ${ovn.southbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovn.southbound.port}
-                  ${pkgs.coreutils}/bin/mv ${ovn.southbound.dbFile}.new ${ovn.southbound.dbFile}
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovnConfig.southbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile}
                 ''
               else if bootstrapIP != null then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to join cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovn.southbound.dbFile}.new OVN_Southbound tcp:${hypervisorClusterIP}:${toString ovn.southbound.port} tcp:${bootstrapIP}:${toString ovn.southbound.port}
-                  ${pkgs.coreutils}/bin/mv ${ovn.southbound.dbFile}.new ${ovn.southbound.dbFile}
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.southbound.dbFile}.new OVN_Southbound tcp:${hypervisorClusterIP}:${toString ovnConfig.southbound.port} tcp:${bootstrapIP}:${toString ovnConfig.southbound.port}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile}
                 ''
               else
                 ''
@@ -985,7 +1041,7 @@ in
                 ''
             )
             + ''
-              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovn.southbound.dbFile}; then
+              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovnConfig.southbound.dbFile}; then
                 ${pkgs.coreutils}/bin/echo "Southbound DB is already clustered, skipping cluster setup."
               else
                 ${pkgs.coreutils}/bin/echo "Unknown Southbound DB state, proceeding with caution."
@@ -1026,7 +1082,8 @@ in
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = if joined then ovn.central.clusterExecStart else ovn.central.localExecStart;
+          ExecStart =
+            if ovnJoined then ovnConfig.central.clusterExecStart else ovnConfig.central.localExecStart;
           PIDFile = "/var/run/ovn/ovn-central.pid";
           User = "root";
           RuntimeDirectory = "ovn";
@@ -1040,9 +1097,9 @@ in
           Environment = [
             "OVN_RUNDIR=/var/run/ovn"
             "OVN_CTL_OPTS=\
-              --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
-              --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
-              --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
+            --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+            --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+            --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
           ];
         };
 
@@ -1117,9 +1174,9 @@ in
 
         preStart = ''
           # Set variables based on cluster membership status
-          if [[ "${lib.boolToString joined}" == "true" ]];
+          if [[ "${lib.boolToString ovnJoined}" == "true" ]];
           then
-            if [[ -n "${ovn.southbound.addressList}" ]];
+            if [[ -n "${ovnConfig.southbound.addressList}" ]];
             then
               OVN_SOUTHBOUND_USE_REMOTE=true
             else
@@ -1150,8 +1207,8 @@ in
           # Point OVN to the correct OVN Southbound DB
           if [[ "''${OVN_SOUTHBOUND_USE_REMOTE}" == "true" ]];
           then
-            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ${ovn.southbound.addressList}"
-            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=${ovn.southbound.addressList}"
+            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ${ovnConfig.southbound.addressList}"
+            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=${ovnConfig.southbound.addressList}"
           else
             ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local: unix:/var/run/ovn/ovnsb_db.sock"
             ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock"
@@ -1314,7 +1371,7 @@ in
             fi
 
             # If this is a member node joining the cluster, wipe existing data.
-            if [[ "${joiningCluster}" == "true" ]];
+            if [[ "${joiningIncusCluster}" == "true" ]];
             then
               ${pkgs.coreutils}/bin/echo "Preparing for cluster member join, wiping existing data..."
 
@@ -1497,9 +1554,9 @@ in
         8443 # Incus API
         9443 # Incus UI
       ]
-      ++ lib.optionals joined [
-        ovn.northbound.port # OVN NB DB (Northbound)
-        ovn.southbound.port # OVN SB DB (Southbound)
+      ++ lib.optionals ovnJoined [
+        ovnConfig.northbound.port # OVN NB DB (Northbound)
+        ovnConfig.southbound.port # OVN SB DB (Southbound)
       ];
       # Allow ICMP globally
       allowPing = true;

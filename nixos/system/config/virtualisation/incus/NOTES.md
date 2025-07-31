@@ -5,9 +5,11 @@
 - [Notes](#notes)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
+  - [Configuration Structure](#configuration-structure)
   - [Deployment](#deployment)
     - [Steps to deploy](#steps-to-deploy)
-      - [Stage 1 (Cluster Creation)](#stage-1-cluster-creation)
+      - [Stage 0 (OVN Cluster Creation)](#stage-0-ovn-cluster-creation)
+      - [Stage 1 (Incus Cluster Creation)](#stage-1-incus-cluster-creation)
       - [Stage 2 (Cluster Joining)](#stage-2-cluster-joining)
       - [Stage 3 (Finalise)](#stage-3-finalise)
       - [Stage 4. (Login and configure)](#stage-4-login-and-configure)
@@ -21,63 +23,136 @@
 
 ## Overview
 
-Notes from setting up the Incus cluster.
+Notes from setting up the Incus cluster with staged OVN and Incus cluster creation.
+
+The deployment follows a staged approach to avoid circular dependencies between OVN and Incus cluster formation.
+
+## Configuration Structure
+
+The configuration uses a grouped variable structure for better organization:
+
+```nix
+# Common hypervisor configuration
+hypervisor = {
+  name = "HYPERVISOR-X";
+  role = "bootstrap" | "member";
+  managementAddress = "10.10.100.X:8443";
+  clusterAddress = "10.10.200.X:9443";
+  clusterPeerAddresses = [ "10.10.200.Y" "10.10.200.Z" ];
+};
+
+# Incus-specific configuration
+incus = {
+  joined = true | false;          # Incus cluster membership
+  clusterToken = "..." | null;    # Only for initial bootstrap
+};
+
+# OVN-specific configuration
+ovn = {
+  joined = true | false;          # OVN cluster membership
+};
+
+# ZFS storage configuration
+zfs = {
+  sourceDefault = "zpool/var/lib/incus/storage-pools/default";
+  sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
+  sourceIso = "zpool/var/lib/incus/storage-pools/iso";
+};
+```
 
 ## Deployment
 
 ### Steps to deploy
 
-_A multi-stage saga._
+_A multi-stage saga to avoid circular dependencies._
 
-#### Stage 1 (Cluster Creation)
+#### Stage 0 (OVN Cluster Creation)
 
-Obtain the Cluster tokens by running the following;
+**Purpose:** Create the OVN cluster first before Incus attempts to use it.
 
-1. Update the nix flake with `joined = true` for **ALL** servers.
+1. Update the nix flake with `ovn.joined = true` for **ALL** servers.
+1. Keep `incus.joined = false` for **ALL** servers (Incus remains in local mode).
+1. Run `./scripts/incus-hypervisors.sh --apply` script to create the OVN cluster.
+1. Run `./scripts/incus-hypervisors.sh --health` script to verify the OVN cluster is working before continuing.
+
+**Expected Result:**
+
+- OVN cluster is formed and synchronised across all nodes
+- Incus runs in local mode on each node
+- OVN databases are clustered and accessible
+
+#### Stage 1 (Incus Cluster Creation)
+
+**Purpose:** Bootstrap the Incus cluster now that OVN is ready.
+
+1. Update the nix flake with `incus.joined = true` for the **bootstrap** server only.
+1. Keep `incus.joined = false` for member servers.
 1. Run `./scripts/incus-hypervisors.sh --create --force-reboot` script to bootstrap the cluster.
 1. Run `./scripts/incus-hypervisors.sh --health` script to verify the bootstrap server is working before continuing.
 
-NOTES:
+**Expected Result:**
+
+- Bootstrap server creates the Incus cluster
+- OVN cluster continues to function
+- Cluster tokens are generated for member servers
+
+**NOTES:**
 
 - The bootstrap server will be the only server in the 'incus' cluster
-- The OVN cluster will be created on the bootstrap server and the member servers will join it.
+- OVN cluster is already established and functional
 
 #### Stage 2 (Cluster Joining)
 
-Join the member servers to the incus cluster using the tokens by running the following;
+**Purpose:** Join member servers to the established Incus cluster.
 
-1. Update the nix flake with the `clusterToken = "..."` for the member servers captured from stage 1.
-1. Run `./scripts/incus-hypervisors.sh --join` script.
-1. Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
+1. Update the nix flake with `incus.joined = true` for member servers.
+2. Update the nix flake with the `incus.clusterToken = "..."` for the member servers captured from stage 1.
+3. Run `./scripts/incus-hypervisors.sh --join` script.
+4. Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
 
-NOTES:
+**Expected Result:**
+
+- All servers are members of both OVN and Incus clusters
+- Full cluster functionality is established
+
+**NOTES:**
 
 - Member servers will perform a data wipe prior to joining the cluster.
 - Verify cluster membership by running `incus cluster list` on the bootstrap server.
 
 #### Stage 3 (Finalise)
 
+**Purpose:** Clean up temporary configuration and stabilize the cluster.
+
 After verifying the members have joined successfully, run the following;
 
-1. Update the nix flake with `clusterToken = null` for all member servers
-1. Run `./scripts/incus-hypervisors.sh --apply` script.
-1. Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
+1. Update the nix flake with `incus.clusterToken = null` for all member servers
+2. Run `./scripts/incus-hypervisors.sh --apply` script.
+3. Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
 
-NOTES:
+**Expected Result:**
+
+- Configuration is cleaned up
+- Cluster operates in steady state
+
+**NOTES:**
 
 - Verify all servers are reporting as `online` in the `incus cluster list` output.
 
 #### Stage 4. (Login and configure)
 
+**Purpose:** Access and configure the operational cluster.
+
 1. Access the Incus Web API and configure your client certificate.
-2. Optionally, run `./scripts/incus-hypervisors.sh --configure` script to configure some default incus settings that can't be done via preseed.
+1. Optionally, run `./scripts/incus-hypervisors.sh --configure` script to configure some default incus settings that can't be done via preseed.
 
 ### Steps to destroy
 
 _One shot to destroy them all._
 
-1. Update the nix flake with `joined = false` for all servers
-1. Update the nix flake with `clusterToken = null` for all member servers
+1. Update the nix flake with `incus.joined = false` for all servers
+1. Update the nix flake with `ovn.joined = false` for all servers
+1. Update the nix flake with `incus.clusterToken = null` for all member servers
 1. Run the `./scripts/incus-hypervisors.sh --yolo --destroy --force-reboot` script.
 
 ## Network Configuration
