@@ -928,21 +928,21 @@ in
 
       # Open apps on startup
       exec-once = [
+        # Start ags
+        "ags run"
+        #"ags run --gtk4"
+
         # Open a Terminal
         "$terminal"
+
+        # Start Insync
+        "sleep 30 ; pidof insync || insync start"
 
         # Start the wallpaper daemon
         "sleep 30 ; pidof swww-daemon || swww-daemon"
 
         # Set a random wallpaper
-        "sleep 60 ; exec notify-send 'Setting random wallpaper...' ; random-wallpaper ''$XDG_WALLPAPERS_DIR"
-
-        # Start ags
-        "ags run"
-        #"ags run --gtk4"
-
-        # Start Insync
-        "sleep 30 ; pidof insync || insync start"
+        "sleep 60 ; random-wallpaper"
       ];
 
       ####################

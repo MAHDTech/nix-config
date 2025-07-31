@@ -14,6 +14,9 @@
         # Variables
         #########################
 
+        # Wallpaper directory
+        WALLPAPER_DIR="''${XDG_WALLPAPERS_DIR:-''${HOME}/Pictures/Wallpapers}"
+
         # SWWWW randomize script settings.
         SWWW_SCRIPT="''${0##*/}"
         SWWW_STATE_DIR="''${HOME}/.local/state/swww"
@@ -70,26 +73,22 @@
         # Pre-flight checks
         #########################
 
-        WALLPAPER_DIR="''${1:-}"
-        if [[ "''${WALLPAPER_DIR:-EMPTY}" == "EMPTY" ]];
-        then
-          echo "Usage: ''${SWWW_SCRIPT} <dir containing images>"
-          exit 1
-        elif [[ ! -d "''${WALLPAPER_DIR}" ]];
-        then
-          echo "Directory does not exist: ''${WALLPAPER_DIR}"
-          exit 1
-        fi
-
         # Start a new log file
         rm -f "''${SWWW_LOG_FILE}" || true
 
         # Make sure the state directory exists or create it
         mkdir -p "''${SWWW_STATE_DIR}" || {
-          echo "Failed to create state directory: ''${SWWW_STATE_DIR}"
+          notify-send "Random Wallpaper" "Failed to create state directory: ''${SWWW_STATE_DIR}"
           exit 1
         }
         msg "Wallpaper state directory created"
+
+        if [[ ! -d "''${WALLPAPER_DIR}" ]];
+        then
+          notify-send "Random Wallpaper" "Wallpaper directory does not exist: ''${WALLPAPER_DIR}"
+          msg "Wallpaper directory does not exist: ''${WALLPAPER_DIR}"
+          exit 1
+        fi
 
         # Make sure only 1 instance of swww_randomize is running
         if [[ -e "''${SWWW_PIDFILE}" ]];
@@ -111,7 +110,7 @@
         fi
         msg "Recording process ID for swww"
         echo "''${BASHPID}" > "''${SWWW_PIDFILE}"
-        msg "Process ID recorded"
+        msg "swww process ID recorded as ''${BASHPID}"
 
         #########################
         # Main loop
