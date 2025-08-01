@@ -14,7 +14,7 @@ let
 
   incus = {
     # Flag to indicate if the hypervisor has joined the incus cluster.
-    joined = true;
+    joined = false;
 
     # The incus server role.
     role = "bootstrap";

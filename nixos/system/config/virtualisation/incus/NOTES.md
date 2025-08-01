@@ -65,9 +65,9 @@ _A multi-stage saga to avoid circular dependencies._
 
 1. ✅ Update the nix flake with `incus.joined = true` for the **bootstrap** server only.
 1. ✅ Keep `incus.joined = false` for member servers.
-1. [ ] Run `./scripts/incus-hypervisors.sh --create --yolo` script to bootstrap the cluster.
-1. [ ] Record the cluster tokens output from the script. However, **DO NOT** put them in the nix flake yet.
-1. [ ] Run `./scripts/incus-hypervisors.sh --health` script to verify the bootstrap server is working before continuing.
+1. ✅ Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
+1. ✅ Record the cluster tokens output from the script. However, **DO NOT** put them in the nix flake yet.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the bootstrap server is working before continuing.
 
 **Expected Result:**
 
@@ -84,10 +84,10 @@ _A multi-stage saga to avoid circular dependencies._
 
 **Purpose:** Join member servers to the established Incus cluster.
 
-1. [ ] Update the nix flake with `incus.joined = true` for member servers.
-1. [ ] Update the nix flake with the `incus.clusterToken = "..."` for the member servers captured from stage 1.
-1. [ ] Run `./scripts/incus-hypervisors.sh --join` script.
-1. [ ] Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
+1. ✅ Update the nix flake with `incus.joined = true` for member servers.
+1. ✅ Update the nix flake with the `incus.clusterToken = "..."` for the member servers captured from stage 1.
+1. ✅ Run `./scripts/incus-hypervisors.sh --join` script.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
 
 **Expected Result:**
 
@@ -105,9 +105,9 @@ _A multi-stage saga to avoid circular dependencies._
 
 After verifying the members have joined successfully, run the following;
 
-1. [ ] Update the nix flake with `incus.clusterToken = null` for all member servers
-1. [ ] Run `./scripts/incus-hypervisors.sh --apply` script.
-1. [ ] Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
+1. ✅ Update the nix flake with `incus.clusterToken = null` for all member servers
+1. ✅ Run `./scripts/incus-hypervisors.sh --apply` script.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
 
 **Expected Result:**
 
@@ -122,8 +122,8 @@ After verifying the members have joined successfully, run the following;
 
 **Purpose:** Access and configure the operational cluster.
 
-1. [ ] Access the Incus Web API and configure your client certificate.
-1. [ ] Optionally, run `./scripts/incus-hypervisors.sh --configure` script to configure some default incus settings that can't be done via preseed.
+1. ✅ Access the Incus Web API and configure your client certificate.
+1. ✅ Optionally, run `./scripts/incus-hypervisors.sh --configure` script to configure some default incus settings that can't be done via preseed.
 
 ### Steps to destroy
 

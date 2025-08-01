@@ -1,12 +1,23 @@
 { pkgs, lib, ... }:
 let
 
+  # Default network configuration
   defaultNetworkConfig = {
     DHCP = "yes";
     DNSSEC = "yes";
     DNSOverTLS = "no";
     DNS = [ ];
-    LinkLocalAddressing = "yes";
+    LinkLocalAddressing = "no";
+  };
+
+  # Default link configuration
+  defaultLinkConfig = {
+    RequiredForOnline = "routable";
+  };
+
+  # Default DHCP configuration
+  defaultDhcpV4Config = {
+    RouteMetric = 1000;
   };
 
 in
@@ -27,7 +38,11 @@ in
       wait-online = {
         enable = true;
         timeout = lib.mkForce 180;
-        extraArgs = [ ];
+        anyInterface = lib.mkForce false; # Wait for ALL interfaces
+        extraArgs = [
+          "--interface=enp6s0" # Wait for Management
+          "--interface=bond0" # Wait for Applications
+        ];
       };
 
       #########################################################
@@ -60,9 +75,9 @@ in
         "10-wired" = {
           matchConfig.Name = lib.mkForce "enp6s0";
           networkConfig = defaultNetworkConfig;
-          dhcpV4Config = {
-            RouteMetric = 1000;
-          };
+          linkConfig = defaultLinkConfig;
+          dhcpV4Config = defaultDhcpV4Config;
+          routes = [ ];
         };
 
         "101-enp1s0f0" = {
@@ -71,6 +86,7 @@ in
             Bond = "bond0";
             DHCP = "no";
           };
+          routes = [ ];
         };
 
         "102-enp1s0f1" = {
@@ -83,14 +99,11 @@ in
 
         "110-bond0" = {
           matchConfig.Name = "bond0";
-          linkConfig = {
-            RequiredForOnline = "carrier";
+          networkConfig = defaultNetworkConfig;
+          linkConfig = lib.mergeAttrs defaultLinkConfig {
             MTUBytes = "9000";
           };
-          networkConfig = defaultNetworkConfig;
-          dhcpV4Config = {
-            RouteMetric = 1000;
-          };
+          dhcpV4Config = defaultDhcpV4Config;
           routes = [ ];
         };
 

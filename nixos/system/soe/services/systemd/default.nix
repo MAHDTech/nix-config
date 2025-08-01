@@ -41,12 +41,21 @@
 
       networks =
         let
-          networkConfig = {
+
+          defaultNetworkConfig = {
             DHCP = "yes";
             DNSSEC = "yes";
             DNSOverTLS = "no";
-
             DNS = [ ];
+            LinkLocalAddressing = "no";
+          };
+
+          defaultWiredLinkConfig = {
+            RequiredForOnline = "routable";
+          };
+
+          defaultWirelessLinkConfig = {
+            RequiredForOnline = "carrier";
           };
         in
         {
@@ -55,7 +64,8 @@
             enable = true;
             name = "en*";
 
-            inherit networkConfig;
+            networkConfig = defaultNetworkConfig;
+            linkConfig = defaultWiredLinkConfig;
 
             dhcpV4Config.RouteMetric = 1000;
           };
@@ -65,7 +75,8 @@
             enable = false;
             name = "wl*";
 
-            inherit networkConfig;
+            networkConfig = defaultNetworkConfig;
+            linkConfig = defaultWirelessLinkConfig;
 
             dhcpV4Config.RouteMetric = 2000;
           };
@@ -75,7 +86,7 @@
             enable = true;
             name = "tun*";
 
-            inherit networkConfig;
+            networkConfig = defaultNetworkConfig;
 
             linkConfig.Unmanaged = true;
           };
@@ -84,7 +95,8 @@
             enable = true;
             name = "bn*";
 
-            inherit networkConfig;
+            networkConfig = defaultNetworkConfig;
+            linkConfig = defaultWirelessLinkConfig;
 
             dhcpV4Config.RouteMetric = 3000;
           };

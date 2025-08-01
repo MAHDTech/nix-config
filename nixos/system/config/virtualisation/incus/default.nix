@@ -63,9 +63,6 @@ let
     else
       null;
 
-  # A string used in bash comparisons to determine if we are joining the cluster.
-  joiningIncusCluster = if clusterToken != null then "true" else "false";
-
   #########################
   # ZFS sources
   #########################
@@ -861,11 +858,15 @@ in
     '';
 
     # Custom target for coordinating OVN and Incus startup
-    # Make sure all OVN and OVS services are ready before starting Incus.
+    # Make sure that Networking, OVN and OVS services are all ready before starting Incus.
     targets = {
       sdn-ready = {
         description = "OVN services are ready";
         after = [
+          # Network must be online first
+          "network-online.target"
+          "systemd-networkd-wait-online.service"
+
           # OVN services
           "ovn-central.service"
           "ovn-controller.service"
@@ -876,6 +877,10 @@ in
           "ovs-vswitchd.service"
         ];
         wants = [
+          # Pull in network-online to ensure network is ready
+          "network-online.target"
+          "systemd-networkd-wait-online.service"
+
           # OVN services
           "ovn-central.service"
           "ovn-controller.service"
@@ -904,7 +909,10 @@ in
       ###############################
       ovn-northbound-db = {
         description = "OVN Northbound DB";
-        after = [ "network.target" ];
+        after = [
+          "network.target"
+          "systemd-networkd-wait-online.service"
+        ];
         wantedBy = [
           "multi-user.target"
           "sdn-ready.target"
@@ -986,7 +994,10 @@ in
       ###############################
       ovn-southbound-db = {
         description = "OVN Southbound DB";
-        after = [ "network.target" ];
+        after = [
+          "network.target"
+          "systemd-networkd-wait-online.service"
+        ];
         wantedBy = [
           "multi-user.target"
           "sdn-ready.target"
@@ -1071,6 +1082,7 @@ in
         description = "OVN Central";
         after = [
           "network.target"
+          "systemd-networkd-wait-online.service"
           "ovs-vswitchd.service"
           "ovn-northbound-db.service"
           "ovn-southbound-db.service"
@@ -1141,6 +1153,7 @@ in
         after = [
           # Wait for Network
           "network.target"
+          "systemd-networkd-wait-online.service"
 
           # Wait for Open vSwitch
           "ovs-vswitchd.service"
@@ -1185,20 +1198,6 @@ in
         };
 
         preStart = ''
-          # Set variables based on cluster membership status
-          if [[ "${lib.boolToString ovnJoined}" == "true" ]];
-          then
-            if [[ -n "${ovnConfig.southbound.addressList}" ]];
-            then
-              OVN_SOUTHBOUND_USE_REMOTE=true
-            else
-              OVN_SOUTHBOUND_USE_REMOTE=false
-            fi
-          else
-            OVN_SOUTHBOUND_USE_REMOTE=false
-          fi
-          ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ''${OVN_SOUTHBOUND_USE_REMOTE}"
-
           # Wait for OVS to be fully ready
           for i in {1..30}; do
             ${pkgs.coreutils}/bin/echo "Waiting for OVS to be ready..."
@@ -1216,15 +1215,11 @@ in
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-ip=${hypervisorClusterIP}"
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-type=geneve"
 
-          # Point OVN to the correct OVN Southbound DB
-          if [[ "''${OVN_SOUTHBOUND_USE_REMOTE}" == "true" ]];
-          then
-            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using remote: ${ovnConfig.southbound.addressList}"
-            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=${ovnConfig.southbound.addressList}"
-          else
-            ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local: unix:/var/run/ovn/ovnsb_db.sock"
-            ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock"
-          fi
+          # Point OVN controller to local Southbound DB socket
+          # NOTE: ovn-controller should ALWAYS use local socket, never cluster TCP addresses
+          # The cluster TCP addresses are for RAFT peer communication between DB servers only
+          ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local socket: unix:/var/run/ovn/ovnsb_db.sock"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock"
 
           # Set additional OVN configuration
           ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-bridge=br-int"
@@ -1271,6 +1266,7 @@ in
           description = lib.mkForce "Incus Container and Virtual Machine Management Daemon (customised)";
 
           after = lib.mkAfter [
+            # Requires OVN/OVS
             "sdn-ready.target"
 
             # Requires SOPS
@@ -1283,48 +1279,6 @@ in
           serviceConfig = {
             EnvironmentFile = config.sops.templates."incus-acme.env".path;
           };
-
-          preStart = ''
-            # Show the Incus version
-            ${pkgs.coreutils}/bin/echo "Starting Incus version: $(incus --version)"
-
-            # Check for lego in the PATH
-            ${pkgs.coreutils}/bin/echo "Checking for lego in the PATH..."
-            ${pkgs.coreutils}/bin/echo "lego: $(${pkgs.which}/bin/which lego)"
-            ${pkgs.coreutils}/bin/echo "$(lego --version || ${pkgs.coreutils}/bin/echo "lego not found")"
-
-            # Verify Cloudflare credentials are properly configured
-            ${pkgs.coreutils}/bin/echo "Checking Cloudflare credentials..."
-
-            # Check for DNS API Token (preferred method)
-            if [[ "''${CLOUDFLARE_DNS_API_TOKEN:-EMPTY}" != "EMPTY" ]]; then
-              ${pkgs.coreutils}/bin/echo "✓ Using Cloudflare DNS API Token (length: ''${#CLOUDFLARE_DNS_API_TOKEN} characters)"
-            # Check for Email + API Key (legacy method)
-            elif [[ "''${CLOUDFLARE_EMAIL:-EMPTY}" != "EMPTY" && "''${CLOUDFLARE_API_KEY:-EMPTY}" != "EMPTY" ]]; then
-              ${pkgs.coreutils}/bin/echo "✓ Using Cloudflare Email + API Key method"
-              ${pkgs.coreutils}/bin/echo "  Email: ''${CLOUDFLARE_EMAIL}"
-              ${pkgs.coreutils}/bin/echo "  API Key: (length: ''${#CLOUDFLARE_API_KEY} characters)"
-            else
-              ${pkgs.coreutils}/bin/echo "⚠️  WARNING: No Cloudflare credentials have been set!"
-              ${pkgs.coreutils}/bin/echo "   Either set CLOUDFLARE_DNS_API_TOKEN (recommended)"
-              ${pkgs.coreutils}/bin/echo "   Or set both CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY"
-            fi
-
-            # Wait up to 15 minutes for the chassis to appear.
-            ${pkgs.coreutils}/bin/echo "Waiting for OVN chassis '${hypervisorName}' to be registered..."
-            for i in {1..90}; do
-              CHASSIS_FOUND=false
-              CHASSIS_FOUND=$( (${pkgs.ovn}/bin/ovn-sbctl --format=json --timeout=3 list chassis | ${pkgs.jq}/bin/jq -r '.data[][] | select(type=="string")' | ${pkgs.gnugrep}/bin/grep -q -x "${hypervisorName}") || true )
-              if [[ $? -eq 0 && "''${CHASSIS_FOUND}" != "false" ]]; then
-                ${pkgs.coreutils}/bin/echo "OVN chassis found. Proceeding with Incus start."
-                sleep 10
-                exit 0
-              fi
-              ${pkgs.coreutils}/bin/echo "Attempt $i: OVN chassis not yet found, waiting 10s..."
-              sleep 10
-            done
-            ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for OVN chassis. Incus may still fail to initialize networks."
-          '';
         })
       ];
 
@@ -1337,6 +1291,7 @@ in
           description = lib.mkForce "Incus initialization with preseed file (customised)";
 
           after = lib.mkAfter [
+            # Requires OVN/OVS
             "sdn-ready.target"
 
             # Requires SOPS
@@ -1349,81 +1304,6 @@ in
           serviceConfig = {
             EnvironmentFile = config.sops.templates."incus-acme.env".path;
           };
-
-          preStart = ''
-            # Clean up any ZFS pools created in error.
-            ${pkgs.coreutils}/bin/echo "Cleaning up invalid ZFS pools..."
-            ${pkgs.zfs}/bin/zfs destroy -r default 2>/dev/null || ${pkgs.coreutils}/bin/echo "Pool not found default"
-            ${pkgs.zfs}/bin/zfs destroy -r instances 2>/dev/null || ${pkgs.coreutils}/bin/echo "Pool not found instances"
-            ${pkgs.zfs}/bin/zfs destroy -r iso 2>/dev/null || ${pkgs.coreutils}/bin/echo "Pool not found iso"
-
-            # Wait for Network to be ready.
-            ${pkgs.coreutils}/bin/echo "Waiting for network to be ready..."
-            for i in {1..60}; do
-              if [ -n "$(${pkgs.systemd}/bin/networkctl status --no-pager | ${pkgs.gnugrep}/bin/grep -E '[[:space:]]*Online state: (online|partial)')" ]; then
-                ${pkgs.coreutils}/bin/echo "Network is ready."
-                break
-              fi
-              ${pkgs.coreutils}/bin/sleep 1
-            done
-
-            # Wait up to 60s for incus daemon to be fully responsive.
-            ${pkgs.coreutils}/bin/echo "Preparing to apply Incus preseed..."
-            READY=false
-            for i in {1..10}; do
-              if ${pkgs.incus}/bin/incus admin waitready --timeout=6; then
-                ${pkgs.coreutils}/bin/echo "Incus daemon is ready."
-                READY=true
-                break
-              fi
-              sleep 6
-            done
-            if [ "$READY" != "true" ]; then
-              ${pkgs.coreutils}/bin/echo "Warning: Timed out waiting for Incus daemon to be ready. Preseed may fail."
-            fi
-
-            # If this is a member node joining the cluster, wipe existing data.
-            if [[ "${joiningIncusCluster}" == "true" ]];
-            then
-              ${pkgs.coreutils}/bin/echo "Preparing for cluster member join, wiping existing data..."
-
-              # Stop all instances (if any)
-              ${pkgs.coreutils}/bin/echo "Stopping all instances..."
-              ${pkgs.incus}/bin/incus stop --all --force-local --timeout=300 || true
-
-              # Delete all instances
-              ${pkgs.coreutils}/bin/echo "Deleting all instances..."
-              for instance in $(${pkgs.incus}/bin/incus list -c n --format csv --force-local); do
-                ${pkgs.incus}/bin/incus delete --force "$instance" --force-local || true
-              done
-
-              # Remove default profile devices
-              ${pkgs.coreutils}/bin/echo "Removing default profile devices..."
-              ${pkgs.incus}/bin/incus profile device remove default root --force-local || true
-              ${pkgs.incus}/bin/incus profile device remove default eth0 --force-local || true
-
-              # Delete networks
-              ${pkgs.coreutils}/bin/echo "Deleting networks..."
-              ${pkgs.incus}/bin/incus network delete incusbr0 --force-local || true
-              ${pkgs.incus}/bin/incus network delete incusbr1 --force-local || true
-
-              # Delete storage pools
-              ${pkgs.coreutils}/bin/echo "Deleting storage pools..."
-              ${pkgs.incus}/bin/incus storage delete default --force-local || true
-              ${pkgs.incus}/bin/incus storage delete instances --force-local || true
-              ${pkgs.incus}/bin/incus storage delete iso --force-local || true
-
-              # Unset addresses
-              ${pkgs.coreutils}/bin/echo "Unsetting addresses..."
-              ${pkgs.incus}/bin/incus config unset core.https_address --force-local || true
-              ${pkgs.incus}/bin/incus config unset cluster.https_address --force-local || true
-
-              ${pkgs.coreutils}/bin/echo "Incus data wiped successfully."
-            else
-              ${pkgs.coreutils}/bin/echo "Not joining a cluster at this time, skipping data wipe."
-              exit 0
-            fi
-          '';
         })
       ];
 
