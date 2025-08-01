@@ -930,52 +930,30 @@ in
         serviceConfig = {
           Type = "oneshot";
           ExecStartPre = ''
-            NB_READY=false
-            SB_READY=false
-            VS_READY=false
-
             ${pkgs.coreutils}/bin/echo "Waiting for OVN to be ready..."
-
             ${pkgs.coreutils}/bin/sleep 30
 
-            ${pkgs.coreutils}/bin/echo "Checking OVN readiness..."
-
-            while [[ "''${NB_READY}" == "false" ]];
-            do
-              ${pkgs.coreutils}/bin/echo "Checking Northbound DB..."
-              if ${pkgs.ovn}/bin/ovn-nbctl --timeout=30 list nb_global >/dev/null 2>&1;
-              then
-                NB_READY=true
-              else
-                ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying..."
-                ${pkgs.coreutils}/bin/sleep 10
-              fi
+            # Check Northbound DB with retry
+            ${pkgs.coreutils}/bin/echo "Checking Northbound DB..."
+            while ! ${pkgs.ovn}/bin/ovn-nbctl --timeout=30 list nb_global >/dev/null 2>&1; do
+              ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
+              ${pkgs.coreutils}/bin/sleep 10
             done
             ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
 
-            while [[ "''${SB_READY}" == "false" ]];
-            do
-              ${pkgs.coreutils}/bin/echo "Checking Southbound DB..."
-              if ${pkgs.ovn}/bin/ovn-sbctl --timeout=30 list sb_global >/dev/null 2>&1;
-              then
-                SB_READY=true
-              else
-                ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying..."
-                ${pkgs.coreutils}/bin/sleep 10
-              fi
+            # Check Southbound DB with retry
+            ${pkgs.coreutils}/bin/echo "Checking Southbound DB..."
+            while ! ${pkgs.ovn}/bin/ovn-sbctl --timeout=30 list sb_global >/dev/null 2>&1; do
+              ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
+              ${pkgs.coreutils}/bin/sleep 10
             done
             ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
 
-            while [[ "''${VS_READY}" == "false" ]];
-            do
-              ${pkgs.coreutils}/bin/echo "Checking Open vSwitch..."
-              if ${pkgs.ovn}/bin/ovs-vsctl get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1;
-              then
-                VS_READY=true
-              else
-                ${pkgs.coreutils}/bin/echo "Open vSwitch is not ready, retrying..."
-                ${pkgs.coreutils}/bin/sleep 10
-              fi
+            # Check Open vSwitch with retry
+            ${pkgs.coreutils}/bin/echo "Checking Open vSwitch..."
+            while ! ${pkgs.ovn}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1; do
+              ${pkgs.coreutils}/bin/echo "Open vSwitch is not ready, retrying in 10 seconds..."
+              ${pkgs.coreutils}/bin/sleep 10
             done
             ${pkgs.coreutils}/bin/echo "Open vSwitch is ready."
 
@@ -985,7 +963,7 @@ in
           RemainAfterExit = true;
           TimeoutStartSec = 60;
           Restart = "on-failure";
-          RestartSec = 5;
+          RestartSec = 60;
         };
       };
 
