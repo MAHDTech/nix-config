@@ -621,13 +621,6 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 				msg "ERROR" "Failed to setup server ${HYPERVISOR}"
 				exit 1
 			}
-		else
-			msg "INFO" "Joining OVN cluster on server ${HYPERVISOR}"
-			# Apply changes to the server and reboot now.
-			apply_changes "${HYPERVISOR}" true || {
-				msg "ERROR" "Failed to join server ${HYPERVISOR}"
-				exit 1
-			}
 		fi
 
 		;;

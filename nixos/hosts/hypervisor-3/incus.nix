@@ -36,7 +36,7 @@ let
 
   ovn = {
     # Flag to indicate if the hypervisor has joined the ovn cluster.
-    joined = true;
+    joined = false;
 
     # IP addresses of all OVN cluster members.
     clusterAddresses = [

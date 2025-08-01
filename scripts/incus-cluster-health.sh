@@ -31,6 +31,10 @@ declare -r REQUIRED_TOOLS=(
 declare -r OVN_NB_SOCKET="/var/run/ovn/ovnnb_db.sock"
 declare -r OVN_SB_SOCKET="/var/run/ovn/ovnsb_db.sock"
 
+# OVN database file paths
+declare -r OVN_NB_DB_FILE="/var/lib/ovn/ovnnb_db.db"
+declare -r OVN_SB_DB_FILE="/var/lib/ovn/ovnsb_db.db"
+
 # Timeout for OVN commands
 declare -r OVN_TIMEOUT=10
 
@@ -591,18 +595,18 @@ function detect_ovn_mode() {
 	local sb_clustered=false
 
 	# Check northbound database
-	if [[ -f "/var/lib/ovn/ovnnb_db-cluster.db" ]] && sudo ovsdb-tool db-is-clustered "/var/lib/ovn/ovnnb_db-cluster.db" >/dev/null 2>&1; then
+	if [[ -f ${OVN_NB_DB_FILE} ]] && sudo ovsdb-tool db-is-clustered "${OVN_NB_DB_FILE}" >/dev/null 2>&1; then
 		nb_clustered=true
 		log "DEBUG" "Northbound database is clustered"
-	elif [[ -f "/var/lib/ovn/ovnnb_db-local.db" ]] && sudo ovsdb-tool db-is-standalone "/var/lib/ovn/ovnnb_db-local.db" >/dev/null 2>&1; then
+	elif [[ -f ${OVN_NB_DB_FILE} ]] && sudo ovsdb-tool db-is-standalone "${OVN_NB_DB_FILE}" >/dev/null 2>&1; then
 		log "DEBUG" "Northbound database is standalone"
 	fi
 
 	# Check southbound database
-	if [[ -f "/var/lib/ovn/ovnsb_db-cluster.db" ]] && sudo ovsdb-tool db-is-clustered "/var/lib/ovn/ovnsb_db-cluster.db" >/dev/null 2>&1; then
+	if [[ -f ${OVN_SB_DB_FILE} ]] && sudo ovsdb-tool db-is-clustered "${OVN_SB_DB_FILE}" >/dev/null 2>&1; then
 		sb_clustered=true
 		log "DEBUG" "Southbound database is clustered"
-	elif [[ -f "/var/lib/ovn/ovnsb_db-local.db" ]] && sudo ovsdb-tool db-is-standalone "/var/lib/ovn/ovnsb_db-local.db" >/dev/null 2>&1; then
+	elif [[ -f ${OVN_SB_DB_FILE} ]] && sudo ovsdb-tool db-is-standalone "${OVN_SB_DB_FILE}" >/dev/null 2>&1; then
 		log "DEBUG" "Southbound database is standalone"
 	fi
 
@@ -611,9 +615,9 @@ function detect_ovn_mode() {
 		OVN_CLUSTER_MODE=true
 		log "INFO" "✓ Detected OVN cluster mode"
 
-		# Try to get cluster addresses from systemd environment or fall back to discovery
+		# Try to get cluster addresses from systemd environment
 		if command -v systemctl >/dev/null 2>&1; then
-			# Extract cluster addresses from ovn-central service if possible
+			# Extract cluster addresses from ovn-central service
 			local nb_cluster_addrs=""
 			local sb_cluster_addrs=""
 

@@ -89,7 +89,7 @@ let
       );
 
       # Use different database files for local vs cluster mode
-      dbFile = if ovnJoined then "/var/lib/ovn/ovnnb_db-cluster.db" else "/var/lib/ovn/ovnnb_db-local.db";
+      dbFile = "/var/lib/ovn/ovnnb_db.db";
 
       # Local mode: simple standalone database
       localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovnConfig.northbound.dbFile}";
@@ -115,7 +115,7 @@ let
       );
 
       # Use different database files for local vs cluster mode
-      dbFile = if ovnJoined then "/var/lib/ovn/ovnsb_db-cluster.db" else "/var/lib/ovn/ovnsb_db-local.db";
+      dbFile = "/var/lib/ovn/ovnsb_db.db";
 
       # Local mode: simple standalone database
       localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovnConfig.southbound.dbFile}";
@@ -875,6 +875,10 @@ in
 
           # OVS services
           "ovs-vswitchd.service"
+          "ovsdb.service"
+
+          # Custom OVN readiness check
+          "ovn-readiness-check.service"
         ];
         wants = [
           # Pull in network-online to ensure network is ready
@@ -889,12 +893,101 @@ in
 
           # OVS services
           "ovs-vswitchd.service"
+          "ovsdb.service"
+
+          # Custom OVN readiness check
+          "ovn-readiness-check.service"
         ];
         wantedBy = [ "multi-user.target" ];
       };
     };
 
+    # Custom service to validate OVN readiness
     services = {
+
+      #########################################################
+      # OVN Readiness Check
+      #########################################################
+
+      ovn-readiness-check = {
+        description = "Validate OVN cluster connectivity";
+        after = [
+          "ovn-central.service"
+          "ovn-controller.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+          "ovs-vswitchd.service"
+          "ovsdb.service"
+        ];
+        requires = [
+          "ovn-central.service"
+          "ovn-controller.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+          "ovs-vswitchd.service"
+          "ovsdb.service"
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStartPre = ''
+            NB_READY=false
+            SB_READY=false
+            VS_READY=false
+
+            ${pkgs.coreutils}/bin/echo "Waiting for OVN to be ready..."
+
+            ${pkgs.coreutils}/bin/sleep 30
+
+            ${pkgs.coreutils}/bin/echo "Checking OVN readiness..."
+
+            while [[ "''${NB_READY}" == "false" ]];
+            do
+              ${pkgs.coreutils}/bin/echo "Checking Northbound DB..."
+              if ${pkgs.ovn}/bin/ovn-nbctl --timeout=30 list nb_global >/dev/null 2>&1;
+              then
+                NB_READY=true
+              else
+                ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying..."
+                ${pkgs.coreutils}/bin/sleep 10
+              fi
+            done
+            ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
+
+            while [[ "''${SB_READY}" == "false" ]];
+            do
+              ${pkgs.coreutils}/bin/echo "Checking Southbound DB..."
+              if ${pkgs.ovn}/bin/ovn-sbctl --timeout=30 list sb_global >/dev/null 2>&1;
+              then
+                SB_READY=true
+              else
+                ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying..."
+                ${pkgs.coreutils}/bin/sleep 10
+              fi
+            done
+            ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
+
+            while [[ "''${VS_READY}" == "false" ]];
+            do
+              ${pkgs.coreutils}/bin/echo "Checking Open vSwitch..."
+              if ${pkgs.ovn}/bin/ovs-vsctl get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1;
+              then
+                VS_READY=true
+              else
+                ${pkgs.coreutils}/bin/echo "Open vSwitch is not ready, retrying..."
+                ${pkgs.coreutils}/bin/sleep 10
+              fi
+            done
+            ${pkgs.coreutils}/bin/echo "Open vSwitch is ready."
+
+            ${pkgs.coreutils}/bin/echo "OVN is ready."
+          '';
+          ExecStart = "${pkgs.coreutils}/bin/echo 'OVN is ready.'";
+          RemainAfterExit = true;
+          TimeoutStartSec = 60;
+          Restart = "on-failure";
+          RestartSec = 5;
+        };
+      };
 
       #########################################################
       # Open Virtual Network

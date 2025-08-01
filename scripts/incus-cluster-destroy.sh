@@ -4,6 +4,7 @@ set -euo pipefail
 
 # Name: incus-cluster-destroy.sh
 # Description: Destroy Incus cluster on nodes.
+# Version: 2.0
 
 ##################################################
 # Variables
@@ -39,6 +40,13 @@ declare -r ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS=(
 	"instances"
 	"iso"
 )
+
+# OVN database file paths
+declare -r OVN_NB_DB_FILE="/var/lib/ovn/ovnnb_db.db"
+declare -r OVN_SB_DB_FILE="/var/lib/ovn/ovnsb_db.db"
+
+# Script start time for timing
+SCRIPT_START_TIME=$(date +%s)
 
 ##################################################
 # Functions
@@ -78,6 +86,50 @@ function check_for_required_tools() {
 			return 1
 		fi
 	done
+
+	# Additional check for OVS/OVN tools
+	if ! command -v ovsdb-tool &>/dev/null; then
+		log "ERROR" "Required tool not found: ovsdb-tool"
+		return 1
+	fi
+
+	return 0
+}
+
+function validate_environment() {
+	log "INFO" "Validating environment..."
+
+	# Check if we're running as root or with sudo
+	if [[ ${EUID} -ne 0 ]] && ! sudo -n true 2>/dev/null; then
+		log "ERROR" "This script requires sudo privileges"
+		return 1
+	fi
+
+	# Check if we're on a hypervisor
+	if [[ ! ${INCUS_NODENAME} =~ ^hypervisor-[1-4]$ ]]; then
+		log "WARN" "This script is designed for hypervisor nodes, running on: ${INCUS_NODENAME}"
+	fi
+
+	return 0
+}
+
+function emergency_cleanup() {
+	log "WARN" "Performing emergency cleanup..."
+
+	# Stop all services to prevent further issues
+	sudo systemctl stop \
+		incus-preseed.service \
+		incus-startup.service \
+		incus.service \
+		incus.socket \
+		ovn-controller.service \
+		ovn-central.service \
+		ovn-northbound-db.service \
+		ovn-southbound-db.service \
+		ovs-vswitchd.service \
+		ovsdb.service || true
+
+	log "WARN" "Emergency cleanup completed"
 
 	return 0
 }
@@ -227,57 +279,41 @@ function zfs_cleanup() {
 }
 
 function cleanup_ovn() {
-	log "INFO" "Cleaning up Open Virtual Network configuration..."
+	log "INFO" "Cleaning up OVN databases..."
 
-	# Restart all OVN services first to ensure a clean state
-	log "INFO" "Restarting OVN services..."
-	sudo systemctl restart \
-		ovn-controller.service \
-		ovn-central.service \
-		ovn-northbound-db.service \
-		ovn-southbound-db.service || {
-		log "WARN" "Failed to restart some OVN services"
-	}
-	sleep 10
+	log "INFO" "Using NB database: ${OVN_NB_DB_FILE}"
+	log "INFO" "Using SB database: ${OVN_SB_DB_FILE}"
 
-	# Get all logical switches and delete them
-	for ls in $(sudo ovn-nbctl --timeout=10 ls-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
-		log "INFO" "Removing logical switch: $ls"
-		sudo ovn-nbctl --timeout=10 --if-exists ls-del "$ls" || {
-			log "WARN" "Failed to remove logical switch: $ls"
-		}
-	done
-
-	# Get all logical routers and delete them
-	log "INFO" "Removing all logical routers from OVN NB..."
-	for lr in $(sudo ovn-nbctl --timeout=10 lr-list 2>/dev/null | awk '{print $2}' | grep -v '^$' || true); do
-		log "INFO" "Removing logical router: $lr"
-		sudo ovn-nbctl --timeout=10 --if-exists lr-del "$lr" || {
-			log "WARN" "Failed to remove logical router: $lr"
-		}
-	done
-
-	# Stop services for database recreation
-	log "INFO" "Stopping OVN services for database cleanup..."
-	sudo systemctl stop \
-		ovn-controller.service \
-		ovn-central.service \
-		ovn-northbound-db.service \
-		ovn-southbound-db.service || {
+	# Stop OVN services to work with databases
+	sudo systemctl stop ovn-controller ovn-central ovn-northbound-db ovn-southbound-db || {
 		log "WARN" "Failed to stop some OVN services"
 	}
 
-	# Remove OVN database files completely
-	log "INFO" "Removing OVN files..."
-	sudo rm -f /var/lib/ovn/ovn* || {
-		log "WARN" "Failed to remove OVN files"
-	}
-	log "INFO" "Removing OVN run files..."
-	sudo rm -f /var/run/ovn/.ovn* || {
-		log "WARN" "Failed to remove OVN run files"
+	# Remove all database files - let systemd recreate them automatically
+	sudo rm -f "${OVN_NB_DB_FILE}" "${OVN_SB_DB_FILE}" || {
+		log "WARN" "Failed to remove existing OVN database files"
 	}
 
-	log "INFO" "Open Virtual Network cleanup completed"
+	# Remove any leftover database files
+	sudo rm -f /var/lib/ovn/ovn* /var/lib/ovn/.ovn* || {
+		log "WARN" "Failed to remove leftover OVN database files"
+	}
+
+	# Start OVN database services
+	sudo systemctl start ovn-northbound-db ovn-southbound-db || {
+		log "ERROR" "Failed to start OVN database services"
+		return 1
+	}
+
+	# Wait some time for databases to be ready
+	sleep 30
+
+	# Start remaining OVN services
+	sudo systemctl start ovn-central ovn-controller || {
+		log "WARN" "Failed to start some OVN services"
+	}
+
+	log "INFO" "OVN databases reinitialized"
 	return 0
 }
 
@@ -291,7 +327,7 @@ function cleanup_ovs() {
 		log "WARN" "Failed to restart some OVS services"
 		return 1
 	}
-	sleep 10
+	sleep 30
 
 	log "INFO" "Removing all OVS bridges..."
 	for bridge in $(sudo ovs-vsctl --db=unix:/run/openvswitch/db.sock list-br 2>/dev/null || true); do
@@ -330,23 +366,92 @@ function cleanup_ovs() {
 		log "WARN" "Failed to stop some OVS services"
 	}
 
-	log "INFO" "Clearing OVS database..."
+	# FIXED: Use correct schema path and make database reset more robust
+	log "INFO" "Resetting OVS database to clean state..."
+
+	# Find the correct schema path
+	SCHEMA_PATH=$(find /nix/store -name "vswitch.ovsschema" 2>/dev/null | head -1)
+	if [[ -z ${SCHEMA_PATH} ]]; then
+		log "ERROR" "Could not find vswitch.ovsschema in /nix/store"
+		return 1
+	fi
+
+	log "INFO" "Using schema: ${SCHEMA_PATH}"
+
+	# Remove existing database and recreate
 	sudo rm -f /var/lib/openvswitch/conf.db* || {
-		log "WARN" "Failed to remove OVS database"
+		log "WARN" "Failed to remove existing OVS database"
 	}
 
-	log "INFO" "Clearing OVS database..."
-	sudo rm -f /etc/openvswitch/conf.db* || {
-		log "WARN" "Failed to remove OVS database"
+	sudo ovsdb-tool create /var/lib/openvswitch/conf.db "${SCHEMA_PATH}" || {
+		log "ERROR" "Failed to recreate OVS database"
+		return 1
+	}
+
+	log "INFO" "Starting OVS services..."
+	sudo systemctl start \
+		ovs-vswitchd.service \
+		ovsdb.service || {
+		log "WARN" "Failed to start some OVS services"
+	}
+	sleep 30
+
+	# Configure OVS for OVN integration
+	configure_ovs_for_ovn || {
+		log "WARN" "Failed to configure OVS for OVN"
 	}
 
 	log "INFO" "Open vSwitch cleanup completed"
 	return 0
 }
 
+function configure_ovs_for_ovn() {
+	log "INFO" "Configuring OVS for OVN integration..."
+
+	# Set OVS external IDs for OVN
+	sudo ovs-vsctl set open_vswitch . external_ids:ovn-remote="unix:/var/run/ovn/ovnsb_db.sock" || {
+		log "WARN" "Failed to set OVN remote"
+	}
+
+	sudo ovs-vsctl set open_vswitch . external_ids:ovn-encap-type="geneve" || {
+		log "WARN" "Failed to set OVN encap type"
+	}
+
+	sudo ovs-vsctl set open_vswitch . external_ids:ovn-encap-ip="127.0.0.1" || {
+		log "WARN" "Failed to set OVN encap IP"
+	}
+
+	# Create integration bridge if it doesn't exist
+	if ! sudo ovs-vsctl br-exists br-int; then
+		log "INFO" "Creating OVS integration bridge..."
+		sudo ovs-vsctl add-br br-int || {
+			log "WARN" "Failed to create integration bridge"
+		}
+	fi
+
+	log "INFO" "OVS configured for OVN integration"
+	return 0
+}
+
+function show_summary() {
+	local END_TIME
+	END_TIME=$(date +%s)
+	local DURATION=$((END_TIME - SCRIPT_START_TIME))
+
+	log "INFO" "=== Cleanup Summary ==="
+	log "INFO" "Node: ${INCUS_NODENAME^^}"
+	log "INFO" "Duration: ${DURATION} seconds"
+	log "INFO" "Steps completed: ${CLEANUP_STEPS[*]}"
+	log "INFO" "Status: SUCCESS"
+	log "INFO" "======================"
+}
+
 ##################################################
 # Main
 ##################################################
+
+# Set up trap for emergency cleanup on script exit
+trap 'emergency_cleanup' EXIT
 
 log "INFO" "Starting incus cluster destruction for node: ${INCUS_NODENAME^^}"
 
@@ -355,24 +460,44 @@ check_for_required_tools || {
 	exit 1
 }
 
-cleanup_incus || {
-	log "ERROR" "Failed to cleanup incus"
+validate_environment || {
+	log "ERROR" "Environment validation failed"
 	exit 2
 }
 
-cleanup_incus_cluster || {
-	log "ERROR" "Failed to destroy incus cluster"
+# Track cleanup steps
+CLEANUP_STEPS=()
+
+if cleanup_incus; then
+	CLEANUP_STEPS+=("incus")
+else
+	log "ERROR" "Failed to cleanup incus"
 	exit 3
-}
+fi
 
-cleanup_ovn || {
-	log "ERROR" "Failed to cleanup OVN"
+if cleanup_incus_cluster; then
+	CLEANUP_STEPS+=("cluster")
+else
+	log "ERROR" "Failed to destroy incus cluster"
 	exit 4
-}
+fi
 
-cleanup_ovs || {
-	log "ERROR" "Failed to cleanup OVS"
+if cleanup_ovn; then
+	CLEANUP_STEPS+=("ovn")
+else
+	log "ERROR" "Failed to cleanup OVN"
 	exit 5
-}
+fi
+
+if cleanup_ovs; then
+	CLEANUP_STEPS+=("ovs")
+else
+	log "ERROR" "Failed to cleanup OVS"
+	exit 6
+fi
+
+# Remove the trap since we're good to go!
+trap - EXIT
 
 log "INFO" "The incus cluster has been destroyed on node: ${INCUS_NODENAME^^}."
+show_summary

@@ -4,7 +4,7 @@ A to do list for tracking remaining issues with the incus cluster configuration.
 
 - [x] Fix the destroy script to cleanly reset the database.
 - [x] Fix the error because the cleanup script isnt cleaning the networks up correctly.
-- [ ] Determine the health check commands that need to be run on each hypervisor.
+- [x] Determine the health check commands that need to be run on each hypervisor.
 - [x] Determine the correct way to configure OVN for cluster mode.
   - [ ] Cluster Northbound DB and test
   - [ ] Cluster Southbound DB and test.
