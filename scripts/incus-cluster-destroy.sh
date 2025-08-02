@@ -196,7 +196,7 @@ function cleanup_incus_cluster() {
 		}
 	fi
 
-	log "INFO" "Stopping and disabling incus services..."
+	log "INFO" "Stopping all incus services..."
 
 	# Stop Incus completely
 	sudo systemctl stop \
@@ -299,21 +299,7 @@ function cleanup_ovn() {
 		log "WARN" "Failed to remove leftover OVN database files"
 	}
 
-	# Start OVN database services
-	sudo systemctl start ovn-northbound-db ovn-southbound-db || {
-		log "ERROR" "Failed to start OVN database services"
-		return 1
-	}
-
-	# Wait some time for databases to be ready
-	sleep 30
-
-	# Start remaining OVN services
-	sudo systemctl start ovn-central ovn-controller || {
-		log "WARN" "Failed to start some OVN services"
-	}
-
-	log "INFO" "OVN databases reinitialized"
+	log "INFO" "OVN databases cleaned up"
 	return 0
 }
 
@@ -366,70 +352,12 @@ function cleanup_ovs() {
 		log "WARN" "Failed to stop some OVS services"
 	}
 
-	# FIXED: Use correct schema path and make database reset more robust
-	log "INFO" "Resetting OVS database to clean state..."
-
-	# Find the correct schema path
-	SCHEMA_PATH=$(find /nix/store -name "vswitch.ovsschema" 2>/dev/null | head -1)
-	if [[ -z ${SCHEMA_PATH} ]]; then
-		log "ERROR" "Could not find vswitch.ovsschema in /nix/store"
-		return 1
-	fi
-
-	log "INFO" "Using schema: ${SCHEMA_PATH}"
-
-	# Remove existing database and recreate
+	# Remove existing database
 	sudo rm -f /var/lib/openvswitch/conf.db* || {
 		log "WARN" "Failed to remove existing OVS database"
 	}
 
-	sudo ovsdb-tool create /var/lib/openvswitch/conf.db "${SCHEMA_PATH}" || {
-		log "ERROR" "Failed to recreate OVS database"
-		return 1
-	}
-
-	log "INFO" "Starting OVS services..."
-	sudo systemctl start \
-		ovs-vswitchd.service \
-		ovsdb.service || {
-		log "WARN" "Failed to start some OVS services"
-	}
-	sleep 30
-
-	# Configure OVS for OVN integration
-	configure_ovs_for_ovn || {
-		log "WARN" "Failed to configure OVS for OVN"
-	}
-
 	log "INFO" "Open vSwitch cleanup completed"
-	return 0
-}
-
-function configure_ovs_for_ovn() {
-	log "INFO" "Configuring OVS for OVN integration..."
-
-	# Set OVS external IDs for OVN
-	sudo ovs-vsctl set open_vswitch . external_ids:ovn-remote="unix:/var/run/ovn/ovnsb_db.sock" || {
-		log "WARN" "Failed to set OVN remote"
-	}
-
-	sudo ovs-vsctl set open_vswitch . external_ids:ovn-encap-type="geneve" || {
-		log "WARN" "Failed to set OVN encap type"
-	}
-
-	sudo ovs-vsctl set open_vswitch . external_ids:ovn-encap-ip="127.0.0.1" || {
-		log "WARN" "Failed to set OVN encap IP"
-	}
-
-	# Create integration bridge if it doesn't exist
-	if ! sudo ovs-vsctl br-exists br-int; then
-		log "INFO" "Creating OVS integration bridge..."
-		sudo ovs-vsctl add-br br-int || {
-			log "WARN" "Failed to create integration bridge"
-		}
-	fi
-
-	log "INFO" "OVS configured for OVN integration"
 	return 0
 }
 

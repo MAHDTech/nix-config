@@ -911,6 +911,7 @@ in
 
       ovn-readiness-check = {
         description = "Validate OVN cluster connectivity";
+        enable = true;
         after = [
           "ovn-central.service"
           "ovn-controller.service"
@@ -927,41 +928,68 @@ in
           "ovs-vswitchd.service"
           "ovsdb.service"
         ];
+        script = ''
+          # Wait for OVN services to start
+          ${pkgs.coreutils}/bin/echo "Waiting for OVN services to start..."
+          ${pkgs.coreutils}/bin/sleep 10
+
+          # Set the location of the local Unix sockets.
+          OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+          OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+          OVS_DB="unix:/run/openvswitch/db.sock"
+
+          # Check OVN services are running
+          ${pkgs.coreutils}/bin/echo "Checking OVN services..."
+          for service in ovn-northbound-db ovn-southbound-db ovn-central ovn-controller;
+          do
+            while ! ${pkgs.systemd}/bin/systemctl is-active --quiet $service;
+            do
+              ${pkgs.coreutils}/bin/echo "Service $service is not active, waiting..."
+              ${pkgs.coreutils}/bin/sleep 10
+            done
+            ${pkgs.coreutils}/bin/echo "Service $service is active"
+          done
+
+          # Check Northbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Northbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-nbctl --db="$OVN_NB_DB" --timeout=30 list nb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
+
+          # Check Southbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Southbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list sb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
+
+          # Check Open vSwitch OVN integration
+          ${pkgs.coreutils}/bin/echo "Checking Open vSwitch OVN integration..."
+          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is ready."
+
+          # Check OVN controller is connected
+          ${pkgs.coreutils}/bin/echo "Checking OVN controller connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list chassis >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "OVN controller is not connected, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "OVN controller is connected."
+        '';
         serviceConfig = {
           Type = "oneshot";
-          ExecStartPre = ''
-            ${pkgs.coreutils}/bin/echo "Waiting for OVN to be ready..."
-            ${pkgs.coreutils}/bin/sleep 30
-
-            # Check Northbound DB with retry
-            ${pkgs.coreutils}/bin/echo "Checking Northbound DB..."
-            while ! ${pkgs.ovn}/bin/ovn-nbctl --timeout=30 list nb_global >/dev/null 2>&1; do
-              ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
-              ${pkgs.coreutils}/bin/sleep 10
-            done
-            ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
-
-            # Check Southbound DB with retry
-            ${pkgs.coreutils}/bin/echo "Checking Southbound DB..."
-            while ! ${pkgs.ovn}/bin/ovn-sbctl --timeout=30 list sb_global >/dev/null 2>&1; do
-              ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
-              ${pkgs.coreutils}/bin/sleep 10
-            done
-            ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
-
-            # Check Open vSwitch with retry
-            ${pkgs.coreutils}/bin/echo "Checking Open vSwitch..."
-            while ! ${pkgs.ovn}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1; do
-              ${pkgs.coreutils}/bin/echo "Open vSwitch is not ready, retrying in 10 seconds..."
-              ${pkgs.coreutils}/bin/sleep 10
-            done
-            ${pkgs.coreutils}/bin/echo "Open vSwitch is ready."
-
-            ${pkgs.coreutils}/bin/echo "OVN is ready."
-          '';
-          ExecStart = "${pkgs.coreutils}/bin/echo 'OVN is ready.'";
           RemainAfterExit = true;
-          TimeoutStartSec = 60;
+          TimeoutStartSec = 300;
           Restart = "on-failure";
           RestartSec = 60;
         };
@@ -980,6 +1008,7 @@ in
       ###############################
       ovn-northbound-db = {
         description = "OVN Northbound DB";
+        enable = true;
         after = [
           "network.target"
           "systemd-networkd-wait-online.service"
@@ -1065,6 +1094,7 @@ in
       ###############################
       ovn-southbound-db = {
         description = "OVN Southbound DB";
+        enable = true;
         after = [
           "network.target"
           "systemd-networkd-wait-online.service"
@@ -1151,6 +1181,7 @@ in
       ###############################
       ovn-central = {
         description = "OVN Central";
+        enable = true;
         after = [
           "network.target"
           "systemd-networkd-wait-online.service"
@@ -1194,22 +1225,43 @@ in
         preStart = ''
           ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn
 
-          # In cluster mode, ovn-northd will handle cluster connectivity automatically
-          if [[ "${lib.boolToString ovnJoined}" == "true" ]]; then
-            ${pkgs.coreutils}/bin/echo "Cluster mode: ovn-northd will connect to cluster addresses"
-            ${pkgs.coreutils}/bin/echo "Northbound cluster: ${ovnConfig.northbound.addressList}"
-            ${pkgs.coreutils}/bin/echo "Southbound cluster: ${ovnConfig.southbound.addressList}"
-          else
-            # Local mode: Wait for local database services to be ready
-          for i in {1..30}; do
-              ${pkgs.coreutils}/bin/echo "Waiting for local OVN databases..."
-            if ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 list nb_global >/dev/null 2>&1 && \
-              ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list sb_global >/dev/null 2>&1; then
-              break
-            fi
-            sleep 10
+          # Wait for OVN services to start
+          ${pkgs.coreutils}/bin/echo "Waiting for OVN services to start..."
+          ${pkgs.coreutils}/bin/sleep 10
+
+          # Set the location of the local Unix sockets.
+          OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+          OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+
+          # Check OVN services are running
+          ${pkgs.coreutils}/bin/echo "Checking OVN services..."
+          for service in ovn-northbound-db ovn-southbound-db;
+          do
+            while ! ${pkgs.systemd}/bin/systemctl is-active --quiet $service;
+            do
+              ${pkgs.coreutils}/bin/echo "Service $service is not active, waiting..."
+              ${pkgs.coreutils}/bin/sleep 10
+            done
+            ${pkgs.coreutils}/bin/echo "Service $service is active"
           done
-          fi
+
+          # Check Northbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Northbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-nbctl --db="$OVN_NB_DB" --timeout=30 list nb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
+
+          # Check Southbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Southbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list sb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
         '';
       };
 
@@ -1221,6 +1273,7 @@ in
       ###############################
       ovn-controller = {
         description = "OVN Controller";
+        enable = true;
         after = [
           # Wait for Network
           "network.target"
@@ -1269,62 +1322,78 @@ in
         };
 
         preStart = ''
-          # Wait for OVS to be fully ready
-          for i in {1..30}; do
-            ${pkgs.coreutils}/bin/echo "Waiting for OVS to be ready..."
-            if ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 show >/dev/null 2>&1; then
-              break
-            fi
-            sleep 10
+          # Wait for OVS services to start
+          ${pkgs.coreutils}/bin/echo "Waiting for OVS services to start..."
+          ${pkgs.coreutils}/bin/sleep 10
+
+          # Set the location of the local Unix sockets.
+          OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+          OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+          OVS_DB="unix:/run/openvswitch/db.sock"
+
+          # Check OVS services are running
+          ${pkgs.coreutils}/bin/echo "Checking OVS services..."
+          for service in ovs-vswitchd ovsdb;
+          do
+            while ! ${pkgs.systemd}/bin/systemctl is-active --quiet $service;
+            do
+              ${pkgs.coreutils}/bin/echo "Service $service is not active, waiting..."
+              ${pkgs.coreutils}/bin/sleep 10
+            done
+            ${pkgs.coreutils}/bin/echo "Service $service is active"
           done
-          ${pkgs.coreutils}/bin/echo "OVS is ready."
+
+          # Check Open vSwitch OVN integration
+          ${pkgs.coreutils}/bin/echo "Checking Open vSwitch OVN integration..."
+          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is ready."
 
           # Set a system ID for OVN
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:system-id=${hypervisorName}"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:system-id=${hypervisorName}"
 
           # Set the OVN encapsulation IP for geneve tunnels
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-ip=${hypervisorClusterIP}"
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-type=geneve"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-encap-ip=${hypervisorClusterIP}"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-encap-type=geneve"
 
           # Point OVN controller to local Southbound DB socket
           # NOTE: ovn-controller should ALWAYS use local socket, never cluster TCP addresses
           # The cluster TCP addresses are for RAFT peer communication between DB servers only
           ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local socket: unix:/var/run/ovn/ovnsb_db.sock"
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock"
 
           # Set additional OVN configuration
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-bridge=br-int"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-bridge=br-int"
 
           # Create the main OVS integration bridge
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --may-exist add-br br-int
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" --may-exist add-br br-int
 
           # Bring up the integration bridge
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set interface br-int admin_state=up
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set interface br-int admin_state=up
 
           # Ensure the bridge is properly configured
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set bridge br-int fail_mode=secure
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set bridge br-int fail_mode=secure
 
-          # Wait for OVN Northbound database socket to be available
-          for i in {1..30}; do
-            ${pkgs.coreutils}/bin/echo "Waiting for OVN Northbound database socket to be available..."
-            if [ -S /var/run/ovn/ovnnb_db.sock ];
-            then
-              break
-            fi
-            sleep 10
+          # Check Northbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Northbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-nbctl --db="$OVN_NB_DB" --timeout=30 list nb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
           done
-          ${pkgs.coreutils}/bin/echo "OVN Northbound database socket is available."
+          ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
 
-          # Wait for OVN Southbound database socket to be available
-          for i in {1..30}; do
-            ${pkgs.coreutils}/bin/echo "Waiting for OVN Southbound database socket to be available..."
-            if [ -S /var/run/ovn/ovnsb_db.sock ];
-            then
-              break
-            fi
-            sleep 10
+          # Check Southbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Southbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list sb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
           done
-          ${pkgs.coreutils}/bin/echo "OVN Southbound database socket is available."
+          ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
         '';
       };
 
