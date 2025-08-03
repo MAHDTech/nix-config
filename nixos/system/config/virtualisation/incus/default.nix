@@ -285,24 +285,24 @@ let
             #
             # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
             ###########################
-            #{
-            #  name = "nutanix-vpc";
-            #  type = "ovn";
-            #  project = "nutanix";
-            #  config = {
-            #    "dns.domain" = "nutanix.local";
-            #    "dns.nameservers" = "10.10.200.254";
-            #    "ipv4.address" = "10.10.202.1/24";
-            #    "ipv4.dhcp" = "true";
-            #    "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
-            #    "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
-            #    "ipv4.nat" = "false";
-            #    "ipv6.address" = "none";
-            #    "network" = "incusbr1";
-            #    "security.acls.default.egress.action" = "allow";
-            #    "security.acls.default.ingress.action" = "allow";
-            #  };
-            #}
+            {
+              name = "nutanix-vpc";
+              type = "ovn";
+              project = "nutanix";
+              config = {
+                "dns.domain" = "nutanix.local";
+                "dns.nameservers" = "10.10.200.254";
+                "ipv4.address" = "10.10.202.1/24";
+                "ipv4.dhcp" = "true";
+                "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
+                "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
+                "ipv4.nat" = "false";
+                "ipv6.address" = "none";
+                "network" = "incusbr1";
+                "security.acls.default.egress.action" = "allow";
+                "security.acls.default.ingress.action" = "allow";
+              };
+            }
           ]
         else
           [ ];
@@ -431,33 +431,33 @@ let
             ###########################
             # Hypervisors profile
             ###########################
-            #{
-            #  name = "hypervisors";
-            #  description = "Profile for nested hypervisors";
-            #  project = "nutanix";
-            #  config = {
-            #    "limits.cpu" = 8;
-            #    "limits.memory" = "32GiB";
-            #    "security.nesting" = true;
-            #    "security.secureboot" = false;
-            #    "security.syscalls.intercept.mknod" = true;
-            #    "security.syscalls.intercept.setxattr" = true;
-            #    "security.syscalls.intercept.sysinfo" = true;
-            #  };
-            #  devices = {
-            #    root = {
-            #      path = "/";
-            #      pool = "instances";
-            #      type = "disk";
-            #    };
-            #    eth0 = {
-            #      name = "eth0";
-            #      # Network and nictype are mutually exclusive.
-            #      network = "nutanix-vpc";
-            #      type = "nic";
-            #    };
-            #  };
-            #}
+            {
+              name = "hypervisors";
+              description = "Profile for nested hypervisors";
+              project = "nutanix";
+              config = {
+                "limits.cpu" = 8;
+                "limits.memory" = "32GiB";
+                "security.nesting" = true;
+                "security.secureboot" = false;
+                "security.syscalls.intercept.mknod" = true;
+                "security.syscalls.intercept.setxattr" = true;
+                "security.syscalls.intercept.sysinfo" = true;
+              };
+              devices = {
+                root = {
+                  path = "/";
+                  pool = "instances";
+                  type = "disk";
+                };
+                eth0 = {
+                  name = "eth0";
+                  # Network and nictype are mutually exclusive.
+                  network = "nutanix-vpc";
+                  type = "nic";
+                };
+              };
+            }
           ]
         else
           [ ];
