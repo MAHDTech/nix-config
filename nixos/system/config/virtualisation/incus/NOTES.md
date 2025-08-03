@@ -66,7 +66,7 @@ _A multi-stage saga to avoid circular dependencies._
 1. ✅ Update the nix flake with `incus.joined = true` for the **bootstrap** server only.
 1. ✅ Keep `incus.joined = false` for member servers.
 1. ✅ Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
-1. ✅ Record the cluster tokens output from the script. However, **DO NOT** put them in the nix flake yet.
+1. ✅ Record the cluster tokens for the members into the nix flake when shown on screen.
 1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the bootstrap server is working before continuing.
 
 **Expected Result:**
@@ -74,11 +74,13 @@ _A multi-stage saga to avoid circular dependencies._
 - Bootstrap server creates the Incus cluster
 - Cluster tokens are generated for member servers
 - OVN cluster continues to function
+- Member servers are not joined to the cluster yet
 
 **NOTES:**
 
 - The bootstrap server will be the only server in the 'incus' cluster
 - OVN cluster is already established and functional
+- Run `watch -n 15 'incus cluster list; incus cluster list-tokens -c n'` to monitor cluster status.
 
 #### Stage 3 (Cluster Joining)
 
@@ -111,8 +113,8 @@ After verifying the members have joined successfully, run the following;
 
 **Expected Result:**
 
-- Configuration is cleaned up
-- Cluster operates in steady state
+- All members are healthy and in the incus cluster
+- OVN cluster is still healthy
 
 **NOTES:**
 

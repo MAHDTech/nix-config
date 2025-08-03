@@ -47,6 +47,11 @@ function print_usage() {
 		    --configure Configure an incus cluster
 		    --health    Check health of all services
 
+		Additional options:
+
+		    --yolo      Skip all interactive prompts
+		    --force-reboot  Force immediate reboot after applying changes
+
 		If no options are provided, the script will default to --apply.
 	EOF
 }

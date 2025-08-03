@@ -1130,7 +1130,7 @@ function main() {
 		if [[ $OVN_CLUSTER_MODE == "true" && $CLUSTER_PEER_HEALTH == "healthy" ]]; then
 			log "INFO" "✓ All health checks passed! (OVSDB cluster is healthy)"
 		else
-			log "INFO" "✓ All health checks passed!"
+			log "INFO" "✓ All health checks passed! (OVSDB standalone is healthy)"
 		fi
 	else
 		log "ERROR" "✗ $failed_checks health check(s) failed"

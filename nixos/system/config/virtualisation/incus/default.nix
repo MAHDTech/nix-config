@@ -635,12 +635,6 @@ let
                 key = "source";
                 value = zfsSourceDefault;
               }
-              {
-                entity = "storage-pool";
-                name = "default";
-                key = "source.wipe";
-                value = "true";
-              }
               #########################
               # Instances storage pool
               #########################
@@ -650,12 +644,6 @@ let
                 key = "source";
                 value = zfsSourceInstances;
               }
-              {
-                entity = "storage-pool";
-                name = "instances";
-                key = "source.wipe";
-                value = "true";
-              }
               #########################
               # ISO storage pool
               #########################
@@ -664,12 +652,6 @@ let
                 name = "iso";
                 key = "source";
                 value = zfsSourceIso;
-              }
-              {
-                entity = "storage-pool";
-                name = "iso";
-                key = "source.wipe";
-                value = "true";
               }
               #########################################################
               # Networks
@@ -700,9 +682,9 @@ let
       # Storage pools configuration.
       #########################################################
       storage_pools =
+        # All joined members share the same configuration.
         if incusJoined then
           [
-
             #########################
             # Default storage pool.
             #########################
@@ -710,6 +692,44 @@ let
               name = "default";
               driver = "zfs";
               config = {
+                "zfs.clone_copy" = "true";
+                "zfs.export" = "false";
+              };
+            }
+            #########################
+            # Instances storage pool.
+            #########################
+            {
+              name = "instances";
+              driver = "zfs";
+              config = {
+                "zfs.clone_copy" = "true";
+                "zfs.export" = "false";
+              };
+            }
+            #########################
+            # ISO storage pool.
+            #########################
+            {
+              name = "iso";
+              driver = "zfs";
+              config = {
+                "zfs.clone_copy" = "true";
+                "zfs.export" = "false";
+              };
+            }
+          ]
+        # The bootstrap server role requires the source to be set.
+        else if incusRole == "bootstrap" then
+          [
+            #########################
+            # Default storage pool.
+            #########################
+            {
+              name = "default";
+              driver = "zfs";
+              config = {
+                source = zfsSourceDefault;
                 "zfs.clone_copy" = "true";
                 "zfs.export" = "false";
               };
@@ -722,6 +742,7 @@ let
               name = "instances";
               driver = "zfs";
               config = {
+                source = zfsSourceInstances;
                 "zfs.clone_copy" = "true";
                 "zfs.export" = "false";
               };
@@ -734,12 +755,14 @@ let
               name = "iso";
               driver = "zfs";
               config = {
+                source = zfsSourceIso;
                 "zfs.clone_copy" = "true";
                 "zfs.export" = "false";
               };
             }
 
           ]
+        # All non-joined members start with nothing.
         else
           [ ];
     };
