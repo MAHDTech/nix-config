@@ -5,8 +5,14 @@
   incus ? {
     joined = false;
     role = null;
-    managementAddress = null;
-    clusterAddress = null;
+    management = {
+      address = null;
+      port = null;
+    };
+    cluster = {
+      address = null;
+      port = null;
+    };
     clusterToken = null;
   },
   ovn ? {
@@ -34,31 +40,24 @@ let
   # Hypervisor configuration
   #########################
 
-  inherit (hypervisor) name;
-  hypervisorName = name;
+  hypervisorName = hypervisor.name;
 
   #########################
   # Incus configuration
   #########################
 
-  inherit (incus)
-    joined
-    role
-    managementAddress
-    clusterAddress
-    clusterToken
-    ;
-  incusJoined = joined;
-  hypervisorRole = role;
-  hypervisorManagementAddress = managementAddress;
-  hypervisorClusterAddress = clusterAddress;
+  incusJoined = incus.joined;
+  incusRole = incus.role;
 
-  # Strip the port from the cluster address.
-  hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
+  incusManagementAddress = incus.management.address + ":" + toString incus.management.port;
+  incusClusterAddress = incus.cluster.address + ":" + toString incus.cluster.port;
+  incusClusterIP = incus.cluster.address;
+
+  incusClusterToken = incus.clusterToken;
 
   # Bootstrap IP for member nodes (extracted from first cluster address where role is bootstrap)
   bootstrapIP =
-    if hypervisorRole == "member" && ovn.clusterAddresses != [ ] then
+    if incus.role == "member" && ovn.clusterAddresses != [ ] then
       builtins.head ovn.clusterAddresses # Use first cluster member as bootstrap
     else
       null;
@@ -83,9 +82,10 @@ let
 
     # OVN Northbound configuration.
     northbound = {
-      port = 6641;
+      serverPort = 6611; # Raft server
+      clientPort = 6612; # CLI client
       addressList = lib.strings.concatStringsSep "," (
-        lib.map (addr: "tcp:${addr}:${toString ovnConfig.northbound.port}") ovnClusterAddresses
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.northbound.clientPort}") ovnClusterAddresses
       );
 
       # Use different database files for local vs cluster mode
@@ -94,8 +94,8 @@ let
       # Local mode: simple standalone database
       localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovnConfig.northbound.dbFile}";
 
-      # Cluster mode: clustered database (TCP handled by RAFT internally)
-      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovnConfig.northbound.dbFile}";
+      # Cluster mode: clustered database with TCP remote for client connections
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock --remote=ptcp:${toString ovnConfig.northbound.clientPort} ${ovnConfig.northbound.dbFile}";
     };
 
     # OVN Central configuration.
@@ -109,9 +109,10 @@ let
 
     # OVN Southbound configuration.
     southbound = {
-      port = 6642;
+      serverPort = 6621; # Raft server
+      clientPort = 6622; # CLI client
       addressList = lib.strings.concatStringsSep "," (
-        lib.map (addr: "tcp:${addr}:${toString ovnConfig.southbound.port}") ovnClusterAddresses
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.southbound.clientPort}") ovnClusterAddresses
       );
 
       # Use different database files for local vs cluster mode
@@ -120,8 +121,8 @@ let
       # Local mode: simple standalone database
       localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovnConfig.southbound.dbFile}";
 
-      # Cluster mode: clustered database (TCP handled by RAFT internally)
-      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovnConfig.southbound.dbFile}";
+      # Cluster mode: clustered database with TCP remote for client connections
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock --remote=ptcp:${toString ovnConfig.southbound.clientPort} ${ovnConfig.southbound.dbFile}";
     };
 
   };
@@ -606,10 +607,10 @@ let
       config = {
 
         # Management interface used by the API.
-        "core.https_address" = hypervisorManagementAddress;
+        "core.https_address" = incusManagementAddress;
 
         # Cluster interface for backplane communication.
-        "cluster.https_address" = hypervisorClusterAddress;
+        "cluster.https_address" = incusClusterAddress;
 
       };
 
@@ -620,7 +621,7 @@ let
         if incusJoined then
           {
             enabled = true;
-            server_address = hypervisorClusterAddress;
+            server_address = incusClusterAddress;
             member_config = [
               #########################################################
               # Storage Pools
@@ -682,13 +683,13 @@ let
               #}
             ];
           }
-          // lib.optionalAttrs (hypervisorRole == "bootstrap") {
+          // lib.optionalAttrs (incusRole == "bootstrap") {
             # The bootstrap server node requires a server_name.
             server_name = hypervisorName;
           }
-          // lib.optionalAttrs (hypervisorRole == "member" && clusterToken != null) {
+          // lib.optionalAttrs (incusRole == "member" && incusClusterToken != null) {
             # The cluster token is only needed for the initial bootstrap.
-            cluster_token = clusterToken;
+            cluster_token = incusClusterToken;
           }
         else
           {
@@ -878,7 +879,7 @@ in
           "ovsdb.service"
 
           # Custom OVN readiness check
-          "ovn-readiness-check.service"
+          "ovn-ready.service"
         ];
         wants = [
           # Pull in network-online to ensure network is ready
@@ -896,7 +897,7 @@ in
           "ovsdb.service"
 
           # Custom OVN readiness check
-          "ovn-readiness-check.service"
+          "ovn-ready.service"
         ];
         wantedBy = [ "multi-user.target" ];
       };
@@ -909,7 +910,7 @@ in
       # OVN Readiness Check
       #########################################################
 
-      ovn-readiness-check = {
+      ovn-ready = {
         description = "Validate OVN cluster connectivity";
         enable = true;
         after = [
@@ -933,9 +934,19 @@ in
           ${pkgs.coreutils}/bin/echo "Waiting for OVN services to start..."
           ${pkgs.coreutils}/bin/sleep 10
 
-          # Set the location of the local Unix sockets.
-          OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
-          OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+          # Set the database connection strings based on cluster mode
+          ${
+            if ovnJoined then
+              ''
+                OVN_NB_DB="${ovnConfig.northbound.addressList}"
+                OVN_SB_DB="${ovnConfig.southbound.addressList}"
+              ''
+            else
+              ''
+                OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+                OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+              ''
+          }
           OVS_DB="unix:/run/openvswitch/db.sock"
 
           # Check OVN services are running
@@ -970,7 +981,7 @@ in
 
           # Check Open vSwitch OVN integration
           ${pkgs.coreutils}/bin/echo "Checking Open vSwitch OVN integration..."
-          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1;
+          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" show >/dev/null 2>&1;
           do
             ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is not ready, retrying in 10 seconds..."
             ${pkgs.coreutils}/bin/sleep 10
@@ -1052,16 +1063,16 @@ in
               if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovnConfig.northbound.dbFile}; then
             ''
             + (
-              if hypervisorRole == "bootstrap" then
+              if incusRole == "bootstrap" then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to a cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovnConfig.northbound.port}
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile} tcp:${incusClusterIP}:${toString ovnConfig.northbound.serverPort}
                   ${pkgs.coreutils}/bin/mv ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile}
                 ''
               else if bootstrapIP != null then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to join cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.northbound.dbFile}.new OVN_Northbound tcp:${hypervisorClusterIP}:${toString ovnConfig.northbound.port} tcp:${bootstrapIP}:${toString ovnConfig.northbound.port}
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.northbound.dbFile}.new OVN_Northbound tcp:${incusClusterIP}:${toString ovnConfig.northbound.serverPort} tcp:${bootstrapIP}:${toString ovnConfig.northbound.serverPort}
                   ${pkgs.coreutils}/bin/mv ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile}
                 ''
               else
@@ -1138,16 +1149,16 @@ in
               if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovnConfig.southbound.dbFile}; then
             ''
             + (
-              if hypervisorRole == "bootstrap" then
+              if incusRole == "bootstrap" then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to a cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile} tcp:${hypervisorClusterIP}:${toString ovnConfig.southbound.port}
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile} tcp:${incusClusterIP}:${toString ovnConfig.southbound.serverPort}
                   ${pkgs.coreutils}/bin/mv ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile}
                 ''
               else if bootstrapIP != null then
                 ''
                   ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to join cluster..."
-                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.southbound.dbFile}.new OVN_Southbound tcp:${hypervisorClusterIP}:${toString ovnConfig.southbound.port} tcp:${bootstrapIP}:${toString ovnConfig.southbound.port}
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.southbound.dbFile}.new OVN_Southbound tcp:${incusClusterIP}:${toString ovnConfig.southbound.serverPort} tcp:${bootstrapIP}:${toString ovnConfig.southbound.serverPort}
                   ${pkgs.coreutils}/bin/mv ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile}
                 ''
               else
@@ -1229,9 +1240,20 @@ in
           ${pkgs.coreutils}/bin/echo "Waiting for OVN services to start..."
           ${pkgs.coreutils}/bin/sleep 10
 
-          # Set the location of the local Unix sockets.
-          OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
-          OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+          # Set the database connection strings based on cluster mode
+          ${
+            if ovnJoined then
+              ''
+                OVN_NB_DB="${ovnConfig.northbound.addressList}"
+                OVN_SB_DB="${ovnConfig.southbound.addressList}"
+              ''
+            else
+              ''
+                OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+                OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+              ''
+          }
+          OVS_DB="unix:/run/openvswitch/db.sock"
 
           # Check OVN services are running
           ${pkgs.coreutils}/bin/echo "Checking OVN services..."
@@ -1326,9 +1348,19 @@ in
           ${pkgs.coreutils}/bin/echo "Waiting for OVS services to start..."
           ${pkgs.coreutils}/bin/sleep 10
 
-          # Set the location of the local Unix sockets.
-          OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
-          OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+          # Set the database connection strings based on cluster mode
+          ${
+            if ovnJoined then
+              ''
+                OVN_NB_DB="${ovnConfig.northbound.addressList}"
+                OVN_SB_DB="${ovnConfig.southbound.addressList}"
+              ''
+            else
+              ''
+                OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+                OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+              ''
+          }
           OVS_DB="unix:/run/openvswitch/db.sock"
 
           # Check OVS services are running
@@ -1345,7 +1377,7 @@ in
 
           # Check Open vSwitch OVN integration
           ${pkgs.coreutils}/bin/echo "Checking Open vSwitch OVN integration..."
-          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" get open_vswitch . external_ids:ovn-remote >/dev/null 2>&1;
+          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" show >/dev/null 2>&1;
           do
             ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is not ready, retrying in 10 seconds..."
             ${pkgs.coreutils}/bin/sleep 10
@@ -1356,14 +1388,12 @@ in
           ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:system-id=${hypervisorName}"
 
           # Set the OVN encapsulation IP for geneve tunnels
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-encap-ip=${hypervisorClusterIP}"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-encap-ip=${incusClusterIP}"
           ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-encap-type=geneve"
 
-          # Point OVN controller to local Southbound DB socket
-          # NOTE: ovn-controller should ALWAYS use local socket, never cluster TCP addresses
-          # The cluster TCP addresses are for RAFT peer communication between DB servers only
-          ${pkgs.coreutils}/bin/echo "OVN Southbound DB using local socket: unix:/var/run/ovn/ovnsb_db.sock"
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock"
+          # Point the OVN controller to Southbound DB (local or cluster mode)
+          ${pkgs.coreutils}/bin/echo "OVN Southbound DB connection: ''${OVN_SB_DB}"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-remote=''${OVN_SB_DB}"
 
           # Set additional OVN configuration
           ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-bridge=br-int"
@@ -1583,12 +1613,14 @@ in
         22 # SSH
         80 # HTTP
         443 # HTTPS
-        8443 # Incus API
-        9443 # Incus UI
+        incus.management.port # Incus API (Management)
+        incus.cluster.port # Incus Cluster (Cluster Operations)
       ]
       ++ lib.optionals ovnJoined [
-        ovnConfig.northbound.port # OVN NB DB (Northbound)
-        ovnConfig.southbound.port # OVN SB DB (Southbound)
+        ovnConfig.northbound.serverPort # OVN NB DB (Northbound Server)
+        ovnConfig.northbound.clientPort # OVN NB DB (Northbound Client)
+        ovnConfig.southbound.clientPort # OVN SB DB (Southbound Client)
+        ovnConfig.southbound.serverPort # OVN SB DB (Southbound Server)
       ];
       # Allow ICMP globally
       allowPing = true;

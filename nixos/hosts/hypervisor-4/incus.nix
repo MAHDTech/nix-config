@@ -20,10 +20,16 @@ let
     role = "member";
 
     # The incus management address.
-    managementAddress = "10.10.100.14:8443";
+    management = {
+      address = "10.10.100.14";
+      port = 8443;
+    };
 
     # The incus cluster address.
-    clusterAddress = "10.10.200.14:9443";
+    cluster = {
+      address = "10.10.200.14";
+      port = 9443;
+    };
 
     # The cluster token is only needed for initial bootstrap.
     # Once joined, the cluster token can be removed.
@@ -36,7 +42,7 @@ let
 
   ovn = {
     # Flag to indicate if the hypervisor has joined the ovn cluster.
-    joined = false;
+    joined = true;
 
     # IP addresses of all OVN cluster members.
     clusterAddresses = [
