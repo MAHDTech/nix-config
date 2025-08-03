@@ -147,16 +147,14 @@ let
             # Core
             "core.shutdown_timeout" = 5;
 
-            # TODO: Debug ACME configuration with Cloudflare.
             # ACME
-            #"acme.agree_tos" = true;
+            "acme.agree_tos" = true;
             #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
-            #"acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
-            #"acme.challenge" = "DNS-01";
-            #"acme.domain" = "saltlabs.cloud";
-            #"acme.email" = "acme@saltlabs.cloud";
-            #"acme.provider" = "cloudflare";
-            #"acme.provider.resolvers" = "1.1.1.1,1.0.0.1";
+            "acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
+            "acme.challenge" = "DNS-01";
+            "acme.domain" = "saltlabs.cloud";
+            "acme.email" = "acme@saltlabs.cloud";
+            "acme.provider" = "cloudflare";
 
             # Images
             "images.auto_update_interval" = 6;
@@ -482,106 +480,106 @@ let
             ###########################
             # NCE-01 Storage Volumes (HYPERVISOR-1)
             ###########################
-            #{
-            #  name = "NCE-01-CVM";
-            #  type = "custom";
-            #  description = "NCE-01 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-01-DATA";
-            #  type = "custom";
-            #  description = "NCE-01 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-01-CVM";
+              type = "custom";
+              description = "NCE-01 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-01-DATA";
+              type = "custom";
+              description = "NCE-01 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
             ###########################
             # NCE-02 Storage Volumes (HYPERVISOR-2)
             ###########################
-            #{
-            #  name = "NCE-02-CVM";
-            #  type = "custom";
-            #  description = "NCE-02 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-02-DATA";
-            #  type = "custom";
-            #  description = "NCE-02 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-02-CVM";
+              type = "custom";
+              description = "NCE-02 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-02-DATA";
+              type = "custom";
+              description = "NCE-02 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
             ###########################
             # NCE-03 Storage Volumes (HYPERVISOR-3)
             ###########################
-            #{
-            #  name = "NCE-03-CVM";
-            #  type = "custom";
-            #  description = "NCE-03 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-03-DATA";
-            #  type = "custom";
-            #  description = "NCE-03 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-03-CVM";
+              type = "custom";
+              description = "NCE-03 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-03-DATA";
+              type = "custom";
+              description = "NCE-03 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
             ###########################
             # NCE-04 Storage Volumes (HYPERVISOR-4)
             ###########################
-            #{
-            #  name = "NCE-04-CVM";
-            #  type = "custom";
-            #  description = "NCE-04 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-04-DATA";
-            #  type = "custom";
-            #  description = "NCE-04 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "instances";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-04-CVM";
+              type = "custom";
+              description = "NCE-04 CVM storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-04-DATA";
+              type = "custom";
+              description = "NCE-04 DATA storage volume";
+              project = "nutanix";
+              pool = "instances";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
           ]
         else
@@ -1522,8 +1520,8 @@ in
               iifname "bond0" oifname "incusbr1" accept  # Routed bridge
 
               # Allow forwarding from both bridges to bond0 (outbound from instances)
-              iifname "incusbr0" oifname "bond0" ct state established,related accept
-              iifname "incusbr1" oifname "bond0" ct state established,related accept
+              iifname "incusbr0" oifname "bond0" accept
+              iifname "incusbr1" oifname "bond0" accept
 
               # Allow forwarding between bridges and management interface
               iifname "incusbr0" oifname "enp6s0" accept
@@ -1651,6 +1649,7 @@ in
   };
 
   boot.kernel.sysctl = {
+    "net.ipv4.conf.all.proxy_arp" = 1;
     "net.ipv4.ip_forward" = 1;
     "net.ipv6.conf.all.forwarding" = 1;
   };

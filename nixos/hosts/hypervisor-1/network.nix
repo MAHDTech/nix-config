@@ -76,7 +76,10 @@ in
           matchConfig.Name = lib.mkForce "enp6s0";
           networkConfig = defaultNetworkConfig;
           linkConfig = defaultLinkConfig;
-          dhcpV4Config = defaultDhcpV4Config;
+          dhcpV4Config = lib.mergeAttrs defaultDhcpV4Config {
+            # Set the management interface to a lower priority.
+            RouteMetric = lib.mkForce 2000;
+          };
           routes = [ ];
         };
 
@@ -99,7 +102,10 @@ in
 
         "110-bond0" = {
           matchConfig.Name = "bond0";
-          networkConfig = defaultNetworkConfig;
+          networkConfig = lib.mergeAttrs defaultNetworkConfig {
+            IPv4Forwarding = true;
+            IPv6Forwarding = true;
+          };
           linkConfig = lib.mergeAttrs defaultLinkConfig {
             MTUBytes = "9000";
           };
