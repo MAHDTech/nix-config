@@ -54,14 +54,39 @@ let
   };
 
   ################################
-  # ZFS configuration.
+  # LINSTOR configuration.
   ################################
 
-  zfs = {
-    sourceDefault = "zpool/var/lib/incus/storage-pools/default";
-    sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
-    sourceIso = "zpool/var/lib/incus/storage-pools/iso";
+  linstor = {
+
+    # TODO: Configure LINSTOR before enabling.
+    enabled = false;
+
+    # Resource group configuration for Incus storage pools
+    resourceGroup = {
+      name = "incus-rg"; # LINSTOR resource group name
+      placeCount = 3; # 3 replicas across the hypervisor cluster
+      storagePool = "incus"; # The LINSTOR storage pool name on satellite nodes
+    };
+
+    # Volume configuration
+    volume = {
+      prefix = "incus-vol-"; # Prefix for LINSTOR managed volumes
+    };
+
+    # DRBD configuration for high availability
+    drbd = {
+      onNoQuorum = "suspend-io"; # Suspend IO when quorum is lost
+      autoDiskful = "5m"; # Auto-convert diskless to diskful after 5 minutes
+      autoAddQuorumTiebreaker = true; # Allow auto tiebreakers for quorum
+    };
+
+    # Controller connection (using controller on hypervisor-1)
+    controller = {
+      connection = null; # Use remote controller
+    };
   };
+
 in
 {
   imports = [
@@ -69,7 +94,7 @@ in
       inherit hypervisor;
       inherit incus;
       inherit ovn;
-      inherit zfs;
+      inherit linstor;
     })
   ];
 }

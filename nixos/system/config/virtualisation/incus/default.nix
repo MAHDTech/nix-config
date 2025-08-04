@@ -19,10 +19,33 @@
     joined = false;
     clusterAddresses = [ ];
   },
-  zfs ? {
-    sourceDefault = null;
-    sourceInstances = null;
-    sourceIso = null;
+  linstor ? {
+    # Flag to enable LINSTOR.
+    enabled = false;
+
+    # Main resource group configuration for Incus storage pools
+    resourceGroup = {
+      name = "incus"; # Name of the LINSTOR resource group (default: "incus")
+      placeCount = 2; # Number of diskful replicas (default: 2)
+      storagePool = "default"; # The LINSTOR storage pool name on satellite nodes
+    };
+
+    # Volume configuration options
+    volume = {
+      prefix = "incus-volume-"; # Prefix for internal LINSTOR volume names (default: "incus-volume-")
+    };
+
+    # DRBD configuration options (applied to resource group)
+    drbd = {
+      onNoQuorum = null; # DRBD policy when quorum is lost
+      autoDiskful = null; # Duration after which diskless can become diskful
+      autoAddQuorumTiebreaker = true; # Auto-create diskless resources as tiebreakers
+    };
+
+    # Controller connection (if needed to override defaults)
+    controller = {
+      connection = null; # LINSTOR controller endpoint (default: use local controller)
+    };
   },
 }:
 {
@@ -63,13 +86,27 @@ let
       null;
 
   #########################
-  # ZFS sources
+  # LINSTOR configuration
   #########################
 
-  inherit (zfs) sourceDefault sourceInstances sourceIso;
-  zfsSourceDefault = sourceDefault;
-  zfsSourceInstances = sourceInstances;
-  zfsSourceIso = sourceIso;
+  # Flag to enable LINSTOR.
+  linstorEnabled = linstor.enabled;
+
+  # Resource Group settings
+  linstorResourceGroup = linstor.resourceGroup.name;
+  linstorResourceGroupPlaceCount = linstor.resourceGroup.placeCount;
+  linstorResourceGroupStoragePool = linstor.resourceGroup.storagePool;
+
+  # Volume settings
+  #linstorVolumePrefix = linstor.volume.prefix;
+
+  # DRBD settings
+  #linstorDrbdOnNoQuorum = linstor.drbd.onNoQuorum;
+  #linstorDrbdAutoDiskful = linstor.drbd.autoDiskful;
+  #linstorDrbdAutoAddQuorumTiebreaker = linstor.drbd.autoAddQuorumTiebreaker;
+
+  # Controller settings
+  #linstorControllerConnection = linstor.controller.connection;
 
   #########################
   # OVN configuration
@@ -482,106 +519,106 @@ let
             ###########################
             # NCE-01 Storage Volumes (HYPERVISOR-1)
             ###########################
-            {
-              name = "NCE-01-CVM";
-              type = "custom";
-              description = "NCE-01 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-01-DATA";
-              type = "custom";
-              description = "NCE-01 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-01-CVM";
+            #  type = "custom";
+            #  description = "NCE-01 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-01-DATA";
+            #  type = "custom";
+            #  description = "NCE-01 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-02 Storage Volumes (HYPERVISOR-2)
             ###########################
-            {
-              name = "NCE-02-CVM";
-              type = "custom";
-              description = "NCE-02 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-02-DATA";
-              type = "custom";
-              description = "NCE-02 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-02-CVM";
+            #  type = "custom";
+            #  description = "NCE-02 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-02-DATA";
+            #  type = "custom";
+            #  description = "NCE-02 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-03 Storage Volumes (HYPERVISOR-3)
             ###########################
-            {
-              name = "NCE-03-CVM";
-              type = "custom";
-              description = "NCE-03 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-03-DATA";
-              type = "custom";
-              description = "NCE-03 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-03-CVM";
+            #  type = "custom";
+            #  description = "NCE-03 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-03-DATA";
+            #  type = "custom";
+            #  description = "NCE-03 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-04 Storage Volumes (HYPERVISOR-4)
             ###########################
-            {
-              name = "NCE-04-CVM";
-              type = "custom";
-              description = "NCE-04 CVM storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-04-DATA";
-              type = "custom";
-              description = "NCE-04 DATA storage volume";
-              project = "nutanix";
-              pool = "instances";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-04-CVM";
+            #  type = "custom";
+            #  description = "NCE-04 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-04-DATA";
+            #  type = "custom";
+            #  description = "NCE-04 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "instances";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
           ]
         else
@@ -622,9 +659,9 @@ let
           {
             enabled = true;
             server_address = incusClusterAddress;
-            member_config = [
+            member_config = lib.optionals linstorEnabled [
               #########################################################
-              # Storage Pools
+              # LINSTOR Storage Pools
               #########################################################
               #########################
               # Default storage pool
@@ -632,8 +669,8 @@ let
               {
                 entity = "storage-pool";
                 name = "default";
-                key = "source";
-                value = zfsSourceDefault;
+                key = "linstor.resource_group.name";
+                value = linstorResourceGroup;
               }
               #########################
               # Instances storage pool
@@ -641,8 +678,8 @@ let
               {
                 entity = "storage-pool";
                 name = "instances";
-                key = "source";
-                value = zfsSourceInstances;
+                key = "linstor.resource_group.name";
+                value = linstorResourceGroup;
               }
               #########################
               # ISO storage pool
@@ -650,10 +687,9 @@ let
               {
                 entity = "storage-pool";
                 name = "iso";
-                key = "source";
-                value = zfsSourceIso;
+                key = "linstor.resource_group.name";
+                value = linstorResourceGroup;
               }
-
             ];
           }
           // lib.optionalAttrs (incusRole == "bootstrap") {
@@ -675,16 +711,20 @@ let
       storage_pools =
         # All joined members share the same configuration.
         if incusJoined then
-          [
+          lib.optionals linstorEnabled [
+            #########################################################
+            # LINSTOR Storage Pools
+            #########################################################
             #########################
             # Default storage pool.
             #########################
             {
               name = "default";
-              driver = "zfs";
+              driver = "linstor";
               config = {
-                "zfs.clone_copy" = "true";
-                "zfs.export" = "false";
+                "linstor.resource_group" = linstorResourceGroup;
+                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
+                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
               };
             }
             #########################
@@ -692,10 +732,11 @@ let
             #########################
             {
               name = "instances";
-              driver = "zfs";
+              driver = "linstor";
               config = {
-                "zfs.clone_copy" = "true";
-                "zfs.export" = "false";
+                "linstor.resource_group" = linstorResourceGroup;
+                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
+                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
               };
             }
             #########################
@@ -703,26 +744,30 @@ let
             #########################
             {
               name = "iso";
-              driver = "zfs";
+              driver = "linstor";
               config = {
-                "zfs.clone_copy" = "true";
-                "zfs.export" = "false";
+                "linstor.resource_group" = linstorResourceGroup;
+                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
+                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
               };
             }
           ]
         # The bootstrap server role requires the source to be set.
         else if incusRole == "bootstrap" then
-          [
+          lib.optionals linstorEnabled [
+            #########################################################
+            # LINSTOR Storage Pools
+            #########################################################
             #########################
             # Default storage pool.
             #########################
             {
               name = "default";
-              driver = "zfs";
+              driver = "linstor";
               config = {
-                source = zfsSourceDefault;
-                "zfs.clone_copy" = "true";
-                "zfs.export" = "false";
+                "linstor.resource_group" = linstorResourceGroup;
+                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
+                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
               };
             }
 
@@ -731,11 +776,11 @@ let
             #########################
             {
               name = "instances";
-              driver = "zfs";
+              driver = "linstor";
               config = {
-                source = zfsSourceInstances;
-                "zfs.clone_copy" = "true";
-                "zfs.export" = "false";
+                "linstor.resource_group" = linstorResourceGroup;
+                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
+                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
               };
             }
 
@@ -744,14 +789,13 @@ let
             #########################
             {
               name = "iso";
-              driver = "zfs";
+              driver = "linstor";
               config = {
-                source = zfsSourceIso;
-                "zfs.clone_copy" = "true";
-                "zfs.export" = "false";
+                "linstor.resource_group" = linstorResourceGroup;
+                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
+                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
               };
             }
-
           ]
         # All non-joined members start with nothing.
         else
