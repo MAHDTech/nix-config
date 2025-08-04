@@ -74,9 +74,9 @@ in
         owner = "root";
         content = ''
           CLOUDFLARE_DNS_API_TOKEN="${config.sops.placeholder."incus/acme/cloudflare/dnsApiToken"}"
-          CLOUDFLARE_POLLING_INTERVAL=15
-          CLOUDFLARE_PROPAGATION_TIMEOUT=300
-          CLOUDFLARE_TTL=120
+          CLOUDFLARE_POLLING_INTERVAL="3"
+          CLOUDFLARE_PROPAGATION_TIMEOUT="900"
+          CLOUDFLARE_TTL="60"
         '';
       };
 

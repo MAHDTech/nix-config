@@ -152,9 +152,11 @@ let
             #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
             "acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
             "acme.challenge" = "DNS-01";
-            "acme.domain" = "saltlabs.cloud";
+            "acme.domain" = "incus.saltlabs.cloud";
             "acme.email" = "acme@saltlabs.cloud";
             "acme.provider" = "cloudflare";
+            # Bypass any local DNS caching issues.
+            "acme.provider.resolvers" = "1.1.1.1:53,1.0.0.1:53";
 
             # Images
             "images.auto_update_interval" = 6;
@@ -651,16 +653,7 @@ let
                 key = "source";
                 value = zfsSourceIso;
               }
-              #########################################################
-              # Networks
-              #########################################################
-              # Bridge Network (transparent bridge)
-              #{
-              #  entity = "network";
-              #  name = "incusbr0";
-              #  key = "bridge.external_interfaces";
-              #  value = "bond0";
-              #}
+
             ];
           }
           // lib.optionalAttrs (incusRole == "bootstrap") {
