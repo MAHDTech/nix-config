@@ -15,9 +15,10 @@
     #########################################################
 
     controller = {
-      enable = false;
+      enable = true;
       bind = "0.0.0.0";
       port = 3370;
+      portSecure = 3371;
 
       database = {
         type = "h2";
@@ -29,7 +30,7 @@
     #########################################################
 
     satellite = {
-      enable = false;
+      enable = true;
       bind = "0.0.0.0";
       port = 3366;
       controllerEndpoint = "linstor://localhost:3370";
@@ -44,6 +45,7 @@
     allowedTCPPorts = [
       3366 # LINSTOR Satellite
       3370 # LINSTOR Controller
+      3371 # LINSTOR Controller (secure)
     ];
 
     # Allow DRBD port range (7000-7999)

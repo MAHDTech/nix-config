@@ -93,14 +93,28 @@ stdenv.mkDerivation rec {
     # Look for JAR files in standard Debian Java locations
     find usr -name "*.jar" -exec cp {} $out/share/linstor-server/ \; || true
 
+    # Build explicit classpath from all JAR files
+    echo "Building classpath from available JAR files..."
+    CLASSPATH=""
+    for jar in $out/share/linstor-server/*.jar; do
+      if [ -f "$jar" ]; then
+        if [ -n "$CLASSPATH" ]; then
+          CLASSPATH="$CLASSPATH:$jar"
+        else
+          CLASSPATH="$jar"
+        fi
+      fi
+    done
+    echo "Classpath: $CLASSPATH"
+
     # Create wrapper scripts for controller
     makeWrapper ${jdk17}/bin/java $out/bin/linstor-controller \
-      --add-flags "-cp $out/share/linstor-server/*" \
+      --set CLASSPATH "$CLASSPATH" \
       --add-flags "com.linbit.linstor.core.Controller"
 
     # Create wrapper scripts for satellite
     makeWrapper ${jdk17}/bin/java $out/bin/linstor-satellite \
-      --add-flags "-cp $out/share/linstor-server/*" \
+      --set CLASSPATH "$CLASSPATH" \
       --add-flags "com.linbit.linstor.core.Satellite"
 
     runHook postInstall
