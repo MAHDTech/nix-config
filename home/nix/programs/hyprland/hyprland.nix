@@ -921,7 +921,12 @@ in
         "_JAVA_AWT_WM_NONREPARENTING,1"
 
         # Electron/Chrome scaling for better Wayland support
-        "ELECTRON_OZONE_PLATFORM_HINT,wayland"
+        # Removed: "ELECTRON_OZONE_PLATFORM_HINT,wayland" # Breaks 1Password.
+        # Apps that need Wayland can be configured individually
+
+        # 1Password authentication dialog fix
+        "GTK_USE_PORTAL,1"
+        "PORTAL_DEBUG,1"
       ];
 
       ###################
@@ -1187,6 +1192,9 @@ in
   # Override the hypridle service to ensure it starts after hyprland-session.target
   systemd.user.services.hypridle = {
     Install.WantedBy = [ "hyprland-session.target" ];
-    Unit.BindsTo = [ "hyprland-session.target" ];
+    Unit = {
+      BindsTo = [ "hyprland-session.target" ];
+      After = [ "hyprland-session.target" ];
+    };
   };
 }

@@ -79,7 +79,7 @@ in
         text = ''
           [Desktop Entry]
           Name=1Password
-          Exec=${pkgs._1password-gui}/bin/1password %U
+          Exec=env GDK_BACKEND=x11 ELECTRON_OZONE_PLATFORM_HINT=x11 ${pkgs._1password-gui}/bin/1password %U
           Terminal=false
           Type=Application
           Icon=${pkgs._1password-gui}/share/icons/hicolor/256x256/apps/1password.png

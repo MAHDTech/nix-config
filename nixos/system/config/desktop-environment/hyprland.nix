@@ -30,8 +30,8 @@
       enable = true;
       updateDbusEnvironment = true;
     };
-    # Idle daemon
-    hypridle.enable = true;
+    # User level idle daemon is being used.
+    #hypridle.enable = true;
   };
 
   programs = {
@@ -55,6 +55,25 @@
   xdg.portal = {
     enable = true;
     xdgOpenUsePortal = true;
+
+    config = {
+      common = {
+        default = [
+          "gtk"
+        ];
+      };
+      hyprland = {
+        default = [
+          "hyprland"
+          "gtk"
+        ];
+        # Enable secret portal for authentication dialogue boxes (like 1password SSH)
+        "org.freedesktop.impl.portal.Secret" = [
+          "gnome-keyring"
+        ];
+      };
+    };
+
     extraPortals = with pkgs; [
       xdg-desktop-portal-gtk
       xdg-desktop-portal-hyprland
@@ -77,6 +96,10 @@
     NIXOS_OZONE_WL = "1";
     WLR_NO_HARDWARE_CURSORS = "1";
     COSMIC_DATA_CONTROL_ENABLED = "1";
+
+    # Fix 1Password desktop integration for authentication dialogue boxes.
+    GTK_USE_PORTAL = "1";
+    QT_QPA_PLATFORMTHEME = "gtk3";
   };
 
   # Greeter (GUI)
