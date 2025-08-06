@@ -97,4 +97,16 @@ in
       inherit linstor;
     })
   ];
+
+  fileSystems = {
+    # Legacy mount point for var/lib/incus using ZFS
+    "/var/lib/incus" = {
+      device = "zpool/var/lib/incus";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
+    };
+  };
 }

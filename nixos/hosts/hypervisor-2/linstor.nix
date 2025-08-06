@@ -11,21 +11,6 @@
   services.linstor = {
 
     #########################################################
-    # Controller (Primary controller node)
-    #########################################################
-
-    controller = {
-      enable = true;
-      bind = "0.0.0.0";
-      port = 3370;
-      portSecure = 3371;
-
-      database = {
-        type = "h2";
-      };
-    };
-
-    #########################################################
     # Satellite (Storage provider)
     #########################################################
 
@@ -33,7 +18,7 @@
       enable = true;
       bind = "0.0.0.0";
       port = 3366;
-      controllerEndpoint = "linstor://localhost:3370";
+      controllerEndpoint = "linstor://10.10.200.11:3370";
     };
   };
 
@@ -43,7 +28,6 @@
 
   networking.firewall = {
     allowedTCPPorts = [
-      3366 # LINSTOR Satellite
       3370 # LINSTOR Controller
       3371 # LINSTOR Controller (secure)
     ];

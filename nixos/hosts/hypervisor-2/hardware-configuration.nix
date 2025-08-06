@@ -127,26 +127,6 @@
       neededForBoot = true;
     };
 
-    # Legacy mount point for var/lib/incus using ZFS
-    "/var/lib/incus" = {
-      device = "zpool/var/lib/incus";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # Legacy mount point for var/lib/incus/storage-pools using ZFS
-    "/var/lib/incus/storage-pools" = {
-      device = "zpool/var/lib/incus/storage-pools";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
     # Legacy mount point for tmp using ZFS
     "/tmp" = {
       device = "zpool/tmp";

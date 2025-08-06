@@ -8,10 +8,12 @@
   - [Prerequisites](#prerequisites)
   - [File Structure](#file-structure)
   - [Deployment Steps](#deployment-steps)
-    - [Update Package Hash](#update-package-hash)
     - [Deploy to Nodes](#deploy-to-nodes)
     - [Initialize LINSTOR Cluster](#initialize-linstor-cluster)
+    - [Create ZFS Datasets (Prerequisites)](#create-zfs-datasets-prerequisites)
     - [Create Storage Pools](#create-storage-pools)
+    - [Create Resource Group](#create-resource-group)
+    - [Create Volumes](#create-volumes)
 
 ## Overview
 
@@ -28,31 +30,13 @@ An initial implementation of LINSTOR for NixOS.
 
 ```bash
 linstor/
-├── package.nix             # 📦 DERIVATION: Builds LINSTOR from source
+├── packages/             # 📦 DERIVATION: Builds LINSTOR nix packages from deb packages
 ├── module.nix              # ⚙️ NixOS MODULE: Provides configuration options
-├── default.nix             # 🔧 IMPORT: Clean module import
+├── default.nix             # 🔧 IMPORT: module imports
 └── README.md               # 📖 DOCUMENTATION: This file
 ```
 
 ## Deployment Steps
-
-### Update Package Hash
-
-The `package.nix` file uses a placeholder hash (`lib.fakeHash`) for the LINSTOR source.
-
-You need to replace it with the actual SHA256 hash. Attempting a build will fail but reveal the expected hash.
-
-```bash
-# Attempt to build the package (this will fail and show the expected hash)
-nix build -f ./package.nix
-
-# The error message will include something like:
-# got:    sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-# expected: sha256-<correct-hash-here>
-
-# Update the hash in package.nix (adjust the path if your structure differs)
-sed -i 's/lib.fakeHash/"sha256-<correct-hash-here>"/' ./package.nix
-```
 
 ### Deploy to Nodes
 
@@ -77,16 +61,19 @@ After deployment, verify that the LINSTOR services are running:
 
 Run these commands on the controller node which in this example is `hypervisor-1`.
 
-This registers the nodes in the cluster. Specify `--controller` for the controller node and `--satellite` for others.
+**Note:** You only need ONE controller node in the cluster. Other nodes run as satellites only.
 
 ```bash
-# Add the controller node
-linstor node create hypervisor-1 10.10.200.1 --controller
+# Show the current nodes in the cluster
+linstor node list
 
-# Add satellite nodes
-linstor node create hypervisor-2 10.10.200.2 --satellite
-linstor node create hypervisor-3 10.10.200.3 --satellite
-linstor node create hypervisor-4 10.10.200.4 --satellite
+# Add the controller node (hypervisor-1 runs both controller and satellite)
+linstor node create hypervisor-1 10.10.200.11
+
+# Add satellite-only nodes
+linstor node create hypervisor-2 10.10.200.12
+linstor node create hypervisor-3 10.10.200.13
+linstor node create hypervisor-4 10.10.200.14
 
 # Verify all nodes are registered and online
 linstor node list
@@ -94,19 +81,59 @@ linstor node list
 
 **Troubleshooting:** If nodes show as offline, check network connectivity, firewall rules, and service status on each node.
 
-### Create Storage Pools
+### Create ZFS Datasets (Prerequisites)
 
-Define storage pools on each node. This example uses ZFS; ensure the underlying ZFS pools/datasets exist on the nodes (e.g., via `zpool create` or `zfs create` beforehand).
+Before creating LINSTOR storage pools, ensure the following ZFS datasets exist on each node:
 
 ```bash
-# Create ZFS storage pools on each node
-linstor storage-pool create zfs hypervisor-1 incus zpool/var/lib/linstor/storage-pools/incus
-linstor storage-pool create zfs hypervisor-2 incus zpool/var/lib/linstor/storage-pools/incus
-linstor storage-pool create zfs hypervisor-3 incus zpool/var/lib/linstor/storage-pools/incus
-linstor storage-pool create zfs hypervisor-4 incus zpool/var/lib/linstor/storage-pools/incus
+# Create a ZFS dataset for LINSTOR data
+sudo zfs create -o mountpoint=/var/lib/linstor zpool/var/lib/linstor
+
+# Create a ZFS dataset for LINSTOR metadata
+sudo zfs create -o mountpoint=/var/lib/linstor.d zpool/var/lib/linstor.d
+
+# Create a ZFS dataset for LINSTOR storage pool
+sudo zfs create -o mountpoint=/var/lib/linstor/storage-pool zpool/var/lib/linstor/storage-pool
+
+# Verify the dataset exists
+zfs list | grep linstor
+```
+
+### Create Storage Pools
+
+Define storage pools on each node using the ZFS datasets created above.
+
+```bash
+# Create a LINSTOR storage pool backed by the ZFS dataset on each node.
+linstor storage-pool create zfs hypervisor-1 linstor zpool/var/lib/linstor/storage-pool
+linstor storage-pool create zfs hypervisor-2 linstor zpool/var/lib/linstor/storage-pool
+linstor storage-pool create zfs hypervisor-3 linstor zpool/var/lib/linstor/storage-pool
+linstor storage-pool create zfs hypervisor-4 linstor zpool/var/lib/linstor/storage-pool
 
 # Verify storage pools are created and available
 linstor storage-pool list
 ```
 
-**Next Steps:** Once pools are set up, you can create resource groups, resources, and volumes. Refer to the official LINSTOR documentation for advanced configuration.
+### Create Resource Group
+
+Create a resource group for Incus containers with replication:
+
+```bash
+# Create a resource group named 'incus' with 3-way replication
+linstor resource-group create linstor \
+  --storage-pool incus \
+  --place-count 3
+
+# Verify the resource group was created
+linstor resource-group list
+
+# Create a volume group for the resource group
+linstor volume-group create linstor
+
+# Verify the volume group
+linstor volume-group list
+```
+
+### Create Volumes
+
+Once storage pools and resource groups are set up, you can configure the incus module to dynamically create volumes as needed.
