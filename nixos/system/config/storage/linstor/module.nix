@@ -9,7 +9,8 @@ with lib;
 
 let
   cfg = config.services.linstor;
-  linstor-server = pkgs.callPackage ./package.nix { };
+  linstor-server = pkgs.callPackage ./packages/server.nix { };
+  linstor-client = pkgs.callPackage ./packages/client.nix { };
 in
 {
   #########################################################
@@ -107,10 +108,16 @@ in
       # Common options
       #########################################################
 
-      package = mkOption {
+      serverPackage = mkOption {
         type = types.package;
         default = linstor-server;
-        description = "LINSTOR package to use";
+        description = "LINSTOR server package to use";
+      };
+
+      clientPackage = mkOption {
+        type = types.package;
+        default = linstor-client;
+        description = "LINSTOR client package to use";
       };
 
       user = mkOption {
@@ -125,10 +132,28 @@ in
         description = "Group to run LINSTOR services as";
       };
 
+      configDir = mkOption {
+        type = types.path;
+        default = "/etc/linstor";
+        description = "Configuration directory for LINSTOR";
+      };
+
       dataDir = mkOption {
         type = types.path;
         default = "/var/lib/linstor";
         description = "Data directory for LINSTOR";
+      };
+
+      metadataDir = mkOption {
+        type = types.path;
+        default = "/var/lib/linstor.d";
+        description = "Metadata directory for LINSTOR";
+      };
+
+      logsDir = mkOption {
+        type = types.path;
+        default = "/var/log/linstor";
+        description = "Logs directory for LINSTOR";
       };
     };
   };
@@ -150,7 +175,8 @@ in
 
       # Required system packages
       environment.systemPackages = with pkgs; [
-        cfg.package
+        cfg.serverPackage
+        cfg.clientPackage
         drbd
         lvm2
       ];
@@ -225,10 +251,23 @@ in
 
       # Create data directory
       systemd.tmpfiles.rules = [
+        # Create configuration directory
+        "d ${cfg.configDir} 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.configDir}/controller 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.configDir}/satellite 0755 ${cfg.user} ${cfg.group} -"
+
+        # Create data directory
         "d ${cfg.dataDir} 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.dataDir}/controller 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.dataDir}/satellite 0755 ${cfg.user} ${cfg.group} -"
         "d ${cfg.dataDir}/storage-pools 0755 ${cfg.user} ${cfg.group} -"
+
+        # Create metadata directory
+        "d ${cfg.metadataDir} 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.metadataDir}/.backup 0755 ${cfg.user} ${cfg.group} -"
+
+        # Create logs directory
+        "d ${cfg.logsDir} 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.logsDir}/controller 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.logsDir}/satellite 0755 ${cfg.user} ${cfg.group} -"
       ];
     })
 
@@ -244,7 +283,6 @@ in
         after = [
           "network.target"
           "var-lib-linstor.mount"
-          "var-lib-linstor-storage\\x2dpools.mount"
         ];
         requires = [
           "network.target"
@@ -255,33 +293,43 @@ in
           LS_KEEP_RES = "1";
         };
 
+        script = ''
+          ${pkgs.coreutils}/bin/echo "Starting LINSTOR Controller"
+
+          ${cfg.serverPackage}/bin/linstor-controller \
+            --config-directory=${cfg.configDir}/controller \
+            --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port} \
+            --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure} \
+            --logs=${cfg.logsDir}/controller
+        '';
+
         serviceConfig = {
           Type = "notify";
           User = cfg.user;
           Group = cfg.group;
           ExecStartPre = pkgs.writeShellScript "linstor-controller-setup" ''
-            ${pkgs.coreutils}/bin/echo "Setting up controller directory"
-            ${pkgs.coreutils}/bin/mkdir -p ${cfg.dataDir}/controller
-            ${pkgs.coreutils}/bin/chown ${cfg.user}:${cfg.group} ${cfg.dataDir}/controller
-            ${pkgs.coreutils}/bin/chown ${cfg.user}:${cfg.group} ${cfg.dataDir}
-
-            if [ -d "${cfg.dataDir}/storage-pools" ];
-            then
-              ${pkgs.coreutils}/bin/echo "Setting up storage-pools directory"
-              ${pkgs.coreutils}/bin/chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}/storage-pools
-            fi
+            ${pkgs.coreutils}/bin/echo "Executing setup script for LINSTOR controller"
           '';
-          ExecStart = "${cfg.package}/bin/linstor-controller --config-directory=${cfg.dataDir}/controller --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port} --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure}";
-          WorkingDirectory = "${cfg.dataDir}/controller";
+          WorkingDirectory = "${cfg.configDir}/controller";
           Restart = "on-failure";
-          RestartSec = "10s";
+          RestartSec = "30s";
+          KillMode = "mixed";
+          SuccessExitStatus = [
+            "0"
+            "143"
+            "129"
+          ];
 
           # Security settings
           NoNewPrivileges = true;
           PrivateTmp = true;
           ProtectHome = true;
           ProtectSystem = "strict";
-          ReadWritePaths = [ cfg.dataDir ];
+          ReadWritePaths = [
+            cfg.configDir
+            cfg.dataDir
+            cfg.logsDir
+          ];
         };
       };
 
@@ -305,57 +353,72 @@ in
           "network.target"
           "lvm2-monitor.service"
           "var-lib-linstor.mount"
+          "var-lib-linstor.d.mount"
         ];
         requires = [
           "network.target"
           "var-lib-linstor.mount"
+          "var-lib-linstor.d.mount"
         ];
 
         environment = {
           # Ensure satellite has access to all storage tools
-          PATH = lib.mkOverride 500 (
-            lib.mkDefault "${
-              lib.makeBinPath [
-                pkgs.drbd # drbdadm, drbdsetup, drbdmeta
-                pkgs.lvm2 # lvm, pvcreate, vgcreate, lvcreate, etc.
-                pkgs.zfs # zfs, zpool
-                pkgs.util-linux # lsblk, blkid, mount, umount
-                pkgs.coreutils # basic utilities
-                pkgs.gnused # sed
-                pkgs.gnugrep # grep
-                pkgs.gawk # awk
-                pkgs.findutils # find
-                pkgs.procps # ps, pgrep
-                pkgs.kmod # modprobe
-              ]
-            }:/run/current-system/sw/bin"
+          PATH = lib.mkForce (
+            lib.makeBinPath [
+              "/run/current-system/sw/bin" # NixOS default path
+              pkgs.coreutils # basic utilities
+              pkgs.drbd # drbdadm, drbdsetup, drbdmeta
+              pkgs.findutils # find
+              pkgs.gawk # awk
+              pkgs.gnugrep # grep
+              pkgs.gnused # sed
+              pkgs.kmod # modprobe
+              pkgs.lvm2 # lvm, pvcreate, vgcreate, lvcreate, etc.
+              pkgs.procps # ps, pgrep
+              pkgs.util-linux # lsblk, blkid, mount, umount
+              pkgs.zfs # zfs, zpool
+            ]
           );
         };
 
+        script = ''
+          ${pkgs.coreutils}/bin/echo "Starting LINSTOR Satellite"
+
+          ${cfg.serverPackage}/bin/linstor-satellite \
+            --config-directory=${cfg.configDir}/satellite \
+            --bind-address=${cfg.satellite.bind} \
+            --port=${toString cfg.satellite.port} \
+            --logs=${cfg.logsDir}/satellite
+        '';
+
         serviceConfig = {
-          Type = "notify";
+          Type = "simple";
           User = cfg.user;
           Group = cfg.group;
           ExecStartPre = pkgs.writeShellScript "linstor-satellite-setup" ''
-            ${pkgs.coreutils}/bin/echo "Setting up satellite directory"
-            ${pkgs.coreutils}/bin/mkdir -p ${cfg.dataDir}/satellite
-            ${pkgs.coreutils}/bin/chown ${cfg.user}:${cfg.group} ${cfg.dataDir}/satellite
-            ${pkgs.coreutils}/bin/chown ${cfg.user}:${cfg.group} ${cfg.dataDir}
-
-            if [ -d "${cfg.dataDir}/storage-pools" ];
-            then
-              ${pkgs.coreutils}/bin/echo "Setting up storage-pools directory"
-              ${pkgs.coreutils}/bin/chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}/storage-pools
-            fi
+            ${pkgs.coreutils}/bin/echo "Executing setup script for LINSTOR satellite"
           '';
-          ExecStart = "${cfg.package}/bin/linstor-satellite --config-directory=${cfg.dataDir}/satellite --bind-address=${cfg.satellite.bind} --port=${toString cfg.satellite.port}";
-          WorkingDirectory = "${cfg.dataDir}/satellite";
+          WorkingDirectory = "${cfg.configDir}/satellite";
           Restart = "on-failure";
           RestartSec = "30s";
+          KillMode = "mixed";
+          SuccessExitStatus = [
+            "0"
+            "143"
+            "129"
+          ];
 
           # Security settings
-          NoNewPrivileges = false;
+          NoNewPrivileges = true;
           PrivateTmp = true;
+          ProtectHome = true;
+          ProtectSystem = "strict";
+          ReadWritePaths = [
+            cfg.configDir
+            cfg.dataDir
+            cfg.metadataDir
+            cfg.logsDir
+          ];
         };
       };
 

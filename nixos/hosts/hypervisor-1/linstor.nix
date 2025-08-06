@@ -75,7 +75,7 @@
 
   fileSystems = {
 
-    # ZFS Dataset for LINSTOR
+    # ZFS Dataset for LINSTOR Data
     "/var/lib/linstor" = {
       device = "zpool/var/lib/linstor";
       fsType = "zfs";
@@ -85,9 +85,9 @@
       neededForBoot = false;
     };
 
-    # ZFS Dataset for LINSTOR storage pools
-    "/var/lib/linstor/storage-pools" = {
-      device = "zpool/var/lib/linstor/storage-pools";
+    # ZFS Dataset for LINSTOR Metadata
+    "/var/lib/linstor.d" = {
+      device = "zpool/var/lib/linstor.d";
       fsType = "zfs";
       options = [
         "zfsutil"
