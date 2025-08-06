@@ -419,9 +419,16 @@ in
               pkgs.gnused # sed
               pkgs.kmod # modprobe
               pkgs.lvm2 # lvm, pvcreate, vgcreate, lvcreate, etc.
+              pkgs.thin-provisioning-tools # thin_check, thin_repair
               pkgs.procps # ps, pgrep
               pkgs.util-linux # lsblk, blkid, mount, umount
               pkgs.zfs # zfs, zpool
+              pkgs.cryptsetup # cryptsetup for LUKS support
+              pkgs.lsscsi # lsscsi for SCSI device listing
+              pkgs.nvme-cli # nvme command for NVMe support
+              pkgs.e2fsprogs # file system utilities
+              pkgs.xfsprogs # XFS file system utilities
+              pkgs.btrfs-progs # Btrfs file system utilities
             ]
           );
         };
