@@ -32,7 +32,7 @@
       enable = true;
       bind = "0.0.0.0";
       port = 3366;
-      controllerEndpoint = "linstor://localhost:3370";
+      controllerEndpoint = "linstor://10.10.200.11:3370";
     };
   };
 

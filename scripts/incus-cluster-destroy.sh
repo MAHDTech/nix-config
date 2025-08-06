@@ -28,18 +28,9 @@ declare -r ZFS_POOL_NAME="zpool"
 
 # The ZFS dataset names
 declare -r ZFS_DATASET_NAME_INCUS="${ZFS_POOL_NAME}/var/lib/incus"
-declare -r ZFS_DATASET_NAME_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS}/storage-pools"
 
 # The path where the ZFS dataset is mounted.
-declare -r ZFS_DATASET_PATH_INCUS_STORAGE_POOLS="${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS#"${ZFS_POOL_NAME}"}"
-
-# The ZFS dataset names that will be destroyed during cleanup.
-# These can also be pools if created in error.
-declare -r ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS=(
-	"default"
-	"instances"
-	"iso"
-)
+declare -r ZFS_DATASET_PATH_INCUS="${ZFS_DATASET_NAME_INCUS#"${ZFS_POOL_NAME}"}"
 
 # OVN database file paths
 declare -r OVN_NB_DB_FILE="/var/lib/ovn/ovnnb_db.db"
@@ -240,40 +231,25 @@ function cleanup_incus_cluster() {
 function zfs_cleanup() {
 	log "INFO" "Performing ZFS cleanup..."
 
-	# For each ZFS dataset name, recursively destroy the ZFS dataset.
-	for ZFS_DATASET_NAME in "${ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS[@]}"; do
+	# If the ZFS dataset exists, destroy it recursively.
+	if sudo zfs list "${ZFS_DATASET_NAME_INCUS}" >/dev/null 2>&1; then
+		log "INFO" "Destroying ZFS dataset: ${ZFS_DATASET_NAME_INCUS}"
+		sudo zfs destroy -rf "${ZFS_DATASET_NAME_INCUS}" || {
+			log "WARN" "Failed to destroy ZFS dataset: ${ZFS_DATASET_NAME_INCUS}"
+		}
+	else
+		log "WARNING" "ZFS dataset does not exist: ${ZFS_DATASET_NAME_INCUS}"
+	fi
 
-		# If the ZFS dataset exists, destroy it recursively.
-		if sudo zfs list "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" >/dev/null 2>&1; then
-			log "INFO" "Destroying ZFS dataset: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
-			sudo zfs destroy -rf "${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" || {
-				log "WARN" "Failed to destroy ZFS dataset: ${ZFS_DATASET_NAME_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
-			}
-		fi
-
-		# If the mount point exists, remove the folder
-		if [[ -d "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" ]]; then
-			log "INFO" "Removing mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
-			sudo rm -rf "${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}" || {
-				log "WARN" "Failed to remove mount point: ${ZFS_DATASET_PATH_INCUS_STORAGE_POOLS}/${ZFS_DATASET_NAME}"
-			}
-		fi
-
-	done
-
-	# If there was a mistake during the creation of the cluster
-	# Then pools may have been created instead of datasets.
-	# If any of these exist as pools, when they should be datasets, destroy them.
-	for ZPOOL in "${ZFS_DATASET_NAMES_INCUS_STORAGE_POOLS[@]}"; do
-		if sudo zpool status "${ZPOOL}" >/dev/null 2>&1; then
-			log "INFO" "Destroying ZFS pool: ${ZPOOL}"
-			sudo zpool destroy -f "${ZPOOL}" || {
-				log "WARN" "Failed to destroy ZFS pool: ${ZPOOL}"
-			}
-		else
-			log "DEBUG" "ZFS pool does not exist: ${ZPOOL}"
-		fi
-	done
+	# If the mount point exists, remove the folder
+	if [[ -d ${ZFS_DATASET_PATH_INCUS} ]]; then
+		log "INFO" "Removing mount point: ${ZFS_DATASET_PATH_INCUS}"
+		sudo rm -rf "${ZFS_DATASET_PATH_INCUS}" || {
+			log "WARN" "Failed to remove mount point: ${ZFS_DATASET_PATH_INCUS}"
+		}
+	else
+		log "WARNING" "Mount point does not exist: ${ZFS_DATASET_PATH_INCUS}"
+	fi
 
 	return 0
 }
@@ -361,6 +337,14 @@ function cleanup_ovs() {
 	return 0
 }
 
+function cleanup_linstor() {
+	log "INFO" "Cleaning up LINSTOR..."
+
+	log "WARNING" "TODO: Not yet implemented..."
+
+	return 0
+}
+
 function show_summary() {
 	local END_TIME
 	END_TIME=$(date +%s)
@@ -422,6 +406,13 @@ if cleanup_ovs; then
 else
 	log "ERROR" "Failed to cleanup OVS"
 	exit 6
+fi
+
+if cleanup_linstor; then
+	CLEANUP_STEPS+=("linstor")
+else
+	log "ERROR" "Failed to cleanup LINSTOR"
+	exit 7
 fi
 
 # Remove the trap since we're good to go!

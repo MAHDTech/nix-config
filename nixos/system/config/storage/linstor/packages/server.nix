@@ -178,14 +178,24 @@ stdenv.mkDerivation rec {
     done
     echo "Classpath: $CLASSPATH"
 
-    # Create wrapper scripts for controller
+    # Create wrapper scripts for controller with proper JVM options
     makeWrapper ${jdk17}/bin/java $out/bin/linstor-controller \
       --set CLASSPATH "$CLASSPATH" \
+      --add-flags "-Xms256M" \
+      --add-flags "-Xmx8G" \
+      --add-flags "-XX:+CrashOnOutOfMemoryError" \
+      --add-flags "-Djava.net.preferIPv4Addresses=true" \
+      --add-flags "-Djava.net.preferIPv4Stack=true" \
       --add-flags "com.linbit.linstor.core.Controller"
 
-    # Create wrapper scripts for satellite
+    # Create wrapper scripts for satellite with proper JVM options
     makeWrapper ${jdk17}/bin/java $out/bin/linstor-satellite \
       --set CLASSPATH "$CLASSPATH" \
+      --add-flags "-Xms128M" \
+      --add-flags "-Xmx4G" \
+      --add-flags "-XX:+CrashOnOutOfMemoryError" \
+      --add-flags "-Djava.net.preferIPv4Addresses=true" \
+      --add-flags "-Djava.net.preferIPv4Stack=true" \
       --add-flags "com.linbit.linstor.core.Satellite"
 
     runHook postInstall

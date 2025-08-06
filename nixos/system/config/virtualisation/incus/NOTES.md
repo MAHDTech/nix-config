@@ -37,6 +37,7 @@ _A multi-stage saga to avoid circular dependencies._
 
 **Purpose:** Verify the system is ready for deployment.
 
+1. ✅ Setup your storage on each node.
 1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to check a few things before we begin.
 
 **Expected Result:**

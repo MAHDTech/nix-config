@@ -28,6 +28,12 @@ in
       controller = {
         enable = mkEnableOption "LINSTOR controller service";
 
+        logLevel = mkOption {
+          type = types.str;
+          default = "INFO";
+          description = "Log level for LINSTOR controller";
+        };
+
         port = mkOption {
           type = types.int;
           default = 3370;
@@ -49,10 +55,10 @@ in
         database = {
           type = mkOption {
             type = types.enum [
-              "h2"
-              "postgresql"
-              "mariadb"
               "etcd"
+              "h2"
+              "mariadb"
+              "postgresql"
             ];
             default = "h2";
             description = "Database backend type";
@@ -84,6 +90,12 @@ in
 
       satellite = {
         enable = mkEnableOption "LINSTOR satellite service";
+
+        logLevel = mkOption {
+          type = types.str;
+          default = "INFO";
+          description = "Log level for LINSTOR satellite";
+        };
 
         controllerEndpoint = mkOption {
           type = types.str;
@@ -198,7 +210,7 @@ in
         cfg.serverPackage
         cfg.clientPackage
 
-        # DRBD utilities (version 9.x)
+        # DRBD utilities (version 9.x+)
         drbd
 
         # LVM tools including thin provisioning
@@ -224,6 +236,10 @@ in
         e2fsprogs
         xfsprogs
         btrfs-progs
+
+        # Systemd utilities
+        systemd
+        sdnotify-wrapper
       ];
 
       # Create users and groups
@@ -303,7 +319,7 @@ in
 
         # Create data directory
         "d ${cfg.dataDir} 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.dataDir}/storage-pools 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.dataDir}/storage-pool 0755 ${cfg.user} ${cfg.group} -"
 
         # Create metadata directory
         "d ${cfg.metadataDir} 0755 ${cfg.user} ${cfg.group} -"
@@ -336,6 +352,14 @@ in
 
         environment = {
           LS_KEEP_RES = "1";
+          PATH = lib.mkForce (
+            lib.makeBinPath [
+              "/run/current-system/sw/bin" # NixOS default path
+              pkgs.coreutils # basic utilities
+              pkgs.sdnotify-wrapper # systemd-notify wrapper
+              pkgs.systemd # systemd
+            ]
+          );
         };
 
         script = ''
@@ -345,11 +369,14 @@ in
             --config-directory=${cfg.configDir}/controller \
             --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port} \
             --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure} \
+            --log-level=${cfg.controller.logLevel} \
+            --log-level-linstor=${cfg.controller.logLevel} \
             --logs=${cfg.logsDir}/controller
         '';
 
         serviceConfig = {
           Type = "notify";
+          TimeoutStartSec = "5m";
           User = cfg.user;
           Group = cfg.group;
           ExecStartPre = pkgs.writeShellScript "linstor-controller-setup" ''
@@ -365,11 +392,8 @@ in
             "129"
           ];
 
-          # Security settings
-          NoNewPrivileges = true;
+          # Reduced security settings to match official service
           PrivateTmp = true;
-          ProtectHome = true;
-          ProtectSystem = "strict";
           ReadWritePaths = [
             cfg.configDir
             cfg.dataDir
@@ -411,24 +435,26 @@ in
           PATH = lib.mkForce (
             lib.makeBinPath [
               "/run/current-system/sw/bin" # NixOS default path
+              pkgs.btrfs-progs # Btrfs file system utilities
               pkgs.coreutils # basic utilities
+              pkgs.cryptsetup # cryptsetup for LUKS support
               pkgs.drbd # drbdadm, drbdsetup, drbdmeta
+              pkgs.e2fsprogs # file system utilities
               pkgs.findutils # find
               pkgs.gawk # awk
               pkgs.gnugrep # grep
               pkgs.gnused # sed
               pkgs.kmod # modprobe
-              pkgs.lvm2 # lvm, pvcreate, vgcreate, lvcreate, etc.
-              pkgs.thin-provisioning-tools # thin_check, thin_repair
-              pkgs.procps # ps, pgrep
-              pkgs.util-linux # lsblk, blkid, mount, umount
-              pkgs.zfs # zfs, zpool
-              pkgs.cryptsetup # cryptsetup for LUKS support
               pkgs.lsscsi # lsscsi for SCSI device listing
+              pkgs.lvm2 # lvm, pvcreate, vgcreate, lvcreate, etc.
               pkgs.nvme-cli # nvme command for NVMe support
-              pkgs.e2fsprogs # file system utilities
+              pkgs.procps # ps, pgrep
+              pkgs.sdnotify-wrapper # systemd-notify wrapper
+              pkgs.systemd # systemd
+              pkgs.thin-provisioning-tools # thin_check, thin_repair
+              pkgs.util-linux # lsblk, blkid, mount, umount
               pkgs.xfsprogs # XFS file system utilities
-              pkgs.btrfs-progs # Btrfs file system utilities
+              pkgs.zfs # zfs, zpool
             ]
           );
         };
@@ -440,11 +466,14 @@ in
             --config-directory=${cfg.configDir}/satellite \
             --bind-address=${cfg.satellite.bind} \
             --port=${toString cfg.satellite.port} \
+            --log-level=${cfg.satellite.logLevel} \
+            --log-level-linstor=${cfg.satellite.logLevel} \
             --logs=${cfg.logsDir}/satellite
         '';
 
         serviceConfig = {
           Type = "simple";
+          TimeoutStartSec = "5m";
           User = cfg.user;
           Group = cfg.group;
           ExecStartPre = pkgs.writeShellScript "linstor-satellite-setup" ''

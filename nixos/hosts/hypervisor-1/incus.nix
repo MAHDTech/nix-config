@@ -14,7 +14,7 @@ let
 
   incus = {
     # Flag to indicate if the hypervisor has joined the incus cluster.
-    joined = true;
+    joined = false;
 
     # The incus server role.
     role = "bootstrap";
@@ -41,7 +41,7 @@ let
 
   ovn = {
     # Flag to indicate if the hypervisor has joined the ovn cluster.
-    joined = true;
+    joined = false;
 
     # IP addresses of all OVN cluster members.
     clusterAddresses = [
