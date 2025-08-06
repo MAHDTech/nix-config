@@ -62,9 +62,9 @@ let
 
     # Resource group configuration for Incus storage pools
     resourceGroup = {
-      name = "incus-rg"; # LINSTOR resource group name
+      name = "linstor"; # LINSTOR resource group name
       placeCount = 3; # 3 replicas across the hypervisor cluster
-      storagePool = "incus"; # The LINSTOR storage pool name on satellite nodes
+      storagePool = "linstor"; # The LINSTOR storage pool name on satellite nodes
     };
 
     # Volume configuration

@@ -170,15 +170,60 @@ in
 
     (mkIf (cfg.controller.enable || cfg.satellite.enable) {
 
-      # Ensure DRBD kernel module is loaded
-      boot.kernelModules = [ "drbd" ];
+      # Ensure LINSTOR required kernel modules are loaded.
+      boot.kernelModules = [
+        # DRBD 9.x for replication
+        "drbd"
+        "drbd_transport_tcp"
 
-      # Required system packages
+        # Device Mapper modules for various storage layers
+        "dm-writecache"
+        "dm-cache"
+        "dm-thin-pool"
+
+        # NVMe over RDMA support
+        "nvmet"
+        "nvmet_rdma"
+        "nvme_rdma"
+
+        # Block cache support
+        "bcache"
+
+        # LUKS encryption support
+        "dm-crypt"
+      ];
+
+      # Ensure LINSTOR required system packages are installed.
       environment.systemPackages = with pkgs; [
         cfg.serverPackage
         cfg.clientPackage
+
+        # DRBD utilities (version 9.x)
         drbd
+
+        # LVM tools including thin provisioning
         lvm2
+        thin-provisioning-tools
+
+        # Encryption support
+        cryptsetup
+
+        # SCSI utilities
+        lsscsi
+
+        # ZFS utilities (usually already included but ensure they're available)
+        zfs
+
+        # NVMe utilities
+        nvme-cli
+
+        # Block device utilities
+        util-linux
+
+        # File system utilities
+        e2fsprogs
+        xfsprogs
+        btrfs-progs
       ];
 
       # Create users and groups

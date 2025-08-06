@@ -1,4 +1,3 @@
-{ pkgs, ... }:
 {
   imports = [
     ../../system/config/storage/linstor
@@ -61,13 +60,7 @@
   # Storage Dependencies
   #########################################################
 
-  # Ensure DRBD module is loaded (required for LINSTOR)
-  boot.kernelModules = [ "drbd" ];
-
-  # Install DRBD utilities
-  environment.systemPackages = with pkgs; [
-    drbd
-  ];
+  # Storage dependencies are now handled by the main LINSTOR module
 
   #########################################################
   # ZFS Datasets for LINSTOR

@@ -27,7 +27,7 @@
     resourceGroup = {
       name = "incus"; # Name of the LINSTOR resource group (default: "incus")
       placeCount = 2; # Number of diskful replicas (default: 2)
-      storagePool = "default"; # The LINSTOR storage pool name on satellite nodes
+      storagepool = "linstor"; # The LINSTOR storage pool name on satellite nodes
     };
 
     # Volume configuration options
@@ -356,110 +356,84 @@ let
             #########################################################
 
             ###########################
-            # Default profile
-            ###########################
-            {
-              name = "default";
-              description = "Default profile";
-              project = "default";
-              config = {
-                "limits.cpu" = 2;
-                "limits.memory" = "2GiB";
-              };
-              devices = {
-                root = {
-                  path = "/";
-                  pool = "default";
-                  type = "disk";
-                };
-                eth0 = {
-                  name = "eth0";
-                  # Network and nictype are mutually exclusive.
-                  network = "incusbr0";
-                  type = "nic";
-                };
-              };
-            }
-
-            ###########################
             # System Containers
             ###########################
-            {
-              name = "system-containers";
-              description = "System Containers profile";
-              project = "default";
-              config = {
-                "limits.cpu" = 2;
-                "limits.memory" = "2GiB";
-              };
-              devices = {
-                root = {
-                  path = "/";
-                  pool = "instances";
-                  type = "disk";
-                };
-                eth0 = {
-                  name = "eth0";
-                  # Network and nictype are mutually exclusive.
-                  network = "incusbr1";
-                  type = "nic";
-                };
-              };
-            }
+            #{
+            #  name = "system-containers";
+            #  description = "System Containers profile";
+            #  project = "default";
+            #  config = {
+            #    "limits.cpu" = 2;
+            #    "limits.memory" = "2GiB";
+            #  };
+            #  devices = {
+            #    root = {
+            #      path = "/";
+            #      pool = "linstor";
+            #      type = "disk";
+            #    };
+            #    eth0 = {
+            #      name = "eth0";
+            #      # Network and nictype are mutually exclusive.
+            #      network = "incusbr1";
+            #      type = "nic";
+            #    };
+            #  };
+            #}
 
             ###########################
             # Application Containers
             ###########################
-            {
-              name = "application-containers";
-              description = "Application Containers profile";
-              project = "default";
-              config = {
-                "limits.cpu" = 2;
-                "limits.memory" = "2GiB";
-              };
-              devices = {
-                root = {
-                  path = "/";
-                  pool = "instances";
-                  type = "disk";
-                };
-                eth0 = {
-                  name = "eth0";
-                  # Network and nictype are mutually exclusive.
-                  network = "incusbr1";
-                  type = "nic";
-                };
-              };
-            }
+            #{
+            #  name = "application-containers";
+            #  description = "Application Containers profile";
+            #  project = "default";
+            #  config = {
+            #    "limits.cpu" = 2;
+            #    "limits.memory" = "2GiB";
+            #  };
+            #  devices = {
+            #    root = {
+            #      path = "/";
+            #      pool = "linstor";
+            #      type = "disk";
+            #    };
+            #    eth0 = {
+            #      name = "eth0";
+            #      # Network and nictype are mutually exclusive.
+            #      network = "incusbr1";
+            #      type = "nic";
+            #    };
+            #  };
+            #}
 
             ###########################
             # Virtual Machines
             ###########################
-            {
-              name = "virtual-machines";
-              description = "Virtual Machines profile";
-              project = "default";
-              config = {
-                "limits.cpu" = 4;
-                "limits.memory" = "4GiB";
-                "security.nesting" = false;
-                "security.secureboot" = false;
-              };
-              devices = {
-                root = {
-                  path = "/";
-                  pool = "instances";
-                  type = "disk";
-                };
-                eth0 = {
-                  name = "eth0";
-                  # Network and nictype are mutually exclusive.
-                  network = "incusbr1";
-                  type = "nic";
-                };
-              };
-            }
+            #{
+            #  name = "virtual-machines";
+            #  description = "Virtual Machines profile";
+            #  project = "default";
+            #  config = {
+            #    "limits.cpu" = 4;
+            #    "limits.memory" = "4GiB";
+            #    "security.nesting" = false;
+            #    "security.secureboot" = false;
+            #  };
+            #  devices = {
+            #    root = {
+            #      path = "/";
+            #      pool = "linstor";
+            #      type = "disk";
+            #    };
+            #    eth0 = {
+            #      name = "eth0";
+            #      # Network and nictype are mutually exclusive.
+            #      network = "incusbr1";
+            #      type = "nic";
+            #    };
+            #  };
+            #}
 
             #########################################################
             # Nutanix Project Profiles
@@ -468,33 +442,33 @@ let
             ###########################
             # Hypervisors profile
             ###########################
-            {
-              name = "hypervisors";
-              description = "Profile for nested hypervisors";
-              project = "nutanix";
-              config = {
-                "limits.cpu" = 8;
-                "limits.memory" = "32GiB";
-                "security.nesting" = true;
-                "security.secureboot" = false;
-                "security.syscalls.intercept.mknod" = true;
-                "security.syscalls.intercept.setxattr" = true;
-                "security.syscalls.intercept.sysinfo" = true;
-              };
-              devices = {
-                root = {
-                  path = "/";
-                  pool = "instances";
-                  type = "disk";
-                };
-                eth0 = {
-                  name = "eth0";
-                  # Network and nictype are mutually exclusive.
-                  network = "nutanix-vpc";
-                  type = "nic";
-                };
-              };
-            }
+            #{
+            #  name = "hypervisors";
+            #  description = "Profile for nested hypervisors";
+            #  project = "nutanix";
+            #  config = {
+            #    "limits.cpu" = 8;
+            #    "limits.memory" = "32GiB";
+            #    "security.nesting" = true;
+            #    "security.secureboot" = false;
+            #    "security.syscalls.intercept.mknod" = true;
+            #    "security.syscalls.intercept.setxattr" = true;
+            #    "security.syscalls.intercept.sysinfo" = true;
+            #  };
+            #  devices = {
+            #    root = {
+            #      path = "/";
+            #      pool = "linstor";
+            #      type = "disk";
+            #    };
+            #    eth0 = {
+            #      name = "eth0";
+            #      # Network and nictype are mutually exclusive.
+            #      network = "nutanix-vpc";
+            #      type = "nic";
+            #    };
+            #  };
+            #}
           ]
         else
           [ ];
@@ -524,7 +498,7 @@ let
             #  type = "custom";
             #  description = "NCE-01 CVM storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "250GiB";
             #  };
@@ -535,7 +509,7 @@ let
             #  type = "custom";
             #  description = "NCE-01 DATA storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "500GiB";
             #  };
@@ -550,7 +524,7 @@ let
             #  type = "custom";
             #  description = "NCE-02 CVM storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "250GiB";
             #  };
@@ -561,7 +535,7 @@ let
             #  type = "custom";
             #  description = "NCE-02 DATA storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "500GiB";
             #  };
@@ -576,7 +550,7 @@ let
             #  type = "custom";
             #  description = "NCE-03 CVM storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "250GiB";
             #  };
@@ -587,7 +561,7 @@ let
             #  type = "custom";
             #  description = "NCE-03 DATA storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "500GiB";
             #  };
@@ -602,7 +576,7 @@ let
             #  type = "custom";
             #  description = "NCE-04 CVM storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "250GiB";
             #  };
@@ -613,7 +587,7 @@ let
             #  type = "custom";
             #  description = "NCE-04 DATA storage volume";
             #  project = "nutanix";
-            #  pool = "instances";
+            #  pool = "linstor";
             #  config = {
             #    size = "500GiB";
             #  };
