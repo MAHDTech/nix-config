@@ -116,6 +116,12 @@ in
             default = "0.0.0.0";
             description = "IP address to bind the satellite to";
           };
+
+          zfsPool = mkOption {
+            type = types.str;
+            default = "zpool";
+            description = "ZFS pool to use for LINSTOR storage pool";
+          };
         };
 
         #########################################################
@@ -486,7 +492,7 @@ in
             extraGroups = [
               "disk"
               "lvm"
-            ]; # Add storage-related groups
+            ];
           };
         };
       };
@@ -540,30 +546,109 @@ in
               command = "${pkgs.zfs}/bin/zpool";
               options = [ "NOPASSWD" ];
             }
+            {
+              command = "${pkgs.zfs}/bin/zfs list";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "${pkgs.zfs}/bin/zfs create";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "${pkgs.zfs}/bin/zfs destroy";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "${pkgs.zfs}/bin/zfs set";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "${pkgs.zfs}/bin/zfs get";
+              options = [ "NOPASSWD" ];
+            }
           ];
         }
       ];
 
       # Create data directory
-      systemd.tmpfiles.rules = [
-        # Create configuration directory
-        "d ${cfg.common.configDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
-        "d ${cfg.common.configDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
-        "d ${cfg.common.configDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
+      systemd = {
 
-        # Create data directory
-        "d ${cfg.common.dataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
-        "d ${cfg.common.dataDir}/storage-pool 0755 ${cfg.common.user} ${cfg.common.group} -"
+        tmpfiles.rules = [
+          # Create configuration directory
+          "d ${cfg.common.configDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d ${cfg.common.configDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d ${cfg.common.configDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
 
-        # Create metadata directory
-        "d ${cfg.common.metadataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
-        "d ${cfg.common.metadataDir}/.backup 0755 ${cfg.common.user} ${cfg.common.group} -"
+          # Create data directory
+          "d ${cfg.common.dataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d ${cfg.common.dataDir}/storage-pool 0755 ${cfg.common.user} ${cfg.common.group} -"
 
-        # Create logs directory
-        "d ${cfg.common.logsDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
-        "d ${cfg.common.logsDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
-        "d ${cfg.common.logsDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
-      ];
+          # Create metadata directory
+          "d ${cfg.common.metadataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d ${cfg.common.metadataDir}/.backup 0755 ${cfg.common.user} ${cfg.common.group} -"
+
+          # Create logs directory
+          "d ${cfg.common.logsDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d ${cfg.common.logsDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d ${cfg.common.logsDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
+        ];
+
+        services = {
+
+          # Configure ZFS delegation for linstor user.
+          linstor-zfs-delegation = {
+            description = "Configure ZFS delegation for LINSTOR";
+
+            wantedBy = [ "multi-user.target" ];
+            before = [ "linstor-satellite.service" ];
+            requires = [
+              "zfs-import.target"
+              "zfs-mount.service"
+            ];
+            after = [
+              "zfs-import.target"
+              "zfs-mount.service"
+            ];
+
+            script = ''
+              ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.user} user and ${cfg.common.group} group..."
+
+              # Wait for the ZFS pool to be available.
+              while ! ${pkgs.zfs}/bin/zfs list -r ${cfg.satellite.zfsPool} >/dev/null 2>&1;
+              do
+                ${pkgs.coreutils}/bin/echo "Waiting for ZFS pool ${cfg.satellite.zfsPool} to be available..."
+                sleep 5
+              done
+              ${pkgs.coreutils}/bin/echo "ZFS pool ${cfg.satellite.zfsPool} is available, delegating permissions..."
+
+              # Grant the user permissions on the storage-pool dataset.
+              ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.user} user on dataset: ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool"
+
+              ${pkgs.zfs}/bin/zfs allow \
+                -u ${cfg.common.user} \
+                create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused \
+                ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool
+
+              # Grant the group permissions on the storage-pool dataset.
+              ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.group} group on dataset: ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool"
+
+              ${pkgs.zfs}/bin/zfs allow \
+                -g ${cfg.common.group} \
+                create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused \
+                ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool
+
+              ${pkgs.coreutils}/bin/echo "ZFS delegation configured for ${cfg.common.user} user and group ${cfg.common.group}."
+            '';
+
+            serviceConfig = {
+              Type = "oneshot";
+              User = "root";
+              Group = "root";
+              RemainAfterExit = true;
+            };
+          };
+        };
+      };
     })
 
     #########################################################
@@ -578,7 +663,7 @@ in
         after = [
           "network.target"
           "var-lib-linstor.mount"
-          "zfs-import.service"
+          "zfs-import.target"
           "zfs-mount.service"
         ];
         requires = [
@@ -664,7 +749,7 @@ in
           "network.target"
           "var-lib-linstor.d.mount"
           "var-lib-linstor.mount"
-          "zfs-import.service"
+          "zfs-import.target"
           "zfs-mount.service"
         ];
         requires = [
@@ -724,9 +809,11 @@ in
             ${pkgs.coreutils}/bin/echo "Executing setup script for LINSTOR satellite"
 
             # Ensure the DRBD 9 kernel module is loaded before LINSTOR starts
-            ${pkgs.kmod}/bin/modprobe drbd9 || {
+            if ${pkgs.kmod}/bin/modprobe drbd9; then
+              ${pkgs.coreutils}/bin/echo "INFO: DRBD 9 kernel module loaded successfully"
+            else
               ${pkgs.coreutils}/bin/echo "WARNING: Failed to load DRBD 9 kernel module"
-            }
+            fi
           '';
           WorkingDirectory = "${cfg.common.configDir}/satellite";
           Restart = "on-failure";
