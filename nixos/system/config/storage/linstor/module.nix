@@ -19,153 +19,274 @@ in
 
   options = {
 
-    services.linstor = {
+    services = {
 
-      #########################################################
-      # Controller options
-      #########################################################
+      linstor = {
 
-      controller = {
-        enable = mkEnableOption "LINSTOR controller service";
+        #########################################################
+        # Controller options
+        #########################################################
 
-        logLevel = mkOption {
-          type = types.str;
-          default = "INFO";
-          description = "Log level for LINSTOR controller";
-        };
+        controller = {
+          enable = mkEnableOption "LINSTOR controller service";
 
-        port = mkOption {
-          type = types.int;
-          default = 3370;
-          description = "Port for LINSTOR controller REST API";
-        };
-
-        portSecure = mkOption {
-          type = types.int;
-          default = 3371;
-          description = "Port for LINSTOR controller REST API (secure)";
-        };
-
-        bind = mkOption {
-          type = types.str;
-          default = "0.0.0.0";
-          description = "IP address to bind the controller to";
-        };
-
-        database = {
-          type = mkOption {
-            type = types.enum [
-              "etcd"
-              "h2"
-              "mariadb"
-              "postgresql"
-            ];
-            default = "h2";
-            description = "Database backend type";
+          logLevel = mkOption {
+            type = types.str;
+            default = "INFO";
+            description = "Log level for LINSTOR controller";
           };
 
-          connectionUrl = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Database connection URL (required if not using embedded H2)";
+          port = mkOption {
+            type = types.int;
+            default = 3370;
+            description = "Port for LINSTOR controller REST API";
+          };
+
+          portSecure = mkOption {
+            type = types.int;
+            default = 3371;
+            description = "Port for LINSTOR controller REST API (secure)";
+          };
+
+          bind = mkOption {
+            type = types.str;
+            default = "0.0.0.0";
+            description = "IP address to bind the controller to";
+          };
+
+          database = {
+            type = mkOption {
+              type = types.enum [
+                "etcd"
+                "h2"
+                "mariadb"
+                "postgresql"
+              ];
+              default = "h2";
+              description = "Database backend type";
+            };
+
+            connectionUrl = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Database connection URL (required if not using embedded H2)";
+            };
+
+            user = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Database username";
+            };
+
+            passwordFile = mkOption {
+              type = types.nullOr types.path;
+              default = null;
+              description = "File containing database password";
+            };
+          };
+        };
+
+        #########################################################
+        # Satellite options
+        #########################################################
+
+        satellite = {
+          enable = mkEnableOption "LINSTOR satellite service";
+
+          logLevel = mkOption {
+            type = types.str;
+            default = "INFO";
+            description = "Log level for LINSTOR satellite";
+          };
+
+          controllerEndpoint = mkOption {
+            type = types.str;
+            default = "linstor://localhost:3370";
+            description = "LINSTOR controller endpoint for satellite to connect to";
+          };
+
+          port = mkOption {
+            type = types.int;
+            default = 3366;
+            description = "Port for LINSTOR satellite communication";
+          };
+
+          bind = mkOption {
+            type = types.str;
+            default = "0.0.0.0";
+            description = "IP address to bind the satellite to";
+          };
+        };
+
+        #########################################################
+        # DRBD options
+        #########################################################
+
+        drbd = {
+          enable = mkEnableOption "DRBD service for LINSTOR";
+
+          config = mkOption {
+            type = types.lines;
+            default = ''
+              #########################################################
+              # Default DRBD configuration for LINSTOR
+              #########################################################
+
+              # Global DRBD settings
+              global {
+
+                # Disable DRBD's own logging, let systemd handle it
+                usage-count no;
+
+              }
+
+              # Common settings for all resources
+              common {
+
+                # Protocol A for maximum performance (no replication guarantees)
+                # Protocol B for synchronous replication (default)
+                # Protocol C for synchronous replication with write ordering
+                protocol C;
+
+                # Startup settings
+                startup {
+                  wfc-timeout 0;
+                  degr-wfc-timeout 120;
+                  outdated-wfc-timeout 120;
+                }
+
+                # Disk settings
+                disk {
+
+                  # Enable disk flushes to ensure data hits stable storage (critical for reliability)
+                  disk-flushes yes;
+
+                  # Enable disk barriers for ordered writes (prevents corruption on failure)
+                  disk-barrier yes;
+
+                  # Enable disk drain to wait for I/O completion
+                  disk-drain yes;
+
+                  # Enable md-flushes for metadata integrity
+                  md-flushes yes;
+
+                  # Add I/O error handling: Detach on error and go diskless (safe default)
+                  on-io-error detach;
+
+                  # Prevent network saturation
+                  resync-rate 512M;
+
+                  # Define the minimum resync rate
+                  c-min-rate 4096;
+
+                }
+
+                # Net settings
+                net {
+
+                  # Timeout settings
+                  connect-int 10;
+                  timeout 60;
+                  ko-count 4;
+
+                  # Buffer settings
+                  sndbuf-size 0;
+                  rcvbuf-size 0;
+
+                  # Disable allow-two-primaries unless needed for dual-primary (e.g., live migration); requires fencing
+                  # allow-two-primaries;  # Comment out for single-primary safety (default)
+
+                  # Use a stronger default HMAC algorithm
+                  cram-hmac-alg "sha256";
+
+                  # Generate a unique shared secret (e.g., via `openssl rand -hex 32`); do not hardcode
+                  #shared-secret "your-unique-generated-secret-here";  # Replace with a secure value (default)
+
+                  # Split-brain policies
+                  after-sb-0pri discard-zero-changes;
+                  after-sb-1pri consensus;
+                  after-sb-2pri disconnect;
+
+                  # Enable replication traffic integrity checking (e.g., with SHA-256) to detect corruption
+                  data-integrity-alg sha256;
+
+                  # Enable TLS for encrypted replication (requires DRBD 9.2.6+ and keys in /etc/tlshd.conf)
+                  #tls yes;
+
+                  # Add verification algorithm for online integrity checks
+                  verify-alg sha256;
+
+                  # Add ping settings for keep-alive (explicit defaults for clarity)
+                  ping-int 10;
+                  ping-timeout 5;
+
+                }
+              }
+            '';
+            description = "DRBD configuration. This will be merged with any additional user configuration.";
+          };
+
+          extraConfig = mkOption {
+            type = types.lines;
+            default = "";
+            description = "Additional DRBD configuration to merge with the default config";
+          };
+        };
+
+        #########################################################
+        # Common options
+        #########################################################
+
+        common = {
+
+          serverPackage = mkOption {
+            type = types.package;
+            default = linstor-server;
+            description = "LINSTOR server package to use";
+          };
+
+          clientPackage = mkOption {
+            type = types.package;
+            default = linstor-client;
+            description = "LINSTOR client package to use";
           };
 
           user = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Database username";
+            type = types.str;
+            default = "linstor";
+            description = "User to run LINSTOR services as";
           };
 
-          passwordFile = mkOption {
-            type = types.nullOr types.path;
-            default = null;
-            description = "File containing database password";
+          group = mkOption {
+            type = types.str;
+            default = "linstor";
+            description = "Group to run LINSTOR services as";
+          };
+
+          configDir = mkOption {
+            type = types.path;
+            default = "/etc/linstor";
+            description = "Configuration directory for LINSTOR";
+          };
+
+          dataDir = mkOption {
+            type = types.path;
+            default = "/var/lib/linstor";
+            description = "Data directory for LINSTOR";
+          };
+
+          metadataDir = mkOption {
+            type = types.path;
+            default = "/var/lib/linstor.d";
+            description = "Metadata directory for LINSTOR";
+          };
+
+          logsDir = mkOption {
+            type = types.path;
+            default = "/var/log/linstor";
+            description = "Logs directory for LINSTOR";
           };
         };
-      };
-
-      #########################################################
-      # Satellite options
-      #########################################################
-
-      satellite = {
-        enable = mkEnableOption "LINSTOR satellite service";
-
-        logLevel = mkOption {
-          type = types.str;
-          default = "INFO";
-          description = "Log level for LINSTOR satellite";
-        };
-
-        controllerEndpoint = mkOption {
-          type = types.str;
-          default = "linstor://localhost:3370";
-          description = "LINSTOR controller endpoint for satellite to connect to";
-        };
-
-        port = mkOption {
-          type = types.int;
-          default = 3366;
-          description = "Port for LINSTOR satellite communication";
-        };
-
-        bind = mkOption {
-          type = types.str;
-          default = "0.0.0.0";
-          description = "IP address to bind the satellite to";
-        };
-      };
-
-      #########################################################
-      # Common options
-      #########################################################
-
-      serverPackage = mkOption {
-        type = types.package;
-        default = linstor-server;
-        description = "LINSTOR server package to use";
-      };
-
-      clientPackage = mkOption {
-        type = types.package;
-        default = linstor-client;
-        description = "LINSTOR client package to use";
-      };
-
-      user = mkOption {
-        type = types.str;
-        default = "linstor";
-        description = "User to run LINSTOR services as";
-      };
-
-      group = mkOption {
-        type = types.str;
-        default = "linstor";
-        description = "Group to run LINSTOR services as";
-      };
-
-      configDir = mkOption {
-        type = types.path;
-        default = "/etc/linstor";
-        description = "Configuration directory for LINSTOR";
-      };
-
-      dataDir = mkOption {
-        type = types.path;
-        default = "/var/lib/linstor";
-        description = "Data directory for LINSTOR";
-      };
-
-      metadataDir = mkOption {
-        type = types.path;
-        default = "/var/lib/linstor.d";
-        description = "Metadata directory for LINSTOR";
-      };
-
-      logsDir = mkOption {
-        type = types.path;
-        default = "/var/log/linstor";
-        description = "Logs directory for LINSTOR";
       };
     };
   };
@@ -177,41 +298,145 @@ in
   config = mkMerge [
 
     #########################################################
+    # DRBD Configuration
+    #########################################################
+
+    (mkIf cfg.drbd.enable {
+
+      # Enable DRBD service
+      services = {
+
+        # HACK: Disable DRBD service and use our own configuration.
+        # This is because the DRBD service doesn't use the out-of-tree DRBD 9 kernel module.
+        # TODO: Re-look at this in future.
+        drbd = {
+          enable = lib.mkForce false;
+          config = cfg.drbd.config + cfg.drbd.extraConfig;
+        };
+
+        udev = {
+          packages = with pkgs; [
+            drbd
+          ];
+        };
+
+      };
+
+      boot = {
+
+        # HACK: Force use of an LTS kernel to ensure we have DRBD 9 support.
+        kernelPackages = lib.mkForce pkgs.linuxPackages_6_12; # LTS
+
+        # Load DRBD 9 out-of-tree kernel module from linuxKernel.packages
+        extraModulePackages = with config.boot.kernelPackages; [ drbd ];
+
+        extraModprobeConfig = ''
+          options drbd usermode_helper=/run/current-system/sw/bin/drbdadm
+        '';
+
+        # Blacklist the old DRBD in-tree kernel module
+        blacklistedKernelModules = [ "drbd" ];
+
+        # Load the DRBD 9 out-of-tree kernel module
+        kernelModules = [ "drbd9" ];
+
+      };
+
+      environment = {
+
+        etc = {
+
+          # The DRBD configuration file.
+          "drbd.conf" = {
+            source = pkgs.writeText "drbd.conf" (cfg.drbd.config + cfg.drbd.extraConfig);
+          };
+
+        };
+
+        # Add DRBD utilities to system packages
+        systemPackages = with pkgs; [
+          drbd
+        ];
+
+      };
+
+      systemd = {
+
+        services = {
+
+          #drbd = {
+          #  after = [
+          #    "network.target"
+          #    "systemd-udev.settle.service"
+          #  ];
+          #  wants = [ "systemd-udev.settle.service" ];
+          #  wantedBy = [ "multi-user.target" ];
+          #  script = ''
+          #    if ! ${pkgs.drbd}/bin/drbdadm up all;
+          #    then
+          #      ${pkgs.coreutils}/bin/echo "WARNING: Failed to bring up DRBD resources."
+          #    else
+          #      ${pkgs.coreutils}/bin/echo "DRBD resources brought up successfully."
+          #    fi
+          #  '';
+          #  serviceConfig = {
+          #    Type = "oneshot";
+          #    User = "root";
+          #    Group = "root";
+          #    #ExecStart = lib.mkForce "${pkgs.drbd}/bin/drbdadm up all";
+          #    ExecStop = lib.mkForce "${pkgs.drbd}/bin/drbdadm down all";
+          #    SuccessExitStatus = [ "0" ];
+          #    Restart = "on-failure";
+          #    RestartSec = "30s";
+          #    KillMode = "mixed";
+          #  };
+          #};
+
+          linstor-satellite = {
+            # Ensure DRBD module is loaded before LINSTOR satellite starts
+            after = [
+              "systemd-modules-load.service"
+            ];
+          };
+
+        };
+
+      };
+    })
+
+    #########################################################
     # Common configuration
     #########################################################
 
     (mkIf (cfg.controller.enable || cfg.satellite.enable) {
 
-      # Ensure LINSTOR required kernel modules are loaded.
-      boot.kernelModules = [
-        # DRBD 9.x for replication
-        "drbd"
-        "drbd_transport_tcp"
+      boot = {
 
-        # Device Mapper modules for various storage layers
-        "dm-writecache"
-        "dm-cache"
-        "dm-thin-pool"
+        # Ensure LINSTOR required kernel modules are loaded.
+        kernelModules = [
+          # Device Mapper modules for various storage layers
+          "dm-writecache"
+          "dm-cache"
+          "dm-thin-pool"
 
-        # NVMe over RDMA support
-        "nvmet"
-        "nvmet_rdma"
-        "nvme_rdma"
+          # NVMe over RDMA support
+          "nvmet"
+          "nvmet_rdma"
+          "nvme_rdma"
 
-        # Block cache support
-        "bcache"
+          # Block cache support
+          "bcache"
 
-        # LUKS encryption support
-        "dm-crypt"
-      ];
+          # LUKS encryption support
+          "dm-crypt"
+        ];
+
+      };
 
       # Ensure LINSTOR required system packages are installed.
       environment.systemPackages = with pkgs; [
-        cfg.serverPackage
-        cfg.clientPackage
-
-        # DRBD utilities (version 9.x+)
-        drbd
+        cfg.common.serverPackage
+        cfg.common.clientPackage
 
         # LVM tools including thin provisioning
         lvm2
@@ -248,15 +473,15 @@ in
         groups = {
           lvm = { }; # Ensure LVM group exists
           disk = { }; # Ensure disk group exists
-          ${cfg.group} = { }; # Ensure linstor group exists
+          ${cfg.common.group} = { }; # Ensure linstor group exists
         };
 
         users = {
-          ${cfg.user} = {
+          ${cfg.common.user} = {
             isSystemUser = true;
-            inherit (cfg) group;
+            inherit (cfg.common) group;
             description = "LINSTOR service user";
-            home = cfg.dataDir;
+            home = cfg.common.dataDir;
             createHome = true;
             extraGroups = [
               "disk"
@@ -269,7 +494,7 @@ in
       # Allow linstor user to perform storage operations
       security.sudo.extraRules = [
         {
-          users = [ cfg.user ];
+          users = [ cfg.common.user ];
           commands = [
             # Storage discovery and management
             {
@@ -297,6 +522,15 @@ in
               command = "${pkgs.drbd}/bin/drbdmeta";
               options = [ "NOPASSWD" ];
             }
+            # Kernel module operations
+            {
+              command = "${pkgs.kmod}/bin/modprobe";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "${pkgs.kmod}/bin/rmmod";
+              options = [ "NOPASSWD" ];
+            }
             # ZFS operations
             {
               command = "${pkgs.zfs}/bin/zfs";
@@ -313,22 +547,22 @@ in
       # Create data directory
       systemd.tmpfiles.rules = [
         # Create configuration directory
-        "d ${cfg.configDir} 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.configDir}/controller 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.configDir}/satellite 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.common.configDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+        "d ${cfg.common.configDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
+        "d ${cfg.common.configDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
 
         # Create data directory
-        "d ${cfg.dataDir} 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.dataDir}/storage-pool 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.common.dataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+        "d ${cfg.common.dataDir}/storage-pool 0755 ${cfg.common.user} ${cfg.common.group} -"
 
         # Create metadata directory
-        "d ${cfg.metadataDir} 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.metadataDir}/.backup 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.common.metadataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+        "d ${cfg.common.metadataDir}/.backup 0755 ${cfg.common.user} ${cfg.common.group} -"
 
         # Create logs directory
-        "d ${cfg.logsDir} 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.logsDir}/controller 0755 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.logsDir}/satellite 0755 ${cfg.user} ${cfg.group} -"
+        "d ${cfg.common.logsDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
+        "d ${cfg.common.logsDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
+        "d ${cfg.common.logsDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
       ];
     })
 
@@ -344,6 +578,8 @@ in
         after = [
           "network.target"
           "var-lib-linstor.mount"
+          "zfs-import.service"
+          "zfs-mount.service"
         ];
         requires = [
           "network.target"
@@ -365,24 +601,28 @@ in
         script = ''
           ${pkgs.coreutils}/bin/echo "Starting LINSTOR Controller"
 
-          ${cfg.serverPackage}/bin/linstor-controller \
-            --config-directory=${cfg.configDir}/controller \
+          ${cfg.common.serverPackage}/bin/linstor-controller \
+            --config-directory=${cfg.common.configDir}/controller \
             --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port} \
             --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure} \
             --log-level=${cfg.controller.logLevel} \
             --log-level-linstor=${cfg.controller.logLevel} \
-            --logs=${cfg.logsDir}/controller
+            --logs=${cfg.common.logsDir}/controller
         '';
 
         serviceConfig = {
-          Type = "notify";
+          #Type = "notify"; # TODO: Fix systemd-notify.
+          Type = "simple";
           TimeoutStartSec = "5m";
-          User = cfg.user;
-          Group = cfg.group;
+          User = cfg.common.user;
+          Group = cfg.common.group;
           ExecStartPre = pkgs.writeShellScript "linstor-controller-setup" ''
             ${pkgs.coreutils}/bin/echo "Executing setup script for LINSTOR controller"
+
+            # HACK: Add an artificial delay to workaround controller first-boot issues.
+            ${pkgs.coreutils}/bin/sleep 30
           '';
-          WorkingDirectory = "${cfg.configDir}/controller";
+          WorkingDirectory = "${cfg.common.configDir}/controller";
           Restart = "on-failure";
           RestartSec = "30s";
           KillMode = "mixed";
@@ -395,9 +635,9 @@ in
           # Reduced security settings to match official service
           PrivateTmp = true;
           ReadWritePaths = [
-            cfg.configDir
-            cfg.dataDir
-            cfg.logsDir
+            cfg.common.configDir
+            cfg.common.dataDir
+            cfg.common.logsDir
           ];
         };
       };
@@ -421,13 +661,16 @@ in
         after = [
           "network.target"
           "lvm2-monitor.service"
-          "var-lib-linstor.mount"
+          "network.target"
           "var-lib-linstor.d.mount"
+          "var-lib-linstor.mount"
+          "zfs-import.service"
+          "zfs-mount.service"
         ];
         requires = [
           "network.target"
-          "var-lib-linstor.mount"
           "var-lib-linstor.d.mount"
+          "var-lib-linstor.mount"
         ];
 
         environment = {
@@ -462,24 +705,30 @@ in
         script = ''
           ${pkgs.coreutils}/bin/echo "Starting LINSTOR Satellite"
 
-          ${cfg.serverPackage}/bin/linstor-satellite \
-            --config-directory=${cfg.configDir}/satellite \
+          ${cfg.common.serverPackage}/bin/linstor-satellite \
+            --config-directory=${cfg.common.configDir}/satellite \
             --bind-address=${cfg.satellite.bind} \
             --port=${toString cfg.satellite.port} \
             --log-level=${cfg.satellite.logLevel} \
             --log-level-linstor=${cfg.satellite.logLevel} \
-            --logs=${cfg.logsDir}/satellite
+            --logs=${cfg.common.logsDir}/satellite
         '';
 
         serviceConfig = {
+          #Type = "notify"; # TODO: Fix systemd-notify.
           Type = "simple";
           TimeoutStartSec = "5m";
-          User = cfg.user;
-          Group = cfg.group;
+          User = cfg.common.user;
+          Group = cfg.common.group;
           ExecStartPre = pkgs.writeShellScript "linstor-satellite-setup" ''
             ${pkgs.coreutils}/bin/echo "Executing setup script for LINSTOR satellite"
+
+            # Ensure the DRBD 9 kernel module is loaded before LINSTOR starts
+            ${pkgs.kmod}/bin/modprobe drbd9 || {
+              ${pkgs.coreutils}/bin/echo "WARNING: Failed to load DRBD 9 kernel module"
+            }
           '';
-          WorkingDirectory = "${cfg.configDir}/satellite";
+          WorkingDirectory = "${cfg.common.configDir}/satellite";
           Restart = "on-failure";
           RestartSec = "30s";
           KillMode = "mixed";
@@ -490,15 +739,18 @@ in
           ];
 
           # Security settings
-          NoNewPrivileges = true;
+          NoNewPrivileges = false; # Allow privilege escalation for kernel module loading
           PrivateTmp = true;
           ProtectHome = true;
           ProtectSystem = "strict";
+          # Add capability to load kernel modules
+          AmbientCapabilities = [ "CAP_SYS_MODULE" ];
+          CapabilityBoundingSet = [ "CAP_SYS_MODULE" ];
           ReadWritePaths = [
-            cfg.configDir
-            cfg.dataDir
-            cfg.metadataDir
-            cfg.logsDir
+            cfg.common.configDir
+            cfg.common.dataDir
+            cfg.common.metadataDir
+            cfg.common.logsDir
           ];
         };
       };

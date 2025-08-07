@@ -47,7 +47,7 @@ in
     # Wiki https://nixos.wiki/wiki/Linux_kernel
     #kernelPackages = pkgs.linuxPackages_latest;
     # Kernel (Pinned version) https://kernel.org/
-    #kernelPackages = pkgs.linuxPackages_6_15;
+    #kernelPackages = pkgs.linuxPackages_6_12; # LTS
     kernelPackages = latestZFSKernelPackage;
 
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.

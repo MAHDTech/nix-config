@@ -7,6 +7,7 @@
   - [Overview](#overview)
   - [Prerequisites](#prerequisites)
   - [File Structure](#file-structure)
+  - [Example](#example)
   - [Deployment Steps](#deployment-steps)
     - [Deploy to Nodes](#deploy-to-nodes)
     - [Initialize LINSTOR Cluster](#initialize-linstor-cluster)
@@ -18,14 +19,21 @@
 
 ## Overview
 
-An initial implementation of LINSTOR for NixOS.
+An initial implementation of LINSTOR for NixOS. LINSTOR manages DRBD (Distributed Replicated Block Device) resources automatically to provide replicated storage across multiple nodes.
+
+**Key Concepts:**
+
+- **LINSTOR Controller**: Manages the cluster and creates DRBD resources
+- **LINSTOR Satellite**: Runs on each storage node, manages local storage
+- **DRBD Resources**: Block devices that are replicated between nodes (created automatically by LINSTOR)
+- **Storage Pools**: Backend storage (ZFS, LVM, etc.) that LINSTOR uses to create DRBD resources
 
 ## Prerequisites
 
 - NixOS systems with flakes enabled.
 - At least one controller node and one or more satellite nodes.
-- ZFS pools pre-configured on each node if using ZFS for storage (e.g., create a ZFS dataset at `zpool/var/lib/linstor/storage-pool` on each node beforehand).
-- Ensure firewall rules allow communication on ports used by LINSTOR (default: 3366 for controller, 3376-3377 for API, etc.).
+- ZFS pools pre-configured on each node if using ZFS for storage.
+- Ensure firewall rules allow communication on ports used by LINSTOR (default: 3366 for satellite, 3370-3371 for controller, 7000-7999 for DRBD).
 
 ## File Structure
 
@@ -36,6 +44,23 @@ linstor/
 ├── default.nix             # 🔧 IMPORT: module imports
 └── README.md               # 📖 DOCUMENTATION: This file
 ```
+
+## Example
+
+In this example, we have 4 nodes:
+
+- hypervisor-1: controller and satellite
+- hypervisor-2: satellite
+- hypervisor-3: satellite
+- hypervisor-4: satellite
+
+Each node has the following ZFS datasets:
+
+| ZFS Dataset                        | Mountpoint                    | Description                                 |
+| ---------------------------------- | ----------------------------- | ------------------------------------------- |
+| zpool/var/lib/linstor              | /var/lib/linstor              | LINSTOR data and controller database        |
+| zpool/var/lib/linstor.d            | /var/lib/linstor.d            | LINSTOR metadata                            |
+| zpool/var/lib/linstor/storage-pool | /var/lib/linstor/storage-pool | LINSTOR storage pool (ZFS backend for DRBD) |
 
 ## Deployment Steps
 
@@ -57,6 +82,7 @@ After deployment, verify that the LINSTOR services are running:
 
 - On the controller: `systemctl status linstor-controller`
 - On satellites: `systemctl status linstor-satellite`
+- DRBD service: `systemctl status drbd` (should show "no resources defined!" - this is normal)
 
 ### Initialize LINSTOR Cluster
 
@@ -79,6 +105,9 @@ linstor node create hypervisor-4 10.10.200.14 --node-type satellite
 # Verify all nodes are registered and online
 linstor node list
 
+# Verify the nodes have the required packages
+linstor node info
+
 # NOTE: To change a node type, run the following command:
 # linstor node modify <node-name> --node-type <node-type>
 # node-type can be: controller, satellite, combined
@@ -99,7 +128,7 @@ sudo zfs create -o mountpoint=/var/lib/linstor zpool/var/lib/linstor
 # Create a ZFS dataset for LINSTOR metadata
 sudo zfs create -o mountpoint=/var/lib/linstor.d zpool/var/lib/linstor.d
 
-# Create a ZFS dataset for LINSTOR storage pool
+# Create a ZFS dataset for LINSTOR storage pool (this will be the backend for DRBD)
 sudo zfs create -o mountpoint=/var/lib/linstor/storage-pool zpool/var/lib/linstor/storage-pool
 
 # Verify the dataset exists
@@ -108,10 +137,11 @@ zfs list | grep linstor
 
 ### Create Storage Pools
 
-Define storage pools on each node using the ZFS datasets created above.
+**IMPORTANT:** This step creates LINSTOR storage pools that use ZFS as the backend. LINSTOR will then create DRBD resources on top of these storage pools.
 
 ```bash
-# Create a LINSTOR storage pool backed by the ZFS dataset on each node.
+# Create LINSTOR storage pools using ZFS as backend on each node
+# This tells LINSTOR to use the ZFS dataset as storage for DRBD resources
 linstor storage-pool create zfs hypervisor-1 linstor zpool/var/lib/linstor/storage-pool
 linstor storage-pool create zfs hypervisor-2 linstor zpool/var/lib/linstor/storage-pool
 linstor storage-pool create zfs hypervisor-3 linstor zpool/var/lib/linstor/storage-pool
@@ -123,10 +153,11 @@ linstor storage-pool list
 
 ### Create Resource Group
 
-Create a resource group for Incus containers with replication:
+Create a resource group for replicated volumes:
 
 ```bash
-# Create a resource group named 'incus' with 3-way replication
+# Create a resource group named 'linstor' with 3-way replication
+# This means each volume will be replicated to 3 nodes
 linstor resource-group create linstor \
   --storage-pool linstor \
   --place-count 3
@@ -146,16 +177,30 @@ linstor volume-group list linstor
 Run the following to create and cleanup a test resources.
 
 ```bash
-# Create a test resource
-linstor resource-group spawn linstor linstor-test 1GiB
+# Create a test resource (this will create DRBD resources automatically)
+linstor resource-group spawn linstor linstor-test-volume 1GiB
 
 # Verify the resource was created
 linstor resource list
 
+# Check DRBD status (should now show resources!)
+drbdadm status
+
 # Cleanup the test resource
-linstor resource-definition delete linstor-test
+linstor resource-definition delete linstor-test-volume
 ```
 
 ### Create Volumes
 
-Once storage pools and resource groups are set up, you can configure the incus module to dynamically create volumes as needed.
+Once storage pools and resource groups are set up, you can create volumes that will be automatically replicated. These can be managed by incus, or manually with these commands:
+
+```bash
+# Create a volume with 3-way replication
+linstor resource-group spawn linstor linstor-volume-1 10GiB
+
+# List all resources
+linstor resource list
+
+# Check DRBD status to see the replicated resources
+drbdadm status
+```
