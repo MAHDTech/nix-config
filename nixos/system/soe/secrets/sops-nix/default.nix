@@ -76,7 +76,7 @@ in
           CLOUDFLARE_DNS_API_TOKEN="${config.sops.placeholder."incus/acme/cloudflare/dnsApiToken"}"
           CLOUDFLARE_POLLING_INTERVAL="3"
           CLOUDFLARE_PROPAGATION_TIMEOUT="900"
-          CLOUDFLARE_TTL="60"
+          CLOUDFLARE_TTL="120"
         '';
       };
 

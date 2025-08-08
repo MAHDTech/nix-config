@@ -14,7 +14,7 @@ let
 
   incus = {
     # Flag to indicate if the hypervisor has joined the incus cluster.
-    joined = false;
+    joined = true;
 
     # The incus server role.
     role = "bootstrap";
@@ -41,7 +41,7 @@ let
 
   ovn = {
     # Flag to indicate if the hypervisor has joined the ovn cluster.
-    joined = false;
+    joined = true;
 
     # IP addresses of all OVN cluster members.
     clusterAddresses = [
@@ -57,8 +57,7 @@ let
   ################################
 
   linstor = {
-    # Enable LINSTOR when ready.
-    enabled = false;
+    enabled = true;
 
     # Resource group configuration for Incus storage pools
     resourceGroup = {
@@ -81,7 +80,7 @@ let
 
     # Controller connection (using local controller on this node)
     controller = {
-      connection = null; # Use local controller
+      connection = "http://10.10.200.11:3370";
     };
   };
 

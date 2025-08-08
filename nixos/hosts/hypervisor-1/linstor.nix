@@ -36,6 +36,13 @@
     };
 
     #########################################################
+    # Web UI (GUI) configuration
+    #########################################################
+
+    # NOTE: The Web UI (GUI) needs the controller to be running to work.
+    gui.enable = true;
+
+    #########################################################
     # DRBD Configuration
     #########################################################
 
@@ -46,7 +53,7 @@
         # Extra DRBD configuration for LINSTOR
         #########################################################
 
-        # TODO: Add extra DRBD configuration.
+        # TODO: Add extra DRBD configuration here...
       '';
     };
   };

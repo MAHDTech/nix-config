@@ -25,7 +25,7 @@
 
     # Main resource group configuration for Incus storage pools
     resourceGroup = {
-      name = "incus"; # Name of the LINSTOR resource group (default: "incus")
+      name = "linstor"; # Name of the LINSTOR resource group (default: "incus")
       placeCount = 2; # Number of diskful replicas (default: 2)
       storagepool = "linstor"; # The LINSTOR storage pool name on satellite nodes
     };
@@ -44,7 +44,7 @@
 
     # Controller connection (if needed to override defaults)
     controller = {
-      connection = null; # LINSTOR controller endpoint (default: use local controller)
+      connection = null;
     };
   },
 }:
@@ -98,15 +98,15 @@ let
   linstorResourceGroupStoragePool = linstor.resourceGroup.storagePool;
 
   # Volume settings
-  #linstorVolumePrefix = linstor.volume.prefix;
+  linstorVolumePrefix = linstor.volume.prefix;
 
   # DRBD settings
-  #linstorDrbdOnNoQuorum = linstor.drbd.onNoQuorum;
-  #linstorDrbdAutoDiskful = linstor.drbd.autoDiskful;
-  #linstorDrbdAutoAddQuorumTiebreaker = linstor.drbd.autoAddQuorumTiebreaker;
+  linstorDrbdOnNoQuorum = linstor.drbd.onNoQuorum;
+  linstorDrbdAutoDiskful = linstor.drbd.autoDiskful;
+  linstorDrbdAutoAddQuorumTiebreaker = linstor.drbd.autoAddQuorumTiebreaker;
 
   # Controller settings
-  #linstorControllerConnection = linstor.controller.connection;
+  linstorControllerConnection = linstor.controller.connection;
 
   #########################
   # OVN configuration
@@ -193,7 +193,7 @@ let
             "acme.email" = "acme@saltlabs.cloud";
             "acme.provider" = "cloudflare";
             # Bypass any local DNS caching issues.
-            "acme.provider.resolvers" = "1.1.1.1:53,1.0.0.1:53";
+            #"acme.provider.resolvers" = "1.1.1.1:53,1.0.0.1:53";
 
             # Images
             "images.auto_update_interval" = 6;
@@ -204,6 +204,10 @@ let
             # Incus OVN configuration.
             "network.ovn.northbound_connection" =
               if ovnConfig.northbound.addressList != "" then "${ovnConfig.northbound.addressList}" else "";
+
+            # Incus LINSTOR configuration.
+            "storage.linstor.controller_connection" =
+              if linstorControllerConnection != null then "${linstorControllerConnection}" else "";
 
           }
         else
@@ -637,30 +641,20 @@ let
               #########################################################
               # LINSTOR Storage Pools
               #########################################################
+
+              # NOTE: The only fields that can differ on nodes are;
+              # - source
+              # - size
+              # - zfs.pool_name
+              # - lvm.thinpool_name
+              # - lvm.vg_name
+
               #########################
-              # Default storage pool
-              #########################
-              {
-                entity = "storage-pool";
-                name = "default";
-                key = "linstor.resource_group.name";
-                value = linstorResourceGroup;
-              }
-              #########################
-              # Instances storage pool
-              #########################
-              {
-                entity = "storage-pool";
-                name = "instances";
-                key = "linstor.resource_group.name";
-                value = linstorResourceGroup;
-              }
-              #########################
-              # ISO storage pool
+              # LINSTOR storage pool
               #########################
               {
                 entity = "storage-pool";
-                name = "iso";
+                name = linstorResourceGroup;
                 key = "linstor.resource_group.name";
                 value = linstorResourceGroup;
               }
@@ -683,95 +677,26 @@ let
       # Storage pools configuration.
       #########################################################
       storage_pools =
-        # All joined members share the same configuration.
         if incusJoined then
           lib.optionals linstorEnabled [
             #########################################################
-            # LINSTOR Storage Pools
+            # LINSTOR Storage Pool
             #########################################################
-            #########################
-            # Default storage pool.
-            #########################
             {
-              name = "default";
+              name = linstorResourceGroup;
               driver = "linstor";
               config = {
+                "drbd.auto_add_quorum_tiebreaker" = linstorDrbdAutoAddQuorumTiebreaker;
+                "drbd.auto_diskful" = linstorDrbdAutoDiskful;
+                "drbd.on_no_quorum" = linstorDrbdOnNoQuorum;
+                "linstor.remove_snapshots" = true;
                 "linstor.resource_group" = linstorResourceGroup;
                 "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
                 "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
-              };
-            }
-            #########################
-            # Instances storage pool.
-            #########################
-            {
-              name = "instances";
-              driver = "linstor";
-              config = {
-                "linstor.resource_group" = linstorResourceGroup;
-                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
-                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
-              };
-            }
-            #########################
-            # ISO storage pool.
-            #########################
-            {
-              name = "iso";
-              driver = "linstor";
-              config = {
-                "linstor.resource_group" = linstorResourceGroup;
-                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
-                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
+                "linstor.volume_prefix" = linstorVolumePrefix;
               };
             }
           ]
-        # The bootstrap server role requires the source to be set.
-        else if incusRole == "bootstrap" then
-          lib.optionals linstorEnabled [
-            #########################################################
-            # LINSTOR Storage Pools
-            #########################################################
-            #########################
-            # Default storage pool.
-            #########################
-            {
-              name = "default";
-              driver = "linstor";
-              config = {
-                "linstor.resource_group" = linstorResourceGroup;
-                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
-                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
-              };
-            }
-
-            #########################
-            # Instances storage pool.
-            #########################
-            {
-              name = "instances";
-              driver = "linstor";
-              config = {
-                "linstor.resource_group" = linstorResourceGroup;
-                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
-                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
-              };
-            }
-
-            #########################
-            # ISO storage pool.
-            #########################
-            {
-              name = "iso";
-              driver = "linstor";
-              config = {
-                "linstor.resource_group" = linstorResourceGroup;
-                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
-                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
-              };
-            }
-          ]
-        # All non-joined members start with nothing.
         else
           [ ];
     };

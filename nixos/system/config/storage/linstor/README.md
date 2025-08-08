@@ -102,6 +102,9 @@ linstor node create hypervisor-2 10.10.200.12 --node-type satellite
 linstor node create hypervisor-3 10.10.200.13 --node-type satellite
 linstor node create hypervisor-4 10.10.200.14 --node-type satellite
 
+# Disable auto-eviction for satellite nodes (fixed node count).
+linstor controller set-property DrbdOptions/AutoEvictAllowEviction false
+
 # Verify all nodes are registered and online
 linstor node list
 
@@ -160,7 +163,8 @@ Create a resource group for replicated volumes:
 # This means each volume will be replicated to 3 nodes
 linstor resource-group create linstor \
   --storage-pool linstor \
-  --place-count 3
+  --place-count 3 \
+  --diskless-on-remaining true
 
 # Verify the resource group was created
 linstor resource-group list
@@ -177,10 +181,11 @@ linstor volume-group list linstor
 Run the following to create and cleanup a test resources.
 
 ```bash
-# Create a test resource (this will create DRBD resources automatically)
+# Create a test resource definition (this will create DRBD resources automatically)
 linstor resource-group spawn linstor linstor-test-volume 1GiB
 
-# Verify the resource was created
+# Verify the resource definition was created and DRBD resources were created.
+linstor resource-definition list
 linstor resource list
 
 # Check DRBD status (should now show resources!)
@@ -188,6 +193,10 @@ drbdadm status
 
 # Cleanup the test resource
 linstor resource-definition delete linstor-test-volume
+
+# Verigy cleanup
+linstor resource-definition list
+linstor resource list
 ```
 
 ### Create Volumes

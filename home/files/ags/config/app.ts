@@ -3970,8 +3970,8 @@ function Launcher() {
                       jsx2(Help_default, { plugins: plugs, visible: showHelp(), onClicked: selectPlugin }),
                       plugs((plugins2) =>
                         Object.values(plugins2)
-                          .filter((i) => i?.ui)
-                          .map((i) => i.ui)
+                          .filter((i) => i?.gui)
+                          .map((i) => i.gui)
                       ),
                     ],
                   }),

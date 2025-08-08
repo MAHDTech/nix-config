@@ -11,6 +11,7 @@ let
   cfg = config.services.linstor;
   linstor-server = pkgs.callPackage ./packages/server.nix { };
   linstor-client = pkgs.callPackage ./packages/client.nix { };
+  linstor-gui = pkgs.callPackage ./packages/gui.nix { };
 in
 {
   #########################################################
@@ -125,6 +126,21 @@ in
         };
 
         #########################################################
+        # Web UI (GUI) options
+        #########################################################
+
+        # NOTE: The Web UI (GUI) needs the controller to be running to work.
+        gui = {
+          enable = mkEnableOption "Enable LINSTOR web UI (GUI)";
+
+          package = mkOption {
+            type = types.package;
+            default = linstor-gui;
+            description = "Package providing LINSTOR Web UI (GUI) assets (linstor-gui)";
+          };
+        };
+
+        #########################################################
         # DRBD options
         #########################################################
 
@@ -228,6 +244,13 @@ in
 
                 }
               }
+
+              #########################################################
+              # LINSTOR integration
+              #########################################################
+
+              # Include LINSTOR-generated DRBD resource definitions
+              include "/var/lib/linstor.d/*.res";
             '';
             description = "DRBD configuration. This will be merged with any additional user configuration.";
           };
@@ -323,6 +346,7 @@ in
         udev = {
           packages = with pkgs; [
             drbd
+            zfs
           ];
         };
 
@@ -369,34 +393,6 @@ in
       systemd = {
 
         services = {
-
-          #drbd = {
-          #  after = [
-          #    "network.target"
-          #    "systemd-udev.settle.service"
-          #  ];
-          #  wants = [ "systemd-udev.settle.service" ];
-          #  wantedBy = [ "multi-user.target" ];
-          #  script = ''
-          #    if ! ${pkgs.drbd}/bin/drbdadm up all;
-          #    then
-          #      ${pkgs.coreutils}/bin/echo "WARNING: Failed to bring up DRBD resources."
-          #    else
-          #      ${pkgs.coreutils}/bin/echo "DRBD resources brought up successfully."
-          #    fi
-          #  '';
-          #  serviceConfig = {
-          #    Type = "oneshot";
-          #    User = "root";
-          #    Group = "root";
-          #    #ExecStart = lib.mkForce "${pkgs.drbd}/bin/drbdadm up all";
-          #    ExecStop = lib.mkForce "${pkgs.drbd}/bin/drbdadm down all";
-          #    SuccessExitStatus = [ "0" ];
-          #    Restart = "on-failure";
-          #    RestartSec = "30s";
-          #    KillMode = "mixed";
-          #  };
-          #};
 
           linstor-satellite = {
             # Ensure DRBD module is loaded before LINSTOR satellite starts
@@ -591,10 +587,13 @@ in
           "d ${cfg.common.logsDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
           "d ${cfg.common.logsDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
           "d ${cfg.common.logsDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
+
+          # Ensure DRBD runtime directories exist for locking/metadata helpers
+          "d /var/run/drbd 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d /var/run/drbd/lock 0755 ${cfg.common.user} ${cfg.common.group} -"
         ];
 
         services = {
-
           # Configure ZFS delegation for linstor user.
           linstor-zfs-delegation = {
             description = "Configure ZFS delegation for LINSTOR";
@@ -621,12 +620,18 @@ in
               done
               ${pkgs.coreutils}/bin/echo "ZFS pool ${cfg.satellite.zfsPool} is available, delegating permissions..."
 
+              # TODO: /dev/zfs is already 0666, so we don't need to grant access to the group?
+              # Grant access to /dev/zfs for the linstor group
+              #${pkgs.coreutils}/bin/echo "Setting /dev/zfs permissions for group ${cfg.common.group}..."
+              #chgrp ${cfg.common.group} /dev/zfs
+              #chmod 660 /dev/zfs
+
               # Grant the user permissions on the storage-pool dataset.
               ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.user} user on dataset: ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool"
 
               ${pkgs.zfs}/bin/zfs allow \
                 -u ${cfg.common.user} \
-                create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused \
+                create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused,refreservation,volsize,volblocksize,reservation,quota,refquota \
                 ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool
 
               # Grant the group permissions on the storage-pool dataset.
@@ -634,7 +639,7 @@ in
 
               ${pkgs.zfs}/bin/zfs allow \
                 -g ${cfg.common.group} \
-                create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused \
+                create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused,refreservation,volsize,volblocksize,reservation,quota,refquota \
                 ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool
 
               ${pkgs.coreutils}/bin/echo "ZFS delegation configured for ${cfg.common.user} user and group ${cfg.common.group}."
@@ -683,29 +688,38 @@ in
           );
         };
 
-        script = ''
-          ${pkgs.coreutils}/bin/echo "Starting LINSTOR Controller"
-
-          ${cfg.common.serverPackage}/bin/linstor-controller \
-            --config-directory=${cfg.common.configDir}/controller \
-            --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port} \
-            --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure} \
-            --log-level=${cfg.controller.logLevel} \
-            --log-level-linstor=${cfg.controller.logLevel} \
-            --logs=${cfg.common.logsDir}/controller
-        '';
-
         serviceConfig = {
           #Type = "notify"; # TODO: Fix systemd-notify.
           Type = "simple";
           TimeoutStartSec = "5m";
           User = cfg.common.user;
           Group = cfg.common.group;
-          ExecStartPre = pkgs.writeShellScript "linstor-controller-setup" ''
-            ${pkgs.coreutils}/bin/echo "Executing setup script for LINSTOR controller"
+          ExecStartPre = pkgs.writeShellScript "linstor-controller-pre-start" ''
+            ${pkgs.coreutils}/bin/echo "Executing pre-start script for LINSTOR controller"
 
             # HACK: Add an artificial delay to workaround controller first-boot issues.
             ${pkgs.coreutils}/bin/sleep 30
+          '';
+          ExecStart = pkgs.writeShellScript "linstor-controller-start" ''
+            ${pkgs.coreutils}/bin/echo "Executing start script for LINSTOR controller"
+
+            EXTRA_FLAGS=""
+            if [ "${toString cfg.gui.enable}" = "1" ] || [ "${toString cfg.gui.enable}" = "true" ];
+            then
+              EXTRA_FLAGS="--webui-directory=${cfg.gui.package}/share/linstor-gui"
+            fi
+
+            ${cfg.common.serverPackage}/bin/linstor-controller \
+              $EXTRA_FLAGS \
+              --config-directory=${cfg.common.configDir}/controller \
+              --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port} \
+              --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure} \
+              --log-level=${cfg.controller.logLevel} \
+              --log-level-linstor=${cfg.controller.logLevel} \
+              --logs=${cfg.common.logsDir}/controller
+          '';
+          ExecStartPost = pkgs.writeShellScript "linstor-controller-post-start" ''
+            ${pkgs.coreutils}/bin/echo "Executing post-start script for LINSTOR controller"
           '';
           WorkingDirectory = "${cfg.common.configDir}/controller";
           Restart = "on-failure";
@@ -787,26 +801,14 @@ in
           );
         };
 
-        script = ''
-          ${pkgs.coreutils}/bin/echo "Starting LINSTOR Satellite"
-
-          ${cfg.common.serverPackage}/bin/linstor-satellite \
-            --config-directory=${cfg.common.configDir}/satellite \
-            --bind-address=${cfg.satellite.bind} \
-            --port=${toString cfg.satellite.port} \
-            --log-level=${cfg.satellite.logLevel} \
-            --log-level-linstor=${cfg.satellite.logLevel} \
-            --logs=${cfg.common.logsDir}/satellite
-        '';
-
         serviceConfig = {
           #Type = "notify"; # TODO: Fix systemd-notify.
           Type = "simple";
           TimeoutStartSec = "5m";
-          User = cfg.common.user;
-          Group = cfg.common.group;
-          ExecStartPre = pkgs.writeShellScript "linstor-satellite-setup" ''
-            ${pkgs.coreutils}/bin/echo "Executing setup script for LINSTOR satellite"
+          User = "root";
+          Group = "root";
+          ExecStartPre = pkgs.writeShellScript "linstor-satellite-pre-start" ''
+            ${pkgs.coreutils}/bin/echo "Executing pre-start script for LINSTOR satellite"
 
             # Ensure the DRBD 9 kernel module is loaded before LINSTOR starts
             if ${pkgs.kmod}/bin/modprobe drbd9; then
@@ -814,6 +816,20 @@ in
             else
               ${pkgs.coreutils}/bin/echo "WARNING: Failed to load DRBD 9 kernel module"
             fi
+          '';
+          ExecStart = pkgs.writeShellScript "linstor-satellite-start" ''
+            ${pkgs.coreutils}/bin/echo "Executing start script for LINSTOR satellite"
+
+            ${cfg.common.serverPackage}/bin/linstor-satellite \
+              --config-directory=${cfg.common.configDir}/satellite \
+              --bind-address=${cfg.satellite.bind} \
+              --port=${toString cfg.satellite.port} \
+              --log-level=${cfg.satellite.logLevel} \
+              --log-level-linstor=${cfg.satellite.logLevel} \
+              --logs=${cfg.common.logsDir}/satellite
+          '';
+          ExecStartPost = pkgs.writeShellScript "linstor-satellite-post-start" ''
+            ${pkgs.coreutils}/bin/echo "Executing post-start script for LINSTOR satellite"
           '';
           WorkingDirectory = "${cfg.common.configDir}/satellite";
           Restart = "on-failure";
@@ -830,14 +846,46 @@ in
           PrivateTmp = true;
           ProtectHome = true;
           ProtectSystem = "strict";
-          # Add capability to load kernel modules
-          AmbientCapabilities = [ "CAP_SYS_MODULE" ];
-          CapabilityBoundingSet = [ "CAP_SYS_MODULE" ];
+          AmbientCapabilities = [
+            "CAP_SYS_ADMIN"
+            "CAP_SYS_MODULE"
+            "CAP_MKNOD"
+            "CAP_DAC_OVERRIDE"
+            "CAP_FOWNER"
+            "CAP_CHOWN"
+            "CAP_NET_ADMIN"
+            "CAP_SYS_RESOURCE"
+          ];
+          CapabilityBoundingSet = [
+            "CAP_SYS_ADMIN"
+            "CAP_SYS_MODULE"
+            "CAP_MKNOD"
+            "CAP_DAC_OVERRIDE"
+            "CAP_FOWNER"
+            "CAP_CHOWN"
+            "CAP_NET_ADMIN"
+            "CAP_SYS_RESOURCE"
+          ];
+          #DevicePolicy = "closed";
+          #DeviceAllow = [
+          #  "/dev/zfs rwm"
+          #  "/dev/zvol/* rwm"
+          #  "/dev/zd* rwm"
+          #  "/dev/drbd rwm"
+          #  "/dev/drbd* rwm"
+          #  "/dev/mapper/* rwm"
+          #  "/dev/loop-control rwm"
+          #  "/dev/loop* rwm"
+          #  "/dev/nvme* rwm"
+          #  "/dev/sd* rwm"
+          #  "block/* rwm"  # block devices
+          #];
           ReadWritePaths = [
             cfg.common.configDir
             cfg.common.dataDir
             cfg.common.metadataDir
             cfg.common.logsDir
+            "/var/run/drbd"
           ];
         };
       };
@@ -848,5 +896,25 @@ in
       ];
 
     })
+
+    #########################################################
+    # Web UI (GUI) configuration
+    #########################################################
+
+    (mkIf cfg.gui.enable (mkMerge [
+
+      {
+        assertions = [
+          {
+            assertion = cfg.controller.enable;
+            message = "services.linstor.gui.enable requires services.linstor.controller.enable = true";
+          }
+        ];
+      }
+
+      {
+        environment.systemPackages = [ cfg.gui.package ];
+      }
+    ]))
   ];
 }

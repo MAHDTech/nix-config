@@ -42,7 +42,7 @@ let
 
   ovn = {
     # Flag to indicate if the hypervisor has joined the ovn cluster.
-    joined = false;
+    joined = true;
 
     # IP addresses of all OVN cluster members.
     clusterAddresses = [
@@ -58,15 +58,13 @@ let
   ################################
 
   linstor = {
-
-    # TODO: Configure LINSTOR before enabling.
-    enabled = false;
+    enabled = true;
 
     # Resource group configuration for Incus storage pools
     resourceGroup = {
-      name = "incus-rg"; # LINSTOR resource group name
+      name = "linstor"; # LINSTOR resource group name
       placeCount = 3; # 3 replicas across the hypervisor cluster
-      storagePool = "incus"; # The LINSTOR storage pool name on satellite nodes
+      storagePool = "linstor"; # The LINSTOR storage pool name on satellite nodes
     };
 
     # Volume configuration
@@ -83,7 +81,7 @@ let
 
     # Controller connection (using controller on hypervisor-1)
     controller = {
-      connection = null; # Use remote controller
+      connection = "http://10.10.200.11:3370";
     };
   };
 

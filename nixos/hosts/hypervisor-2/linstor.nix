@@ -14,7 +14,7 @@
     #########################################################
 
     controller = {
-      enable = true;
+      enable = false;
       bind = "0.0.0.0";
       port = 3370;
       portSecure = 3371;
@@ -46,7 +46,7 @@
         # Extra DRBD configuration for LINSTOR
         #########################################################
 
-        # TODO: Add extra DRBD configuration.
+        # TODO: Add extra DRBD configuration here...
       '';
     };
   };

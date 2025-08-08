@@ -10,12 +10,19 @@ set -uo pipefail
 
 # Service names to check
 declare -r SERVICES=(
+	# Incus services
 	"incus.service"
 	"incus-preseed.service"
+
+	# OVN services
 	"ovn-controller.service"
 	"ovn-central.service"
 	"ovn-southbound-db.service"
 	"ovn-northbound-db.service"
+
+	# LINSTOR services
+	#"linstor-controller.service" # Only on hypervisor-1 atm.
+	"linstor-satellite.service"
 )
 
 # Required tools.
@@ -25,6 +32,7 @@ declare -r REQUIRED_TOOLS=(
 	"ovn-nbctl"
 	"ovn-sbctl"
 	"ovs-vsctl"
+	"linstor"
 )
 
 # OVN database socket paths
@@ -50,6 +58,9 @@ CLUSTER_COMMUNICATION_ISSUES=false
 # OVN role tracking variables
 OVN_NB_ROLE="unknown"
 OVN_SB_ROLE="unknown"
+
+# LINSTOR Controller
+LINSTOR_CONTROLLER_ADDRESS="10.10.200.11:3370"
 
 # Exit handler for cleanup and debugging
 trap 'log "ERROR" "Script exited unexpectedly at line $LINENO. Command: $BASH_COMMAND"' ERR
@@ -521,6 +532,28 @@ function check_ovn_logical_topology() {
 		fi
 	else
 		log "WARN" "⚠ Could not get logical router count"
+	fi
+
+	return 0
+}
+
+function check_linstor_cluster_health() {
+	log "INFO" "Checking LINSTOR cluster health"
+
+	# Check if LINSTOR node is healthy
+	if sudo linstor --controllers ${LINSTOR_CONTROLLER_ADDRESS} node info >/dev/null 2>&1; then
+		log "INFO" "✓ LINSTOR node is healthy"
+	else
+		log "ERROR" "✗ LINSTOR node is not healthy"
+		return 1
+	fi
+
+	# Check if LINSTOR cluster is healthy
+	if sudo linstor --controllers ${LINSTOR_CONTROLLER_ADDRESS} node list >/dev/null 2>&1; then
+		log "INFO" "✓ LINSTOR cluster is healthy"
+	else
+		log "ERROR" "✗ LINSTOR cluster is not healthy"
+		return 1
 	fi
 
 	return 0
@@ -1120,6 +1153,21 @@ function main() {
 		log "DEBUG" "Completed OVN logical topology check"
 	else
 		log "ERROR" "✗ OVN logical topology check failed"
+		((failed_checks++))
+	fi
+
+	# Check LINSTOR cluster health
+	log "INFO" "=== Checking LINSTOR cluster health ==="
+	((total_checks++))
+	log "DEBUG" "Starting LINSTOR cluster health check"
+	set +e
+	check_linstor_cluster_health
+	local check_result=$?
+
+	if [[ $check_result -eq 0 ]]; then
+		log "DEBUG" "Completed LINSTOR cluster health check"
+	else
+		log "ERROR" "✗ LINSTOR cluster health check failed"
 		((failed_checks++))
 	fi
 
