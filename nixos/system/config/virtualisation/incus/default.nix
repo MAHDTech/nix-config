@@ -202,12 +202,12 @@ let
           name = "default";
           description = "Default Incus project";
           config = {
-            "features.images" = "true";
-            "features.networks" = "true";
-            "features.networks.zones" = "true";
-            "features.profiles" = "true";
-            "features.storage.buckets" = "true";
-            "features.storage.volumes" = "true";
+            "features.images" = true;
+            "features.networks" = true;
+            "features.networks.zones" = true;
+            "features.profiles" = true;
+            "features.storage.buckets" = true;
+            "features.storage.volumes" = true;
           };
         }
 
@@ -221,13 +221,13 @@ let
           name = "nutanix";
           description = "Nutanix Community Edition";
           config = {
-            "features.images" = "true";
-            "features.networks" = "true";
-            "features.networks.zones" = "true";
-            "features.profiles" = "true";
-            "features.storage.buckets" = "true";
-            "features.storage.volumes" = "true";
-            "restricted" = "false";
+            "features.images" = true;
+            "features.networks" = true;
+            "features.networks.zones" = true;
+            "features.profiles" = true;
+            "features.storage.buckets" = true;
+            "features.storage.volumes" = true;
+            "restricted" = false;
           };
         }
       ];
@@ -254,9 +254,9 @@ let
             "bridge.driver" = "openvswitch";
             "dns.mode" = "none"; # none, managed, dynamic
             "ipv4.address" = "none";
-            "ipv4.dhcp" = "false";
-            "ipv4.nat" = "false";
-            "ipv4.routing" = "false";
+            "ipv4.dhcp" = false;
+            "ipv4.nat" = false;
+            "ipv4.routing" = false;
             "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
@@ -278,13 +278,13 @@ let
             "dns.domain" = "incus.local";
             "dns.nameservers" = "10.10.200.254";
             "ipv4.address" = "10.10.201.1/24";
-            "ipv4.dhcp" = "true";
+            "ipv4.dhcp" = true;
             "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.150";
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
-            "ipv4.nat" = "false";
+            "ipv4.nat" = false;
             "ipv4.ovn.ranges" = "10.10.201.2-10.10.201.50";
             "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
-            "ipv4.routing" = "true";
+            "ipv4.routing" = true;
             "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
@@ -311,10 +311,10 @@ let
             "dns.domain" = "nutanix.local";
             "dns.nameservers" = "10.10.200.254";
             "ipv4.address" = "10.10.202.1/24";
-            "ipv4.dhcp" = "true";
+            "ipv4.dhcp" = true;
             "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
             "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
-            "ipv4.nat" = "false";
+            "ipv4.nat" = false;
             "ipv6.address" = "none";
             "network" = "incusbr1";
             "security.acls.default.egress.action" = "allow";
@@ -690,12 +690,13 @@ let
               driver = "linstor";
               description = "ISO Storage Pool";
               config = {
-                "drbd.auto_add_quorum_tiebreaker" = "true";
+                "drbd.auto_add_quorum_tiebreaker" = true;
                 "drbd.auto_diskful" = "1h";
                 "drbd.on_no_quorum" = "suspend-io";
                 "linstor.resource_group.name" = "iso";
                 "linstor.resource_group.place_count" = 2;
                 "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
+                #"linstor.volume.prefix" = "iso-volume-";
               };
             }
 
@@ -706,7 +707,7 @@ let
               name = "linstor";
               driver = "linstor";
               config = {
-                "drbd.auto_add_quorum_tiebreaker" = "true";
+                "drbd.auto_add_quorum_tiebreaker" = true;
                 "drbd.auto_diskful" = "1h";
                 "drbd.on_no_quorum" = "suspend-io";
                 "linstor.resource_group.name" = "linstor";

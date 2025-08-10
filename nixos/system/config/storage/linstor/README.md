@@ -178,13 +178,14 @@ linstor resource-group create iso \
 linstor resource-group list
 
 # Create a volume group for the 'linstor' resource group
-linstor volume-group create linstor
+linstor volume-group create linstor --gross
 
 # Create a volume group for the 'iso' resource group
-linstor volume-group create iso
+linstor volume-group create iso --gross
 
-# Verify the volume group
+# Verify the volume groups were created (VG 0)
 linstor volume-group list linstor
+linstor volume-group list iso
 ```
 
 ### Running a test
@@ -205,7 +206,7 @@ drbdadm status
 # Cleanup the test resource
 linstor resource-definition delete linstor-test-volume
 
-# Verigy cleanup
+# Verify cleanup
 linstor resource-definition list
 linstor resource list
 ```
