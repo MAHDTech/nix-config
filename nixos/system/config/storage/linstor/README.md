@@ -16,6 +16,7 @@
     - [Create Resource Group](#create-resource-group)
     - [Running a test](#running-a-test)
     - [Create Volumes](#create-volumes)
+  - [Manual](#manual)
 
 ## Overview
 
@@ -166,11 +167,21 @@ linstor resource-group create linstor \
   --place-count 3 \
   --diskless-on-remaining true
 
+# Create a resource group named 'iso' with 2-way replication
+# This means each volume will be replicated to 2 nodes
+linstor resource-group create iso \
+  --storage-pool linstor \
+  --place-count 2 \
+  --diskless-on-remaining true
+
 # Verify the resource group was created
 linstor resource-group list
 
-# Create a volume group for the resource group
+# Create a volume group for the 'linstor' resource group
 linstor volume-group create linstor
+
+# Create a volume group for the 'iso' resource group
+linstor volume-group create iso
 
 # Verify the volume group
 linstor volume-group list linstor
@@ -201,7 +212,9 @@ linstor resource list
 
 ### Create Volumes
 
-Once storage pools and resource groups are set up, you can create volumes that will be automatically replicated. These can be managed by incus, or manually with these commands:
+Once storage pools and resource groups are set up, you can create volumes that will be automatically replicated.
+
+These can be managed by incus, or manually with these commands:
 
 ```bash
 # Create a volume with 3-way replication
@@ -212,4 +225,34 @@ linstor resource list
 
 # Check DRBD status to see the replicated resources
 drbdadm status
+```
+
+## Manual
+
+Manual steps to create a volume when Incus is being annoying.
+
+```bash
+# Create the storage pool on each Node in a "PENDING" state.
+incus storage create linstor linstor --target HYPERVISOR-1
+incus storage create linstor linstor --target HYPERVISOR-2
+incus storage create linstor linstor --target HYPERVISOR-3
+incus storage create linstor linstor --target HYPERVISOR-4
+
+# Should show as "PENDING"
+incus storage list
+
+# Create the storage pool on each Node in a "CREATED" state.
+incus storage create linstor
+
+# Should show as "CREATED"
+incus storage list
+
+# Configure the storage pool settings.
+incus storage set linstor --property "description" "LINSTOR Storage Pool"
+incus storage set linstor "drbd.auto_add_quorum_tiebreaker" "true"
+incus storage set linstor "drbd.auto_diskful" "1h"
+incus storage set linstor "drbd.on_no_quorum" "suspend-io"
+incus storage set linstor "linstor.resource_group.name" "linstor"
+incus storage set linstor "linstor.resource_group.place_count" "3"
+incus storage set linstor "linstor.resource_group.storage_pool" "linstor"
 ```

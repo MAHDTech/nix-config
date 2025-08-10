@@ -712,11 +712,11 @@ in
             ${cfg.common.serverPackage}/bin/linstor-controller \
               $EXTRA_FLAGS \
               --config-directory=${cfg.common.configDir}/controller \
-              --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port} \
-              --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure} \
-              --log-level=${cfg.controller.logLevel} \
               --log-level-linstor=${cfg.controller.logLevel} \
-              --logs=${cfg.common.logsDir}/controller
+              --log-level=${cfg.controller.logLevel} \
+              --logs=${cfg.common.logsDir}/controller \
+              --rest-bind-secure=${cfg.controller.bind}:${toString cfg.controller.portSecure} \
+              --rest-bind=${cfg.controller.bind}:${toString cfg.controller.port}
           '';
           ExecStartPost = pkgs.writeShellScript "linstor-controller-post-start" ''
             ${pkgs.coreutils}/bin/echo "Executing post-start script for LINSTOR controller"
@@ -821,12 +821,12 @@ in
             ${pkgs.coreutils}/bin/echo "Executing start script for LINSTOR satellite"
 
             ${cfg.common.serverPackage}/bin/linstor-satellite \
-              --config-directory=${cfg.common.configDir}/satellite \
               --bind-address=${cfg.satellite.bind} \
-              --port=${toString cfg.satellite.port} \
-              --log-level=${cfg.satellite.logLevel} \
+              --config-directory=${cfg.common.configDir}/satellite \
               --log-level-linstor=${cfg.satellite.logLevel} \
-              --logs=${cfg.common.logsDir}/satellite
+              --log-level=${cfg.satellite.logLevel} \
+              --logs=${cfg.common.logsDir}/satellite \
+              --port=${toString cfg.satellite.port}
           '';
           ExecStartPost = pkgs.writeShellScript "linstor-satellite-post-start" ''
             ${pkgs.coreutils}/bin/echo "Executing post-start script for LINSTOR satellite"

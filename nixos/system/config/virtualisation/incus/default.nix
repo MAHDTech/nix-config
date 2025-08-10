@@ -20,29 +20,8 @@
     clusterAddresses = [ ];
   },
   linstor ? {
-    # Flag to enable LINSTOR.
     enabled = false;
-
-    # Main resource group configuration for Incus storage pools
-    resourceGroup = {
-      name = "linstor"; # Name of the LINSTOR resource group (default: "incus")
-      placeCount = 2; # Number of diskful replicas (default: 2)
-      storagepool = "linstor"; # The LINSTOR storage pool name on satellite nodes
-    };
-
-    # Volume configuration options
-    volume = {
-      prefix = "incus-volume-"; # Prefix for internal LINSTOR volume names (default: "incus-volume-")
-    };
-
-    # DRBD configuration options (applied to resource group)
-    drbd = {
-      onNoQuorum = null; # DRBD policy when quorum is lost
-      autoDiskful = null; # Duration after which diskless can become diskful
-      autoAddQuorumTiebreaker = true; # Auto-create diskless resources as tiebreakers
-    };
-
-    # Controller connection (if needed to override defaults)
+    storagePool = null;
     controller = {
       connection = null;
     };
@@ -92,21 +71,17 @@ let
   # Flag to enable LINSTOR.
   linstorEnabled = linstor.enabled;
 
-  # Resource Group settings
-  linstorResourceGroup = linstor.resourceGroup.name;
-  linstorResourceGroupPlaceCount = linstor.resourceGroup.placeCount;
-  linstorResourceGroupStoragePool = linstor.resourceGroup.storagePool;
-
-  # Volume settings
-  linstorVolumePrefix = linstor.volume.prefix;
-
-  # DRBD settings
-  linstorDrbdOnNoQuorum = linstor.drbd.onNoQuorum;
-  linstorDrbdAutoDiskful = linstor.drbd.autoDiskful;
-  linstorDrbdAutoAddQuorumTiebreaker = linstor.drbd.autoAddQuorumTiebreaker;
+  # The LINSTOR storage pool name.
+  linstorResourceGroupStoragePool = linstor.storagePool;
 
   # Controller settings
   linstorControllerConnection = linstor.controller.connection;
+
+  # When LINSTOR is enabled, make the LINSTOR packages available.
+  linstorPackages = {
+    linstor-server = pkgs.callPackage ../../storage/linstor/packages/server.nix { };
+    linstor-client = pkgs.callPackage ../../storage/linstor/packages/client.nix { };
+  };
 
   #########################
   # OVN configuration
@@ -166,6 +141,9 @@ let
 
   #########################################################
   # Global configuration
+  #
+  # This configuration is applied to the bootstrap server only.
+  #
   #########################################################
   globalConfig = {
 
@@ -177,305 +155,301 @@ let
       #########################################################
       # Configuration.
       #########################################################
-      config =
-        if incusJoined then
-          {
+      config = {
 
-            # Core
-            "core.shutdown_timeout" = 5;
+        # Configuration for clustered and non-clustered servers.
 
-            # ACME
-            "acme.agree_tos" = true;
-            #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
-            "acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
-            "acme.challenge" = "DNS-01";
-            "acme.domain" = "incus.saltlabs.cloud";
-            "acme.email" = "acme@saltlabs.cloud";
-            "acme.provider" = "cloudflare";
-            # Bypass any local DNS caching issues.
-            #"acme.provider.resolvers" = "1.1.1.1:53,1.0.0.1:53";
+        # Core
+        "core.shutdown_timeout" = 5;
 
-            # Images
-            "images.auto_update_interval" = 6;
+        # Images
+        "images.auto_update_interval" = 6;
 
-            # Allow OVN controller to send logs to incus.
-            "core.syslog_socket" = true;
+        # Allow OVN controller to send logs to incus.
+        "core.syslog_socket" = true;
 
-            # Incus OVN configuration.
-            "network.ovn.northbound_connection" =
-              if ovnConfig.northbound.addressList != "" then "${ovnConfig.northbound.addressList}" else "";
+        # Incus OVN configuration.
+        "network.ovn.northbound_connection" =
+          if ovnConfig.northbound.addressList != "" then "${ovnConfig.northbound.addressList}" else null;
 
-            # Incus LINSTOR configuration.
-            "storage.linstor.controller_connection" =
-              if linstorControllerConnection != null then "${linstorControllerConnection}" else "";
+        # Incus LINSTOR configuration.
+        "storage.linstor.controller_connection" =
+          if linstorControllerConnection != null then "${linstorControllerConnection}" else null;
 
-          }
-        else
-          { };
+      }
+      // lib.optionalAttrs incusJoined {
+
+        # ACME (cluster-only)
+        "acme.agree_tos" = true;
+        #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
+        "acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
+        "acme.challenge" = "DNS-01";
+        "acme.domain" = "incus.saltlabs.cloud";
+        "acme.email" = "acme@saltlabs.cloud";
+        "acme.provider" = "cloudflare";
+
+      };
 
       #########################################################
       # Projects
       #########################################################
-      projects =
-        if incusJoined then
-          [
+      projects = [
 
-            #########################################################
-            # Default project.
-            #########################################################
-            {
-              name = "default";
-              description = "Default Incus project";
-              config = {
-                "features.images" = "true";
-                "features.networks" = "true";
-                "features.networks.zones" = "true";
-                "features.profiles" = "true";
-                "features.storage.buckets" = "true";
-                "features.storage.volumes" = "true";
-              };
-            }
+        #########################################################
+        # Default project.
+        #########################################################
+        {
+          name = "default";
+          description = "Default Incus project";
+          config = {
+            "features.images" = "true";
+            "features.networks" = "true";
+            "features.networks.zones" = "true";
+            "features.profiles" = "true";
+            "features.storage.buckets" = "true";
+            "features.storage.volumes" = "true";
+          };
+        }
 
-            #########################################################
-            # Nutanix project.
-            #########################################################
-            {
-              name = "nutanix";
-              description = "Nutanix Community Edition";
-              config = {
-                "features.images" = "true";
-                "features.networks" = "true";
-                "features.networks.zones" = "true";
-                "features.profiles" = "true";
-                "features.storage.buckets" = "true";
-                "features.storage.volumes" = "true";
-                "restricted" = "false";
-              };
-            }
-          ]
-        else
-          [ ];
+      ]
+      ++ lib.optionals incusJoined [
+
+        #########################################################
+        # Nutanix project.
+        #########################################################
+        {
+          name = "nutanix";
+          description = "Nutanix Community Edition";
+          config = {
+            "features.images" = "true";
+            "features.networks" = "true";
+            "features.networks.zones" = "true";
+            "features.profiles" = "true";
+            "features.storage.buckets" = "true";
+            "features.storage.volumes" = "true";
+            "restricted" = "false";
+          };
+        }
+      ];
 
       #########################################################
       # Networks.
       #########################################################
-      networks =
-        if incusJoined then
-          [
+      networks = [
 
-            #########################################################
-            # Default Project Networks
-            #########################################################
+        #########################################################
+        # Default Project Networks
+        #########################################################
 
-            ###########################
-            # Bridge Network (transparent bridge)
-            #
-            # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
-            ###########################
-            {
-              name = "incusbr0";
-              type = "bridge";
-              project = "default";
-              config = {
-                "bridge.driver" = "openvswitch";
-                "dns.mode" = "none"; # none, managed, dynamic
-                "ipv4.address" = "none";
-                "ipv4.dhcp" = "false";
-                "ipv4.nat" = "false";
-                "ipv4.routing" = "false";
-                "ipv6.address" = "none";
-                "security.acls.default.egress.action" = "allow";
-                "security.acls.default.ingress.action" = "allow";
-              };
-            }
+        ###########################
+        # Bridge Network (transparent bridge)
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
+        ###########################
+        {
+          name = "incusbr0";
+          type = "bridge";
+          project = "default";
+          config = {
+            "bridge.driver" = "openvswitch";
+            "dns.mode" = "none"; # none, managed, dynamic
+            "ipv4.address" = "none";
+            "ipv4.dhcp" = "false";
+            "ipv4.nat" = "false";
+            "ipv4.routing" = "false";
+            "ipv6.address" = "none";
+            "security.acls.default.egress.action" = "allow";
+            "security.acls.default.ingress.action" = "allow";
+          };
+        }
 
-            ###########################
-            # Bridge Network (routed bridge)
-            #
-            # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
-            ###########################
-            {
-              name = "incusbr1";
-              type = "bridge";
-              project = "default";
-              config = {
-                "bridge.driver" = "openvswitch";
-                "dns.mode" = "managed"; # none, managed, dynamic
-                "dns.domain" = "incus.local";
-                "dns.nameservers" = "10.10.200.254";
-                "ipv4.address" = "10.10.201.1/24";
-                "ipv4.dhcp" = "true";
-                "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.150";
-                "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
-                "ipv4.nat" = "false";
-                "ipv4.ovn.ranges" = "10.10.201.2-10.10.201.50";
-                "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
-                "ipv4.routing" = "true";
-                "ipv6.address" = "none";
-                "security.acls.default.egress.action" = "allow";
-                "security.acls.default.ingress.action" = "allow";
-              };
-            }
+        ###########################
+        # Bridge Network (routed bridge)
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
+        ###########################
+        {
+          name = "incusbr1";
+          type = "bridge";
+          project = "default";
+          config = {
+            "bridge.driver" = "openvswitch";
+            "dns.mode" = "managed"; # none, managed, dynamic
+            "dns.domain" = "incus.local";
+            "dns.nameservers" = "10.10.200.254";
+            "ipv4.address" = "10.10.201.1/24";
+            "ipv4.dhcp" = "true";
+            "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.150";
+            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
+            "ipv4.nat" = "false";
+            "ipv4.ovn.ranges" = "10.10.201.2-10.10.201.50";
+            "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
+            "ipv4.routing" = "true";
+            "ipv6.address" = "none";
+            "security.acls.default.egress.action" = "allow";
+            "security.acls.default.ingress.action" = "allow";
+          };
+        }
 
-            #########################################################
-            # Nutanix Project Networks
-            #########################################################
+      ]
+      ++ lib.optionals incusJoined [
 
-            ###########################
-            # Nutanix VPC
-            #
-            # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
-            ###########################
-            {
-              name = "nutanix-vpc";
-              type = "ovn";
-              project = "nutanix";
-              config = {
-                "dns.domain" = "nutanix.local";
-                "dns.nameservers" = "10.10.200.254";
-                "ipv4.address" = "10.10.202.1/24";
-                "ipv4.dhcp" = "true";
-                "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
-                "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
-                "ipv4.nat" = "false";
-                "ipv6.address" = "none";
-                "network" = "incusbr1";
-                "security.acls.default.egress.action" = "allow";
-                "security.acls.default.ingress.action" = "allow";
-              };
-            }
-          ]
-        else
-          [ ];
+        #########################################################
+        # Nutanix Project Networks
+        #########################################################
+
+        ###########################
+        # Nutanix VPC
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
+        ###########################
+        {
+          name = "nutanix-vpc";
+          type = "ovn";
+          project = "nutanix";
+          config = {
+            "dns.domain" = "nutanix.local";
+            "dns.nameservers" = "10.10.200.254";
+            "ipv4.address" = "10.10.202.1/24";
+            "ipv4.dhcp" = "true";
+            "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
+            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
+            "ipv4.nat" = "false";
+            "ipv6.address" = "none";
+            "network" = "incusbr1";
+            "security.acls.default.egress.action" = "allow";
+            "security.acls.default.ingress.action" = "allow";
+          };
+        }
+      ];
 
       #########################################################
       # Profiles.
       #########################################################
-      profiles =
-        if incusJoined then
-          [
+      profiles = [
 
-            #########################################################
-            # Default Project Profiles
-            #########################################################
+        #########################################################
+        # Default Project Profiles
+        #########################################################
 
-            ###########################
-            # System Containers
-            ###########################
-            #{
-            #  name = "system-containers";
-            #  description = "System Containers profile";
-            #  project = "default";
-            #  config = {
-            #    "limits.cpu" = 2;
-            #    "limits.memory" = "2GiB";
-            #  };
-            #  devices = {
-            #    root = {
-            #      path = "/";
-            #      pool = "linstor";
-            #      type = "disk";
-            #    };
-            #    eth0 = {
-            #      name = "eth0";
-            #      # Network and nictype are mutually exclusive.
-            #      network = "incusbr1";
-            #      type = "nic";
-            #    };
-            #  };
-            #}
+        ###########################
+        # System Containers
+        ###########################
+        {
+          name = "system-containers";
+          description = "System Containers profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 2;
+            "limits.memory" = "2GiB";
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "incusbr1";
+              type = "nic";
+            };
+          };
+        }
 
-            ###########################
-            # Application Containers
-            ###########################
-            #{
-            #  name = "application-containers";
-            #  description = "Application Containers profile";
-            #  project = "default";
-            #  config = {
-            #    "limits.cpu" = 2;
-            #    "limits.memory" = "2GiB";
-            #  };
-            #  devices = {
-            #    root = {
-            #      path = "/";
-            #      pool = "linstor";
-            #      type = "disk";
-            #    };
-            #    eth0 = {
-            #      name = "eth0";
-            #      # Network and nictype are mutually exclusive.
-            #      network = "incusbr1";
-            #      type = "nic";
-            #    };
-            #  };
-            #}
+        ###########################
+        # Application Containers
+        ###########################
+        {
+          name = "application-containers";
+          description = "Application Containers profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 2;
+            "limits.memory" = "2GiB";
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "incusbr1";
+              type = "nic";
+            };
+          };
+        }
 
-            ###########################
-            # Virtual Machines
-            ###########################
-            #{
-            #  name = "virtual-machines";
-            #  description = "Virtual Machines profile";
-            #  project = "default";
-            #  config = {
-            #    "limits.cpu" = 4;
-            #    "limits.memory" = "4GiB";
-            #    "security.nesting" = false;
-            #    "security.secureboot" = false;
-            #  };
-            #  devices = {
-            #    root = {
-            #      path = "/";
-            #      pool = "linstor";
-            #      type = "disk";
-            #    };
-            #    eth0 = {
-            #      name = "eth0";
-            #      # Network and nictype are mutually exclusive.
-            #      network = "incusbr1";
-            #      type = "nic";
-            #    };
-            #  };
-            #}
+        ###########################
+        # Virtual Machines
+        ###########################
+        {
+          name = "virtual-machines";
+          description = "Virtual Machines profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 4;
+            "limits.memory" = "4GiB";
+            "security.nesting" = false;
+            "security.secureboot" = false;
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "incusbr1";
+              type = "nic";
+            };
+          };
+        }
 
-            #########################################################
-            # Nutanix Project Profiles
-            #########################################################
+      ]
+      ++ lib.optionals incusJoined [
 
-            ###########################
-            # Hypervisors profile
-            ###########################
-            #{
-            #  name = "hypervisors";
-            #  description = "Profile for nested hypervisors";
-            #  project = "nutanix";
-            #  config = {
-            #    "limits.cpu" = 8;
-            #    "limits.memory" = "32GiB";
-            #    "security.nesting" = true;
-            #    "security.secureboot" = false;
-            #    "security.syscalls.intercept.mknod" = true;
-            #    "security.syscalls.intercept.setxattr" = true;
-            #    "security.syscalls.intercept.sysinfo" = true;
-            #  };
-            #  devices = {
-            #    root = {
-            #      path = "/";
-            #      pool = "linstor";
-            #      type = "disk";
-            #    };
-            #    eth0 = {
-            #      name = "eth0";
-            #      # Network and nictype are mutually exclusive.
-            #      network = "nutanix-vpc";
-            #      type = "nic";
-            #    };
-            #  };
-            #}
-          ]
-        else
-          [ ];
+        #########################################################
+        # Nutanix Project Profiles
+        #########################################################
+
+        ###########################
+        # Hypervisors profile
+        ###########################
+        {
+          name = "hypervisors";
+          description = "Profile for nested hypervisors";
+          project = "nutanix";
+          config = {
+            "limits.cpu" = 8;
+            "limits.memory" = "32GiB";
+            "security.nesting" = true;
+            "security.secureboot" = false;
+            "security.syscalls.intercept.mknod" = true;
+            "security.syscalls.intercept.setxattr" = true;
+            "security.syscalls.intercept.sysinfo" = true;
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "nutanix-vpc";
+              type = "nic";
+            };
+          };
+        }
+      ];
 
       #########################################################
       # Storage volumes.
@@ -485,125 +459,117 @@ let
           [
 
             #########################################################
-            # Default Project Storage Volumes
-            #########################################################
-
-            # None required.
-
-            #########################################################
             # Nutanix Project Storage Volumes
             #########################################################
 
             ###########################
             # NCE-01 Storage Volumes (HYPERVISOR-1)
             ###########################
-            #{
-            #  name = "NCE-01-CVM";
-            #  type = "custom";
-            #  description = "NCE-01 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-01-DATA";
-            #  type = "custom";
-            #  description = "NCE-01 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-01-CVM";
+              type = "custom";
+              description = "NCE-01 CVM storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-01-DATA";
+              type = "custom";
+              description = "NCE-01 DATA storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
             ###########################
             # NCE-02 Storage Volumes (HYPERVISOR-2)
             ###########################
-            #{
-            #  name = "NCE-02-CVM";
-            #  type = "custom";
-            #  description = "NCE-02 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-02-DATA";
-            #  type = "custom";
-            #  description = "NCE-02 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-02-CVM";
+              type = "custom";
+              description = "NCE-02 CVM storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-02-DATA";
+              type = "custom";
+              description = "NCE-02 DATA storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
             ###########################
             # NCE-03 Storage Volumes (HYPERVISOR-3)
             ###########################
-            #{
-            #  name = "NCE-03-CVM";
-            #  type = "custom";
-            #  description = "NCE-03 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-03-DATA";
-            #  type = "custom";
-            #  description = "NCE-03 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-03-CVM";
+              type = "custom";
+              description = "NCE-03 CVM storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-03-DATA";
+              type = "custom";
+              description = "NCE-03 DATA storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
             ###########################
             # NCE-04 Storage Volumes (HYPERVISOR-4)
             ###########################
-            #{
-            #  name = "NCE-04-CVM";
-            #  type = "custom";
-            #  description = "NCE-04 CVM storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "250GiB";
-            #  };
-            #  content_type = "block";
-            #}
-            #{
-            #  name = "NCE-04-DATA";
-            #  type = "custom";
-            #  description = "NCE-04 DATA storage volume";
-            #  project = "nutanix";
-            #  pool = "linstor";
-            #  config = {
-            #    size = "500GiB";
-            #  };
-            #  content_type = "block";
-            #}
+            {
+              name = "NCE-04-CVM";
+              type = "custom";
+              description = "NCE-04 CVM storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "250GiB";
+              };
+              content_type = "block";
+            }
+            {
+              name = "NCE-04-DATA";
+              type = "custom";
+              description = "NCE-04 DATA storage volume";
+              project = "nutanix";
+              pool = "linstor";
+              config = {
+                size = "500GiB";
+              };
+              content_type = "block";
+            }
 
           ]
         else
           [ ];
-
     };
-
   };
 
   #########################################################
@@ -635,38 +601,74 @@ let
       cluster =
         if incusJoined then
           {
+
             enabled = true;
             server_address = incusClusterAddress;
-            member_config = lib.optionals linstorEnabled [
-              #########################################################
-              # LINSTOR Storage Pools
-              #########################################################
 
-              # NOTE: The only fields that can differ on nodes are;
-              # - source
-              # - size
-              # - zfs.pool_name
-              # - lvm.thinpool_name
-              # - lvm.vg_name
+            member_config =
+              if incusRole == "member" && linstorEnabled then
+                [
 
-              #########################
-              # LINSTOR storage pool
-              #########################
-              {
-                entity = "storage-pool";
-                name = linstorResourceGroup;
-                key = "linstor.resource_group.name";
-                value = linstorResourceGroup;
-              }
-            ];
+                  #########################################################
+                  # LINSTOR Storage Pools
+                  #########################################################
+
+                  # NOTE: The only fields that can differ on nodes are;
+                  # - source
+                  # - size
+                  # - zfs.pool_name
+                  # - lvm.thinpool_name
+                  # - lvm.vg_name
+                  # - linstor.resource_group.name
+
+                  #########################
+                  # ISO storage pool
+                  #########################
+                  {
+                    entity = "storage-pool";
+                    name = "iso";
+                    key = "source";
+                    value = "";
+                  }
+                  {
+                    entity = "storage-pool";
+                    name = "iso";
+                    key = "driver";
+                    value = "linstor";
+                  }
+
+                  #########################
+                  # LINSTOR storage pool
+                  #########################
+                  {
+                    entity = "storage-pool";
+                    name = "linstor";
+                    key = "source";
+                    value = "";
+                  }
+                  {
+                    entity = "storage-pool";
+                    name = "linstor";
+                    key = "driver";
+                    value = "linstor";
+                  }
+                ]
+              else
+                [ ];
+
           }
           // lib.optionalAttrs (incusRole == "bootstrap") {
-            # The bootstrap server node requires a server_name.
+
+            # Only the bootstrap server node requires a server_name.
             server_name = hypervisorName;
+
           }
           // lib.optionalAttrs (incusRole == "member" && incusClusterToken != null) {
+
             # The cluster token is only needed for the initial bootstrap.
+            # The cluster token includes the destination server name encoded in the token.
             cluster_token = incusClusterToken;
+
           }
         else
           {
@@ -677,23 +679,39 @@ let
       # Storage pools configuration.
       #########################################################
       storage_pools =
-        if incusJoined then
-          lib.optionals linstorEnabled [
+        if linstorEnabled then
+          [
+
+            #########################################################
+            # ISO Storage Pool
+            #########################################################
+            {
+              name = "iso";
+              driver = "linstor";
+              description = "ISO Storage Pool";
+              config = {
+                "drbd.auto_add_quorum_tiebreaker" = "true";
+                "drbd.auto_diskful" = "1h";
+                "drbd.on_no_quorum" = "suspend-io";
+                "linstor.resource_group.name" = "iso";
+                "linstor.resource_group.place_count" = 2;
+                "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
+              };
+            }
+
             #########################################################
             # LINSTOR Storage Pool
             #########################################################
             {
-              name = linstorResourceGroup;
+              name = "linstor";
               driver = "linstor";
               config = {
-                "drbd.auto_add_quorum_tiebreaker" = linstorDrbdAutoAddQuorumTiebreaker;
-                "drbd.auto_diskful" = linstorDrbdAutoDiskful;
-                "drbd.on_no_quorum" = linstorDrbdOnNoQuorum;
-                "linstor.remove_snapshots" = true;
-                "linstor.resource_group" = linstorResourceGroup;
-                "linstor.resource_group_place_count" = linstorResourceGroupPlaceCount;
-                "linstor.resource_group_storage_pool" = linstorResourceGroupStoragePool;
-                "linstor.volume_prefix" = linstorVolumePrefix;
+                "drbd.auto_add_quorum_tiebreaker" = "true";
+                "drbd.auto_diskful" = "1h";
+                "drbd.on_no_quorum" = "suspend-io";
+                "linstor.resource_group.name" = "linstor";
+                "linstor.resource_group.place_count" = 3;
+                "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
               };
             }
           ]
@@ -703,10 +721,21 @@ let
   };
 
   #########################################################
-  # Merge global and host configurations
+  # Final configuration
   #########################################################
-  mergedConfig = {
-    preseed = lib.recursiveUpdate globalConfig.preseed hostConfig.preseed;
+  finalConfig = {
+
+    preseed =
+      if incusRole == "bootstrap" then
+
+        # If the server is bootstrap, then merge globalConfig and hostConfig.
+        lib.recursiveUpdate globalConfig.preseed hostConfig.preseed
+
+      else
+
+        # If the server is a member, then only use hostConfig.
+        hostConfig.preseed;
+
   };
 
 in
@@ -735,9 +764,13 @@ in
   imports = [ ];
 
   environment = {
-    systemPackages = with pkgs; [
+    systemPackages = [
       # Include the OVN CLI tools.
       pkgs.ovn
+    ]
+    ++ lib.optionals linstorEnabled [
+      linstorPackages.linstor-server
+      linstorPackages.linstor-client
     ];
 
     # Set Open vSwitch environment variables for correct socket paths
@@ -789,17 +822,25 @@ in
         enable = true;
       };
 
-      preseed = {
-        inherit (mergedConfig.preseed)
-          cluster
-          config
-          networks
-          profiles
-          projects
-          storage_pools
-          storage_volumes
-          ;
-      };
+      preseed =
+        if incusRole == "bootstrap" then
+          {
+            inherit (finalConfig.preseed)
+              cluster
+              config
+              networks
+              profiles
+              projects
+              storage_pools
+              storage_volumes
+              ;
+          }
+        else
+          {
+            inherit (finalConfig.preseed)
+              cluster
+              ;
+          };
     };
   };
 
@@ -814,6 +855,19 @@ in
       DefaultTimeoutStopSec=90s
       DefaultLimitNOFILE=1048576
     '';
+
+    # Create tmp files for LINSTOR.
+    tmpfiles = {
+      rules =
+        if linstorEnabled then
+          [
+            "d /usr/share/linstor-server 0755 root root -"
+            "d /usr/share/linstor-server/bin 0755 root root -"
+            "L+ /usr/share/linstor-server/bin/Satellite - - - - ${linstorPackages.linstor-server}/bin/linstor-satellite"
+          ]
+        else
+          [ ];
+    };
 
     # Custom target for coordinating OVN and Incus startup
     # Make sure that Networking, OVN and OVS services are all ready before starting Incus.
@@ -1403,8 +1457,21 @@ in
             "sdn-ready.target"
           ];
 
+          path = lib.optionals linstorEnabled [
+            linstorPackages.linstor-server
+            linstorPackages.linstor-client
+          ];
+
           serviceConfig = {
             EnvironmentFile = config.sops.templates."incus-acme.env".path;
+            ExecStartPre = pkgs.writeShellScript "incus-pre-start" ''
+              if [[ ! -f "/usr/share/linstor-server/bin/Satellite" ]];
+              then
+                ${pkgs.coreutils}/bin/echo "WARNING: The LINSTOR Satellite binary was not found!"
+              else
+                ${pkgs.coreutils}/bin/echo "LINSTOR Satellite binary found."
+              fi
+            '';
           };
         })
       ];
@@ -1428,8 +1495,21 @@ in
             "sdn-ready.target"
           ];
 
+          path = lib.optionals linstorEnabled [
+            linstorPackages.linstor-server
+            linstorPackages.linstor-client
+          ];
+
           serviceConfig = {
             EnvironmentFile = config.sops.templates."incus-acme.env".path;
+            ExecStartPre = pkgs.writeShellScript "incus-preseed-pre-start" ''
+              if [[ ! -f "/usr/share/linstor-server/bin/Satellite" ]];
+              then
+                ${pkgs.coreutils}/bin/echo "WARNING: The LINSTOR Satellite binary was not found!"
+              else
+                ${pkgs.coreutils}/bin/echo "LINSTOR Satellite binary found."
+              fi
+            '';
           };
         })
       ];

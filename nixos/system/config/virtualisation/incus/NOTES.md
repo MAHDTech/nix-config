@@ -7,8 +7,8 @@
   - [Overview](#overview)
   - [Deployment](#deployment)
     - [Steps to deploy](#steps-to-deploy)
-      - [Stage 0 (Pre-flight checks)](#stage-0-pre-flight-checks)
-      - [Stage 1 (OVN Cluster Creation)](#stage-1-ovn-cluster-creation)
+      - [Stage 0 (Storage)](#stage-0-storage)
+      - [Stage 1 (Networking)](#stage-1-networking)
       - [Stage 2 (Incus Cluster Creation)](#stage-2-incus-cluster-creation)
       - [Stage 3 (Cluster Joining)](#stage-3-cluster-joining)
       - [Stage 4 (Finalise)](#stage-4-finalise)
@@ -33,20 +33,23 @@ The deployment follows a staged approach to avoid circular dependencies between 
 
 _A multi-stage saga to avoid circular dependencies._
 
-#### Stage 0 (Pre-flight checks)
+#### Stage 0 (Storage)
 
-**Purpose:** Verify the system is ready for deployment.
+**Purpose:** Verify the LINSTOR cluster is ready.
 
-1. ✅ Setup your storage on each node.
+1. ✅ Setup LINSTOR storage on each node. See [instructions](../../storage/linstor/README.md).
 1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to check a few things before we begin.
 
 **Expected Result:**
 
 - Health check script passes
+- LINSTOR is working on all servers
+- OVN is not yet running
+- Incus is not clustered.
 
-#### Stage 1 (OVN Cluster Creation)
+#### Stage 1 (Networking)
 
-**Purpose:** Create the OVN cluster first before Incus attempts to use it.
+**Purpose:** Verify the OVN cluster is ready
 
 1. ✅ Update the nix flake with `ovn.joined = true` for **ALL** servers.
 1. ✅ Keep `incus.joined = false` for **ALL** servers (Incus remains in local mode).
@@ -55,10 +58,10 @@ _A multi-stage saga to avoid circular dependencies._
 
 **Expected Result:**
 
+- Health check script passes
 - OVN cluster is formed and synchronised across all nodes
-- Incus runs in local mode on each node
-- OVN databases are clustered and accessible
-- Health check script reports OVN cluster is healthy
+- LINSTOR is still working on all servers
+- Incus is not clustered.
 
 #### Stage 2 (Incus Cluster Creation)
 
@@ -67,15 +70,17 @@ _A multi-stage saga to avoid circular dependencies._
 1. ✅ Update the nix flake with `incus.joined = true` for the **bootstrap** server only.
 1. ✅ Keep `incus.joined = false` for member servers.
 1. ✅ Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
-1. ✅ Record the cluster tokens for the members into the nix flake when shown on screen.
+1. ✅ Record the cluster tokens for the incus members into the nix flake when shown on screen.
 1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the bootstrap server is working before continuing.
 
 **Expected Result:**
 
+- Health check script passes
 - Bootstrap server creates the Incus cluster
 - Cluster tokens are generated for member servers
-- OVN cluster continues to function
-- Member servers are not joined to the cluster yet
+- OVN cluster continues to function across all servers
+- LINSTOR is enabled and running across all servers
+- Member servers are **not** joined to the cluster yet
 
 **NOTES:**
 

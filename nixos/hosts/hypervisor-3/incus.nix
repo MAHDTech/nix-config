@@ -14,7 +14,7 @@ let
 
   incus = {
     # Flag to indicate if the hypervisor has joined the incus cluster.
-    joined = false;
+    joined = true;
 
     # The incus server role.
     role = "member";
@@ -59,27 +59,7 @@ let
 
   linstor = {
     enabled = true;
-
-    # Resource group configuration for Incus storage pools
-    resourceGroup = {
-      name = "linstor"; # LINSTOR resource group name
-      placeCount = 3; # 3 replicas across the hypervisor cluster
-      storagePool = "linstor"; # The LINSTOR storage pool name on satellite nodes
-    };
-
-    # Volume configuration
-    volume = {
-      prefix = "incus-vol-"; # Prefix for LINSTOR managed volumes
-    };
-
-    # DRBD configuration for high availability
-    drbd = {
-      onNoQuorum = "suspend-io"; # Suspend IO when quorum is lost
-      autoDiskful = "5m"; # Auto-convert diskless to diskful after 5 minutes
-      autoAddQuorumTiebreaker = true; # Allow auto tiebreakers for quorum
-    };
-
-    # Controller connection (using controller on hypervisor-1)
+    storagePool = "linstor";
     controller = {
       connection = "http://10.10.200.11:3370";
     };
