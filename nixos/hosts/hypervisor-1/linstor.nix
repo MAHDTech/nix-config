@@ -119,6 +119,16 @@
       ];
       neededForBoot = false;
     };
-  };
 
+    # ZFS Dataset for DRBD Metadata
+    "/var/lib/drbd" = {
+      device = "zpool/var/lib/drbd";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
+    };
+
+  };
 }
