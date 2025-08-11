@@ -13,6 +13,7 @@
     - [Initialize LINSTOR Cluster](#initialize-linstor-cluster)
     - [Create ZFS Datasets (Prerequisites)](#create-zfs-datasets-prerequisites)
     - [Create Storage Pools](#create-storage-pools)
+    - [Configure Storage Pool](#configure-storage-pool)
     - [Create Resource Group](#create-resource-group)
     - [Running a test](#running-a-test)
     - [Create Volumes](#create-volumes)
@@ -153,6 +154,28 @@ linstor storage-pool create zfs hypervisor-4 linstor zpool/var/lib/linstor/stora
 
 # Verify storage pools are created and available
 linstor storage-pool list
+```
+
+### Configure Storage Pool
+
+```bash
+# Set StorDriver/ZfscreateOptions on all nodes
+linstor storage-pool set-property hypervisor-1 linstor StorDriver/ZfscreateOptions "-o compression=lz4 -o volblocksize=128k"
+linstor storage-pool set-property hypervisor-2 linstor StorDriver/ZfscreateOptions "-o compression=lz4 -o volblocksize=128k"
+linstor storage-pool set-property hypervisor-3 linstor StorDriver/ZfscreateOptions "-o compression=lz4 -o volblocksize=128k"
+linstor storage-pool set-property hypervisor-4 linstor StorDriver/ZfscreateOptions "-o compression=lz4 -o volblocksize=128k"
+
+# Set MaxOversubscriptionRatio on all nodes
+linstor storage-pool set-property hypervisor-1 linstor MaxOversubscriptionRatio 5
+linstor storage-pool set-property hypervisor-2 linstor MaxOversubscriptionRatio 5
+linstor storage-pool set-property hypervisor-3 linstor MaxOversubscriptionRatio 5
+linstor storage-pool set-property hypervisor-4 linstor MaxOversubscriptionRatio 5
+
+# Set StorDriver/WaitTimeoutAfterCreate on all nodes
+linstor storage-pool set-property hypervisor-1 linstor StorDriver/WaitTimeoutAfterCreate 10000
+linstor storage-pool set-property hypervisor-2 linstor StorDriver/WaitTimeoutAfterCreate 10000
+linstor storage-pool set-property hypervisor-3 linstor StorDriver/WaitTimeoutAfterCreate 10000
+linstor storage-pool set-property hypervisor-4 linstor StorDriver/WaitTimeoutAfterCreate 10000
 ```
 
 ### Create Resource Group
