@@ -172,6 +172,7 @@ linstor storage-pool set-property hypervisor-3 linstor MaxOversubscriptionRatio 
 linstor storage-pool set-property hypervisor-4 linstor MaxOversubscriptionRatio 5
 
 # Set StorDriver/WaitTimeoutAfterCreate on all nodes
+linstor controller set-property StorDriver/WaitTimeoutAfterCreate 10000
 linstor storage-pool set-property hypervisor-1 linstor StorDriver/WaitTimeoutAfterCreate 10000
 linstor storage-pool set-property hypervisor-2 linstor StorDriver/WaitTimeoutAfterCreate 10000
 linstor storage-pool set-property hypervisor-3 linstor StorDriver/WaitTimeoutAfterCreate 10000
@@ -253,7 +254,7 @@ drbdadm status
 
 ## Manual
 
-Manual steps to create a volume when Incus is being annoying.
+Manual setup steps for when Incus preseed is being annoying.
 
 ```bash
 # Create the storage pool on each Node in a "PENDING" state.

@@ -36,7 +36,7 @@ declare -r REQUIRED_NIXPKGS=(
 
 function print_usage() {
 	cat <<-EOF
-		Usage: $0 [--create|--join|--destroy|--apply|--health]
+		Usage: $0 [--create|--join|--destroy|--apply|--health|--test]
 
 		Options:
 
@@ -46,6 +46,7 @@ function print_usage() {
 		    --apply     Apply changes to an incus cluster
 		    --configure Configure an incus cluster
 		    --health    Check health of all services
+		    --test      Run a test script on all servers
 
 		Additional options:
 
@@ -440,12 +441,35 @@ function health_check_server() {
 	return 0
 }
 
+function run_test_script() {
+	local HYPERVISOR=$1
+	local PARENT_DATASET="zpool/var/lib/linstor/storage-pool"
+	local TEST_COUNT=10
+
+	# Copy across the incus cluster test script.
+	copy_script "incus-cluster-test.sh" "${HYPERVISOR}" || {
+		msg "ERROR" "Failed to copy incus-cluster-test.sh to ${HYPERVISOR}"
+		return 1
+	}
+
+	# Run the test script inside a nix-shell with the required tools.
+	msg "INFO" "Running incus-cluster-test.sh on ${HYPERVISOR}"
+	run_ssh_command "${HYPERVISOR}" \
+		"sudo -n nix-shell -p ${REQUIRED_NIXPKGS[*]} \
+		--command 'bash /tmp/incus-cluster-test.sh --dataset ${PARENT_DATASET} --count ${TEST_COUNT}'" || {
+		msg "ERROR" "Failed to run incus-cluster-test.sh on ${HYPERVISOR}"
+		return 1
+	}
+
+	return 0
+}
+
 ##################################################
 # Argument Parsing
 ##################################################
 
 # Use getopt to parse arguments
-OPTS=$(getopt -o "cjdahyofe" --long "create,join,destroy,apply,help,yolo,configure,force-reboot,health" -n "$0" -- "$@")
+OPTS=$(getopt -o "cjdahyofet" --long "create,join,destroy,apply,help,yolo,configure,force-reboot,health,test" -n "$0" -- "$@")
 # shellcheck disable=SC2181
 if [ $? != 0 ]; then
 	print_usage
@@ -461,6 +485,7 @@ declare INCUS_CLUSTER_DESTROY=false
 declare INCUS_CLUSTER_APPLY=false
 declare INCUS_CLUSTER_CONFIGURE=false
 declare INCUS_CLUSTER_HEALTH=false
+declare INCUS_CLUSTER_TEST=false
 declare YOLO_MODE=false
 declare FORCE_REBOOT=false
 declare MODE=""
@@ -510,6 +535,11 @@ while true; do
 		FORCE_REBOOT=true
 		shift
 		;;
+	-t | --test)
+		INCUS_CLUSTER_TEST=true
+		MODE="test"
+		shift
+		;;
 	--)
 		shift
 		break
@@ -530,6 +560,7 @@ MODE_COUNT=0
 [[ $INCUS_CLUSTER_APPLY == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_CONFIGURE == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 [[ $INCUS_CLUSTER_HEALTH == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
+[[ $INCUS_CLUSTER_TEST == true ]] && ((MODE_COUNT = MODE_COUNT + 1))
 
 if [[ ${FORCE_REBOOT^^} == "TRUE" ]]; then
 	msg "INFO" "Force reboot enabled"
@@ -538,7 +569,7 @@ else
 fi
 
 if [ $MODE_COUNT -gt 1 ]; then
-	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, --apply, --configure, or --health)."
+	msg "ERROR" "Only one mode can be specified (--create, --join, --destroy, --apply, --configure, --health, or --test)."
 	print_usage
 	exit 1
 elif [ $MODE_COUNT -eq 0 ]; then
@@ -679,6 +710,14 @@ for HYPERVISOR in "${HYPERVISORS[@]}"; do
 			exit 1
 		}
 
+		;;
+
+	# Run a test script on all servers.
+	"TEST")
+		run_test_script "${HYPERVISOR}" || {
+			msg "ERROR" "Test script failed for server ${HYPERVISOR}"
+			exit 1
+		}
 		;;
 
 	*)

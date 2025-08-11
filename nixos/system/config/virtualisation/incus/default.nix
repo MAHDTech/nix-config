@@ -465,106 +465,106 @@ let
             ###########################
             # NCE-01 Storage Volumes (HYPERVISOR-1)
             ###########################
-            {
-              name = "NCE-01-CVM";
-              type = "custom";
-              description = "NCE-01 CVM storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-01-DATA";
-              type = "custom";
-              description = "NCE-01 DATA storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-01-CVM";
+            #  type = "custom";
+            #  description = "NCE-01 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-01-DATA";
+            #  type = "custom";
+            #  description = "NCE-01 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-02 Storage Volumes (HYPERVISOR-2)
             ###########################
-            {
-              name = "NCE-02-CVM";
-              type = "custom";
-              description = "NCE-02 CVM storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-02-DATA";
-              type = "custom";
-              description = "NCE-02 DATA storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-02-CVM";
+            #  type = "custom";
+            #  description = "NCE-02 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-02-DATA";
+            #  type = "custom";
+            #  description = "NCE-02 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-03 Storage Volumes (HYPERVISOR-3)
             ###########################
-            {
-              name = "NCE-03-CVM";
-              type = "custom";
-              description = "NCE-03 CVM storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-03-DATA";
-              type = "custom";
-              description = "NCE-03 DATA storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-03-CVM";
+            #  type = "custom";
+            #  description = "NCE-03 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-03-DATA";
+            #  type = "custom";
+            #  description = "NCE-03 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
             ###########################
             # NCE-04 Storage Volumes (HYPERVISOR-4)
             ###########################
-            {
-              name = "NCE-04-CVM";
-              type = "custom";
-              description = "NCE-04 CVM storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "250GiB";
-              };
-              content_type = "block";
-            }
-            {
-              name = "NCE-04-DATA";
-              type = "custom";
-              description = "NCE-04 DATA storage volume";
-              project = "nutanix";
-              pool = "linstor";
-              config = {
-                size = "500GiB";
-              };
-              content_type = "block";
-            }
+            #{
+            #  name = "NCE-04-CVM";
+            #  type = "custom";
+            #  description = "NCE-04 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-04-DATA";
+            #  type = "custom";
+            #  description = "NCE-04 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
           ]
         else
