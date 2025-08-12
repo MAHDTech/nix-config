@@ -17,7 +17,7 @@
     - [Create Resource Group](#create-resource-group)
     - [Running a test](#running-a-test)
     - [Create Volumes](#create-volumes)
-  - [Manual](#manual)
+  - [Incus and LINSTOR (Manual)](#incus-and-linstor-manual)
 
 ## Overview
 
@@ -84,7 +84,6 @@ After deployment, verify that the LINSTOR services are running:
 
 - On the controller: `systemctl status linstor-controller`
 - On satellites: `systemctl status linstor-satellite`
-- DRBD service: `systemctl status drbd` (should show "no resources defined!" - this is normal)
 
 ### Initialize LINSTOR Cluster
 
@@ -97,12 +96,12 @@ Run these commands on the controller node which in this example is `hypervisor-1
 linstor node list
 
 # Add the controller node (hypervisor-1 runs both controller and satellite)
-linstor node create hypervisor-1 10.10.200.11 --node-type combined
+linstor node create hypervisor-1 10.10.200.11 --node-type combined --communication-type plain
 
 # Add satellite-only nodes
-linstor node create hypervisor-2 10.10.200.12 --node-type satellite
-linstor node create hypervisor-3 10.10.200.13 --node-type satellite
-linstor node create hypervisor-4 10.10.200.14 --node-type satellite
+linstor node create hypervisor-2 10.10.200.12 --node-type satellite --communication-type plain
+linstor node create hypervisor-3 10.10.200.13 --node-type satellite --communication-type plain
+linstor node create hypervisor-4 10.10.200.14 --node-type satellite --communication-type plain
 
 # Disable auto-eviction for satellite nodes (fixed node count).
 linstor controller set-property DrbdOptions/AutoEvictAllowEviction false
@@ -136,8 +135,11 @@ sudo zfs create -o mountpoint=/var/lib/linstor.d zpool/var/lib/linstor.d
 # Create a ZFS dataset for LINSTOR storage pool (this will be the backend for DRBD)
 sudo zfs create -o mountpoint=/var/lib/linstor/storage-pool zpool/var/lib/linstor/storage-pool
 
+# Create a ZFS dataset for DRBD state
+sudo zfs create -o mountpoint=/var/lib/drbd zpool/var/lib/drbd
+
 # Verify the dataset exists
-zfs list | grep linstor
+zfs list | egrep 'linstor|drbd'
 ```
 
 ### Create Storage Pools
@@ -166,10 +168,10 @@ linstor storage-pool set-property hypervisor-3 linstor StorDriver/ZfscreateOptio
 linstor storage-pool set-property hypervisor-4 linstor StorDriver/ZfscreateOptions "-o compression=lz4 -o volblocksize=128k"
 
 # Set MaxOversubscriptionRatio on all nodes
-linstor storage-pool set-property hypervisor-1 linstor MaxOversubscriptionRatio 5
-linstor storage-pool set-property hypervisor-2 linstor MaxOversubscriptionRatio 5
-linstor storage-pool set-property hypervisor-3 linstor MaxOversubscriptionRatio 5
-linstor storage-pool set-property hypervisor-4 linstor MaxOversubscriptionRatio 5
+linstor storage-pool set-property hypervisor-1 linstor MaxOversubscriptionRatio 2
+linstor storage-pool set-property hypervisor-2 linstor MaxOversubscriptionRatio 2
+linstor storage-pool set-property hypervisor-3 linstor MaxOversubscriptionRatio 2
+linstor storage-pool set-property hypervisor-4 linstor MaxOversubscriptionRatio 2
 
 # Set StorDriver/WaitTimeoutAfterCreate on all nodes
 linstor controller set-property StorDriver/WaitTimeoutAfterCreate 10000
@@ -188,7 +190,7 @@ Create a resource group for replicated volumes:
 # This means each volume will be replicated to 3 nodes
 linstor resource-group create linstor \
   --storage-pool linstor \
-  --place-count 3 \
+  --place-count 2 \
   --diskless-on-remaining true
 
 # Create a resource group named 'iso' with 2-way replication
@@ -218,7 +220,7 @@ Run the following to create and cleanup a test resources.
 
 ```bash
 # Create a test resource definition (this will create DRBD resources automatically)
-linstor resource-group spawn linstor linstor-test-volume 1GiB
+linstor resource-group spawn linstor linstor-test-volume 10GiB
 
 # Verify the resource definition was created and DRBD resources were created.
 linstor resource-definition list
@@ -252,32 +254,50 @@ linstor resource list
 drbdadm status
 ```
 
-## Manual
+## Incus and LINSTOR (Manual)
 
 Manual setup steps for when Incus preseed is being annoying.
 
 ```bash
-# Create the storage pool on each Node in a "PENDING" state.
+# Create the 'linstor' storage pool on each Node in a "PENDING" state.
 incus storage create linstor linstor --target HYPERVISOR-1
 incus storage create linstor linstor --target HYPERVISOR-2
 incus storage create linstor linstor --target HYPERVISOR-3
 incus storage create linstor linstor --target HYPERVISOR-4
 
+# Create the 'iso' storage pool on each Node in a "PENDING" state.
+incus storage create iso linstor --target HYPERVISOR-1
+incus storage create iso linstor --target HYPERVISOR-2
+incus storage create iso linstor --target HYPERVISOR-3
+incus storage create iso linstor --target HYPERVISOR-4
+
 # Should show as "PENDING"
 incus storage list
 
-# Create the storage pool on each Node in a "CREATED" state.
-incus storage create linstor
+# Create the 'linstor' storage pool on each Node in a "CREATED" state.
+incus storage create linstor linstor
+
+# Create the 'iso' storage pool on each Node in a "CREATED" state.
+incus storage create iso linstor
 
 # Should show as "CREATED"
 incus storage list
 
-# Configure the storage pool settings.
+# Configure the storage pool settings for 'linstor'
 incus storage set linstor --property "description" "LINSTOR Storage Pool"
 incus storage set linstor "drbd.auto_add_quorum_tiebreaker" "true"
 incus storage set linstor "drbd.auto_diskful" "1h"
 incus storage set linstor "drbd.on_no_quorum" "suspend-io"
 incus storage set linstor "linstor.resource_group.name" "linstor"
-incus storage set linstor "linstor.resource_group.place_count" "3"
+incus storage set linstor "linstor.resource_group.place_count" "2"
 incus storage set linstor "linstor.resource_group.storage_pool" "linstor"
+
+# Configure the storage pool settings for 'iso'
+incus storage set iso --property "description" "ISO Storage Pool"
+incus storage set iso "drbd.auto_add_quorum_tiebreaker" "true"
+incus storage set iso "drbd.auto_diskful" "1h"
+incus storage set iso "drbd.on_no_quorum" "suspend-io"
+incus storage set iso "linstor.resource_group.name" "iso"
+incus storage set iso "linstor.resource_group.place_count" "2"
+incus storage set iso "linstor.resource_group.storage_pool" "linstor"
 ```

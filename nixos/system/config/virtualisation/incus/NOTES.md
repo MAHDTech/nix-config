@@ -38,6 +38,7 @@ _A multi-stage saga to avoid circular dependencies._
 **Purpose:** Verify the LINSTOR cluster is ready.
 
 1. ✅ Setup LINSTOR storage on each node. See [instructions](../../storage/linstor/README.md).
+1. ✅ Run `./scripts/incus-hypervisors.sh --test` to test the storage backend.
 1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to check a few things before we begin.
 
 **Expected Result:**

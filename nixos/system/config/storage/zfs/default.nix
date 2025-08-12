@@ -34,7 +34,7 @@ in
 
     # Sanoid for automated ZFS snapshots and replication
     sanoid = {
-      enable = true;
+      enable = false;
 
       settings = {
         # Global template for snapshot policies

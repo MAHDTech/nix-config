@@ -340,7 +340,41 @@ function cleanup_ovs() {
 function cleanup_linstor() {
 	log "INFO" "Cleaning up LINSTOR..."
 
-	log "WARNING" "TODO: Not yet implemented..."
+	# Stop LINSTOR services
+	sudo systemctl stop linstor-controller linstor-satellite || {
+		log "WARN" "Failed to stop LINSTOR services"
+	}
+
+	# Cleanup DRBD resources
+	sudo rm -rf /var/lib/drbd/* || {
+		log "WARN" "Failed to cleanup DRBD resources"
+	}
+
+	# Cleanup LINSTOR definitions
+	sudo rm -rf /var/lib/linstor.d/* || {
+		log "WARN" "Failed to cleanup LINSTOR definitions"
+	}
+
+	# Cleanup LINSTOR database files
+	sudo rm -rf /var/lib/linstor/*.db || {
+		log "WARN" "Failed to cleanup LINSTOR database files"
+	}
+
+	# Remove all LINSTOR ZFS datasets
+	sudo zfs destroy -rf zpool/var/lib/linstor/storage-pool || {
+		log "WARN" "Failed to cleanup LINSTOR ZFS datasets"
+	}
+
+	# Create a new LINSTOR ZFS dataset
+	sudo zfs create \
+		-o mountpoint=/var/lib/linstor/storage-pool \
+		-o compression=lz4 \
+		-o sync=always \
+		-o atime=off \
+		-o xattr=sa \
+		zpool/var/lib/linstor/storage-pool || {
+		log "WARN" "Failed to create new LINSTOR ZFS dataset"
+	}
 
 	return 0
 }

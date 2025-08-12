@@ -696,7 +696,7 @@ let
                 "linstor.resource_group.name" = "iso";
                 "linstor.resource_group.place_count" = 2;
                 "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
-                #"linstor.volume.prefix" = "iso-volume-";
+                "linstor.volume.prefix" = "iso-volume-";
               };
             }
 
@@ -706,13 +706,15 @@ let
             {
               name = "linstor";
               driver = "linstor";
+              description = "LINSTOR Storage Pool";
               config = {
                 "drbd.auto_add_quorum_tiebreaker" = true;
                 "drbd.auto_diskful" = "1h";
                 "drbd.on_no_quorum" = "suspend-io";
                 "linstor.resource_group.name" = "linstor";
-                "linstor.resource_group.place_count" = 3;
+                "linstor.resource_group.place_count" = 2;
                 "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
+                "linstor.volume.prefix" = "linstor-volume-";
               };
             }
           ]
@@ -1458,10 +1460,14 @@ in
             "sdn-ready.target"
           ];
 
-          path = lib.optionals linstorEnabled [
-            linstorPackages.linstor-server
-            linstorPackages.linstor-client
-          ];
+          path =
+            lib.optionals linstorEnabled [
+              linstorPackages.linstor-server
+              linstorPackages.linstor-client
+            ]
+            ++ [
+              pkgs.cdrkit # provides isoinfo used by Incus for ISO validation
+            ];
 
           serviceConfig = {
             EnvironmentFile = config.sops.templates."incus-acme.env".path;
@@ -1496,10 +1502,14 @@ in
             "sdn-ready.target"
           ];
 
-          path = lib.optionals linstorEnabled [
-            linstorPackages.linstor-server
-            linstorPackages.linstor-client
-          ];
+          path =
+            lib.optionals linstorEnabled [
+              linstorPackages.linstor-server
+              linstorPackages.linstor-client
+            ]
+            ++ [
+              pkgs.cdrkit # provides isoinfo used by Incus for ISO validation
+            ];
 
           serviceConfig = {
             EnvironmentFile = config.sops.templates."incus-acme.env".path;

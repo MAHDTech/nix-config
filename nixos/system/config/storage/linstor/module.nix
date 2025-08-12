@@ -588,9 +588,10 @@ in
           "d ${cfg.common.logsDir}/controller 0755 ${cfg.common.user} ${cfg.common.group} -"
           "d ${cfg.common.logsDir}/satellite 0755 ${cfg.common.user} ${cfg.common.group} -"
 
-          # Ensure DRBD runtime directories exist for locking/metadata helpers
+          # Ensure DRBD runtime and state directories exist for locking/metadata helpers
           "d /var/run/drbd 0755 ${cfg.common.user} ${cfg.common.group} -"
           "d /var/run/drbd/lock 0755 ${cfg.common.user} ${cfg.common.group} -"
+          "d /var/lib/drbd 0755 root root -"
         ];
 
         services = {
@@ -680,7 +681,7 @@ in
           LS_KEEP_RES = "1";
           PATH = lib.mkForce (
             lib.makeBinPath [
-              "/run/current-system/sw/bin" # NixOS default path
+              pkgs.bash
               pkgs.coreutils # basic utilities
               pkgs.sdnotify-wrapper # systemd-notify wrapper
               pkgs.systemd # systemd
@@ -773,12 +774,13 @@ in
         ];
 
         environment = {
+
           # Ensure satellite has access to all storage tools
           PATH = lib.mkForce (
             lib.makeBinPath [
-              "/run/current-system/sw/bin" # NixOS default path
+              pkgs.bash # required for clone helpers invoking 'bash -c'
               pkgs.btrfs-progs # Btrfs file system utilities
-              pkgs.coreutils # basic utilities
+              pkgs.coreutils # basic utilities (timeout, etc.)
               pkgs.cryptsetup # cryptsetup for LUKS support
               pkgs.drbd # drbdadm, drbdsetup, drbdmeta
               pkgs.e2fsprogs # file system utilities
@@ -886,6 +888,7 @@ in
             cfg.common.metadataDir
             cfg.common.logsDir
             "/var/run/drbd"
+            "/var/lib/drbd"
           ];
         };
       };
