@@ -51,7 +51,7 @@ linstor/
 
 In this example, we have 4 nodes:
 
-- hypervisor-1: controller and satellite
+- hypervisor-1: combined (controller and satellite)
 - hypervisor-2: satellite
 - hypervisor-3: satellite
 - hypervisor-4: satellite
@@ -89,7 +89,7 @@ After deployment, verify that the LINSTOR services are running:
 
 Run these commands on the controller node which in this example is `hypervisor-1`.
 
-**Note:** You only need ONE controller node in the cluster. Other nodes run as satellites only.
+**Note:** This example uses a single controller node. For HA controllers there are alot more steps involved outside of the scope of this guide.
 
 ```bash
 # Show the current nodes in the cluster
@@ -289,7 +289,7 @@ incus storage set linstor "drbd.auto_add_quorum_tiebreaker" "true"
 incus storage set linstor "drbd.auto_diskful" "1h"
 incus storage set linstor "drbd.on_no_quorum" "suspend-io"
 incus storage set linstor "linstor.resource_group.name" "linstor"
-incus storage set linstor "linstor.resource_group.place_count" "2"
+incus storage set linstor "linstor.resource_group.place_count" "1"
 incus storage set linstor "linstor.resource_group.storage_pool" "linstor"
 
 # Configure the storage pool settings for 'iso'
@@ -298,6 +298,6 @@ incus storage set iso "drbd.auto_add_quorum_tiebreaker" "true"
 incus storage set iso "drbd.auto_diskful" "1h"
 incus storage set iso "drbd.on_no_quorum" "suspend-io"
 incus storage set iso "linstor.resource_group.name" "iso"
-incus storage set iso "linstor.resource_group.place_count" "2"
+incus storage set iso "linstor.resource_group.place_count" "1"
 incus storage set iso "linstor.resource_group.storage_pool" "linstor"
 ```

@@ -694,7 +694,7 @@ let
                 "drbd.auto_diskful" = "1h";
                 "drbd.on_no_quorum" = "suspend-io";
                 "linstor.resource_group.name" = "iso";
-                "linstor.resource_group.place_count" = 2;
+                "linstor.resource_group.place_count" = 1;
                 "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
                 "linstor.volume.prefix" = "iso-volume-";
               };
@@ -712,7 +712,7 @@ let
                 "drbd.auto_diskful" = "1h";
                 "drbd.on_no_quorum" = "suspend-io";
                 "linstor.resource_group.name" = "linstor";
-                "linstor.resource_group.place_count" = 2;
+                "linstor.resource_group.place_count" = 1;
                 "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
                 "linstor.volume.prefix" = "linstor-volume-";
               };
