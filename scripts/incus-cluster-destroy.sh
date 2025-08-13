@@ -361,18 +361,24 @@ function cleanup_linstor() {
 	}
 
 	# Remove all LINSTOR ZFS datasets
-	sudo zfs destroy -rf zpool/var/lib/linstor/storage-pool || {
+	sudo zfs destroy -rf zpool/var/lib/storage-pools || {
 		log "WARN" "Failed to cleanup LINSTOR ZFS datasets"
 	}
 
 	# Create a new LINSTOR ZFS dataset
 	sudo zfs create \
-		-o mountpoint=/var/lib/linstor/storage-pool \
-		-o compression=lz4 \
-		-o sync=always \
-		-o atime=off \
+		-o mountpoint=none \
+		-o compression=none \
+		-o sync=standard \
+		-o atime=on \
 		-o xattr=sa \
-		zpool/var/lib/linstor/storage-pool || {
+		-o acltype=posixacl \
+		-o aclinherit=passthrough \
+		-o aclmode=passthrough \
+		-o acltype=posixacl \
+		-o aclinherit=passthrough \
+		-o aclmode=passthrough \
+		zpool/var/lib/storage-pools || {
 		log "WARN" "Failed to create new LINSTOR ZFS dataset"
 	}
 

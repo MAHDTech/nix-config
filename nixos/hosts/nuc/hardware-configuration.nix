@@ -48,7 +48,6 @@
     kernelParams = [
       "mitigations=off"
       "threadirqs"
-      "zfs_force=1"
 
       # Intel VMD
       "nvme_load=YES"

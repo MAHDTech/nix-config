@@ -443,7 +443,7 @@ function health_check_server() {
 
 function run_test_script() {
 	local HYPERVISOR=$1
-	local PARENT_DATASET="zpool/var/lib/linstor/storage-pool"
+	local PARENT_DATASET="zpool/var/lib/storage-pools"
 	local TEST_COUNT=10
 
 	# Copy across the incus cluster test script.

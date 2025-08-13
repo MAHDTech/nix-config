@@ -21,7 +21,6 @@
   },
   linstor ? {
     enabled = false;
-    storagePool = null;
     controller = {
       connection = null;
     };
@@ -70,9 +69,6 @@ let
 
   # Flag to enable LINSTOR.
   linstorEnabled = linstor.enabled;
-
-  # The LINSTOR storage pool name.
-  linstorResourceGroupStoragePool = linstor.storagePool;
 
   # Controller settings
   linstorControllerConnection = linstor.controller.connection;
@@ -154,6 +150,8 @@ let
 
       #########################################################
       # Configuration.
+      #
+      # Applies to all servers.
       #########################################################
       config = {
 
@@ -173,11 +171,12 @@ let
           if ovnConfig.northbound.addressList != "" then "${ovnConfig.northbound.addressList}" else null;
 
         # Incus LINSTOR configuration.
-        "storage.linstor.controller_connection" =
-          if linstorControllerConnection != null then "${linstorControllerConnection}" else null;
+        "storage.linstor.controller_connection" = linstorControllerConnection;
 
       }
-      // lib.optionalAttrs incusJoined {
+      // lib.optionalAttrs (incusJoined && incusRole == "bootstrap") {
+
+        # Only add ACME configuration for bootstrap server to manage DNS records.
 
         # ACME (cluster-only)
         "acme.agree_tos" = true;
@@ -192,6 +191,8 @@ let
 
       #########################################################
       # Projects
+      #
+      # Applies to bootstrap server only.
       #########################################################
       projects = [
 
@@ -234,6 +235,8 @@ let
 
       #########################################################
       # Networks.
+      #
+      # Applies to bootstrap server only.
       #########################################################
       networks = [
 
@@ -325,6 +328,8 @@ let
 
       #########################################################
       # Profiles.
+      #
+      # Applies to bootstrap server only.
       #########################################################
       profiles = [
 
@@ -453,6 +458,8 @@ let
 
       #########################################################
       # Storage volumes.
+      #
+      # Applies to bootstrap server only.
       #########################################################
       storage_volumes =
         if incusJoined then
@@ -574,6 +581,8 @@ let
 
   #########################################################
   # Host-specific configuration
+  #
+  # Applies host specific configuration to all servers.
   #########################################################
   hostConfig = {
 
@@ -605,12 +614,26 @@ let
             enabled = true;
             server_address = incusClusterAddress;
 
+            # Cluster configuration for member servers.
             member_config =
-              if incusRole == "member" && linstorEnabled then
+              if incusRole == "member" then
                 [
 
                   #########################################################
-                  # LINSTOR Storage Pools
+                  # Local Storage Pool
+                  #########################################################
+                  {
+                    entity = "storage-pool";
+                    name = "local";
+                    key = "source";
+                    value = "zpool/var/lib/storage-pools/local";
+                  }
+
+                ]
+                ++ lib.optionals linstorEnabled [
+
+                  #########################################################
+                  # LINSTOR Configuration
                   #########################################################
 
                   # NOTE: The only fields that can differ on nodes are;
@@ -622,6 +645,15 @@ let
                   # - linstor.resource_group.name
 
                   #########################
+                  # Controller connection
+                  #########################
+                  {
+                    entity = "storage.linstor";
+                    key = "controller_connection";
+                    value = linstorControllerConnection;
+                  }
+
+                  #########################
                   # ISO storage pool
                   #########################
                   {
@@ -630,27 +662,15 @@ let
                     key = "source";
                     value = "";
                   }
-                  {
-                    entity = "storage-pool";
-                    name = "iso";
-                    key = "driver";
-                    value = "linstor";
-                  }
 
                   #########################
-                  # LINSTOR storage pool
+                  # Instances storage pool
                   #########################
                   {
                     entity = "storage-pool";
-                    name = "linstor";
+                    name = "instances";
                     key = "source";
                     value = "";
-                  }
-                  {
-                    entity = "storage-pool";
-                    name = "linstor";
-                    key = "driver";
-                    value = "linstor";
                   }
                 ]
               else
@@ -677,10 +697,26 @@ let
 
       #########################################################
       # Storage pools configuration.
+      #
+      # Applies to bootstrap server only.
       #########################################################
       storage_pools =
-        if linstorEnabled then
+        if incusRole == "bootstrap" then
           [
+
+            #########################################################
+            # Local Storage Pool
+            #########################################################
+            {
+              name = "local";
+              driver = "zfs";
+              description = "Local Storage Pool";
+              config = {
+                "source" = "zpool/var/lib/storage-pools/local";
+              };
+            }
+          ]
+          ++ lib.optionals linstorEnabled [
 
             #########################################################
             # ISO Storage Pool
@@ -693,9 +729,9 @@ let
                 "drbd.auto_add_quorum_tiebreaker" = true;
                 "drbd.auto_diskful" = "1h";
                 "drbd.on_no_quorum" = "suspend-io";
-                "linstor.resource_group.name" = "iso";
+                "linstor.resource_group.name" = "linstor-iso";
                 "linstor.resource_group.place_count" = 1;
-                "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
+                "linstor.resource_group.storage_pool" = "linstor-iso";
                 "linstor.volume.prefix" = "iso-volume-";
               };
             }
@@ -704,16 +740,16 @@ let
             # LINSTOR Storage Pool
             #########################################################
             {
-              name = "linstor";
+              name = "instances";
               driver = "linstor";
-              description = "LINSTOR Storage Pool";
+              description = "Instances Storage Pool";
               config = {
                 "drbd.auto_add_quorum_tiebreaker" = true;
                 "drbd.auto_diskful" = "1h";
                 "drbd.on_no_quorum" = "suspend-io";
-                "linstor.resource_group.name" = "linstor";
+                "linstor.resource_group.name" = "linstor-instances";
                 "linstor.resource_group.place_count" = 1;
-                "linstor.resource_group.storage_pool" = linstorResourceGroupStoragePool;
+                "linstor.resource_group.storage_pool" = "linstor-instances";
                 "linstor.volume.prefix" = "linstor-volume-";
               };
             }
@@ -725,19 +761,34 @@ let
 
   #########################################################
   # Final configuration
+  #
+  # Build the final configuration based on incusRole.
   #########################################################
   finalConfig = {
 
     preseed =
       if incusRole == "bootstrap" then
-
-        # If the server is bootstrap, then merge globalConfig and hostConfig.
-        lib.recursiveUpdate globalConfig.preseed hostConfig.preseed
-
+        lib.recursiveUpdate
+          {
+            # Global configuration sections
+            config = globalConfig.preseed.config;
+            projects = globalConfig.preseed.projects;
+            networks = globalConfig.preseed.networks;
+            profiles = globalConfig.preseed.profiles;
+            storage_volumes = globalConfig.preseed.storage_volumes;
+          }
+          # Host-specific configuration
+          hostConfig.preseed
+      else if incusRole == "member" then
+        lib.recursiveUpdate
+          {
+            # Global configuration sections
+            config = globalConfig.preseed.config;
+          }
+          # Host-specific configuration
+          hostConfig.preseed
       else
-
-        # If the server is a member, then only use hostConfig.
-        hostConfig.preseed;
+        null;
 
   };
 
@@ -825,25 +876,8 @@ in
         enable = true;
       };
 
-      preseed =
-        if incusRole == "bootstrap" then
-          {
-            inherit (finalConfig.preseed)
-              cluster
-              config
-              networks
-              profiles
-              projects
-              storage_pools
-              storage_volumes
-              ;
-          }
-        else
-          {
-            inherit (finalConfig.preseed)
-              cluster
-              ;
-          };
+      preseed = finalConfig.preseed;
+
     };
   };
 

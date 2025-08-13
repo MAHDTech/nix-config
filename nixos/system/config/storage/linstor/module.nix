@@ -196,7 +196,7 @@ in
                   on-io-error detach;
 
                   # Prevent network saturation
-                  resync-rate 512M;
+                  resync-rate 128M;
 
                   # Define the minimum resync rate
                   c-min-rate 4096;
@@ -577,7 +577,6 @@ in
 
           # Create data directory
           "d ${cfg.common.dataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
-          "d ${cfg.common.dataDir}/storage-pool 0755 ${cfg.common.user} ${cfg.common.group} -"
 
           # Create metadata directory
           "d ${cfg.common.metadataDir} 0755 ${cfg.common.user} ${cfg.common.group} -"
@@ -621,27 +620,21 @@ in
               done
               ${pkgs.coreutils}/bin/echo "ZFS pool ${cfg.satellite.zfsPool} is available, delegating permissions..."
 
-              # TODO: /dev/zfs is already 0666, so we don't need to grant access to the group?
-              # Grant access to /dev/zfs for the linstor group
-              #${pkgs.coreutils}/bin/echo "Setting /dev/zfs permissions for group ${cfg.common.group}..."
-              #chgrp ${cfg.common.group} /dev/zfs
-              #chmod 660 /dev/zfs
-
               # Grant the user permissions on the storage-pool dataset.
-              ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.user} user on dataset: ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool"
+              ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.user} user on dataset: ${cfg.satellite.zfsPool}${cfg.common.dataDir}"
 
               ${pkgs.zfs}/bin/zfs allow \
                 -u ${cfg.common.user} \
                 create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused,refreservation,volsize,volblocksize,reservation,quota,refquota \
-                ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool
+                ${cfg.satellite.zfsPool}${cfg.common.dataDir}
 
               # Grant the group permissions on the storage-pool dataset.
-              ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.group} group on dataset: ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool"
+              ${pkgs.coreutils}/bin/echo "Setting up ZFS delegation for ${cfg.common.group} group on dataset: ${cfg.satellite.zfsPool}${cfg.common.dataDir}"
 
               ${pkgs.zfs}/bin/zfs allow \
                 -g ${cfg.common.group} \
                 create,destroy,mount,clone,rename,rollback,snapshot,userprop,userquota,userused,refreservation,volsize,volblocksize,reservation,quota,refquota \
-                ${cfg.satellite.zfsPool}${cfg.common.dataDir}/storage-pool
+                ${cfg.satellite.zfsPool}${cfg.common.dataDir}
 
               ${pkgs.coreutils}/bin/echo "ZFS delegation configured for ${cfg.common.user} user and group ${cfg.common.group}."
             '';

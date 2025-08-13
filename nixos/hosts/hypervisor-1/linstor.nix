@@ -90,7 +90,7 @@
 
   fileSystems = {
 
-    # ZFS Dataset for LINSTOR Data (Controller)
+    # ZFS Dataset for LINSTOR Data (LINSTOR Controller)
     "/var/lib/linstor" = {
       device = "zpool/var/lib/linstor";
       fsType = "zfs";
@@ -100,7 +100,7 @@
       neededForBoot = false;
     };
 
-    # ZFS Dataset for LINSTOR Metadata (Satellite)
+    # ZFS Dataset for LINSTOR Metadata (LINSTOR Satellite)
     "/var/lib/linstor.d" = {
       device = "zpool/var/lib/linstor.d";
       fsType = "zfs";
@@ -110,17 +110,7 @@
       neededForBoot = false;
     };
 
-    # ZFS Dataset for LINSTOR Storage Pool (Satellite)
-    "/var/lib/linstor/storage-pool" = {
-      device = "zpool/var/lib/linstor/storage-pool";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # ZFS Dataset for DRBD Metadata
+    # ZFS Dataset for DRBD Metadata (LINSTOR Satellite)
     "/var/lib/drbd" = {
       device = "zpool/var/lib/drbd";
       fsType = "zfs";
@@ -130,5 +120,36 @@
       neededForBoot = false;
     };
 
+    # ZFS Dataset for ZFS Local Storage Pool
+    "/var/lib/storage-pools/local" = {
+      device = "zpool/var/lib/storage-pools/local";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
+    };
+
+    # ZFS Dataset for ISO Storage Pool (LINSTOR Satellite)
+    "/var/lib/storage-pools/linstor-iso" = {
+      device = "zpool/var/lib/storage-pools/linstor-iso";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
+    };
+
+    # ZFS Dataset for Instances Storage Pool (LINSTOR Satellite)
+    "/var/lib/storage-pools/linstor-instances" = {
+      device = "zpool/var/lib/storage-pools/linstor-instances";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
+    };
+
   };
+
 }

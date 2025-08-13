@@ -43,7 +43,6 @@
     kernelParams = [
       "mitigations=off"
       "threadirqs"
-      "zfs_force=1"
     ];
 
     extraModulePackages = [ ];
