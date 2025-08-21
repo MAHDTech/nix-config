@@ -18,7 +18,8 @@ in
 {
   imports = [
     ./hyprland.nix
-  ] ++ lib.optional (!inGitHubActions) ./ags.nix;
+  ]
+  ++ lib.optional (!inGitHubActions) ./bar;
 
   # Pass the device configuration to hyprland.nix
   _module.args.deviceConfig = deviceConfig;

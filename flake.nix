@@ -90,14 +90,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-cosmic = {
-      type = "github";
-      owner = "lilyinstarlight";
-      repo = "nixos-cosmic";
-      ref = "main";
-      flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    #nixos-cosmic = {
+    #  type = "github";
+    #  owner = "lilyinstarlight";
+    #  repo = "nixos-cosmic";
+    #  ref = "main";
+    #  flake = true;
+    #  inputs.nixpkgs.follows = "nixpkgs";
+    #};
 
     flatpaks = {
       type = "github";
@@ -133,14 +133,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    musnix = {
-      type = "github";
-      owner = "musnix";
-      repo = "musnix";
-      ref = "master";
-      flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    #musnix = {
+    #  type = "github";
+    #  owner = "musnix";
+    #  repo = "musnix";
+    #  ref = "master";
+    #  flake = true;
+    #  inputs.nixpkgs.follows = "nixpkgs";
+    #};
 
     impermanence = {
       type = "github";
@@ -149,6 +149,7 @@
       ref = "master";
       flake = true;
     };
+
   };
 
   outputs =
@@ -157,8 +158,8 @@
       devenv,
       flatpaks,
       home-manager,
-      musnix,
-      nixos-cosmic,
+      #musnix,
+      #nixos-cosmic,
       nixos-hardware,
       nixpkgs,
       self,
@@ -220,7 +221,8 @@
 
           modules = [
             sops-nix.nixosModules.sops
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
 
       #########################
@@ -236,7 +238,7 @@
             ./home
 
             catppuccin.homeManagerModules.catppuccin
-            #home-manager.nixosModules.home-manager
+            home-manager.nixosModules.home-manager
             sops-nix.homeManagerModules.sops
           ];
           extraSpecialArgs = {
@@ -310,14 +312,15 @@
             catppuccin.nixosModules.catppuccin
             flatpaks.nixosModule
             home-manager.nixosModules.home-manager
-            musnix.nixosModules.default
-            nixos-cosmic.nixosModules.default
+            #musnix.nixosModules.default
+            #nixos-cosmic.nixosModules.default
             nixos-hardware.nixosModules.common-cpu-intel
             nixos-hardware.nixosModules.common-gpu-intel
             nixos-hardware.nixosModules.common-hidpi
             nixos-hardware.nixosModules.common-pc-laptop
             nixos-hardware.nixosModules.common-pc-ssd
             {
+
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
@@ -331,8 +334,8 @@
                   imports = [
                     ./home
 
-                    sops-nix.homeManagerModules.sops
                     catppuccin.homeManagerModules.catppuccin
+                    sops-nix.homeManagerModules.sops
                   ];
                 };
               };
@@ -358,8 +361,8 @@
             catppuccin.nixosModules.catppuccin
             flatpaks.nixosModule
             home-manager.nixosModules.home-manager
-            musnix.nixosModules.default
-            nixos-cosmic.nixosModules.default
+            #musnix.nixosModules.default
+            #nixos-cosmic.nixosModules.default
             nixos-hardware.nixosModules.common-cpu-amd
             nixos-hardware.nixosModules.common-cpu-amd-pstate
             nixos-hardware.nixosModules.common-gpu-intel

@@ -43,6 +43,7 @@ let
     slurp
     swappy
     swww
+    wayland-utils
     wayland-pipewire-idle-inhibit
     wayshot
     #wf-recorder
@@ -937,6 +938,9 @@ in
 
       "$terminal" = "cosmic-term";
 
+      #"$barCommand" = "ags run";
+      "$barCommand" = "ironbar";
+
       "$fileManager" = "cosmic-files";
 
       "$menu" = "cosmic-launcher";
@@ -945,11 +949,10 @@ in
 
       # Open apps on startup
       exec-once = [
-        # Start ags
-        "ags run"
-        #"ags run --gtk4"
+        # Start the bar
+        "$barCommand"
 
-        # Open a Terminal
+        # Start a terminal
         "$terminal"
 
         # Start Insync
