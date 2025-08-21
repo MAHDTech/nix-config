@@ -1,7 +1,7 @@
 {
   imports = [
     #./ags.nix
-    #./ironbar.nix
+    ./ironbar
     #./waybar.nix
   ];
 }
