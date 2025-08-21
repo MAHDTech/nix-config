@@ -9,8 +9,5 @@
 
   services.throttled = {
     enable = true;
-    extraConfig = ''
-      # Throttled extra config
-    '';
   };
 }
