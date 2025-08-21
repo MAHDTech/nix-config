@@ -5,7 +5,12 @@
     useStockConfig = false;
 
     settings = {
-      cfsProfiles.default.preempt = "voluntary";
+      cfsProfiles = {
+        enable = true;
+        default = {
+          preempt = "voluntary";
+        };
+      };
 
       processScheduler = {
         pipewireBoost.enable = false;

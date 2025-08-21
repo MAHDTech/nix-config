@@ -56,9 +56,6 @@
     };
 
     displayManager.cosmic-greeter.enable = true;
-
-    # Other
-    system76-scheduler.enable = false;
   };
 
   boot.extraModulePackages = with config.boot.kernelPackages; [

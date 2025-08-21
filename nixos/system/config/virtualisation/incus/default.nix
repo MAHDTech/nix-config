@@ -771,11 +771,13 @@ let
         lib.recursiveUpdate
           {
             # Global configuration sections
-            config = globalConfig.preseed.config;
-            projects = globalConfig.preseed.projects;
-            networks = globalConfig.preseed.networks;
-            profiles = globalConfig.preseed.profiles;
-            storage_volumes = globalConfig.preseed.storage_volumes;
+            inherit (globalConfig.preseed)
+              config
+              projects
+              networks
+              profiles
+              storage_volumes
+              ;
           }
           # Host-specific configuration
           hostConfig.preseed
@@ -783,7 +785,7 @@ let
         lib.recursiveUpdate
           {
             # Global configuration sections
-            config = globalConfig.preseed.config;
+            inherit (globalConfig.preseed) config;
           }
           # Host-specific configuration
           hostConfig.preseed
@@ -876,7 +878,7 @@ in
         enable = true;
       };
 
-      preseed = finalConfig.preseed;
+      inherit (finalConfig) preseed;
 
     };
   };
