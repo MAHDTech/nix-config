@@ -3,14 +3,14 @@
   imports = [ ];
 
   environment.systemPackages = with pkgs; [
+    cosmic-settings
     bluez
     bluez-alsa
     bluez-experimental
     bluez-tools
-    overskride
   ];
 
-  services.blueman.enable = false; # Use overskride instead
+  services.blueman.enable = false; # Using cosmic-settings instead
 
   hardware.bluetooth = {
     enable = true;

@@ -1,9 +1,9 @@
 /*
 ##################################################
 
-Ironbar Stylesheet
-
-- Reference: https://github.com/JakeStanger/ironbar/wiki/styling-guide
+Ironbar Stylesheet (GTK Compatible - v3)
+- Theme: Cyberpunk Decepticons
+- Date: 2025-08-22
 
 ##################################################
 */
@@ -14,12 +14,17 @@ Color Definitions
 ##################################################
 */
 
-@define-color color_bg #1a1a1a; /* Deep black for cyberpunk background */
-@define-color color_bg_dark #121212; /* Darker gray for hover states */
-@define-color color_border #4d4d4d; /* Metallic silver for borders */
-@define-color color_border_active #a100a1; /* Neon purple for active highlights */
+@define-color color_accent #FFD700;
+@define-color color_bg rgba(26, 26, 26, 1.0);
+@define-color color_bg_dark rgba(18, 18, 18, 1.0);
+@define-color color_bg_transparent rgba(26, 26, 26, 0.75);
+@define-color color_border #4d4d4d;
+@define-color color_border_active #8B008B;
+@define-color color_dark_purple rgba(75, 0, 130, 1.0);
+@define-color color_decepticon_purple #4B0082;
+@define-color color_metallic #A9A9A9; /* Dark silver for metallic Decepticon feel */
 @define-color color_text #00e6e6; /* Neon cyan for text */
-@define-color color_urgent #ff1a1a; /* Neon red for urgent alerts */
+@define-color color_urgent #DC143C; /* Crimson red for urgent alerts */
 
 /*
 ##################################################
@@ -28,419 +33,133 @@ Base Styles
 */
 
 * {
-  font-family: "JetBrainsMono Nerd Font", "FiraCode Nerd Font", sans-serif;
+  font-family: "Hack Nerd Font Mono", "RobotoMono Nerd Font", "DejaVu Sans Mono", "FiraCode Nerd Font Mono", monospace;
   font-size: 16px;
   border: none;
   border-radius: 0;
 }
 
-box,
-menubar,
-button {
-  background-color: @color_bg;
-  background-image: none;
-  box-shadow: none;
+#bar {
+  background: linear-gradient(to bottom, @color_bg 0%, @color_bg_dark 100%);
+  border-bottom: 2px solid @color_border_active;
+  box-shadow: 0 2px 15px @color_decepticon_purple;
+  border-radius: 0 0 5px 5px;
 }
 
-button,
-label {
+button {
+  background-color: transparent;
+  background-image: none;
   color: @color_text;
+  box-shadow: none;
+  transition: all 0.3s ease-in-out;
 }
 
 button:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active; /* Subtle neon glow on hover */
+  background: linear-gradient(135deg, @color_bg_dark 0%, @color_dark_purple 100%);
+  box-shadow: 0 0 10px @color_decepticon_purple;
 }
 
-scale trough {
-  min-width: 1px;
-  min-height: 2px;
-  background-color: @color_border;
-}
-
-#bar {
-  border-top: 1px solid @color_border;
+label {
+  color: @color_text;
+  text-shadow:
+    0 0 3px @color_text,
+    0 0 6px @color_decepticon_purple;
 }
 
 .popup {
-  border: 1px solid @color_border;
-  padding: 1em;
-  background-color: @color_bg;
+  border: 2px solid @color_border_active;
+  padding: 1.2em;
+  background-color: rgba(26, 26, 26, 0.85); /* Slightly more transparent than @color_bg */
+  border-radius: 5px;
+  box-shadow: 0 0 20px @color_decepticon_purple;
 }
 
 /*
 ##################################################
-Clipboard Styles
+Default Appearance
 ##################################################
 */
 
-.clipboard {
-  margin-left: 5px;
-  font-size: 1.1em;
-}
-
-.clipboard .btn {
-  background-color: @color_bg;
-}
-
-.clipboard .btn .icon,
-.clipboard .btn .text-icon,
-.clipboard .btn .image {
+/*
+ * Make all modules transparent by default.
+ * Inherit the single background from #bar, creating a unified look.
+ * Add some consistent margins
+*/
+.clock,
+.focused,
+.launcher,
+.music,
+.notifications,
+.script,
+.sysinfo,
+.tray,
+.upower,
+.volume,
+.workspaces {
+  background-color: transparent;
   color: @color_text;
-}
-
-.popup-clipboard {
-  background-color: @color_bg;
-}
-
-.popup-clipboard .item {
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid @color_border;
-}
-
-.popup-clipboard .item .btn,
-.popup-clipboard .item .btn.text,
-.popup-clipboard .item .btn.image {
-  color: @color_text;
-  background-color: @color_bg;
-}
-
-.popup-clipboard .item .btn:hover,
-.popup-clipboard .item .btn.text:hover,
-.popup-clipboard .item .btn.image:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-.popup-clipboard .item .btn-remove {
-  color: @color_urgent;
-  background-color: @color_bg;
-}
-
-.popup-clipboard .item .btn-remove:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_urgent;
+  padding: 0 5px;
 }
 
 /*
 ##################################################
-Clock Styles
+Module Specific Styles (Active States & Popups)
 ##################################################
 */
 
 .clock {
   font-weight: bold;
-  margin-left: 5px;
-}
-
-.popup-clock {
-  background-color: @color_bg;
-}
-
-.popup-clock .calendar-clock {
-  color: @color_text;
-  font-size: 2.5em;
-  padding-bottom: 0.1em;
-}
-
-.popup-clock .calendar {
-  background-color: @color_bg;
-  color: @color_text;
-}
-
-.popup-clock .calendar .header {
-  padding-top: 1em;
-  border-top: 1px solid @color_border;
-  font-size: 1.5em;
-}
-
-.popup-clock .calendar:selected {
-  background-color: @color_border_active;
-}
-
-/*
-##################################################
-Focused Styles
-##################################################
-*/
-
-.focused {
-  background-color: @color_bg;
-  margin-left: 5px;
-}
-
-.focused .icon {
-  color: @color_text;
-}
-
-.focused .label {
-  color: @color_text;
-}
-
-.focused:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-/*
-##################################################
-Launcher Styles
-##################################################
-*/
-
-.launcher .item {
-  margin-right: 4px;
-}
-
-.launcher .item:not(.focused):hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-.launcher .open {
-  border-bottom: 1px solid @color_text;
-}
-
-.launcher .focused {
-  border-bottom: 1px solid @color_border_active;
-}
-
-.launcher .urgent {
-  border-bottom-color: @color_urgent;
-}
-
-.popup-launcher {
-  padding: 0;
-  background-color: @color_bg;
-}
-
-.popup-launcher .popup-item:not(:first-child) {
-  border-top: 1px solid @color_border;
-}
-
-/*
-##################################################
-Music Styles
-##################################################
-*/
-
-.music:hover * {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-.popup-music .album-art {
-  margin-right: 1em;
-}
-
-.popup-music .icon-box {
-  margin-right: 0.4em;
-}
-
-.popup-music .title .icon,
-.popup-music .title .label {
-  font-size: 1.7em;
-  color: @color_text;
-}
-
-.popup-music .controls *:disabled {
-  color: @color_border;
-}
-
-.popup-music .volume .slider slider {
-  border-radius: 100%;
-  background-color: @color_border_active;
-}
-
-.popup-music .volume .icon {
-  margin-left: 4px;
-  color: @color_text;
-}
-
-.popup-music .progress .slider slider {
-  border-radius: 100%;
-  background-color: @color_border_active;
-}
-
-/*
-##################################################
-Notifications Styles
-##################################################
-*/
-
-.notifications {
-  background-color: @color_bg;
 }
 
 .notifications .count {
-  font-size: 0.6rem;
+  font-size: 10px;
   background-color: @color_text;
   color: @color_bg;
   border-radius: 100%;
   margin-right: 3px;
   margin-top: 3px;
-  padding-left: 4px;
-  padding-right: 4px;
-  opacity: 0.7;
+  padding: 1px 4px;
+  opacity: 0.9;
 }
 
-.notifications:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
+/* --- Workspaces --- */
+.workspaces .item {
+  transition: all 0.3s ease-in-out;
+  padding: 0 10px;
+  margin: 0 3px;
+  border-radius: 3px;
 }
 
-/*
-##################################################
-Script Styles
-##################################################
-*/
-
-.script {
-  padding-left: 10px;
-  background-color: @color_bg;
-  color: @color_text;
-}
-
-.script:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-/*
-##################################################
-Sys Info Styles
-##################################################
-*/
-
-.sysinfo {
-  margin-left: 10px;
-  background-color: @color_bg;
-}
-
-.sysinfo .item {
-  margin-left: 5px;
-  color: @color_text;
-}
-
-.sysinfo:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-/*
-##################################################
-Tray Styles
-##################################################
-*/
-
-.tray {
-  margin-left: 10px;
-  background-color: @color_bg;
-}
-
-.tray .item {
-  color: @color_text;
-}
-
-.tray .item:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-/*
-##################################################
-Upower Styles
-##################################################
-*/
-
-.upower {
-  background-color: @color_bg;
-  margin-left: 5px;
-}
-
-.upower .contents {
-  color: @color_text;
-}
-
-.upower .icon {
-  color: @color_text;
-}
-
-.upower .label {
-  color: @color_text;
-}
-
-.upower:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-.popup-upower {
-  background-color: @color_bg;
-  border: 1px solid @color_border;
-}
-
-.popup-upower .upower-details {
-  color: @color_text;
-}
-
-/*
-##################################################
-Volume Styles
-##################################################
-*/
-
-.popup-volume .device-box {
-  border-right: 1px solid @color_border;
-}
-
-/*
-##################################################
-Workspaces Styles
-##################################################
-*/
-
+/* A focused workspace gets the glow */
 .workspaces .item.focused {
-  box-shadow: inset 0 -3px;
-  background-color: @color_bg_dark;
+  background: linear-gradient(135deg, @color_bg_dark 0%, @color_dark_purple 100%);
+  box-shadow: inset 0 -3px @color_border_active;
+  border: 1px solid @color_metallic;
 }
 
+/* An urgent workspace is bright red */
 .workspaces .item.urgent {
   background-color: @color_urgent;
+  color: white;
+  box-shadow: 0 0 10px @color_urgent;
 }
 
+/* Hovering a workspace gives it a temporary highlight */
 .workspaces .item:hover {
-  box-shadow: inset 0 -3px;
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
+  box-shadow: inset 0 -3px @color_text;
 }
 
-/*
-##################################################
-Custom: Power Menu Styles
-##################################################
-*/
-
-.popup-power-menu #header {
-  font-size: 1.4em;
-  padding-bottom: 0.4em;
-  margin-bottom: 0.6em;
-  border-bottom: 1px solid @color_border;
-  color: @color_text;
-}
-
+/* --- Power Menu Popup --- */
 .popup-power-menu .power-btn {
-  border: 1px solid @color_border;
-  padding: 0.6em 1em;
-  background-color: @color_bg;
-  color: @color_text;
+  border: 2px solid @color_border;
+  border-radius: 5px;
+  padding: 0.8em 1.2em;
+  background: linear-gradient(135deg, @color_bg 0%, @color_dark_purple 100%);
+  font-weight: bold;
 }
 
 .popup-power-menu .power-btn:hover {
-  background-color: @color_bg_dark;
-  box-shadow: 0 0 5px @color_border_active;
-}
-
-.popup-power-menu #buttons > *:nth-child(1) .power-btn {
-  margin-right: 1em;
+  background: linear-gradient(135deg, @color_bg_dark 0%, @color_decepticon_purple 100%);
+  box-shadow: 0 0 15px @color_urgent;
+  border-color: @color_urgent;
 }

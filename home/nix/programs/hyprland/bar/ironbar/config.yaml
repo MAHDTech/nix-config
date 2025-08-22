@@ -10,11 +10,10 @@
 # Global options
 ##################################################
 
-#icon_theme: Paper
-icon_theme: "Papirus"
+icon_theme: "Zafiro-icons-Light"
 
-icon_overrides:
-  firefox: "firefox-custom-icon"
+#icon_overrides:
+#  firefox: "firefox-custom-icon"
 
 ##################################################
 # Monitors
@@ -31,7 +30,7 @@ monitors:
     - name: "top"
       position: "top"
       anchor_to_edges: true
-      height: 25
+      height: 20
       margin:
         top: 0
         bottom: 0
@@ -95,12 +94,12 @@ monitors:
         - name: "upower"
           position: "right"
           type: upower
-          format: "{percentage}%"
+          format: "󰂄 {percentage}%"
 
     - name: "bottom"
       position: "bottom"
       anchor_to_edges: true
-      height: 25
+      height: 40
       margin:
         top: 0
         bottom: 0
@@ -166,7 +165,7 @@ monitors:
           cmd: "${XDG_CONFIG_HOME}/ironbar/scripts/bluetooth.sh"
           mode: "poll"
           interval: 10000
-          on_click_left: "overskride"
+          on_click_left: "cosmic-settings bluetooth"
         - name: "volume"
           type: volume
           format: "{icon} {percentage}%"
@@ -196,7 +195,7 @@ monitors:
     - name: "top"
       position: "top"
       anchor_to_edges: true
-      height: 25
+      height: 20
       margin:
         top: 0
         bottom: 0
@@ -261,7 +260,7 @@ monitors:
     - name: "bottom"
       position: "bottom"
       anchor_to_edges: true
-      height: 25
+      height: 40
       margin:
         top: 0
         bottom: 0
@@ -297,7 +296,7 @@ monitors:
           cmd: "${XDG_CONFIG_HOME}/ironbar/scripts/bluetooth.sh"
           mode: "poll"
           interval: 10000
-          on_click_left: "overskride"
+          on_click_left: "cosmic-settings bluetooth"
         - name: "volume"
           type: volume
           format: "{icon} {percentage}%"
@@ -313,14 +312,12 @@ monitors:
           icon: "󰨸"
           icon_size: 32
           max_items: 5
-        #- name: "keyboard"
-        #  type: keyboard
-        #  tooltip: "Keyboard"
-        #  icon_size: 32
-        #  show_caps: true
-        #  show_num: true
-        #  show_scroll: true
-        #  show_layout: true
+        - name: "tray"
+          type: tray
+          tooltip: "Tray"
+          direction: "horizontal"
+          icon_size: 16
+          prefer_theme_icons: true
 
   #########################
   # Displayport 1
@@ -339,7 +336,7 @@ monitors:
       exclusive_zone: true
       popup_gap: 5
       start_hidden: false
-      height: 25
+      height: 20
       # Top or Left modules
       start:
         - name: "workspaces"
@@ -395,7 +392,7 @@ monitors:
     - name: "bottom"
       position: "bottom"
       anchor_to_edges: true
-      height: 25
+      height: 40
       margin:
         top: 0
         bottom: 0
@@ -431,7 +428,7 @@ monitors:
           cmd: "${XDG_CONFIG_HOME}/ironbar/scripts/bluetooth.sh"
           mode: "poll"
           interval: 10000
-          on_click_left: "overskride"
+          on_click_left: "cosmic-settings bluetooth"
         - name: "volume"
           type: volume
           format: "{icon} {percentage}%"
@@ -447,11 +444,9 @@ monitors:
           icon: "󰨸"
           icon_size: 32
           max_items: 5
-        #- name: "keyboard"
-        #  type: keyboard
-        #  tooltip: "Keyboard"
-        #  icon_size: 32
-        #  show_caps: true
-        #  show_num: true
-        #  show_scroll: true
-        #  show_layout: true
+        - name: "tray"
+          type: tray
+          tooltip: "Tray"
+          direction: "horizontal"
+          icon_size: 16
+          prefer_theme_icons: true

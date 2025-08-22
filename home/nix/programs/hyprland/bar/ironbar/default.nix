@@ -5,6 +5,7 @@
 {
   home.packages = with pkgs; [
     ironbar
+    zafiro-icons
   ];
 
   xdg = {

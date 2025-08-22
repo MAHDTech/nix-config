@@ -112,12 +112,25 @@
         echo "''${BASHPID}" > "''${SWWW_PIDFILE}"
         msg "swww process ID recorded as ''${BASHPID}"
 
+        # Set up signal handlers for graceful cleanup
+        cleanup() {
+          msg "Received signal, cleaning up..."
+          rm -f "''${SWWW_PIDFILE}"
+          exit 0
+        }
+        trap cleanup INT TERM EXIT
+
         #########################
         # Main loop
         #########################
 
         msg "Querying displays"
-        DISPLAY_LIST=$(swww query | grep -Po "^[^:]+")
+        DISPLAY_LIST=$(swww query 2>/dev/null | grep -Po "^[^:]+")
+        if [[ -z "''${DISPLAY_LIST}" ]];
+        then
+          msg "Error: No displays found. Is swww running?"
+          exit 1
+        fi
         msg "Found displays:"
         while IFS= read -r DISPLAY;
         do
@@ -134,21 +147,37 @@
 
           msg "Reading wallpaper list"
 
-          # Read the wallpaper list
-          exec < "''${SWWW_LIST_FILE}"
-
           msg "Setting wallpapers"
 
+          # Read all images into an array first
+          mapfile -t IMAGES < "''${SWWW_LIST_FILE}"
+
           # Set the wallpaper for each display
+          IMAGE_INDEX=0
           for DISPLAY in ''${DISPLAY_LIST};
           do
-            read -r IMAGE || break
+            if [[ ''${IMAGE_INDEX} -ge ''${#IMAGES[@]} ]];
+            then
+              msg "Warning: Not enough images for all displays, reusing first image"
+              IMAGE="''${IMAGES[0]}"
+            else
+              IMAGE="''${IMAGES[IMAGE_INDEX]}"
+            fi
+
             msg "Setting image ''${IMAGE} for display: ''${DISPLAY}"
-            swww \
-              img \
-              --resize="''${RESIZE_TYPE}" \
-              --outputs "''${DISPLAY}" \
-              "''${IMAGE}"
+            if [[ -f "''${IMAGE}" ]];
+            then
+              # Run swww command and capture exit status without triggering trap
+              if swww img --resize="''${RESIZE_TYPE}" --outputs "''${DISPLAY}" "''${IMAGE}"; then
+                msg "Successfully set wallpaper for ''${DISPLAY}"
+              else
+                msg "Failed to set wallpaper for ''${DISPLAY}"
+              fi
+            else
+              msg "Image file not found: ''${IMAGE}"
+            fi
+
+            ((IMAGE_INDEX++))
           done
 
           msg "Sleeping for ''${INTERVAL} seconds"

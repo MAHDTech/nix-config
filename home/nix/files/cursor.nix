@@ -81,13 +81,13 @@
           "editor.colorDecorators": true,
           "editor.defaultColorDecorators": "always",
           "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.fontFamily": "'JetBrainsMono Nerd Font', 'FiraCode Nerd Font','Noto Color Emoji', monospace",
+          "editor.fontFamily": "'Hack Nerd Font Mono', 'SauceCodePro Nerd Font Mono', monospace",
           "editor.fontSize": 14,
           "editor.formatOnSave": true,
           "editor.minimap.enabled": true,
 
           // Terminal
-          "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font', 'FiraCode Nerd Font', 'Noto Color Emoji', monospace",
+          "terminal.integrated.fontFamily": "'VictorMono Nerd Font Mono', 'UbuntuMono Nerd Font Mono', monospace",
           "terminal.integrated.fontSize": 14,
 
           // Workbench
