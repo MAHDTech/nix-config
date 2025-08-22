@@ -1,12 +1,18 @@
 /*
+##################################################
 
 Ironbar Stylesheet
 
 - Reference: https://github.com/JakeStanger/ironbar/wiki/styling-guide
 
+##################################################
 */
 
-/* --- Color Definitions --- */
+/*
+##################################################
+Color Definitions
+##################################################
+*/
 
 @define-color color_bg #1a1a1a; /* Deep black for cyberpunk background */
 @define-color color_bg_dark #121212; /* Darker gray for hover states */
@@ -15,7 +21,11 @@ Ironbar Stylesheet
 @define-color color_text #00e6e6; /* Neon cyan for text */
 @define-color color_urgent #ff1a1a; /* Neon red for urgent alerts */
 
-/* --- Base Styles --- */
+/*
+##################################################
+Base Styles
+##################################################
+*/
 
 * {
   font-family: "JetBrainsMono Nerd Font", "FiraCode Nerd Font", sans-serif;
@@ -58,7 +68,12 @@ scale trough {
   background-color: @color_bg;
 }
 
-/* --- Clipboard Styles --- */
+/*
+##################################################
+Clipboard Styles
+##################################################
+*/
+
 .clipboard {
   margin-left: 5px;
   font-size: 1.1em;
@@ -107,7 +122,12 @@ scale trough {
   box-shadow: 0 0 5px @color_urgent;
 }
 
-/* --- Clock Styles --- */
+/*
+##################################################
+Clock Styles
+##################################################
+*/
+
 .clock {
   font-weight: bold;
   margin-left: 5px;
@@ -138,7 +158,12 @@ scale trough {
   background-color: @color_border_active;
 }
 
-/* --- Focused Styles --- */
+/*
+##################################################
+Focused Styles
+##################################################
+*/
+
 .focused {
   background-color: @color_bg;
   margin-left: 5px;
@@ -157,7 +182,12 @@ scale trough {
   box-shadow: 0 0 5px @color_border_active;
 }
 
-/* --- Launcher Styles --- */
+/*
+##################################################
+Launcher Styles
+##################################################
+*/
+
 .launcher .item {
   margin-right: 4px;
 }
@@ -188,7 +218,12 @@ scale trough {
   border-top: 1px solid @color_border;
 }
 
-/* --- Music Styles --- */
+/*
+##################################################
+Music Styles
+##################################################
+*/
+
 .music:hover * {
   background-color: @color_bg_dark;
   box-shadow: 0 0 5px @color_border_active;
@@ -227,7 +262,12 @@ scale trough {
   background-color: @color_border_active;
 }
 
-/* --- Notifications Styles --- */
+/*
+##################################################
+Notifications Styles
+##################################################
+*/
+
 .notifications {
   background-color: @color_bg;
 }
@@ -249,7 +289,12 @@ scale trough {
   box-shadow: 0 0 5px @color_border_active;
 }
 
-/* --- Script Styles --- */
+/*
+##################################################
+Script Styles
+##################################################
+*/
+
 .script {
   padding-left: 10px;
   background-color: @color_bg;
@@ -261,7 +306,12 @@ scale trough {
   box-shadow: 0 0 5px @color_border_active;
 }
 
-/* --- Sys Info Styles --- */
+/*
+##################################################
+Sys Info Styles
+##################################################
+*/
+
 .sysinfo {
   margin-left: 10px;
   background-color: @color_bg;
@@ -277,7 +327,12 @@ scale trough {
   box-shadow: 0 0 5px @color_border_active;
 }
 
-/* --- Tray Styles --- */
+/*
+##################################################
+Tray Styles
+##################################################
+*/
+
 .tray {
   margin-left: 10px;
   background-color: @color_bg;
@@ -292,7 +347,12 @@ scale trough {
   box-shadow: 0 0 5px @color_border_active;
 }
 
-/* --- Upower Styles --- */
+/*
+##################################################
+Upower Styles
+##################################################
+*/
+
 .upower {
   background-color: @color_bg;
   margin-left: 5px;
@@ -324,12 +384,22 @@ scale trough {
   color: @color_text;
 }
 
-/* --- Volume Styles --- */
+/*
+##################################################
+Volume Styles
+##################################################
+*/
+
 .popup-volume .device-box {
   border-right: 1px solid @color_border;
 }
 
-/* --- Workspaces Styles --- */
+/*
+##################################################
+Workspaces Styles
+##################################################
+*/
+
 .workspaces .item.focused {
   box-shadow: inset 0 -3px;
   background-color: @color_bg_dark;
@@ -345,7 +415,12 @@ scale trough {
   box-shadow: 0 0 5px @color_border_active;
 }
 
-/* --- Custom: Power Menu Styles --- */
+/*
+##################################################
+Custom: Power Menu Styles
+##################################################
+*/
+
 .popup-power-menu #header {
   font-size: 1.4em;
   padding-bottom: 0.4em;
