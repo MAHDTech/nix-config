@@ -81,7 +81,7 @@
           "editor.colorDecorators": true,
           "editor.defaultColorDecorators": "always",
           "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.fontFamily": "'Hack Nerd Font Mono', 'SauceCodePro Nerd Font Mono', monospace",
+          "editor.fontFamily": "'VictorMono Nerd Font Mono', 'Hack Nerd Font Mono', 'SauceCodePro Nerd Font Mono', monospace",
           "editor.fontSize": 14,
           "editor.formatOnSave": true,
           "editor.minimap.enabled": true,
