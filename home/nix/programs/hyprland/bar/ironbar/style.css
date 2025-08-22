@@ -1,15 +1,21 @@
 /*
-https://github.com/JakeStanger/ironbar/wiki/styling-guide
+
+Ironbar Stylesheet
+
+- Reference: https://github.com/JakeStanger/ironbar/wiki/styling-guide
+
 */
 
-@define-color color_bg #2d2d2d;
-@define-color color_bg_dark #1c1c1c;
-@define-color color_border #424242;
-@define-color color_border_active #6699cc;
-@define-color color_text #ffffff;
-@define-color color_urgent #8f0a0a;
+/* --- Color Definitions --- */
 
-/* -- base styles -- */
+@define-color color_bg #1a1a1a; /* Deep black for cyberpunk background */
+@define-color color_bg_dark #121212; /* Darker gray for hover states */
+@define-color color_border #4d4d4d; /* Metallic silver for borders */
+@define-color color_border_active #a100a1; /* Neon purple for active highlights */
+@define-color color_text #00e6e6; /* Neon cyan for text */
+@define-color color_urgent #ff1a1a; /* Neon red for urgent alerts */
+
+/* --- Base Styles --- */
 
 * {
   font-family: "JetBrainsMono Nerd Font", "FiraCode Nerd Font", sans-serif;
@@ -33,11 +39,13 @@ label {
 
 button:hover {
   background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active; /* Subtle neon glow on hover */
 }
 
 scale trough {
   min-width: 1px;
   min-height: 2px;
+  background-color: @color_border;
 }
 
 #bar {
@@ -47,13 +55,27 @@ scale trough {
 .popup {
   border: 1px solid @color_border;
   padding: 1em;
+  background-color: @color_bg;
 }
 
-/* -- clipboard -- */
-
+/* --- Clipboard Styles --- */
 .clipboard {
   margin-left: 5px;
   font-size: 1.1em;
+}
+
+.clipboard .btn {
+  background-color: @color_bg;
+}
+
+.clipboard .btn .icon,
+.clipboard .btn .text-icon,
+.clipboard .btn .image {
+  color: @color_text;
+}
+
+.popup-clipboard {
+  background-color: @color_bg;
 }
 
 .popup-clipboard .item {
@@ -61,11 +83,38 @@ scale trough {
   border-bottom: 1px solid @color_border;
 }
 
-/* -- clock -- */
+.popup-clipboard .item .btn,
+.popup-clipboard .item .btn.text,
+.popup-clipboard .item .btn.image {
+  color: @color_text;
+  background-color: @color_bg;
+}
 
+.popup-clipboard .item .btn:hover,
+.popup-clipboard .item .btn.text:hover,
+.popup-clipboard .item .btn.image:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
+}
+
+.popup-clipboard .item .btn-remove {
+  color: @color_urgent;
+  background-color: @color_bg;
+}
+
+.popup-clipboard .item .btn-remove:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_urgent;
+}
+
+/* --- Clock Styles --- */
 .clock {
   font-weight: bold;
   margin-left: 5px;
+}
+
+.popup-clock {
+  background-color: @color_bg;
 }
 
 .popup-clock .calendar-clock {
@@ -89,14 +138,33 @@ scale trough {
   background-color: @color_border_active;
 }
 
-/* -- launcher -- */
+/* --- Focused Styles --- */
+.focused {
+  background-color: @color_bg;
+  margin-left: 5px;
+}
 
+.focused .icon {
+  color: @color_text;
+}
+
+.focused .label {
+  color: @color_text;
+}
+
+.focused:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
+}
+
+/* --- Launcher Styles --- */
 .launcher .item {
   margin-right: 4px;
 }
 
-.launcher .ifix examtem:not(.focused):hover {
+.launcher .item:not(.focused):hover {
   background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
 }
 
 .launcher .open {
@@ -113,16 +181,17 @@ scale trough {
 
 .popup-launcher {
   padding: 0;
+  background-color: @color_bg;
 }
 
 .popup-launcher .popup-item:not(:first-child) {
   border-top: 1px solid @color_border;
 }
 
-/* -- music -- */
-
+/* --- Music Styles --- */
 .music:hover * {
   background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
 }
 
 .popup-music .album-art {
@@ -136,6 +205,7 @@ scale trough {
 .popup-music .title .icon,
 .popup-music .title .label {
   font-size: 1.7em;
+  color: @color_text;
 }
 
 .popup-music .controls *:disabled {
@@ -144,17 +214,23 @@ scale trough {
 
 .popup-music .volume .slider slider {
   border-radius: 100%;
+  background-color: @color_border_active;
 }
 
 .popup-music .volume .icon {
   margin-left: 4px;
+  color: @color_text;
 }
 
 .popup-music .progress .slider slider {
   border-radius: 100%;
+  background-color: @color_border_active;
 }
 
-/* notifications */
+/* --- Notifications Styles --- */
+.notifications {
+  background-color: @color_bg;
+}
 
 .notifications .count {
   font-size: 0.6rem;
@@ -168,36 +244,92 @@ scale trough {
   opacity: 0.7;
 }
 
-/* -- script -- */
-
-.script {
-  padding-left: 10px;
+.notifications:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
 }
 
-/* -- sys_info -- */
+/* --- Script Styles --- */
+.script {
+  padding-left: 10px;
+  background-color: @color_bg;
+  color: @color_text;
+}
 
+.script:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
+}
+
+/* --- Sys Info Styles --- */
 .sysinfo {
   margin-left: 10px;
+  background-color: @color_bg;
 }
 
 .sysinfo .item {
   margin-left: 5px;
+  color: @color_text;
 }
 
-/* -- tray -- */
+.sysinfo:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
+}
 
+/* --- Tray Styles --- */
 .tray {
   margin-left: 10px;
+  background-color: @color_bg;
 }
 
-/* -- volume -- */
+.tray .item {
+  color: @color_text;
+}
 
+.tray .item:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
+}
+
+/* --- Upower Styles --- */
+.upower {
+  background-color: @color_bg;
+  margin-left: 5px;
+}
+
+.upower .contents {
+  color: @color_text;
+}
+
+.upower .icon {
+  color: @color_text;
+}
+
+.upower .label {
+  color: @color_text;
+}
+
+.upower:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
+}
+
+.popup-upower {
+  background-color: @color_bg;
+  border: 1px solid @color_border;
+}
+
+.popup-upower .upower-details {
+  color: @color_text;
+}
+
+/* --- Volume Styles --- */
 .popup-volume .device-box {
   border-right: 1px solid @color_border;
 }
 
-/* -- workspaces -- */
-
+/* --- Workspaces Styles --- */
 .workspaces .item.focused {
   box-shadow: inset 0 -3px;
   background-color: @color_bg_dark;
@@ -209,20 +341,29 @@ scale trough {
 
 .workspaces .item:hover {
   box-shadow: inset 0 -3px;
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
 }
 
-/* -- custom: power menu -- */
-
+/* --- Custom: Power Menu Styles --- */
 .popup-power-menu #header {
   font-size: 1.4em;
   padding-bottom: 0.4em;
   margin-bottom: 0.6em;
   border-bottom: 1px solid @color_border;
+  color: @color_text;
 }
 
 .popup-power-menu .power-btn {
   border: 1px solid @color_border;
   padding: 0.6em 1em;
+  background-color: @color_bg;
+  color: @color_text;
+}
+
+.popup-power-menu .power-btn:hover {
+  background-color: @color_bg_dark;
+  box-shadow: 0 0 5px @color_border_active;
 }
 
 .popup-power-menu #buttons > *:nth-child(1) .power-btn {
