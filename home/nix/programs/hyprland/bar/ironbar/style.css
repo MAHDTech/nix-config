@@ -1,3 +1,7 @@
+/*
+https://github.com/JakeStanger/ironbar/wiki/styling-guide
+*/
+
 @define-color color_bg #2d2d2d;
 @define-color color_bg_dark #1c1c1c;
 @define-color color_border #424242;
@@ -8,9 +12,7 @@
 /* -- base styles -- */
 
 * {
-  font-family:
-    Noto Sans Nerd Font,
-    sans-serif;
+  font-family: "JetBrainsMono Nerd Font", "FiraCode Nerd Font", sans-serif;
   font-size: 16px;
   border: none;
   border-radius: 0;

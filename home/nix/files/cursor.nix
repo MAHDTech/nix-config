@@ -78,14 +78,16 @@
           "window.zoomPerWindow": true,
 
           // Editor
-          "editor.fontFamily": "'JetBrains Mono', 'JetBrains Mono Nerd Font', monospace",
-          "editor.fontSize": 14,
-          "editor.minimap.enabled": true,
+          "editor.colorDecorators": true,
+          "editor.defaultColorDecorators": "always",
           "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.fontFamily": "'JetBrainsMono Nerd Font', 'FiraCode Nerd Font','Noto Color Emoji', monospace",
+          "editor.fontSize": 14,
           "editor.formatOnSave": true,
+          "editor.minimap.enabled": true,
 
           // Terminal
-          "terminal.integrated.fontFamily": "'Ubuntu Mono', 'JetBrains Mono', 'JetBrains Mono Nerd Font', monospace",
+          "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font', 'FiraCode Nerd Font', 'Noto Color Emoji', monospace",
           "terminal.integrated.fontSize": 14,
 
           // Workbench

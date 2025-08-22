@@ -42,9 +42,10 @@ let
     pop-launcher
     slurp
     swappy
+    swaynotificationcenter
     swww
-    wayland-utils
     wayland-pipewire-idle-inhibit
+    wayland-utils
     wayshot
     #wf-recorder
     #wl-screenrec
@@ -938,31 +939,31 @@ in
 
       "$terminal" = "cosmic-term";
 
-      #"$barCommand" = "ags run";
       "$barCommand" = "ironbar";
+
+      "$notificationManager" = "swaync";
 
       "$fileManager" = "cosmic-files";
 
       "$menu" = "cosmic-launcher";
 
-      "$switcher" = "rofi window";
+      "$switcher" = "cosmic-launcher alt-tab";
 
-      # Open apps on startup
       exec-once = [
-        # Start the bar
-        "$barCommand"
+        # Start the notification manager if not running
+        "pidof $notificationManager || $notificationManager"
 
-        # Start a terminal
-        "$terminal"
+        # Start the bar if not running
+        "pidof $barCommand || $barCommand"
 
-        # Start Insync
-        "sleep 30 ; pidof insync || insync start"
+        # Start a terminal if not running
+        "pidof $terminal || $terminal"
 
-        # Start the wallpaper daemon
-        "sleep 30 ; pidof swww-daemon || swww-daemon"
+        # Start the wallpaper daemon if not running
+        "pidof swww-daemon || swww-daemon"
 
-        # Set a random wallpaper
-        "sleep 60 ; random-wallpaper"
+        # Start the random wallpaper script
+        "sleep 30 ; random-wallpaper"
       ];
 
       ####################
