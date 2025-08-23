@@ -85,36 +85,4 @@
       };
     };
   };
-
-  systemd = lib.mkIf (syncthingConfig != null) {
-    user = {
-      timers = {
-        # Create a systemd timer to monitor Syncthing status
-        syncthing-status = {
-          Unit = {
-            Description = "Syncthing status monitor timer";
-          };
-          Timer = {
-            OnCalendar = "hourly";
-            Persistent = true;
-          };
-          Install = {
-            WantedBy = [ "timers.target" ];
-          };
-        };
-      };
-      services = {
-        # Create a systemd service to monitor Syncthing status
-        syncthing-status = {
-          Unit = {
-            Description = "Syncthing status monitor";
-          };
-          Service = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.bash}/bin/bash -c 'systemctl --user is-active syncthing && echo \"Syncthing is running\" || echo \"Syncthing is not running\"'";
-          };
-        };
-      };
-    };
-  };
 }
