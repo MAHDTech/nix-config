@@ -14,7 +14,7 @@
 
         enable = true;
         id = "syncthing-shared";
-        path = "/home/mahdtech/Syncthing";
+        path = "/home/mahdtech/Sync";
         type = "sendreceive";
 
         devices = [
