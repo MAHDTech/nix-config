@@ -10,7 +10,7 @@
       }
     ];
     syncFolders = {
-      "Syncthing" = {
+      "Sync" = {
 
         enable = true;
         id = "syncthing-shared";
