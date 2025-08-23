@@ -329,7 +329,8 @@
                   inherit globalStateVersion;
                   inherit globalUsername;
                   inherit inGitHubActions;
-                };
+                }
+                // (import ./nixos/hosts/nuc/home-manager/syncthing.nix);
                 users.${globalUsername} = {
                   imports = [
                     ./home
@@ -378,7 +379,8 @@
                   inherit globalStateVersion;
                   inherit globalUsername;
                   inherit inGitHubActions;
-                };
+                }
+                // (import ./nixos/hosts/jons/home-manager/syncthing.nix);
                 users.${globalUsername} = {
                   imports = [
                     ./home
