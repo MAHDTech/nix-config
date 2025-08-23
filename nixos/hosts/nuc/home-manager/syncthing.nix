@@ -5,7 +5,7 @@
     otherDevices = [
       {
         name = "JONS";
-        id = "REPLACE_WITH_JONS_DEVICE_ID";
+        id = "OZ2YWNW-ARZCGC2-XPHTLXN-SNO6VGZ-A4V5JWK-KXS5ISI-3NDFJQB-HSM6VQC";
         autoAcceptFolders = false;
       }
     ];

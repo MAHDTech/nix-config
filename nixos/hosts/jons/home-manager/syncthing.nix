@@ -1,7 +1,7 @@
 {
   syncthingConfig = {
     deviceName = "JONS";
-    deviceId = "REPLACE_WITH_JONS_DEVICE_ID";
+    deviceId = "OZ2YWNW-ARZCGC2-XPHTLXN-SNO6VGZ-A4V5JWK-KXS5ISI-3NDFJQB-HSM6VQC";
     otherDevices = [
       {
         name = "NUC";
