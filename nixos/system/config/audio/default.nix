@@ -141,18 +141,18 @@
             "monitor.bluez.properties" = {
               "bluez.codecs" = [
                 "aac"
-                "aptx"
-                "aptx_hd"
-                "aptx_ll"
-                "aptx_ll_duplex"
+                #"aptx"
+                #"aptx_hd"
+                #"aptx_ll"
+                #"aptx_ll_duplex"
                 "ldac"
-                "sbc"
-                "sbc_hbr"
-                "sbc_hbr_plus"
+                #"sbc"
+                #"sbc_hbr"
+                #"sbc_hbr_plus"
                 "sbc_xq"
               ];
               "bluez5.enable-sbc-xq" = true;
-              "bluez5.enable-msbc" = true;
+              "bluez5.enable-msbc" = false;
               "bluez5.enable-hw-volume" = true;
               "bluez5.hfphsp-backend" = "native";
               "bluez5.roles" = [
@@ -163,11 +163,11 @@
                 "bap_sink"
                 "bap_source"
                 # Hands-Free Profile Headset/Audio Gateway
-                "hsp_hs"
-                "hsp_ag"
+                #"hsp_hs"
+                #"hsp_ag"
                 # Headset Profile Hands-Free/Audio Gateway
-                "hfp_hf"
-                "hfp_ag"
+                #"hfp_hf"
+                #"hfp_ag"
               ];
             };
           };
@@ -186,7 +186,7 @@
                 ];
                 actions = {
                   update-props = {
-                    "session.suspend-timeout-seconds" = 0;
+                    "session.suspend-timeout-seconds" = 30;
                   };
                 };
               }

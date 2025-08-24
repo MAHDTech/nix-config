@@ -51,6 +51,9 @@
 
       # Intel VMD
       "nvme_load=YES"
+
+      # Disable USB autosuspend
+      "btusb.enable_autosuspend=n"
     ];
 
     extraModulePackages = [ ];

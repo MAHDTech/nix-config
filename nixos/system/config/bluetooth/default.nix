@@ -14,8 +14,8 @@
 
   hardware.bluetooth = {
     enable = true;
-    package = pkgs.bluez;
-    #package = pkgs.bluez-experimental;
+    #package = pkgs.bluez;
+    package = pkgs.bluez-experimental;
     powerOnBoot = true;
     hsphfpd.enable = false; # conflicts with wireplumber
     # Bluez settings
@@ -24,9 +24,10 @@
       General = {
         ControllerMode = "dual"; # Both BR/EDR and LE are enabled
         #Enable = "Source,Sink,Media,Socket";
-        Experimental = "true"; # Enable DBUS experimental interfaces
         FastConnectable = "true";
-        KernelExperimental = "6fbaf188-05e0-496a-9885-d6ddfdb4e03e"; # Enable ISO sockets for BAP
+        # TODO: Re-enable these once reboots are fixed.
+        Experimental = "false"; # Enable DBUS experimental interfaces
+        #KernelExperimental = "6fbaf188-05e0-496a-9885-d6ddfdb4e03e"; # Enable ISO sockets for BAP
       };
       Policy = {
         AutoEnable = "true";
