@@ -51,6 +51,14 @@
 
       # Intel VMD
       "nvme_load=YES"
+
+      # Disable USB autosuspend
+      "btusb.enable_autosuspend=n"
+    ];
+
+    blacklistedKernelModules = [
+      "iwlwifi" # Disable Intel Wireless
+      "btintel" # Disable Intel Bluetooth
     ];
 
     extraModulePackages = [ ];

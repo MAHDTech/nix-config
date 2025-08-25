@@ -958,12 +958,6 @@ in
 
         # Start a terminal if not running
         "pidof $terminal || $terminal"
-
-        # Start the wallpaper daemon if not running
-        "pidof swww-daemon || swww-daemon"
-
-        # Start the random wallpaper script
-        "sleep 30 ; random-wallpaper"
       ];
 
       ####################
@@ -1193,12 +1187,40 @@ in
     extraConfig = '''';
   };
 
-  # Override the hypridle service to ensure it starts after hyprland-session.target
-  systemd.user.services.hypridle = {
-    Install.WantedBy = [ "hyprland-session.target" ];
-    Unit = {
-      BindsTo = [ "hyprland-session.target" ];
-      After = [ "hyprland-session.target" ];
+  # Ensure hyprland-session.target starts on login
+  systemd = {
+    user = {
+
+      targets = {
+
+        hyprland-session = {
+          Install.WantedBy = [ "default.target" ];
+        };
+
+      };
+
+      # Override the hypridle service to ensure it starts after hyprland-session.target
+      services = {
+
+        hypridle = {
+          Install.WantedBy = [ "hyprland-session.target" ];
+          Unit = {
+            BindsTo = [ "hyprland-session.target" ];
+            After = [ "hyprland-session.target" ];
+            Requires = [ "hyprland-session.target" ];
+          };
+        };
+
+        # Override the hyprpaper service to ensure it starts after hyprland-session.target
+        hyprpaper = {
+          Install.WantedBy = [ "hyprland-session.target" ];
+          Unit = {
+            BindsTo = [ "hyprland-session.target" ];
+            After = [ "hyprland-session.target" ];
+            Requires = [ "hyprland-session.target" ];
+          };
+        };
+      };
     };
   };
 }
