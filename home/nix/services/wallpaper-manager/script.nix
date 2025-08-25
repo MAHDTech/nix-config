@@ -21,7 +21,12 @@
           # Wallpaper Manager Daemon Script
           #
           # This script starts swww-daemon in the foreground.
+          #
           # It's designed to be run as a systemd service.
+          ##################################################
+
+          ##################################################
+          # Functions
           ##################################################
 
           function log() {
@@ -64,7 +69,7 @@
           }
 
           ##################################################
-          # Main execution
+          # Main
           ##################################################
 
           log "info" "Starting wallpaper manager daemon service"
@@ -137,6 +142,8 @@
           #
           # This script manages wallpaper rotation.
           # It waits for swww-daemon to be ready before starting.
+          #
+          # It's designed to be run as a systemd service.
           ##################################################
 
           ##################################################
@@ -237,13 +244,13 @@
 
             # Show some sample image files found
             log "info" "Debug: Sample image files found:"
-            find "''${REAL_DIR}" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.webp" -o -name "*.gif" -o -name "*.bmp" -o -name "*.tiff" \) | head -5 > "/tmp/sample_files_$$" 2>/dev/null || true
+            find "''${REAL_DIR}" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.webp" -o -name "*.gif" -o -name "*.bmp" -o -name "*.tiff" \) > "/tmp/sample_files_$$" 2>/dev/null || true
             if [[ -s "/tmp/sample_files_$$" ]];
             then
-              while IFS= read -r file;
+              head -5 "/tmp/sample_files_$$" | while IFS= read -r file;
               do
                 log "info" "Debug:   $file"
-              done < "/tmp/sample_files_$$"
+              done
               rm -f "/tmp/sample_files_$$"
             fi
 

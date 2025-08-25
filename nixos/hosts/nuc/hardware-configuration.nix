@@ -56,6 +56,11 @@
       "btusb.enable_autosuspend=n"
     ];
 
+    blacklistedKernelModules = [
+      "iwlwifi" # Disable Intel Wireless
+      "btintel" # Disable Intel Bluetooth
+    ];
+
     extraModulePackages = [ ];
   };
 
