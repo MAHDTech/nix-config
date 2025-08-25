@@ -1,13 +1,30 @@
 {
-  bootstrapped,
-  clusterToken ? null,
-  hypervisorClusterAddress,
-  hypervisorManagementAddress,
-  hypervisorName,
-  hypervisorRole,
-  sourceDefault,
-  sourceInstances,
-  sourceIso,
+  hypervisor ? {
+    name = null;
+  },
+  incus ? {
+    joined = false;
+    role = null;
+    management = {
+      address = null;
+      port = null;
+    };
+    cluster = {
+      address = null;
+      port = null;
+    };
+    clusterToken = null;
+  },
+  ovn ? {
+    joined = false;
+    clusterAddresses = [ ];
+  },
+  linstor ? {
+    enabled = false;
+    controller = {
+      connection = null;
+    };
+  },
 }:
 {
   config,
@@ -16,11 +33,113 @@
   ...
 }:
 let
-  # Strip the port from the cluster address.
-  hypervisorClusterIP = builtins.elemAt (lib.strings.splitString ":" hypervisorClusterAddress) 0;
+  #########################################################
+  # Variables
+  #########################################################
+
+  #########################
+  # Hypervisor configuration
+  #########################
+
+  hypervisorName = hypervisor.name;
+
+  #########################
+  # Incus configuration
+  #########################
+
+  incusJoined = incus.joined;
+  incusRole = incus.role;
+
+  incusManagementAddress = incus.management.address + ":" + toString incus.management.port;
+  incusClusterAddress = incus.cluster.address + ":" + toString incus.cluster.port;
+  incusClusterIP = incus.cluster.address;
+
+  incusClusterToken = incus.clusterToken;
+
+  # Bootstrap IP for member nodes (extracted from first cluster address where role is bootstrap)
+  bootstrapIP =
+    if incus.role == "member" && ovn.clusterAddresses != [ ] then
+      builtins.head ovn.clusterAddresses # Use first cluster member as bootstrap
+    else
+      null;
+
+  #########################
+  # LINSTOR configuration
+  #########################
+
+  # Flag to enable LINSTOR.
+  linstorEnabled = linstor.enabled;
+
+  # Controller settings
+  linstorControllerConnection = linstor.controller.connection;
+
+  # When LINSTOR is enabled, make the LINSTOR packages available.
+  linstorPackages = {
+    linstor-server = pkgs.callPackage ../../storage/linstor/packages/server.nix { };
+    linstor-client = pkgs.callPackage ../../storage/linstor/packages/client.nix { };
+  };
+
+  #########################
+  # OVN configuration
+  #########################
+
+  ovnJoined = ovn.joined;
+  ovnClusterAddresses = ovn.clusterAddresses;
+
+  ovnConfig = {
+
+    # OVN Northbound configuration.
+    northbound = {
+      serverPort = 6611; # Raft server
+      clientPort = 6612; # CLI client
+      addressList = lib.strings.concatStringsSep "," (
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.northbound.clientPort}") ovnClusterAddresses
+      );
+
+      # Use different database files for local vs cluster mode
+      dbFile = "/var/lib/ovn/ovnnb_db.db";
+
+      # Local mode: simple standalone database
+      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock ${ovnConfig.northbound.dbFile}";
+
+      # Cluster mode: clustered database with TCP remote for client connections
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-nb-db.ctl --pidfile=/var/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/var/run/ovn/ovnnb_db.sock --remote=ptcp:${toString ovnConfig.northbound.clientPort} ${ovnConfig.northbound.dbFile}";
+    };
+
+    # OVN Central configuration.
+    central = {
+      # Local mode: connect to local Unix socket
+      localExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/var/run/ovn/ovn-central.pid --detach --log-file=/var/log/ovn/ovn-central.log --ovnnb-db=unix:/var/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/var/run/ovn/ovnsb_db.sock";
+
+      # Cluster mode: connect to cluster addresses for HA
+      clusterExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/var/run/ovn/ovn-central.pid --detach --log-file=/var/log/ovn/ovn-central.log --ovnnb-db=${ovnConfig.northbound.addressList} --ovnsb-db=${ovnConfig.southbound.addressList}";
+    };
+
+    # OVN Southbound configuration.
+    southbound = {
+      serverPort = 6621; # Raft server
+      clientPort = 6622; # CLI client
+      addressList = lib.strings.concatStringsSep "," (
+        lib.map (addr: "tcp:${addr}:${toString ovnConfig.southbound.clientPort}") ovnClusterAddresses
+      );
+
+      # Use different database files for local vs cluster mode
+      dbFile = "/var/lib/ovn/ovnsb_db.db";
+
+      # Local mode: simple standalone database
+      localExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock ${ovnConfig.southbound.dbFile}";
+
+      # Cluster mode: clustered database with TCP remote for client connections
+      clusterExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/var/run/ovn/ovn-sb-db.ctl --pidfile=/var/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/var/run/ovn/ovnsb_db.sock --remote=ptcp:${toString ovnConfig.southbound.clientPort} ${ovnConfig.southbound.dbFile}";
+    };
+
+  };
 
   #########################################################
   # Global configuration
+  #
+  # This configuration is applied to the bootstrap server only.
+  #
   #########################################################
   globalConfig = {
 
@@ -31,15 +150,49 @@ let
 
       #########################################################
       # Configuration.
+      #
+      # Applies to all servers.
       #########################################################
       config = {
 
+        # Configuration for clustered and non-clustered servers.
+
+        # Core
+        "core.shutdown_timeout" = 5;
+
+        # Images
         "images.auto_update_interval" = 6;
+
+        # Allow OVN controller to send logs to incus.
+        "core.syslog_socket" = true;
+
+        # Incus OVN configuration.
+        "network.ovn.northbound_connection" =
+          if ovnConfig.northbound.addressList != "" then "${ovnConfig.northbound.addressList}" else null;
+
+        # Incus LINSTOR configuration.
+        "storage.linstor.controller_connection" = linstorControllerConnection;
+
+      }
+      // lib.optionalAttrs (incusJoined && incusRole == "bootstrap") {
+
+        # Only add ACME configuration for bootstrap server to manage DNS records.
+
+        # ACME (cluster-only)
+        "acme.agree_tos" = true;
+        #"acme.ca_url" = "https://acme-staging-v02.api.letsencrypt.org/directory";
+        "acme.ca_url" = "https://acme-v02.api.letsencrypt.org/directory";
+        "acme.challenge" = "DNS-01";
+        "acme.domain" = "incus.saltlabs.cloud";
+        "acme.email" = "acme@saltlabs.cloud";
+        "acme.provider" = "cloudflare";
 
       };
 
       #########################################################
       # Projects
+      #
+      # Applies to bootstrap server only.
       #########################################################
       projects = [
 
@@ -50,14 +203,17 @@ let
           name = "default";
           description = "Default Incus project";
           config = {
-            "features.images" = "true";
-            "features.networks" = "true";
-            "features.networks.zones" = "true";
-            "features.profiles" = "true";
-            "features.storage.buckets" = "true";
-            "features.storage.volumes" = "true";
+            "features.images" = true;
+            "features.networks" = true;
+            "features.networks.zones" = true;
+            "features.profiles" = true;
+            "features.storage.buckets" = true;
+            "features.storage.volumes" = true;
           };
         }
+
+      ]
+      ++ lib.optionals incusJoined [
 
         #########################################################
         # Nutanix project.
@@ -66,19 +222,21 @@ let
           name = "nutanix";
           description = "Nutanix Community Edition";
           config = {
-            "features.images" = "true";
-            "features.networks" = "true";
-            "features.networks.zones" = "true";
-            "features.profiles" = "true";
-            "features.storage.buckets" = "true";
-            "features.storage.volumes" = "true";
-            "restricted" = "false";
+            "features.images" = true;
+            "features.networks" = true;
+            "features.networks.zones" = true;
+            "features.profiles" = true;
+            "features.storage.buckets" = true;
+            "features.storage.volumes" = true;
+            "restricted" = false;
           };
         }
       ];
 
       #########################################################
       # Networks.
+      #
+      # Applies to bootstrap server only.
       #########################################################
       networks = [
 
@@ -87,7 +245,9 @@ let
         #########################################################
 
         ###########################
-        # Internal bridge network
+        # Bridge Network (transparent bridge)
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
         ###########################
         {
           name = "incusbr0";
@@ -95,21 +255,47 @@ let
           project = "default";
           config = {
             "bridge.driver" = "openvswitch";
-            "dns.domain" = "incus.local";
-            "dns.nameservers" = "10.10.200.254";
-            "ipv4.address" = "10.10.201.254/24";
-            "ipv4.dhcp" = "true";
-            "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.200";
-            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.254";
-            "ipv4.nat" = "false";
-            "ipv4.ovn.ranges" = "10.10.201.1-10.10.201.25";
-            "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
-            "ipv4.routing" = "false";
+            "dns.mode" = "none"; # none, managed, dynamic
+            "ipv4.address" = "none";
+            "ipv4.dhcp" = false;
+            "ipv4.nat" = false;
+            "ipv4.routing" = false;
             "ipv6.address" = "none";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
           };
         }
+
+        ###########################
+        # Bridge Network (routed bridge)
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_bridge/
+        ###########################
+        {
+          name = "incusbr1";
+          type = "bridge";
+          project = "default";
+          config = {
+            "bridge.driver" = "openvswitch";
+            "dns.mode" = "managed"; # none, managed, dynamic
+            "dns.domain" = "incus.local";
+            "dns.nameservers" = "10.10.200.254";
+            "ipv4.address" = "10.10.201.1/24";
+            "ipv4.dhcp" = true;
+            "ipv4.dhcp.ranges" = "10.10.201.100-10.10.201.150";
+            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.201.1";
+            "ipv4.nat" = false;
+            "ipv4.ovn.ranges" = "10.10.201.2-10.10.201.50";
+            "ipv4.routes" = "10.10.202.0/24,10.10.203.0/24,10.10.204.0/24,10.10.205.0/24";
+            "ipv4.routing" = true;
+            "ipv6.address" = "none";
+            "security.acls.default.egress.action" = "allow";
+            "security.acls.default.ingress.action" = "allow";
+          };
+        }
+
+      ]
+      ++ lib.optionals incusJoined [
 
         #########################################################
         # Nutanix Project Networks
@@ -117,6 +303,8 @@ let
 
         ###########################
         # Nutanix VPC
+        #
+        # Reference: https://linuxcontainers.org/incus/docs/main/reference/network_ovn/
         ###########################
         {
           name = "nutanix-vpc";
@@ -125,13 +313,13 @@ let
           config = {
             "dns.domain" = "nutanix.local";
             "dns.nameservers" = "10.10.200.254";
-            "ipv4.address" = "10.10.202.254/24";
-            "ipv4.dhcp" = "true";
+            "ipv4.address" = "10.10.202.1/24";
+            "ipv4.dhcp" = true;
             "ipv4.dhcp.ranges" = "10.10.202.100-10.10.202.150";
-            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.254";
-            "ipv4.nat" = "false";
+            "ipv4.dhcp.routes" = "0.0.0.0/0,10.10.202.1";
+            "ipv4.nat" = false;
             "ipv6.address" = "none";
-            "network" = "incusbr0";
+            "network" = "incusbr1";
             "security.acls.default.egress.action" = "allow";
             "security.acls.default.ingress.action" = "allow";
           };
@@ -140,6 +328,8 @@ let
 
       #########################################################
       # Profiles.
+      #
+      # Applies to bootstrap server only.
       #########################################################
       profiles = [
 
@@ -148,110 +338,87 @@ let
         #########################################################
 
         ###########################
-        # Default profile
-        ###########################
-        #{
-        #  name = "default";
-        #  description = "Default profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 2;
-        #    "limits.memory" = "2GiB";
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "default";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
-
-        ###########################
         # System Containers
         ###########################
-        #{
-        #  name = "system-containers";
-        #  description = "System Containers profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 2;
-        #    "limits.memory" = "2GiB";
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
+        {
+          name = "system-containers";
+          description = "System Containers profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 2;
+            "limits.memory" = "2GiB";
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "incusbr1";
+              type = "nic";
+            };
+          };
+        }
 
         ###########################
         # Application Containers
         ###########################
-        #{
-        #  name = "application-containers";
-        #  description = "Application Containers profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 2;
-        #    "limits.memory" = "2GiB";
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
+        {
+          name = "application-containers";
+          description = "Application Containers profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 2;
+            "limits.memory" = "2GiB";
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "incusbr1";
+              type = "nic";
+            };
+          };
+        }
 
         ###########################
         # Virtual Machines
         ###########################
-        #{
-        #  name = "virtual-machines";
-        #  description = "Virtual Machines profile";
-        #  project = "default";
-        #  config = {
-        #    "limits.cpu" = 4;
-        #    "limits.memory" = "4GiB";
-        #    "security.nesting" = false;
-        #    "security.secureboot" = false;
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    eth0 = {
-        #      name = "eth0";
-        #      network = "incusbr0";
-        #      nictype = "bridged";
-        #      type = "nic";
-        #    };
-        #  };
-        #}
+        {
+          name = "virtual-machines";
+          description = "Virtual Machines profile";
+          project = "default";
+          config = {
+            "limits.cpu" = 4;
+            "limits.memory" = "4GiB";
+            "security.nesting" = false;
+            "security.secureboot" = false;
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "incusbr1";
+              type = "nic";
+            };
+          };
+        }
+
+      ]
+      ++ lib.optionals incusJoined [
 
         #########################################################
         # Nutanix Project Profiles
@@ -260,163 +427,162 @@ let
         ###########################
         # Hypervisors profile
         ###########################
-        #{
-        #  name = "hypervisors";
-        #  description = "Profile for nested hypervisors";
-        #  project = "nutanix";
-        #  config = {
-        #    "limits.cpu" = 8;
-        #    "limits.memory" = "32GiB";
-        #    "security.nesting" = true;
-        #    "security.secureboot" = false;
-        #    "security.syscalls.intercept.mknod" = true;
-        #    "security.syscalls.intercept.setxattr" = true;
-        #    "security.syscalls.intercept.sysinfo" = true;
-        #  };
-        #  devices = {
-        #    root = {
-        #      path = "/";
-        #      pool = "instances";
-        #      type = "disk";
-        #    };
-        #    # TODO: enable when nutanix-vpc is working
-        #    #eth0 = {
-        #    #  name = "eth0";
-        #    #  #network = "nutanix-vpc";
-        #    #  network = "";
-        #    #  type = "nic";
-        #    #};
-        #  };
-        #}
+        {
+          name = "hypervisors";
+          description = "Profile for nested hypervisors";
+          project = "nutanix";
+          config = {
+            "limits.cpu" = 8;
+            "limits.memory" = "32GiB";
+            "security.nesting" = true;
+            "security.secureboot" = false;
+            "security.syscalls.intercept.mknod" = true;
+            "security.syscalls.intercept.setxattr" = true;
+            "security.syscalls.intercept.sysinfo" = true;
+          };
+          devices = {
+            root = {
+              path = "/";
+              pool = "linstor";
+              type = "disk";
+            };
+            eth0 = {
+              name = "eth0";
+              # Network and nictype are mutually exclusive.
+              network = "nutanix-vpc";
+              type = "nic";
+            };
+          };
+        }
       ];
 
       #########################################################
       # Storage volumes.
+      #
+      # Applies to bootstrap server only.
       #########################################################
-      storage_volumes = [
+      storage_volumes =
+        if incusJoined then
+          [
 
-        #########################################################
-        # Default Project Storage Volumes
-        #########################################################
+            #########################################################
+            # Nutanix Project Storage Volumes
+            #########################################################
 
-        # TODO: Storage volumes for default project if required.
+            ###########################
+            # NCE-01 Storage Volumes (HYPERVISOR-1)
+            ###########################
+            #{
+            #  name = "NCE-01-CVM";
+            #  type = "custom";
+            #  description = "NCE-01 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-01-DATA";
+            #  type = "custom";
+            #  description = "NCE-01 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
-        #########################################################
-        # Nutanix Project Storage Volumes
-        #########################################################
+            ###########################
+            # NCE-02 Storage Volumes (HYPERVISOR-2)
+            ###########################
+            #{
+            #  name = "NCE-02-CVM";
+            #  type = "custom";
+            #  description = "NCE-02 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-02-DATA";
+            #  type = "custom";
+            #  description = "NCE-02 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
-        ###########################
-        # NCE-01 Storage Volumes (HYPERVISOR-1)
-        ###########################
-        {
-          name = "NCE-01-CVM";
-          type = "custom";
-          description = "NCE-01 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-01-DATA";
-          type = "custom";
-          description = "NCE-01 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
+            ###########################
+            # NCE-03 Storage Volumes (HYPERVISOR-3)
+            ###########################
+            #{
+            #  name = "NCE-03-CVM";
+            #  type = "custom";
+            #  description = "NCE-03 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-03-DATA";
+            #  type = "custom";
+            #  description = "NCE-03 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
-        ###########################
-        # NCE-02 Storage Volumes (HYPERVISOR-2)
-        ###########################
-        {
-          name = "NCE-02-CVM";
-          type = "custom";
-          description = "NCE-02 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-02-DATA";
-          type = "custom";
-          description = "NCE-02 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
+            ###########################
+            # NCE-04 Storage Volumes (HYPERVISOR-4)
+            ###########################
+            #{
+            #  name = "NCE-04-CVM";
+            #  type = "custom";
+            #  description = "NCE-04 CVM storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "250GiB";
+            #  };
+            #  content_type = "block";
+            #}
+            #{
+            #  name = "NCE-04-DATA";
+            #  type = "custom";
+            #  description = "NCE-04 DATA storage volume";
+            #  project = "nutanix";
+            #  pool = "linstor";
+            #  config = {
+            #    size = "500GiB";
+            #  };
+            #  content_type = "block";
+            #}
 
-        ###########################
-        # NCE-03 Storage Volumes (HYPERVISOR-3)
-        ###########################
-        {
-          name = "NCE-03-CVM";
-          type = "custom";
-          description = "NCE-03 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-03-DATA";
-          type = "custom";
-          description = "NCE-03 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
-
-        ###########################
-        # NCE-04 Storage Volumes (HYPERVISOR-4)
-        ###########################
-        {
-          name = "NCE-04-CVM";
-          type = "custom";
-          description = "NCE-04 CVM storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "250GiB";
-          };
-          content_type = "block";
-        }
-        {
-          name = "NCE-04-DATA";
-          type = "custom";
-          description = "NCE-04 DATA storage volume";
-          project = "nutanix";
-          pool = "instances";
-          config = {
-            size = "500GiB";
-          };
-          content_type = "block";
-        }
-
-      ];
-
+          ]
+        else
+          [ ];
     };
-
   };
 
   #########################################################
   # Host-specific configuration
+  #
+  # Applies host specific configuration to all servers.
   #########################################################
   hostConfig = {
 
@@ -431,10 +597,10 @@ let
       config = {
 
         # Management interface used by the API.
-        "core.https_address" = hypervisorManagementAddress;
+        "core.https_address" = incusManagementAddress;
 
         # Cluster interface for backplane communication.
-        "cluster.https_address" = hypervisorClusterAddress;
+        "cluster.https_address" = incusClusterAddress;
 
       };
 
@@ -442,121 +608,190 @@ let
       # Cluster configuration.
       #########################################################
       cluster =
-        {
-          enabled = true;
-          server_address = hypervisorClusterAddress;
-          member_config = [
-            #########################################################
-            # Storage Pools
-            #########################################################
-            {
-              entity = "storage-pool";
-              name = "default";
-              key = "source";
-              value = sourceDefault;
-            }
-            {
-              entity = "storage-pool";
-              name = "instances";
-              key = "source";
-              value = sourceInstances;
-            }
-            {
-              entity = "storage-pool";
-              name = "iso";
-              key = "source";
-              value = sourceIso;
-            }
-            #########################################################
-            # Networks
-            #########################################################
+        if incusJoined then
+          {
 
-            # TODO: Add host specific network configuration here.
+            enabled = true;
+            server_address = incusClusterAddress;
 
-          ];
-        }
-        // lib.optionalAttrs (hypervisorRole == "bootstrap") {
-          # The bootstrap server node requires a server_name.
-          server_name = hypervisorName;
-        }
-        // lib.optionalAttrs (hypervisorRole == "member" && !bootstrapped) {
-          # The cluster token is only needed for initial bootstrap.
-          cluster_token = clusterToken;
-        };
+            # Cluster configuration for member servers.
+            member_config =
+              if incusRole == "member" then
+                [
+
+                  #########################################################
+                  # Local Storage Pool
+                  #########################################################
+                  {
+                    entity = "storage-pool";
+                    name = "local";
+                    key = "source";
+                    value = "zpool/var/lib/storage-pools/local";
+                  }
+
+                ]
+                ++ lib.optionals linstorEnabled [
+
+                  #########################################################
+                  # LINSTOR Configuration
+                  #########################################################
+
+                  # NOTE: The only fields that can differ on nodes are;
+                  # - source
+                  # - size
+                  # - zfs.pool_name
+                  # - lvm.thinpool_name
+                  # - lvm.vg_name
+                  # - linstor.resource_group.name
+
+                  #########################
+                  # Controller connection
+                  #########################
+                  {
+                    entity = "storage.linstor";
+                    key = "controller_connection";
+                    value = linstorControllerConnection;
+                  }
+
+                  #########################
+                  # ISO storage pool
+                  #########################
+                  {
+                    entity = "storage-pool";
+                    name = "iso";
+                    key = "source";
+                    value = "";
+                  }
+
+                  #########################
+                  # Instances storage pool
+                  #########################
+                  {
+                    entity = "storage-pool";
+                    name = "instances";
+                    key = "source";
+                    value = "";
+                  }
+                ]
+              else
+                [ ];
+
+          }
+          // lib.optionalAttrs (incusRole == "bootstrap") {
+
+            # Only the bootstrap server node requires a server_name.
+            server_name = hypervisorName;
+
+          }
+          // lib.optionalAttrs (incusRole == "member" && incusClusterToken != null) {
+
+            # The cluster token is only needed for the initial bootstrap.
+            # The cluster token includes the destination server name encoded in the token.
+            cluster_token = incusClusterToken;
+
+          }
+        else
+          {
+            enabled = false;
+          };
 
       #########################################################
       # Storage pools configuration.
+      #
+      # Applies to bootstrap server only.
       #########################################################
-      storage_pools = [
+      storage_pools =
+        if incusRole == "bootstrap" then
+          [
 
-        #########################
-        # Default storage pool.
-        #########################
-        {
-          name = "default";
-          driver = "zfs";
-          config =
-            if bootstrapped then
-              {
-                # Config for when the cluster is bootstrapped.
-              }
-            else
-              {
-                # Config for when the cluster is not yet bootstrapped.
-                source = sourceDefault;
-                "source.wipe" = true;
+            #########################################################
+            # Local Storage Pool
+            #########################################################
+            {
+              name = "local";
+              driver = "zfs";
+              description = "Local Storage Pool";
+              config = {
+                "source" = "zpool/var/lib/storage-pools/local";
               };
-        }
+            }
+          ]
+          ++ lib.optionals linstorEnabled [
 
-        #########################
-        # Instances storage pool.
-        #########################
-        {
-          name = "instances";
-          driver = "zfs";
-          config =
-            if bootstrapped then
-              {
-                # Config for when the cluster is bootstrapped.
-              }
-            else
-              {
-                # Config for when the cluster is not yet bootstrapped.
-                source = sourceInstances;
-                "source.wipe" = true;
+            #########################################################
+            # ISO Storage Pool
+            #########################################################
+            {
+              name = "iso";
+              driver = "linstor";
+              description = "ISO Storage Pool";
+              config = {
+                "drbd.auto_add_quorum_tiebreaker" = true;
+                "drbd.auto_diskful" = "1h";
+                "drbd.on_no_quorum" = "suspend-io";
+                "linstor.resource_group.name" = "linstor-iso";
+                "linstor.resource_group.place_count" = 1;
+                "linstor.resource_group.storage_pool" = "linstor-iso";
+                "linstor.volume.prefix" = "iso-volume-";
               };
-        }
+            }
 
-        #########################
-        # ISO storage pool.
-        #########################
-        {
-          name = "iso";
-          driver = "zfs";
-          config =
-            if bootstrapped then
-              {
-                # Config for when the cluster is bootstrapped.
-              }
-            else
-              {
-                # Config for when the cluster is not yet bootstrapped.
-                source = sourceIso;
-                "source.wipe" = true;
+            #########################################################
+            # LINSTOR Storage Pool
+            #########################################################
+            {
+              name = "instances";
+              driver = "linstor";
+              description = "Instances Storage Pool";
+              config = {
+                "drbd.auto_add_quorum_tiebreaker" = true;
+                "drbd.auto_diskful" = "1h";
+                "drbd.on_no_quorum" = "suspend-io";
+                "linstor.resource_group.name" = "linstor-instances";
+                "linstor.resource_group.place_count" = 1;
+                "linstor.resource_group.storage_pool" = "linstor-instances";
+                "linstor.volume.prefix" = "linstor-volume-";
               };
-        }
-
-      ];
-
+            }
+          ]
+        else
+          [ ];
     };
-
   };
 
   #########################################################
-  # Merge global and host configurations
+  # Final configuration
+  #
+  # Build the final configuration based on incusRole.
   #########################################################
-  mergedConfig = {
-    preseed = lib.recursiveUpdate globalConfig.preseed hostConfig.preseed;
+  finalConfig = {
+
+    preseed =
+      if incusRole == "bootstrap" then
+        lib.recursiveUpdate
+          {
+            # Global configuration sections
+            inherit (globalConfig.preseed)
+              config
+              projects
+              networks
+              profiles
+              storage_volumes
+              ;
+          }
+          # Host-specific configuration
+          hostConfig.preseed
+      else if incusRole == "member" then
+        lib.recursiveUpdate
+          {
+            # Global configuration sections
+            inherit (globalConfig.preseed) config;
+          }
+          # Host-specific configuration
+          hostConfig.preseed
+      else
+        null;
+
   };
 
 in
@@ -584,13 +819,21 @@ in
 
   imports = [ ];
 
-  environment.systemPackages = with pkgs; [
-    ovn
-  ];
+  environment = {
+    systemPackages = [
+      # Include the OVN CLI tools.
+      pkgs.ovn
+    ]
+    ++ lib.optionals linstorEnabled [
+      linstorPackages.linstor-server
+      linstorPackages.linstor-client
+    ];
 
-  # Set Open vSwitch environment variables for correct socket paths
-  environment.variables = {
-    OVS_RUNDIR = "/run/openvswitch";
+    # Set Open vSwitch environment variables for correct socket paths
+    variables = {
+      OVN_RUNDIR = "/run/ovn";
+      OVS_RUNDIR = "/run/openvswitch";
+    };
   };
 
   programs = {
@@ -619,7 +862,11 @@ in
     incus = {
       enable = true;
 
-      startTimeout = 600;
+      # Current LTS (6.0.4) doesn't work with Lego.
+      #package = pkgs.incus-lts;
+      package = pkgs.incus;
+
+      startTimeout = 900; # 15 minutes
       socketActivation = false;
       softDaemonRestart = true;
 
@@ -631,17 +878,8 @@ in
         enable = true;
       };
 
-      preseed = {
-        inherit (mergedConfig.preseed)
-          cluster
-          config
-          networks
-          profiles
-          projects
-          storage_pools
-          storage_volumes
-          ;
-      };
+      inherit (finalConfig) preseed;
+
     };
   };
 
@@ -657,100 +895,199 @@ in
       DefaultLimitNOFILE=1048576
     '';
 
+    # Create tmp files for LINSTOR.
+    tmpfiles = {
+      rules =
+        if linstorEnabled then
+          [
+            "d /usr/share/linstor-server 0755 root root -"
+            "d /usr/share/linstor-server/bin 0755 root root -"
+            "L+ /usr/share/linstor-server/bin/Satellite - - - - ${linstorPackages.linstor-server}/bin/linstor-satellite"
+          ]
+        else
+          [ ];
+    };
+
     # Custom target for coordinating OVN and Incus startup
+    # Make sure that Networking, OVN and OVS services are all ready before starting Incus.
     targets = {
-      ovn-ready = {
+      sdn-ready = {
         description = "OVN services are ready";
         after = [
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-          "ovn-northd.service"
+          # Network must be online first
+          "network-online.target"
+          "systemd-networkd-wait-online.service"
+
+          # OVN services
+          "ovn-central.service"
           "ovn-controller.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+
+          # OVS services
+          "ovs-vswitchd.service"
+          "ovsdb.service"
+
+          # Custom OVN readiness check
+          "ovn-ready.service"
         ];
         wants = [
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-          "ovn-northd.service"
+          # Pull in network-online to ensure network is ready
+          "network-online.target"
+          "systemd-networkd-wait-online.service"
+
+          # OVN services
+          "ovn-central.service"
           "ovn-controller.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+
+          # OVS services
+          "ovs-vswitchd.service"
+          "ovsdb.service"
+
+          # Custom OVN readiness check
+          "ovn-ready.service"
         ];
         wantedBy = [ "multi-user.target" ];
       };
     };
 
+    # Custom service to validate OVN readiness
     services = {
+
+      #########################################################
+      # OVN Readiness Check
+      #########################################################
+
+      ovn-ready = {
+        description = "Validate OVN cluster connectivity";
+        enable = true;
+        after = [
+          "ovn-central.service"
+          "ovn-controller.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+          "ovs-vswitchd.service"
+          "ovsdb.service"
+        ];
+        requires = [
+          "ovn-central.service"
+          "ovn-controller.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+          "ovs-vswitchd.service"
+          "ovsdb.service"
+        ];
+        script = ''
+          # Wait for OVN services to start
+          ${pkgs.coreutils}/bin/echo "Waiting for OVN services to start..."
+          ${pkgs.coreutils}/bin/sleep 10
+
+          # Set the database connection strings based on cluster mode
+          ${
+            if ovnJoined then
+              ''
+                OVN_NB_DB="${ovnConfig.northbound.addressList}"
+                OVN_SB_DB="${ovnConfig.southbound.addressList}"
+              ''
+            else
+              ''
+                OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+                OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+              ''
+          }
+          OVS_DB="unix:/run/openvswitch/db.sock"
+
+          # Check OVN services are running
+          ${pkgs.coreutils}/bin/echo "Checking OVN services..."
+          for service in ovn-northbound-db ovn-southbound-db ovn-central ovn-controller;
+          do
+            while ! ${pkgs.systemd}/bin/systemctl is-active --quiet $service;
+            do
+              ${pkgs.coreutils}/bin/echo "Service $service is not active, waiting..."
+              ${pkgs.coreutils}/bin/sleep 10
+            done
+            ${pkgs.coreutils}/bin/echo "Service $service is active"
+          done
+
+          # Check Northbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Northbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-nbctl --db="$OVN_NB_DB" --timeout=30 list nb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
+
+          # Check Southbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Southbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list sb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
+
+          # Check Open vSwitch OVN integration
+          ${pkgs.coreutils}/bin/echo "Checking Open vSwitch OVN integration..."
+          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" show >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is ready."
+
+          # Check OVN controller is connected
+          ${pkgs.coreutils}/bin/echo "Checking OVN controller connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list chassis >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "OVN controller is not connected, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "OVN controller is connected."
+        '';
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          TimeoutStartSec = 300;
+          Restart = "on-failure";
+          RestartSec = 60;
+        };
+      };
 
       #########################################################
       # Open Virtual Network
       #########################################################
 
       ###############################
-      # OVN Northd
-      #
-      # This service translates high-level OVN configuration
-      # into logical configuration for ovn-controller
-      #
-      ###############################
-      ovn-northd = {
-        description = "OVN northd";
-        after = [
-          "network.target"
-          "ovs-vswitchd.service"
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-        ];
-        requires = [
-          "ovs-vswitchd.service"
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-        ];
-        wantedBy = [ "multi-user.target" ];
-
-        serviceConfig = {
-          Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovn-northd --pidfile=/run/ovn/ovn-northd.pid --detach --log-file=/var/log/ovn/ovn-northd.log --ovnnb-db=unix:/run/ovn/ovnnb_db.sock --ovnsb-db=unix:/run/ovn/ovnsb_db.sock";
-          PIDFile = "/run/ovn/ovn-northd.pid";
-          User = "root";
-          RuntimeDirectory = "ovn";
-          RuntimeDirectoryMode = "0755";
-          LogsDirectory = "ovn";
-          LogsDirectoryMode = "0755";
-          TimeoutStartSec = 60;
-          Restart = "on-failure";
-          RestartSec = 5;
-        };
-
-        preStart = ''
-          ${pkgs.coreutils}/bin/mkdir -p /run/ovn
-          # Wait for database services to be fully ready
-          for i in {1..30}; do
-            if ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 list nb_global >/dev/null 2>&1 && \
-              ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list sb_global >/dev/null 2>&1; then
-              break
-            fi
-            sleep 2
-          done
-        '';
-      };
-
-      ###############################
-      # OVN Northbound
+      # OVN Northbound DB
       #
       # This database is the interface between
       # OVN and Incus.
       #
       ###############################
-      ovn-nb-ovsdb = {
+      ovn-northbound-db = {
         description = "OVN Northbound DB";
-        after = [ "network.target" ];
-        wantedBy = [ "multi-user.target" ];
+        enable = true;
+        after = [
+          "network.target"
+          "systemd-networkd-wait-online.service"
+        ];
+        wantedBy = [
+          "multi-user.target"
+          "sdn-ready.target"
+        ];
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-nb-db.ctl --pidfile=/run/ovn/ovnnb_db.pid --detach --log-file=/var/log/ovn/ovnnb_db.log --remote=punix:/run/ovn/ovnnb_db.sock --remote=ptcp:6641:127.0.0.1 /var/lib/ovn/ovnnb_db.db";
-          PIDFile = "/run/ovn/ovnnb_db.pid";
+          ExecStart =
+            if ovnJoined then ovnConfig.northbound.clusterExecStart else ovnConfig.northbound.localExecStart;
+          PIDFile = "/var/run/ovn/ovnnb_db.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
           StateDirectory = "ovn";
           StateDirectoryMode = "0755";
           LogsDirectory = "ovn";
@@ -758,14 +1095,55 @@ in
           TimeoutStartSec = 60;
           Restart = "on-failure";
           RestartSec = 5;
+          Environment = [ "OVN_RUNDIR=/run/ovn" ];
         };
 
         preStart = ''
-          ${pkgs.coreutils}/bin/mkdir -p /run/ovn
-          if [ ! -f /var/lib/ovn/ovnnb_db.db ]; then
-            ${pkgs.ovn}/bin/ovsdb-tool create /var/lib/ovn/ovnnb_db.db ${pkgs.ovn}/share/ovn/ovn-nb.ovsschema
+          ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn /var/lib/ovn
+
+          # Create initial database if it doesn't exist
+          if [ ! -f ${ovnConfig.northbound.dbFile} ]; then
+            ${pkgs.ovn}/bin/ovsdb-tool create ${ovnConfig.northbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-nb.ovsschema
           fi
-        '';
+        ''
+        + (
+          if ovnJoined then
+            ''
+              # Cluster mode: Handle clustering based on role and current database state
+              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovnConfig.northbound.dbFile}; then
+            ''
+            + (
+              if incusRole == "bootstrap" then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to a cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile} tcp:${incusClusterIP}:${toString ovnConfig.northbound.serverPort}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile}
+                ''
+              else if bootstrapIP != null then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Northbound DB to join cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.northbound.dbFile}.new OVN_Northbound tcp:${incusClusterIP}:${toString ovnConfig.northbound.serverPort} tcp:${bootstrapIP}:${toString ovnConfig.northbound.serverPort}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.northbound.dbFile}.new ${ovnConfig.northbound.dbFile}
+                ''
+              else
+                ''
+                  ${pkgs.coreutils}/bin/echo "Standalone Northbound DB, not forming a cluster."
+                ''
+            )
+            + ''
+              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovnConfig.northbound.dbFile}; then
+                ${pkgs.coreutils}/bin/echo "Northbound DB is already clustered, skipping cluster setup."
+              else
+                ${pkgs.coreutils}/bin/echo "Unknown Northbound DB state, proceeding with caution."
+              fi
+            ''
+          else
+            ''
+              # Local mode: No clustering setup needed
+              ${pkgs.coreutils}/bin/echo "Running Northbound DB in local standalone mode."
+            ''
+        )
+        + '''';
       };
 
       ###############################
@@ -775,18 +1153,27 @@ in
       # consumed by ovn-controller.
       #
       ###############################
-      ovn-sb-ovsdb = {
+      ovn-southbound-db = {
         description = "OVN Southbound DB";
-        after = [ "network.target" ];
-        wantedBy = [ "multi-user.target" ];
+        enable = true;
+        after = [
+          "network.target"
+          "systemd-networkd-wait-online.service"
+        ];
+        wantedBy = [
+          "multi-user.target"
+          "sdn-ready.target"
+        ];
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovsdb-server --unixctl=/run/ovn/ovn-sb-db.ctl --pidfile=/run/ovn/ovnsb_db.pid --detach --log-file=/var/log/ovn/ovnsb_db.log --remote=punix:/run/ovn/ovnsb_db.sock --remote=ptcp:6642:127.0.0.1 /var/lib/ovn/ovnsb_db.db";
-          PIDFile = "/run/ovn/ovnsb_db.pid";
+          ExecStart =
+            if ovnJoined then ovnConfig.southbound.clusterExecStart else ovnConfig.southbound.localExecStart;
+          PIDFile = "/var/run/ovn/ovnsb_db.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
           StateDirectory = "ovn";
           StateDirectoryMode = "0755";
           LogsDirectory = "ovn";
@@ -794,47 +1181,206 @@ in
           TimeoutStartSec = 60;
           Restart = "on-failure";
           RestartSec = 5;
+          Environment = [ "OVN_RUNDIR=/run/ovn" ];
         };
 
         preStart = ''
-          ${pkgs.coreutils}/bin/mkdir -p /run/ovn
-          if [ ! -f /var/lib/ovn/ovnsb_db.db ]; then
-            ${pkgs.ovn}/bin/ovsdb-tool create /var/lib/ovn/ovnsb_db.db ${pkgs.ovn}/share/ovn/ovn-sb.ovsschema
+          ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn /var/lib/ovn
+
+          # Create initial database if it doesn't exist
+          if [ ! -f ${ovnConfig.southbound.dbFile} ]; then
+            ${pkgs.ovn}/bin/ovsdb-tool create ${ovnConfig.southbound.dbFile} ${pkgs.ovn}/share/ovn/ovn-sb.ovsschema
           fi
+        ''
+        + (
+          if ovnJoined then
+            ''
+              # Cluster mode: Handle clustering based on role and current database state
+              if ${pkgs.ovn}/bin/ovsdb-tool db-is-standalone ${ovnConfig.southbound.dbFile}; then
+            ''
+            + (
+              if incusRole == "bootstrap" then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to a cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool create-cluster ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile} tcp:${incusClusterIP}:${toString ovnConfig.southbound.serverPort}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile}
+                ''
+              else if bootstrapIP != null then
+                ''
+                  ${pkgs.coreutils}/bin/echo "Converting standalone Southbound DB to join cluster..."
+                  ${pkgs.ovn}/bin/ovsdb-tool join-cluster ${ovnConfig.southbound.dbFile}.new OVN_Southbound tcp:${incusClusterIP}:${toString ovnConfig.southbound.serverPort} tcp:${bootstrapIP}:${toString ovnConfig.southbound.serverPort}
+                  ${pkgs.coreutils}/bin/mv ${ovnConfig.southbound.dbFile}.new ${ovnConfig.southbound.dbFile}
+                ''
+              else
+                ''
+                  ${pkgs.coreutils}/bin/echo "Standalone Southbound DB, not forming a cluster."
+                ''
+            )
+            + ''
+              elif ${pkgs.ovn}/bin/ovsdb-tool db-is-clustered ${ovnConfig.southbound.dbFile}; then
+                ${pkgs.coreutils}/bin/echo "Southbound DB is already clustered, skipping cluster setup."
+              else
+                ${pkgs.coreutils}/bin/echo "Unknown Southbound DB state, proceeding with caution."
+              fi
+            ''
+          else
+            ''
+              # Local mode: No clustering setup needed
+              ${pkgs.coreutils}/bin/echo "Running Southbound DB in local standalone mode."
+            ''
+        )
+        + '''';
+      };
+
+      ###############################
+      # OVN Central
+      #
+      # This service syncs from northbound to southbound databases.
+      # This is the service that runs northd.
+      # In cluster mode this runs as active/standby with auto-failover.
+      #
+      ###############################
+      ovn-central = {
+        description = "OVN Central";
+        enable = true;
+        after = [
+          "network.target"
+          "systemd-networkd-wait-online.service"
+          "ovs-vswitchd.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+        ];
+        requires = [
+          "ovs-vswitchd.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
+        ];
+        wantedBy = [
+          "multi-user.target"
+          "sdn-ready.target"
+        ];
+
+        serviceConfig = {
+          Type = "forking";
+          ExecStart =
+            if ovnJoined then ovnConfig.central.clusterExecStart else ovnConfig.central.localExecStart;
+          PIDFile = "/var/run/ovn/ovn-central.pid";
+          User = "root";
+          RuntimeDirectory = "ovn";
+          RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
+          LogsDirectory = "ovn";
+          LogsDirectoryMode = "0755";
+          TimeoutStartSec = 60;
+          Restart = "on-failure";
+          RestartSec = 5;
+          Environment = [
+            "OVN_RUNDIR=/var/run/ovn"
+            "OVN_CTL_OPTS=\
+            --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+            --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+            --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
+          ];
+        };
+
+        preStart = ''
+          ${pkgs.coreutils}/bin/mkdir -p /var/run/ovn
+
+          # Wait for OVN services to start
+          ${pkgs.coreutils}/bin/echo "Waiting for OVN services to start..."
+          ${pkgs.coreutils}/bin/sleep 10
+
+          # Set the database connection strings based on cluster mode
+          ${
+            if ovnJoined then
+              ''
+                OVN_NB_DB="${ovnConfig.northbound.addressList}"
+                OVN_SB_DB="${ovnConfig.southbound.addressList}"
+              ''
+            else
+              ''
+                OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+                OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+              ''
+          }
+          OVS_DB="unix:/run/openvswitch/db.sock"
+
+          # Check OVN services are running
+          ${pkgs.coreutils}/bin/echo "Checking OVN services..."
+          for service in ovn-northbound-db ovn-southbound-db;
+          do
+            while ! ${pkgs.systemd}/bin/systemctl is-active --quiet $service;
+            do
+              ${pkgs.coreutils}/bin/echo "Service $service is not active, waiting..."
+              ${pkgs.coreutils}/bin/sleep 10
+            done
+            ${pkgs.coreutils}/bin/echo "Service $service is active"
+          done
+
+          # Check Northbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Northbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-nbctl --db="$OVN_NB_DB" --timeout=30 list nb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
+
+          # Check Southbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Southbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list sb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
         '';
       };
 
       ###############################
       # OVN Controller
       #
-      # The local controller connects to the
-      # southbound database.
+      # Controller that interfaces from OVN to OVS.
       #
       ###############################
       ovn-controller = {
         description = "OVN Controller";
+        enable = true;
         after = [
+          # Wait for Network
           "network.target"
+          "systemd-networkd-wait-online.service"
+
+          # Wait for Open vSwitch
           "ovs-vswitchd.service"
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
-          "ovn-northd.service"
+
+          # Wait for OVN Services
+          "ovn-central.service"
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
         ];
         requires = [
+          # Requires Open vSwitch
           "ovs-vswitchd.service"
-          "ovn-nb-ovsdb.service"
-          "ovn-sb-ovsdb.service"
+
+          # Requires OVN Databases
+          "ovn-northbound-db.service"
+          "ovn-southbound-db.service"
         ];
-        wants = [ "ovn-northd.service" ];
-        wantedBy = [ "multi-user.target" ];
+        wants = [ "ovn-central.service" ];
+        wantedBy = [
+          "multi-user.target"
+          "sdn-ready.target"
+        ];
 
         serviceConfig = {
           Type = "forking";
-          ExecStart = "${pkgs.ovn}/bin/ovn-controller --pidfile=/run/ovn/ovn-controller.pid --detach --log-file=/var/log/ovn/ovn-controller.log unix:/run/openvswitch/db.sock";
-          PIDFile = "/run/ovn/ovn-controller.pid";
+          ExecStart = "${pkgs.ovn}/bin/ovn-controller --pidfile=/var/run/ovn/ovn-controller.pid --detach --log-file=/var/log/ovn/ovn-controller.log unix:/run/openvswitch/db.sock";
+          PIDFile = "/var/run/ovn/ovn-controller.pid";
           User = "root";
           RuntimeDirectory = "ovn";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
           LogsDirectory = "ovn";
           LogsDirectoryMode = "0755";
           TimeoutStartSec = 60;
@@ -842,89 +1388,178 @@ in
           RestartSec = 10;
           Environment = [
             "OVS_RUNDIR=/var/run/openvswitch"
+            "OVN_CTL_OPTS=\
+              --ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
           ];
         };
 
         preStart = ''
-          # Wait for OVS to be fully ready
-          for i in {1..60}; do
-            if ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 show >/dev/null 2>&1; then
-              break
-            fi
-            sleep 2
+          # Wait for OVS services to start
+          ${pkgs.coreutils}/bin/echo "Waiting for OVS services to start..."
+          ${pkgs.coreutils}/bin/sleep 10
+
+          # Set the database connection strings based on cluster mode
+          ${
+            if ovnJoined then
+              ''
+                OVN_NB_DB="${ovnConfig.northbound.addressList}"
+                OVN_SB_DB="${ovnConfig.southbound.addressList}"
+              ''
+            else
+              ''
+                OVN_NB_DB="unix:/var/run/ovn/ovnnb_db.sock"
+                OVN_SB_DB="unix:/var/run/ovn/ovnsb_db.sock"
+              ''
+          }
+          OVS_DB="unix:/run/openvswitch/db.sock"
+
+          # Check OVS services are running
+          ${pkgs.coreutils}/bin/echo "Checking OVS services..."
+          for service in ovs-vswitchd ovsdb;
+          do
+            while ! ${pkgs.systemd}/bin/systemctl is-active --quiet $service;
+            do
+              ${pkgs.coreutils}/bin/echo "Service $service is not active, waiting..."
+              ${pkgs.coreutils}/bin/sleep 10
+            done
+            ${pkgs.coreutils}/bin/echo "Service $service is active"
           done
+
+          # Check Open vSwitch OVN integration
+          ${pkgs.coreutils}/bin/echo "Checking Open vSwitch OVN integration..."
+          while ! ${pkgs.ovn}/bin/ovs-vsctl --db="$OVS_DB" show >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Open vSwitch OVN integration is ready."
 
           # Set a system ID for OVN
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:system-id=${hypervisorName}"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:system-id=${hypervisorName}"
 
           # Set the OVN encapsulation IP for geneve tunnels
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-ip=${hypervisorClusterIP}"
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-encap-type=geneve"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-encap-ip=${incusClusterIP}"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-encap-type=geneve"
 
-          # Point OVN to the OVN Southbound DB
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set open_vswitch . "external_ids:ovn-remote=unix:/run/ovn/ovnsb_db.sock"
+          # Point the OVN controller to Southbound DB (local or cluster mode)
+          ${pkgs.coreutils}/bin/echo "OVN Southbound DB connection: ''${OVN_SB_DB}"
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-remote=''${OVN_SB_DB}"
+
+          # Set additional OVN configuration
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set open_vswitch . "external_ids:ovn-bridge=br-int"
 
           # Create the main OVS integration bridge
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --may-exist add-br br-int
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" --may-exist add-br br-int
 
-          # Wait for the bridge to be fully initialized
-          sleep 5
+          # Bring up the integration bridge
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set interface br-int admin_state=up
 
           # Ensure the bridge is properly configured
-          ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock set bridge br-int fail_mode=secure
+          ${pkgs.openvswitch}/bin/ovs-vsctl --db="$OVS_DB" set bridge br-int fail_mode=secure
 
-          # Wait for OVN Southbound to be ready
-          for i in {1..30}; do
-            if ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 list chassis >/dev/null 2>&1; then
-              break
-            fi
-            sleep 2
+          # Check Northbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Northbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-nbctl --db="$OVN_NB_DB" --timeout=30 list nb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Northbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
           done
+          ${pkgs.coreutils}/bin/echo "Northbound DB is ready."
+
+          # Check Southbound DB connectivity
+          ${pkgs.coreutils}/bin/echo "Checking Southbound DB connectivity..."
+          while ! ${pkgs.ovn}/bin/ovn-sbctl --db="$OVN_SB_DB" --timeout=30 list sb_global >/dev/null 2>&1;
+          do
+            ${pkgs.coreutils}/bin/echo "Southbound DB is not ready, retrying in 10 seconds..."
+            ${pkgs.coreutils}/bin/sleep 10
+          done
+          ${pkgs.coreutils}/bin/echo "Southbound DB is ready."
         '';
       };
 
       #########################################################
-      # Incus Preseed
+      # Incus Service Override
       #########################################################
-      incus-preseed = {
-        after = [
-          "incus.service"
-          "network-online.target"
-          "ovn-ready.target"
-          "systemd-networkd-wait-online.service"
-        ];
-        wants = [
-          "network-online.target"
-          "ovn-ready.target"
-          "systemd-networkd-wait-online.service"
-        ];
-        requires = [
-          "incus.service"
-        ];
-        serviceConfig = {
-          ExecStartPre = [
-            "${pkgs.coreutils}/bin/echo 'Executing pre-start script...'"
-            "${pkgs.coreutils}/bin/sleep 60"
+      incus = lib.mkMerge [
+        (lib.mkIf (config.virtualisation.incus.preseed != null) {
 
-            # Check OVN Northbound
-            "${pkgs.coreutils}/bin/echo 'Checking OVN Northbound...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.ovn}/bin/ovn-nbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
+          description = lib.mkForce "Incus Container and Virtual Machine Management Daemon (customised)";
 
-            # Check OVN Southbound
-            "${pkgs.coreutils}/bin/echo 'Checking OVN Southbound...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..15}; do ${pkgs.ovn}/bin/ovn-sbctl --timeout=5 show >/dev/null 2>&1 && break; sleep 5; done'"
+          after = lib.mkAfter [
+            # Requires OVN/OVS
+            "sdn-ready.target"
 
-            # Check OVS bridge
-            "${pkgs.coreutils}/bin/echo 'Checking OVS bridge...'"
-            "${pkgs.bash}/bin/bash -c 'for i in {1..10}; do ${pkgs.openvswitch}/bin/ovs-vsctl --db=unix:/run/openvswitch/db.sock --timeout=5 br-exists br-int && break; sleep 2; done'"
-
-            "${pkgs.coreutils}/bin/echo 'Pre-start script completed'"
+            # Requires SOPS
+            "sops-nix.service"
           ];
-          TimeoutStartSec = 900;
-          Restart = "on-failure";
-          RestartSec = 60;
-        };
-      };
+          wants = lib.mkAfter [
+            "sdn-ready.target"
+          ];
+
+          path =
+            lib.optionals linstorEnabled [
+              linstorPackages.linstor-server
+              linstorPackages.linstor-client
+            ]
+            ++ [
+              pkgs.cdrkit # provides isoinfo used by Incus for ISO validation
+            ];
+
+          serviceConfig = {
+            EnvironmentFile = config.sops.templates."incus-acme.env".path;
+            ExecStartPre = pkgs.writeShellScript "incus-pre-start" ''
+              if [[ ! -f "/usr/share/linstor-server/bin/Satellite" ]];
+              then
+                ${pkgs.coreutils}/bin/echo "WARNING: The LINSTOR Satellite binary was not found!"
+              else
+                ${pkgs.coreutils}/bin/echo "LINSTOR Satellite binary found."
+              fi
+            '';
+          };
+        })
+      ];
+
+      #########################################################
+      # Incus Preseed Service Override
+      #########################################################
+      incus-preseed = lib.mkMerge [
+        (lib.mkIf (config.virtualisation.incus.preseed != null) {
+
+          description = lib.mkForce "Incus initialization with preseed file (customised)";
+
+          after = lib.mkAfter [
+            # Requires OVN/OVS
+            "sdn-ready.target"
+
+            # Requires SOPS
+            "sops-nix.service"
+          ];
+          wants = lib.mkAfter [
+            "sdn-ready.target"
+          ];
+
+          path =
+            lib.optionals linstorEnabled [
+              linstorPackages.linstor-server
+              linstorPackages.linstor-client
+            ]
+            ++ [
+              pkgs.cdrkit # provides isoinfo used by Incus for ISO validation
+            ];
+
+          serviceConfig = {
+            EnvironmentFile = config.sops.templates."incus-acme.env".path;
+            ExecStartPre = pkgs.writeShellScript "incus-preseed-pre-start" ''
+              if [[ ! -f "/usr/share/linstor-server/bin/Satellite" ]];
+              then
+                ${pkgs.coreutils}/bin/echo "WARNING: The LINSTOR Satellite binary was not found!"
+              else
+                ${pkgs.coreutils}/bin/echo "LINSTOR Satellite binary found."
+              fi
+            '';
+          };
+        })
+      ];
 
     };
 
@@ -933,21 +1568,151 @@ in
   networking = {
     nftables = {
       enable = true;
+      tables = {
+        #########################################################
+        # Forwarding Rules
+        #########################################################
+        forwarding = {
+          family = "ip";
+          content = ''
+            chain forward {
+              type filter hook forward priority 0; policy accept;
+
+              # Allow forwarding from bond0 to bridges (inbound to instances)
+              iifname "bond0" oifname "incusbr0" accept  # Transparent bridge
+              iifname "bond0" oifname "incusbr1" accept  # Routed bridge
+
+              # Allow forwarding from both bridges to bond0 (outbound from instances)
+              iifname "incusbr0" oifname "bond0" accept
+              iifname "incusbr1" oifname "bond0" accept
+
+              # Allow forwarding between bridges and management interface
+              iifname "incusbr0" oifname "enp6s0" accept
+              iifname "incusbr1" oifname "enp6s0" accept
+              iifname "enp6s0" oifname "incusbr0" accept
+              iifname "enp6s0" oifname "incusbr1" accept
+
+              # Allow forwarding between the two bridges
+              iifname "incusbr0" oifname "incusbr1" accept
+              iifname "incusbr1" oifname "incusbr0" accept
+            }
+          '';
+        };
+        #########################################################
+        # Incus Dataplane Rules (10.10.200.0/24)
+        #########################################################
+        incus = {
+          family = "ip";
+          content = ''
+            chain input {
+              type filter hook input priority 0; policy accept;
+
+              # Allow Incus dataplane traffic from all nodes
+              ip saddr 10.10.200.0/24 tcp dport 9443 accept
+
+              # Allow ICMP traffic from all nodes
+              ip saddr 10.10.200.0/24 ip protocol icmp accept
+            }
+          '';
+        };
+        #########################################################
+        # Management Network Rules (10.10.1.0/24)
+        #########################################################
+        management = {
+          family = "ip";
+          content = ''
+            chain input {
+              type filter hook input priority 0; policy accept;
+
+              # TODO: Lockdown when done testing.
+              # YOLO allow all traffic from management network (10.10.1.0/24)
+              ip saddr 10.10.1.0/24 accept
+
+              # Allow SSH from management
+              ip saddr 10.10.1.0/24 tcp dport 22 accept
+
+              # Allow Incus API ports from management
+              ip saddr 10.10.1.0/24 tcp dport 8443 accept
+              ip saddr 10.10.1.0/24 tcp dport 9443 accept
+
+              # Allow ICMP traffic from management
+              ip saddr 10.10.1.0/24 ip protocol icmp accept
+            }
+          '';
+        };
+        #########################################################
+        # Platform Network Rules (10.10.100.0/24)
+        #########################################################
+        platform = {
+          family = "ip";
+          content = ''
+            chain input {
+              type filter hook input priority 0; policy accept;
+
+              # TODO: Lockdown when done testing.
+              # YOLO allow all traffic from platform network (10.10.100.0/24)
+              ip saddr 10.10.100.0/24 accept
+
+              # Allow SSH from platform
+              ip saddr 10.10.100.0/24 tcp dport 22 accept
+
+              # Allow Incus API ports from platform
+              ip saddr 10.10.100.0/24 tcp dport 8443 accept
+              ip saddr 10.10.100.0/24 tcp dport 9443 accept
+
+              # Allow ICMP traffic from platform
+              ip saddr 10.10.100.0/24 ip protocol icmp accept
+            }
+          '';
+        };
+        #########################################################
+        # Applications Network Rules (via bond0 to 10.10.201.0/24-10.10.205.0/24)
+        #########################################################
+        applications = {
+          family = "ip";
+          content = ''
+            chain input {
+              type filter hook input priority 0; policy accept;
+
+              # Allow HTTP from anywhere for exposed applications on bond0 only
+              iifname "bond0" ip saddr 0.0.0.0/0 tcp dport 80 accept
+
+              # Allow HTTPS from anywhere for exposed applications on bond0 only
+              iifname "bond0" ip saddr 0.0.0.0/0 tcp dport 443 accept
+            }
+          '';
+        };
+      };
     };
     firewall = {
-      enable = true;
+      enable = false;
       trustedInterfaces = [
-        "incusbr0"
-        "bond0"
+        "lo" # Loopback
+        "enp6s0" # Management interface
+        "incusbr0" # Transparent bridge
+        "incusbr1" # Routed bridge
+        "bond0" # Bond interface
       ];
       allowedTCPPorts = [
-        8443
-        9443
+        22 # SSH
+        80 # HTTP
+        443 # HTTPS
+        incus.management.port # Incus API (Management)
+        incus.cluster.port # Incus Cluster (Cluster Operations)
+      ]
+      ++ lib.optionals ovnJoined [
+        ovnConfig.northbound.serverPort # OVN NB DB (Northbound Server)
+        ovnConfig.northbound.clientPort # OVN NB DB (Northbound Client)
+        ovnConfig.southbound.clientPort # OVN SB DB (Southbound Client)
+        ovnConfig.southbound.serverPort # OVN SB DB (Southbound Server)
       ];
+      # Allow ICMP globally
+      allowPing = true;
     };
   };
 
   boot.kernel.sysctl = {
+    "net.ipv4.conf.all.proxy_arp" = 1;
     "net.ipv4.ip_forward" = 1;
     "net.ipv6.conf.all.forwarding" = 1;
   };

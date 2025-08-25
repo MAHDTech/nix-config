@@ -1,11 +1,11 @@
 {
   # AppArmor policy for Incus virtual machines
-  "incus-vm" = {
+  "incus_vm" = {
     state = "complain"; # TODO: Change to 'enforce' when policy has been tested.
     profile = ''
       #include <tunables/global>
 
-      profile incus-vm flags=(attach_disconnected,mediate_deleted) {
+      profile incus_vm flags=(attach_disconnected,mediate_deleted) {
         #include <abstractions/base>
 
         # Allow sys_admin capability for VM operations
@@ -30,6 +30,9 @@
 
         # Allow QEMU binary execution
         /nix/store/*/bin/qemu-system-* rix,
+
+        # Allow access to libraries
+        /nix/store/*/lib/*so* mr,
       }
     '';
   };

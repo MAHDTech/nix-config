@@ -10,7 +10,7 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
-    code-cursor
+    code-cursor-fhs
   ];
 in
 {
@@ -69,6 +69,8 @@ in
       gptfdisk
       hello
       htop
+      s-tui
+      lm_sensors
       jq
       libcap
       lolcat
@@ -114,7 +116,7 @@ in
       zathura
 
       # GUI
-      #code-cursor
+      #code-cursor # stable is a few versions behind
       signal-desktop
       google-chrome
       remmina

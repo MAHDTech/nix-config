@@ -1,20 +1,19 @@
 {
-  pkgs,
   config,
-  self,
+  pkgs,
   ...
-}: let
-  flake = builtins.getFlake ./.;
-in {
-  imports = [];
+}:
+let
+  keystoreFile = ../../../../.. + "/secrets/keystore.yaml";
+in
+{
+  imports = [ ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
   sops = {
-    # This will add secrets.yml to the nix store
-    # You can avoid this by adding a string to the full path instead, i.e.
-    # defaultSopsFile = "/root/.sops/secrets/example.yaml";
-    defaultSopsFile = "${flake}/secrets/secrets.yaml";
+    # This option expects a value of type `path`.
+    defaultSopsFile = keystoreFile;
     defaultSopsFormat = "yaml";
 
     # NOTE: Only ED25519 keys are supported with age.
@@ -37,44 +36,52 @@ in {
       ];
     };
 
-    # This is the actual specification of the secrets that
-    # will be available to the system at /run/secrets.d/
-    /*
+    #########################################################
+    # Secrets
+    #
+    # Defined secrets are available to the system at /run/secrets/
+    #
+    #########################################################
+
     secrets = {
 
-      cloudflared = {
-        sopsFile = ${flake}/secrets/cloudflared.yaml;
+      # Cloudflare DNS API Token for ACME.
+      "incus/acme/cloudflare/dnsApiToken" = {
+        sopsFile = keystoreFile;
         format = "yaml";
         mode = "0400";
-        owner = "${config.users.users.cloudflared.name}";
-        group = "${config.users.users.cloudflared.group}";
+        owner = "root";
+        group = "root";
         neededForUsers = false;
         restartUnits = [
-          "cloudflared.service"
+          "incus-preseed.service"
         ];
       };
 
     };
 
-    github_token = {
-      sopsFile = ../../../secrets/secrets.yaml;
-      format = "yaml";
-      mode = "0400";
-      owner = config.users.users.mahdtech.name;
-      group = config.users.users.mahdtech.group;
-      neededForUsers = false;
+    #########################################################
+    # Templates
+    #
+    # Templates are used to populate placeholder values in files at runtime.
+    #
+    #########################################################
+
+    templates = {
+
+      # Cloudflare credentials for ACME.
+      "incus-acme.env" = {
+        owner = "root";
+        content = ''
+          CLOUDFLARE_DNS_API_TOKEN="${config.sops.placeholder."incus/acme/cloudflare/dnsApiToken"}"
+          CLOUDFLARE_POLLING_INTERVAL="3"
+          CLOUDFLARE_PROPAGATION_TIMEOUT="900"
+          CLOUDFLARE_TTL="120"
+        '';
+      };
+
     };
 
-    wakatime_token = {
-      sopsFile = ../../../secrets/secrets.yaml;
-      format = "yaml";
-      mode = "0400";
-      owner = config.users.users.mahdtech.name;
-      group = config.users.users.mahdtech.group;
-      neededForUsers = false;
-    };
-
-    };
-    */
   };
+
 }

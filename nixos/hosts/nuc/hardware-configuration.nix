@@ -48,10 +48,17 @@
     kernelParams = [
       "mitigations=off"
       "threadirqs"
-      "zfs_force=1"
 
       # Intel VMD
       "nvme_load=YES"
+
+      # Disable USB autosuspend
+      "btusb.enable_autosuspend=n"
+    ];
+
+    blacklistedKernelModules = [
+      "iwlwifi" # Disable Intel Wireless
+      "btintel" # Disable Intel Bluetooth
     ];
 
     extraModulePackages = [ ];
@@ -154,26 +161,6 @@
     # Legacy mount point for var/lib/containers using ZFS
     "/var/lib/containers" = {
       device = "zpool/var/lib/containers";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # Legacy mount point for var/lib/incus using ZFS
-    "/var/lib/incus" = {
-      device = "zpool/var/lib/incus";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # Legacy mount point for var/lib/incus/storage-pools using ZFS
-    "/var/lib/incus/storage-pools" = {
-      device = "zpool/var/lib/incus/storage-pools";
       fsType = "zfs";
       options = [
         "zfsutil"

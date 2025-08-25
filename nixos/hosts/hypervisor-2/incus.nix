@@ -1,37 +1,90 @@
 let
-  # Flag to indicate if the cluster has been bootstrapped.
-  # Set to true once the member has joined the cluster.
-  bootstrapped = false;
 
-  # The name of the hypervisor.
-  hypervisorName = "HYPERVISOR-2";
+  ################################
+  # Hypervisor configuration.
+  ################################
 
-  # The role the hypervisor is playing in the cluster.
-  hypervisorRole = "member";
+  hypervisor = {
+    name = "HYPERVISOR-2";
+  };
 
-  # The address of the hypervisor.
-  hypervisorManagementAddress = "10.10.1.12:8443";
-  hypervisorClusterAddress = "10.10.200.12:9443";
+  ################################
+  # Incus configuration.
+  ################################
 
-  # ZFS dataset sources.
-  sourceDefault = "zpool/var/lib/incus/storage-pools/default";
-  sourceInstances = "zpool/var/lib/incus/storage-pools/instances";
-  sourceIso = "zpool/var/lib/incus/storage-pools/iso";
+  incus = {
+    # Flag to indicate if the hypervisor has joined the incus cluster.
+    joined = false;
 
-  # TODO: SOPS encryption when this test is working.
-  # The cluster token obtained during the bootstrap process. Only used if bootstrapped is true.
-  clusterToken = "";
+    # The incus server role.
+    role = "member";
+
+    # The incus management address.
+    management = {
+      address = "10.10.100.12";
+      port = 8443;
+    };
+
+    # The incus cluster address.
+    cluster = {
+      address = "10.10.200.12";
+      port = 9443;
+    };
+
+    # The cluster token is only needed for initial bootstrap.
+    # Once joined, the cluster token can be removed.
+    clusterToken = null;
+  };
+
+  ################################
+  # OVN configuration.
+  ################################
+
+  ovn = {
+    # Flag to indicate if the hypervisor has joined the ovn cluster.
+    joined = false;
+
+    # IP addresses of all OVN cluster members.
+    clusterAddresses = [
+      "10.10.200.11"
+      "10.10.200.12"
+      "10.10.200.13"
+      "10.10.200.14"
+    ];
+  };
+
+  ################################
+  # LINSTOR configuration.
+  ################################
+
+  linstor = {
+    enabled = true;
+    storagePool = "linstor";
+    controller = {
+      connection = "http://10.10.200.11:3370";
+    };
+  };
+
 in
 {
   imports = [
     (import ../../system/config/virtualisation/incus {
-      inherit bootstrapped;
-      inherit hypervisorName;
-      inherit hypervisorRole;
-      inherit hypervisorManagementAddress;
-      inherit hypervisorClusterAddress;
-      inherit sourceDefault sourceInstances sourceIso;
-      inherit clusterToken;
+      inherit hypervisor;
+      inherit incus;
+      inherit ovn;
+      inherit linstor;
     })
   ];
+
+  fileSystems = {
+    # Legacy mount point for var/lib/incus using ZFS
+    "/var/lib/incus" = {
+      device = "zpool/var/lib/incus";
+      fsType = "zfs";
+      options = [
+        "zfsutil"
+      ];
+      neededForBoot = false;
+    };
+  };
 }

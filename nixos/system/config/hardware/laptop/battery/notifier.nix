@@ -4,9 +4,11 @@
   pkgs,
   ...
 }:
-with lib; let
+with lib;
+let
   cfg = config.services.batteryNotifier;
-in {
+in
+{
   options = {
     services.batteryNotifier = {
       enable = mkOption {
@@ -47,36 +49,42 @@ in {
         OnUnitInactiveSec = "1m";
         Unit = "lowbatt.service";
       };
-      wantedBy = ["timers.target"];
+      wantedBy = [ "timers.target" ];
     };
 
     systemd.user.services."lowbatt" = {
       description = "battery level notifier";
-      serviceConfig.PassEnvironment = "DISPLAY";
-      script = ''
-        export battery_capacity=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/capacity)
-        export battery_status=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/status)
+      serviceConfig = {
+        PassEnvironment = "DISPLAY";
+        ExecStartPre = pkgs.writeShellScript "lowbatt-pre-start" ''
+          ${pkgs.coreutils}/bin/echo "Executing pre-start script for lowbatt"
+        '';
+        ExecStart = pkgs.writeShellScript "lowbatt-start" ''
+          ${pkgs.coreutils}/bin/echo "Executing start script for lowbatt"
 
-        if [[ $battery_capacity -le ${
-          builtins.toString cfg.notifyCapacity
-        } && $battery_status = "Discharging" ]];
-        then
-          ${pkgs.libnotify}/bin/notify-send --urgency=critical --hint=int:transient:1 --icon=battery_empty "Battery Low" "You should probably plug-in."
-        fi
+          export battery_capacity=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/capacity)
+          export battery_status=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/status)
 
-        if [[ $battery_capacity -le ${
-          builtins.toString cfg.suspendCapacity
-        } && $battery_status = "Discharging" ]];
-        then
-          ${pkgs.libnotify}/bin/notify-send --urgency=critical --hint=int:transient:1 --icon=battery_empty "Battery Critically Low" "Computer will suspend in 60 seconds."
-          sleep 60s
-          battery_status=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/status)
-          if [[ $battery_status = "Discharging" ]];
+          if [[ $battery_capacity -le ${builtins.toString cfg.notifyCapacity} && $battery_status = "Discharging" ]];
           then
-            systemctl suspend
+            ${pkgs.libnotify}/bin/notify-send --urgency=critical --hint=int:transient:1 --icon=battery_empty "Battery Low" "You should probably plug-in."
           fi
-        fi
-      '';
+
+          if [[ $battery_capacity -le ${builtins.toString cfg.suspendCapacity} && $battery_status = "Discharging" ]];
+          then
+            ${pkgs.libnotify}/bin/notify-send --urgency=critical --hint=int:transient:1 --icon=battery_empty "Battery Critically Low" "Computer will suspend in 60 seconds."
+            sleep 60s
+            battery_status=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/status)
+            if [[ $battery_status = "Discharging" ]];
+            then
+              systemctl suspend
+            fi
+          fi
+        '';
+        ExecStartPost = pkgs.writeShellScript "lowbatt-post-start" ''
+          ${pkgs.coreutils}/bin/echo "Executing post-start script for lowbatt"
+        '';
+      };
     };
   };
 }

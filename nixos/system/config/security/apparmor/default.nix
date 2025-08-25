@@ -9,10 +9,15 @@ in
     apparmor = {
       enable = true;
       enableCache = false;
-      includes = { };
+      includes = {
+        "abstractions/base" = ''
+          # Allow incus to execute wrapped binaries for image unpacking.
+          /nix/store/**/.*-wrapped rix,
+          /dev/tty rw,
+        '';
+      };
       killUnconfinedConfinables = false;
-      packages = [
-      ];
+      packages = [ ];
       policies = apparmorPolicies;
     };
   };

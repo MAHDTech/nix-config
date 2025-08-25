@@ -5,11 +5,12 @@
 }:
 {
   home.packages = with pkgs; [
-    git
-    git-lfs
-    gh
-    git-filter-repo
     bfg-repo-cleaner
+    difftastic
+    gh
+    git
+    git-filter-repo
+    git-lfs
   ];
 
   home.file = {
@@ -63,8 +64,9 @@
 
     difftastic = {
       enable = true;
+      enableAsDifftool = true;
       background = "dark";
-      color = "auto";
+      color = "always";
       display = "side-by-side";
     };
 
@@ -120,7 +122,7 @@
           allowedSignersFile = "~/.config/git/allowed-signers";
           # WSL
           #program = "/mnt/c/Users/MAHDTech/AppData/Local/1Password/app/8/op-ssh-sign-wsl";
-          # Crostini
+          # NixOS and Crostini.
           program = "${pkgs._1password-gui}/bin/op-ssh-sign";
         };
       };
@@ -131,22 +133,7 @@
 
       # [diff]
       diff = {
-        # Enable an external tool globally.
-        #external = "difft";
-
-        # A custom tool for use occasionally.
-        tool = "difftastic";
-
         colorMoved = "zebra";
-      };
-
-      # [difftool]
-      difftool = {
-        prompt = false;
-
-        "difftastic" = {
-          cmd = "difft $LOCAL $REMOTE";
-        };
       };
 
       # [init]

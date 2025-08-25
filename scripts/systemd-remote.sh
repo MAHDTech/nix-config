@@ -95,10 +95,10 @@ journal)
 			msg WARNING "Failed to connect or show journal for ${SYSTEMD_UNIT} on ${SERVER}. Retrying in 15 seconds..."
 		}
 
+		clear
 		echo -e "\033[33m[WARNING] ################################################################################\033[0m"
 		echo -e "\033[33m[WARNING] Re-connecting to server in ${RECONNECT_INTERVAL} seconds...\033[0m"
 		echo -e "\033[33m[WARNING] ################################################################################\033[0m"
-
 		sleep "${RECONNECT_INTERVAL}"
 
 	done

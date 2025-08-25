@@ -43,7 +43,6 @@
     kernelParams = [
       "mitigations=off"
       "threadirqs"
-      "zfs_force=1"
     ];
 
     extraModulePackages = [ ];
@@ -125,46 +124,6 @@
         "zfsutil"
       ];
       neededForBoot = true;
-    };
-
-    # Legacy mount point for var/lib/docker using ZFS
-    "/var/lib/docker" = {
-      device = "zpool/var/lib/docker";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # Legacy mount point for var/lib/containers using ZFS
-    "/var/lib/containers" = {
-      device = "zpool/var/lib/containers";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # Legacy mount point for var/lib/incus using ZFS
-    "/var/lib/incus" = {
-      device = "zpool/var/lib/incus";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
-    };
-
-    # Legacy mount point for var/lib/incus/storage-pools using ZFS
-    "/var/lib/incus/storage-pools" = {
-      device = "zpool/var/lib/incus/storage-pools";
-      fsType = "zfs";
-      options = [
-        "zfsutil"
-      ];
-      neededForBoot = false;
     };
 
     # Legacy mount point for tmp using ZFS

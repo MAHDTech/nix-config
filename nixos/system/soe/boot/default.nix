@@ -1,8 +1,25 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
+let
+
+  # Determine the latest ZFS compatible kernel.
+  zfsCompatibleKernelPackages = lib.filterAttrs (
+    name: kernelPackages:
+    (builtins.match "linux_[0-9]+_[0-9]+" name) != null
+    && (builtins.tryEval kernelPackages).success
+    && (!kernelPackages.${config.boot.zfs.package.kernelModuleAttribute}.meta.broken)
+  ) pkgs.linuxKernel.packages;
+
+  latestZFSKernelPackage = lib.last (
+    lib.sort (a: b: (lib.versionOlder a.kernel.version b.kernel.version)) (
+      builtins.attrValues zfsCompatibleKernelPackages
+    )
+  );
+in
 {
   boot = {
     consoleLogLevel = 4;
@@ -28,9 +45,10 @@
     ];
 
     # Wiki https://nixos.wiki/wiki/Linux_kernel
-    kernelPackages = pkgs.linuxPackages_latest;
+    #kernelPackages = pkgs.linuxPackages_latest;
     # Kernel (Pinned version) https://kernel.org/
-    #kernelPackages = pkgs.linuxPackages_6_15;
+    #kernelPackages = pkgs.linuxPackages_6_12; # LTS
+    kernelPackages = latestZFSKernelPackage;
 
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [

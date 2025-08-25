@@ -31,9 +31,11 @@ guage = "guage"
 hashi = "hashi"
 hashicorp = "hashicorp"
 hda = "hda"
+initialization = "initialization"
 initialize = "initialize"
 initialized = "initialized"
 initializing = "initializing"
+minimize = "minimize"
 maximize = "maximize"
 monitord = "monitord"
 nce = "nce"
@@ -58,6 +60,6 @@ extend-exclude = [
   ".devenv",
   ".direnv",
   ".git",
-  "secrets",
+  "secrets/**/*.asc",
   "vendor"
 ]

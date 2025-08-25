@@ -1,4 +1,8 @@
-{ lib, ... }:
+{
+  config,
+  lib,
+  ...
+}:
 
 let
 
@@ -6,18 +10,18 @@ let
   # Imports
   #########################################################################
 
-  policyIncus = import ./incus.nix;
   policyDocker = import ./docker.nix;
+  policyIncus = import ./incus.nix;
 
   #########################################################################
   # Policies
   #########################################################################
 
-  mergedPolicies = [
-    policyIncus
-    policyDocker
+  enabledPolicies = [
+    (lib.mkIf config.virtualisation.docker.enable policyDocker)
+    (lib.mkIf config.virtualisation.incus.enable policyIncus)
   ];
-  policies = lib.foldl (acc: policy: acc // policy) { } mergedPolicies;
+  policies = lib.foldl (acc: policy: acc // policy) { } enabledPolicies;
 in
 
 policies

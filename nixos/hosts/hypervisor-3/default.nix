@@ -29,6 +29,9 @@
     # Network specific configuration.
     ./network.nix
 
+    # LINSTOR
+    ./linstor.nix
+
     # Incus
     ./incus.nix
 

@@ -1,9 +1,11 @@
 # Typos ignore folders
 
 ## Ignore the typos config
-
 .typos.toml
 
 ## Ignore all of .git
-
 .git/
+
+# Ignore secrets
+secrets/
+

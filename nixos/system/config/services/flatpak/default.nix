@@ -48,53 +48,54 @@
     };
   };
 
-  # If you're not using GNOME, XDG Desktop Portal is needed for flatpaks to work.
-  xdg.portal = {
-    enable = true;
+  # XDG portal configuration moved to hyprland.nix to avoid conflicts
+  # and properly configure secret service for authentication dialogue boxes.
+  # xdg.portal = {
+  #   enable = true;
 
-    xdgOpenUsePortal = true;
+  #   xdgOpenUsePortal = true;
 
-    wlr.enable = true;
+  #   wlr.enable = true;
 
-    config = {
-      common = {
-        default = [
-          "gtk"
-        ];
-      };
-      cosmic = {
-        default = [
-          "cosmic"
-          "gtk"
-        ];
-        "org.freedesktop.impl.portal.Secret" = [
-          "gnome-keyring"
-        ];
-      };
-      pantheon = {
-        default = [
-          "pantheon"
-          "gtk"
-        ];
-        "org.freedesktop.impl.portal.Secret" = [
-          "gnome-keyring"
-        ];
-      };
-      hyprland = {
-        default = [
-          "hyprland"
-          "gtk"
-        ];
-      };
-    };
+  #   config = {
+  #     common = {
+  #       default = [
+  #         "gtk"
+  #       ];
+  #     };
+  #     cosmic = {
+  #       default = [
+  #         "cosmic"
+  #         "gtk"
+  #       ];
+  #       "org.freedesktop.impl.portal.Secret" = [
+  #         "gnome-keyring"
+  #       ];
+  #     };
+  #     pantheon = {
+  #       default = [
+  #         "pantheon"
+  #         "gtk"
+  #       ];
+  #       "org.freedesktop.impl.portal.Secret" = [
+  #         "gnome-keyring"
+  #       ];
+  #     };
+  #     hyprland = {
+  #       default = [
+  #         "hyprland"
+  #         "gtk"
+  #       ];
+  #     };
+  #   };
 
-    extraPortals = with pkgs; [
-      # Make sure the DE has the portal configured.
-      #pantheon.xdg-desktop-portal-pantheon
-      #xdg-desktop-portal-cosmic
-      xdg-desktop-portal-gtk
-      xdg-desktop-portal-hyprland
-      #xdg-desktop-portal-wlr
-    ];
-  };
+  #   extraPortals = with pkgs; [
+  #     # Make sure the DE has the portal configured.
+  #     #pantheon.xdg-desktop-portal-pantheon
+  #     #xdg-desktop-portal-cosmic
+  #     xdg-desktop-portal-gtk
+  #     xdg-desktop-portal-hyprland
+  #     #xdg-desktop-portal-wlr
+  #   ];
+  # };
 }

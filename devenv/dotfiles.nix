@@ -79,11 +79,15 @@ in
 
   git-hooks = {
     excludes = [
-      ".cache"
-      ".devenv"
-      ".direnv"
-      "vendor"
-      "home/files/ags/config/.*"
+      ".*\\.drawio$"
+      "^\\.cache(/.*)?$"
+      "^\\.devenv(/.*)?$"
+      "^\\.direnv(/.*)?$"
+      "^\\.git(/.*)?$"
+      "^home/files/ags/config/.*$"
+      "^secrets/keys/.*\\.asc$"
+      "^secrets/keystore.yaml$"
+      "^vendor(/.*)?$"
     ];
     hooks = {
       actionlint.enable = true;
@@ -126,7 +130,10 @@ in
       };
       mixed-line-endings.enable = true;
       nixfmt-rfc-style.enable = true;
-      pre-commit-hook-ensure-sops.enable = true;
+      pre-commit-hook-ensure-sops = {
+        enable = true;
+        files = "^secrets/keystore.yaml";
+      };
       prettier = {
         enable = true;
         settings = {
@@ -155,7 +162,12 @@ in
       statix.enable = true;
       trufflehog.enable = false;
       trim-trailing-whitespace.enable = true;
-      typos.enable = true;
+      typos = {
+        enable = true;
+        settings = {
+          configPath = ".typos.toml";
+        };
+      };
       yamllint = {
         enable = true;
         settings = {

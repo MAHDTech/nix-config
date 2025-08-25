@@ -17,7 +17,7 @@ let
     cosmic-ext-ctl
     cosmic-files
     cosmic-icons
-    cosmic-idle
+    #cosmic-idle
     cosmic-launcher
     cosmic-osd
     cosmic-panel
@@ -42,8 +42,10 @@ let
     pop-launcher
     slurp
     swappy
+    swaynotificationcenter
     swww
     wayland-pipewire-idle-inhibit
+    wayland-utils
     wayshot
     #wf-recorder
     #wl-screenrec
@@ -190,10 +192,10 @@ in
             timeout = 900;
 
             # Power off monitors.
-            on-timeout = "notify-send 'Sleeping...' ; hyprctl dispatch dpms off";
+            on-timeout = "notify-send 'Sleeping...' ; hyprctl dispatch dpms off, all";
 
             # Power on monitors.
-            on-resume = "notify-send 'Resuming...' ; hyprctl dispatch dpms on";
+            on-resume = "notify-send 'Resuming...' ; hyprctl dispatch dpms on, all";
           }
         ];
       };
@@ -813,11 +815,11 @@ in
         enabled = true;
 
         # Uses the nearest neighbour filtering for scaling
-        use_nearest_neighbor = true;
+        use_nearest_neighbor = false;
 
-        # Forces a scale of 1 on xwayland windows on scaled displays.
-        # Set to false to fix black screen issues with Steam games
-        force_zero_scaling = true;
+        # Allow XWayland to scale with the monitor scaling
+        # Set to false to allow proper scaling with fractional scaling
+        force_zero_scaling = false;
       };
 
       ###################
@@ -878,11 +880,14 @@ in
         # Sets GTK to prefer Wayland, with X11 fallback for compatibility
         "GDK_BACKEND,wayland,x11"
 
-        # Disables GTK automatic scaling (handled by Hyprland instead)
-        "GDK_SCALE,1"
+        # Set GTK scaling to match monitor scaling (1.6x)
+        "GDK_SCALE,1.6"
 
-        # Sets cursor size for Hyprland's cursor system
-        "HYPRCURSOR_SIZE,32"
+        # Disable GTK DPI scaling since we're using GDK_SCALE
+        "GDK_DPI_SCALE,0.625"
+
+        # Sets cursor size for Hyprland's cursor system (scaled)
+        "HYPRCURSOR_SIZE,51"
 
         # Disables Mozilla's RDD sandbox for better Wayland compatibility
         "MOZ_DISABLE_RDD_SANDBOX,1"
@@ -893,8 +898,14 @@ in
         # Enables automatic DPI scaling for Qt applications
         "QT_AUTO_SCREEN_SCALE_FACTOR,1"
 
+        # Set Qt scaling factor to match monitor scaling
+        "QT_SCALE_FACTOR,1.6"
+
         # Forces Qt applications to use Wayland platform instead of X11
         "QT_QPA_PLATFORM,wayland"
+
+        # Enable Qt Wayland fractional scaling
+        "QT_WAYLAND_FORCE_DPI,logical"
 
         # Sets SDL to use Wayland video driver for games and media apps
         "SDL_VIDEODRIVER,wayland"
@@ -905,11 +916,19 @@ in
         # Allows software rendering fallback when hardware acceleration fails
         "WLR_RENDERER_ALLOW_SOFTWARE,1"
 
-        # Sets cursor size for X11/XWayland applications
-        "XCURSOR_SIZE,32"
+        # Sets cursor size for X11/XWayland applications (scaled)
+        "XCURSOR_SIZE,51"
 
         # Fixes Java applications on tiling window managers by disabling reparenting
         "_JAVA_AWT_WM_NONREPARENTING,1"
+
+        # Electron/Chrome scaling for better Wayland support
+        # Removed: "ELECTRON_OZONE_PLATFORM_HINT,wayland" # Breaks 1Password.
+        # Apps that need Wayland can be configured individually
+
+        # 1Password authentication dialog fix
+        "GTK_USE_PORTAL,1"
+        "PORTAL_DEBUG,1"
       ];
 
       ###################
@@ -920,29 +939,25 @@ in
 
       "$terminal" = "cosmic-term";
 
+      "$barCommand" = "ironbar";
+
+      "$notificationManager" = "swaync";
+
       "$fileManager" = "cosmic-files";
 
       "$menu" = "cosmic-launcher";
 
-      "$switcher" = "rofi window";
+      "$switcher" = "cosmic-launcher alt-tab";
 
-      # Open apps on startup
       exec-once = [
-        # Open a Terminal
-        "$terminal"
+        # Start the notification manager if not running
+        "pidof $notificationManager || $notificationManager"
 
-        # Start the wallpaper daemon
-        "sleep 30 ; pidof swww-daemon || swww-daemon"
+        # Start the bar if not running
+        "pidof $barCommand || $barCommand"
 
-        # Set a random wallpaper
-        "sleep 60 ; exec random-wallpaper ''$XDG_WALLPAPERS_DIR"
-
-        # Start ags
-        "ags run"
-        #"ags run --gtk4"
-
-        # Start Insync
-        "sleep 30 ; pidof insync || insync start"
+        # Start a terminal if not running
+        "pidof $terminal || $terminal"
       ];
 
       ####################
@@ -1170,5 +1185,42 @@ in
     };
 
     extraConfig = '''';
+  };
+
+  # Ensure hyprland-session.target starts on login
+  systemd = {
+    user = {
+
+      targets = {
+
+        hyprland-session = {
+          Install.WantedBy = [ "default.target" ];
+        };
+
+      };
+
+      # Override the hypridle service to ensure it starts after hyprland-session.target
+      services = {
+
+        hypridle = {
+          Install.WantedBy = [ "hyprland-session.target" ];
+          Unit = {
+            BindsTo = [ "hyprland-session.target" ];
+            After = [ "hyprland-session.target" ];
+            Requires = [ "hyprland-session.target" ];
+          };
+        };
+
+        # Override the hyprpaper service to ensure it starts after hyprland-session.target
+        hyprpaper = {
+          Install.WantedBy = [ "hyprland-session.target" ];
+          Unit = {
+            BindsTo = [ "hyprland-session.target" ];
+            After = [ "hyprland-session.target" ];
+            Requires = [ "hyprland-session.target" ];
+          };
+        };
+      };
+    };
   };
 }

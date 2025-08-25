@@ -1,11 +1,11 @@
 {
   # AppArmor policy for Docker containers.
-  "docker-default" = {
+  "docker_default" = {
     state = "complain"; # TODO: Change to 'enforce' when policy has been tested.
     profile = ''
       #include <tunables/global>
 
-      profile docker-default flags=(attach_disconnected,mediate_deleted) {
+      profile docker_default flags=(attach_disconnected,mediate_deleted) {
         #include <abstractions/base>
 
         # Allow basic container operations

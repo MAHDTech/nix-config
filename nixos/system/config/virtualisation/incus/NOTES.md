@@ -7,48 +7,148 @@
   - [Overview](#overview)
   - [Deployment](#deployment)
     - [Steps to deploy](#steps-to-deploy)
+      - [Stage 0 (Storage)](#stage-0-storage)
+      - [Stage 1 (Networking)](#stage-1-networking)
+      - [Stage 2 (Incus Cluster Creation)](#stage-2-incus-cluster-creation)
+      - [Stage 3 (Cluster Joining)](#stage-3-cluster-joining)
+      - [Stage 4 (Finalise)](#stage-4-finalise)
+      - [Stage 4. (Login and configure)](#stage-4-login-and-configure)
     - [Steps to destroy](#steps-to-destroy)
   - [Network Configuration](#network-configuration)
   - [Network Layout](#network-layout)
     - [Hypervisor Networks](#hypervisor-networks)
     - [IP Assignments](#ip-assignments)
-  - [Key Configuration](#key-configuration)
-    - [Incus Bridge](#incus-bridge)
-    - [Hypervisor](#hypervisor)
   - [External Router Configuration](#external-router-configuration)
-  - [Network Flow](#network-flow)
   - [Diagram](#diagram)
 
 ## Overview
 
-Notes from setting up the Incus cluster.
+Notes from setting up the Incus cluster with staged OVN and Incus cluster creation.
+
+The deployment follows a staged approach to avoid circular dependencies between OVN and Incus cluster formation.
 
 ## Deployment
 
 ### Steps to deploy
 
-1. Run `export INCUS_CLUSTER_DESTROY=false`
-1. Run `export INCUS_CLUSTER_BOOTSTRAPPED=false`
-1. Update the nix flake with `bootstrapped = false` for ALL servers in the config.
-1. Run `./scripts/bootstrap-hypervisors.sh` script.
-1. Update the flake with `bootstrapped = true` for the bootstrap server when prompted.
-1. Update the nix flake with the `clusterToken` for the member servers when prompted.
-1. Once the script has completed, update the nix flake with `bootstrapped = true` for all member servers in the config.
-1. Run `export INCUS_CLUSTER_BOOTSTRAPPED=true`
-1. Run `./scripts/bootstrap-hypervisors.sh` script a final time.
-1. Access the Incus Web API and configure your client certificate.
+_A multi-stage saga to avoid circular dependencies._
+
+#### Stage 0 (Storage)
+
+**Purpose:** Verify the LINSTOR cluster is ready.
+
+1. ✅ Setup LINSTOR storage on each node. See [instructions](../../storage/linstor/README.md).
+1. ✅ Run `./scripts/incus-hypervisors.sh --test` to test the storage backend.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to check a few things before we begin.
+
+**Expected Result:**
+
+- Health check script passes
+- LINSTOR is working on all servers
+- OVN is not yet running
+- Incus is not clustered.
+
+#### Stage 1 (Networking)
+
+**Purpose:** Verify the OVN cluster is ready
+
+1. ✅ Update the nix flake with `ovn.joined = true` for **ALL** servers.
+1. ✅ Keep `incus.joined = false` for **ALL** servers (Incus remains in local mode).
+1. ✅ Run `./scripts/incus-hypervisors.sh --apply --yolo --force-reboot` script to create the OVN cluster.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the OVN cluster is working before continuing.
+
+**Expected Result:**
+
+- Health check script passes
+- OVN cluster is formed and synchronised across all nodes
+- LINSTOR is still working on all servers
+- Incus is not clustered.
+
+#### Stage 2 (Incus Cluster Creation)
+
+**Purpose:** Bootstrap the Incus cluster now that OVN is ready.
+
+1. ✅ Update the nix flake with `incus.joined = true` for the **bootstrap** server only.
+1. ✅ Keep `incus.joined = false` for member servers.
+1. ✅ Run `./scripts/incus-hypervisors.sh --create` script to bootstrap the cluster.
+1. ✅ Record the cluster tokens for the incus members into the nix flake when shown on screen.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the bootstrap server is working before continuing.
+
+**Expected Result:**
+
+- Health check script passes
+- Bootstrap server creates the Incus cluster
+- Cluster tokens are generated for member servers
+- OVN cluster continues to function across all servers
+- LINSTOR is enabled and running across all servers
+- Member servers are **not** joined to the cluster yet
+
+**NOTES:**
+
+- The bootstrap server will be the only server in the 'incus' cluster
+- OVN cluster is already established and functional
+- Run `watch -n 15 'incus cluster list; incus cluster list-tokens -c n'` to monitor cluster status.
+
+#### Stage 3 (Cluster Joining)
+
+**Purpose:** Join member servers to the established Incus cluster.
+
+1. ✅ Update the nix flake with `incus.joined = true` for member servers.
+1. ✅ Update the nix flake with the `incus.clusterToken = "..."` for the member servers captured from stage 1.
+1. ✅ Run `./scripts/incus-hypervisors.sh --join` script.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
+
+**Expected Result:**
+
+- All servers are members of both OVN and Incus clusters
+- Full cluster functionality is established
+
+**NOTES:**
+
+- Member servers will perform a data wipe prior to joining the cluster.
+- Verify cluster membership by running `incus cluster list` on the bootstrap server.
+
+#### Stage 4 (Finalise)
+
+**Purpose:** Clean up temporary configuration and stabilize the cluster.
+
+After verifying the members have joined successfully, run the following;
+
+1. ✅ Update the nix flake with `incus.clusterToken = null` for all member servers
+1. ✅ Run `./scripts/incus-hypervisors.sh --apply` script.
+1. ✅ Run `./scripts/incus-hypervisors.sh --health` script to verify the cluster is working before continuing.
+
+**Expected Result:**
+
+- All members are healthy and in the incus cluster
+- OVN cluster is still healthy
+
+**NOTES:**
+
+- Verify all servers are reporting as `online` in the `incus cluster list` output.
+
+#### Stage 4. (Login and configure)
+
+**Purpose:** Access and configure the operational cluster.
+
+1. ✅ Access the Incus Web API and configure your client certificate.
+1. ✅ Optionally, run `./scripts/incus-hypervisors.sh --configure` script to configure some default incus settings that can't be done via preseed.
 
 ### Steps to destroy
 
-1. Update the flake with `bootstrapped = false` and clear out any `clusterToken`
-1. Export the variable `INCUS_CLUSTER_DESTROY=true`
-1. Run the `./scripts/bootstrap-hypervisors.sh` script.
+_One shot to destroy them all._
+
+1. ✅ Update the nix flake with `incus.joined = false` for all servers
+1. ✅ Update the nix flake with `ovn.joined = false` for all servers
+1. ✅ Update the nix flake with `incus.clusterToken = null` for all member servers
+1. ✅ Run the `./scripts/incus-hypervisors.sh --yolo --destroy --force-reboot` script.
 
 ## Network Configuration
 
 The configuration implements a **routed setup** where:
 
-- Hypervisors get IPs from external network (`10.10.200.0/24`)
+- Hypervisors get _management_ IP addresses from the "Platform" network (`10.10.100.0/24`)
+- Hyperviros get _data_ IP addresses from the "Applications" network (`10.10.200.0/24`)
 - VMs get IPs from isolated internal network (`10.10.201.0/24`)
 - Traffic is routed between networks without NAT
 - VMs are directly accessible from external network
@@ -57,59 +157,27 @@ The configuration implements a **routed setup** where:
 
 ### Hypervisor Networks
 
-- **Management**: `10.10.1.0/24` via `enp6s0`
+- **Management**: `10.10.100.0/24` via `enp6s0`
 - **Cluster**: `10.10.200.0/24` via `bond0` (DHCP from Unifi)
-- **VM Network**: `10.10.201.0/24` via `incusbr0` (Internal DHCP)
+- **VM Network**: `10.10.201.0/24` via `incusbr1` (Internal DHCP)
+- **Transparent Bridge**: `incusbr0` (No IP)
 
 ### IP Assignments
 
-- **HYPERVISOR-1**: `10.10.200.11`
-- **HYPERVISOR-2**: `10.10.200.12`
-- **HYPERVISOR-3**: `10.10.200.13`
-- **HYPERVISOR-4**: `10.10.200.14`
-
-## Key Configuration
-
-### Incus Bridge
-
-- **Type**: OVS bridge (no external interfaces)
-- **IP**: `10.10.201.254/24`
-- **DHCP**: Enabled (`10.10.201.100-200`)
-- **NAT**: Disabled
-- **Routing**: Enabled
-
-### Hypervisor
-
-- **IP Forwarding**: Enabled
-- **Trusted Interfaces**: `bond0`, `incusbr0`
+| Hypervisor   | Platform Management | Applications   |
+| ------------ | ------------------- | -------------- |
+| HYPERVISOR-1 | `10.10.100.11`      | `10.10.200.11` |
+| HYPERVISOR-2 | `10.10.100.12`      | `10.10.200.12` |
+| HYPERVISOR-3 | `10.10.100.13`      | `10.10.200.13` |
+| HYPERVISOR-4 | `10.10.100.14`      | `10.10.200.14` |
 
 ## External Router Configuration
 
 Added static routes on Unifi router:
 
 ```bash
-10.10.201.0/24 via 10.10.200.11
-10.10.201.0/24 via 10.10.200.12
-10.10.201.0/24 via 10.10.200.13
-10.10.201.0/24 via 10.10.200.14
+10.10.201.0/24 via interface 10.10.200.254/24
 ```
-
-## Network Flow
-
-1. **External → VM**:
-
-   - `10.10.200.x` → Unifi Router → `10.10.200.11` → Hypervisor routes → `10.10.201.100`
-
-2. **VM → External**:
-
-   - `10.10.201.100` → Hypervisor routes → `10.10.200.11` → Unifi Router → `10.10.200.x`
-
-3. **VM → VM** (same hypervisor):
-
-   - Direct via `incusbr0` bridge
-
-4. **VM → VM** (different hypervisor):
-   - `10.10.201.100` → `10.10.200.11` → Unifi Router → `10.10.200.12` → `10.10.201.101`
 
 ## Diagram
 
@@ -121,7 +189,7 @@ graph TD
 
     %% External Network
     UNIFI["Unifi Router<br/>10.10.200.254<br/>DHCP Server"]
-    MGMT["Management Network<br/>10.10.1.0/24"]
+    MGMT["Management Network<br/>10.10.100.0/24"]
 
     %% Hypervisors
     HV1["HYPERVISOR-1"]
@@ -143,7 +211,7 @@ graph TD
 
     %% Hypervisors
     subgraph HV1
-        MGT1["enp6s0<br/>10.10.1.11/24"]
+        MGT1["enp6s0<br/>10.10.100.11/24"]
         BOND1["bond0<br/>10.10.200.11/24<br/>via DHCP"]
         BRIDGE1["incusbr0<br/>10.10.201.254/24<br/>OVS + DHCP Server"]
         VM1
