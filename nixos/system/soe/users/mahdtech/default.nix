@@ -26,6 +26,7 @@ in
       "disk"
       "docker"
       "flatpak"
+      "input"
       "nixos-admins"
       "networkmanager"
       "nixos"

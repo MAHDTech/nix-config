@@ -7,7 +7,8 @@
     openFirewall = true;
 
     extraUpFlags = [
-      "--accept-routes"
+      "--accept-dns=true"
+      "--accept-routes=true"
     ];
 
     extraDaemonFlags = [

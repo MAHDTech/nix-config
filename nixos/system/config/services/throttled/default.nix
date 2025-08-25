@@ -1,8 +1,13 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
-  # Enable fix for Intel CPU throttling.
-  services.throttled = {enable = true;};
+  # Make sure thermald is disabled (conflicts with throttled)
+  services.thermald.enable = false;
+
+  services.throttled = {
+    enable = true;
+  };
 }

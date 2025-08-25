@@ -36,8 +36,11 @@
     # Laptop
     ../../system/config/hardware/laptop
     ../../system/config/network/wireless
-    ../../system/config/services/throttled
     ../../system/config/services/upower
+
+    # CPU Throttling
+    #../../system/config/services/thermald # there can only be one
+    ../../system/config/services/throttled
 
     # Networking
     ../../system/config/network/hosts.nix

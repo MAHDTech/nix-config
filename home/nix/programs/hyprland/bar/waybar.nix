@@ -1,7 +1,8 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   programs = {
     waybar = {
-      enable = false;
+      enable = true;
 
       systemd = {
         enable = true;
@@ -63,11 +64,11 @@
             on-scroll-down = "hyprctl dispatch workspace e-1";
 
             persistent-workspaces = {
-              "Home" = [];
-              "2" = [];
-              "3" = [];
-              "4" = [];
-              "5" = [];
+              "Home" = [ ];
+              "2" = [ ];
+              "3" = [ ];
+              "4" = [ ];
+              "5" = [ ];
               #"6" = [];
               #"7" = [];
               #"8" = [];
@@ -171,7 +172,17 @@
           "backlight" = {
             device = "intel_backlight";
             format = "{icon}";
-            format-icons = ["" "" "" "" "" "" "" "" ""];
+            format-icons = [
+              ""
+              ""
+              ""
+              ""
+              ""
+              ""
+              ""
+              ""
+              ""
+            ];
           };
 
           "tray" = {

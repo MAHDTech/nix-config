@@ -5,11 +5,12 @@
 }:
 {
   home.packages = with pkgs; [
-    git
-    git-lfs
-    gh
-    git-filter-repo
     bfg-repo-cleaner
+    difftastic
+    gh
+    git
+    git-filter-repo
+    git-lfs
   ];
 
   home.file = {
@@ -63,8 +64,9 @@
 
     difftastic = {
       enable = true;
+      enableAsDifftool = true;
       background = "dark";
-      color = "auto";
+      color = "always";
       display = "side-by-side";
     };
 
@@ -131,22 +133,7 @@
 
       # [diff]
       diff = {
-        # Enable an external tool globally.
-        #external = "difft";
-
-        # A custom tool for use occasionally.
-        tool = "difftastic";
-
         colorMoved = "zebra";
-      };
-
-      # [difftool]
-      difftool = {
-        prompt = false;
-
-        "difftastic" = {
-          cmd = "difft $LOCAL $REMOTE";
-        };
       };
 
       # [init]

@@ -142,9 +142,9 @@
       # Nutanix AHV Nodes
       #########################
 
-      "ntnx-ahv-1" = {
-        host = "ntnx-ahv-1";
-        hostname = "ntnx-ahv-1.saltlabs.cloud";
+      "ntnx-nce01-ahv" = {
+        host = "ntnx-nce01-ahv";
+        hostname = "ntnx-nce01-ahv.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
@@ -152,9 +152,9 @@
         };
       };
 
-      "ntnx-ahv-2" = {
-        host = "ntnx-ahv-2";
-        hostname = "ntnx-ahv-2.saltlabs.cloud";
+      "ntnx-nce02-ahv" = {
+        host = "ntnx-nce02-ahv";
+        hostname = "ntnx-nce02-ahv.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
@@ -162,9 +162,9 @@
         };
       };
 
-      "ntnx-ahv-3" = {
-        host = "ntnx-ahv-3";
-        hostname = "ntnx-ahv-3.saltlabs.cloud";
+      "ntnx-nce03-ahv" = {
+        host = "ntnx-nce03-ahv";
+        hostname = "ntnx-nce03-ahv.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
@@ -172,9 +172,9 @@
         };
       };
 
-      "ntnx-ahv-4" = {
-        host = "ntnx-ahv-4";
-        hostname = "ntnx-ahv-4.saltlabs.cloud";
+      "ntnx-nce04-ahv" = {
+        host = "ntnx-nce04-ahv";
+        hostname = "ntnx-nce04-ahv.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
@@ -186,9 +186,9 @@
       # Nutanix CVM VMs
       #########################
 
-      "ntnx-ahv-1-cvm" = {
-        host = "ntnx-ahv-1-cvm";
-        hostname = "ntnx-ahv-1-cvm.saltlabs.cloud";
+      "ntnx-nce01-cvm" = {
+        host = "ntnx-nce01-cvm";
+        hostname = "ntnx-nce01-cvm.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
@@ -196,9 +196,9 @@
         };
       };
 
-      "ntnx-ahv-2-cvm" = {
-        host = "ntnx-ahv-2-cvm";
-        hostname = "ntnx-ahv-2-cvm.saltlabs.cloud";
+      "ntnx-nce02-cvm" = {
+        host = "ntnx-nce02-cvm";
+        hostname = "ntnx-nce02-cvm.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
@@ -206,9 +206,9 @@
         };
       };
 
-      "ntnx-ahv-3-cvm" = {
-        host = "ntnx-ahv-3-cvm";
-        hostname = "ntnx-ahv-3-cvm.saltlabs.cloud";
+      "ntnx-nce03-cvm" = {
+        host = "ntnx-nce03-cvm";
+        hostname = "ntnx-nce03-cvm.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";
@@ -216,9 +216,9 @@
         };
       };
 
-      "ntnx-ahv-4-cvm" = {
-        host = "ntnx-ahv-4-cvm";
-        hostname = "ntnx-ahv-4-cvm.saltlabs.cloud";
+      "ntnx-nce04-cvm" = {
+        host = "ntnx-nce04-cvm";
+        hostname = "ntnx-nce04-cvm.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";

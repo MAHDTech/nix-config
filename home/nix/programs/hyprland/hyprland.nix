@@ -42,8 +42,10 @@ let
     pop-launcher
     slurp
     swappy
+    swaynotificationcenter
     swww
     wayland-pipewire-idle-inhibit
+    wayland-utils
     wayshot
     #wf-recorder
     #wl-screenrec
@@ -937,29 +939,25 @@ in
 
       "$terminal" = "cosmic-term";
 
+      "$barCommand" = "ironbar";
+
+      "$notificationManager" = "swaync";
+
       "$fileManager" = "cosmic-files";
 
       "$menu" = "cosmic-launcher";
 
-      "$switcher" = "rofi window";
+      "$switcher" = "cosmic-launcher alt-tab";
 
-      # Open apps on startup
       exec-once = [
-        # Start ags
-        "ags run"
-        #"ags run --gtk4"
+        # Start the notification manager if not running
+        "pidof $notificationManager || $notificationManager"
 
-        # Open a Terminal
-        "$terminal"
+        # Start the bar if not running
+        "pidof $barCommand || $barCommand"
 
-        # Start Insync
-        "sleep 30 ; pidof insync || insync start"
-
-        # Start the wallpaper daemon
-        "sleep 30 ; pidof swww-daemon || swww-daemon"
-
-        # Set a random wallpaper
-        "sleep 60 ; random-wallpaper"
+        # Start a terminal if not running
+        "pidof $terminal || $terminal"
       ];
 
       ####################
@@ -1189,12 +1187,40 @@ in
     extraConfig = '''';
   };
 
-  # Override the hypridle service to ensure it starts after hyprland-session.target
-  systemd.user.services.hypridle = {
-    Install.WantedBy = [ "hyprland-session.target" ];
-    Unit = {
-      BindsTo = [ "hyprland-session.target" ];
-      After = [ "hyprland-session.target" ];
+  # Ensure hyprland-session.target starts on login
+  systemd = {
+    user = {
+
+      targets = {
+
+        hyprland-session = {
+          Install.WantedBy = [ "default.target" ];
+        };
+
+      };
+
+      # Override the hypridle service to ensure it starts after hyprland-session.target
+      services = {
+
+        hypridle = {
+          Install.WantedBy = [ "hyprland-session.target" ];
+          Unit = {
+            BindsTo = [ "hyprland-session.target" ];
+            After = [ "hyprland-session.target" ];
+            Requires = [ "hyprland-session.target" ];
+          };
+        };
+
+        # Override the hyprpaper service to ensure it starts after hyprland-session.target
+        hyprpaper = {
+          Install.WantedBy = [ "hyprland-session.target" ];
+          Unit = {
+            BindsTo = [ "hyprland-session.target" ];
+            After = [ "hyprland-session.target" ];
+            Requires = [ "hyprland-session.target" ];
+          };
+        };
+      };
     };
   };
 }

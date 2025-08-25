@@ -2,6 +2,7 @@
   imports = [
     ./alacritty.nix
     ./bash.nix
+    ./btop.nix
     ./catppuccin.nix
     ./command-not-found.nix
     ./dconf.nix
@@ -9,7 +10,7 @@
     ./fzf.nix
     ./git.nix
     ./gpg.nix
-    ./btop.nix
+    ./gtk.nix
     ./htop.nix
     ./neovim.nix
     ./password-store.nix

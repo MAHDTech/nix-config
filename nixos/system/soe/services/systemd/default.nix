@@ -7,6 +7,7 @@
 {
   imports = [
     ./oomd.nix
+    ./watchdog.nix
   ];
 
   environment.systemPackages = with pkgs; [ ];
