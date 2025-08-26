@@ -54,7 +54,7 @@
     };
 
     fontconfig = {
-      enable = false; # Enable fontconfig per-user instead of this.
+      enable = true;
       useEmbeddedBitmaps = true;
       defaultFonts = {
         monospace = [
@@ -71,6 +71,7 @@
           "Hack Nerd Font"
           "FreeSans"
           "Liberation Sans"
+          "DejaVu Sans"
         ];
         serif = [
           "Noto Serif"

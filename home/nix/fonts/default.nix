@@ -48,7 +48,7 @@
 
   fonts = {
     fontconfig = {
-      enable = false; # Enable fontconfig per-user.
+      enable = false;
       defaultFonts = {
         monospace = [
           "VictorMono Nerd Font Mono"
@@ -64,6 +64,7 @@
           "Hack Nerd Font"
           "FreeSans"
           "Liberation Sans"
+          "DejaVu Sans"
         ];
         serif = [
           "Noto Serif"
