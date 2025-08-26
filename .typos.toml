@@ -13,7 +13,9 @@ extend-ignore-re = [
     # Ignore next line after spellchecker:ignore-next-line (bash/shell comments)
     "(?s)#\\s*spellchecker:ignore-next-line[^\\n]*\\n[^\\n]*",
     # Ignore next line after spellchecker:ignore-next-line (C-style comments)
-    "(?s)//\\s*spellchecker:ignore-next-line[^\\n]*\\n[^\\n]*"
+    "(?s)//\\s*spellchecker:ignore-next-line[^\\n]*\\n[^\\n]*",
+    # Ignore "Intel AX201" (Bluetooth Device)
+    "Intel AX201"
 ]
 
 [default.extend-words]

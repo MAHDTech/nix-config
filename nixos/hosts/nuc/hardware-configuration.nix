@@ -56,13 +56,18 @@
       "btusb.enable_autosuspend=n"
 
       # Disable Intel WiFi and Bluetooth power management
-      "iwlwifi.power_save=0"
+      "iwlmvm.power_scheme=1"
       "iwlwifi.power_level=0"
+      "iwlwifi.power_save=0"
+      "iwlwifi.power_scheme=1"
       "iwlwifi.uapsd_disable=1"
 
       # Disable Intel CNVi device power management
       "intel_idle.max_cstate=0"
       "pcie_aspm=off"
+
+      # Disable Intel AX201 Bluetooth Device cause it's a piece of shit.
+      "usbcore.quirks=8087:0026:lr"
     ];
 
     blacklistedKernelModules = [

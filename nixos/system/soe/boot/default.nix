@@ -66,6 +66,7 @@ in
     # Increase file watcher limit for all users
     kernel.sysctl = {
       "fs.inotify.max_user_watches" = 524288;
+      "fs.inotify.max_user_instances" = 512;
       "vm.compact_unevictable_allowed" = 1;
       "vm.swappiness" = 10;
     };
