@@ -1,4 +1,36 @@
 { pkgs, ... }:
+let
+
+  # Custom script to configure the browser to use the EID cards.
+  configBrowserEID = pkgs.writeShellScriptBin "config-browser-eid" ''
+    #!${pkgs.bash}/bin/bash
+
+    # NOTES:
+    # - To see certificates, run:
+    #     pkcs15-tool --list-certificates
+    # - To see slots, run:
+    #     pkcs11-tool --module opensc-pkcs11.so --list-slots
+
+    # Variables
+    declare -r NSSDB="''${HOME}/.pki/nssdb"
+
+    ${pkgs.coreutils}/bin/echo "Configuring browser to use EID cards..."
+    ${pkgs.coreutils}/bin/mkdir -p ''${NSSDB} || ${pkgs.coreutils}/bin/echo "NSS database already exists"
+
+    ${pkgs.coreutils}/bin/echo "Creating NSS database..."
+    ${pkgs.nssTools}/bin/certutil -d sql:''${NSSDB} -N --empty-password
+
+    ${pkgs.coreutils}/bin/echo "Adding p11-kit-proxy module to NSS..."
+    ${pkgs.nssTools}/bin/modutil \
+      -force \
+      -dbdir sql:''${NSSDB} \
+      -add p11-kit-proxy \
+      -libfile ${pkgs.p11-kit}/lib/p11-kit-proxy.so
+
+    ${pkgs.coreutils}/bin/echo "Done!"
+  '';
+
+in
 {
 
   home.packages = with pkgs; [
@@ -11,6 +43,7 @@
     libusb-compat-0_1
     libusb1
     opensc
+    p11-kit
     nssTools
     pam_u2f
     pcsc-cyberjack
@@ -30,5 +63,8 @@
     yubikey-personalization
     yubikey-touch-detector
     swig
+
+    # Custom
+    configBrowserEID
   ];
 }
