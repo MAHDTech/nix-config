@@ -55,40 +55,34 @@
       # Disable USB autosuspend
       "btusb.enable_autosuspend=n"
 
-      # Disable Intel WiFi and Bluetooth power management
-      "iwlmvm.power_scheme=1"
-      "iwlwifi.power_level=0"
-      "iwlwifi.power_save=0"
-      "iwlwifi.power_scheme=1"
-      "iwlwifi.uapsd_disable=1"
-
       # Disable Intel CNVi device power management
       "intel_idle.max_cstate=0"
       "pcie_aspm=off"
-
-      # Disable Intel AX201 Bluetooth Device cause it's a piece of shit.
-      "usbcore.quirks=8087:0026:lr"
     ];
 
-    blacklistedKernelModules = [
-      # Intel Wireless modules
-      "cfg80211" # Wireless configuration API (Intel-specific)
-      "iwl3945" # Intel Wireless 3945
-      "iwl4965" # Intel Wireless 4965
-      "iwl5000" # Intel Wireless 5000 series
-      "iwl6000" # Intel Wireless 6000 series
-      "iwl7000" # Intel Wireless 7000 series
-      "iwlagn" # Intel Wireless AGN
-      "iwlcore" # Intel Wireless core
-      "iwlmvm" # Intel Wireless driver
-      "iwlwifi" # Intel Wireless WiFi
-      "mac80211" # IEEE 802.11 subsystem (Intel-specific)
-
-      # Intel Bluetooth modules
-      "btintel" # Intel Bluetooth
-    ];
+    blacklistedKernelModules = [ ];
 
     extraModulePackages = [ ];
+
+    extraModprobeConfig = ''
+      # Keep Bluetooth coexistence disabled for better BT audio stability
+      options iwlwifi bt_coex_active=0
+
+      # Enable software crypto (helps BT coexistence)
+      options iwlwifi swcrypto=1
+
+      # Disable power saving on Wi-Fi module to reduce radio state changes that might disrupt BT
+      options iwlwifi power_save=0
+
+      # Disable Unscheduled Automatic Power Save Delivery (U-APSD) to improve BT audio stability
+      options iwlwifi uapsd_disable=1
+
+      # Disable D0i3 power state to avoid problematic power transitions
+      options iwlwifi d0i3_disable=1
+
+      # Set power scheme for performance (iwlmvm)
+      options iwlmvm power_scheme=1
+    '';
   };
 
   # Legacy mount points
