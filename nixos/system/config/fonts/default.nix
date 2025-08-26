@@ -1,15 +1,20 @@
 { pkgs, ... }:
 {
   # https://nixos.wiki/wiki/Fonts
-
   fonts = {
     packages = with pkgs; [
+      # Font utilities
+      font-manager
+      fontconfig
+
       # Core fonts
       corefonts
       dejavu_fonts
       liberation_ttf
       noto-fonts
-      emojione
+
+      # Emoji fonts
+      joypixels
       twitter-color-emoji
       font-awesome
 
@@ -45,45 +50,38 @@
 
     fontDir = {
       enable = true;
+      decompressFonts = true;
     };
 
     fontconfig = {
-      enable = true;
+      enable = false; # Enable fontconfig per-user instead of this.
       useEmbeddedBitmaps = true;
       defaultFonts = {
         monospace = [
+          "VictorMono Nerd Font Mono"
           "JetBrainsMono Nerd Font Regular"
-          "Ubuntu Mono Regular"
-          "UbuntuMono Nerd Font Regular"
-          "Noto Sans Mono"
-          "Noto Sans Mono Regular"
-          "DejaVu Sans Mono Book"
-          "Source Code Pro Regular"
+          "FiraCode Nerd Font Mono"
+          "SauceCodePro Nerd Font Mono"
+          "Cascadia Code NF"
+          "UbuntuMono Nerd Font Mono"
         ];
         sansSerif = [
-          "JetBrainsMono Nerd Font Regular"
           "Metropolis"
-          "Metropolis Regular"
-          "Ubuntu Regular"
-          "Ubuntu Nerd Font Book"
-          "Noto Sans"
-          "DejaVu Sans Book"
-          "Source Sans Pro"
+          "Ubuntu"
+          "Hack Nerd Font"
+          "FreeSans"
+          "Liberation Sans"
         ];
         serif = [
-          "JetBrainsMono Nerd Font Regular"
-          "Metropolis"
-          "Metropolis Regular"
-          "Ubuntu Regular"
-          "Ubuntu Nerd Font Book"
           "Noto Serif"
-          "DejaVu Serif Book"
-          "Source Serif Pro"
+          "DejaVu Serif"
+          "FreeSerif"
+          "Liberation Serif"
         ];
         emoji = [
-          "EmojiOne Color"
-          "Twitter Color Emoji"
+          "JoyPixels"
           "Noto Color Emoji"
+          "Twitter Color Emoji"
         ];
       };
     };
