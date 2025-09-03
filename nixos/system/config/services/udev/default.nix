@@ -2,13 +2,17 @@
 {
   imports = [ ];
 
-  # REMEMBER: udevadm control --reload-rules
+  # REMEMBER: Run these commands to reload the udev rules:
+  # sudo udevadm control --reload-rules
+  # sudo udevadm trigger
+  # sudo udevadm settle
 
   services.udev = {
     enable = true;
 
     packages = with pkgs; [
       android-udev-rules
+      apio-udev-rules
       game-devices-udev-rules
       ledger-udev-rules
       logitech-udev-rules
@@ -44,7 +48,7 @@
       SUBSYSTEMS=="usb", ATTR{idVendor}=="0a12", ATTR{idProduct}=="4007", SYMLINK+="qcc5141"
       SUBSYSTEMS=="usb", ATTR{idVendor}=="0a12", ATTR{idProduct}=="4007", TAG+="systemd"
 
-      # EOF
+      # EOF - Extra Rules
     '';
   };
 }

@@ -27,4 +27,31 @@
       module: ${pkgs.opensc}/lib/opensc-pkcs11.so
     '';
   };
+
+  # Add UDEV rules for Smart Cards
+  # REMEMBER: Run these commands to reload the udev rules:
+  # sudo udevadm control --reload-rules
+  # sudo udevadm trigger
+  # sudo udevadm settle
+  services = {
+    udev = {
+      extraRules = ''
+        # Identiv SCR3500 Smart Card Reader
+        SUBSYSTEM=="usb", ATTR{idVendor}=="04e6", ATTR{idProduct}=="5814", MODE="0666", TAG+="uaccess"
+
+        # Generic smart card reader rules
+        SUBSYSTEM=="usb", ATTR{idVendor}=="04e6", MODE="0666", TAG+="uaccess"
+        SUBSYSTEM=="usb", ATTR{bDeviceClass}=="0b", MODE="0666", TAG+="uaccess"
+
+        # CCID compliant devices
+        SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="0b", MODE="0666", TAG+="uaccess"
+
+        # Reload pcscd when smart card readers are added/removed
+        ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="04e6", RUN+="${pkgs.systemd}/bin/systemctl try-reload-or-restart pcscd.service"
+        ACTION=="remove", SUBSYSTEM=="usb", ATTR{idVendor}=="04e6", RUN+="${pkgs.systemd}/bin/systemctl try-reload-or-restart pcscd.service"
+
+        # EOF - Smart Cards
+      '';
+    };
+  };
 }

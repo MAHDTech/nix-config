@@ -1,6 +1,6 @@
 {
   services.tailscale = {
-    enable = true;
+    enable = false; # TODO: Broken in September 2025.
 
     useRoutingFeatures = "client";
 
