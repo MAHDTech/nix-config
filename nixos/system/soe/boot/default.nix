@@ -2,8 +2,10 @@
   config,
   lib,
   pkgs,
+  customKernelPackage ? null,
   ...
 }:
+
 let
 
   # Determine the latest ZFS compatible kernel.
@@ -44,11 +46,20 @@ in
     kernelModules = [
     ];
 
-    # Wiki https://nixos.wiki/wiki/Linux_kernel
-    #kernelPackages = pkgs.linuxPackages_latest;
-    # Kernel (Pinned version) https://kernel.org/
-    #kernelPackages = pkgs.linuxPackages_6_12; # LTS
-    kernelPackages = latestZFSKernelPackage;
+    # Kernel selection (either use the customKernelPackage or default to latest ZFS compatible)
+    # Examples of kernel override usage:
+    #
+    # 1. To use the latest available kernel (may not be ZFS compatible):
+    #    customKernelPackage = pkgs.linuxPackages_latest;
+    #
+    # 2. To use a specific LTS kernel:
+    #    customKernelPackage = pkgs.linuxPackages_6_12;
+    #
+    # 3. To use the latest ZFS compatible (default):
+    #    # Don't pass customKernelPackage or set it to null
+    #
+    kernelPackages =
+      if customKernelPackage != null then customKernelPackage else latestZFSKernelPackage;
 
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [

@@ -4,7 +4,7 @@
 
 # NOTES:
 # - This desktop has a single display
-# - 40" HP
+#   - 40" HP
 # - Use hyprland automatic detection
 
 {

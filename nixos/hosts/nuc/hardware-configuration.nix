@@ -10,6 +10,7 @@
     supportedFilesystems = [
       "btrfs"
       "cifs"
+      "exfat"
       "f2fs"
       "nfs"
       "ntfs"

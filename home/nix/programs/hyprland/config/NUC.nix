@@ -4,9 +4,9 @@
 
 # NOTES:
 # - This laptop has 3 displays
-# - 1x Laptop Monitor (BOE)
-# - 1x DP Ultrawide Monitor (Kogan)
-# - 1x HDMI Ultrawide Monitor (DELL)
+#   - 1x Laptop Monitor (BOE)
+#   - 1x DP Ultrawide Monitor (Kogan)
+#   - 1x HDMI Ultrawide Monitor (DELL)
 # - Manually specify monitor configs
 # - Monitor descriptions put into variables for brevity
 

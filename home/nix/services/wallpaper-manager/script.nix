@@ -124,7 +124,7 @@
 
           # Start swww-daemon in foreground
           log "info" "Starting swww-daemon..."
-          exec ${pkgs.swww}/bin/swww-daemon --no-cache
+          exec ${pkgs.swww}/bin/swww-daemon --no-cache --quiet
         '';
       };
 

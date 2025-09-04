@@ -1,7 +1,21 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
 {
   imports = [
-    ./boot
+    (import ./boot {
+      # Passthrough any provided customKernelPackage.
+      inherit config lib pkgs;
+      customKernelPackage =
+        if lib.hasAttr "customKernelPackage" config._module.args then
+          config._module.args.customKernelPackage
+        else
+          null;
+    })
     ./groups
     ./network
     ./users
