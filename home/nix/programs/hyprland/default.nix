@@ -1,12 +1,17 @@
 {
-  config,
   lib,
   inGitHubActions,
+  osConfig ? { },
   ...
 }:
 let
   # Get hostname for conditional configuration
-  hostname = config.networking.hostName or (lib.fileContents /proc/sys/kernel/hostname);
+  # When running as NixOS module, use osConfig, otherwise fallback to file
+  hostname =
+    if builtins.hasAttr "networking" osConfig && builtins.hasAttr "hostName" osConfig.networking then
+      osConfig.networking.hostName
+    else
+      (lib.fileContents /proc/sys/kernel/hostname);
 
   # Determine which device config to load based on hostname
   deviceConfigPath =

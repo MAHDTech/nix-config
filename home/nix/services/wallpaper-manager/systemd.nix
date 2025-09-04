@@ -6,8 +6,6 @@
       wallpaper-manager-daemon = {
         Unit = {
           Description = "Wallpaper Manager Daemon Service";
-          After = [ "hyprland-session.target" ];
-          Wants = [ "hyprland-session.target" ];
           PartOf = [ "hyprland-session.target" ];
         };
 
