@@ -100,7 +100,8 @@
           if [[ "''${WAYLAND_DISPLAY:-EMPTY}" != "EMPTY" ]];
           then
             # Set swww socket path
-            export SWWW_SOCKET="''${XDG_RUNTIME_DIR}/swww-''${WAYLAND_DISPLAY}.socket"
+            export SWWW_SOCKET
+            SWWW_SOCKET="''${XDG_RUNTIME_DIR}/swww-''${WAYLAND_DISPLAY}.socket"
             log "info" "Set SWWW_SOCKET=''${SWWW_SOCKET}"
 
             # Try to detect Hyprland instance signature
@@ -400,7 +401,8 @@
           if [[ "''${WAYLAND_DISPLAY:-EMPTY}" != "EMPTY" ]];
           then
             # Set swww socket path
-            export SWWW_SOCKET="''${XDG_RUNTIME_DIR}/swww-''${WAYLAND_DISPLAY}.socket"
+            export SWWW_SOCKET
+            SWWW_SOCKET="''${XDG_RUNTIME_DIR}/swww-''${WAYLAND_DISPLAY}.socket"
             log "info" "Set SWWW_SOCKET=''${SWWW_SOCKET}"
 
             # Try to detect Hyprland instance signature
@@ -417,6 +419,9 @@
               fi
               i=$((i + 1))
             done
+          else
+            log "info" "WAYLAND_DISPLAY is not set"
+            export SWWW_SOCKET
           fi
 
           # Now wait for swww-daemon to be ready
