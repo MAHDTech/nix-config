@@ -18,7 +18,7 @@ in
     with pkgs;
     [
       # File management
-      insync
+      #insync # dead to me.
       restic
       rclone
       rsync

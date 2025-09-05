@@ -71,20 +71,20 @@
 
               "nixos" )
 
-                # NixOS needs to have insync installed.
-                if ! type insync 2>/dev/null;
+                # NixOS needs to have insync or syncthing installed.
+                if ! type insync 2>/dev/null && ! type syncthing 2>/dev/null;
                 then
-                  echo "On NixOS, insync needs to be installed"
+                  echo "On NixOS, insync or syncthing needs to be installed to take care of remote sync."
                   exit 2
                 else
-                  # InSync is used for remote upload.
+                  # InSync or Syncthing is used for remote upload.
                   RCLONE_ENABLED=false
                 fi
 
                 PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
                 BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
-                RSYNC_PROJECTS_REMOTE="''${HOME}/Insync/mahdtech@gmail.com/gdrive/Projects/Backup/"
+                RSYNC_PROJECTS_REMOTE="''${HOME}/Sync/Projects/Backup/"
 
                 RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
                 RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"

@@ -392,7 +392,7 @@ fi
 # Wallpapers
 #########################
 
-WALLPAPERS_DIR_SOURCE="${HOME}/Insync/mahdtech@gmail.com/gdrive/Pictures/Wallpapers"
+WALLPAPERS_DIR_SOURCE="${HOME}/Sync/Pictures/Wallpapers"
 WALLPAPERS_DIR_DEST="${XDG_WALLPAPERS_DIR:-EMPTY}"
 
 # If a symlink already exists, then don't create a new one
