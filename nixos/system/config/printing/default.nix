@@ -1,4 +1,10 @@
+{ pkgs, ... }:
 {
+
+  environment.systemPackages = with pkgs; [
+    hplipWithPlugin
+  ];
+
   services = {
     printing.enable = true;
 
