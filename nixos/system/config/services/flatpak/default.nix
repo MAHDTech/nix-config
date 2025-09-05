@@ -24,6 +24,7 @@
 
     # <remote name>:<type>/<flatpak ref>/<arch>/<branch>:<commit>
     packages = [
+      "flathub:app/com.adobe.Reader//stable"
       "flathub:app/com.discordapp.Discord//stable"
       "flathub:app/com.github.PintaProject.Pinta//stable"
       "flathub:app/com.github.tchx84.Flatseal//stable"
