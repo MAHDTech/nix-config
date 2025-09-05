@@ -12,18 +12,23 @@
     ./gpg.nix
     ./gtk.nix
     ./htop.nix
-    ./neovim.nix
     ./password-store.nix
     #./python.nix
     ./ssh.nix
     ./starship.nix
-    ./vim.nix
-    ./vscode.nix
     ./wakatime.nix
-    ./work.nix
+
+    # Editors
+    ./cursor.nix
+    #./neovim.nix
+    ./vim.nix
+    #./vscode.nix
     ./zed.nix
 
     # Hyprland
     ./hyprland
+
+    # Work Tools
+    ./work.nix
   ];
 }

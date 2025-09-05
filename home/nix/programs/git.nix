@@ -11,6 +11,7 @@
     git
     git-filter-repo
     git-lfs
+    jujutsu
   ];
 
   home.file = {

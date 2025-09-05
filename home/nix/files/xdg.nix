@@ -1,26 +1,8 @@
 {
   config,
-  inputs,
   pkgs,
   ...
 }:
-let
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs) system;
-    config.allowUnfree = true;
-  };
-
-  env_cursor = pkgs.buildEnv {
-    name = "cursor-env";
-    paths = [
-      "${pkgsUnstable.code-cursor-fhs}/bin"
-      "${pkgs.golangci-lint}/bin"
-      "${pkgs.go}/bin"
-      "${pkgs.nerd-fonts.jetbrains-mono}"
-    ];
-  };
-
-in
 {
   home.packages = with pkgs; [
     xdg-user-dirs
@@ -39,12 +21,19 @@ in
 
     systemDirs = {
       # Directory names to add to XDG_CONFIG_DIRS
-      config = [ ];
+      config = [
+        "/etc/xdg"
+      ];
 
       # Directory names to add to XDG_DATA_DIRS
       data = [
-        "/var/lib/flatpak/exports/share"
         "${config.home.homeDirectory}/.local/share/flatpak/exports/share"
+        "${config.home.homeDirectory}/.local/state/nix/profiles/home-manager/home-path/share/applications"
+        "/usr/local/share"
+        "/usr/local/share/applications"
+        "/usr/share"
+        "/usr/share/applications"
+        "/var/lib/flatpak/exports/share"
       ];
     };
 
@@ -87,24 +76,6 @@ in
           Comment=Password manager and secure wallet
           MimeType=x-scheme-handler/onepassword;
           Categories=Office;
-        '';
-      };
-
-      "cursor.desktop" = {
-        target = "applications/cursor.desktop";
-
-        text = ''
-          [Desktop Entry]
-          Name=Cursor
-          Exec=${env_cursor}/cursor --no-sandbox %U
-          Path=${env_cursor}
-          Terminal=false
-          Type=Application
-          Icon=${pkgs.code-cursor-fhs}/share/icons/hicolor/256x256/apps/cursor.png
-          StartupWMClass=Cursor
-          Comment=Cursor is an AI-first coding environment.
-          MimeType=x-scheme-handler/cursor;
-          Categories=Utility;
         '';
       };
 
