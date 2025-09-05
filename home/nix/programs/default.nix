@@ -21,6 +21,7 @@
     ./vscode.nix
     ./wakatime.nix
     ./work.nix
+    ./zed.nix
 
     # Hyprland
     ./hyprland

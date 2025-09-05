@@ -115,24 +115,6 @@
       flake = true;
     };
 
-    ags = {
-      type = "github";
-      owner = "Aylur";
-      repo = "ags";
-      ref = "v2.3.0";
-      flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    matugen = {
-      type = "github";
-      owner = "InioX";
-      repo = "matugen";
-      ref = "v2.4.1";
-      flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     #musnix = {
     #  type = "github";
     #  owner = "musnix";

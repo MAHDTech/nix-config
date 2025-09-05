@@ -86,7 +86,6 @@
     };
     pam = {
       services = {
-        ags = { };
         hyprlock = { };
       };
     };

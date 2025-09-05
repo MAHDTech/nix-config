@@ -10,7 +10,6 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
-    code-cursor-fhs
   ];
 in
 {
@@ -116,7 +115,6 @@ in
       zathura
 
       # GUI
-      #code-cursor # stable is a few versions behind
       signal-desktop
       google-chrome
       remmina
