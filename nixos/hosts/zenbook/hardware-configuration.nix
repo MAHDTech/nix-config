@@ -56,7 +56,7 @@
         extraFiles = {
           # sudo apt install device-tree-compiler
           # sudo dtc -I fs -O dtb /sys/firmware/devicetree/base -o ~/x1e80100-asus-zenbook-a14.dtb
-          "dtbs/qcom/x1e80100-asus-zenbook-a14.dtb" = ./files/dtb/x1e80100-asus-zenbook-a14.dtb;
+          "dtbs/qcom/x1e80100-asus-zenbook-a14.dtb" = ./files/dtb/qcom/x1e80100-asus-zenbook-a14.dtb;
         };
       };
     };
@@ -69,17 +69,20 @@
     };
     enableRedistributableFirmware = true;
     firmware = [
-      # Copy all local device trees
-      (pkgs.runCommandNoCC "devicetree" { } ''
-        mkdir -p $out/lib/dtbs
-        cp -r ${./files/dtb}/* $out/lib/dtbs/
-      '')
+      (pkgs.runCommandNoCC "zenbook-custom-firmware"
+        {
+          srcDTB = ./files/dtb/qcom/x1e80100-asus-zenbook-a14.dtb;
+          srcFirmware = ./files/firmware;
+        }
+        ''
+          # Copy Device Tree
+          mkdir -p $out/lib/firmware/qcom/x1e80100/ASUSTeK
+          cat $srcDTB > $out/lib/firmware/qcom/x1e80100/ASUSTeK/x1e80100-asus-zenbook-a14.dtb
 
-      # Copy all local binary firmware blobs
-      (pkgs.runCommandNoCC "firmware" { } ''
-        mkdir -p $out/lib/firmware
-        cp -r ${./files/firmware}/* $out/lib/firmware/
-      '')
+          # Copy Firmware Blobs
+          cp -r --no-preserve=mode,ownership $srcFirmware/* $out/lib/firmware/
+        ''
+      )
     ];
   };
 

@@ -18,6 +18,7 @@ let
       [
         # x86_64 only packages
         google-chrome
+        ledger-live-desktop
         onlyoffice-desktopeditors
       ]
     else if pkgs.system == "aarch64-linux" then
@@ -139,7 +140,6 @@ in
       trezor-agent
 
       # Ledger
-      ledger-live-desktop
 
       # Development
       go

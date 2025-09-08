@@ -48,6 +48,9 @@
       SUBSYSTEMS=="usb", ATTR{idVendor}=="0a12", ATTR{idProduct}=="4007", SYMLINK+="qcc5141"
       SUBSYSTEMS=="usb", ATTR{idVendor}=="0a12", ATTR{idProduct}=="4007", TAG+="systemd"
 
+      # CH341A SPI programmer rules
+      SUBSYSTEM=="usb", ATTR{idVendor}=="1a86", ATTR{idProduct}=="5512", MODE="0666", GROUP="plugdev"
+
       # EOF - Extra Rules
     '';
   };
