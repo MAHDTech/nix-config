@@ -30,41 +30,58 @@ let
     ${pkgs.coreutils}/bin/echo "Done!"
   '';
 
+  # System architecture specific packages.
+  systemArchPackages =
+    if pkgs.system == "x86_64-linux" then
+      with pkgs;
+      [
+        # x86_64 only packages.
+        pcsc-safenet
+        pcsc-scm-scl011
+        scmccid
+      ]
+    else if pkgs.system == "aarch64-linux" then
+      [
+        # aarch64 only packages.
+      ]
+    else
+      [ ];
+
 in
 {
 
-  home.packages = with pkgs; [
-    # Common
-    acsccid
-    ccid
-    hidapi
-    libfido2
-    libu2f-host
-    libusb-compat-0_1
-    libusb1
-    opensc
-    p11-kit
-    nssTools
-    pam_u2f
-    pcsc-cyberjack
-    pcsc-safenet
-    pcsc-scm-scl011
-    pcsc-tools
-    pcsclite
-    pinentry
-    scmccid
+  home.packages =
+    with pkgs;
+    [
+      # Common
+      acsccid
+      ccid
+      hidapi
+      libfido2
+      libu2f-host
+      libusb-compat-0_1
+      libusb1
+      opensc
+      p11-kit
+      nssTools
+      pam_u2f
+      pcsc-cyberjack
+      pcsc-tools
+      pcsclite
+      pinentry
 
-    # YubiKey
-    # NOTE: For YubiKey reset instructions see: https://support.yubico.com/hc/en-us/articles/360013761339-Resetting-the-OpenPGP-Application-on-the-YubiKey
-    yubico-pam
-    yubico-piv-tool
-    yubikey-manager
-    yubioath-flutter
-    yubikey-personalization
-    yubikey-touch-detector
-    swig
+      # YubiKey
+      # NOTE: For YubiKey reset instructions see: https://support.yubico.com/hc/en-us/articles/360013761339-Resetting-the-OpenPGP-Application-on-the-YubiKey
+      yubico-pam
+      yubico-piv-tool
+      yubikey-manager
+      yubioath-flutter
+      yubikey-personalization
+      yubikey-touch-detector
+      swig
 
-    # Custom
-    configBrowserEID
-  ];
+      # Custom
+      configBrowserEID
+    ]
+    ++ systemArchPackages;
 }

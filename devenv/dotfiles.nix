@@ -87,6 +87,7 @@ in
       "^secrets/keys/.*\\.asc$"
       "^secrets/keystore.yaml$"
       "^vendor(/.*)?$"
+      "^nixos/hosts/.*/files/.*$"
     ];
     hooks = {
       actionlint.enable = true;

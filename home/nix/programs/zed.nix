@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   pkgs,
   ...
 }:
@@ -7,7 +8,6 @@ let
 
   pkgsUnstable = import inputs.nixpkgs-unstable {
     inherit (pkgs) system;
-    config.allowUnfree = true;
   };
 
   extraPackagesUnstable = with pkgsUnstable; [
@@ -17,6 +17,43 @@ let
 in
 {
   xdg = {
+
+    configFile = {
+      "zed_keymap" = {
+        enable = true;
+        force = false;
+        executable = false;
+        target = "zed/keymap.json";
+        text = ''
+          [
+            {
+              "context": "Editor && edit_prediction_conflict",
+              "bindings": {
+                "alt-l": "editor::AcceptEditPrediction"
+              }
+            }
+            {
+              "context": "Workspace",
+              "bindings": {
+                "ctrl-shift-t": "workspace::NewTerminal"
+              }
+            },
+            {
+              "bindings": {
+                "ctrl-right": "editor::SelectLargerSyntaxNode",
+                "ctrl-left": "editor::SelectSmallerSyntaxNode"
+              }
+            },
+            {
+              "context": "ProjectPanel && not_editing",
+              "bindings": {
+                "o": "project_panel::Open"
+              }
+            }
+          ]
+        '';
+      };
+    };
 
     desktopEntries = {
 
@@ -122,6 +159,7 @@ in
           astro-language-server
           clippy
           eslint
+          gitlab-ci-ls
           go
           gopls
           golangci-lint
@@ -163,8 +201,7 @@ in
         disable_ai = false;
         format_on_save = "prettier";
         formatter = "auto";
-        hour_format = "hour24";
-        shell = "system";
+        #hour_format = "hour12"; # TODO: wtf?
         load_direnv = "shell_hook"; # direct, shell_hook
         show_whitespaces = "all";
 
@@ -189,15 +226,6 @@ in
         helix_mode = false;
 
         base_keymap = "VSCode";
-
-        userKeymaps = [
-          {
-            context = "Workspace";
-            bindings = {
-              "ctrl-shift-t" = "workspace::NewTerminal";
-            };
-          }
-        ];
 
         #########################
         # Minimap
@@ -301,15 +329,11 @@ in
               activate_script = "default";
             };
           };
-          activate_script = "default";
-        };
-
-        #########################
-        # Environment
-        #########################
-
-        env = {
-          TERM = "cosmic-terminal";
+          env = {
+            TERM = "cosmic-terminal";
+          };
+          line_height = "comfortable";
+          shell = "system";
         };
 
         #########################
@@ -326,7 +350,6 @@ in
         ui_font_family = ".SystemUIFont";
         ui_font_size = 16;
         ui_font_weight = 400;
-        ui_line_height = "comfortable";
 
         #########################
         # Layouts
@@ -438,22 +461,22 @@ in
           #########################
 
           default_model = {
-            provider = "xai";
+            provider = "x_ai";
             model = "grok-code-fast-1";
           };
 
           inline_assistant_model = {
-            provider = "xai";
+            provider = "x_ai";
             model = "grok-code-fast-1";
           };
 
           commit_message_model = {
-            provider = "xai";
+            provider = "x_ai";
             model = "grok-code-fast-1";
           };
 
           thread_summary_model = {
-            provider = "xai";
+            provider = "x_ai";
             model = "grok-code-fast-1";
           };
 
@@ -463,35 +486,25 @@ in
         # AI Language Models
         #########################
 
-        #language_models = {
-        #  xai = {
-        #    api_url = "https://api.x.ai/v1";
-        #    version = "1";
-        #    available_models = [
-        #      {
-        #        name = "grok-code-fast-1";
-        #        display_name = "grok-code-fast-1";
-        #        max_tokens = 256000;
-        #      }
-        #      {
-        #        name = "grok-4-latest";
-        #        display_name = "grok-4";
-        #        max_tokens = 256000;
-        #      }
-        #    ];
-        #  };
-        #};
+        language_models = {
+          x_ai = {
+            api_url = "https://api.x.ai/v1";
+          };
+        };
 
         #########################
         # Language Server Providers
         #########################
 
         lsp = {
-
+          gitlab-ci = {
+            binary = {
+              path = lib.getExe pkgs.gitlab-ci-ls;
+            };
+          };
           rust-analyzer = {
             binary = {
-              #path = lib.getExe pkgs.rust-analyzer;
-              path_lookup = true;
+              path = lib.getExe pkgs.rust-analyzer;
             };
             initialization_options = {
               checkOnSave = true;
@@ -500,14 +513,16 @@ in
               };
             };
           };
-
-          nix = {
+          nixd = {
             binary = {
-              #path = lib.getExe pkgs.nix;
-              path_lookup = true;
+              path = lib.getExe pkgs.nixd;
             };
           };
-
+          nil = {
+            binary = {
+              path = lib.getExe pkgs.nil;
+            };
+          };
         };
 
         #########################
@@ -550,6 +565,14 @@ in
 
     };
 
+  };
+
+  home.file = {
+    # The Zed remote server binary.
+    ".zed_server" = {
+      source = "${pkgs.zed-editor.remote_server}/bin";
+      recursive = true;
+    };
   };
 
 }

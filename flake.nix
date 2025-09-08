@@ -495,6 +495,49 @@
           ];
         };
 
+        # Hostname: ZENBOOK
+        # Description: ASUS Zenbook A14 Snapdragon X Elite 32GB RAM (UX3407R)
+        ZENBOOK = configNixOS {
+          username = globalUsername;
+          system = "aarch64-linux";
+
+          specialArgs = {
+            inherit inputs;
+          };
+
+          extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
+            ./nixos/hosts/zenbook
+
+            catppuccin.nixosModules.catppuccin
+            flatpaks.nixosModule
+            home-manager.nixosModules.home-manager
+            {
+
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs;
+                  inherit globalStateVersion;
+                  inherit globalUsername;
+                  inherit inGitHubActions;
+                }
+                // (import ./nixos/hosts/zenbook/home-manager/syncthing.nix);
+                users.${globalUsername} = {
+                  imports = [
+                    ./home
+
+                    catppuccin.homeManagerModules.catppuccin
+                    sops-nix.homeManagerModules.sops
+                  ];
+                };
+              };
+            }
+          ];
+        };
+
       };
 
       #########################

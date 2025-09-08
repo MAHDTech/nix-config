@@ -1,21 +1,10 @@
 {
-  config,
-  lib,
-  pkgs,
   ...
 }:
 
 {
   imports = [
-    (import ./boot {
-      # Passthrough any provided customKernelPackage.
-      inherit config lib pkgs;
-      customKernelPackage =
-        if lib.hasAttr "customKernelPackage" config._module.args then
-          config._module.args.customKernelPackage
-        else
-          null;
-    })
+    ./boot
     ./groups
     ./network
     ./users
@@ -25,8 +14,6 @@
     ./services
     ./security
   ];
-
-  environment.systemPackages = with pkgs; [ ];
 
   time.timeZone = "Australia/Canberra";
 

@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  customKernelPackage ? null,
   ...
 }:
 
@@ -21,16 +20,24 @@ let
       builtins.attrValues zfsCompatibleKernelPackages
     )
   );
+
+  # Determine the systems to allow QEMU emulation for.
+  qemuEmulatedSystems =
+    if pkgs.system == "x86_64-linux" then
+      [ "aarch64-linux" ]
+    else if pkgs.system == "aarch64-linux" then
+      [ "x86_64-linux" ]
+    else
+      [ ];
+
 in
 {
   boot = {
     consoleLogLevel = 4;
 
-    # Enable QEMU emulation
+    # Enable QEMU emulation for the right systems.
     binfmt = {
-      emulatedSystems = [
-        "aarch64-linux"
-      ];
+      emulatedSystems = qemuEmulatedSystems;
     };
 
     initrd = {
@@ -41,25 +48,16 @@ in
       kernelModules = [ ];
     };
 
-    extraModulePackages = with config.boot.kernelPackages; [ ];
-
-    kernelModules = [
-    ];
-
-    # Kernel selection (either use the customKernelPackage or default to latest ZFS compatible)
-    # Examples of kernel override usage:
-    #
-    # 1. To use the latest available kernel (may not be ZFS compatible):
-    #    customKernelPackage = pkgs.linuxPackages_latest;
-    #
-    # 2. To use a specific LTS kernel:
-    #    customKernelPackage = pkgs.linuxPackages_6_12;
-    #
-    # 3. To use the latest ZFS compatible (default):
-    #    # Don't pass customKernelPackage or set it to null
-    #
+    # Kernel selection
+    #  - 1. If a custom kernel is set as module argument, use that.
+    #  - 2. If no custom kernel is set, use the latest ZFS compatible kernel.
     kernelPackages =
-      if customKernelPackage != null then customKernelPackage else latestZFSKernelPackage;
+      if lib.hasAttr "customKernelPackage" config._module.args then
+        # Use the custom kernel override.
+        config._module.args.customKernelPackage
+      else
+        # Default to the latest ZFS compatible kernel.
+        latestZFSKernelPackage;
 
     # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [
@@ -105,7 +103,7 @@ in
         enable = true;
 
         graceful = true;
-        memtest86.enable = true;
+        memtest86.enable = false;
         netbootxyz.enable = false;
 
         configurationLimit = 10;

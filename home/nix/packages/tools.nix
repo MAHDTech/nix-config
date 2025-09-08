@@ -11,6 +11,22 @@ let
 
   unstablePkgs = with pkgsUnstable; [
   ];
+
+  systemArchPackages =
+    if pkgs.system == "x86_64-linux" then
+      with pkgs;
+      [
+        # x86_64 only packages
+        google-chrome
+        onlyoffice-desktopeditors
+      ]
+    else if pkgs.system == "aarch64-linux" then
+      [
+        # aarch64 only packages
+      ]
+    else
+      [ ];
+
 in
 {
   home.packages =
@@ -48,8 +64,8 @@ in
       xfsprogs
 
       # Disk imagers
-      unetbootin
-      syslinux
+      #unetbootin
+      #syslinux # Doesn't support aarch64
       #ventoy-full
 
       # CLI
@@ -116,11 +132,7 @@ in
 
       # GUI
       signal-desktop
-      google-chrome
       remmina
-
-      # Office
-      onlyoffice-desktopeditors
 
       # Trezor
       trezor-suite
@@ -134,5 +146,6 @@ in
       golangci-lint
       gotools
     ]
-    ++ unstablePkgs;
+    ++ unstablePkgs
+    ++ systemArchPackages;
 }

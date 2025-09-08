@@ -1,7 +1,5 @@
 {
-  config,
   lib,
-  pkgs,
   ...
 }:
 {
@@ -9,8 +7,6 @@
     ./oomd.nix
     ./watchdog.nix
   ];
-
-  environment.systemPackages = with pkgs; [ ];
 
   systemd = {
     extraConfig = ''
