@@ -31,7 +31,7 @@ in
               "bindings": {
                 "alt-l": "editor::AcceptEditPrediction"
               }
-            }
+            },
             {
               "context": "Workspace",
               "bindings": {
