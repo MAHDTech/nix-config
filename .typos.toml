@@ -51,6 +51,7 @@ personalization = "personalization"
 randomize = "randomize"
 randomized = "randomized"
 recognize = "recognize"
+serialize = "serialize"
 stabilize = "stabilize"
 
 [files]

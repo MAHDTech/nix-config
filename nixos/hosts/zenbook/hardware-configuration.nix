@@ -11,22 +11,69 @@
     initrd = {
       availableKernelModules = [
         "nvme"
-        "pcie-qcom"
         "usb_storage"
         "usbhid"
         "xhci_pci"
+        "uas"
+        "sd_mod"
+
+        # ARM/Qualcomm
+        "arm_smmu"
+        "qcom_geni_se"
+        "qcom_geni_i2c"
+        "qcom_geni_spi"
+        "qcom_smd_regulator"
+        "qcom_spmi_regulator"
+
+        # Display/Framebuffer
+        "simplefb"
+        "efifb"
+        "fb_sys_fops"
+        "syscopyarea"
+        "sysfillrect"
+        "sysimgblt"
       ];
       kernelModules = [
-        "kvm"
+        #"kvm"
         "zfs"
       ];
     };
 
-    kernelModules = [ ];
+    kernelModules = [
+      # ARM64
+      "msm"
+      "panel_simple"
+
+      # Qualcomm
+      "qcom_q6v5_mss"
+      "qcom_common"
+      "qcom_glink_smem"
+      "qcom_sysmon"
+    ];
 
     kernelParams = [
+      # Boot parameters for Snapdragon
       "clk_ignore_unused"
       "pd_ignore_unused"
+
+      # Console output
+      "console=ttyAMA0,115200n8"
+      "console=tty0"
+      "earlyprintk"
+
+      # Framebuffer
+      "cma=128M"
+      "video=efifb"
+      "fbcon=map:0"
+
+      # ARM64 specific
+      "arm64.nopauth"
+      "acpi=force"
+
+      # Debug (remove after it works)
+      "loglevel=7"
+      "debug"
+      "ignore_loglevel"
     ];
 
     kernelPatches = [
@@ -34,6 +81,19 @@
         name = "snapdragon-config";
         patch = null;
         extraConfig = ''
+          # Framebuffer for installer
+          FRAMEBUFFER_CONSOLE y
+          FB_EFI y
+          FB_SIMPLE y
+          LOGO y
+
+          # ARM64 console
+          SERIAL_AMBA_PL011 y
+          SERIAL_AMBA_PL011_CONSOLE y
+          HVC_DCC y
+          HVC_DCC_SERIALIZE_SMP y
+
+          # Qualcomm essentials
           TYPEC y
           PHY_QCOM_QMP y
           QCOM_CLK_RPM y
@@ -41,6 +101,15 @@
           REGULATOR_QCOM_RPM y
           PHY_QCOM_QMP_PCIE y
           CLK_X1E80100_CAMCC y
+
+          # Display pipeline
+          DRM y
+          DRM_MSM y
+          DRM_PANEL_SIMPLE y
+
+          # ARM64 fundamentals
+          ARM_SMMU y
+          ARM_SMMU_V3 y
         '';
       }
     ];
