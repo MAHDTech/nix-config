@@ -20,21 +20,17 @@
         # ARM/Qualcomm
         "arm_smmu"
         "qcom_geni_se"
-        "qcom_geni_i2c"
-        "qcom_geni_spi"
         "qcom_smd_regulator"
         "qcom_spmi_regulator"
 
         # Display/Framebuffer
-        "simplefb"
-        "efifb"
         "fb_sys_fops"
         "syscopyarea"
         "sysfillrect"
         "sysimgblt"
       ];
       kernelModules = [
-        #"kvm"
+        "kvm"
         "zfs"
       ];
     };
@@ -82,34 +78,33 @@
         patch = null;
         extraConfig = ''
           # Framebuffer for installer
-          FRAMEBUFFER_CONSOLE y
-          FB_EFI y
-          FB_SIMPLE y
-          LOGO y
+          FRAMEBUFFER_CONSOLE y      # Enables console output on framebuffer devices
+          FB_EFI y                   # Support for EFI-based framebuffer
+          LOGO y                     # Displays boot logo on framebuffer
 
           # ARM64 console
-          SERIAL_AMBA_PL011 y
-          SERIAL_AMBA_PL011_CONSOLE y
-          HVC_DCC y
-          HVC_DCC_SERIALIZE_SMP y
+          SERIAL_AMBA_PL011 y        # Driver for AMBA PL011 UART (serial console)
+          SERIAL_AMBA_PL011_CONSOLE y # Enables console output via PL011 UART
+          HVC_DCC y                  # ARM Debug Communications Channel hypervisor console
+          HVC_DCC_SERIALIZE_SMP y    # Serialises SMP access for DCC console
 
           # Qualcomm essentials
-          TYPEC y
-          PHY_QCOM_QMP y
-          QCOM_CLK_RPM y
-          MFD_QCOM_RPM y
-          REGULATOR_QCOM_RPM y
-          PHY_QCOM_QMP_PCIE y
-          CLK_X1E80100_CAMCC y
+          TYPEC y                    # USB Type-C and Power Delivery support
+          PHY_QCOM_QMP y             # Qualcomm QMP PHY driver for USB/PCIE/USB3
+          QCOM_CLK_RPM y             # Qualcomm RPM clock controller
+          MFD_QCOM_RPM y             # Qualcomm Resource Power Manager multi-function device
+          REGULATOR_QCOM_RPM y       # Qualcomm RPM voltage regulator driver
+          PHY_QCOM_QMP_PCIE y        # Qualcomm QMP PCIe PHY driver
+          CLK_X1E80100_CAMCC y       # Camera clock controller for Snapdragon X Elite (X1E80100)
 
           # Display pipeline
-          DRM y
-          DRM_MSM y
-          DRM_PANEL_SIMPLE y
+          DRM y                      # Direct Rendering Manager framework for GPUs
+          DRM_MSM m                  # MSM DRM driver for Qualcomm Snapdragon GPUs (as module)
+          DRM_PANEL_SIMPLE m         # Simple panel driver for DRM-based displays
 
           # ARM64 fundamentals
-          ARM_SMMU y
-          ARM_SMMU_V3 y
+          ARM_SMMU y                 # ARM System Memory Management Unit support
+          ARM_SMMU_V3 y              # ARM SMMU version 3 for advanced IOMMU features
         '';
       }
     ];
@@ -141,6 +136,7 @@
       (pkgs.runCommandNoCC "zenbook-custom-firmware"
         {
           srcFirmware = ./files/firmware;
+          srcDTB = ./files/dtb/qcom/x1e80100-asus-zenbook-a14.dtb;
         }
         ''
           # Copy Firmware Blobs
