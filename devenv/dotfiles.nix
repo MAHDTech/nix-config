@@ -1,11 +1,19 @@
 {
-  pkgs,
   config,
+  inputs,
   lib,
+  pkgs,
   ...
 }:
 
 let
+
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${builtins.currentSystem};
+
+  unstablePackages = with pkgsUnstable; [
+    ventoy-full
+  ];
+
   packages = with pkgs; [
     hello
   ];
@@ -47,7 +55,7 @@ in
     ];
   };
 
-  packages = packages ++ lib.optionals (!config.container.isBuilding) devPackages;
+  packages = packages ++ unstablePackages ++ lib.optionals (!config.container.isBuilding) devPackages;
 
   enterShell = ''
     figlet -f starwars $PROJECT

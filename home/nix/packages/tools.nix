@@ -10,6 +10,7 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
+    ventoy-full
   ];
 
   systemArchPackages =
