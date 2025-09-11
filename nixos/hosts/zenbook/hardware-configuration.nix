@@ -120,7 +120,7 @@
         extraFiles = {
           # sudo apt install device-tree-compiler
           # sudo dtc -I fs -O dtb /sys/firmware/devicetree/base -o ~/x1e80100-asus-zenbook-a14.dtb
-          "dtbs/x1e80100-asus-zenbook-a14.dtb" = ./files/dtbs/x1e80100-asus-zenbook-a14.dtb;
+          "dtb/base/x1e80100-asus-zenbook-a14.dtb" = ./files/dtb/x1e80100-asus-zenbook-a14.dtb;
         };
       };
     };
@@ -133,7 +133,7 @@
     };
     enableRedistributableFirmware = true;
     firmware = [
-      (pkgs.runCommandNoCC "zenbook-custom-firmware"
+      (pkgs.runCommandNoCC "zenbook-firmware"
         {
           srcFirmware = ./files/firmware;
         }

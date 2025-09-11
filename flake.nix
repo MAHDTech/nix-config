@@ -495,6 +495,25 @@
           ];
         };
 
+        # Hostname: OPI-001
+        # Description: Orange PI 5 Pro 1
+        OPI-001 = configNixOS {
+          username = globalUsername;
+          system = "aarch64-linux";
+
+          specialArgs = {
+            inherit inputs;
+          };
+
+          extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
+            ./nixos/hosts/opi-001
+
+            catppuccin.nixosModules.catppuccin
+          ];
+        };
+
         # Hostname: ZENBOOK
         # Description: ASUS Zenbook A14 Snapdragon X Elite 32GB RAM (UX3407R)
         ZENBOOK = configNixOS {
