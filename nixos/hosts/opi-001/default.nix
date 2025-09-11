@@ -7,7 +7,8 @@
   # Module arguments.
   _module.args = {
     # For Orange PI 5 Pro, use the latest bleeding edge kernel.
-    customKernelPackage = pkgs.linuxPackages_latest;
+    #customKernelPackage = pkgs.linuxPackages_latest;
+    customKernelPackage = pkgs.linuxPackages_6_1; # DTB is from Armbian with 6.1.x kernel
   };
 
   networking = {
