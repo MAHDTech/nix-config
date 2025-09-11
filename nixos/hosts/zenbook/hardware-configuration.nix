@@ -136,7 +136,6 @@
       (pkgs.runCommandNoCC "zenbook-custom-firmware"
         {
           srcFirmware = ./files/firmware;
-          srcDTB = ./files/dtb/qcom/x1e80100-asus-zenbook-a14.dtb;
         }
         ''
           # Copy Firmware Blobs
