@@ -256,10 +256,10 @@ rm -rf ~/.ssh
 
 ```bash
 # x86-64
-nixos-generate --show-trace --flake .#NAME --format iso --out-link result --system x86_64-linux
+nixos-generate --show-trace --flake .#NAME --format install-iso --out-link result --system x86_64-linux
 
 # aarch64
-nixos-generate --show-trace --flake .#NAME --format iso --out-link result --system aarch64-linux
+nixos-generate --show-trace --flake .#NAME --format install-iso --out-link result --system aarch64-linux
 ```
 
 ## Troubleshooting
