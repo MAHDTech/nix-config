@@ -1,8 +1,7 @@
-{pkgs, ...}: {
+{
   imports = [
+    ./firewall.nix
   ];
-
-  environment.systemPackages = with pkgs; [];
 
   networking = {
     useNetworkd = true;

@@ -1685,7 +1685,6 @@ in
       };
     };
     firewall = {
-      enable = false;
       trustedInterfaces = [
         "lo" # Loopback
         "enp6s0" # Management interface
