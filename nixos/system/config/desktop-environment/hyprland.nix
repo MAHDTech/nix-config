@@ -99,6 +99,9 @@
     # Fix 1Password desktop integration for authentication dialogue boxes.
     GTK_USE_PORTAL = "1";
     QT_QPA_PLATFORMTHEME = "gtk3";
+
+    # Enable XWayland without 2D hardware acceleration
+    XWAYLAND_NO_GLAMOR = "0";
   };
 
   # Greeter (GUI)

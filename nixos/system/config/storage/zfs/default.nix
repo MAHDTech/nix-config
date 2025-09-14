@@ -6,6 +6,9 @@ let
 in
 {
   boot = {
+    kernelParams = [
+      "zfs.zfs_arc_max=12884901888"
+    ];
     zfs = {
       requestEncryptionCredentials = true;
 

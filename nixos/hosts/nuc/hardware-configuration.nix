@@ -59,6 +59,10 @@
       # Disable Intel CNVi device power management
       "intel_idle.max_cstate=0"
       "pcie_aspm=off"
+
+      # Laptop screen
+      "acpi_osi=Linux"
+      "acpi_backlight=native"
     ];
 
     blacklistedKernelModules = [ ];

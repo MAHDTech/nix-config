@@ -7,20 +7,6 @@
 
 let
 
-  # Determine the latest ZFS compatible kernel.
-  zfsCompatibleKernelPackages = lib.filterAttrs (
-    name: kernelPackages:
-    (builtins.match "linux_[0-9]+_[0-9]+" name) != null
-    && (builtins.tryEval kernelPackages).success
-    && (!kernelPackages.${config.boot.zfs.package.kernelModuleAttribute}.meta.broken)
-  ) pkgs.linuxKernel.packages;
-
-  latestZFSKernelPackage = lib.last (
-    lib.sort (a: b: (lib.versionOlder a.kernel.version b.kernel.version)) (
-      builtins.attrValues zfsCompatibleKernelPackages
-    )
-  );
-
   # Determine the systems to allow QEMU emulation for.
   qemuEmulatedSystems =
     if pkgs.system == "x86_64-linux" then
@@ -53,22 +39,29 @@ in
     #  - 2. If no custom kernel is set, use the latest ZFS compatible kernel.
     kernelPackages =
       if lib.hasAttr "customKernelPackage" config._module.args then
-        # Use the custom kernel override.
         config._module.args.customKernelPackage
       else
-        # Default to the latest ZFS compatible kernel.
+        let
+          zfsCompatibleKernelPackages = lib.filterAttrs (
+            name: kernelPackages:
+            (builtins.match "linux_[0-9]+_[0-9]+" name) != null
+            && (builtins.tryEval kernelPackages).success
+            && (
+              !config.boot.supportedFilesystems ? "zfs"
+              || !kernelPackages.${config.boot.zfs.package.kernelModuleAttribute}.meta.broken
+            )
+          ) pkgs.linuxKernel.packages;
+
+          latestZFSKernelPackage = lib.last (
+            lib.sort (a: b: (lib.versionOlder a.kernel.version b.kernel.version)) (
+              builtins.attrValues zfsCompatibleKernelPackages
+            )
+          );
+        in
         latestZFSKernelPackage;
 
-    # NOTE: Do NOT set nomodeset with Intel GPU as they require kernel mode-setting.
     kernelParams = [
-      "acpi_osi=Linux"
-      "acpi_backlight=native"
-
       "nohibernate"
-      "zfs.zfs_arc_max=12884901888"
-
-      "usbcore.autosuspend=-1"
-
       "quiet"
     ];
 
@@ -108,7 +101,6 @@ in
 
         configurationLimit = 10;
 
-        # Disable bootloader editing for security
         editor = false;
       };
 

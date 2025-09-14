@@ -7,8 +7,8 @@
   # Module arguments.
   _module.args = {
     # For Qualcomm Snapdragon X Elite, use the latest bleeding edge kernel.
-    #customKernelPackage = pkgs.linuxPackages_latest;
-    customKernelPackage = pkgs.linuxPackages_testing;
+    customKernelPackage = pkgs.linuxPackages_latest;
+    #customKernelPackage = pkgs.linuxPackages_6_17;
   };
 
   networking = {
@@ -39,11 +39,11 @@
     #../../system/config/services
 
     # Storage
-    ../../system/config/storage/zfs
+    #../../system/config/storage/zfs
     #../../system/config/storage/persistence
 
     # Theme
-    ../../system/config/theme/catppuccin
+    #../../system/config/theme/catppuccin
 
     # Laptop
     #../../system/config/hardware/laptop
