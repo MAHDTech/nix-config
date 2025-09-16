@@ -40,7 +40,7 @@
 
     # CPU Throttling
     #../../system/config/services/thermald # there can only be one
-    ../../system/config/services/throttled
+    #../../system/config/services/throttled
 
     # Networking
     ../../system/config/network/hosts.nix
@@ -49,16 +49,15 @@
     ../../system/config/desktop-environment/hyprland.nix
 
     # Tailscale
-    ../../system/config/services/tailscale
+    #../../system/config/services/tailscale
 
     # Desktop Applications and Services
     ../../system/config/programs/1password
     ../../system/config/services/trezor
 
     # Virtualisation
-    #../../system/config/virtualisation/docker
+    ../../system/config/virtualisation/docker
     #../../system/config/virtualisation/host/vmware
-    #../../system/config/virtualisation/incus
 
     # Games
     ../../system/config/games
