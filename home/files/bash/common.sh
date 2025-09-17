@@ -144,7 +144,7 @@ function trap_signal() {
 		FUNCTION="$1"
 		#echo "Received Function: ${FUNCTION}"
 	else
-		echo 'ERROR: Please provide the Function as $2'
+		echo "ERROR: Please provide the Function as parameter #1"
 		return 1
 	fi
 
@@ -152,7 +152,7 @@ function trap_signal() {
 		SIGNAL="$2"
 		#echo "Received Signal: ${SIGNAL}"
 	else
-		echo 'ERROR: Please provide the Signal as $1'
+		echo "ERROR: Please provide the Signal as parameter #2"
 		return 1
 	fi
 
@@ -567,4 +567,5 @@ function showMemUsage() {
 # Exports
 #########################
 
-export -f setup_trap trap_signal
+# TODO: Does this fix devenv?
+#export -f setup_trap trap_signal

@@ -38,7 +38,7 @@ function checkLog() {
 	if [[ ! -f ${FILE} ]]; then
 
 		touch "${FILE}" || {
-			echo "ERROR: Failed to create logfile ${FILE}"
+			echo "ERROR: Failed to create log file ${FILE}"
 			return 1
 		}
 
@@ -98,7 +98,7 @@ function writeLog() {
 	local LEVEL=$1    # The log level; DEBUG,INFO,WARN,ERROR
 	local MESSAGE=$2  # The log message
 	local DESTINATION # The log destination; stdout, file, all
-	local APPEND      # Boolean whether to append exsting log file.
+	local APPEND      # Boolean whether to append existing log file.
 
 	###############
 	# Checks
@@ -112,7 +112,7 @@ function writeLog() {
 
 	# The level provided cannot be empty.
 	if [[ ${LEVEL:-EMPTY} == "EMPTY" ]]; then
-		echo 'Please provide a Log Level as $1'
+		echo "Please provide a Log Level as param #1"
 		return 1
 	else
 		LEVEL=$(echo "${LEVEL}" | tr '[:lower:]' '[:upper:]')
@@ -120,7 +120,7 @@ function writeLog() {
 
 	# The message provided cannot be empty.
 	if [[ ${MESSAGE:-EMPTY} == "EMPTY" ]]; then
-		echo 'Please provide a Log Message as $2'
+		echo "Please provide a Log Message as param #2"
 		return 1
 	fi
 
@@ -212,7 +212,7 @@ function writeLog() {
 
 	"STDOUT")
 
-		echo -e "$(date +"%Y/%m/%d %H:%M:%S") [$LEVEL] $MESSAGE"
+		echo -e "${LOG_MESSAGE}"
 
 		;;
 
@@ -224,9 +224,9 @@ function writeLog() {
 		}
 
 		if [[ ${APPEND:-TRUE} == "TRUE" ]]; then
-			echo -e "$(date +"%Y/%m/%d %H:%M:%S") [$LEVEL] $MESSAGE" >>"${LOG_FILE}"
+			echo -e "${LOG_MESSAGE}" >>"${LOG_FILE}"
 		else
-			echo -e "$(date +"%Y/%m/%d %H:%M:%S") [$LEVEL] $MESSAGE" >"${LOG_FILE}"
+			echo -e "${LOG_MESSAGE}" >"${LOG_FILE}"
 		fi
 
 		;;
@@ -239,9 +239,9 @@ function writeLog() {
 		}
 
 		if [[ ${APPEND:-TRUE} == "TRUE" ]]; then
-			echo -e "$(date +"%Y/%m/%d %H:%M:%S") [$LEVEL] $MESSAGE" | tee --append "${LOG_FILE}"
+			echo -e "${LOG_MESSAGE}" | tee --append "${LOG_FILE}"
 		else
-			echo -e "$(date +"%Y/%m/%d %H:%M:%S") [$LEVEL] $MESSAGE" | tee "${LOG_FILE}"
+			echo -e "${LOG_MESSAGE}" | tee "${LOG_FILE}"
 		fi
 
 		;;
@@ -259,6 +259,7 @@ function writeLog() {
 
 }
 
-export -f checkLog
-export -f checkLogLevel
-export -f writeLog
+# TODO: Does this fix devenv?
+#export -f checkLog
+#export -f checkLogLevel
+#export -f writeLog
