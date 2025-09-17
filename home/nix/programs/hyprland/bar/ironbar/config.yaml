@@ -24,6 +24,8 @@ icon_theme: "Zafiro-icons-Light"
 monitors:
   #########################
   # Embedded Displayport 1
+  #
+  # - NUC Laptop Display
   #########################
 
   eDP-1:
@@ -188,10 +190,12 @@ monitors:
           prefer_theme_icons: true
 
   #########################
-  # HDMI 1
+  # HDMI A 3
+  #
+  # - JONS Dell Alienware Display
   #########################
 
-  HDMI-A-1:
+  HDMI-A-3:
     - name: "top"
       position: "top"
       anchor_to_edges: true
@@ -321,6 +325,8 @@ monitors:
 
   #########################
   # Displayport 1
+  #
+  # - NUC Kogan Display
   #########################
 
   DP-1:
@@ -452,10 +458,12 @@ monitors:
           prefer_theme_icons: true
 
   #########################
-  # Displayport 3
+  # Displayport 2
+  #
+  # - JONS HP Display
   #########################
 
-  DP-3:
+  DP-2:
     - name: "top"
       position: "top"
       anchor_to_edges: true

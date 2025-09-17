@@ -18,10 +18,9 @@
     "desc:HP Inc. HP Z43 CN49500228,3840x2160@59.99700,0x0,1.6,bitdepth,10"
 
     # Dell Alienware 32" with HDMI connection
-    # Above the HP Monitor and to the right.
-    # 1080 - 1440 = 360
-    # 360 / 1.6 = 225
-    "desc:Dell Inc. Dell AW3423DW ##GrMYMxgwABgH,3440x1440@60,1200x-225,1.6,bitdepth,10"
+    # Above the HP Monitor.
+    # 2160 + 1440 = 3600
+    "desc:Dell Inc. Dell AW3423DW ##GrMYMxgwABgH,3440x1440@60,0x3600,1.6,bitdepth,10"
   ];
 
   extraSettings = {
