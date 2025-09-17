@@ -14,6 +14,7 @@ let
       (lib.fileContents /proc/sys/kernel/hostname);
 
   # Determine which device config to load based on hostname
+  # Get the monitor names with 'hyprctl monitors'
   deviceConfigPath =
     if lib.hasInfix "JONS" hostname then
       ./config/JONS.nix

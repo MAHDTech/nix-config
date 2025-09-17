@@ -3,10 +3,9 @@
 ##################################################
 
 # NOTES:
-# - This laptop has 3 displays
-#   - 1x Laptop Monitor (BOE)
-#   - 1x DP Ultrawide Monitor (Kogan)
-#   - 1x HDMI Ultrawide Monitor (DELL)
+# - This laptop has dual displays
+#   1. Laptop Monitor (BOE)
+#   2. DP Ultrawide Monitor (Kogan)
 # - Manually specify monitor configs
 # - Monitor descriptions put into variables for brevity
 
@@ -32,8 +31,8 @@
   extraSettings = {
     # Laptop-specific settings - smaller gaps for mobile use
     general = {
-      gaps_in = 2;
-      gaps_out = 2;
+      gaps_in = 4;
+      gaps_out = 4;
     };
 
     # Workspace rules for multi-monitor setup
