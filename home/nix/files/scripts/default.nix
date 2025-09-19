@@ -6,9 +6,6 @@
     # Storj related scripts.
     ./storj.nix
 
-    # Setup Hyprland Workspaces
-    ./setup-workspaces.nix
-
     # Hyprland misc scripts
     ./hyprland.nix
 

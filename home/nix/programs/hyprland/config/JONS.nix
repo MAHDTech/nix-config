@@ -14,13 +14,12 @@
     # Let Hyprland automatically detect and configure the monitor
     #",preferred,auto,1"
 
-    # HP 40" with DP connection
-    "desc:HP Inc. HP Z43 CN49500228,3840x2160@59.99700,0x0,1.6,bitdepth,10"
+    # HP 40" with DP connection (positioned below the Dell)
+    "desc:HP Inc. HP Z43 CN49500228,3840x2160@59.99700,0x900,1.6,bitdepth,10"
 
     # Dell Alienware 32" with HDMI connection
-    # Above the HP Monitor.
-    # 2160 + 1440 = 3600
-    "desc:Dell Inc. Dell AW3423DW ##GrMYMxgwABgH,3440x1440@60,0x3600,1.6,bitdepth,10"
+    # Above the HP Monitor (center)
+    "desc:Dell Inc. Dell AW3423DW ##GrMYMxgwABgH,3440x1440@60,125x0,1.6,bitdepth,10"
   ];
 
   extraSettings = {

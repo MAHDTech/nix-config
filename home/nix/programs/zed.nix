@@ -415,13 +415,14 @@ in
                 diagnostics = true;
                 edit_file = true;
                 fetch = true;
+                find_path = true;
+                grep = true;
                 list_directory = true;
-                project_notifications = false;
                 move_path = true;
                 now = true;
-                find_path = true;
+                open = true;
+                project_notifications = true;
                 read_file = true;
-                grep = true;
                 terminal = true;
                 thinking = true;
                 web_search = true;
@@ -436,13 +437,13 @@ in
                 contents = true;
                 diagnostics = true;
                 fetch = true;
-                list_directory = true;
-                project_notifications = false;
-                now = true;
                 find_path = true;
-                read_file = true;
-                open = true;
                 grep = true;
+                list_directory = true;
+                now = true;
+                open = true;
+                project_notifications = false;
+                read_file = true;
                 thinking = true;
                 web_search = true;
               };
@@ -559,12 +560,18 @@ in
               };
             };
           };
+          "Shell Script" = {
+            tab_size = 4;
+            format_on_save = "on";
+            hard_tabs = true;
+          };
+          YAML = {
+            tab_size = 4;
+            format_on_save = "on";
+          };
         };
-
       };
-
     };
-
   };
 
   home.file = {
