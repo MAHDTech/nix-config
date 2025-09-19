@@ -32,7 +32,7 @@ function pause() {
 
 	local MESSAGE=$1
 
-	read -p "${MESSAGE}"
+	read -rp "${MESSAGE}"
 
 	return 0
 
@@ -76,7 +76,7 @@ function exit_zsh_session() {
 
 	writeLog "DEBUG" "Executing .zlogout"
 
-	# shellcheck source=${HOME}/.zlogout
+	# shellcheck disable=SC1091
 	source "${HOME}/.zlogout"
 
 }
@@ -85,7 +85,7 @@ function exit_bash_session() {
 
 	writeLog "DEBUG" "Executing .bash_logout"
 
-	# shellcheck source=${HOME}/.bash_logout
+	# shellcheck disable=SC1091
 	. "${HOME}/.bash_logout"
 
 }

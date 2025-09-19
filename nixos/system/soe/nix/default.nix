@@ -58,28 +58,31 @@
     registry.nixpkgs.flake = inputs.nixpkgs;
   };
 
-  system.autoUpgrade = {
-    enable = true;
+  system = {
+    autoUpgrade = {
+      enable = true;
 
-    allowReboot = true;
+      allowReboot = true;
 
-    operation = "boot";
+      operation = "boot";
 
-    flake = "github:MAHDTech/nix-config";
+      flake = "github:MAHDTech/nix-config";
 
-    flags = [
-      "--accept-flake-config"
-      "--impure"
-      "--show-trace"
-    ];
+      flags = [
+        "--accept-flake-config"
+        "--impure"
+        "--refresh"
+        "--show-trace"
+        "--verbose"
+      ];
 
-    dates = "daily";
+      dates = "daily";
 
-    rebootWindow = {
-      lower = "02:00";
-      upper = "04:00";
+      rebootWindow = {
+        lower = "02:00";
+        upper = "04:00";
+      };
+      randomizedDelaySec = "1h";
     };
-
-    randomizedDelaySec = "1h";
   };
 }

@@ -7,7 +7,7 @@ function listen_socket() {
 	FORK_ARGS="${SOCKET_PATH},fork"
 	EXEC_ARGS="ssh-agent $*"
 
-	if ! ps x | grep -v grep | grep -q "${FORK_ARGS}"; then
+	if ! pgrep -f "${FORK_ARGS}" >/dev/null; then
 		writeLog "INFO" "Removing old socket: ${SOCKET_PATH}"
 		rm -f "${SOCKET_PATH}"
 

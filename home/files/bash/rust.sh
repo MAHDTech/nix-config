@@ -89,7 +89,7 @@ function configureRustup() {
 
 	esac
 
-	for TARGET in ${RUSTUP_TARGETS[*]}; do
+	for TARGET in "${RUSTUP_TARGETS[@]}"; do
 
 		if grep -q "${TARGET} (installed)" <(rustup target list); then
 
@@ -98,7 +98,7 @@ function configureRustup() {
 		else
 			writeLog "INFO" "Installing Rust toolchain target ${TARGET}"
 
-			rustup target add ${TARGET} || {
+			rustup target add "${TARGET}" || {
 				writeLog "ERROR" "Failed to add target toolchain ${TARGET}"
 				return 1
 			}
