@@ -18,7 +18,7 @@ let
       with pkgs;
       [
         # x86_64 only packages
-        google-chrome
+        #google-chrome
         ledger-live-desktop
         onlyoffice-desktopeditors
       ]
@@ -135,6 +135,7 @@ in
       # GUI
       signal-desktop
       remmina
+      brave
 
       # Trezor
       trezor-suite

@@ -79,23 +79,6 @@
         '';
       };
 
-      #"google-chrome.desktop" = {
-      #  target = "applications/google-chrome.desktop";
-
-      #  text = ''
-      #    [Desktop Entry]
-      #    Name=Google Chrome
-      #    Exec=${pkgs.google-chrome}/bin/google-chrome-stable %U
-      #    Terminal=false
-      #    Type=Application
-      #    Icon=${pkgs.google-chrome}/share/icons/hicolor/256x256/apps/google-chrome.png
-      #    StartupWMClass=google-chrome
-      #    Comment=Web Browser
-      #    MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;
-      #    Categories=Network;WebBrowser;
-      #  '';
-      #};
-
       "signal.desktop" = {
         target = "applications/signal.desktop";
 
