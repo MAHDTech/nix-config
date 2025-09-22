@@ -24,6 +24,7 @@ in
       "adbusers"
       "audio"
       "disk"
+      "dialout"
       "docker"
       "flatpak"
       "input"
