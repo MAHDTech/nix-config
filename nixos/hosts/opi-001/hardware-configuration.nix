@@ -16,11 +16,11 @@
     initrd = {
       availableKernelModules = [
         "nvme"
+        "sd_mod"
+        "uas"
         "usb_storage"
         "usbhid"
         "xhci_pci"
-        "uas"
-        "sd_mod"
       ];
       kernelModules = [
         "kvm"

@@ -13,7 +13,7 @@
 
   networking = {
     hostName = "OPI-001";
-    hostId = "ad000001";
+    hostId = "adf00001";
   };
 
   imports = [
