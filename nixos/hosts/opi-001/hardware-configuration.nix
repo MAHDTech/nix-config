@@ -7,14 +7,27 @@
 {
   imports = [ ];
 
+  powerManagement = {
+    cpuFreqGovernor = lib.mkDefault "ondemand";
+  };
+
   boot = {
     supportedFilesystems = [
       "vfat"
+      "fat32"
+      "exfat"
+      "ext4"
       "zfs"
     ];
 
     initrd = {
-      availableKernelModules = [
+      includeDefaultModules = lib.mkForce false;
+      availableKernelModules = lib.mkForce [
+        "dm_crypt" # LUKS
+        "dm_mod" # LUKS
+        "hid"
+        "input_leds"
+        "mmc_block"
         "nvme"
         "sd_mod"
         "uas"
@@ -32,7 +45,18 @@
     ];
 
     kernelParams = [
-      "console=ttyS2,1500000n8"
+      "rootwait"
+
+      "earlycon" # Enable boot messages via debug port
+      "consoleblank=0" # disable console blanking(screen saver)
+      "console=ttyS2,1500000" # debug serial port
+      "console=tty1" # HDMI
+
+      # docker optimizations
+      "cgroup_enable=cpuset"
+      "cgroup_memory=1"
+      "cgroup_enable=memory"
+      "swapaccount=1"
     ];
 
     kernelPatches = [
@@ -47,9 +71,10 @@
       systemd-boot = {
         enable = true;
         extraFiles = {
+          # TODO: Test custom device tree
           # sudo apt install device-tree-compiler
           # sudo dtc -I fs -O dtb /sys/firmware/devicetree/base -o ~/rk3588s-orangepi-5-pro.dtb;
-          "dtb/base/rk3588s-orangepi-5-pro.dtb" = ./files/dtb/rk3588s-orangepi-5-pro.dtb;
+          #"dtb/base/rk3588s-orangepi-5-pro.dtb" = ./files/dtb/rk3588s-orangepi-5-pro.dtb;
         };
         extraInstallCommands = ''
           ${pkgs.coreutils}/bin/mkdir -p /boot/dtb/base
@@ -63,9 +88,14 @@
   hardware = {
     deviceTree = {
       enable = true;
-      name = "rk3588s-orangepi-5-pro.dtb";
+      name = "rockchip/rk3588s-orangepi-5-pro.dtb";
+      overlays = [
+      ];
     };
-    enableRedistributableFirmware = true;
+    enableRedistributableFirmware = lib.mkForce true;
+    firmware = [
+      (pkgs.callPackage ./firmware.nix { })
+    ];
   };
 
   fileSystems = {
