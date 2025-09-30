@@ -58,6 +58,12 @@
     registry.nixpkgs.flake = inputs.nixpkgs;
   };
 
+  systemd.services.nixos-upgrade = {
+    environment = {
+      NIXPKGS_ALLOW_UNFREE = "1";
+    };
+  };
+
   system = {
     autoUpgrade = {
       enable = true;

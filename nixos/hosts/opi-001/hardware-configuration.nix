@@ -23,13 +23,24 @@
     initrd = {
       includeDefaultModules = lib.mkForce false;
       availableKernelModules = lib.mkForce [
+        "analogix_dp"
         "dm_crypt" # LUKS
         "dm_mod" # LUKS
+        "dw_hdmi" # Display/HDMI
+        "dw_mmc_rockchip"
         "hid"
         "input_leds"
         "mmc_block"
+        "mmc_core"
         "nvme"
+        "pcie_rockchip_host"
+        "phy_rockchip_pcie"
+        "pwm-rockchip"
+        "rockchip-rng"
+        "rockchip_drm"
         "sd_mod"
+        "sdhci"
+        "sdhci-pci"
         "uas"
         "usb_storage"
         "usbhid"
@@ -42,6 +53,13 @@
     };
 
     kernelModules = [
+      "brcmfmac" # Broadcom WiFi
+      "btusb" # Bluetooth USB
+      "r8125" # Realtek Ethernet
+      "r8169" # Realtek Ethernet
+      "motorcomm" # Motorcomm YT8531 Ethernet
+      "rkvdec" # Rockchip Video Decoder
+      "rknpu" # Rockchip Neural Processing Unit
     ];
 
     kernelParams = [
@@ -57,16 +75,59 @@
       "cgroup_memory=1"
       "cgroup_enable=memory"
       "swapaccount=1"
+
+      # PCI-E disable power management
+      "pcie_aspm=off"
     ];
 
     kernelPatches = [
+      {
+        name = "rockchip-options";
+        patch = null; # No patch file, just config overrides
+        extraConfig = ''
+          # Enable access to staging drivers
+          STAGING y
+          STAGING_MEDIA y
+
+          # Architecture
+          ARCH_ROCKCHIP y
+
+          # Rockchip specific options
+          DRM_ROCKCHIP y
+          PCIE_ROCKCHIP_HOST y
+          PHY_ROCKCHIP_PCIE y
+          ROCKCHIP_DW_HDMI y
+          ROCKCHIP_IOMMU y
+          ROCKCHIP_VOP2 y
+
+          # Dependencies
+          MDIO_BUS y
+          MEDIA_CONTROLLER y
+          PHYLIB y
+          STMMAC_ETH y
+          V4L2_H264 m
+          V4L2_MEM2MEM_DEV m
+          V4L2_VP9 m
+          VIDEOBUF2_DMA_CONTIG m
+          VIDEOBUF2_VMALLOC m
+
+          # Rockchip Video Decoder
+          VIDEO_ROCKCHIP_VDEC m
+
+          # Panfrost GPU Driver for Mali G610
+          DRM_PANFROST y
+
+          # Motorcomm YT8531 Ethernet
+          MOTORCOMM_PHY m
+        '';
+      }
     ];
 
     extraModulePackages = [ ];
 
     loader = {
       efi = {
-        canTouchEfiVariables = true;
+        canTouchEfiVariables = true; # edk2 firmware
       };
       systemd-boot = {
         enable = true;
@@ -74,11 +135,23 @@
           # TODO: Test custom device tree
           # sudo apt install device-tree-compiler
           # sudo dtc -I fs -O dtb /sys/firmware/devicetree/base -o ~/rk3588s-orangepi-5-pro.dtb;
-          #"dtb/base/rk3588s-orangepi-5-pro.dtb" = ./files/dtb/rk3588s-orangepi-5-pro.dtb;
+          "dtbs/rockchip/rk3588s-orangepi-5-pro.dtb" = ./files/dtb/rk3588s-orangepi-5-pro.dtb;
         };
         extraInstallCommands = ''
-          ${pkgs.coreutils}/bin/mkdir -p /boot/dtb/base
-          ${pkgs.coreutils}/bin/cp -r ${config.hardware.deviceTree.package}/rockchip/* /boot/dtb/base/
+          # Create the directory for device tree blobs
+          ${pkgs.coreutils}/bin/mkdir -p /boot/dtbs
+
+          # Only copy the device tree blobs if they don't conflict with custom ones already present.
+          for DTB in ${config.hardware.deviceTree.package}/rockchip/*.dtb;
+          do
+            if [ ! -f "/boot/dtbs/rockchip/''${DTB}" ];
+            then
+              ${pkgs.coreutils}/bin/echo "Copying ''${DTB} to /boot/dtbs/rockchip/"
+              ${pkgs.coreutils}/bin/cp "''${DTB}" /boot/dtbs/rockchip/
+            else
+              ${pkgs.coreutils}/bin/echo "Skipping ''${DTB} as it already exists in /boot/dtbs/rockchip/"
+            fi
+          done
           ${pkgs.coreutils}/bin/sync
         '';
       };
@@ -94,6 +167,7 @@
     };
     enableRedistributableFirmware = lib.mkForce true;
     firmware = [
+      pkgs.armbian-firmware
       (pkgs.callPackage ./firmware.nix { })
     ];
   };

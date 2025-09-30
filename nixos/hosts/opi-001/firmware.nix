@@ -27,4 +27,8 @@ stdenvNoCC.mkDerivation {
 
     runHook postInstall
   '';
+
+  meta = {
+    license = "unfree";
+  };
 }
