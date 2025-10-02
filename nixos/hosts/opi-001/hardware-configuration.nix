@@ -37,7 +37,6 @@
         "phy_rockchip_pcie"
         "pwm-rockchip"
         "rockchip-rng"
-        "rockchip_drm"
         "sd_mod"
         "sdhci"
         "sdhci-pci"
@@ -55,8 +54,8 @@
     kernelModules = [
       "brcmfmac" # Broadcom WiFi
       "btusb" # Bluetooth USB
-      "r8125" # Realtek Ethernet
-      "r8169" # Realtek Ethernet
+      #"r8125" # Realtek Ethernet
+      #"r8169" # Realtek Ethernet
       "motorcomm" # Motorcomm YT8531 Ethernet
       "rkvdec" # Rockchip Video Decoder
       "rknpu" # Rockchip Neural Processing Unit
