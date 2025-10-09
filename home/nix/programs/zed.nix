@@ -282,9 +282,6 @@ in
           inline = {
             enabled = true;
           };
-          cargo = {
-            fetch_cargo_diagnostics = false;
-          };
         };
 
         #########################
@@ -541,7 +538,7 @@ in
         #########################
 
         languages = {
-          Nix = {
+          "Nix" = {
             prettier = {
               allowed = false;
             };
@@ -568,6 +565,26 @@ in
           YAML = {
             tab_size = 4;
             format_on_save = "on";
+          };
+          "Terraform" = {
+            prettier = {
+              allowed = false;
+            };
+            enable_language_server = true;
+            language_servers = [
+              "terraform-ls"
+              "terraform-lsp"
+            ];
+            format_on_save = "on";
+            formatter = {
+              external = {
+                # command = "terraform fmt";
+                command = "tofu fmt";
+                arguments = [
+                  "-write=true"
+                ];
+              };
+            };
           };
         };
       };
