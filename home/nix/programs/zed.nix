@@ -550,7 +550,7 @@ in
             format_on_save = "on";
             formatter = {
               external = {
-                command = "nixfmt";
+                command = "${pkgs.nixfmt-rfc-style}/bin/nixfmt";
                 arguments = [
                   "--verify"
                 ];
@@ -560,11 +560,13 @@ in
           "Shell Script" = {
             tab_size = 4;
             format_on_save = "on";
+            formatter = "auto";
             hard_tabs = true;
           };
-          YAML = {
+          "YAML" = {
             tab_size = 4;
             format_on_save = "on";
+            formatter = "auto";
           };
           "Terraform" = {
             prettier = {
@@ -578,10 +580,11 @@ in
             format_on_save = "on";
             formatter = {
               external = {
-                # command = "terraform fmt";
-                command = "tofu fmt";
+                command = "${pkgs.terraform}/bin/terraform";
                 arguments = [
+                  "fmt"
                   "-write=true"
+                  "-"
                 ];
               };
             };
