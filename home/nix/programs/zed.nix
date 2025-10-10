@@ -521,17 +521,41 @@ in
               path = lib.getExe pkgs.nil;
             };
           };
+          terraform-ls = {
+            initialization_options = {
+              experimentalFeatures = {
+                prefillRequiredFields = true;
+              };
+            };
+          };
+          yaml-language-server = {
+            settings = {
+              yaml = {
+                keyOrdering = true;
+                format = {
+                  singleQuote = true;
+                };
+                schemas = {
+                  #"http://json.schemastore.org/composer" = [
+                  #  "/*"
+                  #];
+                  #"../relative/path/schema.json" = [
+                  #  "/config*.yaml"
+                  #];
+                };
+              };
+            };
+          };
         };
 
         #########################
         # File Types
         #########################
 
-        #file_types = {
-        #  "Nix" = [
-        #    "nix"
-        #  ];
-        #};
+        file_types = {
+          "dotenv" = [ ".env*" ];
+          "Markdown" = [ "*.mdx" ];
+        };
 
         #########################
         # Languages
