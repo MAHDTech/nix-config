@@ -147,6 +147,10 @@ in
       go
       golangci-lint
       gotools
+
+      # Screen recorder
+      gpu-screen-recorder
+      gpu-screen-recorder-gtk
     ]
     ++ unstablePkgs
     ++ systemArchPackages;
