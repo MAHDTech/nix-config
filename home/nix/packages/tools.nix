@@ -21,6 +21,10 @@ let
         #google-chrome
         ledger-live-desktop
         onlyoffice-desktopeditors
+
+        # Screen recorder
+        gpu-screen-recorder
+        gpu-screen-recorder-gtk
       ]
     else if pkgs.system == "aarch64-linux" then
       [
@@ -147,10 +151,6 @@ in
       go
       golangci-lint
       gotools
-
-      # Screen recorder
-      gpu-screen-recorder
-      gpu-screen-recorder-gtk
     ]
     ++ unstablePkgs
     ++ systemArchPackages;

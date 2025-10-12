@@ -172,6 +172,8 @@ in
           nixfmt-rfc-style
           opentofu
           opentofu-ls
+          powershell
+          powershell-editor-services
           rustc
           rust-analyzer
           shellcheck
@@ -500,11 +502,40 @@ in
               path = lib.getExe pkgs.gitlab-ci-ls;
             };
           };
+          gopls = {
+            initialization_options = {
+              hints = {
+                assignVariableTypes = true;
+                compositeLiteralFields = true;
+                compositeLiteralTypes = true;
+                constantValues = true;
+                functionTypeParameters = true;
+                parameterNames = true;
+                rangeVariableTypes = true;
+              };
+            };
+          };
+          jsonnet-language-server = {
+            settings = {
+              resolve_paths_with_tanka = true;
+            };
+          };
           rust-analyzer = {
             binary = {
               path = lib.getExe pkgs.rust-analyzer;
             };
             initialization_options = {
+              # https://rust-analyzer.github.io/book/features.html#inlay-hints
+              inlayHints = {
+                maxLength = null;
+                lifetimeElisionHints = {
+                  enable = "skip_trivial";
+                  useParameterNames = true;
+                };
+                closureReturnTypeHints = {
+                  enable = "always";
+                };
+              };
               checkOnSave = true;
               check = {
                 command = "clippy";
@@ -519,6 +550,24 @@ in
           nil = {
             binary = {
               path = lib.getExe pkgs.nil;
+            };
+          };
+          powershell-es = {
+            binary = {
+              path = "${pkgs.powershell-editor-services}/bin/PowerShellEditorServices";
+            };
+          };
+          tailwindcss-language-server = {
+            settings = {
+              classFunctions = [
+                "cva"
+                "cx"
+              ];
+              experimental = {
+                classRegex = [
+                  "[cls|className]\\s\\:\\=\\s\"([^\"]*)"
+                ];
+              };
             };
           };
           terraform-ls = {
@@ -536,12 +585,11 @@ in
                   singleQuote = true;
                 };
                 schemas = {
-                  #"http://json.schemastore.org/composer" = [
-                  #  "/*"
-                  #];
-                  #"../relative/path/schema.json" = [
-                  #  "/config*.yaml"
-                  #];
+                  "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/inventory.json" =
+                    [
+                      "./inventory/*.yaml"
+                      "hosts.yml"
+                    ];
                 };
               };
             };
@@ -553,7 +601,35 @@ in
         #########################
 
         file_types = {
+          "Ansible" = [
+            "**.ansible.yml"
+            "**.ansible.yaml"
+            "**/defaults/*.yml"
+            "**/defaults/*.yaml"
+            "**/meta/*.yml"
+            "**/meta/*.yaml"
+            "**/tasks/*.yml"
+            "**/tasks/*.yaml"
+            "**/handlers/*.yml"
+            "**/handlers/*.yaml"
+            "**/group_vars/*.yml"
+            "**/group_vars/*.yaml"
+            "**/host_vars/*.yml"
+            "**/host_vars/*.yaml"
+            "**/playbooks/*.yml"
+            "**/playbooks/*.yaml"
+            "**playbook*.yml"
+            "**playbook*.yaml"
+          ];
           "dotenv" = [ ".env*" ];
+          "Helm" = [
+            "**/templates/**/*.tpl"
+            "**/templates/**/*.yaml"
+            "**/templates/**/*.yml"
+            "**/helmfile.d/**/*.yaml"
+            "**/helmfile.d/**/*.yml"
+            "**/values*.yaml"
+          ];
           "Markdown" = [ "*.mdx" ];
         };
 
@@ -562,6 +638,10 @@ in
         #########################
 
         languages = {
+          "Markdown" = {
+            format_on_save = "on";
+            remove_trailing_whitespace_on_save = true;
+          };
           "Nix" = {
             prettier = {
               allowed = false;
@@ -583,14 +663,19 @@ in
           };
           "Shell Script" = {
             tab_size = 4;
-            format_on_save = "on";
-            formatter = "auto";
             hard_tabs = true;
-          };
-          "YAML" = {
-            tab_size = 4;
             format_on_save = "on";
-            formatter = "auto";
+            formatter = {
+              external = {
+                command = "shfmt";
+                arguments = [
+                  "--filename"
+                  "{buffer_path}"
+                  "--indent"
+                  "4"
+                ];
+              };
+            };
           };
           "Terraform" = {
             prettier = {
@@ -613,6 +698,32 @@ in
               };
             };
           };
+        };
+        "TypeScript" = {
+          language_servers = [
+            "!typescript-language-server"
+            "vtsls"
+            "..."
+          ];
+        };
+        "TSX" = {
+          language_servers = [
+            "!typescript-language-server"
+            "vtsls"
+            "..."
+          ];
+        };
+        "JavaScript" = {
+          language_servers = [
+            "!typescript-language-server"
+            "vtsls"
+            "..."
+          ];
+        };
+        "YAML" = {
+          tab_size = 4;
+          format_on_save = "on";
+          formatter = "auto";
         };
       };
     };
