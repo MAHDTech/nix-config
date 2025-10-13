@@ -580,7 +580,7 @@ in
           yaml-language-server = {
             settings = {
               yaml = {
-                keyOrdering = true;
+                keyOrdering = false; # Enable to warn on alphabetical ordering.
                 format = {
                   singleQuote = true;
                 };
