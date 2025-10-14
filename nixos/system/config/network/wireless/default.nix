@@ -1,14 +1,27 @@
-{pkgs, ...}: {
-  environment.systemPackages = with pkgs; [wpa_supplicant];
+{ pkgs, ... }:
+{
+
+  environment.systemPackages = with pkgs; [ ];
 
   networking = {
     wireless = {
-      # Whether to enable wpa_supplicant
-      enable = false;
+      enable = false; # Disable wpa_supplicant
 
       iwd = {
         # Whether to enable iwd
         enable = true;
+        settings = {
+          General = {
+            EnableNetworkConfiguration = true;
+          };
+          Network = {
+            EnableIPv6 = true;
+            RoutePriorityOffset = 300;
+          };
+          Settings = {
+            AutoConnect = true;
+          };
+        };
       };
 
       userControlled = {
@@ -27,13 +40,13 @@
         MAHDTech = {
           pskRaw = "ext:psk_mahdtech";
           priority = 100;
-          authProtocols = ["WPA-PSK"];
+          authProtocols = [ "WPA-PSK" ];
         };
 
         Coldspot = {
           pskRaw = "ext:psk_coldspot";
           priority = 50;
-          authProtocols = ["WPA-PSK"];
+          authProtocols = [ "WPA-PSK" ];
         };
       };
     };
