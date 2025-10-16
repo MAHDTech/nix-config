@@ -118,6 +118,7 @@ type Model struct {
 	progress   progress.Model
 	logger     *log.Logger
 	fileLogger *log.Logger
+	doneScroll int
 }
 
 func listenForMsgs(ch chan tea.Msg) tea.Cmd {
@@ -186,7 +187,7 @@ func InitialModel() Model {
 
 	p := progress.New(progress.WithGradient(string(Blue), string(Pink)))
 
-	logger := log.New(os.Stderr, "actions: ", log.LstdFlags)
+	logger := fileLogger
 
 	return Model{
 		list:       l,
@@ -197,6 +198,7 @@ func InitialModel() Model {
 		progress:   p,
 		logger:     logger,
 		fileLogger: fileLogger,
+		doneScroll: 0,
 	}
 }
 
@@ -330,10 +332,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case "done":
-		switch msg.(type) {
+		switch msg := msg.(type) {
 		case tea.KeyMsg:
-			m.fileLogger.Printf("App exited by user")
-			return m, tea.Quit
+			switch msg.String() {
+			case "k", "up":
+				if m.doneScroll > 0 {
+					m.doneScroll--
+				}
+			case "j", "down":
+				m.doneScroll++
+			case "q", "esc", "ctrl+c":
+				m.fileLogger.Printf("App exited by user")
+				return m, tea.Quit
+			default:
+				m.fileLogger.Printf("App exited by user")
+				return m, tea.Quit
+			}
 		}
 	}
 
@@ -358,8 +372,22 @@ func (m Model) View() string {
 	case "done":
 		view := "Operation completed!\n"
 		view += fmt.Sprintf("Final: %d files processed, %d matched\n", m.processed, m.matched)
-		view += logStyle.Render(m.logs.String())
-		view += "\nPress any key to quit"
+		lines := strings.Split(m.logs.String(), "\n")
+		if m.doneScroll >= len(lines) {
+			m.doneScroll = len(lines) - 1
+		}
+		if m.doneScroll < 0 {
+			m.doneScroll = 0
+		}
+		start := m.doneScroll
+		height := 20 // Fixed height for diff view; adjust as needed
+		end := start + height
+		if end > len(lines) {
+			end = len(lines)
+		}
+		content := strings.Join(lines[start:end], "\n")
+		view += "\nUse up/down to scroll diffs, press q to quit\n"
+		view += logStyle.Render(content)
 		return view
 	}
 	return ""

@@ -42,7 +42,7 @@ func RunPatch(ch chan tea.Msg, yolo bool, logger *log.Logger) {
 		return
 	}
 
-	logger = log.New(os.Stderr, "actions: ", log.LstdFlags)
+	// logger is already passed in
 
 	err := filepath.Walk(startDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

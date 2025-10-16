@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// ProcessFile processes a devenv.nix file by removing excludes from git-hooks or pre-commit sections.
+// ProcessFile processes a devenv.nix file by replacing non-empty excludes with empty ones.
 // It returns whether the file changed, a diff string (if not applying changes), and any error.
 func ProcessFile(
 	path string,
@@ -30,29 +30,18 @@ func ProcessFile(
 	}
 
 	originalContent := string(content)
-	// Check for git-hooks pattern
-	pattern1 := regexp.MustCompile(`(?s)(git-hooks\s*=\s*{\s*excludes\s*=\s*\[).*?(\];)`)
-	matched1 := pattern1.MatchString(originalContent)
-	// Check for pre-commit pattern
-	pattern2 := regexp.MustCompile(`(?s)(pre-commit\s*=\s*{\s*excludes\s*=\s*\[).*?(\];)`)
-	matched2 := pattern2.MatchString(originalContent)
-	if matched1 {
-		logger.Printf("Git-hooks pattern matched in %s", path)
-	} else if matched2 {
-		logger.Printf("Pre-commit pattern matched in %s", path)
-	} else {
-		logger.Printf("No pattern matched in %s", path)
-	}
-	newContent := originalContent
-	if matched1 {
-		newContent = pattern1.ReplaceAllString(newContent, `git-hooks = { excludes = []; `)
-	}
-	if matched2 {
-		newContent = pattern2.ReplaceAllString(newContent, `pre-commit = { excludes = []; `)
-	}
+	// Regex to match excludes = [ ... ]; and replace if non-empty (handles multi-line with (?s))
+	excludesRegex := regexp.MustCompile(`(?s)excludes\s*=\s*\[([^]]*)\];`)
+	newContent := excludesRegex.ReplaceAllStringFunc(originalContent, func(match string) string {
+		parts := excludesRegex.FindStringSubmatch(match)
+		if len(parts) > 1 && strings.TrimSpace(parts[1]) == "" {
+			return match // Already empty, no change
+		}
+		return "excludes = [];"
+	})
 
 	if originalContent == newContent {
-		logger.Printf("File %s unchanged", path)
+		logger.Printf("File %s unchanged (no non-empty excludes found)", path)
 		return false, "", nil
 	}
 
@@ -69,7 +58,7 @@ func ProcessFile(
 		return changed, diffStr, nil
 	}
 
-	// Apply
+	// Apply changes (with backup)
 	logger.Printf("Applying changes to file %s", path)
 	backupPath := path + ".bak"
 	if err := os.WriteFile(backupPath, content, info.Mode()); err != nil {
