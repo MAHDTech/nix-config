@@ -77,7 +77,7 @@ in
     };
 
     go = {
-      enable = false;
+      enable = true;
     };
 
     opentofu = {

@@ -41,7 +41,8 @@ in
             {
               "bindings": {
                 "ctrl-right": "editor::SelectLargerSyntaxNode",
-                "ctrl-left": "editor::SelectSmallerSyntaxNode"
+                "ctrl-left": "editor::SelectSmallerSyntaxNode",
+                "cmd-g": ["agent::NewExternalAgentThread", { "agent": "gemini" }]
               }
             },
             {
@@ -117,6 +118,7 @@ in
         "git-firefly"
         "github-actions"
         "gitlab-ci-ls"
+        "golangci-lint"
         "graphviz"
         "html"
         "ini"
@@ -159,6 +161,7 @@ in
           astro-language-server
           clippy
           eslint
+          gemini-cli
           gitlab-ci-ls
           go
           gopls
@@ -453,6 +456,16 @@ in
               name = "Minimal";
               enable_all_context_servers = false;
               tools = { };
+            };
+          };
+
+          #########################
+          # Agent Servers
+          #########################
+
+          agent_servers = {
+            gemini = {
+              ignore_system_version = false;
             };
           };
 
