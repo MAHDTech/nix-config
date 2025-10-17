@@ -32,8 +32,7 @@ func RunPatch(ch chan tea.Msg, yolo bool, logger *log.Logger) {
 		return
 	}
 	// TODO: Put back after testing.
-	//startDir := filepath.Join(homeDir, "Projects")
-	startDir := filepath.Join(homeDir, "Projects", "test")
+	startDir := filepath.Join(homeDir, "Projects")
 	if resolved, err := filepath.EvalSymlinks(startDir); err == nil {
 		startDir = resolved
 	}

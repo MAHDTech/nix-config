@@ -172,7 +172,7 @@ func InitialModel() Model {
 	delegate := customDelegate{list.NewDefaultDelegate()}
 
 	l := list.New(items, delegate, 80, 24)
-	l.Title = "CyberPatch Menu (space to toggle, enter to run)"
+	l.Title = "Menu (space to toggle, enter to run selected action)"
 	l.Styles.Title = titleStyle
 	l.SetShowFilter(false)
 	l.SetFilteringEnabled(false)

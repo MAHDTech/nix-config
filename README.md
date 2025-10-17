@@ -93,7 +93,7 @@ NixOS might have a steep learning curve, but it's been worth it imo.
 ```bash
 export NIX_CONFIG_REPO="https://github.com/MAHDTech/nix-config.git"
 
-git clone ${NIX_CONFIG_REPO} "$HOME/dotfiles"
+git clone ${NIX_CONFIG_REPO} "$/HOME/dotfiles"
 cd "${HOME}/dotfiles"
 ```
 
