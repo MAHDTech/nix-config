@@ -378,6 +378,16 @@ in
         };
 
         #########################
+        # AI Agent Servers
+        #########################
+
+        agent_servers = {
+          gemini = {
+            ignore_system_version = false;
+          };
+        };
+
+        #########################
         # AI Agent
         #########################
 
@@ -460,16 +470,6 @@ in
           };
 
           #########################
-          # Agent Servers
-          #########################
-
-          agent_servers = {
-            gemini = {
-              ignore_system_version = false;
-            };
-          };
-
-          #########################
           # AI Providers
           #########################
 
@@ -534,6 +534,7 @@ in
             };
           };
           rust-analyzer = {
+            enable_lsp_tasks = true;
             binary = {
               path = lib.getExe pkgs.rust-analyzer;
             };
@@ -551,7 +552,14 @@ in
               };
               checkOnSave = true;
               check = {
+                workspace = true;
                 command = "clippy";
+              };
+              cargo = {
+                allTargets = true;
+              };
+              rust = {
+                analyzerTargetDir = true;
               };
             };
           };
@@ -567,7 +575,7 @@ in
           };
           powershell-es = {
             binary = {
-              path = "${pkgs.powershell-editor-services}/bin/PowerShellEditorServices";
+              path = lib.getExe pkgs.powershell-editor-services;
             };
           };
           tailwindcss-language-server = {
@@ -667,7 +675,7 @@ in
             format_on_save = "on";
             formatter = {
               external = {
-                command = "${pkgs.nixfmt-rfc-style}/bin/nixfmt";
+                command = lib.getExe pkgs.nixfmt-rfc-style;
                 arguments = [
                   "--verify"
                 ];
@@ -702,7 +710,7 @@ in
             format_on_save = "on";
             formatter = {
               external = {
-                command = "${pkgs.terraform}/bin/terraform";
+                command = lib.getExe pkgs.terraform;
                 arguments = [
                   "fmt"
                   "-write=true"
@@ -711,32 +719,32 @@ in
               };
             };
           };
-        };
-        "TypeScript" = {
-          language_servers = [
-            "!typescript-language-server"
-            "vtsls"
-            "..."
-          ];
-        };
-        "TSX" = {
-          language_servers = [
-            "!typescript-language-server"
-            "vtsls"
-            "..."
-          ];
-        };
-        "JavaScript" = {
-          language_servers = [
-            "!typescript-language-server"
-            "vtsls"
-            "..."
-          ];
-        };
-        "YAML" = {
-          tab_size = 4;
-          format_on_save = "on";
-          formatter = "auto";
+          "TypeScript" = {
+            language_servers = [
+              "!typescript-language-server"
+              "vtsls"
+              "..."
+            ];
+          };
+          "TSX" = {
+            language_servers = [
+              "!typescript-language-server"
+              "vtsls"
+              "..."
+            ];
+          };
+          "JavaScript" = {
+            language_servers = [
+              "!typescript-language-server"
+              "vtsls"
+              "..."
+            ];
+          };
+          "YAML" = {
+            tab_size = 4;
+            format_on_save = "on";
+            formatter = "auto";
+          };
         };
       };
     };
