@@ -32,7 +32,8 @@ in
   imports = [
     ./hyprland.nix
   ]
-  ++ lib.optional (!inGitHubActions) ./bar;
+  ++ lib.optional (!inGitHubActions) ./bar
+  ++ lib.optional (!inGitHubActions) ./runner;
 
   # Pass the device configuration to hyprland.nix
   _module.args.deviceConfig = deviceConfig;

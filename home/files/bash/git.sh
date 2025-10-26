@@ -857,8 +857,15 @@ function git_checkin() {
 	BRANCH_SOURCE="$(git rev-parse --abbrev-ref HEAD)"
 	BRANCH_DEST="${1}"
 
+	# Make sure the destination branch is not empty.
 	if [[ ${BRANCH_DEST:-EMPTY} == "EMPTY" ]]; then
 		writeLog "ERROR" "Please provide the branch name to merge upstream changes into."
+		return 1
+	fi
+
+	# Make sure the source and destination branches are not the same.
+	if [[ ${BRANCH_SOURCE:-EMPTY} == "${BRANCH_DEST:-EMPTY}" ]]; then
+		writeLog "ERROR" "Source and destination branches cannot be the same."
 		return 1
 	fi
 

@@ -18,7 +18,7 @@ let
     cosmic-files
     cosmic-icons
     #cosmic-idle
-    cosmic-launcher
+    #cosmic-launcher
     cosmic-osd
     cosmic-panel
     cosmic-player
@@ -47,6 +47,7 @@ let
     wayland-pipewire-idle-inhibit
     wayland-utils
     wayshot
+    walker
     #wf-recorder
     #wl-screenrec
     wl-clipboard
@@ -945,7 +946,7 @@ in
 
       "$fileManager" = "cosmic-files";
 
-      "$menu" = "cosmic-launcher";
+      "$menu" = "walker";
 
       "$switcher" = "cosmic-launcher alt-tab";
 

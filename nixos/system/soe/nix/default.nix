@@ -60,6 +60,8 @@
 
   systemd.services.nixos-upgrade = {
     environment = {
+      NIXPKGS_ALLOW_BROKEN = "0";
+      NIXPKGS_ALLOW_INSECURE = "1";
       NIXPKGS_ALLOW_UNFREE = "1";
     };
   };
