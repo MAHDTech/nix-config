@@ -227,6 +227,21 @@
       };
 
       #########################
+      # UniFi
+      #########################
+
+      "unifi" = {
+        host = "unifi";
+        hostname = "10.10.1.254";
+        user = "root"; # Use root and not ubnt.
+        extraOptions = {
+          PasswordAuthentication = "yes";
+          PreferredAuthentications = "keyboard-interactive";
+          PubkeyAuthentication = "no";
+        };
+      };
+
+      #########################
       # Bingamon
       #########################
 

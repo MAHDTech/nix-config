@@ -204,7 +204,7 @@ in
         auto_update = false;
         autosave = "on_focus_change";
         disable_ai = false;
-        format_on_save = "prettier";
+        format_on_save = "on";
         formatter = "auto";
         #hour_format = "hour12"; # TODO: wtf?
         load_direnv = "shell_hook"; # direct, shell_hook
@@ -398,7 +398,6 @@ in
           button = true;
           dock = "right";
           always_allow_tool_actions = false;
-          stream_edits = false;
           single_file_review = true;
           enable_feedback = true;
 
@@ -693,7 +692,7 @@ in
                   "--filename"
                   "{buffer_path}"
                   "--indent"
-                  "4"
+                  "0"
                 ];
               };
             };
