@@ -7,7 +7,6 @@
 let
   pname = "BambuStudio";
   version = "2.0.2";
-  name = "${pname}-${version}";
 
   src = fetchurl {
     url = "https://github.com/bambulab/BambuStudio/releases/download/v02.00.02.57/Bambu_Studio_linux_v02.00.02.57_ubuntu_24.04.AppImage";
@@ -20,15 +19,18 @@ let
   # file -k type2.AppImage
   #   (SYSV) (Lepton 3.x), scale 232-60668
   appimageContents = appimageTools.extractType2 {
-    inherit name src version;
+    inherit pname version src;
   };
 in
 appimageTools.wrapType2 {
-  inherit name src;
+  inherit pname version src;
 
   extraInstallCommands = ''
     # Install the AppImage binary
-    mv $out/bin/${name} $out/bin/${pname}
+    if [[ -f $out/bin/${pname}-${version} ]];
+    then
+      mv $out/bin/${pname}-${version} $out/bin/${pname}
+    fi
 
     # Create the AppImage shortcut
     install -m 444 -D ${appimageContents}/${pname}.desktop -t $out/share/applications

@@ -88,13 +88,13 @@
       # Salt Labs
       #########################
 
-      "kvm" = {
-        host = "kvm";
-        hostname = "kvm.saltlabs.cloud";
-        user = "blikvm";
+      "bootycall" = {
+        host = "bootycall";
+        hostname = "bootycall.saltlabs.cloud";
+        user = "root";
         extraOptions = {
-          PasswordAuthentication = "yes";
-          PubkeyAuthentication = "no";
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
         };
       };
 

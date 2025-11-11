@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 # Name: make-a-bootycall.sh
-# Description: A script to de-unify UniFi Cloud Key Gen2 Plus, remove UniFi software, reclaim HDD, and install TFTP/PXE tools.
+# Description:
+# 	A script to de-unify UniFi Cloud Key Gen2 Plus, remove UniFi software, reclaim HDD, and install TFTP/PXE tools.
+#   This prepares the system to run 'BootyCall' a TFTP/iPXE server that always answers the call to boot your devices.
 # Notes:
 # 	- Inspired by community scripts and guides.
 # 	- This script keeps the ck-ui package for the OLED display to remain functional.
@@ -20,7 +22,7 @@ set -euo pipefail
 # Variables
 ##################################################
 
-BUCKET_LINK="https://link.storjshare.io/s/jwqhpvqz6kmmnxfwfgwrxialv5ia/junk"
+BUCKET_LINK="https://link.storjshare.io/raw/jwqhpvqz6kmmnxfwfgwrxialv5ia/junk"
 
 # Temporary directory for downloads
 TEMP_DIR="$(mktemp -d)"
@@ -29,15 +31,110 @@ TEMP_DIR="$(mktemp -d)"
 # Functions
 ##################################################
 
+function yolo() {
+	cat <<-'EOF'
+		___  ___  ______    ___        ______    ___
+		|"  \/"  |/    " \  |"  |      /    " \  |"  |
+		 \   \  /// ____  \ ||  |     // ____  \ ||  |
+		  \\  \//  /    ) :)|:  |    /  /    ) :)|:  |
+		  /   /(: (____/ //  \  |___(: (____/ //_|  /
+		 /   /  \        /  ( \_|:  \\        // |_/ )
+		|___/    \"_____/    \_______)\"_____/(_____/
+
+	EOF
+	return 0
+}
+
+function configure_motd() {
+
+	cat <<-EOF >>/etc/motd-messages
+		Always answering the boot(y) call – Ready for your late-night PXE request!
+		Answering the call: BootyCall, your PXE partner in crime.
+		BootyCall activated: Get your rear in gear for network booting!
+		BootyCall – Because every server needs a cheeky start.
+		BootyCall: Cracking up your network – One boot at a time!
+		BootyCall: Serving up bootstraps since [date] – Don't be a bum, log in!
+		BootyCall: The bottom line in bootstrapping – Always up!
+		Shake it and boot: BootyCall here for your iPXE emergencies.
+	EOF
+
+	cat <<-EOF >/usr/local/bin/motd-rotator
+		#!/usr/bin/env bash
+
+		MOTD_MESSAGES=/etc/motd-messages
+
+		# Step 1. Read a random message from the list of messages.
+		random_message=\$(shuf -n 1 /etc/motd-messages)
+
+		# Step 2. Layout the base MOTD file.
+		cat <<-"MOTD_EOF" > /etc/motd
+			  ___           _         ___      _ _
+			 | _ ) ___  ___| |_ _  _ / __|__ _| | |
+			 | _ \/ _ \/ _ \  _| || | (__/ _\` | | |
+			 |___/\___/\___/\__|\_, |\___\__,_|_|_|
+			                    |__/
+		MOTD_EOF
+
+		# Step 3. Append the random message to the MOTD file.
+		cat <<-MOTD_EOF >> /etc/motd
+			\${random_message}
+		MOTD_EOF
+		exit 0
+	EOF
+
+	chmod +x /usr/local/bin/motd-rotator
+
+	# Create a systemd unit that rotates the message daily
+	cat <<-EOF >/etc/systemd/system/motd-rotator.service
+		[Unit]
+		Description=MOTD rotator unit
+
+		[Service]
+		Type=oneshot
+		ExecStart=/usr/local/bin/motd-rotator
+
+		[Install]
+		WantedBy=multi-user.target
+	EOF
+
+	# Create a systemd timer for daily rotation
+	cat <<-EOF >/etc/systemd/system/motd-rotator.timer
+		[Unit]
+		Description=MOTD rotator timer
+
+		[Timer]
+		OnCalendar=daily
+		Persistent=true
+
+		[Install]
+		WantedBy=timers.target
+	EOF
+
+	# Reload systemd daemon
+	systemctl daemon-reload
+
+	# Enable and start the timer
+	systemctl enable --now motd-rotator.service motd-rotator.timer
+
+}
+
 # Cleanup function
-cleanup() {
+function cleanup() {
 	log "INFO" "Cleaning up..."
 	rm -rf "$TEMP_DIR"
 	log "INFO" "Cleanup complete."
 }
 
+function print_header() {
+	echo -e "\033[34m##################################################\033[0m"
+}
+
+function print_footer() {
+	echo -e "\033[34m##################################################\033[0m"
+}
+
 # Logging function
-log() {
+function log() {
 	local level="$1"
 	local msg="$2"
 	local color
@@ -51,7 +148,7 @@ log() {
 }
 
 # Function to check whoami
-check_whoami() {
+function check_whoami() {
 	if [[ $EUID -ne 0 ]]; then
 		log "ERR" "This script must be run as root. Aborting."
 		return 1
@@ -61,7 +158,7 @@ check_whoami() {
 }
 
 # Function to check if running on UniFi Cloud Key Gen2
-check_device() {
+function check_device() {
 	if ! command -v ck-ui &>/dev/null || ! uname -a | grep -q "ui-qcom"; then
 		log "ERR" "This script must run on a UniFi OS device with ck-ui installed. Aborting."
 		return 1
@@ -72,27 +169,38 @@ check_device() {
 
 # Function to download a file from a defined S3 Bucket.
 download_file() {
-	local http_params="download=1"
-	local file=$1
+	local folder=$1
+	local file=$2
 
 	if [[ ${BUCKET_LINK:-EMPTY} == "EMPTY" ]]; then
 		log "ERR" "No S3 Bucket link specified. Aborting."
 		return 1
 	fi
 
-	if [[ ${file:-EMPTY} == "EMPTY" ]]; then
-		log "ERR" "No file specified, nothing to download.. Aborting."
+	if [[ ${folder:-EMPTY} == "EMPTY" ]]; then
+		log "ERR" "No folder was specified, please pass the folder and file. Aborting."
 		return 1
 	fi
 
-	log "INFO" "Downloading file ${file}"
+	if [[ ${file:-EMPTY} == "EMPTY" ]]; then
+		log "ERR" "No file was specified, nothing to download.. Aborting."
+		return 1
+	fi
+
+	# Create the directory structure inside the temp directory
+	mkdir -p "${TEMP_DIR}/${folder}" || {
+		log "ERR" "Failed to create directory ${TEMP_DIR}/${folder}. Aborting."
+		return 1
+	}
+
+	log "INFO" "Downloading file ${file} into ${TEMP_DIR}/${folder}"
 	curl \
 		--silent \
 		--location \
-		--output "${TEMP_DIR}/${file}" \
-		"${BUCKET_LINK}/${file}?${http_params}" ||
+		--output "${TEMP_DIR}/${folder}/${file}" \
+		"${BUCKET_LINK}/${folder}/${file}" ||
 		{
-			log "ERR" "Failed to download file ${file}. Aborting."
+			log "ERR" "Failed to download file ${file} from the folder ${folder} in the s3 bucket ${BUCKET_LINK}. Aborting."
 			return 1
 		}
 
@@ -100,9 +208,11 @@ download_file() {
 }
 
 # Function to set up SSH with user's public key
-setup_ssh() {
+function setup_ssh() {
 	log "INFO" "Setting up SSH for root access."
+	print_header
 	read -rp "Paste your SSH public key (id_rsa.pub or id_ed25519.pub contents) and press Enter: " authorizedkey
+	print_footer
 	authorizedkey=$(echo "$authorizedkey" | xargs) # Trim whitespace
 	if [[ -z $authorizedkey ]]; then
 		log "ERR" "No key provided. Aborting."
@@ -113,7 +223,11 @@ setup_ssh() {
 		return 1
 	fi
 	mkdir -p /root/.ssh
-	echo "$authorizedkey" >>/root/.ssh/authorized_keys
+	if [ ! -f /root/.ssh/authorized_keys ] || ! grep -q "$authorizedkey" /root/.ssh/authorized_keys; then
+		echo "$authorizedkey" >>/root/.ssh/authorized_keys
+	else
+		log "INFO" "SSH public key already present in authorized_keys."
+	fi
 	chmod 700 /root/.ssh
 	chmod 600 /root/.ssh/authorized_keys
 	touch /etc/ssh/sshd_config.d/99-allow-keys.conf
@@ -131,10 +245,12 @@ setup_ssh() {
 }
 
 # Function to confirm warranty void
-confirm() {
+function confirm() {
 	log "WARN" "This script will remove UniFi software, void your warranty, lose all your data and finally, kick your cat."
 	log "WARN" "You may proceed at your own risk."
+	print_header
 	read -rp "Type 'I understand you will kick my cat' to continue: " CHECK
+	print_footer
 	if [[ ${CHECK:-EMPTY} != "I understand you will kick my cat" ]]; then
 		log "INFO" "Confirmation not received. Exiting."
 		exit 0
@@ -143,7 +259,7 @@ confirm() {
 }
 
 # Function to stop UniFi services
-stop_services() {
+function stop_services() {
 	local unifi_services=(
 		unifi
 		unifi-core
@@ -175,31 +291,25 @@ stop_services() {
 }
 
 # Function to uninstall UniFi packages
-uninstall_packages() {
+function uninstall_packages() {
 	local unifi_packages=(
-		unifi
 		unifi-core
 		unifi-directory
-		ulp-go
-		uos-agent
-		uos
-		mongodb-org*
+		unifi-assets-uckp
+		unifi-email-templates-all
+		unifi-identity-update
+		ubnt-unifi-setup
+		mongodb-clients
+		mongodb-server-core
+		mongodb-server
 		postgresql*
 		nginx*
 		node*
 		openjdk*
 		simple-pid
 		ui-snmp
-		unifi-assets-uckp
-		unifi-email-templates-all
-		unifi-identity-update
-		ubnt*
 		ustd
-		ustated
-		usd
-		usbd
-		uhwd
-		uid-agent
+		ustate-exporter
 	)
 	log "INFO" "Updating package list."
 	apt update -y || {
@@ -207,25 +317,37 @@ uninstall_packages() {
 		return 1
 	}
 
+	log "INFO" "Fixing any broken packages before removal."
+	apt --fix-broken install -y || {
+		log "ERR" "Failed to fix broken packages."
+		return 1
+	}
+
+	# HACK: Manually remove broken PostgreSQL packages
+	log "INFO" "Temporarily disabling PostgreSQL prerm scripts to bypass removal errors."
+	for pg_version in 14 16; do
+		prerm_file="/var/lib/dpkg/info/postgresql-${pg_version}.prerm"
+		if [ -f "$prerm_file" ]; then
+			mv "$prerm_file" "${prerm_file}.disabled" 2>/dev/null || true
+		fi
+	done
+
 	log "INFO" "Uninstalling UniFi and related packages."
-	apt remove --purge -y "${unifi_packages[@]}" || {
-		log "ERR" "Failed to uninstall UniFi packages, aborting!"
-		return 1
-	}
+	for package in "${unifi_packages[@]}"; do
+		if dpkg -s "$package" >/dev/null 2>&1; then
+			log "INFO" "Removing $package"
+			apt remove --purge -y "$package" || log "WARN" "Failed to remove $package, proceeding."
+		else
+			log "INFO" "$package is not installed, skipping."
+		fi
+	done
 
-	apt autoremove --purge -y || {
-		log "ERR" "Failed to autoremove packages, aborting!"
-		return 1
-	}
-
-	apt clean || {
-		log "ERR" "Failed to clean package cache, aborting!"
-		return 1
-	}
+	apt autoremove --purge -y || log "WARN" "Failed to autoremove packages, proceeding."
+	apt clean || log "WARN" "Failed to clean package cache, proceeding."
 }
 
 # Function to remove residual files and configs
-remove_files() {
+function remove_files() {
 	local unifi_paths=(
 		/usr/lib/unifi*
 		/etc/unifi*
@@ -239,6 +361,7 @@ remove_files() {
 		/var/www/html
 		/var/log/nginx
 		/persistent/system.cfg
+		/srv
 	)
 	log "INFO" "Removing residual UniFi files and configs."
 	for unifi_path in "${unifi_paths[@]}"; do
@@ -250,7 +373,7 @@ remove_files() {
 }
 
 # Function to reclaim HDD space
-reclaim_hdd() {
+function reclaim_hdd() {
 	local unifi_paths=(
 		/volume1
 	)
@@ -261,54 +384,67 @@ reclaim_hdd() {
 		sda
 	)
 
+	# Check if already reclaimed
+	if mountpoint -q /mnt/hdd; then
+		log "INFO" "HDD already reclaimed and mounted at /mnt/hdd."
+		return 0
+	fi
+
 	log "INFO" "Processing mount points by path..."
 	for path in "${unifi_paths[@]}"; do
 		log "INFO" "Unmounting path ${path} all partitions"
-		umount "${path}" || true
+		umount "${path}" 2>/dev/null || true
 	done
 
 	log "INFO" "Stopping mdadm RAID"
 	for raid in "${unifi_raid[@]}"; do
-		mdadm --stop "/dev/${raid}" || true
+		if [ -b "/dev/${raid}" ]; then
+			mdadm --stop "/dev/${raid}" 2>/dev/null || true
+		fi
 	done
 
 	log "INFO" "Processing disks..."
+
 	for disk in "${unifi_disks[@]}"; do
 		log "INFO" "Unmounting all partitions on ${disk}"
-		umount "/dev/${disk}*" || true
+		umount "/dev/${disk}*" 2>/dev/null || true
 	done
 
-	if ! lsblk -no NAME | grep -q '^sda5$'; then
-		log "ERR" "Partition /dev/sda5 not found. Aborting HDD reclaim."
-		return 1
-	fi
+	print_header
 	read -rp "Confirm formatting /dev/sda5 (all data will be lost)? [y/N] " confirm_format
-	if [[ ${confirm_format,,} != "y" ]]; then
+	print_footer
+	if [[ ${confirm_format:-EMPTY} != [yY] ]]; then
 		log "INFO" "Formatting skipped."
 		return 1
 	fi
-	umount /volume1 || true
-	mdadm --stop /dev/md3 || true # Stop RAID if active
-	if ! lsblk -no NAME | grep -q '^sda5$'; then
-		log "ERR" "Partition /dev/sda5 not found. Aborting HDD reclaim."
+
+	log "INFO" "Formatting /dev/sda5"
+	mkfs.ext4 -F /dev/sda5 || {
+		log "ERR" "Failed to format /dev/sda5."
 		return 1
-	fi
-	read -rp "Confirm formatting /dev/sda5 (all data will be lost)? [y/N] " confirm_format
-	if [[ ${confirm_format,,} != "y" ]]; then
-		log "INFO" "Formatting skipped."
+	}
+
+	log "INFO" "Creating /mnt/hdd"
+	mkdir -p /mnt/hdd || {
+		log "ERR" "Failed to create /mnt/hdd."
 		return 1
-	fi
-	mkfs.ext4 -F /dev/sda5 # Format the main data partition
-	mkdir -p /mnt/hdd
-	mount /dev/sda5 /mnt/hdd
-	echo "/dev/sda5 /mnt/hdd ext4 defaults 0 2" >>/etc/fstab
-	log "INFO" "HDD reclaimed and mounted at /mnt/hdd. Use this for data storage."
+	}
+
+	log "INFO" "Mounting /dev/sda5 to /mnt/hdd"
+	mount /dev/sda5 /mnt/hdd || {
+		log "ERR" "Failed to mount /dev/sda5."
+		return 1
+	}
+
+	log "INFO" "HDD reclaimed and mounted at /mnt/hdd. Note: Mount manually after reboot with 'mount /dev/sda5 /mnt/hdd' since /etc/fstab changes don't persist on overlayfs."
 }
 
 # Function to install TFTP/PXE tools
-install_tools() {
+function install_tools() {
 	local tools=(
+		tftp
 		tftpd-hpa
+		pxelinux
 	)
 
 	log "INFO" "Installing TFTP/PXE/iPXE server tools."
@@ -321,11 +457,11 @@ install_tools() {
 }
 
 # Function to configure TFTP/PXE tools.
-configure_tools() {
+function configure_tools() {
 
 	local TFTP_BOOT_DIR="/mnt/hdd/tftpboot"
 	local TFTP_CONFIG="/etc/default/tftpd-hpa"
-	local TFTP_SERVICE="tftp-hpa"
+	local TFTP_SERVICE="tftpd-hpa"
 	local TFTP_USER="tftp"
 
 	#########################
@@ -341,11 +477,37 @@ configure_tools() {
 	cat <<-EOF >"${TFTP_CONFIG}"
 		TFTP_USERNAME="${TFTP_USER}"
 		TFTP_DIRECTORY="${TFTP_BOOT_DIR}"
-		TFTP_ADDRESS=:69
+		TFTP_ADDRESS=":69"
 		TFTP_OPTIONS="--listen --secure --verbose --timeout 900"
 	EOF
+
+	# Create persistent systemd mount unit for /mnt/hdd
+	log "INFO" "Creating systemd mount unit for persistent HDD mount."
+	cat <<-EOF >/etc/systemd/system/mnt-hdd.mount
+		[Unit]
+		Description=Mount HDD at /mnt/hdd
+
+		[Mount]
+		What=/dev/sda5
+		Where=/mnt/hdd
+		Type=ext4
+		Options=defaults
+
+		[Install]
+		WantedBy=multi-user.target
+	EOF
+	systemctl enable mnt-hdd.mount || log "WARN" "Failed to enable mnt-hdd.mount, mount may not persist."
+
+	# Add dependency for tftpd-hpa to start after mount
+	mkdir -p /etc/systemd/system/tftpd-hpa.service.d
+	cat <<-EOF >/etc/systemd/system/tftpd-hpa.service.d/10-mount.conf
+		[Unit]
+		Requires=mnt-hdd.mount
+		After=mnt-hdd.mount
+	EOF
+
 	systemctl restart "${TFTP_SERVICE}" || {
-		log "ERR" "Failed to restart ${TFTP_SERVICE} after configuration changes, verify the configuration file at ${TFTP_CONFIG}."
+		log "ERROR" "Failed to restart ${TFTP_SERVICE} after configuration changes, verify the configuration file at ${TFTP_CONFIG}."
 		return 1
 	}
 
@@ -354,7 +516,7 @@ configure_tools() {
 	#########################
 
 	# Download the required files into the tftp root dir.
-	PXE_FILES=(
+	TFTP_FILES=(
 		autoexec.ipxe
 		config.ipxe
 		ipxe.efi
@@ -362,14 +524,14 @@ configure_tools() {
 		README.md
 		threefold.ipxe
 	)
-	for file in "${PXE_FILES[@]}"; do
+	for file in "${TFTP_FILES[@]}"; do
 		# Download the file from the s3 bucket into the temp dir.
-		download_file "${file}" || {
-			log "ERR" "Failed to download required file ${file}"
+		download_file "tftp" "${file}" || {
+			log "ERR" "Failed to download required file ${file} from the tftp dir in the s3 bucket."
 			return 1
 		}
 		# Move the file to the tftp root directory.
-		mv "${TEMP_DIR}/${file}" "${TFTP_BOOT_DIR}/${file}" || {
+		mv "${TEMP_DIR}/tftp/${file}" "${TFTP_BOOT_DIR}/${file}" || {
 			log "ERR" "Failed to move ${file} to ${TFTP_BOOT_DIR}"
 			return 1
 		}
@@ -380,7 +542,7 @@ configure_tools() {
 		log "ERR" "Failed to set ownership on ${TFTP_BOOT_DIR}"
 		return 1
 	}
-	chmod -R 0755 "${TFTP_BOOT_DIR}" || {
+	chmod -R 0660 "${TFTP_BOOT_DIR}" || {
 		log "ERR" "Failed to set permissions on ${TFTP_BOOT_DIR}"
 		return 1
 	}
@@ -395,7 +557,7 @@ configure_tools() {
 }
 
 # Function to set up systemd service and timer for OLED stats display
-set_custom_display() {
+function set_custom_display() {
 	local DISPLAY_DEPS=(
 		imagemagick
 	)
@@ -460,8 +622,66 @@ set_custom_display() {
 	log "INFO" "OLED stats service and timer set up and started."
 }
 
+# Function to enable unattended updates
+function enable_unattended_updates() {
+	local DEB_DEPS=(
+		unattended-upgrades
+	)
+
+	apt update || {
+		log "ERR" "Failed to update package lists."
+		exit 1
+	}
+	apt install -y "${DEB_DEPS[@]}" || {
+		log "ERR" "Failed to install unattended-upgrades."
+		exit 1
+	}
+
+	log "INFO" "Configuring auto-upgrades"
+
+	cat <<-EOF >/etc/apt/apt.conf.d/20auto-upgrades
+		APT::Periodic::Update-Package-Lists "1";
+		APT::Periodic::Unattended-Upgrade "1";
+	EOF
+
+	log "INFO" "Configuring unattended-upgrades"
+
+	cat <<-EOF >/etc/apt/apt.conf.d/50unattended-upgrades
+		Unattended-Upgrade::Allowed-Origins {
+		    "\${distro_id}:\${distro_codename}";
+		    "\${distro_id}:\${distro_codename}-security";
+		    "\${distro_id}:\${distro_codename}-updates";
+		};
+		Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+		Unattended-Upgrade::MinimalSteps "true";
+		Unattended-Upgrade::InstallOnShutdown "false";
+		Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+		Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
+		Unattended-Upgrade::Remove-Unused-Dependencies "true";
+		Unattended-Upgrade::Automatic-Reboot "true";
+		Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+		Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+		Unattended-Upgrade::OnlyOnACPower "true";
+		Unattended-Upgrade::Allow-downgrade "false";
+		Unattended-Upgrade::Allow-APT-Mark-Fallback "true";
+	EOF
+
+	log "INFO" "Unattended upgrades enabled."
+}
+
+function finish_up() {
+	print_header
+	read -rp "The 'de-unifi-cation' process is complete. Are you ready to reboot? [y/N] " response
+	print_footer
+	if [[ ${response:-EMPTY} == [yY] ]]; then
+		yolo || true
+		reboot
+	fi
+	log "INFO" "Skipping reboot"
+}
+
 # Main execution
-main() {
+function main() {
 	# Dependency checks
 	command -v curl >/dev/null 2>&1 || {
 		log "ERR" "curl not found."
@@ -535,9 +755,18 @@ main() {
 		log "ERR" "Failed to set custom display."
 		exit 1
 	}
-	log "INFO" "De-unify complete. Rebooting in 5 seconds."
-	sleep 5
-	reboot
+	enable_unattended_updates || {
+		log "ERR" "Failed to enable unattended updates."
+		exit 1
+	}
+	configure_motd || {
+		log "ERR" "Failed to configure MOTD."
+		exit 1
+	}
+	finish_up || {
+		log "ERR" "Failed to finish up."
+		exit 1
+	}
 }
 
 ##################################################

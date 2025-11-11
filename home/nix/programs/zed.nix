@@ -27,9 +27,10 @@ in
         text = ''
           [
             {
-              "context": "Editor && edit_prediction_conflict",
+              "context": "Editor",
               "bindings": {
-                "alt-l": "editor::AcceptEditPrediction"
+                "alt-l": "editor::AcceptEditPrediction",
+                "tab": "editor::Tab"
               }
             },
             {
