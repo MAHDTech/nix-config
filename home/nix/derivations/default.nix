@@ -1,9 +1,6 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   home.packages = [
-    # Bambu Studio
-    (pkgs.callPackage ./BambuStudio.nix { })
-
     # Cursor
     # On ChromeOS use AppImage directly.
     # On NixOS, now available in nixpkgs
@@ -18,5 +15,8 @@
     #(pkgs.callPackage ./pivnet.nix {})
 
     (pkgs.callPackage ./ls-colors.nix { })
-  ];
+  ]
+  ++
+    # Bambu Studio only available on AMD64.
+    (lib.optional (pkgs.system == "x86_64-linux") (pkgs.callPackage ./BambuStudio.nix { }));
 }

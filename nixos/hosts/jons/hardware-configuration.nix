@@ -165,7 +165,16 @@
 
   swapDevices = [ ];
 
-  networking.useDHCP = lib.mkDefault true;
+  networking = {
+    useDHCP = lib.mkDefault true;
+    interfaces = {
+      enp10s0 = {
+        name = "enp10s0";
+        useDHCP = true;
+        mtu = 9000;
+      };
+    };
+  };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
