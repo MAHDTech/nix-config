@@ -140,6 +140,7 @@ in
       signal-desktop
       remmina
       brave
+      framesh
 
       # Trezor
       trezor-suite
