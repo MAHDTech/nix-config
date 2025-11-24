@@ -293,23 +293,24 @@ function stop_services() {
 # Function to uninstall UniFi packages
 function uninstall_packages() {
 	local unifi_packages=(
-		unifi-core
-		unifi-directory
-		unifi-assets-uckp
-		unifi-email-templates-all
-		unifi-identity-update
-		ubnt-unifi-setup
 		mongodb-clients
-		mongodb-server-core
 		mongodb-server
-		postgresql*
+		mongodb-server-core
 		nginx*
 		node*
 		openjdk*
+		postgresql*
 		simple-pid
+		ubnt-unifi-setup
+		ucore-setup-lisenter
 		ui-snmp
-		ustd
+		unifi-assets-uckp
+		unifi-core
+		unifi-directory
+		unifi-email-templates-all
+		unifi-identity-update
 		ustate-exporter
+		ustd
 	)
 	log "INFO" "Updating package list."
 	apt update -y || {

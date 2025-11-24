@@ -21,6 +21,7 @@ let
         #google-chrome
         ledger-live-desktop
         onlyoffice-desktopeditors
+        framesh
 
         # Screen recorder
         gpu-screen-recorder
@@ -140,7 +141,6 @@ in
       signal-desktop
       remmina
       brave
-      framesh
 
       # Trezor
       trezor-suite

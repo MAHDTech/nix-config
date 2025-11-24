@@ -1,5 +1,6 @@
 {
   pkgs,
+  config,
   deviceConfig ? {
     monitorConfig = [ ];
     extraSettings = { };
@@ -1207,7 +1208,11 @@ in
           Install.WantedBy = [ "hyprland-session.target" ];
           Unit = {
             BindsTo = [ "hyprland-session.target" ];
-            After = [ "hyprland-session.target" ];
+            After = [
+              "graphical-session.target"
+              "hyprland-session.target"
+              config.wayland.systemd.target
+            ];
             Requires = [ "hyprland-session.target" ];
           };
         };
@@ -1217,7 +1222,11 @@ in
           Install.WantedBy = [ "hyprland-session.target" ];
           Unit = {
             BindsTo = [ "hyprland-session.target" ];
-            After = [ "hyprland-session.target" ];
+            After = [
+              "graphical-session.target"
+              "hyprland-session.target"
+              config.wayland.systemd.target
+            ];
             Requires = [ "hyprland-session.target" ];
           };
         };
