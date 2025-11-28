@@ -57,6 +57,9 @@
     ../../system/config/virtualisation/docker
     #../../system/config/virtualisation/host/vmware
 
+    # QEMU/KVM Virtualisation
+    ../../system/config/virtualisation/host/qemu
+
     # Games
     ../../system/config/games
   ];
