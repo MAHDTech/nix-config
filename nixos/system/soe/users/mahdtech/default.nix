@@ -23,26 +23,34 @@ in
       username
       "adbusers"
       "audio"
-      "disk"
       "dialout"
+      "disk"
       "docker"
       "flatpak"
       "input"
-      "nixos-admins"
       "networkmanager"
       "nixos"
+      "nixos-admins"
       "pipewire"
       "plugdev"
       "rtkit"
       "trezord"
       "users"
       "video"
-      "vmware"
       "wheel"
 
+      # VMware
+      "vmware"
+
+      # KVM/QEMU
+      "kvm"
+      "qemu"
+      "libvirt"
+      "libvirtd"
+
       # Incus
-      #"incus" # safe, isolated incus experience.
-      "incus-admin" # full access to incus.
+      #"incus"            # incus pleb group.
+      "incus-admin" # incus admins group.
     ];
 
     openssh.authorizedKeys.keys = [

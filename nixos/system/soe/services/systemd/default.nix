@@ -40,7 +40,7 @@
         let
 
           defaultNetworkConfig = {
-            DHCP = "yes";
+            DHCP = "no";
             DNSSEC = "yes";
             DNSOverTLS = "no";
             DNS = [ ];
@@ -58,7 +58,7 @@
         {
           # systemd-networkd handles LAN
           "10-wired" = {
-            enable = true;
+            enable = false; # Disable, now configured per-host.
             name = "en*";
 
             networkConfig = defaultNetworkConfig;
@@ -69,7 +69,7 @@
 
           # NetworkManager handles WiFi
           "20-wireless" = {
-            enable = false;
+            enable = false; # Disabled, now configured per-host.
             name = "wl*";
 
             networkConfig = defaultNetworkConfig;

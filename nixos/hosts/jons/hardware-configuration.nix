@@ -170,8 +170,18 @@
     interfaces = {
       enp10s0 = {
         name = "enp10s0";
+        useDHCP = false;
+        mtu = lib.mkForce 9000;
+      };
+      br0 = {
+        name = "br0";
         useDHCP = true;
         mtu = 9000;
+      };
+    };
+    bridges = {
+      br0 = {
+        interfaces = [ "enp10s0" ];
       };
     };
   };
