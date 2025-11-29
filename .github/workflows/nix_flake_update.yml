@@ -44,7 +44,7 @@ jobs:
 
       - id: update_nix_flake
         name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@v27
+        uses: DeterminateSystems/update-flake-lock@v28
         with:
           token: ${{ secrets.MAHDTECH_TOKEN_CREATE_PR }}
           sign-commits: false
