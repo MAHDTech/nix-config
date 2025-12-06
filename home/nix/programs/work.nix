@@ -1,5 +1,6 @@
 {
   pkgs,
+  #inputs,
   ...
 }:
 let
@@ -21,7 +22,7 @@ let
         # https://militarycac.com/linux.html
         # nix-prefetch-url file://$PWD/linuxx64-25.05.0.44.tar.gz
         #pkgsUnstable.citrix_workspace
-        pkgs.citrix_workspace
+        #pkgs.citrix_workspace
       ]
     else if pkgs.system == "aarch64-linux" then
       [

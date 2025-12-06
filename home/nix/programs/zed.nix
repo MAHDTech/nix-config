@@ -502,6 +502,22 @@ in
         language_models = {
           x_ai = {
             api_url = "https://api.x.ai/v1";
+            available_models = [
+              {
+                name = "grok-4-1-fast-reasoning";
+                display_name = "Grok (big dog)";
+                max_tokens = 2000000;
+                supports_images = true;
+                supports_tools = true;
+              }
+              {
+                name = "grok-code-fast-1";
+                display_name = "Grok (little dog)";
+                max_tokens = 256000;
+                supports_images = false;
+                supports_tools = true;
+              }
+            ];
           };
         };
 

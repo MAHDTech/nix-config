@@ -9,12 +9,6 @@
   ];
 
   systemd = {
-    extraConfig = ''
-      DefaultTimeoutStartSec=15s
-      DefaultTimeoutStopSec=15s
-      DefaultLimitNOFILE=1048576
-    '';
-
     timers.suspend-on-low-battery = {
       wantedBy = [ "multi-user.target" ];
 

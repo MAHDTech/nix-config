@@ -17,11 +17,11 @@
     font-awesome
 
     # Microsoft fonts
-    vistafonts
+    vista-fonts
     cascadia-code
 
     # Popular fonts
-    ubuntu_font_family
+    ubuntu-classic
     source-code-pro
     source-sans
     source-serif

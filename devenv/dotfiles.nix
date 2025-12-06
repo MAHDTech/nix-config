@@ -11,7 +11,6 @@ let
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${builtins.currentSystem};
 
   unstablePackages = with pkgsUnstable; [
-    ventoy-full
   ];
 
   packages = with pkgs; [

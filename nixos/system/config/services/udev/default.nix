@@ -11,7 +11,6 @@
     enable = true;
 
     packages = with pkgs; [
-      android-udev-rules
       apio-udev-rules
       game-devices-udev-rules
       ledger-udev-rules

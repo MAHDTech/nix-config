@@ -144,7 +144,7 @@ in
 
       # Trezor
       trezor-suite
-      trezor-agent
+      #trezor-agent
 
       # Ledger
 

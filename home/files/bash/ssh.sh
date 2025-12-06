@@ -5,6 +5,15 @@
 # Description: Contains ssh related functions
 ##################################################
 
+function ssh_force_password() {
+	local SSH_HOST=$1
+
+	# I can never remember the args :/
+	ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no "${SSH_HOST}"
+
+	return 0
+}
+
 function ssh_control_master() {
 	local SSH_CONTROL_MASTER_DIR="${HOME}/.ssh/control-master"
 

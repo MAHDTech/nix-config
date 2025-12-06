@@ -68,7 +68,7 @@ in
       pcsc-cyberjack
       pcsc-tools
       pcsclite
-      pinentry
+      pinentry-gnome3
 
       # YubiKey
       # NOTE: For YubiKey reset instructions see: https://support.yubico.com/hc/en-us/articles/360013761339-Resetting-the-OpenPGP-Application-on-the-YubiKey
