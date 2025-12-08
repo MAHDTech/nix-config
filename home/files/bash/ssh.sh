@@ -9,7 +9,10 @@ function ssh_force_password() {
 	local SSH_HOST=$1
 
 	# I can never remember the args :/
-	ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no "${SSH_HOST}"
+	ssh \
+		-o ControlMaster=no \
+		-o PreferredAuthentications=password \
+		-o PubkeyAuthentication=no "${SSH_HOST}"
 
 	return 0
 }
