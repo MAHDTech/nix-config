@@ -609,7 +609,7 @@ in
         # 0 Cursor movement will not change focus
         # 1 Cursor movement will always change focus to under the cursor
         # 2 Cursor focus will be detached from keyboard focus. Need to click to change focus.
-        # 3 Custor focus will be completely separate from keyboard focus. Clicking a windoe will not change focus.
+        # 3 Custor focus will be completely separate from keyboard focus. Clicking a window will not change focus.
         follow_mouse = 1;
 
         # Window focus when a window is closes
@@ -1015,7 +1015,7 @@ in
         # If enabled, the split will not change regardless of what happens to the container.
         preserve_split = true;
 
-        # If enabled, allows more precise control over the windoe split direction.
+        # If enabled, allows more precise control over the window split direction.
         smart_split = false;
 
         # If enabled, resizing direction is determined by the mouse position.
@@ -1068,7 +1068,7 @@ in
         workspace_swipe = false;
 
         # How many fingers for touchpad gesture.
-        workspace_swipe_fingers = 3;
+        workspace_fingers = 3;
 
         # If enabled, workspace_swipe_fingers is the minimum number of fingers required.
         workspace_swipe_min_fingers = false;

@@ -61,6 +61,17 @@
     # Apply overrides to specific hosts.
     matchBlocks = {
       #########################
+      # Global
+      #########################
+
+      # openssh_gssapi pkg includes the needed support.
+      #"*" = {
+      #  extraOptions = {
+      #    IgnoreUnknown = "gssapikexalgorithms,gssapiauthentication,gssapidelegatecredentials";
+      #  };
+      #};
+
+      #########################
       # Internet
       #########################
 
