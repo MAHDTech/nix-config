@@ -93,9 +93,9 @@ monitors:
           format:
             - " {cpu_percent}%"
             - " {memory_percent}%"
-        - name: "upower"
+        - name: "battery"
           position: "right"
-          type: upower
+          type: battery
           format: "󰂄 {percentage}%"
 
     - name: "bottom"

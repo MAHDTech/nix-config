@@ -506,9 +506,6 @@ in
         # Whether to enable animations
         enabled = true;
 
-        # Enable first launch animation
-        first_launch_animation = true;
-
         # Bezier curve for animations
         bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
 
@@ -760,12 +757,6 @@ in
         # Whether mouse moving to another monitor will focus that monitor.
         mouse_move_focuses_monitor = true;
 
-        # Starts rendering before monitor displays a frame.
-        render_ahead_of_time = false;
-
-        # How many ms of safezone to add to rendering.
-        render_ahead_safezone = 1;
-
         # If true, will allow you to restart a lockscreen app (redscreen of death)
         allow_session_lock_restore = false;
 
@@ -840,17 +831,11 @@ in
       # https://wiki.hyprland.org/Configuring/Variables/#render
 
       render = {
-        # Whether to enable explicit sync support.
-        # 0 = no
-        # 1 = yes
-        # 2 = auto
-        explicit_sync = 2;
-
-        # Whether to enable explicit sync support for KMS.
-        explicit_sync_kms = 2;
-
-        # Enables direct scanout. Attempts to reduce lag.
-        direct_scanout = true;
+        # Enables direct scanout. Attempts to reduce lag.a
+        # 0 = off
+        # 1 = on
+        # 2 = auto (on for games)
+        direct_scanout = 2;
       };
 
       ####################
@@ -1064,14 +1049,8 @@ in
       # https://wiki.hyprland.org/Configuring/Gestures/
 
       gestures = {
-        # Whether to enable workspace swipe gestures.
-        workspace_swipe = false;
-
-        # How many fingers for touchpad gesture.
-        workspace_fingers = 3;
-
-        # If enabled, workspace_swipe_fingers is the minimum number of fingers required.
-        workspace_swipe_min_fingers = false;
+        # Gesture on swiping with 3 fingers
+        gesture = "3, horizontal, workspace";
 
         # In px, the distance of the touchpad gesture.
         workspace_swipe_distance = 300;
