@@ -124,6 +124,7 @@ in
         "html"
         "ini"
         #"jj-lsp" # TODO: jj-lsp in nixpkgs
+        "jinja2"
         "just"
         "make"
         "mermaid"
@@ -505,14 +506,14 @@ in
             available_models = [
               {
                 name = "grok-4-1-fast-reasoning";
-                display_name = "Grok (big dog)";
+                display_name = "Grok 4.1";
                 max_tokens = 2000000;
                 supports_images = true;
                 supports_tools = true;
               }
               {
                 name = "grok-code-fast-1";
-                display_name = "Grok (little dog)";
+                display_name = "Grok Code Fast 1";
                 max_tokens = 256000;
                 supports_images = false;
                 supports_tools = true;
@@ -638,6 +639,11 @@ in
         #########################
 
         file_types = {
+          "Dockerfile" = [
+            "**/Dockerfile"
+            "**/Dockerfile*"
+            "**/Dockerfile.*"
+          ];
           "Ansible" = [
             "**.ansible.yml"
             "**.ansible.yaml"
@@ -757,7 +763,7 @@ in
             ];
           };
           "YAML" = {
-            tab_size = 4;
+            tab_size = 2;
             format_on_save = "on";
             formatter = "auto";
           };
