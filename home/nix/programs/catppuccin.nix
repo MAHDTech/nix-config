@@ -18,7 +18,7 @@
     };
 
     delta = {
-      enable = true;
+      enable = false;
     };
 
     dunst = {

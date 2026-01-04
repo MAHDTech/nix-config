@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   ...
 }:
@@ -14,17 +13,15 @@
 #       nix-shell .#NAME
 #########################
 let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
 
-  unstablePkgs = with pkgsUnstable; [];
-
-  pythonPackages = pipPkg:
-    with pipPkg; [
+  pythonPackages =
+    pipPkg: with pipPkg; [
       pip
       virtualenv
 
       requests
     ];
-in {
-  home.packages = with pkgs; [(python3.withPackages pythonPackages)]; #++ unstablePkgs;
+in
+{
+  home.packages = with pkgs; [ (python3.withPackages pythonPackages) ]; # ++ unstablePkgs;
 }

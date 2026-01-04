@@ -32,7 +32,7 @@ let
 
   # System architecture specific packages.
   systemArchPackages =
-    if pkgs.system == "x86_64-linux" then
+    if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
       with pkgs;
       [
         # x86_64 only packages.
@@ -40,7 +40,7 @@ let
         pcsc-scm-scl011
         scmccid
       ]
-    else if pkgs.system == "aarch64-linux" then
+    else if pkgs.stdenv.hostPlatform.system == "aarch64-linux" then
       [
         # aarch64 only packages.
       ]

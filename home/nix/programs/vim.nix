@@ -3,11 +3,13 @@
   config,
   pkgs,
   ...
-}: let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+}:
+let
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
-  unstablePlugins = with pkgsUnstable.vimPlugins; [];
-in {
+  unstablePlugins = with pkgsUnstable.vimPlugins; [ ];
+in
+{
   programs.vim = {
     enable = true;
 
@@ -15,7 +17,8 @@ in {
 
     defaultEditor = true;
 
-    plugins = with pkgs.vimPlugins;
+    plugins =
+      with pkgs.vimPlugins;
       [
         copilot-vim
         rust-vim

@@ -4,7 +4,7 @@
   ...
 }:
 let
-  #pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+  #pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
   # System common packages.
   systemCommonPackages = [
@@ -16,7 +16,7 @@ let
 
   # System architecture specific packages.
   systemArchPackages =
-    if pkgs.system == "x86_64-linux" then
+    if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
       [
         # x86_64 only packages.
         # https://militarycac.com/linux.html
@@ -24,7 +24,7 @@ let
         #pkgsUnstable.citrix_workspace
         #pkgs.citrix_workspace
       ]
-    else if pkgs.system == "aarch64-linux" then
+    else if pkgs.stdenv.hostPlatform.system == "aarch64-linux" then
       [
         # aarch64 only packages.
       ]

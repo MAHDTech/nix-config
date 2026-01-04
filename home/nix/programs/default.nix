@@ -1,6 +1,6 @@
 {
   imports = [
-    ./alacritty.nix
+    #./alacritty.nix
     ./bash.nix
     ./btop.nix
     ./catppuccin.nix

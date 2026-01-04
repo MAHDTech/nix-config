@@ -4,7 +4,7 @@
   ...
 }:
 let
-  _pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+  _pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
   #unstablePkgs = with pkgsUnstable; [
   #devenv

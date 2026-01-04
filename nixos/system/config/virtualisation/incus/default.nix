@@ -889,11 +889,11 @@ in
 
   systemd = {
     # Override global systemd timeouts for hypervisor systems
-    extraConfig = ''
-      DefaultTimeoutStartSec=300s
-      DefaultTimeoutStopSec=90s
-      DefaultLimitNOFILE=1048576
-    '';
+    settings.Manager = {
+      DefaultTimeoutStartSec = "300s";
+      DefaultTimeoutStopSec = "90s";
+      DefaultLimitNOFILE = 1048576;
+    };
 
     # Create tmp files for LINSTOR.
     tmpfiles = {

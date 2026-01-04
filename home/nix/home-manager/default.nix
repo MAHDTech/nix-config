@@ -2,11 +2,15 @@
   globalStateVersion,
   globalUsername,
   ...
-}: let
+}:
+let
   stateVersion = globalStateVersion;
   username = globalUsername;
-in {
-  programs.home-manager = {enable = true;};
+in
+{
+  programs.home-manager = {
+    enable = true;
+  };
 
   home = {
     enableNixpkgsReleaseCheck = true;
@@ -17,5 +21,6 @@ in {
     homeDirectory = "/home/${username}";
   };
 
-  targets.genericLinux.enable = true;
+  # NixOS or Generic Linux
+  targets.genericLinux.enable = false;
 }

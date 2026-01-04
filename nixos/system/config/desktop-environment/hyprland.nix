@@ -18,7 +18,7 @@
     kitty
 
     # Greeter
-    greetd.tuigreet
+    tuigreet
 
     # XDG
     xdg-utils
@@ -123,7 +123,7 @@
     settings = {
       default_session = {
         command = ''
-          ${pkgs.greetd.tuigreet}/bin/tuigreet \
+          ${pkgs.tuigreet}/bin/tuigreet \
           --asterisks \
           --cmd Hyprland \
           --greet-align center \

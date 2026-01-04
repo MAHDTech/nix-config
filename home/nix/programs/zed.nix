@@ -7,7 +7,7 @@
 let
 
   pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs) system;
+    inherit (pkgs.stdenv.hostPlatform) system;
   };
 
   extraPackagesUnstable = with pkgsUnstable; [
@@ -176,7 +176,7 @@ in
           nil
           nixfmt-rfc-style
           opentofu
-          opentofu-ls
+          tofu-ls
           powershell
           powershell-editor-services
           rustc
@@ -500,27 +500,27 @@ in
         # AI Language Models
         #########################
 
-        language_models = {
-          x_ai = {
-            api_url = "https://api.x.ai/v1";
-            available_models = [
-              {
-                name = "grok-4-1-fast-reasoning";
-                display_name = "Grok 4.1";
-                max_tokens = 2000000;
-                supports_images = true;
-                supports_tools = true;
-              }
-              {
-                name = "grok-code-fast-1";
-                display_name = "Grok Code Fast 1";
-                max_tokens = 256000;
-                supports_images = false;
-                supports_tools = true;
-              }
-            ];
-          };
-        };
+        #language_models = {
+        #  x_ai = {
+        #    api_url = "https://api.x.ai/v1";
+        #    available_models = [
+        #      {
+        #        name = "grok-4-1-fast-reasoning";
+        #        display_name = "Grok 4.1";
+        #        max_tokens = 2000000;
+        #        supports_images = true;
+        #        supports_tools = true;
+        #      }
+        #      {
+        #        name = "grok-code-fast-1";
+        #        display_name = "Grok Code Fast 1";
+        #        max_tokens = 256000;
+        #        supports_images = false;
+        #        supports_tools = true;
+        #      }
+        #    ];
+        #  };
+        #};
 
         #########################
         # Language Server Providers
@@ -552,9 +552,6 @@ in
           };
           rust-analyzer = {
             enable_lsp_tasks = true;
-            binary = {
-              path = lib.getExe pkgs.rust-analyzer;
-            };
             initialization_options = {
               # https://rust-analyzer.github.io/book/features.html#inlay-hints
               inlayHints = {
@@ -574,6 +571,8 @@ in
               };
               cargo = {
                 allTargets = true;
+                noDefaultFeatures = false;
+                sysroot = null; # Auto-detects from PATH
               };
               rust = {
                 analyzerTargetDir = true;
@@ -684,6 +683,24 @@ in
           "Markdown" = {
             format_on_save = "on";
             remove_trailing_whitespace_on_save = true;
+          };
+          "Rust" = {
+            format_on_save = "on";
+            prettier = {
+              allowed = false;
+            };
+            enable_language_server = true;
+            language_servers = [
+              "rust-analyzer"
+            ];
+            formatter = {
+              external = {
+                command = lib.getExe pkgs.rustfmt;
+                arguments = [
+                  "--check"
+                ];
+              };
+            };
           };
           "Nix" = {
             prettier = {

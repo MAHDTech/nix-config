@@ -1,17 +1,20 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   systemd = {
     services = {
       # Kernel level OOM
       "config-mglru" = {
         enable = true;
-        after = ["basic.target"];
-        wantedBy = ["sysinit.target"];
-        script = let
-          inherit (pkgs) coreutils;
-        in ''
-          ${coreutils}/bin/echo Y > /sys/kernel/mm/lru_gen/enabled
-          ${coreutils}/bin/echo 1000 > /sys/kernel/mm/lru_gen/min_ttl_ms
-        '';
+        after = [ "basic.target" ];
+        wantedBy = [ "sysinit.target" ];
+        script =
+          let
+            inherit (pkgs) coreutils;
+          in
+          ''
+            ${coreutils}/bin/echo Y > /sys/kernel/mm/lru_gen/enabled
+            ${coreutils}/bin/echo 1000 > /sys/kernel/mm/lru_gen/min_ttl_ms
+          '';
       };
     };
 
@@ -20,7 +23,7 @@
       enableRootSlice = true;
       enableSystemSlice = true;
       enableUserSlices = true;
-      extraConfig = {
+      settings.OOM = {
         DefaultMemoryPressureDurationSec = "30s";
       };
     };

@@ -133,7 +133,7 @@
     };
     enableRedistributableFirmware = true;
     firmware = [
-      (pkgs.runCommandNoCC "zenbook-firmware"
+      (pkgs.runCommand "zenbook-firmware"
         {
           srcFirmware = ./files/firmware;
         }

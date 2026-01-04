@@ -99,7 +99,7 @@ function run_nixos_rebuild() {
 	msg "INFO" "Running nixos-rebuild ${ACTION} on ${HYPERVISOR}"
 
 	nixos-rebuild "${ACTION}" \
-		--use-remote-sudo \
+		--sudo \
 		--accept-flake-config \
 		--flake "path:.#${HYPERVISOR^^}" \
 		--target-host "${HYPERVISOR}.${DOMAIN}" \

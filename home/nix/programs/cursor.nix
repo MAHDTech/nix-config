@@ -1,5 +1,4 @@
 {
-  config,
   inputs,
   pkgs,
   ...
@@ -7,29 +6,34 @@
 let
 
   pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs) system;
+    inherit (pkgs.stdenv.hostPlatform) system;
     config.allowUnfree = true;
   };
 
-  env_cursor = pkgs.buildEnv {
-    name = "cursor-env";
-    paths = [
-      "${pkgsUnstable.code-cursor-fhs}/bin"
-      "${pkgs.golangci-lint}/bin"
-      "${pkgs.go}/bin"
-    ];
-  };
+  env_cursor =
+    if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
+      pkgs.buildEnv {
+        name = "cursor-env";
+        paths = [
+          "${pkgsUnstable.code-cursor-fhs}/bin"
+          "${pkgs.golangci-lint}/bin"
+          "${pkgs.go}/bin"
+        ];
+      }
+    else
+      pkgs.hello;
 
 in
 {
-  home.packages = with pkgs; [
-    #code-cursor-fhs
-    pkgsUnstable.code-cursor-fhs
-  ];
+  home.packages =
+    with pkgs;
+    pkgs.lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
+      pkgsUnstable.code-cursor-fhs
+    ];
 
   xdg = {
 
-    desktopEntries = {
+    desktopEntries = pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
 
       cursor = {
         name = "Cursor";

@@ -32,31 +32,10 @@
 {
   programs.ssh = {
     enable = true;
-
-    compression = true;
-
-    controlMaster = "auto";
-    controlPath = "~/.ssh/control-master/%r@%h:%p";
-    controlPersist = "3600";
-
-    hashKnownHosts = false;
-
-    forwardAgent = true;
-
-    serverAliveCountMax = 3;
-    serverAliveInterval = 60;
+    enableDefaultConfig = false;
 
     # Include any extra files with SSH config.
     includes = [ ];
-
-    # These options override any Host settings globally.
-    extraOptionOverrides = {
-      RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
-      SecurityKeyProvider = "internal";
-
-      # Use the 1Password SSH Agent.
-      identityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
-    };
 
     # Apply overrides to specific hosts.
     matchBlocks = {
@@ -64,12 +43,31 @@
       # Global
       #########################
 
-      # openssh_gssapi pkg includes the needed support.
-      #"*" = {
-      #  extraOptions = {
-      #    IgnoreUnknown = "gssapikexalgorithms,gssapiauthentication,gssapidelegatecredentials";
-      #  };
-      #};
+      "*" = {
+        compression = true;
+
+        controlMaster = "auto";
+        controlPath = "~/.ssh/control-master/%r@%h:%p";
+        controlPersist = "3600";
+
+        hashKnownHosts = false;
+
+        forwardAgent = true;
+
+        serverAliveCountMax = 3;
+        serverAliveInterval = 60;
+
+        extraOptions = {
+          RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
+          SecurityKeyProvider = "internal";
+
+          # Use the 1Password SSH Agent.
+          identityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
+
+          # openssh_gssapi pkg includes the needed support.
+          # IgnoreUnknown = "gssapikexalgorithms,gssapiauthentication,gssapidelegatecredentials";
+        };
+      };
 
       #########################
       # Internet
@@ -310,6 +308,20 @@
       "ntnx-ce-10-cvm" = {
         host = "ntnx-ce-10-cvm";
         hostname = "ntnx-ce-10-cvm.saltlabs.cloud";
+        user = "admin";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      #########################
+      # Prism Central
+      #########################
+
+      "ntnx-pc-01" = {
+        host = "ntnx-pc-01";
+        hostname = "ntnx-pc-01.saltlabs.cloud";
         user = "admin";
         extraOptions = {
           PasswordAuthentication = "no";

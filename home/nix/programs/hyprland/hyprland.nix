@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   config,
   deviceConfig ? {
@@ -1193,6 +1194,7 @@ in
               config.wayland.systemd.target
             ];
             Requires = [ "hyprland-session.target" ];
+            ConditionEnvironment = lib.mkForce "PATH";
           };
         };
 

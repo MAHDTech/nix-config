@@ -3,7 +3,8 @@
 locale = "en-au"
 
 extend-ignore-re = [
-    "^[ \t]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*^[ \t]*-----END PGP PUBLIC KEY BLOCK-----",
+    "(?s)-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+    "(?s)-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----",
     # Ignore current line with spellchecker:ignore-line (HTML comments)
     "(?Rm)^.*<!--.*spellchecker:ignore-line.*-->.*$",
     # Ignore current line with spellchecker:ignore-line (bash/shell/C comments)
@@ -68,5 +69,6 @@ extend-exclude = [
   ".direnv",
   ".git",
   "secrets/**/*.asc",
-  "vendor"
+  "vendor",
+  "home/nix/programs/vim.nix" # Ignore vim shortcuts.
 ]
