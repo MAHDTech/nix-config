@@ -25,14 +25,21 @@ jobs:
     steps:
       - id: checkout
         name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           lfs: false
           submodules: recursive
 
+      - id: qemu
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - id: install_nix
         name: "Install Nix ❄️"
         uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            extra-platforms = aarch64-linux
 
       - id: cachix
         name: "Enable Cachix ❄️"

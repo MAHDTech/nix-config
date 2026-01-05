@@ -23,7 +23,7 @@ jobs:
     steps:
       - id: checkout
         name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           lfs: false
           submodules: recursive
@@ -31,6 +31,9 @@ jobs:
       - id: install_nix
         name: "Install Nix ❄️"
         uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          enable_kvm: true
 
       - id: cachix
         name: "Enable Cachix ❄️"
@@ -44,7 +47,7 @@ jobs:
 
       - id: update_nix_flake
         name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@v27
+        uses: DeterminateSystems/update-flake-lock@v28
         with:
           token: ${{ secrets.MAHDTECH_TOKEN_CREATE_PR }}
           sign-commits: false
