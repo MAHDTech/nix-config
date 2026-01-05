@@ -1,12 +1,26 @@
 {
+  inputs,
   pkgs,
   ...
 }:
-{
-  home.packages = with pkgs; [
-    ironbar
-    zafiro-icons
+let
+
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+
+  unstablePkgs = with pkgsUnstable; [
+    ironbar # v0.18+ is GTK4
   ];
+
+in
+{
+
+  home.packages =
+    with pkgs;
+    [
+      ironbar
+      zafiro-icons
+    ]
+    ++ unstablePkgs;
 
   xdg = {
     configFile = {

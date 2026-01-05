@@ -10,7 +10,7 @@ let
 
   pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
-  unstablePackages = with pkgsUnstable; [
+  unstablePkgs = with pkgsUnstable; [
   ];
 
   packages = with pkgs; [
@@ -54,7 +54,7 @@ in
     ];
   };
 
-  packages = packages ++ unstablePackages ++ lib.optionals (!config.container.isBuilding) devPackages;
+  packages = packages ++ unstablePkgs ++ lib.optionals (!config.container.isBuilding) devPackages;
 
   enterShell = ''
     figlet -f starwars $PROJECT

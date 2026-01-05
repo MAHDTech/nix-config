@@ -26,10 +26,15 @@
     source-sans
     source-serif
 
+    # VMware
+    clarity-city
+
     # Nerd Fonts
-    nerd-fonts.fira-code
+    nerd-fonts.arimo
+    nerd-fonts.commit-mono
     nerd-fonts.dejavu-sans-mono
     nerd-fonts.droid-sans-mono
+    nerd-fonts.fira-code
     nerd-fonts.fira-mono
     nerd-fonts.go-mono
     nerd-fonts.hack
@@ -43,6 +48,7 @@
     nerd-fonts.space-mono
     nerd-fonts.ubuntu
     nerd-fonts.ubuntu-mono
+    nerd-fonts.ubuntu-sans
     nerd-fonts.victor-mono
   ];
 
@@ -59,8 +65,8 @@
           "UbuntuMono Nerd Font Mono"
         ];
         sansSerif = [
-          "Metropolis"
-          "Ubuntu"
+          "Clarity City"
+          "Ubuntu Nerd Font"
           "Hack Nerd Font"
           "FreeSans"
           "Liberation Sans"

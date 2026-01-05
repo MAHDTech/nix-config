@@ -318,6 +318,8 @@ in
         #########################
 
         terminal = {
+          font_size = 16;
+          #font_family = "" # Defaults to Editor font.
           alternate_scroll = "off";
           blinking = "off";
           copy_on_select = true;
@@ -345,15 +347,28 @@ in
         #########################
 
         # Editor Fonts
-        buffer_font_family = "VictorMono Nerd Font Mono";
+        buffer_font_family = "JetBrainsMono Nerd Font Mono";
+        #buffer_font_family = "VictorMono Nerd Font Mono";
+        #buffer_font_family = "Hack Nerd Font Mono";
+        buffer_font_fallbacks = [
+          ".ZedMono"
+        ];
         buffer_font_size = 16;
-        buffer_font_weight = 400;
+        buffer_font_weight = 500;
         buffer_line_height = "comfortable";
 
         # UI Fonts
-        ui_font_family = ".SystemUIFont";
+        #ui_font_family = ".ZedSans"; # IBM Plex
+        ui_font_family = ".SystemUIFont"; # System default
+        ui_font_fallbacks = [
+          ".ZedSans"
+          ".SystemUIFont"
+        ];
         ui_font_size = 16;
-        ui_font_weight = 400;
+        ui_font_weight = 500;
+
+        # Agent Fonts
+        agent_ui_font_size = 16;
 
         #########################
         # Layouts
@@ -683,6 +698,7 @@ in
           "Markdown" = {
             format_on_save = "on";
             remove_trailing_whitespace_on_save = true;
+            hard_tabs = false;
           };
           "Rust" = {
             format_on_save = "on";
