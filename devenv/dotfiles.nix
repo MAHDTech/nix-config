@@ -8,7 +8,7 @@
 
 let
 
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${builtins.currentSystem};
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
   unstablePackages = with pkgsUnstable; [
   ];

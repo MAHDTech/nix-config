@@ -51,7 +51,6 @@ jobs:
           --all-systems
           --impure
           --keep-going
-          --no-build
           --refresh
           --verbose
 

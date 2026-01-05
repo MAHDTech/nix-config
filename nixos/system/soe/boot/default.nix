@@ -10,8 +10,10 @@ let
   # Determine the systems to allow QEMU emulation for.
   qemuEmulatedSystems =
     if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
+      # Emulate ARM64 on AMD64
       [ "aarch64-linux" ]
     else if pkgs.stdenv.hostPlatform.system == "aarch64-linux" then
+      # Emulate AMD64 on ARM64
       [ "x86_64-linux" ]
     else
       [ ];
