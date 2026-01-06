@@ -15,7 +15,7 @@
     #",preferred,auto,1"
 
     # Laptop Monitor
-    "desc:BOE 0x084D,1920x1080@144,0x0,1.6,bitdepth,10"
+    "desc:BOE 0x084D,1920x1080@144,0x0,1.25,bitdepth,10"
 
     # Kogan Monitor underneath Laptop Monitor (DP connection)
     "desc:KOGAN AUSTRALIA PTY LTD KAMN49QDQUCLA 0000000000000,5120x1440@60,450x675,1.6,bitdepth,10"

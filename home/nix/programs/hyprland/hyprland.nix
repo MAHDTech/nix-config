@@ -868,49 +868,25 @@ in
         # Sets GTK to prefer Wayland, with X11 fallback for compatibility
         "GDK_BACKEND,wayland,x11"
 
-        # Set GTK scaling to match monitor scaling (1.6x)
-        "GDK_SCALE,1.6"
-
-        # Disable GTK DPI scaling since we're using GDK_SCALE
-        "GDK_DPI_SCALE,0.625"
-
-        # Sets cursor size for Hyprland's cursor system (scaled)
-        "HYPRCURSOR_SIZE,51"
-
-        # Disables Mozilla's RDD sandbox for better Wayland compatibility
-        "MOZ_DISABLE_RDD_SANDBOX,1"
-
-        # Enables native Wayland support in Firefox and other Mozilla apps
-        "MOZ_ENABLE_WAYLAND,1"
-
-        # Enables automatic DPI scaling for Qt applications
-        "QT_AUTO_SCREEN_SCALE_FACTOR,1"
-
-        # Set Qt scaling factor to match monitor scaling
-        "QT_SCALE_FACTOR,1.6"
-
-        # Forces Qt applications to use Wayland platform instead of X11
-        "QT_QPA_PLATFORM,wayland"
-
-        # Enable Qt Wayland fractional scaling
-        "QT_WAYLAND_FORCE_DPI,logical"
+        # HACK: Fix for Ironbar Vulkan errors/crashing on Intel ARC GPU
+        # Use the New GL renderer
+        "GSK_RENDERER,ngl"
 
         # Sets SDL to use Wayland video driver for games and media apps
         "SDL_VIDEODRIVER,wayland"
 
-        # Sets cursor size for X11/XWayland applications (scaled)
-        "XCURSOR_SIZE,51"
+        # Forces Qt applications to use Wayland platform instead of X11
+        "QT_QPA_PLATFORM,wayland"
 
         # Fixes Java applications on tiling window managers by disabling reparenting
         "_JAVA_AWT_WM_NONREPARENTING,1"
 
-        # Electron/Chrome scaling for better Wayland support
-        # Removed: "ELECTRON_OZONE_PLATFORM_HINT,wayland" # Breaks 1Password.
-        # Apps that need Wayland can be configured individually
-
         # 1Password authentication dialog fix
         "GTK_USE_PORTAL,1"
-        "PORTAL_DEBUG,1"
+
+        # Cursors (Standardised to 48 for HiDPI)
+        "HYPRCURSOR_SIZE,48"
+        "XCURSOR_SIZE,48"
       ];
 
       ###################

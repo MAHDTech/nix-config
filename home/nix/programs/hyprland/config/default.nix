@@ -9,7 +9,7 @@
 {
   monitorConfig = [
     # Automatic monitor detection with reasonable defaults
-    ",preferred,auto,1.6"
+    ",preferred,auto,1"
   ];
 
   extraSettings = {

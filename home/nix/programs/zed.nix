@@ -704,6 +704,11 @@ in
             remove_trailing_whitespace_on_save = true;
             hard_tabs = false;
           };
+          "Rust" = {
+            prettier = {
+              allowed = false;
+            };
+          };
           "Nix" = {
             prettier = {
               allowed = false;
