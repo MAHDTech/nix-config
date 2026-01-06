@@ -491,22 +491,22 @@ in
 
           default_model = {
             provider = "x_ai";
-            model = "grok-code-fast-1";
+            model = "grok-4-1-fast-non-reasoning";
           };
 
           inline_assistant_model = {
             provider = "x_ai";
-            model = "grok-code-fast-1";
+            model = "grok-4-1-fast-non-reasoning";
           };
 
           commit_message_model = {
             provider = "x_ai";
-            model = "grok-code-fast-1";
+            model = "grok-4-1-fast-non-reasoning";
           };
 
           thread_summary_model = {
             provider = "x_ai";
-            model = "grok-code-fast-1";
+            model = "grok-4-1-fast-non-reasoning";
           };
 
         };
@@ -568,6 +568,11 @@ in
           rust-analyzer = {
             enable_lsp_tasks = true;
             initialization_options = {
+              diagnostics = {
+                experimental = {
+                  enable = true;
+                };
+              };
               # https://rust-analyzer.github.io/book/features.html#inlay-hints
               inlayHints = {
                 maxLength = null;
@@ -582,7 +587,6 @@ in
               checkOnSave = true;
               check = {
                 workspace = true;
-                command = "clippy";
               };
               cargo = {
                 allTargets = true;
@@ -700,24 +704,24 @@ in
             remove_trailing_whitespace_on_save = true;
             hard_tabs = false;
           };
-          "Rust" = {
-            format_on_save = "on";
-            prettier = {
-              allowed = false;
-            };
-            enable_language_server = true;
-            language_servers = [
-              "rust-analyzer"
-            ];
-            formatter = {
-              external = {
-                command = lib.getExe pkgs.rustfmt;
-                arguments = [
-                  "--check"
-                ];
-              };
-            };
-          };
+          #"Rust" = {
+          #  format_on_save = "off";
+          #  prettier = {
+          #    allowed = false;
+          #  };
+          #  enable_language_server = true;
+          #  language_servers = [
+          #    "rust-analyzer"
+          #  ];
+          #  formatter = {
+          #    external = {
+          #      command = lib.getExe pkgs.rustfmt;
+          #      arguments = [
+          #        "--check"
+          #      ];
+          #    };
+          #  };
+          #};
           "Nix" = {
             prettier = {
               allowed = false;
