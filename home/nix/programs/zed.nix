@@ -704,24 +704,24 @@ in
             remove_trailing_whitespace_on_save = true;
             hard_tabs = false;
           };
-          #"Rust" = {
-          #  format_on_save = "off";
-          #  prettier = {
-          #    allowed = false;
-          #  };
-          #  enable_language_server = true;
-          #  language_servers = [
-          #    "rust-analyzer"
-          #  ];
-          #  formatter = {
-          #    external = {
-          #      command = lib.getExe pkgs.rustfmt;
-          #      arguments = [
-          #        "--check"
-          #      ];
-          #    };
-          #  };
-          #};
+          "Rust" = {
+            format_on_save = "on";
+            prettier = {
+              allowed = false;
+            };
+            enable_language_server = true;
+            language_servers = [
+              "rust-analyzer"
+            ];
+            formatter = {
+              external = {
+                command = lib.getExe pkgs.rustfmt;
+                arguments = [
+                  "--check"
+                ];
+              };
+            };
+          };
           "Nix" = {
             prettier = {
               allowed = false;
