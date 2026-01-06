@@ -30,6 +30,7 @@ monitors:
 
   eDP-1:
     - name: "top"
+      popup_autohide: false
       position: "top"
       anchor_to_edges: true
       height: 20
@@ -197,6 +198,7 @@ monitors:
 
   HDMI-A-3:
     - name: "top"
+      popup_autohide: false
       position: "top"
       anchor_to_edges: true
       height: 20
@@ -332,6 +334,7 @@ monitors:
   DP-1:
     - name: "top"
       position: "top"
+      popup_autohide: false
       anchor_to_edges: true
       margin:
         top: 0

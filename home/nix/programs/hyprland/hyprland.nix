@@ -252,7 +252,7 @@ in
     portalPackage = null;
 
     systemd = {
-      enable = true;
+      enable = false; # Using UWSM instead.
 
       enableXdgAutostart = true;
 
@@ -897,12 +897,6 @@ in
 
         # Sets SDL to use Wayland video driver for games and media apps
         "SDL_VIDEODRIVER,wayland"
-
-        # Disables hardware cursor rendering (fixes cursor issues on some GPUs)
-        "WLR_NO_HARDWARE_CURSORS,1"
-
-        # Allows software rendering fallback when hardware acceleration fails
-        "WLR_RENDERER_ALLOW_SOFTWARE,1"
 
         # Sets cursor size for X11/XWayland applications (scaled)
         "XCURSOR_SIZE,51"

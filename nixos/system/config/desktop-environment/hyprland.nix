@@ -93,15 +93,11 @@
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
-    WLR_NO_HARDWARE_CURSORS = "1";
     COSMIC_DATA_CONTROL_ENABLED = "1";
 
     # Fix 1Password desktop integration for authentication dialogue boxes.
     GTK_USE_PORTAL = "1";
-    QT_QPA_PLATFORMTHEME = "gtk3";
-
-    # Enable XWayland without 2D hardware acceleration
-    XWAYLAND_NO_GLAMOR = "0";
+    QT_QPA_PLATFORMTHEME = "gtk4";
   };
 
   # Greeter (GUI)
@@ -125,7 +121,7 @@
         command = ''
           ${pkgs.tuigreet}/bin/tuigreet \
           --asterisks \
-          --cmd Hyprland \
+          --cmd "uwsm start hyprland-uwsm.desktop" \
           --greet-align center \
           --greeting "Welcome to NixOS" \
           --power-reboot 'shutdown -r now' \
