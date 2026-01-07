@@ -82,6 +82,11 @@ monitors:
           justify: "center"
       # Right modules
       end:
+        - name: "latency-script"
+          type: script
+          cmd: "${XDG_CONFIG_HOME}/ironbar/scripts/latency.sh"
+          mode: "poll"
+          interval: 10000
         - name: "sys_info"
           tooltip: "System Information"
           type: sys_info
@@ -250,6 +255,11 @@ monitors:
           justify: "center"
       # Right modules
       end:
+        - name: "latency-script"
+          type: script
+          cmd: "${XDG_CONFIG_HOME}/ironbar/scripts/latency.sh"
+          mode: "poll"
+          interval: 10000
         - name: "sys_info"
           tooltip: "System Information"
           type: sys_info
@@ -519,6 +529,11 @@ monitors:
           justify: "center"
       # Right modules
       end:
+        - name: "latency-script"
+          type: script
+          cmd: "${XDG_CONFIG_HOME}/ironbar/scripts/latency.sh"
+          mode: "poll"
+          interval: 10000
         - name: "sys_info"
           tooltip: "System Information"
           type: sys_info
