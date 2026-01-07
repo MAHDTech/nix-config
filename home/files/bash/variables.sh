@@ -265,6 +265,9 @@ export HISTFILESIZE=5000
 # Default kubeconfig
 export KUBECONFIG="${HOME}/.kube/config"
 
+# Default Krew
+export KREW_ROOT="${HOME}/.krew"
+
 # Enable Kubernetes symbol
 export KUBE_PS1_SYMBOL_ENABLE="false"
 

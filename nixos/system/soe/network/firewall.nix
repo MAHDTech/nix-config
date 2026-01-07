@@ -1,7 +1,43 @@
 {
+  pkgs,
+  ...
+}:
+{
+  environment.systemPackages = with pkgs; [
+    iptables
+  ];
+
   networking = {
+
     firewall = {
       enable = true;
+
+      backend = "nftables";
+
+      # Allow ICMP globally
+      allowPing = true;
+
+      trustedInterfaces = [
+        "docker0"
+      ];
+
+      # Disable strict reverse path filtering.
+      # This is needed for Docker containers to communicate with the host.
+      checkReversePath = "loose";
+
+      # Incoming -> Host
+      extraInputRules = ''
+        # KinD
+        ip saddr 172.18.0.0/16 accept comment "Allow Kind Cluster to Host"
+      '';
+
+      # Forwarding -> Internet
+      extraForwardRules = ''
+        # KinD
+        ip saddr 172.18.0.0/16 accept comment "Allow Kind to Internet"
+        ip daddr 172.18.0.0/16 accept comment "Allow Internet to Kind"
+      '';
+
       allowedUDPPorts = [
         ##################################################
         # iVentoy
@@ -21,6 +57,7 @@
 
         ##################################################
       ];
+
       allowedTCPPorts = [
         ##################################################
         # iVentoy
@@ -41,6 +78,15 @@
         ##################################################
       ];
     };
+
+    nat = {
+      enable = true;
+      internalIPs = [
+        "172.18.0.0/16"
+      ];
+      externalInterface = "br0"; # The external interface with a host network IP.
+    };
+
     nftables = {
       enable = true;
     };
