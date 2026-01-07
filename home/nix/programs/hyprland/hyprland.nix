@@ -870,7 +870,7 @@ in
 
         # HACK: Fix for Ironbar Vulkan errors/crashing on Intel ARC GPU
         # Use the New GL renderer
-        "GSK_RENDERER,ngl"
+        "GSK_RENDERER,gl"
 
         # Sets SDL to use Wayland video driver for games and media apps
         "SDL_VIDEODRIVER,wayland"

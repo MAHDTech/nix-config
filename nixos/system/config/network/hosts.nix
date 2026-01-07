@@ -7,20 +7,25 @@
       # Ingress/Gateway API exposed services from local KinD cluster.
       #########################
 
+      # Test
+      "test.kind.local"
+
       # KubeTail
-      "kubetail.ping-devops.kind.local"
+      "kubetail.kind.local"
 
       # PING Identity
-      "pingaccess-admin.ping-devops.kind.local"
-      "pingaccess-engine.ping-devops.kind.local"
-      "pingauthorize.ping-devops.kind.local"
-      "pingauthorizepap.ping-devops.kind.local"
-      "pingcentral.ping-devops.kind.local"
-      "pingdataconsole.ping-devops.kind.local"
-      "pingdatasync.ping-devops.kind.local"
-      "pingdelegator.ping-devops.kind.local"
-      "pingdirectory.ping-devops.kind.local"
-      "pingdirectoryproxy.ping-devops.kind.local"
+      "pingaccess-admin.kind.local"
+      "pingaccess-engine.kind.local"
+      "pingauthorize.kind.local"
+      "pingauthorizepap.kind.local"
+      "pingcentral.kind.local"
+      "pingdataconsole.kind.local"
+      "pingdatasync.kind.local"
+      "pingdelegator.kind.local"
+      "pingdirectory.kind.local"
+      "pingdirectoryproxy.kind.local"
+      "pingfederate-admin.kind.local"
+      "pingfederate-engine.kind.local"
     ];
 
   };
