@@ -1,9 +1,12 @@
-{config, ...}: {
+{
   programs.direnv = {
     enable = true;
+    silent = false;
     enableBashIntegration = true;
 
-    nix-direnv = {enable = true;};
+    nix-direnv = {
+      enable = true;
+    };
 
     config = {
       disable_stdin = false;
