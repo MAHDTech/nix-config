@@ -14,13 +14,13 @@
           # Google official
           https://github.com/gemini-cli-extensions/code-review
           https://github.com/gemini-cli-extensions/conductor
-          https://github.com/gemini-cli-extensions/gcloud
+          #https://github.com/gemini-cli-extensions/gcloud
           https://github.com/gemini-cli-extensions/genkit
           https://github.com/gemini-cli-extensions/jules
-          https://github.com/gemini-cli-extensions/mcp-toolbox
+          #https://github.com/gemini-cli-extensions/mcp-toolbox
           https://github.com/gemini-cli-extensions/nanobanana
           https://github.com/gemini-cli-extensions/observability
-          https://github.com/gemini-cli-extensions/postgres
+          #https://github.com/gemini-cli-extensions/postgres
           https://github.com/gemini-cli-extensions/security
           https://github.com/gemini-cli-extensions/workspace
           https://github.com/googleapis/genai-toolbox
@@ -137,16 +137,26 @@
 
       text = ''
         {
+          "experimental": {
+            "skills": true
+          },
           "security": {
             "auth": {
               "selectedType": "oauth-personal"
+            },
+            "folderTrust": {
+              "enabled": true
+            },
+            "environmentVariableRedaction": {
+              "enabled": true
             }
           },
           "selectedAuthType": "gemini-api-key",
           "theme": "Default",
           "general": {
+            "enablePromptCompletion": true,
             "previewFeatures": true,
-            "vimMode": false
+            "vimMode": true
           },
           "output": {
             "format": "text"
