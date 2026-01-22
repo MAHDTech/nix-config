@@ -10,6 +10,7 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
+    gemini-cli-bin
   ];
 
   systemArchPackages =
@@ -151,6 +152,7 @@ in
       go
       golangci-lint
       gotools
+      #gemini-cli-bin
     ]
     ++ unstablePkgs
     ++ systemArchPackages;

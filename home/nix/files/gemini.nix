@@ -137,12 +137,9 @@
 
       text = ''
         {
-          "experimental": {
-            "skills": true
-          },
           "security": {
             "auth": {
-              "selectedType": "oauth-personal"
+              "selectedType": "gemini-api-key"
             },
             "folderTrust": {
               "enabled": true
@@ -151,8 +148,14 @@
               "enabled": true
             }
           },
-          "selectedAuthType": "gemini-api-key",
-          "theme": "Default",
+          "ui": {
+            "showMemoryUsage": true,
+            "showModelInfoInChat": true,
+            "theme": "Default"
+          },
+          "experimental": {
+            "skills": true
+          },
           "general": {
             "enablePromptCompletion": true,
             "previewFeatures": true,
@@ -160,10 +163,6 @@
           },
           "output": {
             "format": "text"
-          },
-          "ui": {
-            "showMemoryUsage": true,
-            "showModelInfoInChat": true
           },
           "tools": {
             "shell": {
