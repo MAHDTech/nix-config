@@ -160,36 +160,56 @@ in
       extraPackages =
         with pkgs;
         [
+          # AI Agents
+          claude-code
+          gemini-cli-bin
+
+          # Language Servers
           astro-language-server
-          clippy
-          eslint
-          gemini-cli
           gitlab-ci-ls
-          go
           gopls
-          golangci-lint
-          gotools
-          jujutsu
           jq-lsp
-          markdownlint-cli2
           nixd
           nil
-          nixfmt-rfc-style
-          opentofu
-          tofu-ls
-          powershell
           powershell-editor-services
-          rustc
           rust-analyzer
-          shellcheck
-          shfmt
           starpls
-          terraform
           terraform-ls
           terraform-lsp
+          tofu-ls
+
+          # Linters
+          clippy
+          eslint
+          golangci-lint
+          markdownlint-cli2
+          shellcheck
           typos
-          wakatime-cli
           yamllint
+
+          # Package Managers
+          cargo
+          bun
+
+          # Formatters
+          nixfmt-rfc-style
+          shfmt
+
+          # Programming Languages
+          go
+          powershell
+          rustc
+
+          # Infrastructure Tools
+          opentofu
+          terraform
+
+          # Version Control
+          jujutsu
+
+          # Utilities
+          gotools
+          wakatime-cli
         ]
         ++ extraPackagesUnstable;
 
