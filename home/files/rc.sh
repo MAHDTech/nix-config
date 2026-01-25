@@ -54,6 +54,7 @@ FOLDERS=(
 	"${HOME}/.local/bin"
 	"${HOME}/bin"
 	"${HOME}/.nix-profile/bin"
+	"${HOME}/.cache/.bun/bin"
 )
 
 # A list of required binaries for the dotfiles to work correctly

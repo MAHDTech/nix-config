@@ -384,11 +384,11 @@ in
           ".ZedSans"
           ".SystemUIFont"
         ];
-        ui_font_size = 16;
+        ui_font_size = 18;
         ui_font_weight = 500;
 
         # Agent Fonts
-        agent_ui_font_size = 16;
+        agent_ui_font_size = 18;
 
         #########################
         # Layouts

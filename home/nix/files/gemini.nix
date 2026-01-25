@@ -138,7 +138,10 @@
       text = ''
         {
           "experimental": {
-            "skills": true
+            "skills": true,
+            "codebaseInvestigatorSettings": {
+              "maxNumTurns": 30
+            }
           },
           "security": {
             "auth": {
@@ -151,25 +154,53 @@
               "enabled": true
             }
           },
-          "selectedAuthType": "oauth-personal",
           "theme": "Default",
           "general": {
             "enablePromptCompletion": true,
             "previewFeatures": true,
-            "vimMode": true
+            "vimMode": true,
+            "sessionRetention": {
+              "enabled": true,
+              "minRetention": "7d"
+            }
           },
           "output": {
             "format": "text"
           },
           "ui": {
             "showMemoryUsage": true,
-            "showModelInfoInChat": true
+            "showModelInfoInChat": true,
+            "showLineNumbers": false
           },
           "tools": {
             "shell": {
               "showColor": true
             },
             "useRipgrep": true
+          },
+          "mcpServers": {
+            "astroDocs": {
+              "url": "https://mcp.docs.astro.build/mcp"
+            },
+            "github": {
+              "httpUrl": "https://api.githubcopilot.com/mcp/",
+              "headers": {
+                "Authorization": "Bearer ''${GITHUB_TOKEN}"
+              }
+            },
+            "daisyui-blueprint": {
+              "command": "bunx",
+              "args": [
+                "-y",
+                "daisyui-blueprint@latest"
+              ]
+            },
+            "devenv": {
+              "command": "devenv",
+              "args": ["mcp"],
+              "env": {
+              }
+            }
           }
         }
       '';

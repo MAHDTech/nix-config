@@ -7,6 +7,7 @@
     ./general.nix
     ./github.nix
     ./gptcommit.nix
+    ./grok.nix
     ./scripts
     ./xdg.nix
   ];
