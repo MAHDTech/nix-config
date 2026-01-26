@@ -12,7 +12,7 @@
     syncFolders = {
       "Sync" = {
 
-        enable = true;
+        enable = false; # TODO: Re-enable when server fixed.
         id = "syncthing-shared";
         path = "/home/mahdtech/Sync";
         type = "sendreceive";

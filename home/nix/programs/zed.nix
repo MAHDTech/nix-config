@@ -511,22 +511,22 @@ in
 
           default_model = {
             provider = "x_ai";
-            model = "grok-4-1-fast-non-reasoning";
+            model = "grok-code-fast-1";
           };
 
           inline_assistant_model = {
             provider = "x_ai";
-            model = "grok-4-1-fast-non-reasoning";
+            model = "grok-code-fast-1";
           };
 
           commit_message_model = {
             provider = "x_ai";
-            model = "grok-4-1-fast-non-reasoning";
+            model = "grok-code-fast-1";
           };
 
           thread_summary_model = {
             provider = "x_ai";
-            model = "grok-4-1-fast-non-reasoning";
+            model = "grok-code-fast-1";
           };
 
         };
@@ -556,6 +556,48 @@ in
         #    ];
         #  };
         #};
+
+        #########################
+        # AI Context Servers
+        #########################
+
+        context_servers = {
+          astroDocs = {
+            type = "http";
+            url = "https://mcp.docs.astro.build/mcp";
+          };
+
+          daisyui-blueprint = {
+            command = "bunx";
+            args = [
+              "-y"
+              "daisyui-blueprint@latest"
+            ];
+            env =
+              let
+                email = builtins.getEnv "DAISYUI_EMAIL";
+                license = builtins.getEnv "DAISYUI_LICENSE";
+              in
+              lib.optionalAttrs (email != "") { EMAIL = email; }
+              // lib.optionalAttrs (license != "") { LICENSE = license; };
+          };
+
+          devenv = {
+            command = "devenv";
+            args = [ "mcp" ];
+            env = { };
+          };
+
+          github = {
+            type = "http";
+            url = "https://api.githubcopilot.com/mcp/";
+            headers =
+              let
+                token = builtins.getEnv "GITHUB_TOKEN";
+              in
+              lib.optionalAttrs (token != "") { Authorization = "Bearer ${token}"; };
+          };
+        };
 
         #########################
         # Language Server Providers
