@@ -563,7 +563,6 @@ in
 
         context_servers = {
           astroDocs = {
-            type = "http";
             url = "https://mcp.docs.astro.build/mcp";
           };
 
@@ -589,7 +588,6 @@ in
           };
 
           github = {
-            type = "http";
             url = "https://api.githubcopilot.com/mcp/";
             headers =
               let
