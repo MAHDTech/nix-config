@@ -371,6 +371,7 @@ in
         #buffer_font_family = "VictorMono Nerd Font Mono";
         #buffer_font_family = "Hack Nerd Font Mono";
         buffer_font_fallbacks = [
+          "Noto Color Emoji"
           ".ZedMono"
         ];
         buffer_font_size = 16;
