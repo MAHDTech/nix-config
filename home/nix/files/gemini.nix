@@ -193,7 +193,11 @@
               "args": [
                 "-y",
                 "daisyui-blueprint@latest"
-              ]
+              ],
+              "env": {
+                "LICENSE": "''${DAISYUI_LICENSE}",
+                "EMAIL": "''${DAISYUI_EMAIL}"
+              }
             },
             "devenv": {
               "command": "devenv",

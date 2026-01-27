@@ -374,13 +374,13 @@ in
           "Noto Color Emoji"
           ".ZedMono"
         ];
-        buffer_font_size = 16;
+        buffer_font_size = 18;
         buffer_font_weight = 500;
         buffer_line_height = "comfortable";
 
         # UI Fonts
-        #ui_font_family = ".ZedSans"; # IBM Plex
-        ui_font_family = ".SystemUIFont"; # System default
+        ui_font_family = ".ZedSans"; # IBM Plex
+        #ui_font_family = ".SystemUIFont"; # System default
         ui_font_fallbacks = [
           ".ZedSans"
           ".SystemUIFont"
