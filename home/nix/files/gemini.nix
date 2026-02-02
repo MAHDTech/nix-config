@@ -137,6 +137,12 @@
 
       text = ''
         {
+          "model": {
+            "name": "auto-gemini-3"
+          },
+          "context": {
+            "includeDirectories": ["~/.gemini/extensions/pickle-rick"]
+          },
           "experimental": {
             "skills": true,
             "codebaseInvestigatorSettings": {
@@ -164,6 +170,9 @@
               "minRetention": "7d"
             }
           },
+          "hooks": {
+            "enabled": true
+          },
           "output": {
             "format": "text"
           },
@@ -173,6 +182,15 @@
             "showLineNumbers": false
           },
           "tools": {
+            "exclude": ["run_shell_command(git push)"],
+            "allowed": [
+              "run_shell_command(git commit)",
+              "run_shell_command(git add)",
+              "run_shell_command(git diff)",
+              "run_shell_command(git status)"
+            ],
+            "sandbox": "docker",
+            "enableHooks": true,
             "shell": {
               "showColor": true
             },
@@ -198,15 +216,75 @@
                 "LICENSE": "''${DAISYUI_LICENSE}",
                 "EMAIL": "''${DAISYUI_EMAIL}"
               }
-            },
-            "devenv": {
-              "command": "devenv",
-              "args": ["mcp"],
-              "env": {
-              }
             }
           }
         }
+      '';
+    };
+
+    "geminicli-policy-allowed" = {
+      target = "${config.home.homeDirectory}/.gemini/policies/pickle_rick.toml";
+      executable = false;
+      text = ''
+        # ---------------------------------------------------------
+        # PICKLE RICK "GOD MODE" POLICIES 🥒
+        # ---------------------------------------------------------
+
+        # Reference:
+        # https://geminicli.com/docs/core/policy-engine/#system-wide-policies-admin
+
+        # 1. Unleash Morty (The Worker)
+        # Allows the Python script that runs the sub-agent to execute.
+        [[rule]]
+        toolName = "run_shell_command"
+        commandRegex = ".*spawn_morty\\.py.*"
+        decision = "allow"
+        priority = 100
+
+        # 2. Basic Engineering Senses
+        # Allows Morty to see and touch files without asking "Mother, may I?" every time.
+        [[rule]]
+        toolName = [
+            "read_file",
+            "write_file",
+            "replace",
+            "glob",
+            "list_directory",
+            "search_file_content",
+            "create_or_update_file",
+            "delete_file"
+        ]
+        decision = "allow"
+        priority = 95
+
+        # 3. The Tool Belt
+        # Allows standard dev commands.
+        [[rule]]
+        toolName = "run_shell_command"
+        commandPrefix = [
+            "git",
+            "npm",
+            "node",
+            "bun",
+            "cargo",
+            "devenv",
+            "op",
+            "pre-commit",
+            "mkdir",
+            "rm",
+            "cp",
+            "mv",
+            "touch"
+        ]
+        decision = "allow"
+        priority = 90
+
+        # 4. Agent Delegation
+        # Allows Pickle Rick to spawn sub-agents (codebase_investigator, etc.) if needed.
+        [[rule]]
+        toolName = "delegate_to_agent"
+        decision = "allow"
+        priority = 85
       '';
     };
   };

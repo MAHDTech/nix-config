@@ -12,6 +12,9 @@ let
 
   extraPackagesUnstable = with pkgsUnstable; [
     prettier
+
+    # Newer release of Gemini CLI
+    gemini-cli-bin
   ];
 
 in
@@ -162,7 +165,7 @@ in
         [
           # AI Agents
           claude-code
-          gemini-cli-bin
+          #gemini-cli-bin
 
           # Language Servers
           astro-language-server

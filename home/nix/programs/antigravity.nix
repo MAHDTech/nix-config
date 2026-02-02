@@ -13,10 +13,10 @@ let
 in
 {
 
-  home.packages =
-    with pkgs;
-    [
-      #antigravity-fhs
-    ]
-    ++ unstablePkgs;
+  home.packages = unstablePkgs;
+  #  with pkgs;
+  #  [
+  #    #antigravity-fhs
+  #  ]
+  #  ++ unstablePkgs;
 }

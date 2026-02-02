@@ -10,7 +10,9 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
-    gemini-cli-bin
+    # Using devenv.
+    #gemini-cli-bin
+    #gemini-cli
   ];
 
   systemArchPackages =
