@@ -245,14 +245,18 @@
         # Allows Morty to see and touch files without asking "Mother, may I?" every time.
         [[rule]]
         toolName = [
-            "read_file",
-            "write_file",
-            "replace",
-            "glob",
-            "list_directory",
-            "search_file_content",
+            "activate_skill",
             "create_or_update_file",
-            "delete_file"
+            "delete_file",
+            "glob",
+            "google_web_search",
+            "list_directory",
+            "read_file",
+            "replace",
+            "search_file_content",
+            "time.getCurrentTime",
+            "web_fetch",
+            "write_file",
         ]
         decision = "allow"
         priority = 95
@@ -262,19 +266,21 @@
         [[rule]]
         toolName = "run_shell_command"
         commandPrefix = [
-            "git",
-            "npm",
-            "node",
+            "bash",
             "bun",
             "cargo",
+            "cp",
             "devenv",
+            "git",
+            "mkdir",
+            "mv",
+            "node",
+            "npm",
             "op",
             "pre-commit",
-            "mkdir",
+            "python3",
             "rm",
-            "cp",
-            "mv",
-            "touch"
+            "touch",
         ]
         decision = "allow"
         priority = 90
