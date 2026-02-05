@@ -33,6 +33,10 @@
 
       # Forwarding -> Internet
       extraForwardRules = ''
+        # Docker
+        ip saddr 172.17.0.0/16 accept comment "Allow Docker to Internet"
+        ip daddr 172.17.0.0/16 accept comment "Allow Internet to Docker"
+
         # KinD
         ip saddr 172.18.0.0/16 accept comment "Allow Kind to Internet"
         ip daddr 172.18.0.0/16 accept comment "Allow Internet to Kind"
@@ -82,7 +86,8 @@
     nat = {
       enable = true;
       internalIPs = [
-        "172.18.0.0/16"
+        "172.17.0.0/16" # Docker
+        "172.18.0.0/16" # KinD
       ];
       externalInterface = "br0"; # The external interface with a host network IP.
     };
