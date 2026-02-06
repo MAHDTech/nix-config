@@ -13,7 +13,10 @@ let
   extraPackagesUnstable = with pkgsUnstable; [
     prettier
 
-    # Newer release of Gemini CLI
+    # Newer release of Agent Tools.
+    claude-code-acp
+    claude-code-bin
+    claude-monitor
     gemini-cli-bin
   ];
 
@@ -164,7 +167,8 @@ in
         with pkgs;
         [
           # AI Agents
-          claude-code
+          #claude-code-bin
+          #claude-code-acp
           #gemini-cli-bin
 
           # Language Servers

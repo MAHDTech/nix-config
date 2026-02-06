@@ -10,9 +10,10 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
-    # Using devenv.
-    #gemini-cli-bin
-    #gemini-cli
+    claude-code-acp
+    claude-code-bin
+    claude-monitor
+    gemini-cli-bin
   ];
 
   systemArchPackages =
