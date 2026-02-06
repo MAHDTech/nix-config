@@ -137,6 +137,9 @@ in
       # Image Viewer
       imv
 
+      # Image Editor
+      aseprite
+
       # PDF
       zathura
 
