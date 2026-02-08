@@ -144,9 +144,8 @@ in
         "wakatime"
 
         # Tools
-        "codebook"
         "color-highlight"
-        "typos"
+        "cspell"
 
         # Themes
         "catppuccin"
@@ -187,11 +186,11 @@ in
 
           # Linters
           clippy
+          cspell
           eslint
           golangci-lint
           markdownlint-cli2
           shellcheck
-          typos
           yamllint
 
           # Package Managers
