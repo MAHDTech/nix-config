@@ -51,6 +51,8 @@ in
       # Nix
       nixos-generators
       #nix-du
+      nil
+      nixfmt
 
       # Shell
       nushell
@@ -136,9 +138,6 @@ in
 
       # Image Viewer
       imv
-
-      # Image Editor
-      aseprite
 
       # PDF
       zathura

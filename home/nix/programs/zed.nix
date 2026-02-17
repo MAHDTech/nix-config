@@ -290,7 +290,8 @@ in
         #########################
 
         features = {
-          edit_prediction_provider = "zed";
+          #edit_prediction_provider = "zed";
+          edit_prediction_provider = "copilot";
         };
 
         #########################

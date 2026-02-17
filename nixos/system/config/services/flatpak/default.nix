@@ -29,6 +29,8 @@
       #"flathub:app/com.slack.Slack//stable"
       # Flatpak
       "flathub:app/com.github.tchx84.Flatseal//stable"
+      # Video
+      "flathub:app/fr.handbrake.ghb//stable"
       # Audio
       #"flathub:app/com.obsproject.Studio//stable"
       # Games
@@ -36,7 +38,7 @@
       "flathub:app/com.valvesoftware.SteamLink//stable"
       "flathub:app/org.ferdium.Ferdium//stable"
       "flathub:app/org.videolan.VLC//stable"
-      # Editing software
+      # Image Editing
       "flathub:app/com.jgraph.drawio.desktop//stable"
       "flathub:app/com.orama_interactive.Pixelorama//stable"
       "flathub:app/net.pixieditor.PixiEditor//stable"

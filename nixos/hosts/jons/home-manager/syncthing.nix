@@ -12,13 +12,13 @@
     syncFolders = {
       "Sync" = {
 
-        enable = false; # TODO: Re-enable when server fixed.
+        enable = true;
         id = "syncthing-shared";
         path = "/home/mahdtech/Sync";
         type = "sendreceive";
 
         devices = [
-          "NUC"
+          #"NUC" # NUC is dead :(
         ];
         versioning = {
           type = "simple";
