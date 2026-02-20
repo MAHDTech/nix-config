@@ -155,7 +155,7 @@ in
         "mcp-server-container-use"
         "mcp-server-github"
         "mcp-server-gitlab"
-        "terraform-context-server"
+        "terraform-mcp-server"
       ];
 
       #########################
@@ -590,6 +590,10 @@ in
           };
 
           devenv = {
+            url = "https://mcp.devenv.sh";
+          };
+
+          devenv-cli = {
             command = "devenv";
             args = [ "mcp" ];
             env = { };
