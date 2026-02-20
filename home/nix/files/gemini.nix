@@ -2,7 +2,7 @@
 {
   home.file = {
 
-    "geminicli-extensions-install" = {
+    "gemini-install-extensions" = {
       target = "${config.home.homeDirectory}/.local/bin/gemini-install-extensions";
       executable = true;
       text = ''
@@ -26,6 +26,8 @@
           https://github.com/googleapis/genai-toolbox
           #https://github.com/github/github-mcp-server
           # Third-party
+          https://github.com/elevenlabs/elevenlabs-mcp
+          https://github.com/Olshansk/agent-md
           #https://github.com/ZhanZiyuan/cloudflare-mcp
           #https://github.com/abagames/slash-criticalthink
           #https://github.com/dynatrace-oss/dynatrace-mcp
@@ -170,7 +172,7 @@
               "minRetention": "7d"
             }
           },
-          "hooks": {
+          "hooksConfig": {
             "enabled": true
           },
           "output": {
