@@ -383,6 +383,20 @@
       };
 
       #########################
+      # Romilly (Storage & Observability)
+      #########################
+
+      "romilly-01" = {
+        host = "romilly-01";
+        hostname = "romilly-01.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      #########################
       # UniFi
       #########################
 
