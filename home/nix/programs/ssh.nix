@@ -132,104 +132,18 @@
         };
       };
 
+      ##################################################
+      # TARS Cloud
+      ##################################################
+
       #########################
-      # Nutanix AHV Nodes
+      # Lander (Load Balancer)
       #########################
 
-      "ntnx-ce-01-ahv" = {
-        host = "ntnx-ce-01-ahv";
-        hostname = "ntnx-ce-01-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-02-ahv" = {
-        host = "ntnx-ce-02-ahv";
-        hostname = "ntnx-ce-02-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-03-ahv" = {
-        host = "ntnx-ce-03-ahv";
-        hostname = "ntnx-ce-03-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-04-ahv" = {
-        host = "ntnx-ce-04-ahv";
-        hostname = "ntnx-ce-04-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-05-ahv" = {
-        host = "ntnx-ce-05-ahv";
-        hostname = "ntnx-ce-05-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-06-ahv" = {
-        host = "ntnx-ce-06-ahv";
-        hostname = "ntnx-ce-06-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-07-ahv" = {
-        host = "ntnx-ce-07-ahv";
-        hostname = "ntnx-ce-07-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-08-ahv" = {
-        host = "ntnx-ce-08-ahv";
-        hostname = "ntnx-ce-08-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-09-ahv" = {
-        host = "ntnx-ce-09-ahv";
-        hostname = "ntnx-ce-09-ahv.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-10-ahv" = {
-        host = "ntnx-ce-10-ahv";
-        hostname = "ntnx-ce-10-ahv.saltlabs.cloud";
-        user = "admin";
+      "lander-01" = {
+        host = "lander-01";
+        hostname = "lander-01.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
@@ -237,103 +151,63 @@
       };
 
       #########################
-      # Nutanix CVM VMs
+      # Horizon (CASE Workers)
       #########################
 
-      "ntnx-ce-01-cvm" = {
-        host = "ntnx-ce-01-cvm";
-        hostname = "ntnx-ce-01-cvm.saltlabs.cloud";
-        user = "admin";
+      "horizon-01" = {
+        host = "horizon-01";
+        hostname = "horizon-01.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
         };
       };
 
-      "ntnx-ce-02-cvm" = {
-        host = "ntnx-ce-02-cvm";
-        hostname = "ntnx-ce-02-cvm.saltlabs.cloud";
-        user = "admin";
+      "horizon-02" = {
+        host = "horizon-02";
+        hostname = "horizon-02.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
         };
       };
 
-      "ntnx-ce-03-cvm" = {
-        host = "ntnx-ce-03-cvm";
-        hostname = "ntnx-ce-03-cvm.saltlabs.cloud";
-        user = "admin";
+      "horizon-03" = {
+        host = "horizon-03";
+        hostname = "horizon-03.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
         };
       };
 
-      "ntnx-ce-04-cvm" = {
-        host = "ntnx-ce-04-cvm";
-        hostname = "ntnx-ce-04-cvm.saltlabs.cloud";
-        user = "admin";
+      "horizon-04" = {
+        host = "horizon-04";
+        hostname = "horizon-04.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
         };
       };
 
-      "ntnx-ce-05-cvm" = {
-        host = "ntnx-ce-05-cvm";
-        hostname = "ntnx-ce-05-cvm.saltlabs.cloud";
-        user = "admin";
+      "horizon-05" = {
+        host = "horizon-05";
+        hostname = "horizon-05.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
         };
       };
 
-      "ntnx-ce-06-cvm" = {
-        host = "ntnx-ce-06-cvm";
-        hostname = "ntnx-ce-06-cvm.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-07-cvm" = {
-        host = "ntnx-ce-07-cvm";
-        hostname = "ntnx-ce-07-cvm.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-08-cvm" = {
-        host = "ntnx-ce-08-cvm";
-        hostname = "ntnx-ce-08-cvm.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-09-cvm" = {
-        host = "ntnx-ce-09-cvm";
-        hostname = "ntnx-ce-09-cvm.saltlabs.cloud";
-        user = "admin";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
-      };
-
-      "ntnx-ce-10-cvm" = {
-        host = "ntnx-ce-10-cvm";
-        hostname = "ntnx-ce-10-cvm.saltlabs.cloud";
-        user = "admin";
+      "horizon-06" = {
+        host = "horizon-06";
+        hostname = "horizon-06.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
@@ -341,13 +215,167 @@
       };
 
       #########################
-      # Prism Central
+      # Tesseract (BUFFER)
       #########################
 
-      "ntnx-pc-01" = {
-        host = "ntnx-pc-01";
-        hostname = "ntnx-pc-01.saltlabs.cloud";
-        user = "admin";
+      "tesseract-01" = {
+        host = "tesseract-01";
+        hostname = "tesseract-01.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "tesseract-02" = {
+        host = "tesseract-02";
+        hostname = "tesseract-02.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "tesseract-03" = {
+        host = "tesseract-03";
+        hostname = "tesseract-03.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "tesseract-04" = {
+        host = "tesseract-04";
+        hostname = "tesseract-04.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      #########################
+      # Lazarus / KIPP (Drones)
+      #########################
+
+      "lazarus-01" = {
+        host = "lazarus-01";
+        hostname = "lazarus-01.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-02" = {
+        host = "lazarus-02";
+        hostname = "lazarus-02.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-03" = {
+        host = "lazarus-03";
+        hostname = "lazarus-03.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-04" = {
+        host = "lazarus-04";
+        hostname = "lazarus-04.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-05" = {
+        host = "lazarus-05";
+        hostname = "lazarus-05.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-06" = {
+        host = "lazarus-06";
+        hostname = "lazarus-06.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-07" = {
+        host = "lazarus-07";
+        hostname = "lazarus-07.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-08" = {
+        host = "lazarus-08";
+        hostname = "lazarus-08.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-09" = {
+        host = "lazarus-09";
+        hostname = "lazarus-09.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-10" = {
+        host = "lazarus-10";
+        hostname = "lazarus-10.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-11" = {
+        host = "lazarus-11";
+        hostname = "lazarus-11.tars-cloud.ai";
+        user = "cooper";
+        extraOptions = {
+          PasswordAuthentication = "no";
+          PubkeyAuthentication = "yes";
+        };
+      };
+
+      "lazarus-12" = {
+        host = "lazarus-12";
+        hostname = "lazarus-12.tars-cloud.ai";
+        user = "cooper";
         extraOptions = {
           PasswordAuthentication = "no";
           PubkeyAuthentication = "yes";
