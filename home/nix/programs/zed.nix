@@ -172,17 +172,21 @@ in
 
           # Language Servers
           astro-language-server
+          bash-language-server
+          dockerfile-language-server
           gitlab-ci-ls
           gopls
           jq-lsp
           nixd
           nil
+          nodePackages.typescript-language-server
           powershell-editor-services
           rust-analyzer
           starpls
           terraform-ls
           terraform-lsp
           tofu-ls
+          vscode-langservers-extracted
 
           # Linters
           clippy
@@ -191,6 +195,7 @@ in
           golangci-lint
           markdownlint-cli2
           shellcheck
+          tflint
           yamllint
 
           # Package Managers
@@ -199,22 +204,36 @@ in
 
           # Formatters
           nixfmt-rfc-style
+          rustfmt
           shfmt
 
           # Programming Languages
           go
+          nodejs
           powershell
           rustc
+          typescript
 
           # Infrastructure Tools
           opentofu
+          pulumi
+          pulumiPackages.pulumi-go
           terraform
 
           # Version Control
+          git
           jujutsu
+
+          # Containers
+          docker-client
+          docker-compose
+
+          # Debugging
+          delve
 
           # Utilities
           gotools
+          uv
           wakatime-cli
         ]
         ++ extraPackagesUnstable;
