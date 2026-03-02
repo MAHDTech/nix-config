@@ -145,12 +145,6 @@
           "context": {
             "includeDirectories": ["~/.gemini/extensions/pickle-rick"]
           },
-          "experimental": {
-            "skills": true,
-            "codebaseInvestigatorSettings": {
-              "maxNumTurns": 30
-            }
-          },
           "security": {
             "auth": {
               "selectedType": "oauth-personal"
@@ -162,10 +156,7 @@
               "enabled": true
             }
           },
-          "theme": "Default",
           "general": {
-            "enablePromptCompletion": true,
-            "previewFeatures": true,
             "vimMode": true,
             "sessionRetention": {
               "enabled": true,
@@ -179,6 +170,7 @@
             "format": "text"
           },
           "ui": {
+            "theme": "Default",
             "showMemoryUsage": true,
             "showModelInfoInChat": true,
             "showLineNumbers": false
@@ -192,7 +184,6 @@
               "run_shell_command(git status)"
             ],
             "sandbox": "docker",
-            "enableHooks": true,
             "shell": {
               "showColor": true
             },

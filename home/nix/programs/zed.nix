@@ -289,10 +289,7 @@ in
         # Features
         #########################
 
-        features = {
-          #edit_prediction_provider = "zed";
-          edit_prediction_provider = "copilot";
-        };
+        features = { };
 
         #########################
         # Prettier Integration
@@ -420,6 +417,7 @@ in
 
         edit_predictions = {
           mode = "eager";
+          provider = "copilot";
         };
 
         #########################
@@ -442,7 +440,6 @@ in
           preferred_completion_mode = "normal";
           button = true;
           dock = "right";
-          always_allow_tool_actions = false;
           single_file_review = true;
           enable_feedback = true;
 
@@ -453,6 +450,42 @@ in
 
           expand_edit_card = true;
           expand_terminal_card = true;
+
+          tool_permissions = {
+            default = "confirm";
+            tools = {
+              terminal = {
+                default = "confirm";
+              };
+              edit_file = {
+                default = "confirm";
+              };
+              delete_path = {
+                default = "confirm";
+              };
+              move_path = {
+                default = "confirm";
+              };
+              copy_path = {
+                default = "allow";
+              };
+              create_directory = {
+                default = "allow";
+              };
+              restore_file_from_disk = {
+                default = "allow";
+              };
+              save_file = {
+                default = "allow";
+              };
+              fetch = {
+                default = "allow";
+              };
+              web_search = {
+                default = "allow";
+              };
+            };
+          };
 
           #########################
           # AI Profiles
@@ -571,7 +604,13 @@ in
 
         context_servers = {
           astroDocs = {
+            settings = { };
             url = "https://mcp.docs.astro.build/mcp";
+          };
+
+          avalanche = {
+            settings = { };
+            url = "https://build.avax.network/api/mcp";
           };
 
           daisyui-blueprint = {
@@ -590,6 +629,7 @@ in
           };
 
           devenv = {
+            settings = { };
             url = "https://mcp.devenv.sh";
           };
 
@@ -600,12 +640,18 @@ in
           };
 
           github = {
+            settings = { };
             url = "https://api.githubcopilot.com/mcp/";
             headers =
               let
                 token = builtins.getEnv "GITHUB_TOKEN";
               in
               lib.optionalAttrs (token != "") { Authorization = "Bearer ${token}"; };
+          };
+
+          phaser-editor = {
+            command = "bunx";
+            args = [ "@phaserjs/editor-mcp-server" ];
           };
         };
 

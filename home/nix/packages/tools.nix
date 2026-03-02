@@ -11,9 +11,9 @@ let
 
   unstablePkgs = with pkgsUnstable; [
     claude-code-acp
-    claude-code-bin
+    claude-code
     claude-monitor
-    gemini-cli-bin
+    gemini-cli
   ];
 
   systemArchPackages =
@@ -157,7 +157,7 @@ in
       go
       golangci-lint
       gotools
-      #gemini-cli-bin
+      #gemini-cli
     ]
     ++ unstablePkgs
     ++ systemArchPackages;
