@@ -57,6 +57,7 @@ randomize = "randomize"
 randomized = "randomized"
 recognize = "recognize"
 serialize = "serialize"
+shotcut = "shotcut"
 stabilize = "stabilize"
 
 [files]

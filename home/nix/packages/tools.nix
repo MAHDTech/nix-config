@@ -139,6 +139,9 @@ in
       # Image Viewer
       imv
 
+      # Video Editor
+      shotcut
+
       # PDF
       zathura
 
