@@ -2,7 +2,7 @@
 
 ##################################################
 # Name: keyring
-# Description: Keyring shennanigans.
+# Description: Keyring shenanigans.
 ##################################################
 
 function unlock_gnome_keyring() {

@@ -32,7 +32,7 @@ function ansible_cfg_workaround_cleanup() {
 
 function ansible_cfg_workaround() {
 
-	# Merges multiple ansible.cfg togethor
+	# Merges multiple ansible.cfg together
 
 	# References:
 	# https://github.com/ansible/proposals/issues/35
