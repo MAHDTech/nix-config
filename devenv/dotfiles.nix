@@ -81,10 +81,11 @@ in
       "^\\.devenv(/.*)?$"
       "^\\.direnv(/.*)?$"
       "^\\.git(/.*)?$"
+      "^docs/agents/.*"
+      "^nixos/hosts/.*/files/.*$"
       "^secrets/keys/.*\\.asc$"
       "^secrets/keystore.yaml$"
       "^vendor(/.*)?$"
-      "^nixos/hosts/.*/files/.*$"
     ];
     hooks = {
       actionlint.enable = true;

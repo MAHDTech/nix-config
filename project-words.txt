@@ -1175,3 +1175,8 @@ zfsutil
 zstd
 zvol
 zvols
+calt
+liga
+dlig
+freetype
+autohint
