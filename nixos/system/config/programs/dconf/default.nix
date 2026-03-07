@@ -1,7 +1,10 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
-  programs.dconf = {enable = true;};
+  programs.dconf = {
+    enable = true;
+  };
 }

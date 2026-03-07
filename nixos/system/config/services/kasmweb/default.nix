@@ -3,7 +3,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   # The kasmweb username.
   options.kasmwebconfig = {
     user = lib.mkOption {
@@ -33,7 +34,7 @@
   };
 
   config = {
-    environment.systemPackages = with pkgs; [];
+    environment.systemPackages = with pkgs; [ ];
 
     services.kasmweb = {
       enable = true;

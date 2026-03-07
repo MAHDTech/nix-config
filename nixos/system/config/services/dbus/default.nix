@@ -1,7 +1,10 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
-  services.dbus = {enable = true;};
+  services.dbus = {
+    enable = true;
+  };
 }

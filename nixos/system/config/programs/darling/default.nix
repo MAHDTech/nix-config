@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # Darling is the macOS compatibility layer for Linux.
 
   imports = [

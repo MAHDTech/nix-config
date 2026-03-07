@@ -54,7 +54,7 @@ log_err() { log ERROR "$@"; }
 log_ok() { log OK "$@"; }
 
 # Cleanup handler (always runs)
-# shellcheck disable=SC2317 # Called via trap; ShellCheck can't always detect indirect invocation
+# shellcheck disable=SC2317,SC2329 # Called via trap; ShellCheck can't always detect indirect invocation
 cleanup() {
 	# Prevent recursive cleanup if already in progress
 	[ -n "$__CLEANUP_RUNNING" ] && return

@@ -1,4 +1,5 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   carvel = {
     ytt = pkgs.fetchurl {
       name = "ytt";
@@ -37,26 +38,26 @@
     };
   };
 in
-  pkgs.stdenv.mkDerivation {
-    name = "carvel-dev";
-    version = "1.0.0";
+pkgs.stdenv.mkDerivation {
+  name = "carvel-dev";
+  version = "1.0.0";
 
-    phases = ["installPhase"];
+  phases = [ "installPhase" ];
 
-    installPhase = ''
-      mkdir --parents $out/bin
+  installPhase = ''
+    mkdir --parents $out/bin
 
-      install --verbose ${carvel.ytt} $out/bin/ytt
-      install --verbose ${carvel.kapp} $out/bin/kapp
-      install --verbose ${carvel.kctrl} $out/bin/kctrl
-      install --verbose ${carvel.kbld} $out/bin/kbld
-      install --verbose ${carvel.imgpkg} $out/bin/imgpkg
-      install --verbose ${carvel.vendir} $out/bin/vendir
-    '';
+    install --verbose ${carvel.ytt} $out/bin/ytt
+    install --verbose ${carvel.kapp} $out/bin/kapp
+    install --verbose ${carvel.kctrl} $out/bin/kctrl
+    install --verbose ${carvel.kbld} $out/bin/kbld
+    install --verbose ${carvel.imgpkg} $out/bin/imgpkg
+    install --verbose ${carvel.vendir} $out/bin/vendir
+  '';
 
-    meta = {
-      description = "Carvel provides a set of reliable, single-purpose, composable tools that aid in your application building, configuration, and deployment to Kubernetes.";
-      homepage = "https://carvel.dev";
-      license = "Apache 2.0";
-    };
-  }
+  meta = {
+    description = "Carvel provides a set of reliable, single-purpose, composable tools that aid in your application building, configuration, and deployment to Kubernetes.";
+    homepage = "https://carvel.dev";
+    license = "Apache 2.0";
+  };
+}

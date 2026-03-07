@@ -1,5 +1,6 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
   programs = {
     gnome-disks.enable = true;
@@ -25,7 +26,7 @@
       ];
 
       # https://nixos.org/manual/nixos/stable/options.html#opt-services.xserver.desktopManager.pantheon.extraSwitchboardPlugs
-      extraSwitchboardPlugs = [];
+      extraSwitchboardPlugs = [ ];
     };
   };
 

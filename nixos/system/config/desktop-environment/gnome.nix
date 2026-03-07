@@ -1,5 +1,6 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
   environment.systemPackages = with pkgs; [
     gnomeExtensions.appindicator
@@ -9,7 +10,7 @@
     ibus
   ];
 
-  services.udev.packages = with pkgs; [gnome-settings-daemon];
+  services.udev.packages = with pkgs; [ gnome-settings-daemon ];
 
   # If you need to run old GNOME 2 apps
   #services.dbus.packages = with pkgs; [ gnome2.GConf ];
@@ -19,9 +20,13 @@
 
     updateDbusEnvironment = true;
 
-    displayManager = {gdm.enable = true;};
+    displayManager = {
+      gdm.enable = true;
+    };
 
-    desktopManager = {gnome.enable = true;};
+    desktopManager = {
+      gnome.enable = true;
+    };
   };
 
   environment.gnome.excludePackages =

@@ -11,4 +11,3 @@ sudo mount /dev/sda2 /mnt/nixos/boot/nixos
 echo "When ready, run this..."
 
 echo sudo -E nixos-install --verbose --no-root-password --flake .#NUC --impure --root /mnt/nixos
-

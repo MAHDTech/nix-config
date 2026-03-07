@@ -1,7 +1,8 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
   services.resolved = {
     enable = true;
@@ -10,7 +11,10 @@
 
     dnssec = "allow-downgrade";
 
-    fallbackDns = ["1.1.1.1" "1.0.0.1"];
+    fallbackDns = [
+      "1.1.1.1"
+      "1.0.0.1"
+    ];
 
     # Local network suffixes
     domains = [

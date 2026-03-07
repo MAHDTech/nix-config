@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"actions_menu/utils"
+	fileutils "actions_menu/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/sync/errgroup"
@@ -111,7 +111,7 @@ func RunPatch(ch chan tea.Msg, yolo bool, logger *log.Logger) {
 			case <-ctx.Done():
 				return ctx.Err()
 			default:
-				changed, diff, err := utils.ProcessFile(path, yolo, logger)
+				changed, diff, err := fileutils.ProcessFile(path, yolo, logger)
 				mu.Lock()
 				defer mu.Unlock()
 				if err != nil {

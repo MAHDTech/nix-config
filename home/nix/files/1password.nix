@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   home.file = {
     "1password-ssh-agent" = {
       target = "${config.home.homeDirectory}/.config/1Password/ssh/agent.toml";

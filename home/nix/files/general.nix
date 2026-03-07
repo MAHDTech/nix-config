@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   home.file = {
     # Electron flags for apps like VSCode
     "electron-flags" = {

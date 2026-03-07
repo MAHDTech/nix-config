@@ -1,7 +1,8 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # https://nixos.wiki/wiki/Laptop
 
-  imports = [];
+  imports = [ ];
 
   environment.systemPackages = with pkgs; [
     # Install powertop for analysis but not run autotune.

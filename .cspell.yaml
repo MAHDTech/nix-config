@@ -11,12 +11,15 @@ dictionaries:
   - project-words
 ignorePaths:
   - "*.drawio"
+  - "*.sum"
   - .devenv
   - .direnv
   - .git
+  - .sops.yaml
   - devenv.nix
   - docs/agents/**
   - docs/issues/**
+  - go.mod
   - node_modules
   - public/config-client.json
   - public/workers

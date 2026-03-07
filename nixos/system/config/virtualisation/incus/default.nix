@@ -1143,7 +1143,7 @@ in
               ${pkgs.coreutils}/bin/echo "Running Northbound DB in local standalone mode."
             ''
         )
-        + '''';
+        + "";
       };
 
       ###############################
@@ -1229,7 +1229,7 @@ in
               ${pkgs.coreutils}/bin/echo "Running Southbound DB in local standalone mode."
             ''
         )
-        + '''';
+        + "";
       };
 
       ###############################

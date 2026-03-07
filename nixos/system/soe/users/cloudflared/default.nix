@@ -1,6 +1,8 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   username = "cloudflared";
-in {
+in
+{
   users.users.${username} = {
     name = username;
     uid = 1001;

@@ -1,4 +1,5 @@
-{config, ...}: {
+{ _ }:
+{
   # Fancontrol is the shell script inside of lm-sensors.
   hardware = {
     fancontrol = {
@@ -25,13 +26,13 @@
       enable = false;
 
       # Check thinkfan man page.
-      extraArgs = [];
+      extraArgs = [ ];
 
       # Enable to build thinkfan with S.M.A.R.T support.
       smartSupport = true;
 
       # Configure the settings not exposed in NixOS.
-      settings = {};
+      settings = { };
 
       # Fans (only 1 is currently supported)
       # Common paths;
@@ -154,23 +155,59 @@
       # HIGH is the temp when to step up to the next LEVEL.
       levels = [
         # When the temp is from 0 to 25
-        [0 0 25]
+        [
+          0
+          0
+          25
+        ]
         # When the temp is from 25 to 30
-        [1 25 30]
+        [
+          1
+          25
+          30
+        ]
         # When the temp is from 30 to 35
-        [2 30 35]
+        [
+          2
+          30
+          35
+        ]
         # When the temp is from 35 to 40
-        [3 35 40]
+        [
+          3
+          35
+          40
+        ]
         # When the temp is from 40 to 45
-        [4 40 45]
+        [
+          4
+          40
+          45
+        ]
         # When the temp is from 45 to 50
-        [5 45 50]
+        [
+          5
+          45
+          50
+        ]
         # When the temp is from 50 to 55
-        ["level auto" 50 55]
+        [
+          "level auto"
+          50
+          55
+        ]
         # When the level is from 50 to 60
-        ["level full-speed" 55 60]
+        [
+          "level full-speed"
+          55
+          60
+        ]
         # When the temp is greater than 60
-        ["level disengaged" 60 32767]
+        [
+          "level disengaged"
+          60
+          32767
+        ]
       ];
     };
   };

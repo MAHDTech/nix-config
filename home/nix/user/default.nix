@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   home = {
     sessionVariables = {
       # Allow unfree packages.

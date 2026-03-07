@@ -91,7 +91,7 @@ After deployment, verify that the LINSTOR services are running:
 
 Run these commands on the controller node which in this example is `hypervisor-1`.
 
-**Note:** This example uses a single controller node. For HA controllers there are alot more steps involved outside of the scope of this guide.
+**Note:** This example uses a single controller node. For HA controllers there are a lot more steps involved outside of the scope of this guide.
 
 ```bash
 # Show the current nodes in the cluster

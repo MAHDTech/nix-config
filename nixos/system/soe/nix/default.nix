@@ -51,7 +51,7 @@
       ];
     };
 
-    extraOptions = '''';
+    extraOptions = "";
 
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 

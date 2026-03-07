@@ -83,7 +83,7 @@
           '';
 
           # Use external diff tool
-          dft = ''difftool'';
+          dft = "difftool";
 
           # Reset file permissions only
           reset-permissions = ''

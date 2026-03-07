@@ -1,5 +1,10 @@
-{pkgs, ...}: {
-  home.packages = with pkgs; [bashInteractive bash-completion nix-bash-completions];
+{ pkgs, ... }:
+{
+  home.packages = with pkgs; [
+    bashInteractive
+    bash-completion
+    nix-bash-completions
+  ];
 
   programs.bash = {
     enable = true;
@@ -7,11 +12,14 @@
 
     package = pkgs.bashInteractive;
 
-    historyControl = ["ignoredups" "ignorespace"];
-    historyIgnore = ["sops"];
+    historyControl = [
+      "ignoredups"
+      "ignorespace"
+    ];
+    historyIgnore = [ "sops" ];
     historySize = 10000;
 
-    shellAliases = {};
+    shellAliases = { };
 
     shellOptions = [
       "cmdhist"
@@ -24,18 +32,15 @@
 
     # TODO: Transition away from manual rc management.
     # These are added to the top of .bashrc
-    bashrcExtra = ''
-    '';
+    bashrcExtra = "";
 
     initExtra = ''
       . ~/.shrc
     '';
 
-    logoutExtra = ''
-    '';
+    logoutExtra = "";
 
-    profileExtra = ''
-    '';
+    profileExtra = "";
 
     sessionVariables = {
       EDITOR = "vim";

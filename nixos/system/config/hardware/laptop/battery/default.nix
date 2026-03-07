@@ -1,7 +1,8 @@
-{pkgs, ...}: {
-  imports = [./notifier.nix];
+{ pkgs, ... }:
+{
+  imports = [ ./notifier.nix ];
 
-  environment.systemPackages = with pkgs; [libnotify];
+  environment.systemPackages = with pkgs; [ libnotify ];
 
   services.batteryNotifier = {
     enable = true;

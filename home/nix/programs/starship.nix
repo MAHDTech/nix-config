@@ -2,8 +2,9 @@
   lib,
   pkgs,
   ...
-}: {
-  home.packages = with pkgs; [];
+}:
+{
+  home.packages = with pkgs; [ ];
 
   programs.starship = {
     enable = true;
@@ -319,7 +320,9 @@
         symbol = "☸️ ";
       };
 
-      line_break = {disabled = false;};
+      line_break = {
+        disabled = false;
+      };
 
       memory_usage = {
         disabled = false;

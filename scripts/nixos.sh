@@ -63,7 +63,7 @@ else
 	exit 1
 fi
 
-# Partition shennanigans.
+# Partition shenanigans.
 
 if [[ ${NIX_CONFIG_INST_DISK_1} =~ ^/dev/nvme* ]]; then
 
@@ -72,7 +72,6 @@ if [[ ${NIX_CONFIG_INST_DISK_1} =~ ^/dev/nvme* ]]; then
 	PART_1="p1"
 	PART_2="p2"
 	PART_3="p3"
-	PART_4="p4"
 
 elif [[ ${NIX_CONFIG_INST_DISK_1} =~ /dev/sd* ]]; then
 
@@ -81,7 +80,6 @@ elif [[ ${NIX_CONFIG_INST_DISK_1} =~ /dev/sd* ]]; then
 	PART_1="1"
 	PART_2="2"
 	PART_3="3"
-	PART_4="4"
 
 else
 
@@ -90,7 +88,6 @@ else
 	PART_1="1"
 	PART_2="2"
 	PART_3="3"
-	PART_4="4"
 
 fi
 
@@ -159,27 +156,27 @@ for DISK in "${INST_DISKS[@]}"; do
 	}
 
 	writeLog "INFO" "Creating UEFI system partition"
-	sgdisk -n 1:1M:+${INST_PARTSIZE_UESP}M -t 1:EF00 "${DISK}" || {
+	sgdisk -n "1:1M:+${INST_PARTSIZE_UESP}M" -t 1:EF00 "${DISK}" || {
 		writeLog "ERROR" "Failed to create UEFI system partition!"
 		exit 98
 	}
 
 	writeLog "INFO" "Creating boot partition"
-	sgdisk -n 2:0:+${INST_PARTSIZE_BOOT}G -t 2:BE00 "${DISK}" || {
+	sgdisk -n "2:0:+${INST_PARTSIZE_BOOT}G" -t 2:BE00 "${DISK}" || {
 		writeLog "ERROR" "Failed to create boot partition!"
 		exit 97
 	}
 
 	if [[ ${INST_ENABLE_SWAP^^} == "TRUE" ]]; then
 		writeLog "INFO" "Creating SWAP partition"
-		sgdisk -n 4:0:+${INST_PARTSIZE_SWAP}G -t 4:8200 "${DISK}" || {
+		sgdisk -n "4:0:+${INST_PARTSIZE_SWAP}G" -t 4:8200 "${DISK}" || {
 			writeLog "ERROR" "Failed to create SWAP partition!"
 			exit 96
 		}
 	fi
 
 	writeLog "INFO" "Creating root partition"
-	sgdisk -n 3:0:+${INST_PARTSIZE_ROOT}G -t 3:BF00 "${DISK}" || {
+	sgdisk -n "3:0:+${INST_PARTSIZE_ROOT}G" -t 3:BF00 "${DISK}" || {
 		writeLog "ERROR" "Failed to create root partition!"
 		exit 96
 	}
@@ -400,7 +397,7 @@ zfs create \
 	exit 91
 }
 
-writeLog "INFO" "Formatting and mouting EFI System Partition"
+writeLog "INFO" "Formatting and mounting EFI System Partition"
 
 for DISK in "${INST_DISKS[@]}"; do
 
@@ -444,7 +441,7 @@ if [[ ${WIPED_DISKS} -eq 2 ]]; then
 				writeLog "ERROR" "Failed to create required directory for EFI FAT partitions"
 				exit 90
 			}
-			mount -t vfat ${DISK}${PART_1} "/mnt/boot/efis/${DISK##*/}${PART_1}" || {
+			mount -t vfat "${DISK}${PART_1}" "/mnt/boot/efis/${DISK##*/}${PART_1}" || {
 				writeLog "ERROR" "Failed to mount EFI FAT partition"
 				exit 90
 			}
@@ -523,11 +520,11 @@ zfs list
 echo -e "\n\n"
 
 # HACK: Fix this it's too fragile.
-INST_EFI_UUID=$(ls -la /dev/disk/by-uuid/ | grep "${NIX_CONFIG_INST_DISK_1##*/}${PART_1}" | cut -d ' ' -f 10)
+INST_EFI_UUID=$(find /dev/disk/by-uuid/ -maxdepth 1 -name "*${NIX_CONFIG_INST_DISK_1##*/}${PART_1}*" -printf "%P\n" | head -n1)
 
 writeLog "WARN" "The UUID for the EFI partition has changed, update git with the id ${INST_EFI_UUID:-ERROR} before continuing..."
 
-ls -la /dev/disk/by-uuid/ | grep "${NIX_CONFIG_INST_DISK_1##*/}${PART_1}"
+find /dev/disk/by-uuid/ -maxdepth 1 -name "*${NIX_CONFIG_INST_DISK_1##*/}${PART_1}*"
 
 pause "Press ENTER to continue..."
 git pull

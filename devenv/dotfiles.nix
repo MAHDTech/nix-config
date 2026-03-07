@@ -113,16 +113,16 @@ in
       };
       cspell = {
         enable = true;
-        excludes = [
-
-        ];
       };
       dialyzer.enable = true;
       editorconfig-checker = {
         enable = true;
       };
       gofmt.enable = true;
-      golangci-lint.enable = true;
+      golangci-lint = {
+        enable = true;
+        excludes = [ "^scripts/hacks/" ];
+      };
       golines.enable = true;
       gotest.enable = true;
       govet.enable = true;
@@ -162,6 +162,7 @@ in
       revive = {
         enable = true;
         fail_fast = false;
+        excludes = [ "^scripts/hacks/" ];
       };
       ripsecrets.enable = true;
       shellcheck = {
@@ -171,7 +172,10 @@ in
         ];
       };
       shfmt.enable = true;
-      staticcheck.enable = true;
+      staticcheck = {
+        enable = true;
+        excludes = [ "^scripts/hacks/" ];
+      };
       statix.enable = true;
       trufflehog.enable = false;
       trim-trailing-whitespace.enable = true;

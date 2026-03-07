@@ -1,11 +1,12 @@
-{pkgs, ...}: {
-  imports = [];
+{ pkgs, ... }:
+{
+  imports = [ ];
 
-  environment.systemPackages = with pkgs; [];
+  environment.systemPackages = with pkgs; [ ];
 
   services.cron = {
     enable = true;
 
-    systemCronJobs = [];
+    systemCronJobs = [ ];
   };
 }

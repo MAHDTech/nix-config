@@ -1,5 +1,5 @@
-// Package utils provides utility functions for file processing and diff generation.
-package utils
+// Package fileutils provides utility functions for file processing and diff generation.
+package fileutils
 
 import (
 	"fmt"

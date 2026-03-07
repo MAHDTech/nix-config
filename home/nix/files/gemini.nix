@@ -90,12 +90,8 @@
                 "url": "https://mcp.devenv.sh"
               },
               "github": {
-                "command": "${pkgs.docker}/bin/docker",
-                "args": [
-                  "run", "-i", "--rm",
-                  "-e", "GITHUB_TOKEN",
-                  "ghcr.io/github/github-mcp-server"
-                ],
+                "command": "${pkgs.github-mcp-server}/bin/github-mcp-server",
+                "args": ["stdio"],
                 "env": {
                   "GITHUB_TOKEN": "$GITHUB_TOKEN"
                 }
@@ -110,6 +106,19 @@
                   "LICENSE": "$DAISYUI_LICENSE",
                   "EMAIL": "$DAISYUI_EMAIL"
                 }
+              },
+              "terraform": {
+                "command": "${pkgs.terraform-mcp-server}/bin/terraform-mcp-server",
+                "args": ["stdio"],
+                "env": {
+                  "TFE_TOKEN": "$TFE_TOKEN",
+                  "TFE_ADDRESS": "$TFE_ADDRESS",
+                  "ENABLE_TF_OPERATIONS": "$ENABLE_TF_OPERATIONS"
+                }
+              },
+              "ElevenLabs": {
+                "command": "${pkgs.uv}/bin/uvx",
+                "args": ["elevenlabs-mcp"]
               }
             },
             "ide": {
@@ -464,9 +473,11 @@
     '';
 
     packages = with pkgs; [
-      jq # JSON parser
-      docker # github-mcp-server
       bun # daisyui-blueprint MCP
+      github-mcp-server # github MCP
+      jq # JSON parser
+      nodejs # gemini-cli-security extension
+      terraform-mcp-server # terraform MCP
       uv # elevenlabs-mcp
     ];
   };

@@ -233,7 +233,7 @@ sudo apt install --yes \
     intel-gpu-tools \
     gnome-keyring
 
-# TODO: Get gnome-keyring working correctlyin home-manger.
+# TODO: Get gnome-keyring working correctly in home-manger.
 
 ssh-keygen -t ed25519
 cat ~/.ssh/id_ed25519.pub
