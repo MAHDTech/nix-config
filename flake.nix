@@ -72,33 +72,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cachix = {
-      type = "github";
-      owner = "cachix";
-      repo = "cachix";
-      ref = "master";
-      flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    devenv = {
-      type = "github";
-      owner = "cachix";
-      repo = "devenv";
-      ref = "main";
-      flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    #nixos-cosmic = {
-    #  type = "github";
-    #  owner = "lilyinstarlight";
-    #  repo = "nixos-cosmic";
-    #  ref = "main";
-    #  flake = true;
-    #  inputs.nixpkgs.follows = "nixpkgs";
-    #};
-
     flatpaks = {
       type = "github";
       owner = "in-a-dil-emma";
@@ -115,14 +88,14 @@
       flake = true;
     };
 
-    #musnix = {
-    #  type = "github";
-    #  owner = "musnix";
-    #  repo = "musnix";
-    #  ref = "master";
-    #  flake = true;
-    #  inputs.nixpkgs.follows = "nixpkgs";
-    #};
+    devenv = {
+      type = "github";
+      owner = "cachix";
+      repo = "devenv";
+      ref = "main";
+      flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     impermanence = {
       type = "github";
@@ -130,25 +103,13 @@
       repo = "impermanence";
       ref = "master";
       flake = true;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
   };
 
   outputs =
-    {
-      catppuccin,
-      devenv,
-      flatpaks,
-      home-manager,
-      #musnix,
-      #nixos-cosmic,
-      nixos-hardware,
-      nixpkgs,
-      self,
-      sops-nix,
-      systems,
-      ...
-    }@inputs:
+    { self, ... }@inputs:
     let
       # Whoami
       globalUsername = "mahdtech";
@@ -168,7 +129,7 @@
       # Systems functions
       #########################
 
-      forEachSystem = nixpkgs.lib.genAttrs (import systems);
+      forEachSystem = inputs.nixpkgs.lib.genAttrs (import inputs.systems);
 
       #########################
       # Packages functions
@@ -176,7 +137,7 @@
 
       pkgsImportSystem =
         system:
-        import nixpkgs {
+        import inputs.nixpkgs {
           inherit system;
           config = {
             allowUnfree = true;
@@ -196,7 +157,7 @@
           extraModules,
           ...
         }:
-        nixpkgs.lib.nixosSystem {
+        inputs.nixpkgs.lib.nixosSystem {
           pkgs = pkgsImportSystem system;
 
           specialArgs = {
@@ -206,7 +167,7 @@
           };
 
           modules = [
-            sops-nix.nixosModules.sops
+            inputs.sops-nix.nixosModules.sops
           ]
           ++ extraModules;
         };
@@ -218,14 +179,14 @@
       # Home Manager (standalone)
       mkHomeConfigurations =
         system:
-        home-manager.lib.homeManagerConfiguration {
+        inputs.home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsImportSystem system;
           modules = [
             ./home
 
-            catppuccin.homeManagerModules.catppuccin
-            home-manager.nixosModules.home-manager
-            sops-nix.homeManagerModules.sops
+            inputs.catppuccin.homeManagerModules.catppuccin
+            inputs.home-manager.nixosModules.home-manager
+            inputs.sops-nix.homeManagerModules.sops
           ];
           extraSpecialArgs = {
             inherit inputs;
@@ -257,7 +218,7 @@
 
             ./nixos/hosts/template
 
-            catppuccin.nixosModules.catppuccin
+            inputs.catppuccin.nixosModules.catppuccin
           ];
         };
 
@@ -276,7 +237,7 @@
 
             ./nixos/hosts/nixos-1
 
-            catppuccin.nixosModules.catppuccin
+            inputs.catppuccin.nixosModules.catppuccin
           ];
         };
 
@@ -285,7 +246,6 @@
         NUC = configNixOS {
           username = globalUsername;
           system = "x86_64-linux";
-
           specialArgs = {
             inherit inputs;
           };
@@ -295,16 +255,16 @@
 
             ./nixos/hosts/nuc
 
-            catppuccin.nixosModules.catppuccin
-            flatpaks.nixosModules.default
-            home-manager.nixosModules.home-manager
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.flatpaks.nixosModules.default
+            inputs.home-manager.nixosModules.home-manager
             #musnix.nixosModules.default
             #nixos-cosmic.nixosModules.default
-            nixos-hardware.nixosModules.common-cpu-intel
-            nixos-hardware.nixosModules.common-gpu-intel
-            nixos-hardware.nixosModules.common-hidpi
-            nixos-hardware.nixosModules.common-pc-laptop
-            nixos-hardware.nixosModules.common-pc-ssd
+            inputs.nixos-hardware.nixosModules.common-cpu-intel
+            inputs.nixos-hardware.nixosModules.common-gpu-intel
+            inputs.nixos-hardware.nixosModules.common-hidpi
+            inputs.nixos-hardware.nixosModules.common-pc-laptop
+            inputs.nixos-hardware.nixosModules.common-pc-ssd
             {
 
               home-manager = {
@@ -321,8 +281,8 @@
                   imports = [
                     ./home
 
-                    catppuccin.homeManagerModules.catppuccin
-                    sops-nix.homeManagerModules.sops
+                    inputs.catppuccin.homeManagerModules.catppuccin
+                    inputs.sops-nix.homeManagerModules.sops
                   ];
                 };
               };
@@ -345,17 +305,15 @@
 
             ./nixos/hosts/jons
 
-            catppuccin.nixosModules.catppuccin
-            flatpaks.nixosModules.default
-            home-manager.nixosModules.home-manager
-            #musnix.nixosModules.default
-            #nixos-cosmic.nixosModules.default
-            nixos-hardware.nixosModules.common-cpu-amd
-            nixos-hardware.nixosModules.common-cpu-amd-pstate
-            nixos-hardware.nixosModules.common-gpu-intel
-            nixos-hardware.nixosModules.common-hidpi
-            nixos-hardware.nixosModules.common-pc
-            nixos-hardware.nixosModules.common-pc-ssd
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.flatpaks.nixosModules.default
+            inputs.home-manager.nixosModules.home-manager
+            inputs.nixos-hardware.nixosModules.common-cpu-amd
+            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+            inputs.nixos-hardware.nixosModules.common-gpu-intel
+            inputs.nixos-hardware.nixosModules.common-hidpi
+            inputs.nixos-hardware.nixosModules.common-pc
+            inputs.nixos-hardware.nixosModules.common-pc-ssd
             {
               home-manager = {
                 useGlobalPkgs = true;
@@ -371,8 +329,8 @@
                   imports = [
                     ./home
 
-                    sops-nix.homeManagerModules.sops
-                    catppuccin.homeManagerModules.catppuccin
+                    inputs.sops-nix.homeManagerModules.sops
+                    inputs.catppuccin.homeManagerModules.catppuccin
                   ];
                 };
               };
@@ -395,7 +353,7 @@
 
             ./nixos/hosts/kasmweb-001
 
-            catppuccin.nixosModules.catppuccin
+            inputs.catppuccin.nixosModules.catppuccin
           ];
         };
 
@@ -414,12 +372,12 @@
 
             ./nixos/hosts/hypervisor-1
 
-            catppuccin.nixosModules.catppuccin
-            nixos-hardware.nixosModules.common-cpu-amd
-            nixos-hardware.nixosModules.common-cpu-amd-pstate
-            nixos-hardware.nixosModules.common-gpu-amd
-            nixos-hardware.nixosModules.common-pc
-            nixos-hardware.nixosModules.common-pc-ssd
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.nixos-hardware.nixosModules.common-cpu-amd
+            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+            inputs.nixos-hardware.nixosModules.common-gpu-amd
+            inputs.nixos-hardware.nixosModules.common-pc
+            inputs.nixos-hardware.nixosModules.common-pc-ssd
           ];
         };
 
@@ -438,12 +396,12 @@
 
             ./nixos/hosts/hypervisor-2
 
-            catppuccin.nixosModules.catppuccin
-            nixos-hardware.nixosModules.common-cpu-amd
-            nixos-hardware.nixosModules.common-cpu-amd-pstate
-            nixos-hardware.nixosModules.common-gpu-amd
-            nixos-hardware.nixosModules.common-pc
-            nixos-hardware.nixosModules.common-pc-ssd
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.nixos-hardware.nixosModules.common-cpu-amd
+            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+            inputs.nixos-hardware.nixosModules.common-gpu-amd
+            inputs.nixos-hardware.nixosModules.common-pc
+            inputs.nixos-hardware.nixosModules.common-pc-ssd
           ];
         };
 
@@ -462,12 +420,12 @@
 
             ./nixos/hosts/hypervisor-3
 
-            catppuccin.nixosModules.catppuccin
-            nixos-hardware.nixosModules.common-cpu-amd
-            nixos-hardware.nixosModules.common-cpu-amd-pstate
-            nixos-hardware.nixosModules.common-gpu-amd
-            nixos-hardware.nixosModules.common-pc
-            nixos-hardware.nixosModules.common-pc-ssd
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.nixos-hardware.nixosModules.common-cpu-amd
+            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+            inputs.nixos-hardware.nixosModules.common-gpu-amd
+            inputs.nixos-hardware.nixosModules.common-pc
+            inputs.nixos-hardware.nixosModules.common-pc-ssd
           ];
         };
 
@@ -486,12 +444,12 @@
 
             ./nixos/hosts/hypervisor-4
 
-            catppuccin.nixosModules.catppuccin
-            nixos-hardware.nixosModules.common-cpu-amd
-            nixos-hardware.nixosModules.common-cpu-amd-pstate
-            nixos-hardware.nixosModules.common-gpu-amd
-            nixos-hardware.nixosModules.common-pc
-            nixos-hardware.nixosModules.common-pc-ssd
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.nixos-hardware.nixosModules.common-cpu-amd
+            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+            inputs.nixos-hardware.nixosModules.common-gpu-amd
+            inputs.nixos-hardware.nixosModules.common-pc
+            inputs.nixos-hardware.nixosModules.common-pc-ssd
           ];
         };
 
@@ -529,9 +487,9 @@
 
             ./nixos/hosts/zenbook
 
-            catppuccin.nixosModules.catppuccin
-            flatpaks.nixosModules.default
-            home-manager.nixosModules.home-manager
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.flatpaks.nixosModules.default
+            inputs.home-manager.nixosModules.home-manager
             {
 
               home-manager = {
@@ -548,8 +506,8 @@
                   imports = [
                     ./home
 
-                    catppuccin.homeManagerModules.catppuccin
-                    sops-nix.homeManagerModules.sops
+                    inputs.catppuccin.homeManagerModules.catppuccin
+                    inputs.sops-nix.homeManagerModules.sops
                   ];
                 };
               };
@@ -591,7 +549,7 @@
           pkgs = inputs.nixpkgs.legacyPackages.${system};
 
           shells = {
-            default = devenv.lib.mkShell {
+            default = inputs.devenv.lib.mkShell {
               inherit inputs pkgs;
               modules = [
                 (import ./devenv/dotfiles.nix)

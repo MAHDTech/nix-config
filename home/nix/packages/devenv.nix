@@ -4,22 +4,20 @@
   ...
 }:
 let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
-  unstablePkgs = with pkgsUnstable; [
+  inherit (inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system})
+    cachix
+    devenv
+    secretspec
+    ;
+
+  devenvPkgs = [
     cachix
     devenv
     secretspec
   ];
+
 in
 {
-
-  home.packages = unstablePkgs;
-  #with pkgs;
-  #[
-  #cachix
-  #devenv
-  #secretspec
-  #]
-  #++ unstablePkgs;
+  home.packages = devenvPkgs;
 }

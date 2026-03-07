@@ -18,13 +18,7 @@ let
   ];
 
   devPackages = with pkgs; [
-    devenv
-    direnv
-    docker-client
     figlet
-    nil
-    nix
-    secretspec
   ];
 
 in
@@ -53,7 +47,7 @@ in
   packages = packages ++ unstablePkgs ++ lib.optionals (!config.container.isBuilding) devPackages;
 
   enterShell = ''
-    figlet -f starwars $PROJECT
+    figlet -f slant $PROJECT
 
     hello --greeting="Hello ''${USER:-user}, welcome to the $PROJECT project!"
   '';
