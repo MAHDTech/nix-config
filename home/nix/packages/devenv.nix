@@ -7,8 +7,11 @@ let
 
   inherit (inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system})
     cachix
-    devenv
     secretspec
+    ;
+
+  inherit (inputs.devenv.packages.${pkgs.stdenv.hostPlatform.system})
+    devenv
     ;
 
   devenvPkgs = [

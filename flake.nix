@@ -94,7 +94,6 @@
       repo = "devenv";
       ref = "main";
       flake = true;
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     impermanence = {
