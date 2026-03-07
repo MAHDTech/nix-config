@@ -896,7 +896,7 @@ in
 
       # https://wiki.hyprland.org/Configuring/Keywords/
 
-      "$terminal" = "cosmic-term";
+      "$terminal" = "ghostty";
 
       "$barCommand" = "ironbar";
 

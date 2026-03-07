@@ -1,0 +1,29 @@
+---
+$schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
+version: "0.2"
+language: en-GB,en-US
+dictionaryDefinitions:
+  - name: project-words
+    path: ./project-words.txt
+    addWords: true
+dictionaries:
+  - en-gb
+  - project-words
+ignorePaths:
+  - "*.drawio"
+  - .devenv
+  - .direnv
+  - .git
+  - devenv.nix
+  - docs/agents/**
+  - docs/issues/**
+  - node_modules
+  - public/config-client.json
+  - public/workers
+  - "*.svg"
+  - secrets
+  - vendor
+ignoreRegExpList:
+  - /-----BEGIN PGP PUBLIC KEY BLOCK-----[\s\S]*?-----END PGP PUBLIC KEY BLOCK-----/
+  - /initialHashedPassword\s*=\s*.*/
+  - /\b([a-z0-9]{5}-)+[a-z0-9]{1,5}\b/

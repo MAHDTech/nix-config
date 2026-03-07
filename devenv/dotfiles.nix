@@ -111,6 +111,12 @@ in
           noUnderscore = true;
         };
       };
+      cspell = {
+        enable = true;
+        excludes = [
+
+        ];
+      };
       dialyzer.enable = true;
       editorconfig-checker = {
         enable = true;
@@ -169,12 +175,6 @@ in
       statix.enable = true;
       trufflehog.enable = false;
       trim-trailing-whitespace.enable = true;
-      typos = {
-        enable = true;
-        settings = {
-          configPath = ".typos.toml";
-        };
-      };
       yamllint = {
         enable = true;
         settings = {
