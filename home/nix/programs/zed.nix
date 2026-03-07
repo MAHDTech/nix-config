@@ -379,7 +379,7 @@ in
             };
           };
           env = {
-            TERM = "cosmic-terminal";
+            TERM = "ghostty";
           };
           line_height = "comfortable";
           shell = "system";

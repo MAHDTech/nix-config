@@ -137,7 +137,8 @@ export GOPROXY="https://proxy.golang.org,direct"
 #########################
 
 # GitHub
-export GITHUB_TOKEN=""
+export GITHUB_TOKEN
+GITHUB_TOKEN="$(gh auth token)"
 
 # GitLab
 export GITLAB_TOKEN=""

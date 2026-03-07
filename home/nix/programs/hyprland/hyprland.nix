@@ -33,6 +33,7 @@ let
     cosmic-term
 
     brightnessctl
+    ghostty
     grim
     hyprpicker
     hyprshot
@@ -1136,7 +1137,7 @@ in
       ];
     };
 
-    extraConfig = '''';
+    extraConfig = "";
   };
 
   # Ensure hyprland-session.target starts on login
