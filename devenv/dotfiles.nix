@@ -18,17 +18,13 @@ let
   ];
 
   devPackages = with pkgs; [
+    devenv
+    direnv
     docker-client
     figlet
-    #go-tools
-    #golangci-lint
     nil
     nix
-    #pulumi-bin # bundled with plugins.
-    #pulumictl
-    #sshuttle
-    #trivy
-    #yq-go
+    secretspec
   ];
 
 in

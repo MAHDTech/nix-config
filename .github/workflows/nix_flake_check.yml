@@ -23,15 +23,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - id: checkout
-        name: Checkout repository
+      - id: checkout_repository
+        name: Checkout Repository
         uses: actions/checkout@v6
         with:
           lfs: false
           submodules: recursive
 
-      - id: qemu
-        name: Set up QEMU
+      - id: free_disk_space
+        name: Free Disk Space
+        uses: ./.github/actions/free-disk-space
+
+      - id: setup_qemu
+        name: Setup QEMU
         uses: docker/setup-qemu-action@v3
 
       - id: install_nix
@@ -41,7 +45,7 @@ jobs:
           extra_nix_config: |
             extra-platforms = aarch64-linux
 
-      - id: cachix
+      - id: enable_cachix
         name: "Enable Cachix ❄️"
         uses: cachix/cachix-action@v16
         if: ${{ vars.CACHIX_CACHE_NAME != '' }}
@@ -51,7 +55,18 @@ jobs:
           useDaemon: true
           skipPush: false
 
-      - name: Nix Flake check
+      - id: test_devenv
+        name: Test Devenv
+        run: >-
+          nix develop
+          --accept-flake-config
+          --impure
+          .#default
+          --command
+          devenv test
+
+      - id: check_flake
+        name: Check Nix Flake
         run: >-
           nix flake check
           --accept-flake-config
@@ -61,5 +76,6 @@ jobs:
           --refresh
           --verbose
 
-      - name: Statix check
+      - id: check_statix
+        name: Check Statix
         run: nix run nixpkgs#statix -- check

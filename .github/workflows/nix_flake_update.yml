@@ -21,12 +21,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - id: checkout
-        name: Checkout repository
+      - id: checkout_repository
+        name: Checkout Repository
         uses: actions/checkout@v6
         with:
           lfs: false
           submodules: recursive
+
+      - id: free_disk_space
+        name: Free Disk Space
+        uses: ./.github/actions/free-disk-space
 
       - id: install_nix
         name: "Install Nix ❄️"
@@ -35,7 +39,7 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           enable_kvm: true
 
-      - id: cachix
+      - id: enable_cachix
         name: "Enable Cachix ❄️"
         uses: cachix/cachix-action@v16
         if: ${{ vars.CACHIX_CACHE_NAME != '' }}
@@ -45,8 +49,8 @@ jobs:
           useDaemon: true
           skipPush: false
 
-      - id: update_nix_flake
-        name: Update flake.lock
+      - id: update_flake_lock
+        name: Update Flake Lock
         uses: DeterminateSystems/update-flake-lock@v28
         with:
           token: ${{ secrets.MAHDTECH_TOKEN_CREATE_PR }}
@@ -62,6 +66,6 @@ jobs:
           nix-options: --accept-flake-config
 
       - id: print_pr_number
-        name: Pull request number
+        name: Print PR Number
         run: |
-          echo PR number: ${{ steps.update_nix_flake.outputs.pull-request-number }}
+          echo PR number: ${{ steps.update_flake_lock.outputs.pull-request-number }}

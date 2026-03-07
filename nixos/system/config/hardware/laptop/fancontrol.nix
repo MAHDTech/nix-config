@@ -1,5 +1,4 @@
-{ _ }:
-{
+_: {
   # Fancontrol is the shell script inside of lm-sensors.
   hardware = {
     fancontrol = {
