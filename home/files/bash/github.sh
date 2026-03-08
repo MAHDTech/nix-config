@@ -78,13 +78,8 @@ function github_download_release() {
 }
 
 function github_delete_workflows() {
-
-	# Deletes all Workflow run results for a given org/repo
-
 	local GITHUB_ORG_REPO="$1"
 	local WORKFLOW_STATUS="${2:-}"
-	local COUNTER_SUCCESS=0
-	local COUNTER_FAILURE=0
 
 	if ! command -v gh &>/dev/null; then
 		writeLog "ERROR" "Please install the GitHub CLI 'gh'"
@@ -100,9 +95,9 @@ function github_delete_workflows() {
 
 	local WORKFLOW_RUNS
 	if [[ -n ${WORKFLOW_STATUS} ]]; then
-		WORKFLOW_RUNS=$(gh run list --repo "${GITHUB_ORG_REPO}" --limit 100 --status "${WORKFLOW_STATUS}" --json databaseId --jq '.[].databaseId')
+		WORKFLOW_RUNS=$(gh run list --repo "${GITHUB_ORG_REPO}" --limit 1000 --status "${WORKFLOW_STATUS}" --json databaseId --jq '.[].databaseId')
 	else
-		WORKFLOW_RUNS=$(gh run list --repo "${GITHUB_ORG_REPO}" --limit 100 --json databaseId --jq '.[].databaseId')
+		WORKFLOW_RUNS=$(gh run list --repo "${GITHUB_ORG_REPO}" --limit 1000 --json databaseId --jq '.[].databaseId')
 	fi
 
 	if [[ -z ${WORKFLOW_RUNS} ]]; then
@@ -110,27 +105,15 @@ function github_delete_workflows() {
 		return 0
 	fi
 
-	while IFS= read -r RUN_ID; do
+	local RUN_COUNT
+	RUN_COUNT=$(echo "$WORKFLOW_RUNS" | wc -w | tr -d ' ')
+	writeLog "INFO" "Found ${RUN_COUNT} workflow runs. Deleting in parallel (this will be quiet)..."
 
-		[[ -z ${RUN_ID} ]] && continue
+	# The Fix: Added "> /dev/null 2>&1" to completely silence the concurrent gh commands
+	echo "$WORKFLOW_RUNS" | xargs -P 15 -I {} gh run delete {} --repo "${GITHUB_ORG_REPO}" >/dev/null 2>&1
 
-		writeLog "INFO" "Deleting Workflow run ${RUN_ID}"
-
-		if gh run delete "${RUN_ID}" --repo "${GITHUB_ORG_REPO}" 2>/dev/null; then
-			writeLog "INFO" "Successfully deleted run ${RUN_ID}"
-			((COUNTER_SUCCESS++))
-		else
-			writeLog "WARN" "Failed to delete run ${RUN_ID}"
-			((COUNTER_FAILURE++))
-		fi
-
-	done <<<"${WORKFLOW_RUNS}"
-
-	writeLog "INFO" "Deleted a total of ${COUNTER_SUCCESS} Workflow Runs."
-	[[ ${COUNTER_FAILURE} -gt 0 ]] && writeLog "WARN" "Failed to delete ${COUNTER_FAILURE} Workflow Runs."
-
+	writeLog "INFO" "Finished sending delete requests for ${RUN_COUNT} Workflow Runs."
 	return 0
-
 }
 
 function github_query_projects() {
