@@ -76,7 +76,7 @@
               "useAlternateBuffer": true
             },
             "tools": {
-              "sandbox": "docker",
+              "sandbox": "none",
               "shell": {
                 "showColor": true
               },
@@ -473,6 +473,7 @@
     '';
 
     packages = with pkgs; [
+      gemini-cli # The gemini cli
       bun # daisyui-blueprint MCP
       github-mcp-server # github MCP
       jq # JSON parser

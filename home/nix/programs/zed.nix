@@ -15,9 +15,9 @@ let
 
     # Newer release of Agent Tools.
     claude-code-acp
-    claude-code-bin
+    claude-code
     claude-monitor
-    gemini-cli-bin
+    gemini-cli
   ];
 
 in
@@ -166,9 +166,9 @@ in
         with pkgs;
         [
           # AI Agents
-          #claude-code-bin
+          #claude-code
           #claude-code-acp
-          #gemini-cli-bin
+          #gemini-cli
 
           # Language Servers
           astro-language-server
