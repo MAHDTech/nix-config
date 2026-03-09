@@ -1,9 +1,21 @@
 {
+  inputs,
   config,
   pkgs,
   lib,
   ...
 }:
+let
+
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs.stdenv.hostPlatform) system;
+  };
+
+  unstablePkgs = with pkgsUnstable; [
+    gemini-cli
+  ];
+
+in
 {
   # ---------------------------------------------------------------------------
   # Gemini CLI
@@ -472,14 +484,16 @@
       chmod 600 "$TARGET"
     '';
 
-    packages = with pkgs; [
-      gemini-cli # The gemini cli
-      bun # daisyui-blueprint MCP
-      github-mcp-server # github MCP
-      jq # JSON parser
-      nodejs # gemini-cli-security extension
-      terraform-mcp-server # terraform MCP
-      uv # elevenlabs-mcp
-    ];
+    packages =
+      with pkgs;
+      [
+        bun # daisyui-blueprint MCP
+        github-mcp-server # github MCP
+        jq # JSON parser
+        nodejs # gemini-cli-security extension
+        terraform-mcp-server # terraform MCP
+        uv # elevenlabs-mcp
+      ]
+      ++ unstablePkgs;
   };
 }

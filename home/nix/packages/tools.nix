@@ -13,7 +13,6 @@ let
     claude-code-acp
     claude-code
     claude-monitor
-    gemini-cli
   ];
 
   systemArchPackages =
@@ -160,7 +159,6 @@ in
       go
       golangci-lint
       gotools
-      #gemini-cli
     ]
     ++ unstablePkgs
     ++ systemArchPackages;

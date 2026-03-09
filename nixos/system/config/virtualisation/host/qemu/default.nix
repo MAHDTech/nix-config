@@ -4,7 +4,8 @@
 
   environment.systemPackages = with pkgs; [
     OVMFFull
-    qemu_full
+    qemu
+    #qemu_full # Include CEPH/RBD support
   ];
 
   environment = {
