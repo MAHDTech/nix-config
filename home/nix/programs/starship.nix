@@ -188,6 +188,14 @@
         ];
       };
 
+      buf = {
+        disabled = false;
+      };
+
+      bun = {
+        disabled = false;
+      };
+
       character = {
         disabled = false;
 
@@ -215,6 +223,11 @@
         read_only = " 🔒";
         truncation_length = 4;
         truncate_to_repo = true;
+      };
+
+      direnv = {
+        disabled = false;
+
       };
 
       docker_context = {
@@ -329,6 +342,14 @@
         symbol = "🐏"; # a RAM, not a Sheep :)
       };
 
+      mojo = {
+        disabled = false;
+      };
+
+      nats = {
+        disabled = false;
+      };
+
       nix_shell = {
         disabled = false;
         symbol = "❄️ ";
@@ -403,11 +424,19 @@
         symbol = "🦀 ";
       };
 
+      shell = {
+        disabled = false;
+      };
+
       shlvl = {
         disabled = false;
       };
 
       singularity = {
+        disabled = false;
+      };
+
+      solidity = {
         disabled = false;
       };
 
