@@ -243,44 +243,44 @@ in
             echo ""
             echo "Commands:"
             echo "  install    Install all extensions (auto-updates already-installed ones)"
-            echo "  update     Update all currently installed extensions"
-            echo "  uninstall  Uninstall all extensions (from the managed list)"
-            echo "  nuke       Uninstall EVERY installed extension regardless of list"
+            echo "  uninstall  Uninstall EVERY installed extension (based on ~/.gemini/extensions/* folder names)"
             exit 1
           }
 
           ACTION=''${1:-}
           [ -z "$ACTION" ] && usage
 
+          # Associative array:
+          #  - KEY = extension name (folder)
+          #  - VALUE = extension URL:
+          declare -A GEMINI_CLI_EXTENSIONS
           GEMINI_CLI_EXTENSIONS=(
-            # Google official
-            https://github.com/gemini-cli-extensions/code-review
-            https://github.com/gemini-cli-extensions/conductor
-            #https://github.com/gemini-cli-extensions/gcloud
-            https://github.com/gemini-cli-extensions/genkit
-            https://github.com/gemini-cli-extensions/jules
-            #https://github.com/gemini-cli-extensions/mcp-toolbox
-            #https://github.com/gemini-cli-extensions/nanobanana
-            https://github.com/gemini-cli-extensions/observability
-            #https://github.com/gemini-cli-extensions/postgres
-            https://github.com/gemini-cli-extensions/security
-            https://github.com/gemini-cli-extensions/workspace
-            #https://github.com/googleapis/genai-toolbox
-            #https://github.com/github/github-mcp-server
-            # Third-party
-            https://github.com/elevenlabs/elevenlabs-mcp
-            https://github.com/Olshansk/agent-md
-            #https://github.com/ZhanZiyuan/cloudflare-mcp
-            #https://github.com/abagames/slash-criticalthink
-            #https://github.com/dynatrace-oss/dynatrace-mcp
-            https://github.com/fiquellcarter/commitzen
-            https://github.com/galz10/pickle-rick-extension
-            #https://github.com/grafana/mcp-grafana
-            https://github.com/hashicorp/terraform-mcp-server
-            #https://github.com/hashicorp/vault-mcp-server
-            #https://github.com/mikebz/gitops-extension
-            #https://github.com/redis/mcp-redis
-            #https://github.com/stripe/ai
+            # [agent-md]="https://github.com/Olshansk/agent-md"
+            # [cloudflare-mcp]="https://github.com/ZhanZiyuan/cloudflare-mcp"
+            # [code-review]="https://github.com/gemini-cli-extensions/code-review"
+            # [commitzen]="https://github.com/fiquellcarter/commitzen"
+            # [conductor]="https://github.com/gemini-cli-extensions/conductor"
+            # [dynatrace-mcp]="https://github.com/dynatrace-oss/dynatrace-mcp"
+            # [elevenlabs-mcp]="https://github.com/elevenlabs/elevenlabs-mcp"
+            # [gcloud]="https://github.com/gemini-cli-extensions/gcloud"
+            # [genai-toolbox]="https://github.com/googleapis/genai-toolbox"
+            # [genkit]="https://github.com/gemini-cli-extensions/genkit"
+            # [github-mcp-server]="https://github.com/github/github-mcp-server"
+            # [gitops-extension]="https://github.com/mikebz/gitops-extension"
+            # [jules]="https://github.com/gemini-cli-extensions/jules"
+            # [mcp-grafana]="https://github.com/grafana/mcp-grafana"
+            # [mcp-redis]="https://github.com/redis/mcp-redis"
+            # [mcp-toolbox]="https://github.com/gemini-cli-extensions/mcp-toolbox"
+            # [nanobanana]="https://github.com/gemini-cli-extensions/nanobanana"
+            # [observability]="https://github.com/gemini-cli-extensions/observability"
+            [pickle-rick-extension]="https://github.com/galz10/pickle-rick-extension"
+            # [postgres]="https://github.com/gemini-cli-extensions/postgres"
+            # [security]="https://github.com/gemini-cli-extensions/security"
+            # [slash-criticalthink]="https://github.com/abagames/slash-criticalthink"
+            # [stripe-ai]="https://github.com/stripe/ai"
+            # [terraform-mcp-server]="https://github.com/hashicorp/terraform-mcp-server"
+            # [vault-mcp-server]="https://github.com/hashicorp/vault-mcp-server"
+            # [workspace]="https://github.com/gemini-cli-extensions/workspace"
           )
 
           log() {
@@ -306,39 +306,22 @@ in
             exit 1
           fi
 
+          if ! type python3 > /dev/null 2>&1; then
+            log ERROR "python3 not found. Please ensure python3 is installed and available on PATH."
+            exit 1
+          fi
+
           success_count=0
           skip_count=0
           fail_count=0
 
-          # ---------------------------------------------------------------------------
-          # Cache the full extension list as JSON once (avoids N CLI round-trips).
-          # Lookup by installMetadata.source URL -> authoritative installed name.
-          #
-          # NOTE: gemini emits warning strings to stdout/stderr before the JSON
-          # array, which breaks jq. The awk filter discards every line until
-          # it sees the opening '[', giving jq clean JSON input.
-          # ---------------------------------------------------------------------------
-          EXT_LIST_JSON=$(gemini extensions list --output-format json 2>&1 \
-            | awk '/^\[/{found=1} found{print}')
-
-          # Returns the installed display name for a source URL, or empty string if
-          # the extension is not currently installed.
-          installed_name_for_url() {
-            echo "$EXT_LIST_JSON" \
-              | jq -r --arg url "$1" \
-                  '.[] | select(.installMetadata.source == $url) | .name'
-          }
-
           case "$ACTION" in
             "install")
-              for extension in "''${GEMINI_CLI_EXTENSIONS[@]}";
-              do
-                if [[ "$extension" == \#* ]]; then continue; fi
-                ext_name="$(installed_name_for_url "$extension")"
-                stderr_tmp=$(mktemp)
-                if [ -n "$ext_name" ]; then
-                  # Already installed — update in place
+              for ext_name in "''${!GEMINI_CLI_EXTENSIONS[@]}"; do
+                ext_url="''${GEMINI_CLI_EXTENSIONS[$ext_name]}"
+                if [ -d "$HOME/.gemini/extensions/$ext_name" ]; then
                   log INFO "Updating gemini cli extension: $ext_name"
+                  stderr_tmp=$(mktemp)
                   output=$(gemini extensions update "$ext_name" 2>"$stderr_tmp")
                   cmd_exit=$?
                   captured_stderr=$(cat "$stderr_tmp")
@@ -352,20 +335,20 @@ in
                     fail_count=$((fail_count + 1))
                   fi
                 else
-                  # Not installed — fresh install
-                  log INFO "Installing gemini cli extension: $extension"
+                  log INFO "Installing gemini cli extension: $ext_url"
+                  stderr_tmp=$(mktemp)
                   output=$(gemini extensions install \
-                    "$extension" \
+                    "$ext_url" \
                     --auto-update \
                     --consent 2>"$stderr_tmp")
                   cmd_exit=$?
                   captured_stderr=$(cat "$stderr_tmp")
                   rm "$stderr_tmp"
                   if [ $cmd_exit -eq 0 ]; then
-                    log SUCCESS "Gemini cli extension $extension installed successfully"
+                    log SUCCESS "Gemini cli extension $ext_url installed successfully"
                     success_count=$((success_count + 1))
                   else
-                    log ERROR "Failed to install gemini cli extension: $extension"
+                    log ERROR "Failed to install gemini cli extension: $ext_url"
                     log ERROR "Output: $output $captured_stderr"
                     fail_count=$((fail_count + 1))
                   fi
@@ -373,69 +356,20 @@ in
               done
               log INFO "Summary: $success_count installed/updated, $skip_count skipped, $fail_count failed."
             ;;
-            "update")
-              for extension in "''${GEMINI_CLI_EXTENSIONS[@]}";
-              do
-                if [[ "$extension" == \#* ]]; then continue; fi
-                ext_name="$(installed_name_for_url "$extension")"
-                if [ -n "$ext_name" ]; then
-                  log INFO "Updating gemini cli extension: $ext_name"
-                  stderr_tmp=$(mktemp)
-                  output=$(gemini extensions update "$ext_name" 2>"$stderr_tmp")
-                  cmd_exit=$?
-                  captured_stderr=$(cat "$stderr_tmp")
-                  rm "$stderr_tmp"
-                  if [ $cmd_exit -eq 0 ]; then
-                    log SUCCESS "Gemini cli extension $ext_name updated successfully"
-                    success_count=$((success_count + 1))
-                  else
-                    log ERROR "Failed to update gemini cli extension: $ext_name"
-                    log ERROR "Output: $output $captured_stderr"
-                    fail_count=$((fail_count + 1))
-                  fi
-                else
-                  log WARN "Gemini cli extension $(basename "$extension") not installed, skipping"
-                  skip_count=$((skip_count + 1))
-                fi
-              done
-              log INFO "Summary: $success_count updated, $skip_count skipped, $fail_count failed."
-            ;;
             "uninstall")
-              for extension in "''${GEMINI_CLI_EXTENSIONS[@]}";
-              do
-                if [[ "$extension" == \#* ]]; then continue; fi
-                ext_name="$(installed_name_for_url "$extension")"
-                if [ -n "$ext_name" ]; then
-                  log INFO "Removing gemini cli extension: $ext_name"
-                  stderr_tmp=$(mktemp)
-                  output=$(gemini extensions uninstall "$ext_name" 2>"$stderr_tmp")
-                  remove_exit=$?
-                  captured_stderr=$(cat "$stderr_tmp")
-                  rm "$stderr_tmp"
-                  if [ $remove_exit -eq 0 ]; then
-                    log SUCCESS "Gemini cli extension $ext_name removed successfully"
-                    success_count=$((success_count + 1))
-                  else
-                    log ERROR "Failed to remove gemini cli extension: $ext_name"
-                    log ERROR "Output: $output $captured_stderr"
-                    fail_count=$((fail_count + 1))
-                  fi
-                else
-                  log WARN "Gemini cli extension $(basename "$extension") not installed"
-                  skip_count=$((skip_count + 1))
-                fi
-              done
-              log INFO "Summary: $success_count removed, $skip_count skipped, $fail_count failed."
-            ;;
-            "nuke")
-              log WARN "Nuking EVERY installed Gemini CLI extension..."
-              installed_names=$(echo "$EXT_LIST_JSON" | jq -r '.[].name' 2>/dev/null || echo "")
-              if [ -z "$installed_names" ]; then
-                log INFO "No extensions found to nuke."
+              EXT_DIR="$HOME/.gemini/extensions"
+              if [ ! -d "$EXT_DIR" ]; then
+                log INFO "No extensions directory found at $EXT_DIR"
                 exit 0
               fi
 
-              for ext_name in $installed_names; do
+              found_any=0
+              for entry in "$EXT_DIR"/*; do
+                [ ! -e "$entry" ] && continue
+                [ ! -d "$entry" ] && continue
+                ext_name="$(basename "$entry")"
+                [ -z "$ext_name" ] && continue
+                found_any=1
                 log INFO "Removing gemini cli extension: $ext_name"
                 stderr_tmp=$(mktemp)
                 output=$(gemini extensions uninstall "$ext_name" 2>"$stderr_tmp")
@@ -443,15 +377,21 @@ in
                 captured_stderr=$(cat "$stderr_tmp")
                 rm "$stderr_tmp"
                 if [ $remove_exit -eq 0 ]; then
-                  log SUCCESS "Gemini cli extension $ext_name nuked successfully"
+                  log SUCCESS "Gemini cli extension $ext_name removed successfully"
                   success_count=$((success_count + 1))
                 else
-                  log ERROR "Failed to nuke gemini cli extension: $ext_name"
+                  log ERROR "Failed to remove gemini cli extension: $ext_name"
                   log ERROR "Output: $output $captured_stderr"
                   fail_count=$((fail_count + 1))
                 fi
               done
-              log INFO "Summary: $success_count nuked, 0 skipped, $fail_count failed."
+
+              if [ $found_any -eq 0 ]; then
+                log INFO "No extensions found to uninstall in $EXT_DIR."
+                exit 0
+              fi
+
+              log INFO "Summary: $success_count removed, $skip_count skipped, $fail_count failed."
             ;;
             *)
               log ERROR "Unknown command: $ACTION"

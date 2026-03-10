@@ -426,6 +426,7 @@
 
       shell = {
         disabled = false;
+        bash_indicator = "bash";
       };
 
       shlvl = {

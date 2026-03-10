@@ -243,6 +243,7 @@ autocpu
 autoexec
 autofetch
 autohide
+autohint
 autoindent
 automount
 autoprune
@@ -284,6 +285,7 @@ burn
 cachix
 caddyfile
 caffeinate
+calt
 cancelreader
 canmount
 cascadia
@@ -339,6 +341,7 @@ coreutils
 cpio
 cpufreq
 cpuset
+criticalthink
 cros
 crudini
 cryptsetup
@@ -376,6 +379,7 @@ discordapp
 diskful
 diskless
 disko
+dlig
 dmask
 dmenu
 dnodesize
@@ -393,6 +397,7 @@ dtbs
 dunst
 dunstctl
 dunstify
+dynatrace
 earlycon
 earlyprintk
 echoerr
@@ -449,6 +454,7 @@ forcergbx
 fowner
 fprintd
 framesh
+freetype
 fsetid
 fsprogs
 ftplugin
@@ -459,6 +465,7 @@ gamescope
 gcroots
 gdrive
 geminicli
+genai
 geneve
 geni
 genik
@@ -471,6 +478,7 @@ ghostty
 gitdir
 gitgutter
 gitmodules
+gitops
 gitsubmodule
 gitsubmodules
 glink
@@ -646,6 +654,7 @@ libvirtd
 libvulkan
 libwayland
 libxkbcommon
+liga
 lilyinstarlight
 linadmin
 linbit
@@ -1175,8 +1184,3 @@ zfsutil
 zstd
 zvol
 zvols
-calt
-liga
-dlig
-freetype
-autohint
