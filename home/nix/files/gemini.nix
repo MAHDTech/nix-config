@@ -88,7 +88,7 @@ in
               "useAlternateBuffer": true
             },
             "tools": {
-              "sandbox": "none",
+              "sandbox": "true",
               "shell": {
                 "showColor": true
               },

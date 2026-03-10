@@ -11,6 +11,7 @@ let
   };
 
   extraPackagesUnstable = with pkgsUnstable; [
+    # Tools
     prettier
 
     # Newer release of Agent Tools.
@@ -332,6 +333,8 @@ in
           inline = {
             enabled = true;
           };
+          log_level = "debug";
+          log_file = "${builtins.getEnv "TMPDIR"}/zed-diagnostics.log";
         };
 
         #########################
@@ -456,7 +459,7 @@ in
         agent = {
 
           enabled = true;
-          preferred_completion_mode = "normal";
+          preferred_completion_mode = "inline";
           button = true;
           dock = "right";
           single_file_review = true;

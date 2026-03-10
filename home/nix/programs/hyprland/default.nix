@@ -1,6 +1,6 @@
 {
   lib,
-  inGitHubActions,
+  inCI,
   osConfig ? { },
   ...
 }:
@@ -32,8 +32,8 @@ in
   imports = [
     ./hyprland.nix
   ]
-  ++ lib.optional (!inGitHubActions) ./bar
-  ++ lib.optional (!inGitHubActions) ./runner;
+  ++ lib.optional (!inCI) ./bar
+  ++ lib.optional (!inCI) ./runner;
 
   # Pass the device configuration to hyprland.nix
   _module.args.deviceConfig = deviceConfig;

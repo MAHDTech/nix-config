@@ -121,8 +121,8 @@
       # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
       globalStateVersion = "24.05";
 
-      # Are we running in GitHub Actions?
-      inGitHubActions = builtins.getEnv "GITHUB_ACTIONS" == "true";
+      # Are we running in CI?
+      inCI = builtins.getEnv "CI" == "true";
 
       #########################
       # Systems functions
@@ -192,7 +192,7 @@
             inherit globalStateVersion;
             inherit globalUsername;
             inherit system;
-            inherit inGitHubActions;
+            inherit inCI;
           };
         };
     in
@@ -273,7 +273,7 @@
                   inherit inputs;
                   inherit globalStateVersion;
                   inherit globalUsername;
-                  inherit inGitHubActions;
+                  inherit inCI;
                 }
                 // (import ./nixos/hosts/nuc/home-manager/syncthing.nix);
                 users.${globalUsername} = {
@@ -321,7 +321,7 @@
                   inherit inputs;
                   inherit globalStateVersion;
                   inherit globalUsername;
-                  inherit inGitHubActions;
+                  inherit inCI;
                 }
                 // (import ./nixos/hosts/jons/home-manager/syncthing.nix);
                 users.${globalUsername} = {
@@ -498,7 +498,7 @@
                   inherit inputs;
                   inherit globalStateVersion;
                   inherit globalUsername;
-                  inherit inGitHubActions;
+                  inherit inCI;
                 }
                 // (import ./nixos/hosts/zenbook/home-manager/syncthing.nix);
                 users.${globalUsername} = {
