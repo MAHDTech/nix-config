@@ -364,7 +364,7 @@ in
         #########################
 
         terminal = {
-          font_size = 16;
+          font_size = 20;
           #font_family = "" # Defaults to Editor font.
           alternate_scroll = "off";
           blinking = "off";
@@ -390,32 +390,43 @@ in
 
         #########################
         # Fonts
+        #
+        # To get fallback order;
+        # fc-match "FontName" -s
         #########################
 
         # Editor Fonts
-        buffer_font_family = "JetBrainsMono Nerd Font Mono";
-        #buffer_font_family = "VictorMono Nerd Font Mono";
-        #buffer_font_family = "Hack Nerd Font Mono";
+        buffer_font_family = "JetBrainsMono Nerd Font";
         buffer_font_fallbacks = [
+          "VictorMono Nerd Font"
+          "Hack Nerd Font"
+          "Twitter Color Emoji"
           "Noto Color Emoji"
           ".ZedMono"
         ];
-        buffer_font_size = 18;
-        buffer_font_weight = 500;
+        buffer_font_features = {
+          calt = true; # Enable Ligatures
+        };
         buffer_line_height = "comfortable";
+        buffer_font_size = 20;
+        buffer_font_weight = 500;
 
         # UI Fonts
-        ui_font_family = ".ZedSans"; # IBM Plex
-        #ui_font_family = ".SystemUIFont"; # System default
+        ui_font_family = "Clarity City";
         ui_font_fallbacks = [
-          ".ZedSans"
+          "JetBrainsMono Nerd Font"
+          "VictorMono Nerd Font"
+          "Hack Nerd Font"
+          "Twitter Color Emoji"
+          "Noto Color Emoji"
           ".SystemUIFont"
+          ".ZedSans"
         ];
-        ui_font_size = 18;
+        ui_font_size = 20;
         ui_font_weight = 500;
 
         # Agent Fonts
-        agent_ui_font_size = 18;
+        agent_ui_font_size = 20;
 
         #########################
         # Layouts
@@ -459,7 +470,6 @@ in
         agent = {
 
           enabled = true;
-          preferred_completion_mode = "inline";
           button = true;
           dock = "right";
           single_file_review = true;
