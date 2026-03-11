@@ -11,6 +11,7 @@ Ashburn
 BOHICA
 BUILDKIT
 Bambu
+Battlemage
 Bingamon
 Bisync
 Bluez
@@ -20,11 +21,10 @@ CACERT
 CAINFO
 CAMCC
 CCID
-ollama
-opencode
 CLUST
 CONTIG
 CTYPE
+CUDA
 Cascadia
 Catppuccin
 Changhua
@@ -59,6 +59,8 @@ Ferdium
 Fira
 Flatpaks
 Flatseal
+GGML
+GGUFS
 GLSL
 GNUPGHOME
 GOBIN
@@ -111,6 +113,7 @@ MKNOD
 MOTORCOMM
 MXTJ
 Mioi
+Modelfile
 Modeswitch
 Motorcomm
 Mxgw
@@ -148,6 +151,7 @@ RAMYBQ
 RCLONE
 RDMA
 ROCKCHIP
+ROCR
 RSYNC
 RUNDIR
 RUSTUP
@@ -184,6 +188,7 @@ UESP
 UNIFI
 UWSM
 Ultrawide
+Ungated
 Unifi
 Uwyv
 VDEC
@@ -261,6 +266,7 @@ avahi
 ayatana
 aymanbagabas
 barentry
+bartowski
 bcache
 binbash
 bindm
@@ -307,6 +313,7 @@ channelmix
 chara
 charasay
 charmbracelet
+chatml
 chattr
 checkbutton
 checkhash
@@ -329,6 +336,7 @@ cloudforge
 cman
 cmdhist
 cmdk
+codegeex
 coex
 coldspot
 colorprofile
@@ -366,6 +374,7 @@ dearmor
 debsig
 decepticon
 deepcolor
+deepseek
 defexpr
 degr
 dejavu
@@ -416,6 +425,7 @@ elif
 emul
 endersonmenezes
 endfunction
+endswith
 envfs
 erikgeiser
 errfmt
@@ -550,6 +560,7 @@ hsphfpd
 htop
 httping
 httpstat
+huggingface
 huponexit
 hwdec
 hwmon
@@ -694,6 +705,7 @@ mailwarn
 mangohud
 mapfile
 mapleader
+maziyarpanahi
 memlock
 memsize
 memtest
@@ -781,6 +793,7 @@ nospell
 noswapfile
 noto
 notwendig
+nounits
 nowrap
 nowritebackup
 nproperty
@@ -796,6 +809,7 @@ nvml
 nvtop
 obsproject
 oifname
+ollama
 ondemand
 onepassword
 oneshot
@@ -803,6 +817,7 @@ onlyoffice
 oomd
 openal
 opencl
+opencode
 opengl
 openpgp
 opensc
@@ -874,6 +889,7 @@ protontricks
 pseudotile
 pstate
 psuedotiling
+psutil
 ptcp
 pubkeys
 pubring
@@ -913,6 +929,7 @@ resisizing
 resolv
 restic
 reviewone
+rfilename
 rgba
 ripsecrets
 rivo
@@ -928,6 +945,8 @@ rohm
 romilly
 rootwait
 rpool
+rprint
+rptint
 rtcqs
 rtkit
 rtprio
@@ -1045,6 +1064,7 @@ synctex
 syncthing
 syscopyarea
 sysfillrect
+sysfs
 sysimgblt
 sysinfo
 sysinit
@@ -1078,6 +1098,7 @@ tmpl
 togglefloating
 togglesplit
 tokei
+tokyonight
 touchdevice
 tpacpi
 trezord
@@ -1194,5 +1215,3 @@ zfsutil
 zstd
 zvol
 zvols
-nounits
-sysfs

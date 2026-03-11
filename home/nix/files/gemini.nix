@@ -416,9 +416,9 @@ in
         # This enforces your declarative defaults while preserving CLI-managed keys
         # (e.g. auth tokens, cached state inside nested objects).
         ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$TARGET" "$TEMPLATE" > "$TMP_TARGET"
-        mv "$TMP_TARGET" "$TARGET"
+        mv --force "$TMP_TARGET" "$TARGET"
       else
-        cp "$TEMPLATE" "$TARGET"
+        cp --force "$TEMPLATE" "$TARGET"
       fi
 
       chmod 600 "$TARGET"

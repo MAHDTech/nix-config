@@ -19,11 +19,7 @@ let
     claude-code
     claude-monitor
     gemini-cli
-    #mistral-rs
-    mistral-vibe
-    #mistral-interface
     copilot-language-server
-    goose-cli
     opencode
   ];
 
@@ -367,7 +363,7 @@ in
         #########################
 
         terminal = {
-          font_size = 20;
+          font_size = 18;
           #font_family = "" # Defaults to Editor font.
           alternate_scroll = "off";
           blinking = "off";
@@ -405,7 +401,7 @@ in
           ".ZedMono"
         ];
         buffer_font_features = {
-          calt = false; # Enable/Disable Ligatures
+          calt = true; # Enable/Disable Ligatures
         };
         buffer_line_height = "comfortable";
         buffer_font_size = 20;
@@ -460,27 +456,7 @@ in
           gemini = {
             ignore_system_version = false;
           };
-          # Use Goose CLI from nixpkgs
-          "NixOS Goose CLI" = {
-            type = "custom";
-            command = "${pkgsUnstable.goose-cli}/bin/goose";
-            args = [
-              "acp"
-            ];
-            env = {
-            };
-          };
-          # Use Mistral Vibe from nixpkgs
-          "NixOS Mistral Vibe" = {
-            type = "custom";
-            command = "${pkgsUnstable.mistral-vibe}/bin/vibe-acp";
-            args = [
-            ];
-            env = {
-            };
-          };
-          # Use OpenCode CLI from nixpkgs
-          "NixOS OpenCode CLI" = {
+          "OpenCode" = {
             type = "custom";
             command = "${pkgsUnstable.opencode}/bin/opencode";
             args = [
@@ -637,27 +613,27 @@ in
         # AI Language Models
         #########################
 
-        #language_models = {
-        #  x_ai = {
-        #    api_url = "https://api.x.ai/v1";
-        #    available_models = [
-        #      {
-        #        name = "grok-4-1-fast-reasoning";
-        #        display_name = "Grok 4.1";
-        #        max_tokens = 2000000;
-        #        supports_images = true;
-        #        supports_tools = true;
-        #      }
-        #      {
-        #        name = "grok-code-fast-1";
-        #        display_name = "Grok Code Fast 1";
-        #        max_tokens = 256000;
-        #        supports_images = false;
-        #        supports_tools = true;
-        #      }
-        #    ];
-        #  };
-        #};
+        language_models = {
+          openai_compatible = {
+            "Local" = {
+              api_url = "http://127.0.0.1:8080/v1";
+              available_models = [
+                {
+                  name = "Qwen2.5-Coder-7B-Instruct";
+                  display_name = "Local Qwen 7B (64k)";
+                  max_tokens = 65536;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = false;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+              ];
+            };
+          };
+        };
 
         #########################
         # AI Context Servers

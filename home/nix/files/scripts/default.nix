@@ -11,5 +11,8 @@
 
     # Sync projects.
     ./sync-projects.nix
+
+    # AI Launcher Menu
+    ./ai-launcher.nix
   ];
 }

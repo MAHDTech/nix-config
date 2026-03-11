@@ -1,30 +1,59 @@
 #!/usr/bin/env bash
 
 # llm-local.sh
-# A wrapper script to start a local model.
+# A wrapper script to start a local model for OpenCode on NixOS.
+# Auto-detects NVIDIA/AMD (mistralrs) or Intel (Ollama Vulkan), or CPU-only mode.
+# Dynamically allocates 75% GPU VRAM and 50% System RAM for hybrid workloads.
 
-clear
 set -euo pipefail
-
 export NIXPKGS_ALLOW_UNFREE=1
 
-# --- LOGGING SETUP ---
+# --- CONFIGURATION & DEFAULTS ---
 SCRIPT_NAME=$(basename "$0")
 TMP_DIR="${TMPDIR:-/tmp}"
 LOG_FILE="$TMP_DIR/${SCRIPT_NAME%.*}.log"
+PID_FILE="$TMP_DIR/.llm.pid"
 
-ACTION=${1:-""}
-if [[ -n $ACTION ]]; then
-	shift # Move past the action so we can parse the flags
-fi
-
-# Default values
-ISQ="Q4K"
+ACTION=""
 MODEL="Qwen/Qwen2.5-Coder-7B-Instruct"
+CPU_ENABLED=false
+CPU_TYPE="ollama"
+UPDATE_CONFIG=false
+ISQ="Q4K"
 
-# Argument parser
+# HuggingFace to Ollama Model Mapping (Update this array as needed)
+declare -A OLLAMA_MODEL_MAP=(
+	["Qwen/Qwen2.5-Coder-7B-Instruct"]="qwen2.5-coder:7b"
+	["Qwen/Qwen2.5-Coder-1.5B-Instruct"]="qwen2.5-coder:1.5b"
+	["Qwen/Qwen2.5-Coder-32B-Instruct"]="qwen2.5-coder:32b"
+	["deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct"]="deepseek-coder-v2"
+	["meta-llama/Llama-3-8B-Instruct"]="llama3:8b"
+)
+
+# --- ARGUMENT PARSING ---
 while [[ $# -gt 0 ]]; do
 	case $1 in
+	start | stop | opencode)
+		ACTION="$1"
+		shift
+		;;
+	--help)
+		ACTION="help"
+		shift
+		;;
+	--cpu)
+		CPU_ENABLED=true
+		if [[ -n ${2:-} && $2 != --* ]]; then
+			CPU_TYPE="$2"
+			shift 2
+		else
+			shift
+		fi
+		;;
+	--config)
+		UPDATE_CONFIG=true
+		shift
+		;;
 	--model)
 		MODEL="$2"
 		shift 2
@@ -34,260 +63,321 @@ while [[ $# -gt 0 ]]; do
 		shift 2
 		;;
 	*)
-		echo "Unknown parameter: $1"
-		shift
+		echo "❌ Unknown parameter: $1"
+		exit 1
 		;;
 	esac
 done
 
-if [ -z "$ACTION" ]; then
-	echo "Usage: ./llm-local.sh <shell|start|stop|tune|bench|penCode|dev> [--model MODEL_NAME] [--isq ISQ_LEVEL]"
+if [[ -z $ACTION || $ACTION == "help" ]]; then
+	echo "Usage: $0 <start|stop|opencode> [OPTIONS]"
 	echo ""
-	echo "Commands:"
-	echo "  shell   - Enters the Nix environment"
-	echo "  start   - Starts the server in the background"
-	echo "  stop    - Stops the server"
-	echo "  tune    - Auto-profiles hardware"
-	echo "  bench   - Runs performance benchmark"
-	echo "  opencode    - Starts OpenCode with the current backend"
-	echo "  dev     - The ultimate combo: Shell -> Tune -> Bench -> Start -> OpenCode -> Auto-Stop"
-	exit 1
+	echo "Actions:"
+	echo "  start       Starts the model, tails logs in foreground. CTRL+C to stop cleanly."
+	echo "  stop        Stops the server from another terminal and cleans up processes."
+	echo "  opencode    Launches OpenCode from Nixpkgs."
+	echo ""
+	echo "Options:"
+	echo "  --help      Show this help message."
+	echo "  --model     HuggingFace model name (default: Qwen/Qwen2.5-Coder-7B-Instruct)."
+	echo "  --config    Overwrite the OpenCode config for the active model/backend."
+	echo "  --cpu       Force CPU mode [ollama|mistralrs] (default: ollama, caps at 50% of system RAM)."
+	echo "  --isq       Quantization level for MistralRS (default: Q4K)."
+	exit 0
 fi
 
-if [[ $ACTION != "shell" && $ACTION != "stop" ]] && [[ -z $MODEL ]]; then
-	echo "❌ Error: You must specify a model using --model"
-	echo "Example: ./llm-wrapper.sh $ACTION --model Qwen/Qwen2.5-Coder-7B-Instruct"
-	exit 1
+# --- CLEANUP / STOP LOGIC ---
+stop_servers() {
+	# Prevent multiple invocations
+	if [[ -n ${_STOP_IN_PROGRESS:-} ]]; then
+		return 0
+	fi
+	_STOP_IN_PROGRESS=1
+
+	echo "🛑 Stopping servers and cleaning up..."
+	if [[ -f $PID_FILE ]]; then
+		PID=$(cat "$PID_FILE")
+		kill "$PID" 2>/dev/null || true
+		rm -f "$PID_FILE"
+	fi
+	pkill -f mistralrs 2>/dev/null || true
+	pkill -f "ollama serve" 2>/dev/null || true
+	echo "✅ Cleanup complete."
+
+	unset _STOP_IN_PROGRESS
+}
+
+if [[ $ACTION == "stop" ]]; then
+	stop_servers
+	exit 0
 fi
 
-# --- GPU AUTO-DETECTION ---
+# --- HARDWARE & MEMORY DETECTION ---
 GPU_VENDOR="unknown"
-if command -v lspci >/dev/null 2>&1 && lspci | grep -i nvidia >/dev/null; then
-	GPU_VENDOR="nvidia"
-elif command -v lspci >/dev/null 2>&1 && lspci | grep -i intel | grep -iE 'vga|3d|display' >/dev/null; then
-	GPU_VENDOR="intel"
-elif command -v lsgpu >/dev/null 2>&1 && lsgpu | grep -i intel >/dev/null; then
-	GPU_VENDOR="intel"
-else
-	echo "Unsupported GPU vendor"
-	exit 1
-fi
-
-# --- VRAM & CONTEXT SIZE CALCULATION ---
-GPU_MEM_GB=12 # Safe default fallback
-
-if [[ $GPU_VENDOR == "nvidia" ]] && command -v nvidia-smi >/dev/null 2>&1; then
-	# Parse exactly how many GBs NVIDIA reports
-	GPU_MEM_GB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | awk '{print int($1/1024)}')
-else
-	# Parse Linux sysfs or lspci for Intel/AMD VRAM
-	VRAM_BYTES=$(cat /sys/class/drm/card*/device/mem_info_vram_total 2>/dev/null | sort -nr | head -n 1 || true)
-	if [[ -n $VRAM_BYTES ]]; then
-		GPU_MEM_GB=$((VRAM_BYTES / 1024 / 1024 / 1024))
-	elif command -v lspci >/dev/null 2>&1; then
-		# Fallback: Check PCIe BAR size (often matches VRAM on modern Arc/Radeon GPUs)
-		VRAM_G=$(lspci -v 2>/dev/null | grep -iE 'VGA|Display|3D' -A 10 | grep "Memory at" | grep "prefetchable" | grep -oE '[0-9]+G' | head -n 1 | tr -d 'G' || true)
-		if [[ -n $VRAM_G ]]; then
-			GPU_MEM_GB="$VRAM_G"
-		fi
+if [[ $CPU_ENABLED == true ]]; then
+	GPU_VENDOR="cpu"
+elif command -v lsgpu >/dev/null 2>&1; then
+	if lsgpu | grep -iE 'NVIDIA|GeForce|Quadro|Tesla' >/dev/null; then
+		GPU_VENDOR="nvidia"
+	elif lsgpu | grep -iE 'AMD|Radeon|RX|Ryzen Integrated' >/dev/null; then
+		GPU_VENDOR="amd"
+	elif lsgpu | grep -iE 'Intel.*Arc|Battlemage|Alchemist' >/dev/null; then
+		GPU_VENDOR="intel"
+	elif lsgpu | grep -i 'vga compatible controller' | grep -i intel >/dev/null; then
+		GPU_VENDOR="intel"
+	elif lsgpu | grep -i 'vga compatible controller' | grep -i amd >/dev/null; then
+		GPU_VENDOR="amd"
 	fi
 fi
 
-# - Reserve 25% GPU memory for the system.
-# - Use the rest for the LLM
-GPU_MEM_GB=$((GPU_MEM_GB * 3 / 4))
-OLLAMA_VRAM_BYTES=$((GPU_MEM_GB * 1024 * 1024 * 1024))
+# 1. Calculate 50% System RAM
+TOTAL_SYS_BYTES=$(free -b | awk '/^Mem:/{print $2}')
+SYS_MEM_BYTES=$((TOTAL_SYS_BYTES * 50 / 100))
+SYS_MEM_GB=$((SYS_MEM_BYTES / 1024 / 1024 / 1024))
 
-# Map VRAM to optimal context window length
-case $GPU_MEM_GB in
-24 | 2[4-9] | [3-9][0-9]) CONTEXT_SIZE=65536 ;; # 24GB+
-16 | 1[6-9] | 2[0-3]) CONTEXT_SIZE=49152 ;;     # 16GB - 23GB
-12 | 1[2-5]) CONTEXT_SIZE=32768 ;;              # 12GB - 15GB
-8 | [8-9] | 1[0-1]) CONTEXT_SIZE=16384 ;;       # 8GB - 11GB
-6 | 7) CONTEXT_SIZE=8192 ;;                     # 6GB - 7GB
-*) CONTEXT_SIZE=4096 ;;                         # 4GB or fallback
+# 2. Calculate 75% GPU VRAM (0 if CPU mode)
+GPU_MEM_BYTES=0
+GPU_MEM_GB=0
+
+if [[ $GPU_VENDOR != "cpu" ]]; then
+	TOTAL_VRAM_MB=0
+	if [[ $GPU_VENDOR == "nvidia" ]] && command -v nvidia-smi >/dev/null 2>&1; then
+		TOTAL_VRAM_MB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | head -n 1)
+	else
+		VRAM_BYTES=$(cat /sys/class/drm/card*/device/mem_info_vram_total 2>/dev/null | sort -nr | head -n 1 || true)
+		if [[ -n $VRAM_BYTES ]]; then
+			TOTAL_VRAM_MB=$((VRAM_BYTES / 1024 / 1024))
+		elif command -v lspci >/dev/null 2>&1; then
+			VRAM_G=$(lspci -v 2>/dev/null | grep -iE 'VGA|Display|3D' -A 10 | grep "Memory at" | grep "prefetchable" | grep -oE '[0-9]+G' | head -n 1 | tr -d 'G' || true)
+			if [[ -n $VRAM_G ]]; then
+				TOTAL_VRAM_MB=$((VRAM_G * 1024))
+			fi
+		fi
+	fi
+
+	if [[ $TOTAL_VRAM_MB -gt 0 ]]; then
+		GPU_MEM_BYTES=$((TOTAL_VRAM_MB * 1024 * 1024 * 75 / 100))
+		GPU_MEM_GB=$((GPU_MEM_BYTES / 1024 / 1024 / 1024))
+	fi
+fi
+
+# Total Combined Allocation for Context Window Math
+TOTAL_ALLOC_GB=$((SYS_MEM_GB + GPU_MEM_GB))
+
+case $TOTAL_ALLOC_GB in
+24 | 2[4-9] | [3-9][0-9]) CONTEXT_SIZE=65536 ;;
+16 | 1[6-9] | 2[0-3]) CONTEXT_SIZE=49152 ;;
+12 | 1[2-5]) CONTEXT_SIZE=32768 ;;
+8 | [8-9] | 1[0-1]) CONTEXT_SIZE=16384 ;;
+6 | 7) CONTEXT_SIZE=8192 ;;
+*) CONTEXT_SIZE=4096 ;;
 esac
 
-echo "🔍 Detected GPU: ${GPU_VENDOR^^} (Adjusted available VRAM: ~${GPU_MEM_GB}GB)"
-echo "🧠 Allocated Context: $CONTEXT_SIZE tokens"
-echo "📝 Server logs will be written to: $LOG_FILE"
-
-# --- BACKEND CONFIGURATION ---
-if [[ $GPU_VENDOR == "nvidia" ]]; then
+# --- APPLY BACKEND SETTINGS ---
+case "${GPU_VENDOR:-unknown}" in
+"nvidia" | "amd")
 	BACKEND="mistralrs"
-	TARGET_REPO="$MODEL"
 	NIX_PKGS=(
 		"github:NixOS/nixpkgs/nixos-unstable#mistral-rs"
 		"github:NixOS/nixpkgs/nixos-unstable#opencode"
 		"github:NixOS/nixpkgs/nixos-unstable#cacert"
 	)
-else
+	TARGET_REPO="$MODEL"
+	;;
+"intel")
 	BACKEND="ollama"
 	NIX_PKGS=(
 		"github:NixOS/nixpkgs/nixos-unstable#ollama-vulkan"
 		"github:NixOS/nixpkgs/nixos-unstable#opencode"
 		"github:NixOS/nixpkgs/nixos-unstable#cacert"
 	)
-
-	# Map HuggingFace repo to Ollama model tag
-	if [[ $MODEL == "Qwen/Qwen2.5-Coder-7B-Instruct" ]]; then
-		TARGET_REPO="qwen2.5-coder:7b"
+	if [[ -n ${OLLAMA_MODEL_MAP[$MODEL]:-} ]]; then
+		TARGET_REPO="${OLLAMA_MODEL_MAP[$MODEL]}"
 	else
 		TARGET_REPO=$(basename "$MODEL" | tr '[:upper:]' '[:lower:]')
 	fi
-fi
+	CUSTOM_TAG="${TARGET_REPO}-opencode"
+	;;
+"cpu")
+	export CUDA_VISIBLE_DEVICES=""
+	export GGML_VK_VISIBLE_DEVICES=""
+	export ROCR_VISIBLE_DEVICES=""
 
-# --- MODEL VALIDATION ---
-if [[ $ACTION != "shell" && $ACTION != "stop" ]]; then
-	if [[ $BACKEND == "mistralrs" ]]; then
-		echo "🌍 Validating \"$TARGET_REPO\" via Hugging Face API..."
-		HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://huggingface.co/api/models/$TARGET_REPO" || echo "000")
-
-		if [[ $HTTP_STATUS != "200" ]]; then
-			echo "❌ ERROR: No model named \"$TARGET_REPO\" was found on Hugging Face (HTTP $HTTP_STATUS)."
-			exit 1
+	case "$CPU_TYPE" in
+	"mistralrs")
+		BACKEND="mistralrs"
+		NIX_PKGS=(
+			"github:NixOS/nixpkgs/nixos-unstable#mistral-rs"
+			"github:NixOS/nixpkgs/nixos-unstable#opencode"
+			"github:NixOS/nixpkgs/nixos-unstable#cacert"
+		)
+		TARGET_REPO="$MODEL"
+		;;
+	"ollama" | *)
+		BACKEND="ollama"
+		NIX_PKGS=(
+			"github:NixOS/nixpkgs/nixos-unstable#ollama"
+			"github:NixOS/nixpkgs/nixos-unstable#opencode"
+			"github:NixOS/nixpkgs/nixos-unstable#cacert"
+		)
+		if [[ -n ${OLLAMA_MODEL_MAP[$MODEL]:-} ]]; then
+			TARGET_REPO="${OLLAMA_MODEL_MAP[$MODEL]}"
+		else
+			TARGET_REPO=$(basename "$MODEL" | tr '[:upper:]' '[:lower:]')
 		fi
-		echo "✅ Model successfully validated."
-	else
-		echo "✅ Ollama will automatically validate and pull \"$TARGET_REPO\" during startup."
-	fi
-fi
-
-# --- NIX NETWORK FIXES ---
-unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
-export SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
-export GIT_SSL_CAINFO=/etc/ssl/certs/ca-bundle.crt
-
-if [ ! -f "$SSL_CERT_FILE" ]; then
-	export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-	export GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
-fi
-# -------------------------
-
-case $ACTION in
-shell)
-	echo "❄️ Entering Nix shell for $BACKEND..."
-	nix shell --impure "${NIX_PKGS[@]}"
+		CUSTOM_TAG="${TARGET_REPO}-opencode"
+		;;
+	esac
 	;;
-
-start)
-	echo "🚀 Starting $BACKEND server for $TARGET_REPO..."
-	if [[ $BACKEND == "mistralrs" ]]; then
-		nohup mistralrs serve --ui auto -m "$MODEL" --isq "$ISQ" >"$LOG_FILE" 2>&1 &
-		PID=$!
-		echo "$PID" >.llm.pid
-	else
-		export OLLAMA_HOST="127.0.0.1:8080"
-		export OLLAMA_MAX_VRAM="$OLLAMA_VRAM_BYTES"
-		export OLLAMA_KEEP_ALIVE="-1"
-		export OLLAMA_KV_CACHE_TYPE="f16"
-		export OLLAMA_MAX_QUEUE="$CONTEXT_SIZE"
-		export OLLAMA_NUM_PARALLEL="4"
-
-		nohup ollama serve >"$LOG_FILE" 2>&1 &
-		PID=$!
-		echo "$PID" >.llm.pid
-
-		echo "⏳ Waiting 3 seconds for Ollama server to boot..."
-		sleep 3
-		echo "📥 Pulling model $TARGET_REPO (this may take a minute if not cached)..."
-		ollama pull "$TARGET_REPO"
-	fi
-
-	echo "✅ Server started in background (PID: $PID)."
-	echo "👉 Open a new terminal and run: tail -f $LOG_FILE"
-	;;
-
-stop)
-	if [ -f .llm.pid ]; then
-		PID=$(cat .llm.pid)
-		echo "🛑 Stopping server (PID: $PID)..."
-		kill "$PID" 2>/dev/null || true
-		rm .llm.pid
-	fi
-	pkill -f mistralrs 2>/dev/null || true
-	pkill -f ollama 2>/dev/null || true
-	echo "✅ Cleanup complete."
-	;;
-
-tune)
-	if [[ $BACKEND == "mistralrs" ]]; then
-		echo "⚙️ Tuning hardware for $MODEL..."
-		mistralrs tune -m "$MODEL"
-	else
-		echo "⚙️ Tuning bypassed: Ollama handles memory limits automatically."
-	fi
-	;;
-
-bench)
-	if [[ $BACKEND == "mistralrs" ]]; then
-		echo "⏱️ Benchmarking $MODEL (ISQ: $ISQ)..."
-		mistralrs bench auto -m "$MODEL" --isq "$ISQ"
-	else
-		echo "⏱️ Benchmarking bypassed: Skipped for Ollama."
-	fi
-	;;
-
-opencode)
-	echo "🤖 Launching OpenCode..."
-	opencode
-	;;
-
-dev)
-	echo "🌟 Launching Full Dev Workflow via $BACKEND..."
-
-	if [[ $BACKEND == "mistralrs" ]]; then
-		nix shell --impure "${NIX_PKGS[@]}" \
-			--command bash -c "
-					echo -e '\n=== 1/4 Tuning ==='
-					mistralrs tune -m '$MODEL'
-					echo -e '\n=== 2/4 Benchmarking ==='
-					mistralrs bench auto -m '$MODEL' --isq '$ISQ'
-					echo -e '\n=== 3/4 Starting Server ==='
-					nohup mistralrs serve --ui auto -m '$MODEL' --isq '$ISQ' > '$LOG_FILE' 2>&1 &
-					echo \$! > .llm.pid
-					echo '👉 Open a new terminal and run: tail -f $LOG_FILE'
-					echo 'Waiting 15 seconds for shards to load...'
-					sleep 15
-					echo -e '\n=== 4/4 Launching OpenCode ==='
-					opencode
-					echo -e '\n✅ OpenCode closed. Server is STILL RUNNING in the background.'
-					echo 'To stop it and free VRAM, run: ./scripts/llm-wrapper.sh stop'
-				"
-	else
-		nix shell --impure "${NIX_PKGS[@]}" \
-			--command bash -c "
-					echo -e '\n=== 1/4 Tuning ==='
-					echo 'Ollama handles memory limits automatically via OLLAMA_MAX_VRAM.'
-					echo -e '\n=== 2/4 Benchmarking ==='
-					echo 'Skipped for Ollama.'
-					echo -e '\n=== 3/4 Starting Server ==='
-					export OLLAMA_HOST='127.0.0.1:8080'
-					export OLLAMA_MAX_VRAM='$OLLAMA_VRAM_BYTES'
-					export OLLAMA_KEEP_ALIVE='-1'
-					export OLLAMA_KV_CACHE_TYPE='f16'
-					export OLLAMA_MAX_QUEUE='$CONTEXT_SIZE'
-					export OLLAMA_NUM_PARALLEL='4'
-
-					nohup ollama serve > '$LOG_FILE' 2>&1 &
-					echo \$! > .llm.pid
-					echo '⏳ Waiting for Ollama...'
-					sleep 3
-					echo '📥 Pulling model $TARGET_REPO...'
-					ollama pull '$TARGET_REPO'
-					echo '👉 Open a new terminal and run: tail -f $LOG_FILE'
-					echo -e '\n=== 4/4 Ready for OpenCode ==='
-					echo 'You can now run \"opencode\" in your project directory!'
-					echo 'Starting OpenCode as fallback...'
-					OpenCode || echo 'OpenCode not found, skipping.'
-					echo -e '\n✅ Server is STILL RUNNING in the background.'
-					echo 'To stop it, run: ./scripts/llm-wrapper.sh stop'
-				"
-	fi
-	;;
-
 *)
-	echo "❌ Unknown action: $ACTION"
+	echo "Unknown or unsupported GPU vendor ${GPU_VENDOR}"
 	exit 1
 	;;
 esac
+
+# --- NIXOS ENVIRONMENT WRAPPER ---
+if [[ -z ${__LLM_WRAPPED:-} ]]; then
+	echo "🔍 Detected Hardware: ${GPU_VENDOR^^}"
+	echo "🧠 Memory Limits: ${GPU_MEM_GB}GB VRAM (75%) + ${SYS_MEM_GB}GB RAM (50%)"
+	echo "📏 Context Size:  $CONTEXT_SIZE tokens (Based on ${TOTAL_ALLOC_GB}GB Total memory)"
+	echo "⚙️ Backend Choice: ${BACKEND^^}"
+
+	export __LLM_WRAPPED=1
+	export SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
+	export GIT_SSL_CAINFO=/etc/ssl/certs/ca-bundle.crt
+	if [ ! -f "$SSL_CERT_FILE" ]; then
+		export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+		export GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
+	fi
+
+	echo "❄️ Bootstrapping Nix Environment..."
+	ARGS=("$ACTION" --model "$MODEL" --isq "$ISQ")
+	[[ $CPU_ENABLED == true ]] && ARGS+=(--cpu "$CPU_TYPE")
+	[[ $UPDATE_CONFIG == true ]] && ARGS+=(--config)
+	exec nix shell --impure "${NIX_PKGS[@]}" --command "$0" "${ARGS[@]}"
+fi
+
+# --- INSIDE NIX SHELL EXECUTION ---
+if [[ $UPDATE_CONFIG == true ]]; then
+	echo "⚙️ Overwriting OpenCode configuration for ${BACKEND^^}..."
+	mkdir -p ~/.config/opencode
+
+	if [[ $BACKEND == "ollama" ]]; then
+		CONFIG_MODEL="${CUSTOM_TAG}"
+		PROVIDER="ollama"
+	else
+		CONFIG_MODEL="${TARGET_REPO}"
+		PROVIDER="mistralrs"
+	fi
+
+	cat <<EOF >~/.config/opencode/opencode.json
+{
+  "\$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "${PROVIDER}": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "${PROVIDER^^} Local Server",
+      "options": {
+        "baseURL": "http://127.0.0.1:8080/v1",
+        "apiKey": "sk-dummy"
+      },
+      "models": {
+        "${CONFIG_MODEL}": {
+          "name": "${CONFIG_MODEL}"
+        }
+      }
+    }
+  },
+  "model": "${PROVIDER}/${CONFIG_MODEL}"
+}
+EOF
+	echo "✅ OpenCode config updated successfully."
+fi
+
+if [[ $ACTION == "opencode" ]]; then
+	echo "🤖 Launching OpenCode..."
+	unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY all_proxy
+	export NO_PROXY="localhost,127.0.0.1,::1"
+	export OPENAI_API_KEY="sk-dummy"
+	exec opencode
+
+elif [[ $ACTION == "start" ]]; then
+	trap stop_servers SIGINT SIGTERM EXIT
+	echo "🚀 Starting ${BACKEND^^} server for $TARGET_REPO..."
+
+	true >"$LOG_FILE" # Clear old logs
+
+	if [[ $BACKEND == "mistralrs" ]]; then
+
+		# --- MISTRALRS PRE-FLIGHT CHECKS ---
+		echo "----------------------------------------------------------------------"
+		echo "🩺 Running mistralrs doctor..."
+		mistralrs doctor
+
+		echo "----------------------------------------------------------------------"
+		echo "🛠️ Running mistralrs tune (Hardware profiling)..."
+		mistralrs tune
+
+		echo "----------------------------------------------------------------------"
+		echo "📊 Running mistralrs bench for $MODEL..."
+		echo "   (This will test your hardware speeds. Please wait...)"
+		mistralrs bench -m "$MODEL" --isq "$ISQ"
+		echo "----------------------------------------------------------------------"
+
+		echo "🚀 Pre-flight complete. Starting inference server..."
+		MISTRAL_ARGS=(serve --host 127.0.0.1 --port 8080 --ui auto -m "$MODEL" --isq "$ISQ")
+
+		mistralrs "${MISTRAL_ARGS[@]}" >"$LOG_FILE" 2>&1 &
+		LLM_PID=$!
+		echo "$LLM_PID" >"$PID_FILE"
+
+		echo "⏳ Waiting for MistralRS to initialize..."
+		echo "   (This takes a few minutes on CPU while it quantizes the model to $ISQ...)"
+
+		# Looping until it responds with HTTP 200
+		MISTRAL_COUNTER=0
+		while ! curl -s http://127.0.0.1:8080/v1/models >/dev/null; do
+			# Check if the process crashed while we were waiting
+			if ! kill -0 "$LLM_PID" 2>/dev/null; then
+				echo "❌ Error: MistralRS crashed during startup. Check the logs."
+				exit 1
+			fi
+			sleep 10
+			MISTRAL_COUNTER=$((MISTRAL_COUNTER + 1))
+			echo "Still waiting, attempt ${MISTRAL_COUNTER}..."
+		done
+	else
+		export OLLAMA_HOST="127.0.0.1:8080"
+		export OLLAMA_MAX_VRAM="$GPU_MEM_BYTES"
+		export OLLAMA_KEEP_ALIVE="-1"
+		export OLLAMA_NUM_PARALLEL="1"
+
+		ollama serve >"$LOG_FILE" 2>&1 &
+		LLM_PID=$!
+		echo "$LLM_PID" >"$PID_FILE"
+
+		echo "⏳ Waiting for Ollama server to boot..."
+		sleep 3
+
+		echo "📥 Pulling base model $TARGET_REPO..."
+		ollama pull "$TARGET_REPO"
+
+		echo "⚙️ Creating explicit OpenCode tag to enforce $CONTEXT_SIZE context..."
+		echo "FROM $TARGET_REPO" >.Modelfile.tmp
+		echo "PARAMETER num_ctx $CONTEXT_SIZE" >>.Modelfile.tmp
+		ollama create "$CUSTOM_TAG" -f .Modelfile.tmp
+		rm -f .Modelfile.tmp
+	fi
+
+	echo ""
+	echo "✅ Server is READY and running."
+	echo "📝 Tailing logs below. Press [CTRL+C] to gracefully stop the server."
+	echo "👉 To launch the UI, open a new terminal and run: $0 opencode"
+	echo "----------------------------------------------------------------------"
+
+	tail -f "$LOG_FILE" &
+	TAIL_PID=$!
+
+	wait "$LLM_PID" 2>/dev/null || true
+	kill "$TAIL_PID" 2>/dev/null || true
+fi
