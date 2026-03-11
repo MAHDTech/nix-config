@@ -140,8 +140,6 @@
           inherit system;
           config = {
             allowUnfree = true;
-            # Accept the JoyPixels license for font use.
-            joypixels.acceptLicense = true;
           };
         };
 

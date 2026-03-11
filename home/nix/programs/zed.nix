@@ -22,6 +22,9 @@ let
     #mistral-rs
     mistral-vibe
     #mistral-interface
+    copilot-language-server
+    goose-cli
+    opencode
   ];
 
 in
@@ -314,12 +317,6 @@ in
         };
 
         #########################
-        # Features
-        #########################
-
-        features = { };
-
-        #########################
         # Prettier Integration
         #########################
 
@@ -341,8 +338,6 @@ in
           inline = {
             enabled = true;
           };
-          log_level = "debug";
-          log_file = "${builtins.getEnv "TMPDIR"}/zed-diagnostics.log";
         };
 
         #########################
@@ -406,14 +401,11 @@ in
         # Editor Fonts
         buffer_font_family = "JetBrainsMono Nerd Font";
         buffer_font_fallbacks = [
-          "VictorMono Nerd Font"
-          "Hack Nerd Font"
-          "Twitter Color Emoji"
           "Noto Color Emoji"
           ".ZedMono"
         ];
         buffer_font_features = {
-          calt = true; # Enable Ligatures
+          calt = false; # Enable/Disable Ligatures
         };
         buffer_line_height = "comfortable";
         buffer_font_size = 20;
@@ -422,10 +414,6 @@ in
         # UI Fonts
         ui_font_family = "Clarity City";
         ui_font_fallbacks = [
-          "JetBrainsMono Nerd Font"
-          "VictorMono Nerd Font"
-          "Hack Nerd Font"
-          "Twitter Color Emoji"
           "Noto Color Emoji"
           ".SystemUIFont"
           ".ZedSans"
@@ -466,21 +454,38 @@ in
         #########################
 
         agent_servers = {
-          # Use Gemini CLI from nixpkgs
+          github-copilot-cli = {
+            type = "registry";
+          };
           gemini = {
             ignore_system_version = false;
           };
-
-          # Use Claude Code from nixpkgs
-          claude-code = {
-            ignore_system_version = false;
+          # Use Goose CLI from nixpkgs
+          "NixOS Goose CLI" = {
+            type = "custom";
+            command = "${pkgsUnstable.goose-cli}/bin/goose";
+            args = [
+              "acp"
+            ];
+            env = {
+            };
           };
-
           # Use Mistral Vibe from nixpkgs
-          "Mistral Vibe NixOS" = {
+          "NixOS Mistral Vibe" = {
             type = "custom";
             command = "${pkgsUnstable.mistral-vibe}/bin/vibe-acp";
             args = [
+            ];
+            env = {
+            };
+          };
+          # Use OpenCode CLI from nixpkgs
+          "NixOS OpenCode CLI" = {
+            type = "custom";
+            command = "${pkgsUnstable.opencode}/bin/opencode";
+            args = [
+              "acp"
+              "--print-logs"
             ];
             env = {
             };
@@ -660,12 +665,10 @@ in
 
         context_servers = {
           astroDocs = {
-            settings = { };
             url = "https://mcp.docs.astro.build/mcp";
           };
 
           avalanche = {
-            settings = { };
             url = "https://build.avax.network/api/mcp";
           };
 
@@ -685,7 +688,6 @@ in
           };
 
           devenv = {
-            settings = { };
             url = "https://mcp.devenv.sh";
           };
 
@@ -696,7 +698,6 @@ in
           };
 
           github = {
-            settings = { };
             url = "https://api.githubcopilot.com/mcp/";
             headers =
               let
@@ -732,11 +733,6 @@ in
                 parameterNames = true;
                 rangeVariableTypes = true;
               };
-            };
-          };
-          jsonnet-language-server = {
-            settings = {
-              resolve_paths_with_tanka = true;
             };
           };
           rust-analyzer = {

@@ -12,8 +12,6 @@
     noto-fonts
 
     # Emoji Fonts
-    joypixels
-    twitter-color-emoji
     font-awesome
 
     # Microsoft fonts
@@ -57,8 +55,8 @@
       enable = false;
       defaultFonts = {
         monospace = [
-          "VictorMono Nerd Font Mono"
           "JetBrainsMono Nerd Font Regular"
+          "VictorMono Nerd Font Mono"
           "FiraCode Nerd Font Mono"
           "SauceCodePro Nerd Font Mono"
           "Cascadia Code NF"
@@ -79,8 +77,6 @@
           "Liberation Serif"
         ];
         emoji = [
-          "JoyPixels"
-          "Twitter Color Emoji"
           "Noto Color Emoji"
         ];
       };

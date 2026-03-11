@@ -20,6 +20,8 @@ CACERT
 CAINFO
 CAMCC
 CCID
+ollama
+opencode
 CLUST
 CONTIG
 CTYPE
@@ -1194,4 +1196,3 @@ zvol
 zvols
 nounits
 sysfs
-
