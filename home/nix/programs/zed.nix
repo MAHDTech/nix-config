@@ -14,11 +14,14 @@ let
     # Tools
     prettier
 
-    # Newer release of Agent Tools.
+    # AI Agents
     claude-code-acp
     claude-code
     claude-monitor
     gemini-cli
+    #mistral-rs
+    mistral-vibe
+    #mistral-interface
   ];
 
 in
@@ -167,9 +170,14 @@ in
         with pkgs;
         [
           # AI Agents
-          #claude-code
-          #claude-code-acp
           #gemini-cli
+          #mistral-rs
+          #mistral-vibe
+
+          # Shared Libraries
+          cacert
+          openssl
+          zlib
 
           # Language Servers
           astro-language-server
@@ -458,8 +466,24 @@ in
         #########################
 
         agent_servers = {
+          # Use Gemini CLI from nixpkgs
           gemini = {
             ignore_system_version = false;
+          };
+
+          # Use Claude Code from nixpkgs
+          claude-code = {
+            ignore_system_version = false;
+          };
+
+          # Use Mistral Vibe from nixpkgs
+          "Mistral Vibe NixOS" = {
+            type = "custom";
+            command = "${pkgsUnstable.mistral-vibe}/bin/vibe-acp";
+            args = [
+            ];
+            env = {
+            };
           };
         };
 

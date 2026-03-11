@@ -1,8 +1,4 @@
 ALRM
-CAINFO
-QWEN
-mistralrs
-CACERT
 AMBA
 AMDVLK
 APSD
@@ -20,6 +16,8 @@ Bisync
 Bluez
 Btrfs
 Bwkw
+CACERT
+CAINFO
 CAMCC
 CCID
 CLUST
@@ -142,6 +140,7 @@ Pixi
 Pwtku
 QDQUCLA
 QUADRO
+QWEN
 RADV
 RAMYBQ
 RCLONE
@@ -478,6 +477,7 @@ genkl
 getgrnam
 getopt
 getpos
+gguf
 ghostty
 gitdir
 gitgutter
@@ -671,6 +671,7 @@ lisenter
 listchars
 listdir
 lithist
+llamacpp
 llmnr
 llms
 loadavg
@@ -682,6 +683,7 @@ lockscreen
 logind
 loglevel
 lowbatt
+lsgpu
 lsusb
 lucasb
 mahdtech
@@ -696,6 +698,7 @@ memtest
 metacharacters
 mglru
 milli
+mistralrs
 mkhl
 mkiso
 mkisofs
@@ -857,6 +860,7 @@ popin
 posixacl
 powersave
 powertop
+prefetchable
 prerm
 preseed
 procfile
@@ -1188,3 +1192,6 @@ zfsutil
 zstd
 zvol
 zvols
+nounits
+sysfs
+

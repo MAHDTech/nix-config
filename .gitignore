@@ -37,3 +37,7 @@ WIP/
 
 # Ignore AI Agent local config
 .claude/
+
+# PIDs
+*.pid
+
