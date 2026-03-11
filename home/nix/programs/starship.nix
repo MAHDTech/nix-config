@@ -199,8 +199,8 @@
       character = {
         disabled = false;
 
-        success_symbol = "[➜](bold green)";
-        error_symbol = "[✗](bold red)";
+        success_symbol = "[➜](bold green) ";
+        error_symbol = "[✗](bold red) ";
       };
 
       cmake = {
@@ -232,7 +232,7 @@
 
       docker_context = {
         disabled = false;
-        symbol = "�� ";
+        symbol = "🐳 ";
       };
 
       gcloud = {
@@ -287,15 +287,15 @@
         disabled = false;
         format = "([$all_status$ahead_behind]($style)) ";
         conflicted = "⚔️";
-        ahead = "⇡\${count}";
-        behind = "⇣\${count}";
-        diverged = "⇕⇡\${ahead_count}⇣\${behind_count}";
-        untracked = "？";
-        stashed = "📦";
-        modified = "!";
-        staged = "＋";
-        renamed = "»";
-        deleted = "✘";
+        ahead = "⇡\${count} ";
+        behind = "⇣\${count} ";
+        diverged = "⇕⇡\${ahead_count}⇣\${behind_count} ";
+        untracked = "？ ";
+        stashed = "📦 ";
+        modified = "! ";
+        staged = "＋ ";
+        renamed = "» ";
+        deleted = "✘ ";
       };
 
       golang = {
@@ -443,7 +443,7 @@
 
       status = {
         disabled = false;
-        symbol = "↯";
+        symbol = "↯ ";
       };
 
       sudo = {

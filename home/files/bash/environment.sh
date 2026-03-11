@@ -124,10 +124,10 @@ export RUST_ENABLED="FALSE"
 #########################
 
 # Environment wide Proxy servers
-export HTTP_PROXY=""
-export HTTPS_PROXY=""
-export http_proxy=""
-export https_proxy=""
+#export HTTP_PROXY=""
+#export HTTPS_PROXY=""
+#export http_proxy=""
+#export https_proxy=""
 
 # Proxy for Golang packages
 export GOPROXY="https://proxy.golang.org,direct"
