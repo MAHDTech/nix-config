@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import psutil
+import requests
 from huggingface_hub import HfApi
 from rich import print as rprint
 from rich.console import Console
@@ -19,7 +20,7 @@ api = HfApi()
 # --- 🛒 DYNAMIC MODEL CATALOG ---
 CATALOG = {
     "💻 Coding & Dev": [
-        "Qwen/Qwen2.5-Coder-14B-Instruct-GGUF", # Added 14B for your Test 2!
+        "Qwen/Qwen2.5-Coder-14B-Instruct-GGUF",
         "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
         "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
         "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
@@ -37,7 +38,7 @@ CATALOG = {
 }
 
 def stop_server():
-    """Finds and kills the llama-server process."""
+    """Finds and kills orphaned llama-server processes."""
     killed = False
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
@@ -53,8 +54,8 @@ def stop_server():
         console.print("[yellow]⚠️ No running llama-server found.[/yellow]")
 
 def get_gpu_vram_gb():
-    """Programmatically gets exact VRAM from glxinfo, bypassing Vulkan ReBAR illusions."""
-    try:
+    """Programmatically gets exact VRAM, relying on glxinfo for Intel ARC."""
+    # Fallback to glxinfo (which reliably grabs Dedicated Video Memory across vendors)    try:
         cmd = ["glxinfo", "-B"]
         output = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
         match = re.search(r"Dedicated video memory:\s*(\d+)\s*MB", output)
@@ -200,7 +201,8 @@ def start_server(model_id: str, quant: str, split: bool):
     try:
         files = api.list_repo_files(repo_id=model_id)
     except Exception as e:
-        console.print(f"[red]❌ Error connecting to Hugging Face: {e}[/red]")
+        console.print(f"[red]❌ Error connecting to Hugging Face. Please check your internet connection.[/red]")
+        console.print(f"[dim]Details: {e}[/dim]")
         sys.exit(1)
 
     ggufs = [f for f in files if f.endswith('.gguf')]
@@ -241,26 +243,38 @@ def start_server(model_id: str, quant: str, split: bool):
         cmd.append("--no-kv-offload")
 
     try:
-        subprocess.run(cmd)
+        # Use Popen to allow graceful process termination
+        proc = subprocess.Popen(cmd)
+        proc.wait()
     except KeyboardInterrupt:
-        console.print("\n[yellow]Shutting down server...[/yellow]")
-        stop_server()
+        console.print("\n[yellow]Shutting down server gracefully...[/yellow]")
+        proc.terminate() # Send SIGTERM
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill() # Force kill if it doesn't respond
+        console.print("[green]✅ Server stopped.[/green]")
 
 def main():
     parser = argparse.ArgumentParser(description="Local AI Launcher")
-    parser.add_argument("action", choices=["start", "stop"], help="Action to perform")
+    # Action is now optional (nargs="?"). If not provided, we show help instead of defaulting to start.
+    parser.add_argument("action", nargs="?", choices=["start", "stop"], help="Action to perform")
     parser.add_argument("--model", type=str, help="Bypass menu and load a specific model")
     parser.add_argument("--quant", type=str, default="Q4_K_M", help="Preferred quantization")
-    parser.add_argument("--split", action="store_true", help="Put model in GPU and context in System RAM") # 🚀 Added argument
+    parser.add_argument("--split", action="store_true", help="Put model in GPU and context in System RAM")
 
     args = parser.parse_args()
+
+    # Show help if no action is given
+    if not args.action:
+        parser.print_help()
+        sys.exit(1)
 
     if args.action == "stop":
         stop_server()
         sys.exit(0)
 
     if args.action == "start":
-        stop_server()
         model_to_load = args.model if args.model else interactive_menu()
         start_server(model_to_load, args.quant, args.split)
 
