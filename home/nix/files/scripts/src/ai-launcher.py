@@ -54,21 +54,41 @@ def stop_server():
         console.print("[yellow]⚠️ No running llama-server found.[/yellow]")
 
 def get_gpu_vram_gb():
-    """Programmatically gets exact VRAM, relying on glxinfo for Intel ARC."""
-    # Fallback to glxinfo (which reliably grabs Dedicated Video Memory across vendors)    try:
+    """Programmatically gets exact VRAM, checking NVIDIA, AMD, Intel, and generic tools."""
+    # 1. NVIDIA (nvidia-smi)
+    try:
+        output = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+            text=True, stderr=subprocess.DEVNULL
+        )
+        return float(output.strip()) / 1024.0
+    except Exception:
+        pass
+
+    # 2. AMD (sysfs)
+    try:
+        hwmon_paths = list(Path("/sys/class/drm").glob("card*/device/mem_info_vram_total"))
+        if hwmon_paths:
+            with open(hwmon_paths[0], "r") as f:
+                vram_bytes = int(f.read().strip())
+                return vram_bytes / (1024**3)
+    except Exception:
+        pass
+
+    # 3. Intel / Generic (glxinfo)
+    try:
         cmd = ["glxinfo", "-B"]
         output = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
         match = re.search(r"Dedicated video memory:\s*(\d+)\s*MB", output)
         if match:
             vram_mb = int(match.group(1))
             return vram_mb / 1024.0
-
-    except Exception as e:
-        console.print(f"[yellow]⚠️ glxinfo parsing error: {e}[/yellow]")
+    except Exception:
         pass
 
-    console.print("[yellow]⚠️ Could not read exact VRAM from glxinfo. Falling back to 12.0 GB default.[/yellow]")
-    return 12.0
+    console.print("[red]❌ FATAL: Could not detect GPU VRAM using any known method (nvidia-smi, sysfs, glxinfo).[/red]")
+    console.print("[red]Please ensure your GPU drivers are correctly installed and tools like glxinfo are available in your environment.[/red]")
+    sys.exit(1)
 
 def get_system_specs(model_name: str, split: bool = False):
     """Calculates dynamic context sizing using strict mathematical VRAM/RAM budgeting."""
