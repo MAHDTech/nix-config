@@ -619,13 +619,13 @@ in
               api_url = "http://127.0.0.1:8080/v1";
               available_models = [
                 {
-                  name = "Qwen2.5-Coder-7B-Instruct";
-                  display_name = "Local Qwen 7B (64k)";
-                  max_tokens = 65536;
+                  name = "Local AI";
+                  display_name = "Local AI";
+                  max_tokens = 131072;
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = false;
+                    parallel_tool_calls = true;
                     prompt_cache_key = false;
                     tools = true;
                   };

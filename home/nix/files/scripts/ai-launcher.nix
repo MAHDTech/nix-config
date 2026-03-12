@@ -15,6 +15,7 @@ in
 {
   # Make sure vulkan-tools is installed so Python can query your GPU VRAM!
   home.packages = with pkgs; [
+    mesa-demos
     vulkan-tools
   ];
 

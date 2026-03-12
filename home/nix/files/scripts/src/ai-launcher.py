@@ -19,6 +19,7 @@ api = HfApi()
 # --- 🛒 DYNAMIC MODEL CATALOG ---
 CATALOG = {
     "💻 Coding & Dev": [
+        "Qwen/Qwen2.5-Coder-14B-Instruct-GGUF", # Added 14B for your Test 2!
         "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
         "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
         "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
@@ -52,63 +53,80 @@ def stop_server():
         console.print("[yellow]⚠️ No running llama-server found.[/yellow]")
 
 def get_gpu_vram_gb():
-    """Dynamically queries the Vulkan driver for the physical device-local memory (VRAM)."""
+    """Programmatically gets exact VRAM from glxinfo, bypassing Vulkan ReBAR illusions."""
     try:
-        cmd = ["vulkaninfo", "--summary"]
+        cmd = ["glxinfo", "-B"]
         output = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+        match = re.search(r"Dedicated video memory:\s*(\d+)\s*MB", output)
+        if match:
+            vram_mb = int(match.group(1))
+            return vram_mb / 1024.0
 
-        # Find all memory heaps marked as 'device local' (Actual physical VRAM)
-        heaps = re.findall(r"Heap \d+: (\d+) MB \(device local\)", output)
-        if heaps:
-            max_heap_mb = max([int(h) for h in heaps])
-            return max_heap_mb / 1024.0
-    except Exception:
+    except Exception as e:
+        console.print(f"[yellow]⚠️ glxinfo parsing error: {e}[/yellow]")
         pass
 
-    # Fallback if vulkaninfo fails or is missing
-    console.print("[yellow]⚠️ Could not read exact VRAM from Vulkan. Falling back to 12.0 GB default.[/yellow]")
+    console.print("[yellow]⚠️ Could not read exact VRAM from glxinfo. Falling back to 12.0 GB default.[/yellow]")
     return 12.0
 
-def get_system_specs(model_name: str):
-    """Calculates dynamic context sizing based on exact hardware limits and model size."""
+def get_system_specs(model_name: str, split: bool = False):
+    """Calculates dynamic context sizing using strict mathematical VRAM/RAM budgeting."""
     sys_mem_bytes = psutil.virtual_memory().available
     sys_mem_gb = sys_mem_bytes / (1024**3)
-
-    # 1. Determine exactly how much RAM the GPU has
     total_gpu_vram = get_gpu_vram_gb()
 
-    # 2. Determine 75% of that VRAM as our strict operating budget
-    gpu_budget = total_gpu_vram * 0.75
-
     model_upper = model_name.upper()
-
-    # 3. Extract the parameter size of the model from its name (e.g., "7B", "14B")
     param_match = re.search(r'(\d+(?:\.\d+)?)B', model_upper)
     params_b = float(param_match.group(1)) if param_match else 7.0
 
-    # 4. Calculate "The Brain": Q4_K_M quantizations use ~0.65 GB per 1 Billion parameters
-    model_vram_gb = params_b * 0.65
+    # Brain Size: ~0.65 GB per 1 Billion parameters
+    brain_gb = params_b * 0.65
 
-    # 5. Calculate "The Desk": Subtract the Brain from the Budget to find free context space
-    free_vram_for_ctx = gpu_budget - model_vram_gb
+    if split:
+        # SPLIT MODE: Brain goes to GPU, Desk goes to System RAM
+        gpu_budget = total_gpu_vram * 0.90 # Leave 10% for OS/Hyprland
+        if brain_gb > gpu_budget:
+            console.print(f"\n[red]⚠️ GPU LIMIT REACHED[/red]")
+            console.print(f"[red]❌ Model ({brain_gb:.1f}GB) exceeds available GPU memory ({gpu_budget:.1f}GB).[/red]")
+            sys.exit(1)
 
-    # Hardware Protector: Does the brain even fit in the budget?
-    if free_vram_for_ctx <= 0:
-        console.print(f"\n[red]⚠️ HARDWARE LIMIT REACHED[/red]")
-        console.print(f"[red]❌ Model ({model_vram_gb:.1f}GB) exceeds your 75% GPU budget ({gpu_budget:.1f}GB).[/red]")
-        console.print("👉 Please select a smaller model.")
-        sys.exit(1)
+        # Context is calculated against System RAM (75% budget)
+        desk_gb = sys_mem_gb * 0.75
+        fixed_sizes = [262144, 131072, 65536, 32768, 16384, 8192, 4096] # Unlocked 256k!
+        budget_type = "System RAM"
+    else:
+        # GPU ONLY MODE: Everything must fit in GPU
+        gpu_budget = total_gpu_vram * 0.75
+        desk_gb = gpu_budget - brain_gb
+        if desk_gb <= 0:
+            console.print(f"\n[red]⚠️ HARDWARE LIMIT REACHED[/red]")
+            console.print(f"[red]❌ Model ({brain_gb:.1f}GB) exceeds your AI budget ({gpu_budget:.1f}GB).[/red]")
+            sys.exit(1)
 
-    # 6. Convert free VRAM to Context Tokens (1GB VRAM ≈ 16,000 tokens)
-    calculated_ctx = int(free_vram_for_ctx * 16000)
+        fixed_sizes = [131072, 65536, 32768, 16384, 8192, 4096]
+        budget_type = "GPU VRAM"
 
-    # 7. Snap to the nearest safe power of 2 for optimal engine performance
-    if calculated_ctx >= 131072: ctx_size = 131072
-    elif calculated_ctx >= 65536: ctx_size = 65536
-    elif calculated_ctx >= 32768: ctx_size = 32768
-    elif calculated_ctx >= 16384: ctx_size = 16384
-    elif calculated_ctx >= 8192: ctx_size = 8192
-    else: ctx_size = 4096
+    # Architecture Tax
+    if "QWEN" in model_upper:
+        mb_per_token = 0.055
+    elif "LLAMA-3" in model_upper:
+        mb_per_token = 0.125
+    else:
+        mb_per_token = 0.09
+
+    # Apply 50% discount because of q8_0 cache compression
+    mb_per_token = mb_per_token / 2.0
+
+    desk_mb = desk_gb * 1024
+    theoretical_max = int(desk_mb / mb_per_token)
+
+    ctx_size = 4096
+    for size in fixed_sizes:
+        if theoretical_max >= size:
+            ctx_size = size
+            break
+
+    console.print(f"📊 [dim]Math ({'SPLIT' if split else 'GPU ONLY'}): Brain {brain_gb:.1f}GB (GPU) | Desk {desk_gb:.1f}GB ({budget_type}) -> {theoretical_max} theoretical tokens[/dim]")
 
     return sys_mem_gb, total_gpu_vram, ctx_size
 
@@ -145,7 +163,6 @@ def write_opencode_config(model_id: str):
     config_file = config_dir / "opencode.json"
     config_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Read the existing config (managed by Nix)
     if config_file.exists():
         with open(config_file, "r") as f:
             try:
@@ -155,10 +172,7 @@ def write_opencode_config(model_id: str):
     else:
         config = {}
 
-    # 2. Ensure base dictionary structures exist
     config.setdefault("provider", {})
-
-    # 3. UPSERT the local provider (Leaves MCPs and Gemini alone!)
     config["provider"]["local"] = {
         "npm": "@ai-sdk/openai-compatible",
         "name": "local",
@@ -173,17 +187,14 @@ def write_opencode_config(model_id: str):
             }
         }
     }
-
-    # 4. Set the active model
     config["model"] = f"local/{short_name}"
 
-    # 5. Save it safely back to disk
     with open(config_file, "w") as f:
         json.dump(config, f, indent=2)
 
     return short_name
 
-def start_server(model_id: str, quant: str):
+def start_server(model_id: str, quant: str, split: bool):
     console.print(f"\n🌐 [cyan]Contacting Hugging Face API for:[/cyan] {model_id}")
 
     try:
@@ -197,17 +208,16 @@ def start_server(model_id: str, quant: str):
         console.print(f"[red]❌ No GGUF files found in {model_id}![/red]")
         sys.exit(1)
 
-    # Find the right quantization
     target_file = next((f for f in ggufs if quant.lower() in f.lower()), None)
     if not target_file:
         target_file = next((f for f in ggufs if 'q4_0' in f.lower()), ggufs[0])
 
     console.print(f"🎯 [green]Resolved File:[/green] {target_file}")
 
-    sys_ram, gpu_ram, ctx_size = get_system_specs(model_id)
+    sys_ram, gpu_ram, ctx_size = get_system_specs(model_id, split)
     short_name = write_opencode_config(model_id)
 
-    console.print(f"⚙️  [cyan]Limits:[/cyan] {gpu_ram:.1f}GB Total VRAM | Context Size: {ctx_size}")
+    console.print(f"⚙️  [cyan]Limits:[/cyan] Context Size snapped to: {ctx_size}")
     console.print(f"🚀 [bold green]Igniting llama-server...[/bold green]\n")
 
     cmd = [
@@ -221,8 +231,14 @@ def start_server(model_id: str, quant: str):
         "--threads", "16",
         "--ctx-size", str(ctx_size),
         "--flash-attn", "on",
+        "--cache-type-k", "q8_0",
+        "--cache-type-v", "q8_0",
         "--alias", short_name
     ]
+
+    # 🚀 If user passes --split, explicitly ban the KV Cache from the GPU
+    if split:
+        cmd.append("--no-kv-offload")
 
     try:
         subprocess.run(cmd)
@@ -235,6 +251,7 @@ def main():
     parser.add_argument("action", choices=["start", "stop"], help="Action to perform")
     parser.add_argument("--model", type=str, help="Bypass menu and load a specific model")
     parser.add_argument("--quant", type=str, default="Q4_K_M", help="Preferred quantization")
+    parser.add_argument("--split", action="store_true", help="Put model in GPU and context in System RAM") # 🚀 Added argument
 
     args = parser.parse_args()
 
@@ -245,7 +262,7 @@ def main():
     if args.action == "start":
         stop_server()
         model_to_load = args.model if args.model else interactive_menu()
-        start_server(model_to_load, args.quant)
+        start_server(model_to_load, args.quant, args.split)
 
 if __name__ == "__main__":
     main()

@@ -62,6 +62,7 @@ Flatseal
 GGML
 GGUFS
 GLSL
+glxinfo
 GNUPGHOME
 GOBIN
 GOPATH
