@@ -614,6 +614,58 @@ in
         #########################
 
         language_models = {
+          x_ai = {
+            available_models = [
+              {
+                name = "grok-4.20-multi-agent-beta-0309";
+                display_name = "Grok 4.2 Multi-Agent";
+                max_tokens = 2000000;
+                capabilities = {
+                  chat_completions = true;
+                  images = true;
+                  parallel_tool_calls = true;
+                  prompt_cache_key = true;
+                  tools = true;
+                };
+              }
+              {
+                name = "grok-4.20-beta-0309-reasoning";
+                display_name = "Grok 4.2 Reasoning";
+                max_tokens = 2000000;
+                capabilities = {
+                  chat_completions = true;
+                  images = true;
+                  parallel_tool_calls = true;
+                  prompt_cache_key = true;
+                  tools = true;
+                };
+              }
+              {
+                name = "grok-4.20-beta-0309-non-reasoning";
+                display_name = "Grok 4.2";
+                max_tokens = 2000000;
+                capabilities = {
+                  chat_completions = true;
+                  images = true;
+                  parallel_tool_calls = true;
+                  prompt_cache_key = true;
+                  tools = true;
+                };
+              }
+              {
+                name = "grok-code-fast-1";
+                display_name = "Grok Code Fast";
+                max_tokens = 256000;
+                capabilities = {
+                  chat_completions = true;
+                  images = false;
+                  parallel_tool_calls = true;
+                  prompt_cache_key = true;
+                  tools = true;
+                };
+              }
+            ];
+          };
           openai_compatible = {
             "Local" = {
               api_url = "http://127.0.0.1:8080/v1";
