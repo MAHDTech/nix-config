@@ -59,7 +59,7 @@ monitors:
             "7": "7"
             "8": "8"
             "9": "9"
-            "10": "10"
+            "10": "0"
       # Center modules
       center:
         - name: "notifications"
@@ -232,7 +232,7 @@ monitors:
             "7": "7"
             "8": "8"
             "9": "9"
-            "10": "10"
+            "10": "0"
       # Center modules
       center:
         - name: "notifications"
@@ -372,7 +372,7 @@ monitors:
             "7": "7"
             "8": "8"
             "9": "9"
-            "10": "10"
+            "10": "0"
       # Center modules
       center:
         - name: "notifications"
@@ -506,7 +506,7 @@ monitors:
             "7": "7"
             "8": "8"
             "9": "9"
-            "10": "10"
+            "10": "0"
       # Center modules
       center:
         - name: "notifications"
