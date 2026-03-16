@@ -62,7 +62,6 @@ Flatseal
 GGML
 GGUFS
 GLSL
-glxinfo
 GNUPGHOME
 GOBIN
 GOPATH
@@ -183,6 +182,7 @@ TPSMAPI
 TRKDPAN
 TYPEC
 Tanzu
+Tesslate
 Thinkfan
 Touchdevice
 UESP
@@ -460,6 +460,7 @@ filereadable
 findutils
 finegrained
 fira
+fishaudio
 flathub
 flatpaks
 fmask
@@ -503,6 +504,7 @@ glist
 globalasciiranges
 globasciiranges
 glog
+glxinfo
 gnnome
 gnugrep
 gnused
@@ -651,6 +653,7 @@ lastpipe
 laststatus
 latexmk
 ldac
+leejet
 libcap
 libclang
 libdrm
@@ -967,6 +970,7 @@ sbctl
 scanout
 scdaemon
 schedtool
+schnell
 scmccid
 screenrec
 scriptnames
@@ -1033,6 +1037,7 @@ spmi
 srcs
 sshkeys
 sshuttle
+stablediffusionapu
 starlark
 starpls
 startmenu
@@ -1108,6 +1113,7 @@ tsched
 ttimeoutlen
 tuigreet
 tunables
+turbovisionxl
 tuxtina
 uaccess
 uapsd
@@ -1216,3 +1222,5 @@ zfsutil
 zstd
 zvol
 zvols
+stablediffusionapi
+rhasspy
