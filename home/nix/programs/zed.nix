@@ -442,7 +442,7 @@ in
 
         edit_predictions = {
           mode = "eager";
-          provider = "zeta";
+          provider = "zed";
           #provider = "copilot";
         };
 
@@ -462,7 +462,6 @@ in
             command = "${pkgsUnstable.opencode}/bin/opencode";
             args = [
               "acp"
-              "--print-logs"
             ];
             env = {
             };
