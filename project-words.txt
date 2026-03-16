@@ -325,6 +325,7 @@ chromeos
 chrt
 cifs
 cjdahyofet
+cjpais
 clamav
 clangd
 clickfinger
@@ -491,6 +492,7 @@ genkl
 getgrnam
 getopt
 getpos
+ggerganov
 gguf
 ghostty
 gitdir
@@ -654,6 +656,7 @@ laststatus
 latexmk
 ldac
 leejet
+lessac
 libcap
 libclang
 libdrm
@@ -724,6 +727,7 @@ mknod
 mkpasswd
 mktemp
 mmin
+mmproj
 mntdir
 modeline
 modelines
@@ -935,6 +939,7 @@ restic
 reviewone
 rfilename
 rgba
+rhasspy
 ripsecrets
 rivo
 rknpu
@@ -1037,6 +1042,7 @@ spmi
 srcs
 sshkeys
 sshuttle
+stablediffusionapi
 stablediffusionapu
 starlark
 starpls
@@ -1204,6 +1210,7 @@ xhost
 xlong
 xrdb
 xsrnkagsaz
+xtuner
 xunlong
 xwayland
 yaru
@@ -1222,5 +1229,4 @@ zfsutil
 zstd
 zvol
 zvols
-stablediffusionapi
-rhasspy
+
