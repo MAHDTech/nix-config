@@ -442,7 +442,8 @@ in
 
         edit_predictions = {
           mode = "eager";
-          provider = "copilot";
+          provider = "zeta";
+          #provider = "copilot";
         };
 
         #########################
