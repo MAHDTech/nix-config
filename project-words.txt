@@ -1229,4 +1229,15 @@ zfsutil
 zstd
 zvol
 zvols
+GETFL
+NONBLOCK
+SETFL
+TCSADRAIN
+excepthook
+levelname
+libritts
+pyyaml
+tcgetattr
+tcsetattr
+thewh1teagle
 
