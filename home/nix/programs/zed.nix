@@ -692,6 +692,13 @@ in
         #########################
 
         context_servers = {
+          svelte = {
+            command = "bunx";
+            args = [
+              "-y"
+              "@sveltejs/mcp"
+            ];
+          };
           astroDocs = {
             url = "https://mcp.docs.astro.build/mcp";
           };
