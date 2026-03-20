@@ -1,3 +1,6 @@
+swapchain
+wgpu
+pkgsi
 sveltejs
 ALRM
 AMBA

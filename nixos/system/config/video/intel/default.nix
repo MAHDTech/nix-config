@@ -1,4 +1,14 @@
-{ pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  ...
+}:
+let
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs.stdenv.hostPlatform) system;
+    config.allowUnfree = true;
+  };
+in
 {
   imports = [ ];
 
@@ -30,7 +40,9 @@
     # https://wiki.archlinux.org/title/Intel_graphics#Enable_GuC_/_HuC_firmware_loading
     # lspci -nn |grep  -Ei 'VGA|DISPLAY'
     kernelParams = [
-      "xe.enable_preemption=1"
+      # xe.enable_preemption=1 removed: causes Vulkan swapchain acquisition
+      # failures on BMG G21 (Intel Arc B580 Battlemage). The xe driver's GPU
+      # preemption implementation for BMG is still immature in Mesa 25.x.
 
       # Disable GPU Power Management
       #"xe.runpm=0"
@@ -46,6 +58,13 @@
       # intel-vaapi-driver for LIB_DRIVER_NAME=i965
 
       enable = true;
+
+      # Use Mesa from nixpkgs-unstable (26.x) for improved Intel Arc Battlemage
+      # (BMG G21) Vulkan/ANV support. Mesa 25.2.x has swapchain acquisition bugs
+      # on BMG that cause graphical corruption in wgpu-based apps (e.g. Zed).
+      package = pkgsUnstable.mesa;
+      package32 = pkgsUnstable.pkgsi686Linux.mesa;
+
       extraPackages = with pkgs; [
         # OpenCL and Level Zero compute runtime for 12th Gen and newer Intel ARC GPUs
         intel-compute-runtime
@@ -80,5 +99,10 @@
 
     # Ensures X11 applications use Mesa's OpenGL implementation
     __GLX_VENDOR_LIBRARY_NAME = "mesa";
+
+    # Workaround for Intel Arc B580 (BMG G21) ANV Vulkan swapchain bug in Mesa 25.x.
+    # "immediate" was the least-corrupt present mode in testing; mailbox/fifo both
+    # trigger the swapchain acquisition failure. Remove once ANV BMG support matures.
+    MESA_VK_WSI_PRESENT_MODE = "immediate";
   };
 }
