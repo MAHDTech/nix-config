@@ -141,6 +141,7 @@ in
         "powershell"
         "scss"
         "starlark"
+        "svelte"
         "tera"
         "terraform"
         "toml"
