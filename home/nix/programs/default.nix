@@ -24,7 +24,7 @@
     #./neovim.nix
     ./vim.nix
     #./vscode.nix
-    ./zed.nix
+    ./zed
 
     # AI
     ./opencode.nix

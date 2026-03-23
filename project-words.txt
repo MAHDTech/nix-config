@@ -1,7 +1,3 @@
-swapchain
-wgpu
-pkgsi
-sveltejs
 ALRM
 AMBA
 AMDVLK
@@ -63,6 +59,7 @@ Ferdium
 Fira
 Flatpaks
 Flatseal
+GETFL
 GGML
 GGUFS
 GLSL
@@ -125,6 +122,7 @@ NATACPI
 NDFJQB
 NODENAME
 NOFILE
+NONBLOCK
 NONREPARENTING
 NOPASSWD
 NSSDB
@@ -168,6 +166,7 @@ Rockchip
 Romilly
 Ryzen
 SAXG
+SETFL
 SIGABRT
 SMMU
 STATICR
@@ -181,6 +180,7 @@ Sommerlier
 Stax
 Stylesheet
 Syncthing
+TCSADRAIN
 TPACPI
 TPSMAPI
 TRKDPAN
@@ -439,6 +439,7 @@ errgroup
 esac
 esbenp
 euao
+excepthook
 excludesfile
 execfail
 exfat
@@ -661,6 +662,7 @@ latexmk
 ldac
 leejet
 lessac
+levelname
 libcap
 libclang
 libdrm
@@ -674,6 +676,7 @@ liblnss
 libnotify
 libnss
 libpipewire
+libritts
 libsecret
 libu
 libusb
@@ -878,6 +881,7 @@ pipewire
 pivnet
 pixieditor
 pkgs
+pkgsi
 pkill
 playerctl
 plugdev
@@ -890,6 +894,7 @@ posixacl
 powersave
 powertop
 prefetchable
+preproc
 prerm
 preseed
 procfile
@@ -915,6 +920,7 @@ pvscsi
 pxelinux
 pyprland
 pyproject
+pyyaml
 racc
 rakr
 raku
@@ -1066,7 +1072,9 @@ substituters
 subuid
 subuids
 suppressevent
+sveltejs
 swapaccount
+swapchain
 swapfile
 swappy
 swaync
@@ -1091,7 +1099,9 @@ tabn
 tabp
 tabr
 taskset
+tcgetattr
 tchx
+tcsetattr
 tekumura
 temurin
 tera
@@ -1102,6 +1112,7 @@ tessen
 tflint
 tftpboot
 thermald
+thewh1teagle
 thinkfan
 thinpool
 threadirqs
@@ -1191,6 +1202,7 @@ wayshot
 webp
 websearch
 webui
+wgpu
 whichwrap
 wildmenu
 wildmode
@@ -1233,15 +1245,4 @@ zfsutil
 zstd
 zvol
 zvols
-GETFL
-NONBLOCK
-SETFL
-TCSADRAIN
-excepthook
-levelname
-libritts
-pyyaml
-tcgetattr
-tcsetattr
-thewh1teagle
 

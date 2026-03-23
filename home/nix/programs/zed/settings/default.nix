@@ -348,18 +348,6 @@ in
         };
 
         #########################
-        # Theme
-        #########################
-
-        theme = {
-          mode = "system";
-          light = "Catppuccin Mocha";
-          dark = "Catppuccin Mocha";
-        };
-
-        icon_theme = "Catppuccin Mocha";
-
-        #########################
         # Terminal
         #########################
 
@@ -623,6 +611,7 @@ in
                 max_tokens = 2000000;
                 supports_tools = true;
                 supports_images = true;
+                parallel_tool_calls = true;
               }
               {
                 name = "grok-4.20-beta-0309-reasoning";
@@ -630,6 +619,7 @@ in
                 max_tokens = 2000000;
                 supports_tools = true;
                 supports_images = true;
+                parallel_tool_calls = true;
               }
               {
                 name = "grok-4.20-beta-0309-non-reasoning";
@@ -637,6 +627,7 @@ in
                 max_tokens = 2000000;
                 supports_tools = true;
                 supports_images = true;
+                parallel_tool_calls = true;
               }
               {
                 name = "grok-code-fast-1";
@@ -644,6 +635,7 @@ in
                 max_tokens = 256000;
                 supports_tools = true;
                 supports_images = false;
+                parallel_tool_calls = true;
               }
             ];
           };
@@ -655,8 +647,13 @@ in
                   name = "Local AI";
                   display_name = "Local AI";
                   max_tokens = 131072;
-                  supports_tools = true;
-                  supports_images = false;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = true;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
                 }
               ];
             };
@@ -676,12 +673,10 @@ in
             ];
           };
           astroDocs = {
-            settings = { };
             url = "https://mcp.docs.astro.build/mcp";
           };
 
           avalanche = {
-            settings = { };
             url = "https://build.avax.network/api/mcp";
           };
 
@@ -701,7 +696,6 @@ in
           };
 
           devenv = {
-            settings = { };
             url = "https://mcp.devenv.sh";
           };
 
@@ -712,7 +706,6 @@ in
           };
 
           github = {
-            settings = { };
             url = "https://api.githubcopilot.com/mcp/";
             headers =
               let
