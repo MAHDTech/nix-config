@@ -5,7 +5,7 @@
     ./cursor.nix
     ./gemini.nix
     ./general.nix
-    ./ghostty.nix
+    ./ghostty
     ./github.nix
     ./gptcommit.nix
     ./grok.nix
