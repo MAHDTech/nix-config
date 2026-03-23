@@ -3,7 +3,7 @@
     ./1password.nix
     ./cargo.nix
     ./cursor.nix
-    ./gemini.nix
+    ./gemini
     ./general.nix
     ./ghostty
     ./github.nix

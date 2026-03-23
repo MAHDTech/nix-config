@@ -1,0 +1,93 @@
+{
+  "context": {
+    "includeDirectories": ["~/.gemini/extensions/pickle-rick"]
+  },
+  "experimental": {
+    "plan": true
+  },
+  "general": {
+    "enableAutoUpdate": false,
+    "sessionRetention": {
+      "enabled": true,
+      "maxAge": "30d",
+      "minRetention": "7d",
+      "warningAcknowledged": true
+    },
+    "vimMode": true
+  },
+  "hooksConfig": {
+    "enabled": true
+  },
+  "ide": {
+    "enabled": true
+  },
+  "mcpServers": {
+    "astroDocs": {
+      "url": "https://mcp.docs.astro.build/mcp"
+    },
+    "daisyui-blueprint": {
+      "args": ["-y", "daisyui-blueprint@latest"],
+      "command": "bunx",
+      "env": {
+        "EMAIL": "$DAISYUI_EMAIL",
+        "LICENSE": "$DAISYUI_LICENSE"
+      }
+    },
+    "devenv": {
+      "url": "https://mcp.devenv.sh"
+    },
+    "devenv-cli": {
+      "args": ["mcp"],
+      "command": "devenv"
+    },
+    "github": {
+      "args": ["stdio"],
+      "command": "github-mcp-server",
+      "env": {
+        "GITHUB_TOKEN": "$GITHUB_TOKEN"
+      }
+    },
+    "terraform": {
+      "args": ["stdio"],
+      "command": "terraform-mcp-server",
+      "env": {
+        "ENABLE_TF_OPERATIONS": "$ENABLE_TF_OPERATIONS",
+        "TFE_ADDRESS": "$TFE_ADDRESS",
+        "TFE_TOKEN": "$TFE_TOKEN"
+      }
+    }
+  },
+  "model": {
+    "name": "auto-gemini-3"
+  },
+  "output": {
+    "format": "text"
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    },
+    "environmentVariableRedaction": {
+      "enabled": true
+    },
+    "folderTrust": {
+      "enabled": true
+    }
+  },
+  "tools": {
+    "sandbox": "false",
+    "shell": {
+      "showColor": true
+    },
+    "useRipgrep": true
+  },
+  "ui": {
+    "inlineThinkingMode": "full",
+    "showLineNumbers": false,
+    "showMemoryUsage": true,
+    "showModelInfoInChat": true,
+    "showStatusInTitle": true,
+    "theme": "Default",
+    "useAlternateBuffer": true
+  }
+}

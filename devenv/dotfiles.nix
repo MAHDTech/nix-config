@@ -144,12 +144,6 @@ in
           configPath = ".prettierrc.yaml";
         };
       };
-      pretty-format-json = {
-        enable = true;
-        args = [
-          "--autofix"
-        ];
-      };
       revive = {
         enable = true;
         fail_fast = false;

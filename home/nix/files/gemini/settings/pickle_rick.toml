@@ -1,0 +1,76 @@
+# ---------------------------------------------------------
+# PICKLE RICK "GOD MODE" POLICIES 🥒
+# ---------------------------------------------------------
+#
+# Reference:
+# https://geminicli.com/docs/core/policy-engine/#system-wide-policies-admin
+#
+# Rules are evaluated highest-priority first.
+# Higher number = evaluated first = wins on conflict.
+
+# Priority 100 — Unleash Morty (The Worker)
+# Allows the Python script that runs the sub-agent to execute.
+[[rule]]
+toolName = "run_shell_command"
+commandRegex = ".*spawn_morty\\.py.*"
+decision = "allow"
+priority = 100
+
+# Priority 95 — Basic Engineering Senses
+# Allows Morty to see and touch files without asking "Mother, may I?" every time.
+[[rule]]
+toolName = [
+    "activate_skill",
+    "create_or_update_file",
+    "delete_file",
+    "glob",
+    "google_web_search",
+    "list_directory",
+    "read_file",
+    "replace",
+    "search_file_content",
+    "time.getCurrentTime",
+    "web_fetch",
+    "write_file",
+]
+decision = "allow"
+priority = 95
+
+# Priority 91 — Block destructive git operations.
+# Must outrank the broad git allow below (priority 90).
+[[rule]]
+toolName = "run_shell_command"
+commandRegex = "git\\s+push.*"
+decision = "deny"
+priority = 91
+
+# Priority 90 — The Tool Belt
+# Allows standard dev commands.
+[[rule]]
+toolName = "run_shell_command"
+commandPrefix = [
+    "bash",
+    "bun",
+    "cargo",
+    "cp",
+    "devenv",
+    "git",
+    "mkdir",
+    "mv",
+    "node",
+    "npm",
+    "op",
+    "pre-commit",
+    "python3",
+    "rm",
+    "touch",
+]
+decision = "allow"
+priority = 90
+
+# Priority 85 — Agent Delegation
+# Allows Pickle Rick to spawn sub-agents (codebase_investigator, etc.) if needed.
+[[rule]]
+toolName = "delegate_to_agent"
+decision = "allow"
+priority = 85
