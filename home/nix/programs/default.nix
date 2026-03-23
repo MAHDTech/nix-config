@@ -26,9 +26,6 @@
     #./vscode.nix
     ./zed
 
-    # AI
-    ./opencode.nix
-
     # Hyprland
     ./hyprland
 

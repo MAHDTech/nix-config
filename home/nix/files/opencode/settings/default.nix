@@ -85,7 +85,7 @@ in
         text = ''
           {
             "$schema": "https://opencode.ai/tui.json",
-            "theme": "tokyonight"
+            "theme": "tars_synthwave"
           }
         '';
       };
