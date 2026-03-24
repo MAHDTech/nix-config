@@ -34,9 +34,6 @@
       }
     },
     "devenv": {
-      "url": "https://mcp.devenv.sh"
-    },
-    "devenv-cli": {
       "args": ["mcp"],
       "command": "devenv"
     },

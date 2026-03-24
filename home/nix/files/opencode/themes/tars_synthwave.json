@@ -6,28 +6,28 @@
       "light": "#36F9F6"
     },
     "background": {
-      "dark": "#241B2F",
-      "light": "#241B2F"
+      "dark": "#0F0A18",
+      "light": "#0F0A18"
     },
     "backgroundElement": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "backgroundPanel": {
-      "dark": "#392B4B",
-      "light": "#392B4B"
+      "dark": "#1C1428",
+      "light": "#1C1428"
     },
     "border": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "borderActive": {
       "dark": "#36F9F6",
       "light": "#36F9F6"
     },
     "borderSubtle": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "diffAdded": {
       "dark": "#72F1B8",
@@ -42,12 +42,12 @@
       "light": "#33454A"
     },
     "diffContext": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "diffContextBg": {
-      "dark": "#392B4B",
-      "light": "#392B4B"
+      "dark": "#1C1428",
+      "light": "#1C1428"
     },
     "diffHighlightAdded": {
       "dark": "#72F1B8",
@@ -62,8 +62,8 @@
       "light": "#36F9F6"
     },
     "diffLineNumber": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "diffRemoved": {
       "dark": "#FE4450",
@@ -86,16 +86,16 @@
       "light": "#36F9F6"
     },
     "markdownBlockQuote": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "markdownCode": {
       "dark": "#F0F8FF",
       "light": "#F0F8FF"
     },
     "markdownCodeBlock": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "markdownEmph": {
       "dark": "#FDF129",
@@ -106,16 +106,16 @@
       "light": "#36F9F6"
     },
     "markdownHorizontalRule": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "markdownImage": {
       "dark": "#36F9F6",
       "light": "#36F9F6"
     },
     "markdownImageText": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "markdownLink": {
       "dark": "#36F9F6",
@@ -154,8 +154,8 @@
       "light": "#72F1B8"
     },
     "syntaxComment": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "syntaxFunction": {
       "dark": "#F0F8FF",
@@ -174,8 +174,8 @@
       "light": "#36F9F6"
     },
     "syntaxPunctuation": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "syntaxString": {
       "dark": "#72F1B8",
@@ -194,8 +194,8 @@
       "light": "#F0F8FF"
     },
     "textMuted": {
-      "dark": "#4F4266",
-      "light": "#4F4266"
+      "dark": "#312447",
+      "light": "#312447"
     },
     "warning": {
       "dark": "#FDF129",

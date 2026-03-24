@@ -1,0 +1,33 @@
+[
+  {
+    "context": "Editor && showing_edit_prediction",
+    "bindings": {
+      "tab": "editor::AcceptEditPrediction"
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "alt-l": "editor::AcceptEditPrediction"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-shift-t": "workspace::NewTerminal"
+    }
+  },
+  {
+    "bindings": {
+      "ctrl-right": "editor::SelectLargerSyntaxNode",
+      "ctrl-left": "editor::SelectSmallerSyntaxNode",
+      "cmd-g": ["agent::NewExternalAgentThread", { "agent": "gemini" }]
+    }
+  },
+  {
+    "context": "ProjectPanel && not_editing",
+    "bindings": {
+      "o": "project_panel::Open"
+    }
+  }
+]

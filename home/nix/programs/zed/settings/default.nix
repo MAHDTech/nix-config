@@ -13,6 +13,7 @@ let
   extraPackagesUnstable = with pkgsUnstable; [
     # Tools
     prettier
+    jq
 
     # AI Agents
     claude-code-acp
@@ -33,36 +34,7 @@ in
         force = false;
         executable = false;
         target = "zed/keymap.json";
-        text = ''
-          [
-            {
-              "context": "Editor",
-              "bindings": {
-                "alt-l": "editor::AcceptEditPrediction",
-                "tab": "editor::Tab"
-              }
-            },
-            {
-              "context": "Workspace",
-              "bindings": {
-                "ctrl-shift-t": "workspace::NewTerminal"
-              }
-            },
-            {
-              "bindings": {
-                "ctrl-right": "editor::SelectLargerSyntaxNode",
-                "ctrl-left": "editor::SelectSmallerSyntaxNode",
-                "cmd-g": ["agent::NewExternalAgentThread", { "agent": "gemini" }]
-              }
-            },
-            {
-              "context": "ProjectPanel && not_editing",
-              "bindings": {
-                "o": "project_panel::Open"
-              }
-            }
-          ]
-        '';
+        source = ./keymap.json;
       };
     };
 
@@ -696,10 +668,6 @@ in
           };
 
           devenv = {
-            url = "https://mcp.devenv.sh";
-          };
-
-          devenv-cli = {
             command = "devenv";
             args = [ "mcp" ];
             env = { };
@@ -712,11 +680,6 @@ in
                 token = builtins.getEnv "GITHUB_TOKEN";
               in
               lib.optionalAttrs (token != "") { Authorization = "Bearer ${token}"; };
-          };
-
-          phaser-editor = {
-            command = "bunx";
-            args = [ "@phaserjs/editor-mcp-server" ];
           };
         };
 
