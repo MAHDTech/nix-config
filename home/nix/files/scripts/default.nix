@@ -13,6 +13,6 @@
     ./sync-projects.nix
 
     # AI Launcher Menu
-    ./ai-launcher.nix
+    ./ai-launcher
   ];
 }

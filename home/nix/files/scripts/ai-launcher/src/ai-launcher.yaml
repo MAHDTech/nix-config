@@ -1,0 +1,32 @@
+# ai-launcher model catalog
+# Categories are for the interactive menu only.
+# Engine detection is automatic via HuggingFace API metadata.
+
+models:
+  general:
+    - name: "bartowski/moonshotai_Kimi-K2.5-GGUF"
+    - name: "bartowski/Qwen2.5-7B-Instruct-GGUF"
+    - name: "bartowski/gemma-3-4b-it-GGUF"
+    - name: "bartowski/Jackrong_Qwen3.5-4B-Neo-GGUF"
+  coding:
+    - name: "bartowski/Tesslate_OmniCoder-9B-GGUF"
+    - name: "bartowski/Qwen2.5-Coder-7B-Instruct-GGUF"
+    - name: "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
+  vision:
+    - name: "bartowski/gemma-3-4b-it-GGUF"
+  math:
+    - name: "bartowski/Jackrong_Qwen3.5-9B-Neo-GGUF"
+    - name: "bartowski/Qwen2.5-Math-7B-Instruct-GGUF"
+  embeddings:
+    - name: "nomic-ai/nomic-embed-text-v1.5-GGUF"
+  image_gen:
+    - name: "city96/FLUX.1-schnell-gguf"
+  stt:
+    - name: "ggerganov/whisper.cpp"
+  tts:
+    - name: "Pyrater/TARS"
+    - name: "OpenVoiceOS/qwen3-tts-0.6b-q4-k-m"
+    - name: "Soundly/Qwen3-TTS-12Hz-1.7B-ONNX-INT4"
+    - name: "ResembleAI/chatterbox-turbo"
+    - name: "rhasspy/piper-voices"
+    - name: "local/TARS-AI"
