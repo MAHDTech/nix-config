@@ -197,7 +197,6 @@ in
             "jnoortheen.nix-ide"
             "johnpapa.vscode-peacock"
             "kamadorueda.alejandra"
-            "mkhl.direnv"
             "nhoizey.gremlins"
             "pinage404.nix-extension-pack"
             "redhat.vscode-yaml"
