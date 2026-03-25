@@ -2,10 +2,8 @@
   networking.hosts = {
 
     "127.0.0.1" = [
-      #########################
-      # KinD
-      # Ingress/Gateway API exposed services from local KinD cluster.
-      #########################
+      # Trunk
+      "trunk.serve.local"
 
       # Test
       "test.kind.local"

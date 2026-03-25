@@ -72,7 +72,7 @@ def _handle_llama(model_id: str, spec: EngineSpec, force_cpu: bool):
         "--host", "127.0.0.1",
         "--port", str(spec.port),
         "--ctx-size", str(ctx_size),
-        "--flash-attn",
+        "--flash-attn", "on",
         "--alias", short_name,
     ]
 
