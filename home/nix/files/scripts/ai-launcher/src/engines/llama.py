@@ -4,10 +4,11 @@ import logging
 import subprocess
 import sys
 
-from huggingface.api import download_file, fetch_model_info
 from core.log import console
-from system.specs import get_system_specs
 from core.ports import PORT_LLM
+from huggingface.api import download_file, fetch_model_info
+from system.specs import get_system_specs
+
 from engines import EngineSpec
 
 
@@ -71,6 +72,7 @@ def _handle_llama(model_id: str, spec: EngineSpec, force_cpu: bool):
         "--host", "127.0.0.1",
         "--port", str(spec.port),
         "--ctx-size", str(ctx_size),
+        "--flash-attn",
         "--alias", short_name,
     ]
 

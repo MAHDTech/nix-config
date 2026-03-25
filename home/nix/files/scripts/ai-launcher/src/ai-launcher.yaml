@@ -24,7 +24,6 @@ models:
   stt:
     - name: "ggerganov/whisper.cpp"
   tts:
-    - name: "Pyrater/TARS"
     - name: "OpenVoiceOS/qwen3-tts-0.6b-q4-k-m"
     - name: "Soundly/Qwen3-TTS-12Hz-1.7B-ONNX-INT4"
     - name: "ResembleAI/chatterbox-turbo"

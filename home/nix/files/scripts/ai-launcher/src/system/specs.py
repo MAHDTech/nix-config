@@ -4,9 +4,9 @@ import logging
 import sys
 
 import psutil
-
 from core.log import console
 from huggingface.api import get_param_count
+
 from system.gpu import get_gpu_vendor_and_vram
 
 
@@ -37,7 +37,7 @@ def get_system_specs(model_name: str, split: bool = False, force_cpu: bool = Fal
 
     if vendor == "cpu" or force_cpu:
         desk_gb = sys_mem_gb * 0.75
-        fixed_sizes = [262144, 131072, 65536, 32768, 16384, 8192, 4096]
+        fixed_sizes = [32768, 16384, 8192, 4096]
         budget_type = "System RAM (CPU Mode)"
         split = False
     elif split:
@@ -52,7 +52,7 @@ def get_system_specs(model_name: str, split: bool = False, force_cpu: bool = Fal
             )
             sys.exit(1)
         desk_gb = sys_mem_gb * 0.75
-        fixed_sizes = [262144, 131072, 65536, 32768, 16384, 8192, 4096]
+        fixed_sizes = [32768, 16384, 8192, 4096]
         budget_type = "System RAM"
     else:
         gpu_budget = total_gpu_vram * 0.75
@@ -66,7 +66,7 @@ def get_system_specs(model_name: str, split: bool = False, force_cpu: bool = Fal
                 f"[bold red]❌ Model ({brain_gb:.1f}GB) exceeds your AI budget ({gpu_budget:.1f}GB).[/bold red]"
             )
             sys.exit(1)
-        fixed_sizes = [131072, 65536, 32768, 16384, 8192, 4096]
+        fixed_sizes = [32768, 16384, 8192, 4096]
         budget_type = "GPU VRAM"
 
     # Conservative estimate for KV cache memory per token.
