@@ -131,6 +131,7 @@ in
         "mcp-server-container-use"
         "mcp-server-github"
         "mcp-server-gitlab"
+        "mcp-nixos"
         "terraform-mcp-server"
       ];
 
@@ -670,6 +671,16 @@ in
           devenv = {
             command = "devenv";
             args = [ "mcp" ];
+            env = { };
+          };
+
+          nixos = {
+            command = "nix";
+            args = [
+              "run"
+              "github:utensils/mcp-nixos"
+              "--"
+            ];
             env = { };
           };
 

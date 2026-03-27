@@ -15,6 +15,7 @@ let
     bun
     github-mcp-server
     jq
+    mcp-nixos
     nodejs
     terraform-mcp-server
     uv

@@ -37,6 +37,10 @@
       "args": ["mcp"],
       "command": "devenv"
     },
+    "nixos": {
+      "args": ["run", "github:utensils/mcp-nixos", "--"],
+      "command": "nix"
+    },
     "github": {
       "args": ["stdio"],
       "command": "github-mcp-server",
