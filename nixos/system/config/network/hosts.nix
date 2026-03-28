@@ -2,9 +2,6 @@
   networking.hosts = {
 
     "127.0.0.1" = [
-      # Trunk
-      "trunk.serve.local"
-
       # Test
       "test.kind.local"
 
