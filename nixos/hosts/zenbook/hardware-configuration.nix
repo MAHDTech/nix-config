@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, inputs, ... }:
 {
   imports = [ ];
 
@@ -9,12 +9,12 @@
     ];
 
     # Use the specific kernel tree for Zenbook A14 support
-    kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_latest.override {
+    kernelPackages = lib.mkForce (pkgs.linuxPackagesFor (pkgs.linux_latest.override {
       argsOverride = {
         src = inputs.zenbook-linux;
         version = "6.12.0-zenbook"; # Adjust if the repo version changes
       };
-    });
+    }));
 
     initrd = {
       availableKernelModules = [
