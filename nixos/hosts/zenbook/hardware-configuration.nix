@@ -8,6 +8,14 @@
       "zfs"
     ];
 
+    # Use the specific kernel tree for Zenbook A14 support
+    kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_latest.override {
+      argsOverride = {
+        src = inputs.zenbook-linux;
+        version = "6.12.0-zenbook"; # Adjust if the repo version changes
+      };
+    });
+
     initrd = {
       availableKernelModules = [
         "nvme"
@@ -64,7 +72,7 @@
 
       # ARM64 specific
       "arm64.nopauth"
-      "acpi=force"
+      # "acpi=force" # Removed to allow DTB usage
 
       # Debug (remove after it works)
       "loglevel=7"
@@ -117,34 +125,46 @@
       };
       systemd-boot = {
         enable = true;
-        extraFiles = {
-          # sudo apt install device-tree-compiler
-          # sudo dtc -I fs -O dtb /sys/firmware/devicetree/base -o ~/x1e80100-asus-zenbook-a14.dtb
-          "dtb/base/x1e80100-asus-zenbook-a14.dtb" = ./files/dtb/x1e80100-asus-zenbook-a14.dtb;
-        };
       };
     };
   };
 
   hardware = {
+    graphics = {
+      enable = true;
+    };
     deviceTree = {
       enable = true;
-      name = "x1e80100-asus-zenbook-a14.dtb";
+      # The alexVinarskis kernel builds this DTB from its own DTS sources.
+      # This ensures the hardware description is perfectly synced with the drivers.
+      name = "qcom/x1e80100-asus-zenbook-ux3407.dtb";
     };
     enableRedistributableFirmware = true;
     firmware = [
       (pkgs.runCommand "zenbook-firmware"
         {
           srcFirmware = ./files/firmware;
+          # Audio Topology Firmware from the kernel source
+          topologySrc = inputs.zenbook-linux;
         }
         ''
-          # Copy Firmware Blobs
+          # Copy Firmware Blobs from your local files (qcom, ath12k, etc.)
           mkdir -p $out/lib/firmware
           cp -r --no-preserve=mode,ownership $srcFirmware/* $out/lib/firmware/
+
+          # Decompress zst files if necessary (Nix prefers raw or handles compression)
+          find $out/lib/firmware -name "*.zst" -exec zstd -d --rm {} +
+
+          # Copy Audio Topology Firmware specifically from kernel source
+          mkdir -p $out/lib/firmware/qcom/x1e80100
+          cp $topologySrc/firmware/qcom/x1e80100/*.bin $out/lib/firmware/qcom/x1e80100/
         ''
       )
     ];
   };
+
+  # Audio (UCM files from the patched kernel tree)
+  environment.etc."alsa/ucm2".source = "${inputs.zenbook-linux}/ucm2";
 
   fileSystems = {
     "/" = {
@@ -200,7 +220,7 @@
 
   swapDevices = [ ];
 
-  networking.useDHCP = lib.mkDefault true;
+  networking.useDHCP = lib.mkDefault false;
 
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 }

@@ -133,7 +133,7 @@ in
         };
       };
       mixed-line-endings.enable = true;
-      nixfmt-rfc-style.enable = true;
+      nixfmt.enable = true;
       pre-commit-hook-ensure-sops = {
         enable = true;
         files = "^secrets/keystore.yaml";

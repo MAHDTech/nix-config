@@ -576,16 +576,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1774559029,
-        "narHash": "sha256-deix7yg3j6AhjMPnFDCmWB3f83LsajaaULP5HH2j34k=",
+        "lastModified": 1775143651,
+        "narHash": "sha256-S0RqAyDPMTcv9vASMaE8eY1QexFysAOdnxUxFHIPOyE=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "a0bb0d11514f92b639514220114ac8063c72d0a3",
+        "rev": "d166a078541982a76f14d3e06e9665fa5c9ed85e",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
-        "ref": "release-25.11",
+        "ref": "master",
         "repo": "home-manager",
         "type": "github"
       }
@@ -869,16 +869,16 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1774744135,
-        "narHash": "sha256-dsmWc4Wl/rp+bGJrugzKNyP8xtukJhZwIKQx/8RmWck=",
+        "lastModified": 1775036866,
+        "narHash": "sha256-ZojAnPuCdy657PbTq5V0Y+AHKhZAIwSIT2cb8UgAz/U=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b4ec83e68bd8a49b0cb8d19654d4e07def283e5b",
+        "rev": "6201e203d09599479a3b3450ed24fa81537ebc4e",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "release-25.11",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -952,7 +952,8 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "sops-nix": "sops-nix",
-        "systems": "systems"
+        "systems": "systems",
+        "zenbook-linux": "zenbook-linux"
       }
     },
     "rust-overlay": {
@@ -1032,6 +1033,22 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "zenbook-linux": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769902004,
+        "narHash": "sha256-v8w3MnGpVNmdMFB/KE9REyq+EmojOZUb11qIs50PRDM=",
+        "owner": "alexVinarskis",
+        "repo": "linux-x1e80100-zenbook-a14",
+        "rev": "7c0c549bc1d53909b274b4b989abb3bbe792f2da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alexVinarskis",
+        "repo": "linux-x1e80100-zenbook-a14",
         "type": "github"
       }
     }

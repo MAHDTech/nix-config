@@ -166,7 +166,7 @@
   swapDevices = [ ];
 
   networking = {
-    useDHCP = lib.mkDefault true;
+    useDHCP = lib.mkDefault false;
     interfaces = {
       enp10s0 = {
         name = "enp10s0";

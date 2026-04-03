@@ -44,7 +44,7 @@ in
         name = "Zed";
         genericName = "Text Editor";
         comment = "A high-performance, multiplayer code editor.";
-        exec = "${pkgsUnstable.zed-editor-fhs}/bin/zeditor %U";
+        exec = "${pkgsUnstable.zed-editor}/bin/zed %U";
         icon = "zed";
         settings = {
           Keywords = "editor;zed";
@@ -65,7 +65,7 @@ in
           newWorkspace = {
             name = "Open a new workspace";
             icon = "zed";
-            exec = "${pkgsUnstable.zed-editor-fhs}/bin/zeditor --new %U";
+            exec = "${pkgsUnstable.zed-editor}/bin/zed --new %U";
           };
         };
 
@@ -79,7 +79,7 @@ in
     zed-editor = {
 
       enable = true;
-      package = pkgsUnstable.zed-editor-fhs;
+      package = pkgsUnstable.zed-editor;
 
       installRemoteServer = false;
 
@@ -161,7 +161,7 @@ in
           jq-lsp
           nixd
           nil
-          nodePackages.typescript-language-server
+          typescript-language-server
           powershell-editor-services
           rust-analyzer
           starpls
@@ -185,7 +185,7 @@ in
           bun
 
           # Formatters
-          nixfmt-rfc-style
+          nixfmt
           rustfmt
           shfmt
 
@@ -873,7 +873,7 @@ in
             format_on_save = "on";
             formatter = {
               external = {
-                command = lib.getExe pkgs.nixfmt-rfc-style;
+                command = lib.getExe pkgs.nixfmt;
                 arguments = [
                   "--verify"
                 ];

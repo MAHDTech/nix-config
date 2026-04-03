@@ -101,8 +101,9 @@ in
       libcap
       lolcat
       ncdu
-      neofetch
+      fastfetch
       pandoc
+
       pciutils
       read-edid
       ripgrep

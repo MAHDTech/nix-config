@@ -1,15 +1,7 @@
 {
-  pkgs,
   ...
 }:
 {
-
-  # Module arguments.
-  _module.args = {
-    # For Qualcomm Snapdragon X Elite, use the latest bleeding edge kernel.
-    customKernelPackage = pkgs.linuxPackages_latest;
-    #customKernelPackage = pkgs.linuxPackages_6_17;
-  };
 
   networking = {
     hostName = "ZENBOOK";
@@ -30,12 +22,12 @@
     ../../system/soe
 
     # System configuration
-    #../../system/config/audio
-    #../../system/config/bluetooth
+    ../../system/config/audio
+    ../../system/config/bluetooth
     #../../system/config/disk/gparted
-    #../../system/config/fonts
-    #../../system/config/power
-    #../../system/config/printing
+    ../../system/config/fonts
+    ../../system/config/power
+    ../../system/config/printing
     #../../system/config/services
 
     # Storage
@@ -43,25 +35,25 @@
     #../../system/config/storage/persistence
 
     # Theme
-    #../../system/config/theme/catppuccin
+    ../../system/config/theme/catppuccin
 
     # Laptop
-    #../../system/config/hardware/laptop
-    #../../system/config/network/wireless
-    #../../system/config/services/upower
+    ../../system/config/hardware/laptop
+    ../../system/config/network/wireless
+    ../../system/config/services/upower
 
     # CPU Throttling
     #../../system/config/services/thermald # there can only be one
     #../../system/config/services/throttled
 
     # Networking
-    #../../system/config/network/hosts.nix
+    ../../system/config/network/hosts.nix
 
     # Desktop Environment
-    #../../system/config/desktop-environment/hyprland.nix
+    ../../system/config/desktop-environment/hyprland.nix
 
     # Tailscale
-    #../../system/config/services/tailscale
+    ../../system/config/services/tailscale
 
     # Desktop Applications and Services
     #../../system/config/programs/1password

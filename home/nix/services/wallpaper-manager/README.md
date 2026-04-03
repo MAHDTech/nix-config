@@ -1,6 +1,6 @@
 # Wallpaper Manager Service
 
-This directory contains the configuration for a systemd user service that manages both `swww-daemon` and a random wallpaper rotation in a single integrated script.
+This directory contains the configuration for a systemd user service that manages both `awww-daemon` and a random wallpaper rotation in a single integrated script.
 
 ## Components
 
@@ -8,8 +8,8 @@ This directory contains the configuration for a systemd user service that manage
 
 Creates the main `wallpaper-manager` script that:
 
-- Starts `swww-daemon` if not already running
-- Waits for swww to be ready
+- Starts `awww-daemon` if not already running
+- Waits for awww to be ready
 - Manages a wallpaper rotation loop
 - Logs to the systemd journal
 - Rotates wallpapers every 15 minutes (configurable)
@@ -91,11 +91,11 @@ systemctl --user status wallpaper-manager.service
 journalctl --user -u wallpaper-manager.service --since "1 hour ago"
 ```
 
-### Check if swww is Running
+### Check if awww is Running
 
 ```bash
-pgrep -x swww-daemon
-swww query
+pgrep -x awww-daemon
+awww query
 ```
 
 ### Manual Test
@@ -109,14 +109,14 @@ swww query
 
 The following changes were made to consolidate the wallpaper management:
 
-1. **Merged scripts**: Combined `swww-daemon` startup and `random-wallpaper` into a single `wallpaper-manager` script
+1. **Merged scripts**: Combined `awww-daemon` startup and `random-wallpaper` into a single `wallpaper-manager` script
 2. **Single systemd service**: One service manages both the daemon and wallpaper rotation
 3. **Unified logging**: All logs go to systemd journal with consistent tagging
 4. **Simplified structure**: Four files instead of multiple scattered configurations
 
 ## Dependencies
 
-- `swww` package (already included in hyprland packages)
+- `awww` package (already included in hyprland packages)
 - `systemd` (standard on NixOS)
 - `bash` (standard shell)
 - `find`, `shuf`, `grep` (standard Unix tools)

@@ -46,7 +46,7 @@ let
     slurp
     swappy
     swaynotificationcenter
-    swww
+    awww
     wayland-pipewire-idle-inhibit
     wayland-utils
     wayshot

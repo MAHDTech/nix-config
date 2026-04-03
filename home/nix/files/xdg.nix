@@ -102,6 +102,7 @@
       enable = true;
 
       createDirectories = true;
+      setSessionVariables = true;
 
       desktop = "${config.home.homeDirectory}/Desktop";
       documents = "${config.home.homeDirectory}/Documents";
@@ -113,10 +114,10 @@
       videos = "${config.home.homeDirectory}/Videos";
 
       extraConfig = {
-        XDG_PROJECTS_DIR = "${config.home.homeDirectory}/Projects";
-        XDG_SOFTWARE_DIR = "${config.home.homeDirectory}/Software";
-        XDG_WALLPAPERS_DIR = "${config.home.homeDirectory}/Pictures/Wallpapers";
-        XDG_WORKSPACES_DIR = "${config.home.homeDirectory}/Workspaces";
+        PROJECTS = "${config.home.homeDirectory}/Projects";
+        SOFTWARE = "${config.home.homeDirectory}/Software";
+        WALLPAPERS = "${config.home.homeDirectory}/Pictures/Wallpapers";
+        WORKSPACES = "${config.home.homeDirectory}/Workspaces";
       };
     };
   };

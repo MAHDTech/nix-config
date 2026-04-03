@@ -26,7 +26,7 @@
       type = "github";
       owner = "NixOS";
       repo = "nixpkgs";
-      ref = "release-25.11";
+      ref = "nixos-unstable";
       flake = true;
     };
 
@@ -58,7 +58,7 @@
       type = "github";
       owner = "nix-community";
       repo = "home-manager";
-      ref = "release-25.11";
+      ref = "master";
       flake = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -105,6 +105,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    zenbook-linux = {
+      url = "github:alexVinarskis/linux-x1e80100-zenbook-a14";
+      flake = false;
+    };
+
   };
 
   outputs =
@@ -119,7 +124,7 @@
       # this value at the release version of the first install of this system.
       # Before changing this value read the documentation for this option
       # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-      globalStateVersion = "24.05";
+      globalStateVersion = "25.11";
 
       # Are we running in CI?
       inCI = builtins.getEnv "CI" == "true";
@@ -128,7 +133,10 @@
       # Systems functions
       #########################
 
-      forEachSystem = inputs.nixpkgs.lib.genAttrs (import inputs.systems);
+      forEachSystem = inputs.nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
 
       #########################
       # Packages functions

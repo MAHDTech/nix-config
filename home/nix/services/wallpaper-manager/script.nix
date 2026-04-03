@@ -3,7 +3,7 @@
   home = {
 
     packages = [
-      pkgs.swww
+      pkgs.awww
       pkgs.findutils
     ];
 
@@ -20,7 +20,7 @@
           ##################################################
           # Wallpaper Manager Daemon Script
           #
-          # This script starts swww-daemon in the foreground.
+          # This script starts awww-daemon in the foreground.
           #
           # It's designed to be run as a systemd service.
           ##################################################
@@ -59,9 +59,9 @@
           function cleanup() {
             log "info" "Received signal, cleaning up wallpaper manager daemon..."
 
-            # Kill all swww-daemon processes
-            pkill -f "swww-daemon" || {
-              log "error" "Failed to kill swww-daemon processes"
+            # Kill all awww-daemon processes
+            pkill -f "awww-daemon" || {
+              log "error" "Failed to kill awww-daemon processes"
               exit 1
             }
 
@@ -99,10 +99,10 @@
           # Set additional Wayland environment variables
           if [[ "''${WAYLAND_DISPLAY:-EMPTY}" != "EMPTY" ]];
           then
-            # Set swww socket path
-            export SWWW_SOCKET
-            SWWW_SOCKET="''${XDG_RUNTIME_DIR}/swww-''${WAYLAND_DISPLAY}.socket"
-            log "info" "Set SWWW_SOCKET=''${SWWW_SOCKET}"
+            # Set awww socket path
+            export AWWW_SOCKET
+            AWWW_SOCKET="''${XDG_RUNTIME_DIR}/awww-''${WAYLAND_DISPLAY}.socket"
+            log "info" "Set AWWW_SOCKET=''${AWWW_SOCKET}"
 
             # Try to detect Hyprland instance signature
             NUM_ATTEMPTS=10
@@ -121,11 +121,11 @@
           fi
 
           log "info" "Environment: WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-unset}, XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR:-unset}"
-          log "info" "Environment: SWWW_SOCKET=''${SWWW_SOCKET:-unset}, HYPRLAND_INSTANCE_SIGNATURE=''${HYPRLAND_INSTANCE_SIGNATURE:-unset}"
+          log "info" "Environment: AWWW_SOCKET=''${AWWW_SOCKET:-unset}, HYPRLAND_INSTANCE_SIGNATURE=''${HYPRLAND_INSTANCE_SIGNATURE:-unset}"
 
-          # Start swww-daemon in foreground
-          log "info" "Starting swww-daemon..."
-          exec ${pkgs.swww}/bin/swww-daemon --no-cache --quiet
+          # Start awww-daemon in foreground
+          log "info" "Starting awww-daemon..."
+          exec ${pkgs.awww}/bin/awww-daemon --no-cache --quiet
         '';
       };
 
@@ -142,7 +142,7 @@
           # Wallpaper Manager Script
           #
           # This script manages wallpaper rotation.
-          # It waits for swww-daemon to be ready before starting.
+          # It waits for awww-daemon to be ready before starting.
           #
           # It's designed to be run as a systemd service.
           ##################################################
@@ -154,14 +154,14 @@
           # Wallpaper directory
           WALLPAPER_DIR="''${XDG_WALLPAPERS_DIR:-''${HOME}/Pictures/Wallpapers}"
 
-          # SWWW settings
-          SWWW_STATE_DIR="${config.home.homeDirectory}/.local/state/swww"
-          SWWW_LIST_FILE="''${SWWW_STATE_DIR}/wallpapers.txt"
+          # AWWW settings
+          AWWW_STATE_DIR="${config.home.homeDirectory}/.local/state/awww"
+          AWWW_LIST_FILE="''${AWWW_STATE_DIR}/wallpapers.txt"
 
-          # SWWW Settings for image transitions.
-          export SWWW_TRANSITION_FPS=60
-          export SWWW_TRANSITION_STEP=2
-          export SWWW_TRANSITION_TYPE="random"
+          # AWWW Settings for image transitions.
+          export AWWW_TRANSITION_FPS=60
+          export AWWW_TRANSITION_STEP=2
+          export AWWW_TRANSITION_TYPE="random"
 
           # This controls (in seconds) when to switch to the next image
           # 15 minutes
@@ -288,7 +288,7 @@
             fi
 
             # Now shuffle and limit to 100
-            if ! shuf -n 100 "''${TEMP_LIST}" > "''${SWWW_LIST_FILE}";
+            if ! shuf -n 100 "''${TEMP_LIST}" > "''${AWWW_LIST_FILE}";
             then
               log "error" "Failed to shuffle wallpaper list"
               rm -f "''${TEMP_LIST}"
@@ -299,21 +299,21 @@
             rm -f "''${TEMP_LIST}"
 
             # Check if we got any wallpapers
-            if [[ ! -s "''${SWWW_LIST_FILE}" ]];
+            if [[ ! -s "''${AWWW_LIST_FILE}" ]];
             then
               log "error" "No wallpaper files found in ''${WALLPAPER_DIR}"
               log "error" "Debug: Generated file is empty or missing"
               return 1
             fi
 
-            log "info" "Generated wallpaper list with $(wc -l < "''${SWWW_LIST_FILE}") images"
+            log "info" "Generated wallpaper list with $(wc -l < "''${AWWW_LIST_FILE}") images"
           }
 
           function cleanup() {
             log "info" "Received signal, cleaning up wallpaper manager..."
 
             # Remove wallpaper list file
-            rm -f "''${SWWW_LIST_FILE}" || true
+            rm -f "''${AWWW_LIST_FILE}" || true
 
             exit 0
           }
@@ -335,12 +335,12 @@
           fi
 
           # Make sure the state directory exists or create it
-          if ! mkdir -p "''${SWWW_STATE_DIR}";
+          if ! mkdir -p "''${AWWW_STATE_DIR}";
           then
-            log "error" "Failed to create state directory: ''${SWWW_STATE_DIR}"
+            log "error" "Failed to create state directory: ''${AWWW_STATE_DIR}"
             exit 1
           else
-            log "info" "Wallpaper state directory created at ''${SWWW_STATE_DIR}"
+            log "info" "Wallpaper state directory created at ''${AWWW_STATE_DIR}"
           fi
 
           # Set up signal handlers for graceful cleanup
@@ -348,16 +348,16 @@
           log "info" "Signal trap set for cleanup"
 
           ##################################################
-          # Wait for swww-daemon to be ready
+          # Wait for awww-daemon to be ready
           ##################################################
 
-          log "info" "Waiting for swww-daemon..."
+          log "info" "Waiting for awww-daemon..."
 
           NUM_ATTEMPTS=30
           i=1
           while [[ $i -le ''${NUM_ATTEMPTS} ]];
           do
-            log "info" "Waiting for swww-daemon... (attempt $i/''${NUM_ATTEMPTS})"
+            log "info" "Waiting for awww-daemon... (attempt $i/''${NUM_ATTEMPTS})"
 
             if systemctl --user is-active --quiet wallpaper-manager-daemon;
             then
@@ -400,10 +400,10 @@
           # Set additional Wayland environment variables
           if [[ "''${WAYLAND_DISPLAY:-EMPTY}" != "EMPTY" ]];
           then
-            # Set swww socket path
-            export SWWW_SOCKET
-            SWWW_SOCKET="''${XDG_RUNTIME_DIR}/swww-''${WAYLAND_DISPLAY}.socket"
-            log "info" "Set SWWW_SOCKET=''${SWWW_SOCKET}"
+            # Set awww socket path
+            export AWWW_SOCKET
+            AWWW_SOCKET="''${XDG_RUNTIME_DIR}/awww-''${WAYLAND_DISPLAY}.socket"
+            log "info" "Set AWWW_SOCKET=''${AWWW_SOCKET}"
 
             # Try to detect Hyprland instance signature
             NUM_ATTEMPTS=10
@@ -421,41 +421,41 @@
             done
           else
             log "info" "WAYLAND_DISPLAY is not set"
-            export SWWW_SOCKET
+            export AWWW_SOCKET
           fi
 
-          # Now wait for swww-daemon to be ready
-          log "info" "Waiting for swww-daemon to accept connections"
+          # Now wait for awww-daemon to be ready
+          log "info" "Waiting for awww-daemon to accept connections"
 
           # Debug: Check environment and socket
           log "info" "Debug: WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-unset}"
           log "info" "Debug: XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR:-unset}"
-          log "info" "Debug: SWWW_SOCKET=''${SWWW_SOCKET:-unset}"
+          log "info" "Debug: AWWW_SOCKET=''${AWWW_SOCKET:-unset}"
 
           # Debug: Show all relevant environment variables
           log "info" "Debug: Full environment check:"
-          env | grep -E "(WAYLAND|XDG|SWWW|HYPRLAND)" | while IFS= read -r line;
+          env | grep -E "(WAYLAND|XDG|AWWW|HYPRLAND)" | while IFS= read -r line;
           do
             log "info" "Debug: $line"
           done
 
           # Check if the socket file exists
-          if [[ "''${SWWW_SOCKET:-EMPTY}" != "EMPTY" ]] && [[ -S "''${SWWW_SOCKET}" ]];
+          if [[ "''${AWWW_SOCKET:-EMPTY}" != "EMPTY" ]] && [[ -S "''${AWWW_SOCKET}" ]];
           then
-            log "info" "Debug: swww socket found at ''${SWWW_SOCKET}"
+            log "info" "Debug: awww socket found at ''${AWWW_SOCKET}"
           else
-            log "warning" "Debug: swww socket not found at ''${SWWW_SOCKET}"
+            log "warning" "Debug: awww socket not found at ''${AWWW_SOCKET}"
             # Try to find the socket dynamically
             NUM_ATTEMPTS=10
             i=1
             while [[ $i -le ''${NUM_ATTEMPTS} ]];
             do
-              log "info" "Checking for swww-wayland-$i socket (attempt $i/''${NUM_ATTEMPTS})"
-              SOCKET_PATH="''${XDG_RUNTIME_DIR}/swww-wayland-$i.socket"
+              log "info" "Checking for awww-wayland-$i socket (attempt $i/''${NUM_ATTEMPTS})"
+              SOCKET_PATH="''${XDG_RUNTIME_DIR}/awww-wayland-$i.socket"
               if [[ -S "''${SOCKET_PATH}" ]];
               then
-                log "info" "Debug: Found swww socket at ''${SOCKET_PATH}"
-                export SWWW_SOCKET="''${SOCKET_PATH}"
+                log "info" "Debug: Found awww socket at ''${SOCKET_PATH}"
+                export AWWW_SOCKET="''${SOCKET_PATH}"
                 break
               fi
               i=$((i + 1))
@@ -466,21 +466,21 @@
           i=1
           while [[ $i -le ''${NUM_ATTEMPTS} ]];
           do
-            log "info" "Waiting for swww-daemon... (attempt $i/''${NUM_ATTEMPTS})"
+            log "info" "Waiting for awww-daemon... (attempt $i/''${NUM_ATTEMPTS})"
 
-            if ${pkgs.swww}/bin/swww query >/dev/null 2>&1;
+            if ${pkgs.awww}/bin/awww query >/dev/null 2>&1;
             then
-              log "info" "swww-daemon is ready and accepting connections"
+              log "info" "awww-daemon is ready and accepting connections"
               break
             else
-              log "info" "swww-daemon not ready yet (attempt $i/''${NUM_ATTEMPTS})"
+              log "info" "awww-daemon not ready yet (attempt $i/''${NUM_ATTEMPTS})"
             fi
 
             if [[ $i -eq ''${NUM_ATTEMPTS} ]];
             then
-              log "error" "Timeout waiting for swww-daemon to be ready"
+              log "error" "Timeout waiting for awww-daemon to be ready"
               log "error" "Debug: Final environment check - WAYLAND_DISPLAY=''${WAYLAND_DISPLAY}, XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR}"
-              log "error" "Debug: Socket check - SWWW_SOCKET=''${SWWW_SOCKET}"
+              log "error" "Debug: Socket check - AWWW_SOCKET=''${AWWW_SOCKET}"
               exit 1
             fi
 
@@ -494,31 +494,31 @@
 
           log "info" "Querying displays"
 
-          # Debug: Test swww query directly
-          log "info" "Debug: Testing swww query command"
-          if ${pkgs.swww}/bin/swww query >/dev/null 2>&1;
+          # Debug: Test awww query directly
+          log "info" "Debug: Testing awww query command"
+          if ${pkgs.awww}/bin/awww query >/dev/null 2>&1;
           then
-            log "info" "Debug: swww query command succeeded"
+            log "info" "Debug: awww query command succeeded"
           else
-            log "error" "Debug: swww query command failed"
+            log "error" "Debug: awww query command failed"
           fi
 
           # Debug: Show raw output
-          log "info" "Debug: Raw swww query output:"
-          ${pkgs.swww}/bin/swww query 2>&1 | while IFS= read -r line;
+          log "info" "Debug: Raw awww query output:"
+          ${pkgs.awww}/bin/awww query 2>&1 | while IFS= read -r line;
           do
             log "info" "Debug: $line"
           done
 
           # Now try to get display list
           log "info" "Debug: Attempting to extract display list"
-          DISPLAY_LIST=$(${pkgs.swww}/bin/swww query 2>/dev/null | grep -Po "^[^:]+" || true)
+          DISPLAY_LIST=$(${pkgs.awww}/bin/awww query 2>/dev/null | grep -Po "^[^:]+" || true)
           log "info" "Debug: DISPLAY_LIST=''${DISPLAY_LIST:-EMPTY}"
 
           if [[ "''${DISPLAY_LIST:-EMPTY}" == "EMPTY" ]];
           then
-            log "error" "No displays found. Is swww-daemon running?"
-            log "error" "Debug: Environment check - WAYLAND_DISPLAY=''${WAYLAND_DISPLAY}, SWWW_SOCKET=''${SWWW_SOCKET}"
+            log "error" "No displays found. Is awww-daemon running?"
+            log "error" "Debug: Environment check - WAYLAND_DISPLAY=''${WAYLAND_DISPLAY}, AWWW_SOCKET=''${AWWW_SOCKET}"
             exit 1
           fi
           log "info" "Found displays:"
@@ -542,7 +542,7 @@
             log "info" "Reading wallpaper list"
 
             # Read all images into an array first
-            if ! mapfile -t IMAGES < "$SWWW_LIST_FILE";
+            if ! mapfile -t IMAGES < "$AWWW_LIST_FILE";
             then
               log "error" "Failed to read wallpaper list"
               sleep 60
@@ -579,8 +579,8 @@
               log "info" "Setting image ''${IMAGE} for display: ''${DISPLAY}"
               if [[ -f "''${IMAGE}" ]];
               then
-                # Run swww command and capture exit status without triggering trap
-                if ${pkgs.swww}/bin/swww img --resize="$RESIZE_TYPE" --outputs "''${DISPLAY}" "''${IMAGE}";
+                # Run awww command and capture exit status without triggering trap
+                if ${pkgs.awww}/bin/awww img --resize="$RESIZE_TYPE" --outputs "''${DISPLAY}" "''${IMAGE}";
                 then
                   log "info" "Successfully set wallpaper for ''${DISPLAY} to ''${IMAGE}"
                 else
