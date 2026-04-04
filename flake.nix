@@ -110,6 +110,11 @@
       flake = false;
     };
 
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -492,6 +497,9 @@
 
             ./nixos/hosts/zenbook
 
+            inputs.disko.nixosModules.disko
+            ./nixos/hosts/zenbook/disko-config.nix
+
             inputs.catppuccin.nixosModules.catppuccin
             inputs.flatpaks.nixosModules.default
             inputs.home-manager.nixosModules.home-manager
@@ -547,6 +555,8 @@
             specialArgs = { inherit inputs; };
             modules = [
               ./kexec.nix
+              inputs.disko.nixosModules.disko
+              ./nixos/hosts/zenbook/disko-config.nix
             ];
           }).config.system.build.kexecTarball;
 

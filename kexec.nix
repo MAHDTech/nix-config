@@ -37,5 +37,7 @@
   boot.initrd.includeDefaultModules = false;
   boot.initrd.allowMissingModules = true;
 
+  environment.etc."install-guide.md".source = ./docs/zenbook-install.md;
+
   system.stateVersion = "26.05";
 }

@@ -147,6 +147,8 @@
         "arm_smmu" "qcom_geni_se" "qcom_smd_regulator" "qcom_spmi_regulator"
         "ath12k" "msm" "i2c_hid_of" "i2c_hid" "hid_multitouch"
         "snd_soc_x1e80100" "qcom_q6v5_pas" "qcom_sysmon" "qrtr_smd"
+        # Plan B: USB Tethering drivers
+        "usbnet" "cdc_ether" "cdc_ncm" "cdc_mbim" "rndis_host"
       ];
       kernelModules = [ "kvm" ];
     };
@@ -181,29 +183,6 @@
 
   # Audio (Pull UCM files from the patched kernel tree)
   environment.etc."alsa/ucm2".source = "${inputs.zenbook-linux}/ucm2";
-
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-label/nixos";
-      fsType = "btrfs";
-      options = [ "subvol=root" "compress=zstd" ];
-    };
-    "/home" = {
-      device = "/dev/disk/by-label/nixos";
-      fsType = "btrfs";
-      options = [ "subvol=home" "compress=zstd" ];
-    };
-    "/nix" = {
-      device = "/dev/disk/by-label/nixos";
-      fsType = "btrfs";
-      options = [ "subvol=nix" "compress=zstd" "noatime" ];
-    };
-    "/boot" = {
-      device = "/dev/disk/by-label/boot";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
-  };
 
   networking.useDHCP = lib.mkDefault false;
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
