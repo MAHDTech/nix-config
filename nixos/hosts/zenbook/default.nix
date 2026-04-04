@@ -1,4 +1,6 @@
 {
+  lib,
+  config,
   ...
 }:
 {
@@ -8,6 +10,12 @@
     hostId = "def00003";
   };
 
+  # Force use of our custom kernel to bypass SOE ZFS selection logic
+  # We import the kernelPackages from hardware-configuration.nix directly
+  boot.kernelPackages = let
+    hw = import ./hardware-configuration.nix { inherit lib pkgs inputs; };
+  in lib.mkForce hw.boot.kernelPackages;
+
   imports = [
     # Load hardware specific configuration.
     ./hardware-configuration.nix
@@ -16,10 +24,13 @@
     ../../system/config/virtualisation/cpu/qcom.nix
 
     # GPU specific configuration.
-    #../../system/config/video/qcom
+    ../../system/config/video/qcom
 
     # Load system standard-operating-environment.
     ../../system/soe
+
+    # Power management and optimizations
+    ./power.nix
 
     # System configuration
     ../../system/config/audio
@@ -29,10 +40,6 @@
     ../../system/config/power
     ../../system/config/printing
     #../../system/config/services
-
-    # Storage
-    #../../system/config/storage/zfs
-    #../../system/config/storage/persistence
 
     # Theme
     ../../system/config/theme/catppuccin
@@ -53,16 +60,11 @@
     ../../system/config/desktop-environment/hyprland.nix
 
     # Tailscale
-    ../../system/config/services/tailscale
+    #../../system/config/services/tailscale
 
     # Desktop Applications and Services
     #../../system/config/programs/1password
     #../../system/config/services/trezor
-
-    # Virtualisation
-    #../../system/config/virtualisation/docker
-    #../../system/config/virtualisation/host/vmware
-    #../../system/config/virtualisation/incus
 
     # Games
     #../../system/config/games

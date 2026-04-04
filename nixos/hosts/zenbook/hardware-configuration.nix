@@ -3,224 +3,208 @@
   imports = [ ];
 
   boot = {
-    supportedFilesystems = [
-      "vfat"
-      "zfs"
-    ];
+    supportedFilesystems = lib.mkForce [ "vfat" "btrfs" ];
 
     # Use the specific kernel tree for Zenbook A14 support
-    kernelPackages = lib.mkForce (pkgs.linuxPackagesFor (pkgs.linux_latest.override {
-      argsOverride = {
-        src = inputs.zenbook-linux;
-        version = "6.12.0-zenbook"; # Adjust if the repo version changes
+    kernelPackages = let
+      # We use linux_latest to get the base kernel for versioning helper functions
+      baseKernel = pkgs.linux_latest;
+      
+      # The actual kernel build
+      kernelBuild = pkgs.stdenv.mkDerivation rec {
+        pname = "latest-zenbook";
+        # Set version to match what linux-next reports to avoid mismatch
+        version = "6.19.0-rc4-next-20260109"; 
+        
+        # Pull the absolute latest bleeding edge where Zenbook support lives
+        src = pkgs.fetchgit {
+          url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
+          # Use the revision mentioned in the README as tested
+          rev = "next-20260109"; 
+          sha256 = "sha256-wCsWxGnKycbXFY0PEPUKnMFsy6pQ+SaEVDcOkySIzac=";
+        };
+        
+        nativeBuildInputs = with pkgs; [
+          perl bc nettools openssl rsync gmp libmpc mpfr 
+          util-linux elfutils binutils flex bison pahole zstd gcc gnumake
+          python3
+        ];
+
+        # Apply the patches from the input. 
+        prePatch = ''
+          echo "Applying Zenbook patches from ${inputs.zenbook-linux}..."
+          for patch in ${inputs.zenbook-linux}/*.patch; do
+            echo "Applying $patch"
+            patch -p1 < "$patch"
+          done
+
+          echo "Fixing DTSI camera errors (camss/cci1/csiphy missing in this linux-next)..."
+          # Comment out the camera sections that refer to missing labels
+          sed -i '/&camss {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+          sed -i '/&cci1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+          sed -i '/&cci1_i2c1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+          sed -i '/&csiphy4 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+        '';
+
+        # satisfy the kernel modules expectations
+        passthru = {
+          modDirVersion = version;
+          config = { 
+            isEnabled = _: true; 
+            isYes = _: true;
+            isNo = _: false;
+            isModule = _: false;
+          };
+          kernelOlder = v: lib.versionOlder version v;
+          kernelAtLeast = v: lib.versionAtLeast version v;
+          inherit version;
+          override = _: kernelBuild;
+          overrideAttrs = _: kernelBuild;
+        };
+
+        configurePhase = ''
+          patchShebangs scripts/config
+          make ARCH=arm64 defconfig
+          
+          echo "Applying opt-in configuration via localmodconfig..."
+          LSMOD=${./lsmod.txt} make ARCH=arm64 localmodconfig
+          
+          # Ensure critical Snapdragon features are built-in or enabled
+          ./scripts/config --enable DRM_MSM
+          ./scripts/config --enable PINCTRL_X1E80100
+          ./scripts/config --enable QCOM_COMMAND_DB
+          ./scripts/config --enable QCOM_RPMH
+          ./scripts/config --enable QCOM_RPMHPD
+          
+          # Disable problematic/unnecessary Ethernet vendors
+          ./scripts/config --disable NET_VENDOR_TI
+          ./scripts/config --disable NET_VENDOR_BROADCOM
+          ./scripts/config --disable NET_VENDOR_INTEL
+          ./scripts/config --disable NET_VENDOR_MARVELL
+          ./scripts/config --disable NET_VENDOR_REALTEK
+          ./scripts/config --disable NET_VENDOR_MICROCHIP
+          ./scripts/config --disable NET_VENDOR_VIA
+          ./scripts/config --disable NET_VENDOR_STMICRO
+          ./scripts/config --disable NET_VENDOR_WIZNET
+          ./scripts/config --disable NET_VENDOR_XILINX
+          ./scripts/config --disable NET_VENDOR_SYNOPSYS
+          ./scripts/config --disable NET_VENDOR_PENSANDO
+          ./scripts/config --disable NET_VENDOR_RENESAS
+          ./scripts/config --disable NET_VENDOR_CADENCE
+          ./scripts/config --disable NET_VENDOR_NI
+          ./scripts/config --disable NET_VENDOR_8390
+          ./scripts/config --disable NET_VENDOR_SOLARFLARE
+          ./scripts/config --disable NET_VENDOR_SOCIONEXT
+          ./scripts/config --disable NET_VENDOR_WANGXUN
+          
+          # Explicitly re-enable Audio (often missing in generic builds)
+          ./scripts/config --module SND_SOC_QCOM
+          ./scripts/config --module SND_SOC_X1E80100
+          ./scripts/config --module SND_SOC_LPASS_WSA_MACRO
+          ./scripts/config --module SND_SOC_LPASS_VA_MACRO
+          ./scripts/config --module SND_SOC_LPASS_RX_MACRO
+          ./scripts/config --module SND_SOC_LPASS_TX_MACRO
+          ./scripts/config --module SND_SOC_WSA884X
+          ./scripts/config --module SND_SOC_WCD938X
+          ./scripts/config --module SND_SOC_WCD_CLASSH
+          
+          # Camera (OV02C10 mentioned in Vinarskis patches)
+          ./scripts/config --module VIDEO_OV02C10
+          ./scripts/config --enable VIDEO_V4L2_SUBDEV_API
+          
+          # WiFi/BT co-existence and routing
+          ./scripts/config --module ATH12K
+          ./scripts/config --module QRTR_SMD
+          ./scripts/config --module QRTR_MHI
+          ./scripts/config --module QCOM_PD_MAPPER
+          
+          # Re-sync configuration
+          make ARCH=arm64 olddefconfig
+        '';
+
+        buildPhase = ''
+          make ARCH=arm64 -j$NIX_BUILD_CORES
+        '';
+
+        installPhase = ''
+          mkdir -p $out/boot
+          cp arch/arm64/boot/Image $out/boot/vmlinuz
+          cp arch/arm64/boot/Image $out/Image
+          make ARCH=arm64 modules_install INSTALL_MOD_PATH=$out
+          
+          # Delete dangling symlinks that point to the build directory
+          rm -rf $out/lib/modules/*/build
+          rm -rf $out/lib/modules/*/source
+        '';
       };
-    }));
+    in lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 
     initrd = {
+      includeDefaultModules = false;
+      allowMissingModules = true;
       availableKernelModules = [
-        "nvme"
-        "usb_storage"
-        "usbhid"
-        "xhci_pci"
-        "uas"
-        "sd_mod"
-
-        # ARM/Qualcomm
-        "arm_smmu"
-        "qcom_geni_se"
-        "qcom_smd_regulator"
-        "qcom_spmi_regulator"
-
-        # Display/Framebuffer
-        "fb_sys_fops"
-        "syscopyarea"
-        "sysfillrect"
-        "sysimgblt"
+        "nvme" "usb_storage" "usbhid" "xhci_pci" "uas" "sd_mod"
+        "arm_smmu" "qcom_geni_se" "qcom_smd_regulator" "qcom_spmi_regulator"
+        "ath12k" "msm" "i2c_hid_of" "i2c_hid" "hid_multitouch"
+        "snd_soc_x1e80100" "qcom_q6v5_pas" "qcom_sysmon" "qrtr_smd"
       ];
-      kernelModules = [
-        "kvm"
-        "zfs"
-      ];
+      kernelModules = [ "kvm" ];
     };
 
-    kernelModules = [
-      # ARM64
-      "msm"
-      "panel_simple"
-
-      # Qualcomm
-      "qcom_q6v5_mss"
-      "qcom_common"
-      "qcom_glink_smem"
-      "qcom_sysmon"
-    ];
-
     kernelParams = [
-      # Boot parameters for Snapdragon
-      "clk_ignore_unused"
-      "pd_ignore_unused"
-
-      # Console output
-      "console=ttyAMA0,115200n8"
-      "console=tty0"
-      "earlyprintk"
-
-      # Framebuffer
-      "cma=128M"
-      "video=efifb"
-      "fbcon=map:0"
-
-      # ARM64 specific
+      "clk_ignore_unused" "pd_ignore_unused"
+      "console=ttyAMA0,115200n8" "console=tty0"
+      "earlyprintk" "cma=128M" "video=efifb" "fbcon=map:0"
       "arm64.nopauth"
-      # "acpi=force" # Removed to allow DTB usage
-
-      # Debug (remove after it works)
-      "loglevel=7"
-      "debug"
-      "ignore_loglevel"
     ];
 
-    kernelPatches = [
-      {
-        name = "snapdragon-config";
-        patch = null;
-        extraConfig = ''
-          # Framebuffer for installer
-          FRAMEBUFFER_CONSOLE y      # Enables console output on framebuffer devices
-          FB_EFI y                   # Support for EFI-based framebuffer
-          LOGO y                     # Displays boot logo on framebuffer
-
-          # ARM64 console
-          SERIAL_AMBA_PL011 y        # Driver for AMBA PL011 UART (serial console)
-          SERIAL_AMBA_PL011_CONSOLE y # Enables console output via PL011 UART
-          HVC_DCC y                  # ARM Debug Communications Channel hypervisor console
-          HVC_DCC_SERIALIZE_SMP y    # Serialises SMP access for DCC console
-
-          # Qualcomm essentials
-          TYPEC y                    # USB Type-C and Power Delivery support
-          PHY_QCOM_QMP y             # Qualcomm QMP PHY driver for USB/PCIE/USB3
-          QCOM_CLK_RPM y             # Qualcomm RPM clock controller
-          MFD_QCOM_RPM y             # Qualcomm Resource Power Manager multi-function device
-          REGULATOR_QCOM_RPM y       # Qualcomm RPM voltage regulator driver
-          PHY_QCOM_QMP_PCIE y        # Qualcomm QMP PCIe PHY driver
-          CLK_X1E80100_CAMCC y       # Camera clock controller for Snapdragon X Elite (X1E80100)
-
-          # Display pipeline
-          DRM y                      # Direct Rendering Manager framework for GPUs
-          DRM_MSM m                  # MSM DRM driver for Qualcomm Snapdragon GPUs (as module)
-          DRM_PANEL_SIMPLE m         # Simple panel driver for DRM-based displays
-
-          # ARM64 fundamentals
-          ARM_SMMU y                 # ARM System Memory Management Unit support
-          ARM_SMMU_V3 y              # ARM SMMU version 3 for advanced IOMMU features
-        '';
-      }
-    ];
-
-    extraModulePackages = [ ];
-
+    # Modern boot management
     loader = {
+      systemd-boot.enable = true;
       efi = {
         canTouchEfiVariables = true;
-      };
-      systemd-boot = {
-        enable = true;
+        efiSysMountPoint = lib.mkForce "/boot";
       };
     };
   };
 
   hardware = {
-    graphics = {
-      enable = true;
-    };
+    graphics.enable = true;
     deviceTree = {
       enable = true;
       # The alexVinarskis kernel builds this DTB from its own DTS sources.
-      # This ensures the hardware description is perfectly synced with the drivers.
       name = "qcom/x1e80100-asus-zenbook-ux3407.dtb";
     };
     enableRedistributableFirmware = true;
-    firmware = [
-      (pkgs.runCommand "zenbook-firmware"
-        {
-          srcFirmware = ./files/firmware;
-          # Audio Topology Firmware from the kernel source
-          topologySrc = inputs.zenbook-linux;
-        }
-        ''
-          # Copy Firmware Blobs from your local files (qcom, ath12k, etc.)
-          mkdir -p $out/lib/firmware
-          cp -r --no-preserve=mode,ownership $srcFirmware/* $out/lib/firmware/
-
-          # Decompress zst files if necessary (Nix prefers raw or handles compression)
-          find $out/lib/firmware -name "*.zst" -exec zstd -d --rm {} +
-
-          # Copy Audio Topology Firmware specifically from kernel source
-          mkdir -p $out/lib/firmware/qcom/x1e80100
-          cp $topologySrc/firmware/qcom/x1e80100/*.bin $out/lib/firmware/qcom/x1e80100/
-        ''
-      )
-    ];
+    firmware = [ (import ./firmware.nix { inherit pkgs; }) ];
   };
 
-  # Audio (UCM files from the patched kernel tree)
+  # Audio (Pull UCM files from the patched kernel tree)
   environment.etc."alsa/ucm2".source = "${inputs.zenbook-linux}/ucm2";
 
   fileSystems = {
     "/" = {
-      device = "zpool/root";
-      fsType = "zfs";
+      device = "/dev/disk/by-label/nixos";
+      fsType = "btrfs";
+      options = [ "subvol=root" "compress=zstd" ];
     };
-
-    "/boot" = {
-      device = "zpool/boot";
-      fsType = "zfs";
-    };
-
-    "/boot/efi" = {
-      device = "/dev/disk/by-path/pci-0000:02:00.0-scsi-0:0:0:0-part1";
-      fsType = "vfat";
-      options = [
-        "fmask=0077"
-        "dmask=0077"
-      ];
-    };
-
     "/home" = {
-      device = "zpool/home";
-      fsType = "zfs";
-      neededForBoot = false;
+      device = "/dev/disk/by-label/nixos";
+      fsType = "btrfs";
+      options = [ "subvol=home" "compress=zstd" ];
     };
-
     "/nix" = {
-      device = "zpool/nix";
-      fsType = "zfs";
+      device = "/dev/disk/by-label/nixos";
+      fsType = "btrfs";
+      options = [ "subvol=nix" "compress=zstd" "noatime" ];
     };
-
-    "/var" = {
-      device = "zpool/var";
-      fsType = "zfs";
-    };
-
-    "/var/lib" = {
-      device = "zpool/var/lib";
-      fsType = "zfs";
-    };
-
-    "/var/lib/docker" = {
-      device = "zpool/var/lib/docker";
-      fsType = "zfs";
-    };
-
-    "/tmp" = {
-      device = "zpool/tmp";
-      fsType = "zfs";
+    "/boot" = {
+      device = "/dev/disk/by-label/boot";
+      fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
     };
   };
 
-  swapDevices = [ ];
-
   networking.useDHCP = lib.mkDefault false;
-
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 }

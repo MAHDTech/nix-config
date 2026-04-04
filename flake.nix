@@ -124,7 +124,7 @@
       # this value at the release version of the first install of this system.
       # Before changing this value read the documentation for this option
       # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-      globalStateVersion = "25.11";
+      globalStateVersion = "26.05";
 
       # Are we running in CI?
       inCI = builtins.getEnv "CI" == "true";
@@ -540,6 +540,15 @@
 
       packages = forEachSystem (system: {
         devenv-up = self.devShells.${system}.default.config.procfileScript;
+
+        kexec-installer =
+          (inputs.nixpkgs.lib.nixosSystem {
+            inherit system;
+            specialArgs = { inherit inputs; };
+            modules = [
+              ./kexec.nix
+            ];
+          }).config.system.build.kexecTarball;
 
         #home-manager = self.homeConfigurations.${globalUsername}.activationPackage.${system};
       });

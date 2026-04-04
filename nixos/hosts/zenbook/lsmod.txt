@@ -1,0 +1,159 @@
+Module                  Size  Used by
+cdc_mbim               20480  0
+cdc_wdm                28672  1 cdc_mbim
+cdc_ncm                49152  1 cdc_mbim
+cdc_ether              20480  1 cdc_ncm
+usbnet                 61440  3 cdc_mbim,cdc_ncm,cdc_ether
+aes_ce_ccm             12288  2
+michael_mic            12288  1
+reset_gpio             12288  1
+snd_soc_wsa884x        28672  0
+q6prm_clocks           12288  17
+q6apm_lpass_dais       16384  0
+q6apm_dai              24576  0
+snd_q6dsp_common       49152  2 q6apm_lpass_dais,q6prm_clocks
+q6prm                  12288  1 q6prm_clocks
+snd_seq_dummy          12288  0
+snd_hrtimer            12288  1
+snd_seq_midi           24576  0
+snd_seq_midi_event     20480  1 snd_seq_midi
+snd_rawmidi            53248  1 snd_seq_midi
+snd_seq               131072  9 snd_seq_midi,snd_seq_midi_event,snd_seq_dummy
+snd_seq_device         16384  3 snd_seq,snd_seq_midi,snd_rawmidi
+rfcomm                102400  6
+algif_hash             16384  1
+algif_skcipher         12288  1
+af_alg                 32768  6 algif_hash,algif_skcipher
+bnep                   32768  2
+binfmt_misc            24576  1
+nls_iso8859_1          12288  1
+qrtr_mhi               16384  0
+xfs                  2498560  1
+aes_ce_blk             32768  6 aes_ce_ccm
+aes_ce_cipher          12288  2 aes_ce_ccm,aes_ce_blk
+polyval_ce             12288  0
+ghash_ce               20480  0
+sm4_ce_gcm             16384  0
+sm4_ce_ccm             16384  0
+sm4_ce                 28672  2 sm4_ce_gcm,sm4_ce_ccm
+sm4_ce_cipher          12288  0
+sm4                    12288  4 sm4_ce,sm4_ce_cipher,sm4_ce_gcm,sm4_ce_ccm
+sm3_ce                 12288  0
+sha3_ce                16384  0
+pm8941_pwrkey          16384  0
+hci_uart              188416  0
+btqca                  28672  1 hci_uart
+btrtl                  32768  1 hci_uart
+btintel                69632  1 hci_uart
+ath12k                901120  0
+qcom_spmi_temp_alarm    20480  0
+btbcm                  24576  1 hci_uart
+industrialio          143360  1 qcom_spmi_temp_alarm
+snd_soc_x1e80100       12288  0
+mac80211             1667072  1 ath12k
+snd_soc_qcom_sdw       12288  1 snd_soc_x1e80100
+snd_soc_qcom_common    16384  1 snd_soc_x1e80100
+bluetooth            1015808  34 btrtl,btqca,btintel,hci_uart,btbcm,bnep,rfcomm
+snd_soc_hdmi_codec     24576  0
+cfg80211             1306624  2 ath12k,mac80211
+snd_q6apm              53248  3 q6apm_dai,q6prm,q6apm_lpass_dais
+fastrpc                40960  0
+libarc4                12288  1 mac80211
+qcom_edac              12288  0
+mhi                   135168  2 ath12k,qrtr_mhi
+pci_pwrctrl_pwrseq     12288  0
+pci_pwrctrl_core       12288  1 pci_pwrctrl_pwrseq
+leds_gpio              12288  0
+joydev                 36864  0
+input_leds             12288  0
+sch_fq_codel           24576  1
+efi_pstore             12288  0
+nfnetlink              20480  1
+dmi_sysfs              24576  0
+autofs4                61440  2
+btrfs                2015232  1
+blake2b_generic        20480  0
+xor                    12288  1 btrfs
+xor_neon               16384  1 xor
+raid6_pq              106496  1 btrfs
+gpucc_x1e80100         24576  0
+snd_soc_wcd938x       110592  0
+snd_soc_wcd_classh     24576  1 snd_soc_wcd938x
+snd_soc_wcd938x_sdw    24576  1 snd_soc_wcd938x
+snd_soc_wcd_mbhc       36864  1 snd_soc_wcd938x
+regmap_sdw             12288  2 snd_soc_wsa884x,snd_soc_wcd938x_sdw
+snd_soc_lpass_wsa_macro    73728  1
+snd_soc_lpass_rx_macro   118784  1
+apr                    20480  2 snd_q6apm,q6prm
+nvme                   65536  3
+panel_samsung_atna33xc20    12288  0
+nvme_core             237568  4 nvme
+hid_multitouch         36864  0
+nvme_keyring           20480  1 nvme_core
+hid_generic            12288  0
+nvme_auth              28672  1 nvme_core
+rpmsg_ctrl             12288  0
+phy_nxp_ptn3222        12288  1
+qrtr_smd               16384  0
+i2c_hid_of             12288  0
+msm                  1781760  2
+i2c_hid                40960  1 i2c_hid_of
+snd_soc_lpass_tx_macro   106496  1
+snd_soc_lpass_va_macro    61440  5
+qcom_pd_mapper         28672  0
+hid                   278528  3 i2c_hid,hid_multitouch,hid_generic
+soundwire_qcom         45056  0
+slimbus                36864  1 soundwire_qcom
+ubwc_config            20480  1 msm
+ps883x                 12288  16
+nvmem_qcom_spmi_sdam    16384  0
+qcom_pon               12288  0
+soundwire_bus        1175552  6 regmap_sdw,snd_soc_wsa884x,snd_soc_wcd938x_sdw,snd_soc_qcom_sdw,soundwire_qcom,snd_soc_x1e80100
+snd_soc_lpass_macro_common    12288  4 snd_soc_lpass_wsa_macro,snd_soc_lpass_va_macro,snd_soc_lpass_rx_macro,snd_soc_lpass_tx_macro
+rtc_pm8xxx             24576  0
+snd_soc_core          405504  16 snd_q6apm,q6apm_dai,snd_soc_qcom_common,q6apm_lpass_dais,snd_soc_hdmi_codec,snd_soc_lpass_wsa_macro,snd_soc_wsa884x,snd_soc_qcom_sdw,snd_soc_lpass_va_macro,snd_soc_wcd938x,snd_soc_wcd_mbhc,snd_soc_lpass_rx_macro,soundwire_qcom,snd_soc_x1e80100,snd_soc_lpass_tx_macro,snd_soc_wcd_classh
+ocmem                  24576  1 msm
+reboot_mode            12288  1 qcom_pon
+drm_gpuvm              45056  1 msm
+qcom_spmi_pmic         20480  0
+snd_compress           36864  1 snd_soc_core
+qcom_stats             12288  0
+qcom_geni_serial       40960  0
+qcom_q6v5_pas          36864  0
+i2c_qcom_geni          28672  0
+ac97_bus               12288  1 snd_soc_core
+snd_pcm_dmaengine      16384  1 snd_soc_core
+drm_exec               16384  2 msm,drm_gpuvm
+pinctrl_sm8550_lpass_lpi    16384  1
+snd_pcm               204800  7 q6apm_dai,q6apm_lpass_dais,snd_soc_hdmi_codec,snd_compress,snd_soc_core,snd_soc_lpass_rx_macro,snd_pcm_dmaengine
+dispcc_x1e80100        40960  27
+phy_qcom_edp           32768  1
+gpu_sched              69632  1 msm
+qcom_pil_info          12288  1 qcom_q6v5_pas
+qcom_common            20480  2 ath12k,qcom_q6v5_pas
+pinctrl_lpass_lpi      16384  13 pinctrl_sm8550_lpass_lpi
+snd_timer              49152  3 snd_seq,snd_hrtimer,snd_pcm
+qcom_glink_smem        12288  1 qcom_common
+qcom_q6v5              16384  1 qcom_q6v5_pas
+lpasscc_sc8280xp       12288  3
+snd                   151552  11 snd_seq,snd_seq_device,snd_soc_qcom_common,snd_soc_hdmi_codec,snd_timer,snd_compress,snd_soc_core,snd_pcm,snd_rawmidi
+qcom_sysmon            24576  2 qcom_q6v5_pas,qcom_q6v5
+pwrseq_qcom_wcn        16384  2
+ucsi_glink             20480  0
+gpucc_x1p42100         20480  1
+mdt_loader             12288  3 ath12k,msm,qcom_q6v5_pas
+sbsa_gwdt              12288  0
+icc_bwmon              28672  0
+tcsrcc_x1e80100        16384  6
+qcom_cpucp_mbox        12288  2
+socinfo                28672  0
+pwrseq_core            20480  3 hci_uart,pwrseq_qcom_wcn,pci_pwrctrl_pwrseq
+qcom_battmgr           20480  0
+typec_ucsi             61440  1 ucsi_glink
+soundcore              16384  1 snd
+arm_smccc_trng         12288  0
+uio_pdrv_genirq        16384  0
+uio                    32768  1 uio_pdrv_genirq
+gpio_keys              24576  0
+fixed                  16384  33
+qrtr                   49152  22 qrtr_smd,qrtr_mhi

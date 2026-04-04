@@ -354,8 +354,8 @@ in
 
       boot = {
 
-        # HACK: Force use of an LTS kernel to ensure we have DRBD 9 support.
-        kernelPackages = lib.mkForce pkgs.linuxPackages_6_12; # LTS
+        # HACK: Use the latest kernel packages to match the rest of the system.
+        kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
 
         # Load DRBD 9 out-of-tree kernel module from linuxKernel.packages
         extraModulePackages = with config.boot.kernelPackages; [ drbd ];
