@@ -60,7 +60,17 @@
       "fbcon=map:0"
       "arm64.nopauth"
     ];
+
+    supportedFilesystems = lib.mkForce [
+      "vfat"
+      "btrfs"
+    ];
+    zfs.forceImportAll = lib.mkForce false;
   };
+
+  # Disable ZFS userspace as well
+  networking.hostId = "def00003"; # Required for some ZFS-adjacent checks even if disabled
+  boot.zfs.enabled = lib.mkForce false;
 
   hardware = {
     graphics.enable = true;
