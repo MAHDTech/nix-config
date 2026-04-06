@@ -73,7 +73,10 @@
   };
 
   services.openssh.enable = true;
-  users.users.root.password = lib.mkForce "nixos";
+  users.users.root = {
+    password = lib.mkForce "nixos";
+    initialHashedPassword = lib.mkForce null;
+  };
   nixpkgs.hostPlatform = "aarch64-linux";
   networking.hostName = "zenbook-iso";
 }
