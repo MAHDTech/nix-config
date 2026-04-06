@@ -1,49 +1,8 @@
-# ASUS Zenbook Snapdragon X Elite - NixOS Anywhere Guide
+# ASUS Zenbook Snapdragon X Elite
 
-This guide describes how to install NixOS on the ASUS Zenbook A14 (UX3407R) using `nixos-anywhere`. You can choose between two methods for the target environment:
+How to install NixOS on the ASUS Zenbook A14 (UX3407R) using `nixos-anywhere` and a custom NixOS ISO with the necessary Qualcomm patches.
 
-- **Option A**: Using an Ubuntu Live USB (Legacy method).
-- **Option B**: Using the Custom NixOS ISO (Recommended).
-
-## ⚠️ CRITICAL: The "No-Kexec" Method
-
-The Snapdragon X Elite requires a highly specific kernel. Standard `nixos-anywhere` attempts to `kexec` into a generic installer kernel, which **will crash** (black screen). To avoid this, we skip the `kexec` phase and run the installer directly within the live environment.
-
-## Option A: Using Ubuntu Live (Legacy)
-
-### Target Machine (Zenbook)
-
-1.  **Boot Ubuntu Live**: Create an Ubuntu 24.04 (or later) aarch64 Live USB and boot the Zenbook.
-2.  **Network Connectivity**:
-    - Connect to WiFi or use **USB Tethering** from an Android phone.
-3.  **Install Nix on Ubuntu**:
-
-    ```bash
-    # Install Nix (multi-user mode)
-    sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
-
-    # Enable Flakes
-    mkdir -p ~/.config/nix
-    echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
-    ```
-
-4.  **Enable SSH & Root Access**:
-
-    ```bash
-    sudo apt update && sudo apt install -y openssh-server
-    sudo passwd ubuntu # Set a temporary password
-    sudo passwd root   # Set a root password (required for nixos-anywhere)
-
-    # Allow root login over SSH for the duration of the install
-    sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-    sudo systemctl restart ssh
-    ```
-
-## Option B: Using the Custom NixOS ISO (Recommended)
-
-This method is faster and more reliable. The custom ISO contains the exact kernel and firmware needed for the Snapdragon X Elite, ensuring that components like the internal NVMe drive are visible immediately.
-
-> **Why this is better**: Standard Ubuntu kernels lack the `qcom_geni_se` and `nvme` configuration necessary to see the internal storage on Snapdragon X Elite hardware. Our custom ISO includes these modules in the initrd, guaranteeing that `nixos-anywhere` can find the disk.
+The custom ISO contains the exact kernel and firmware needed for the Snapdragon X Elite, ensuring that components like the internal NVMe drive are visible immediately.
 
 ### 1. Build the ISO
 

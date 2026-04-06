@@ -2,11 +2,12 @@
   pkgs,
   lib,
   inputs,
+  modulesPath,
   ...
 }:
 {
   imports = [
-    "${pkgs.path}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+    (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
   ];
 
   boot = {
@@ -68,11 +69,11 @@
       name = "qcom/x1e80100-asus-zenbook-ux3407.dtb";
     };
     enableRedistributableFirmware = true;
-    firmware = [ (import ./firmware.nix { inherit pkgs; }) ];
+    firmware = [ (pkgs.callPackage ./firmware.nix { }) ];
   };
 
   services.openssh.enable = true;
-  users.users.root.password = "nixos";
+  users.users.root.password = lib.mkForce "nixos";
   nixpkgs.hostPlatform = "aarch64-linux";
   networking.hostName = "zenbook-iso";
 }

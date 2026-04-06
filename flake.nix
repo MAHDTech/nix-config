@@ -533,7 +533,9 @@
         zenbook-iso = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           specialArgs = { inherit inputs; };
-          modules = [ ./nixos/hosts/zenbook/iso.nix ];
+          modules = [
+            ./nixos/hosts/zenbook/iso.nix
+          ];
         };
       };
 
@@ -557,9 +559,8 @@
         devenv-up = self.devShells.${system}.default.config.procfileScript;
 
         #home-manager = self.homeConfigurations.${globalUsername}.activationPackage.${system};
-      } // (inputs.nixpkgs.lib.optionalAttrs (system == "aarch64-linux") {
         zenbook-iso = self.nixosConfigurations.zenbook-iso.config.system.build.isoImage;
-      }));
+      });
 
       #########################
       # DevShells

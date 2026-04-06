@@ -6,10 +6,8 @@
 }:
 
 let
-  # We use linux_latest to get the base kernel for versioning helper functions
-
   # The actual kernel build
-  kernelBuild = pkgs.stdenv.mkDerivation rec {
+  kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "latest-zenbook";
     # Set version to match what linux-next reports to avoid mismatch
     version = "6.19.0-rc4-next-20260109";
@@ -58,23 +56,6 @@ let
       sed -i '/&cci1_i2c1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
       sed -i '/&csiphy4 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
     '';
-
-    # satisfy the kernel modules expectations
-    passthru = {
-      modDirVersion = version;
-      config = {
-        isEnabled = _: true;
-        isYes = _: true;
-        isNo = _: false;
-        isModule = _: false;
-        isSet = _: true;
-      };
-      kernelOlder = v: lib.versionOlder version v;
-      kernelAtLeast = v: lib.versionAtLeast version v;
-      inherit version;
-      override = _: kernelBuild;
-      overrideAttrs = _: kernelBuild;
-    };
 
     configurePhase = ''
       patchShebangs scripts/config
@@ -165,6 +146,25 @@ let
       rm -rf $out/lib/modules/*/build
       rm -rf $out/lib/modules/*/source
     '';
+
+    # satisfy the kernel modules expectations
+    passthru = rec {
+      modDirVersion = "6.19.0-rc4-next-20260109";
+      version = modDirVersion;
+      dev = kernelBuild;
+      moduleBuildDependencies = [ ];
+      config = {
+        isEnabled = _: true;
+        isYes = _: true;
+        isNo = _: false;
+        isModule = _: false;
+        isSet = _: true;
+      };
+      kernelOlder = v: lib.versionOlder version v;
+      kernelAtLeast = v: lib.versionAtLeast version v;
+      features = { };
+      commonMakeFlags = [ "ARCH=arm64" ];
+    };
   };
 in
 kernelBuild
