@@ -1,6 +1,8 @@
 {
   lib,
   config,
+  pkgs,
+  inputs,
   ...
 }:
 {
@@ -9,12 +11,6 @@
     hostName = "ZENBOOK";
     hostId = "def00003";
   };
-
-  # Force use of our custom kernel to bypass SOE ZFS selection logic
-  # We import the kernelPackages from hardware-configuration.nix directly
-  boot.kernelPackages = let
-    hw = import ./hardware-configuration.nix { inherit lib pkgs inputs; };
-  in lib.mkForce hw.boot.kernelPackages;
 
   imports = [
     # Load hardware specific configuration.

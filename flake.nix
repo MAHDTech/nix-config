@@ -527,7 +527,6 @@
             }
           ];
         };
-
       };
 
       #########################
@@ -548,17 +547,6 @@
 
       packages = forEachSystem (system: {
         devenv-up = self.devShells.${system}.default.config.procfileScript;
-
-        kexec-installer =
-          (inputs.nixpkgs.lib.nixosSystem {
-            inherit system;
-            specialArgs = { inherit inputs; };
-            modules = [
-              ./kexec.nix
-              inputs.disko.nixosModules.disko
-              ./nixos/hosts/zenbook/disko-config.nix
-            ];
-          }).config.system.build.kexecTarball;
 
         #home-manager = self.homeConfigurations.${globalUsername}.activationPackage.${system};
       });

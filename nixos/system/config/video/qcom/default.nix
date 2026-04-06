@@ -4,7 +4,7 @@
   hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
-      mesa.drivers # Includes freedreno
+      mesa # Includes freedreno
       libva-utils
       vulkan-loader
       vulkan-tools
