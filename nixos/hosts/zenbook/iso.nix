@@ -10,6 +10,8 @@
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
   ];
 
+  disabledModules = [ "tasks/filesystems/zfs.nix" ];
+
   boot = {
     kernelPackages =
       let
@@ -68,9 +70,8 @@
     zfs.forceImportAll = lib.mkForce false;
   };
 
-  # Disable ZFS userspace as well
-  networking.hostId = "def00003"; # Required for some ZFS-adjacent checks even if disabled
-  boot.zfs.enabled = lib.mkForce false;
+  # Set hostId for some adjacent checks even if ZFS is disabled
+  networking.hostId = "def00003";
 
   hardware = {
     graphics.enable = true;
