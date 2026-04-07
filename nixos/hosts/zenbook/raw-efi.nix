@@ -12,7 +12,7 @@ let
   # Paths to kernel, initrd, and device tree for the ESP
   kernelTarget = "${config.system.build.kernel}/${config.system.boot.loader.kernelFile}";
   initrdTarget = "${config.system.build.initialRamdisk}/${config.system.boot.loader.initrdFile}";
-  dtbTarget = "${config.hardware.deviceTree.package}/qcom/x1e80100-asus-zenbook-ux3407.dtb";
+  dtbTarget = "${config.hardware.deviceTree.package}/qcom/x1e80100-asus-zenbook-a14.dtb";
 
   # GRUB configuration for the ESP
   grubCfg = pkgs.writeText "grub.cfg" ''
@@ -65,6 +65,7 @@ let
       e2fsprogs # mkfs.ext4, mke2fs
       util-linux # sfdisk, losetup
       gptfdisk # sgdisk
+      mtools # mmd, mcopy
       coreutils
       fakeroot
     ];
@@ -248,7 +249,7 @@ in
     graphics.enable = true;
     deviceTree = {
       enable = true;
-      name = "qcom/x1e80100-asus-zenbook-ux3407.dtb";
+      name = "qcom/x1e80100-asus-zenbook-a14.dtb";
     };
     enableRedistributableFirmware = true;
     firmware = [ (pkgs.callPackage ./firmware.nix { }) ];
@@ -257,4 +258,5 @@ in
   networking.hostName = "zenbook-installer";
   networking.hostId = "def00003";
   nixpkgs.hostPlatform = "aarch64-linux";
+  system.stateVersion = "26.05";
 }

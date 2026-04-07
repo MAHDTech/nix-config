@@ -1,4 +1,3 @@
-{ _ }:
 {
   # pd-mapper: Protection Domain Mapper for Qualcomm DSPs
   # The Vinarskis kernel you are using often includes these as built-in

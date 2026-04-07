@@ -65,6 +65,7 @@ let
       LSMOD=${./lsmod.txt} make ARCH=arm64 localmodconfig
 
       # Ensure critical Snapdragon features are built-in or enabled
+      ./scripts/config --enable EFI_STUB
       ./scripts/config --enable DRM_MSM
       ./scripts/config --enable PINCTRL_X1E80100
       ./scripts/config --enable QCOM_COMMAND_DB
@@ -162,7 +163,9 @@ let
       };
       kernelOlder = v: lib.versionOlder version v;
       kernelAtLeast = v: lib.versionAtLeast version v;
-      features = { };
+      features = {
+        efiBootStub = true;
+      };
       commonMakeFlags = [ "ARCH=arm64" ];
     };
   };

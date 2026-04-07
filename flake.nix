@@ -534,6 +534,7 @@
           system = "aarch64-linux";
           specialArgs = { inherit inputs; };
           modules = [
+            { system.stateVersion = globalStateVersion; }
             ./nixos/hosts/zenbook/raw-efi.nix
           ];
         };
