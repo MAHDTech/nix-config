@@ -38,29 +38,33 @@ in
 
     # Kernel selection
     #  - 1. If a custom kernel is set as module argument, use that.
-    #  - 2. If no custom kernel is set, use the latest ZFS compatible kernel.
+    #  - 2. If no custom kernel is set, use the latest compatible kernel (filtering for ZFS only if needed).
     kernelPackages =
       if lib.hasAttr "customKernelPackage" config._module.args then
         config._module.args.customKernelPackage
       else
         let
-          zfsCompatibleKernelPackages = lib.filterAttrs (
+          # Check if ZFS is actually requested and the module is available
+          zfsRequested = lib.elem "zfs" config.boot.supportedFilesystems;
+          zfsModuleAvailable = lib.hasAttr "zfs" config.boot;
+
+          compatibleKernelPackages = lib.filterAttrs (
             name: kernelPackages:
             (builtins.match "linux_[0-9]+_[0-9]+" name) != null
             && (builtins.tryEval kernelPackages).success
             && (
-              !config.boot.supportedFilesystems ? "zfs"
+              !(zfsRequested && zfsModuleAvailable)
               || !kernelPackages.${config.boot.zfs.package.kernelModuleAttribute}.meta.broken
             )
           ) pkgs.linuxKernel.packages;
 
-          latestZFSKernelPackage = lib.last (
+          latestCompatibleKernelPackage = lib.last (
             lib.sort (a: b: (lib.versionOlder a.kernel.version b.kernel.version)) (
-              builtins.attrValues zfsCompatibleKernelPackages
+              builtins.attrValues compatibleKernelPackages
             )
           );
         in
-        latestZFSKernelPackage;
+        latestCompatibleKernelPackage;
 
     kernelParams = [
       "nohibernate"

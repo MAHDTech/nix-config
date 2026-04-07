@@ -9,7 +9,7 @@ The custom ISO contains the exact kernel and firmware needed for the Snapdragon 
 On your **source machine** (must have Nix installed), build the ISO:
 
 ```bash
-nix build .#zenbook-iso
+nix build .#zenbook-sd-image
 ```
 
 ### 2. Prepare the USB
