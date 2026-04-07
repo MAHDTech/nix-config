@@ -2,6 +2,7 @@ pub mod config;
 pub mod models;
 pub mod runner;
 pub mod ui;
+pub mod api;
 
 use clap::Parser;
 
@@ -15,7 +16,8 @@ struct Args {
     cpu: bool,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     let catalog = match config::Catalog::load_from_default() {
@@ -41,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     println!("\n🔥 Launching: {} (Engine: {})\n", model_spec.name, model_spec.engine);
-    runner::run_engine(model_spec, args.cpu)?;
+    runner::run_engine(model_spec, args.cpu).await?;
 
     Ok(())
 }

@@ -12,15 +12,20 @@ let
   # Clean source path. Ensure Cargo.lock is generated and tracked by git later!
   src = crane.cleanCargoSource ./.;
 
-  # Build the dependency artifacts to cache them
-  cargoArtifacts = crane.buildDepsOnly {
+  # Shared build arguments
+  commonArgs = {
     inherit src;
+    nativeBuildInputs = [ pkgs.pkg-config ];
+    buildInputs = [ pkgs.openssl.dev ];
   };
 
+  # Build the dependency artifacts to cache them
+  cargoArtifacts = crane.buildDepsOnly commonArgs;
+
   # Build the main binary
-  burn-launcher = crane.buildPackage {
-    inherit src cargoArtifacts;
-  };
+  burn-launcher = crane.buildPackage (commonArgs // {
+    inherit cargoArtifacts;
+  });
 
   # Make Vulkan and generic cc libraries available for WGPU detection
   wgpuLibPath = lib.makeLibraryPath [

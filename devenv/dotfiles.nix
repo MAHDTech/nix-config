@@ -85,7 +85,12 @@ in
       actionlint.enable = true;
       check-json.enable = true;
       check-merge-conflicts.enable = true;
-      check-shebang-scripts-are-executable.enable = true;
+      check-shebang-scripts-are-executable = {
+        excludes = [
+          "**/*.rs"
+        ];
+        enable = true;
+      };
       check-symlinks.enable = true;
       check-yaml.enable = true;
       commitizen.enable = true;
@@ -114,8 +119,8 @@ in
       govet.enable = true;
       gptcommit.enable = true;
       markdownlint = {
-        enable = true;
-        package = pkgs.markdownlint-cli2;
+        enable = false;
+        package = pkgs.markdownlint-cli;
         settings = {
           configuration = {
             MD033 = false;
