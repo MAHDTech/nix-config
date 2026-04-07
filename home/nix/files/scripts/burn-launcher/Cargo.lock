@@ -1060,6 +1060,7 @@ dependencies = [
  "rustc-hash 1.1.0",
  "serde",
  "serde_yaml",
+ "sysinfo 0.38.4",
  "tiktoken-rs",
  "tokenizers",
  "tokio",

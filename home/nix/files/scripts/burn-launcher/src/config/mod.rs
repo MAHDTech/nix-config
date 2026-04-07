@@ -12,6 +12,8 @@ pub struct ModelSpec {
     pub engine: String,
     pub repo_id: Option<String>,
     pub weight_file: Option<String>,
+    pub required_ram_gb: Option<f32>,
+    pub required_vram_gb: Option<f32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
