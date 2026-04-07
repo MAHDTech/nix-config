@@ -577,6 +577,13 @@
             default = inputs.devenv.lib.mkShell {
               inherit inputs pkgs;
               modules = [
+                {
+                  devenv.root =
+                    let
+                      inline = builtins.toFile "inline" "builtins.toString ./.";
+                    in
+                    builtins.dirOf (builtins.toString inline);
+                }
                 (import ./devenv/dotfiles.nix)
               ];
             };
