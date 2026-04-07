@@ -14,5 +14,6 @@
 
     # AI Launcher Menu
     ./ai-launcher
+    ./burn-launcher
   ];
 }

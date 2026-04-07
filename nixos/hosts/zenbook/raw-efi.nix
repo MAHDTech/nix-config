@@ -75,12 +75,13 @@ let
 
       # Calculate sizes
       espSizeMB=512
-      rootSizeBytes=$(du -sb --apparent-size $(cat $closureInfo/store-paths) | tail -1 | awk '{print $1}')
-      # Add 512MB headroom for root
-      rootSizeMB=$(( (rootSizeBytes / 1048576) + 512 ))
+      rootSizeBytes=$(cat $closureInfo/store-paths | xargs du -sb | awk '{sum += $1} END {print sum}')
+      # Add 4096MB headroom for root to be absolutely safe
+      rootSizeMB=$(( (rootSizeBytes / 1048576) + 4096 ))
       totalSizeMB=$(( espSizeMB + rootSizeMB + 2 ))
 
       echo "ESP: ''${espSizeMB}MB, Root: ''${rootSizeMB}MB, Total: ''${totalSizeMB}MB"
+
 
       # Create the raw disk image
       truncate -s ''${totalSizeMB}M image.raw
@@ -145,10 +146,8 @@ let
       "
 
       # Build the ext4 image from the populated directory
-      # Calculate actual size needed
-      actualSize=$(du -sb root-mnt | awk '{print $1}')
-      imgSize=$(( actualSize + 200 * 1048576 ))  # 200MB headroom
-      truncate -s $imgSize root.img
+      # Use the full root partition size for the image
+      truncate -s $rootBytes root.img
       mkfs.ext4 -L nixos-root -d root-mnt root.img
 
       # Write root image into the disk image
