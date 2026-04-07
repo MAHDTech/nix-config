@@ -28,12 +28,15 @@
       sandbox = true;
       sandbox-fallback = false;
       system-features = [
-        "nixos-test"
         "benchmark"
         "big-parallel"
         "kvm"
+        "nixos-test"
+        "uid-range"
       ];
       auto-optimise-store = true;
+      auto-allocate-uids = true;
+      use-cgroups = true;
       keep-outputs = true;
       keep-derivations = true;
       trusted-users = [
@@ -41,10 +44,11 @@
         "mahdtech"
       ];
       experimental-features = [
-        "nix-command"
-        "flakes"
-        "ca-derivations"
         "auto-allocate-uids"
+        "ca-derivations"
+        "cgroups"
+        "flakes"
+        "nix-command"
       ];
       extra-platforms = [
         "aarch64-linux"

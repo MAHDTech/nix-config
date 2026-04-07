@@ -1,10 +1,4 @@
-{
-  lib,
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ ... }:
 {
 
   networking = {
@@ -15,6 +9,7 @@
   imports = [
     # Load hardware specific configuration.
     ./hardware-configuration.nix
+    ./pd-mapper.nix
 
     # CPU specific configuration.
     ../../system/config/virtualisation/cpu/qcom.nix

@@ -528,13 +528,13 @@
           ];
         };
 
-        # Hostname: zenbook-sd-image
-        # Description: ASUS Zenbook A14 Snapdragon X Elite (SD Image)
-        zenbook-sd-image = inputs.nixpkgs.lib.nixosSystem {
+        # Hostname: zenbook-image
+        # Description: ASUS Zenbook A14 Snapdragon X Elite (Raw EFI disk image)
+        zenbook-image = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           specialArgs = { inherit inputs; };
           modules = [
-            ./nixos/hosts/zenbook/sd-image.nix
+            ./nixos/hosts/zenbook/raw-efi.nix
           ];
         };
       };
@@ -559,8 +559,8 @@
         devenv-up = self.devShells.${system}.default.config.procfileScript;
 
         #home-manager = self.homeConfigurations.${globalUsername}.activationPackage.${system};
-        zenbook-sd-image = self.nixosConfigurations.zenbook-sd-image.config.system.build.sdImage;
-        zenbook-iso = self.nixosConfigurations.zenbook-sd-image.config.system.build.sdImage;
+
+        zenbook-image = self.nixosConfigurations.zenbook-image.config.system.build.image;
       });
 
       #########################

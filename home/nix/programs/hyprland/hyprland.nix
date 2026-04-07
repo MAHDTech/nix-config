@@ -51,6 +51,7 @@ let
     wayland-utils
     wayshot
     walker
+    elephant
     #wf-recorder
     #wl-screenrec
     wl-clipboard
@@ -315,9 +316,6 @@ in
       general = {
         # The size of the border around windows
         border_size = 2;
-
-        # Disable border on floating windows
-        no_border_on_floating = false;
 
         # Gaps between windows and other windows - can be overridden by device config
         gaps_in = deviceConfig.extraSettings.general.gaps_in or 4;
@@ -769,12 +767,6 @@ in
         # Close the special workspace if last window is closed.
         close_special_on_empty = true;
 
-        # If there is an app fullscreen, new window replaces it.
-        # 0 = behind
-        # 1 = takes over
-        # 2 = unfullscreen
-        new_window_takes_over_fullscreen = 0;
-
         # If true, closing a fullscreen window makes the next focused window fullscreen.
         exit_window_retains_fullscreen = false;
 
@@ -906,7 +898,7 @@ in
 
       "$menu" = "walker";
 
-      "$switcher" = "cosmic-launcher alt-tab";
+      "$switcher" = "walker";
 
       exec-once = [
         # Start the notification manager if not running
@@ -926,28 +918,28 @@ in
       # https://wiki.hyprland.org/Configuring/Window-Rules/
       # https://wiki.hyprland.org/Configuring/Workspace-Rules/
 
-      windowrulev2 = [
+      windowrule = [
         # Ignore maximize requests from apps.
-        "suppressevent maximize, class:.*"
+        "suppress_event maximize, match:class .*"
 
         # Fix some dragging issues with XWayland
-        "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
+        "no_focus 1, match:class ^$, match:title ^$, match:xwayland 1, float 1, fullscreen 0, pin 0"
 
         # Don't blur windows with no title or class.
-        "noblur,class:^()$,title:^()$"
+        "no_blur 1, match:class ^()$, match:title ^()$"
 
         # Gaming optimizations
-        "immediate, class:^(steam_app_.*)$"
-        "immediate, class:^(steam_proton)$"
-        "immediate, class:^(gamemode)$"
-        "forcergbx, class:^(steam_app_.*)$"
-        "fullscreen, class:^(steam_app_.*)$"
+        "immediate 1, match:class ^(steam_app_.*)$"
+        "immediate 1, match:class ^(steam_proton)$"
+        "immediate 1, match:class ^(gamemode)$"
+        "force_rgbx 1, match:class ^(steam_app_.*)$"
+        "fullscreen 1, match:class ^(steam_app_.*)$"
 
         # Additional Steam and gaming fixes
-        "noborder, class:^(steam_app_.*)$"
-        "noshadow, class:^(steam_app_.*)$"
-        "noblur, class:^(steam_app_.*)$"
-        "norounding, class:^(steam_app_.*)$"
+        "border_size 0, match:class ^(steam_app_.*)$"
+        "no_shadow 1, match:class ^(steam_app_.*)$"
+        "no_blur 1, match:class ^(steam_app_.*)$"
+        "rounding 0, match:class ^(steam_app_.*)$"
       ];
 
       # Device-specific workspace rules (if defined)

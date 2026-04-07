@@ -45,7 +45,7 @@ in
       else
         let
           # Check if ZFS is actually requested and the module is available
-          zfsRequested = lib.elem "zfs" config.boot.supportedFilesystems;
+          zfsRequested = config.boot.supportedFilesystems.zfs or false;
           zfsModuleAvailable = lib.hasAttr "zfs" config.boot;
 
           compatibleKernelPackages = lib.filterAttrs (
