@@ -44,10 +44,10 @@ impl Gemma4LayerConfig {
             .init(device);
 
         Gemma4Layer {
-            attention,
-            feed_forward,
-            attention_norm,
-            ffn_norm,
+            self_attn: attention,
+            mlp: feed_forward,
+            input_layernorm: attention_norm,
+            post_attention_layernorm: ffn_norm,
             is_shared_kv: self.config.is_shared_kv,
         }
     }
@@ -56,10 +56,10 @@ impl Gemma4LayerConfig {
 /// Gemma 4 Transformer Layer Block.
 #[derive(Module, Debug)]
 pub struct Gemma4Layer<B: Backend> {
-    attention: Gemma4Attention<B>,
-    feed_forward: FeedForward<B>,
-    attention_norm: RmsNorm<B>,
-    ffn_norm: RmsNorm<B>,
+    pub self_attn: Gemma4Attention<B>,
+    pub mlp: FeedForward<B>,
+    pub input_layernorm: RmsNorm<B>,
+    pub post_attention_layernorm: RmsNorm<B>,
     pub is_shared_kv: bool,
 }
 
@@ -72,14 +72,14 @@ impl<B: Backend> Gemma4Layer<B> {
     ) -> Tensor<B, 3> {
         // Gemma 4 uses pre-norm: h = x + Attn(Norm(x))
         let h = input.clone()
-            + self.attention.forward(
-                self.attention_norm.forward(input),
+            + self.self_attn.forward(
+                self.input_layernorm.forward(input),
                 cache,
                 rope,
             );
 
         // h = h + MLP(Norm(h))
-        h.clone() + self.feed_forward.forward(self.ffn_norm.forward(h))
+        h.clone() + self.mlp.forward(self.post_attention_layernorm.forward(h))
     }
 }
 
@@ -110,10 +110,12 @@ impl Gemma4ModelConfig {
             .init(device); // If tied embeddings are required later, this can dynamically point to the embedding matrix via custom module bindings.
 
         Gemma4Model {
-            tok_embeddings,
-            layers,
-            norm,
-            output,
+            model: Gemma4Core {
+                embed_tokens: tok_embeddings,
+                layers,
+                norm,
+            },
+            lm_head: output,
             hidden_size: self.config.hidden_size,
         }
     }
@@ -122,11 +124,16 @@ impl Gemma4ModelConfig {
 /// Main entry point for the Gemma 4 computational graph.
 #[derive(Module, Debug)]
 pub struct Gemma4Model<B: Backend> {
-    tok_embeddings: Embedding<B>,
-    layers: Vec<Gemma4Layer<B>>,
-    norm: RmsNorm<B>,
-    output: Linear<B>,
-    hidden_size: usize,
+    pub model: Gemma4Core<B>,
+    pub lm_head: Linear<B>,
+    pub hidden_size: usize,
+}
+
+#[derive(Module, Debug)]
+pub struct Gemma4Core<B: Backend> {
+    pub embed_tokens: Embedding<B>,
+    pub layers: Vec<Gemma4Layer<B>>,
+    pub norm: RmsNorm<B>,
 }
 
 impl<B: Backend> Gemma4Model<B> {
@@ -138,13 +145,13 @@ impl<B: Backend> Gemma4Model<B> {
     ) -> Tensor<B, 3> {
         // Input: [batch_size, seq_length]
         // Scale embeddings as per standard Gemma
-        let mut h = self.tok_embeddings.forward(input).mul_scalar(
+        let mut h = self.model.embed_tokens.forward(input).mul_scalar(
             (self.hidden_size as f32).sqrt(),
         );
 
         let mut actual_cache_idx = 0;
 
-        for layer in self.layers.iter() {
+        for layer in self.model.layers.iter() {
             // Apply RoPE geometry defined mathematically for this layer's scale
             let rope = &ropes[actual_cache_idx];
 
@@ -157,7 +164,7 @@ impl<B: Backend> Gemma4Model<B> {
             }
         }
 
-        let h = self.norm.forward(h);
-        self.output.forward(h)
+        let h = self.model.norm.forward(h);
+        self.lm_head.forward(h)
     }
 }

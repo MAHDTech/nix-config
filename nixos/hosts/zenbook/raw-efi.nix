@@ -14,42 +14,6 @@ let
   initrdTarget = "${config.system.build.initialRamdisk}/${config.system.boot.loader.initrdFile}";
   dtbTarget = "${config.hardware.deviceTree.package}/qcom/x1e80100-asus-zenbook-a14.dtb";
 
-  # GRUB configuration for the ESP
-  grubCfg = pkgs.writeText "grub.cfg" ''
-    set timeout=5
-    set default=0
-
-    menuentry "NixOS Zenbook Installer" {
-      linux /nixos/kernel init=${config.system.build.toplevel}/init ${lib.concatStringsSep " " config.boot.kernelParams}
-      initrd /nixos/initrd
-      devicetree /nixos/dtb
-    }
-  '';
-
-  # Build a standalone GRUB EFI binary for aarch64
-  grubEfiImage =
-    pkgs.runCommand "grub-efi-aa64"
-      {
-        nativeBuildInputs = [ pkgs.grub2_efi ];
-      }
-      ''
-        mkdir -p $out
-
-        cat > embed.cfg <<'EOF'
-        search --label --set=root ESP
-        set prefix=($root)/grub
-        configfile ($root)/grub/grub.cfg
-        EOF
-
-        grub-mkstandalone \
-          --format=arm64-efi \
-          --output=$out/BOOTAA64.EFI \
-          --locales="" \
-          --fonts="" \
-          --themes="" \
-          "boot/grub/grub.cfg=embed.cfg"
-      '';
-
   # The closure info for the root partition
   closureInfo = pkgs.closureInfo { rootPaths = [ config.system.build.toplevel ]; };
 
@@ -105,10 +69,31 @@ let
       # Populate ESP
       mmd -i esp.img ::EFI
       mmd -i esp.img ::EFI/BOOT
-      mmd -i esp.img ::grub
+      mmd -i esp.img ::loader
+      mmd -i esp.img ::loader/entries
       mmd -i esp.img ::nixos
-      mcopy -i esp.img ${grubEfiImage}/BOOTAA64.EFI ::EFI/BOOT/BOOTAA64.EFI
-      mcopy -i esp.img ${grubCfg} ::grub/grub.cfg
+
+      # Copy systemd-boot binary
+      mcopy -i esp.img ${pkgs.systemd}/lib/systemd/boot/efi/systemd-bootaa64.efi ::EFI/BOOT/BOOTAA64.EFI
+
+      # Create loader.conf
+      cat > loader.conf <<EOF
+      default nixos.conf
+      timeout 5
+      console-mode keep
+      EOF
+      mcopy -i esp.img loader.conf ::loader/loader.conf
+
+      # Create nixos.conf entry
+      cat > nixos.conf <<EOF
+      title NixOS Zenbook Installer
+      linux /nixos/kernel
+      initrd /nixos/initrd
+      devicetree /nixos/dtb
+      options init=${config.system.build.toplevel}/init ${lib.concatStringsSep " " config.boot.kernelParams}
+      EOF
+      mcopy -i esp.img nixos.conf ::loader/entries/nixos.conf
+
       mcopy -i esp.img ${kernelTarget} ::nixos/kernel
       mcopy -i esp.img ${initrdTarget} ::nixos/initrd
       mcopy -i esp.img ${dtbTarget} ::nixos/dtb
@@ -219,7 +204,7 @@ in
       "ext4"
     ];
 
-    # Boot is handled by GRUB embedded on the ESP, not by NixOS boot loader modules.
+    # Boot is handled by systemd-boot manually installed to the ESP.
     loader = {
       grub.enable = false;
       systemd-boot.enable = lib.mkForce false;

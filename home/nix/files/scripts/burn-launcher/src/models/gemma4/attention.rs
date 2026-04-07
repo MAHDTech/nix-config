@@ -57,24 +57,24 @@ impl Gemma4AttentionConfig {
         let head_dim = self.hidden_size / self.n_heads;
 
         // Grouped Query Attention uses fewer KV heads
-        let wq = LinearConfig::new(self.hidden_size, self.n_heads * head_dim)
+        let q_proj = LinearConfig::new(self.hidden_size, self.n_heads * head_dim)
             .with_bias(false)
             .init(device);
-        let wk = LinearConfig::new(self.hidden_size, self.n_kv_heads * head_dim)
+        let k_proj = LinearConfig::new(self.hidden_size, self.n_kv_heads * head_dim)
             .with_bias(false)
             .init(device);
-        let wv = LinearConfig::new(self.hidden_size, self.n_kv_heads * head_dim)
+        let v_proj = LinearConfig::new(self.hidden_size, self.n_kv_heads * head_dim)
             .with_bias(false)
             .init(device);
-        let wo = LinearConfig::new(self.n_heads * head_dim, self.hidden_size)
+        let o_proj = LinearConfig::new(self.n_heads * head_dim, self.hidden_size)
             .with_bias(false)
             .init(device);
 
         Gemma4Attention {
-            wq,
-            wk,
-            wv,
-            wo,
+            q_proj,
+            k_proj,
+            v_proj,
+            o_proj,
             n_heads: self.n_heads,
             n_kv_heads: self.n_kv_heads,
             head_dim,
@@ -86,10 +86,10 @@ impl Gemma4AttentionConfig {
 
 #[derive(Module, Debug)]
 pub struct Gemma4Attention<B: Backend> {
-    wq: Linear<B>,
-    wk: Linear<B>,
-    wv: Linear<B>,
-    wo: Linear<B>,
+    q_proj: Linear<B>,
+    k_proj: Linear<B>,
+    v_proj: Linear<B>,
+    o_proj: Linear<B>,
 
     n_heads: usize,
     n_kv_heads: usize,
@@ -108,9 +108,9 @@ impl<B: Backend> Gemma4Attention<B> {
         let device = input.device();
         let [batch_size, seq_len, hidden_size] = input.dims();
 
-        let q = self.wq.forward(input.clone());
-        let k = self.wk.forward(input.clone());
-        let v = self.wv.forward(input);
+        let q = self.q_proj.forward(input.clone());
+        let k = self.k_proj.forward(input.clone());
+        let v = self.v_proj.forward(input);
 
         let q = q
             .reshape([batch_size, seq_len, self.n_heads, self.head_dim])
@@ -171,7 +171,7 @@ impl<B: Backend> Gemma4Attention<B> {
         let output = output
             .swap_dims(1, 2)
             .reshape([batch_size, seq_len, hidden_size]);
-        self.wo.forward(output)
+        self.o_proj.forward(output)
     }
 
     fn repeat_kv(&self, x: Tensor<B, 4>) -> Tensor<B, 4> {

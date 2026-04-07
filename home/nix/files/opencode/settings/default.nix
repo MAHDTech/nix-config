@@ -61,16 +61,7 @@ in
                   "apiKey": "sk-dummy"
                 },
                 "models": {
-                  "gemma-2-9b-it": { "name": "gemma-2-9b-it", "disableTools": true },
-                  "Mistral-7B-Instruct-v0.3": { "name": "Mistral-7B-Instruct-v0.3", "disableTools": true },
-                  "Meta-Llama-3.1-8B-Instruct": { "name": "Meta-Llama-3.1-8B-Instruct", "disableTools": true },
-                  "OmniCoder-9B": { "name": "OmniCoder-9B", "disableTools": true },
-                  "Qwen2.5-Coder-14B-Instruct": { "name": "Qwen2.5-Coder-14B-Instruct", "disableTools": true },
-                  "Qwen2.5-Coder-7B-Instruct": { "name": "Qwen2.5-Coder-7B-Instruct", "disableTools": true },
-                  "Qwen2.5-Coder-3B-Instruct": { "name": "Qwen2.5-Coder-3B-Instruct", "disableTools": true },
-                  "codegeex4-all-9b": { "name": "codegeex4-all-9b", "disableTools": true },
-                  "Phi-3-mini-4k-instruct": { "name": "Phi-3-mini-4k-instruct", "disableTools": true },
-                  "Qwen2-Math-7B-Instruct": { "name": "Qwen2-Math-7B-Instruct", "disableTools": true }
+                  "local": { "name": "Local AI Server", "disableTools": true }
                 }
               }
             }

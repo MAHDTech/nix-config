@@ -1,15 +1,20 @@
 use axum::{
     extract::State,
+    response::sse::{Event, Sse},
     routing::post,
-    Json, Router,
+    Json, Router, response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tokio_stream::StreamExt;
+use futures_util::stream::Stream;
+use std::convert::Infallible;
 
 #[derive(Deserialize)]
 pub struct ChatRequest {
     pub messages: Vec<ChatMessage>,
+    pub stream: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -30,7 +35,30 @@ pub struct ChatResponse {
 pub struct ChatChoice {
     pub index: u32,
     pub message: ChatMessage,
-    pub finish_reason: String,
+    pub finish_reason: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct ChatStreamResponse {
+    pub id: String,
+    pub object: String,
+    pub created: u64,
+    pub choices: Vec<ChatStreamChoice>,
+}
+
+#[derive(Serialize)]
+pub struct ChatStreamChoice {
+    pub index: u32,
+    pub delta: ChatMessageDelta,
+    pub finish_reason: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct ChatMessageDelta {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
 }
 
 // Type alias for our inference callback.
@@ -60,7 +88,7 @@ pub async fn start_server(port: u16, state: ApiState) -> Result<(), Box<dyn std:
 async fn chat_completions(
     State(state): State<ApiState>,
     Json(payload): Json<ChatRequest>,
-) -> Json<ChatResponse> {
+) -> impl IntoResponse {
 
     // Naively extract the last user message to feed inference
     let prompt = payload
@@ -82,20 +110,70 @@ async fn chat_completions(
 
     let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
 
-    let response = ChatResponse {
-        id: format!("chatcmpl-{}", timestamp),
-        object: "chat.completion".to_string(),
-        created: timestamp,
-        choices: vec![ChatChoice {
-            index: 0,
-            message: ChatMessage {
-                role: "assistant".to_string(),
-                content: generated_text,
-            },
-            finish_reason: "stop".to_string(),
-        }],
-    };
+    if payload.stream.unwrap_or(false) {
+        // SSE Streaming
+        let stream = async_stream::stream! {
+            let chunk_id = format!("chatcmpl-{}", timestamp);
 
-    println!("📤 Sent response!");
-    Json(response)
+            // Send initial role chunk
+            let init_chunk = ChatStreamResponse {
+                id: chunk_id.clone(),
+                object: "chat.completion.chunk".to_string(),
+                created: timestamp,
+                choices: vec![ChatStreamChoice {
+                    index: 0,
+                    delta: ChatMessageDelta { role: Some("assistant".to_string()), content: None },
+                    finish_reason: None,
+                }],
+            };
+            yield Ok::<_, std::convert::Infallible>(Event::default().json_data(init_chunk).unwrap());
+
+            // Send content chunk (TODO: real token-by-token streaming from Burn)
+            let txt_chunk = ChatStreamResponse {
+                id: chunk_id.clone(),
+                object: "chat.completion.chunk".to_string(),
+                created: timestamp,
+                choices: vec![ChatStreamChoice {
+                    index: 0,
+                    delta: ChatMessageDelta { role: None, content: Some(generated_text) },
+                    finish_reason: None,
+                }],
+            };
+            yield Ok::<_, std::convert::Infallible>(Event::default().json_data(txt_chunk).unwrap());
+
+            // Send stop chunk
+            let stop_chunk = ChatStreamResponse {
+                id: chunk_id,
+                object: "chat.completion.chunk".to_string(),
+                created: timestamp,
+                choices: vec![ChatStreamChoice {
+                    index: 0,
+                    delta: ChatMessageDelta { role: None, content: None },
+                    finish_reason: Some("stop".to_string()),
+                }],
+            };
+            yield Ok::<_, std::convert::Infallible>(Event::default().json_data(stop_chunk).unwrap());
+            yield Ok::<_, std::convert::Infallible>(Event::default().data("[DONE]"));
+        };
+
+        Sse::new(stream).into_response()
+    } else {
+        // Sync response
+        let response = ChatResponse {
+            id: format!("chatcmpl-{}", timestamp),
+            object: "chat.completion".to_string(),
+            created: timestamp,
+            choices: vec![ChatChoice {
+                index: 0,
+                message: ChatMessage {
+                    role: "assistant".to_string(),
+                    content: generated_text,
+                },
+                finish_reason: Some("stop".to_string()),
+            }],
+        };
+
+        println!("📤 Sent sync response!");
+        Json(response).into_response()
+    }
 }
