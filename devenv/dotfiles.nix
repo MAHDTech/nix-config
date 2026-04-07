@@ -35,13 +35,7 @@ in
   };
 
   cachix = {
-    enable = true;
-    push = [
-      "mahdtech"
-    ];
-    pull = [
-      "mahdtech"
-    ];
+    enable = false;
   };
 
   packages = packages ++ unstablePkgs ++ lib.optionals (!config.container.isBuilding) devPackages;
@@ -104,6 +98,7 @@ in
       };
       cspell = {
         enable = true;
+        package = pkgs.cspell;
       };
       dialyzer.enable = true;
       editorconfig-checker = {
@@ -120,6 +115,7 @@ in
       gptcommit.enable = true;
       markdownlint = {
         enable = true;
+        package = pkgs.markdownlint-cli2;
         settings = {
           configuration = {
             MD033 = false;
@@ -140,6 +136,7 @@ in
       };
       prettier = {
         enable = true;
+        package = pkgs.prettier;
         settings = {
           configPath = ".prettierrc.yaml";
         };
