@@ -28,6 +28,11 @@ fn capitalize(s: &str) -> String {
 
 pub fn ui(f: &mut ratatui::Frame, app: &mut App) {
     // 0. Boundary Verification
+    let vendors_len = app.current_vendors().len();
+    if vendors_len > 0 && app.selected_vendor >= vendors_len {
+        app.selected_vendor = vendors_len - 1;
+        app.state_vendor.select(Some(app.selected_vendor));
+    }
     let engines_len = app.current_engines().len();
     if engines_len > 0 && app.selected_engine >= engines_len {
         app.selected_engine = engines_len - 1;
@@ -95,7 +100,7 @@ pub fn ui(f: &mut ratatui::Frame, app: &mut App) {
         f.render_widget(Block::default().borders(Borders::NONE), chunks[1]);
     }
 
-    // 3. Drill-down Menu
+    // 3. Drill-down Menu (4-level: Category → Vendor → Engine → Model)
     let list_chunk = chunks[2];
     let space = Line::from(Span::raw(""));
 
@@ -117,9 +122,27 @@ pub fn ui(f: &mut ratatui::Frame, app: &mut App) {
                 .highlight_symbol(">> ");
             f.render_stateful_widget(list, list_chunk, &mut app.state_cat);
         }
+        FocusedPane::Vendors => {
+            let vendors = app.current_vendors();
+            let items: Vec<ListItem> = vendors
+                .iter()
+                .map(|v| {
+                    let text = Line::from(Span::raw(v.as_str())).alignment(Alignment::Center);
+                    ListItem::new(vec![space.clone(), text, space.clone()])
+                })
+                .collect();
+            let parent_cat = format_category(&app.categories[app.selected_category]);
+            let list = List::new(items)
+                .block(Block::default()
+                    .title(Line::from(format!(" Choose a Vendor in '{}' ", parent_cat)).alignment(Alignment::Center))
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Green)))
+                .highlight_style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD))
+                .highlight_symbol(">> ");
+            f.render_stateful_widget(list, list_chunk, &mut app.state_vendor);
+        }
         FocusedPane::Engines => {
             let engines = app.current_engines();
-            // Bounds checked early
             let items: Vec<ListItem> = engines
                 .iter()
                 .map(|e| {
@@ -127,10 +150,15 @@ pub fn ui(f: &mut ratatui::Frame, app: &mut App) {
                     ListItem::new(vec![space.clone(), text, space.clone()])
                 })
                 .collect();
-            let parent_cat = format_category(&app.categories[app.selected_category]);
+            let vendors = app.current_vendors();
+            let parent_vendor = if !vendors.is_empty() {
+                vendors[app.selected_vendor.min(vendors.len().saturating_sub(1))].clone()
+            } else {
+                "None".to_string()
+            };
             let list = List::new(items)
                 .block(Block::default()
-                    .title(Line::from(format!(" Choose an Engine in '{}' ", parent_cat)).alignment(Alignment::Center))
+                    .title(Line::from(format!(" Choose an Engine from '{}' ", parent_vendor)).alignment(Alignment::Center))
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::Green)))
                 .highlight_style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD))
@@ -138,7 +166,6 @@ pub fn ui(f: &mut ratatui::Frame, app: &mut App) {
             f.render_stateful_widget(list, list_chunk, &mut app.state_eng);
         }
         FocusedPane::Models => {
-             // Bounds checked early
              let engines = app.current_engines();
              let engine = if !engines.is_empty() { capitalize(&engines[app.selected_engine]) } else { "None".to_string() };
 
@@ -152,7 +179,7 @@ pub fn ui(f: &mut ratatui::Frame, app: &mut App) {
                          MemoryStatus::Tight =>  ("🟡", Color::Yellow),
                          MemoryStatus::Unsafe => ("❌", Color::Red),
                      };
-                     
+
                      let name_span = Span::styled(
                          format!("{} {}", marker, m.name),
                          Style::default().fg(color).add_modifier(Modifier::BOLD)

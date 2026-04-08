@@ -2,9 +2,9 @@ use burn::{
     config::Config,
     module::Module,
     nn::{
-        Embedding, EmbeddingConfig, Linear, LinearConfig, RmsNorm, RmsNormConfig, RotaryEncoding,
+        Embedding, EmbeddingConfig, RmsNorm, RmsNormConfig, RotaryEncoding,
     },
-    tensor::{backend::Backend, Device, Int, Tensor},
+    tensor::{backend::Backend, Device, Float, Int, Tensor},
 };
 
 use super::attention::{Gemma4Attention, Gemma4AttentionConfig, KeyValueCache};
@@ -22,6 +22,7 @@ impl Gemma4LayerConfig {
     pub fn init<B: Backend>(&self, device: &Device<B>) -> Gemma4Layer<B> {
         let attention = Gemma4AttentionConfig::new(
             self.config.hidden_size,
+            self.config.head_dim,
             self.config.n_heads,
             self.config.n_kv_heads,
             self.config.layer_type,
@@ -105,17 +106,12 @@ impl Gemma4ModelConfig {
             .with_epsilon(self.config.norm_eps as f64)
             .init(device);
 
-        let output = LinearConfig::new(self.config.hidden_size, self.config.vocab_size)
-            .with_bias(false)
-            .init(device); // If tied embeddings are required later, this can dynamically point to the embedding matrix via custom module bindings.
-
         Gemma4Model {
             model: Gemma4Core {
                 embed_tokens: tok_embeddings,
                 layers,
                 norm,
             },
-            lm_head: output,
             hidden_size: self.config.hidden_size,
         }
     }
@@ -125,7 +121,6 @@ impl Gemma4ModelConfig {
 #[derive(Module, Debug)]
 pub struct Gemma4Model<B: Backend> {
     pub model: Gemma4Core<B>,
-    pub lm_head: Linear<B>,
     pub hidden_size: usize,
 }
 
@@ -165,6 +160,15 @@ impl<B: Backend> Gemma4Model<B> {
         }
 
         let h = self.model.norm.forward(h);
-        self.lm_head.forward(h)
+
+        // Tied embeddings: use the transpose of embed_tokens weight as the output projection.
+        // Reshape h from [batch, seq, hidden] → [batch*seq, hidden] for 2D matmul,
+        // then reshape back to [batch, seq, vocab_size].
+        let [batch_size, seq_len, _hidden] = h.dims();
+        let embed_weight: Tensor<B, 2, Float> = self.model.embed_tokens.clone().into_record().weight.val();
+        let h_flat = h.reshape([batch_size * seq_len, self.hidden_size]);
+        let logits = h_flat.matmul(embed_weight.transpose());
+        let vocab_size = logits.dims()[1];
+        logits.reshape([batch_size, seq_len, vocab_size])
     }
 }

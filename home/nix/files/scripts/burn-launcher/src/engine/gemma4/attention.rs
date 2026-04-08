@@ -6,7 +6,7 @@ use burn::{
 };
 
 use super::config::LayerType;
-use crate::models::llama::cache::AutoregressiveCache; // Temporarily using llama's cache
+use crate::engine::llama::cache::AutoregressiveCache; // Temporarily using llama's cache
 
 pub struct KeyValueCache<B: Backend> {
     pub key: AutoregressiveCache<B>,
@@ -50,6 +50,7 @@ impl<B: Backend> KeyValueCache<B> {
 #[derive(Config, Debug)]
 pub struct Gemma4AttentionConfig {
     pub hidden_size: usize,
+    pub head_dim: usize,
     pub n_heads: usize,
     pub n_kv_heads: usize,
     pub layer_type: LayerType,
@@ -58,7 +59,7 @@ pub struct Gemma4AttentionConfig {
 
 impl Gemma4AttentionConfig {
     pub fn init<B: Backend>(&self, device: &Device<B>) -> Gemma4Attention<B> {
-        let head_dim = self.hidden_size / self.n_heads;
+        let head_dim = self.head_dim;
 
         // Grouped Query Attention uses fewer KV heads
         let q_proj = LinearConfig::new(self.hidden_size, self.n_heads * head_dim)
@@ -110,7 +111,7 @@ impl<B: Backend> Gemma4Attention<B> {
         rope: &RotaryEncoding<B>,
     ) -> Tensor<B, 3> {
         let device = input.device();
-        let [batch_size, seq_len, hidden_size] = input.dims();
+        let [batch_size, seq_len, _hidden_size] = input.dims();
 
         let q = self.q_proj.forward(input.clone());
         let k = self.k_proj.forward(input.clone());
@@ -174,7 +175,7 @@ impl<B: Backend> Gemma4Attention<B> {
         let output = scores.matmul(v);
         let output = output
             .swap_dims(1, 2)
-            .reshape([batch_size, seq_len, hidden_size]);
+            .reshape([batch_size, seq_len, self.n_heads * self.head_dim]);
         self.o_proj.forward(output)
     }
 

@@ -5,6 +5,7 @@ use crate::system::HardwareBudget;
 #[derive(PartialEq, Eq)]
 pub enum FocusedPane {
     Categories,
+    Vendors,
     Engines,
     Models,
 }
@@ -14,9 +15,11 @@ pub struct App {
     pub catalog: Catalog,
     pub categories: Vec<String>,
     pub selected_category: usize,
+    pub selected_vendor: usize,
     pub selected_engine: usize,
     pub selected_model: usize,
     pub state_cat: ListState,
+    pub state_vendor: ListState,
     pub state_eng: ListState,
     pub state_mod: ListState,
     pub should_quit: bool,
@@ -28,7 +31,7 @@ pub struct App {
 impl App {
     pub fn new(catalog: Catalog, cpu: bool) -> Self {
         let mut categories: Vec<String> = catalog.models.keys().cloned().collect();
-        categories.sort(); // Predictable list
+        categories.sort();
         let hw = crate::system::get_hardware_budget(cpu);
 
         let mut app = App {
@@ -36,9 +39,11 @@ impl App {
             catalog,
             categories,
             selected_category: 0,
+            selected_vendor: 0,
             selected_engine: 0,
             selected_model: 0,
             state_cat: ListState::default(),
+            state_vendor: ListState::default(),
             state_eng: ListState::default(),
             state_mod: ListState::default(),
             should_quit: false,
@@ -47,16 +52,37 @@ impl App {
             context_length: 4096,
         };
         app.state_cat.select(Some(0));
+        app.state_vendor.select(Some(0));
         app.state_eng.select(Some(0));
         app.state_mod.select(Some(0));
         app
     }
 
-    pub fn current_engines(&self) -> Vec<String> {
+    /// Get unique vendors within the selected category.
+    pub fn current_vendors(&self) -> Vec<String> {
         if self.categories.is_empty() { return vec![]; }
         let cat = &self.categories[self.selected_category];
         if let Some(models) = self.catalog.models.get(cat) {
-            let mut engines: Vec<String> = models.iter().map(|m| m.engine.clone()).collect();
+            let mut vendors: Vec<String> = models.iter().map(|m| m.vendor.clone()).collect();
+            vendors.sort();
+            vendors.dedup();
+            vendors
+        } else {
+            vec![]
+        }
+    }
+
+    /// Get unique engines within the selected category + vendor.
+    pub fn current_engines(&self) -> Vec<String> {
+        let vendors = self.current_vendors();
+        if vendors.is_empty() { return vec![]; }
+        let target_vendor = &vendors[self.selected_vendor.min(vendors.len().saturating_sub(1))];
+        let cat = &self.categories[self.selected_category];
+        if let Some(models) = self.catalog.models.get(cat) {
+            let mut engines: Vec<String> = models.iter()
+                .filter(|m| &m.vendor == target_vendor)
+                .map(|m| m.engine.clone())
+                .collect();
             engines.sort();
             engines.dedup();
             engines
@@ -65,13 +91,21 @@ impl App {
         }
     }
 
+    /// Get models matching the selected category + vendor + engine.
     pub fn current_models(&self) -> Vec<&ModelSpec> {
+        let vendors = self.current_vendors();
+        if vendors.is_empty() { return vec![]; }
+        let target_vendor = &vendors[self.selected_vendor.min(vendors.len().saturating_sub(1))];
+
         let engines = self.current_engines();
         if engines.is_empty() { return vec![]; }
         let target_eng = &engines[self.selected_engine.min(engines.len().saturating_sub(1))];
+
         let cat = &self.categories[self.selected_category];
         if let Some(models) = self.catalog.models.get(cat) {
-            models.iter().filter(|m| &m.engine == target_eng).collect()
+            models.iter()
+                .filter(|m| &m.vendor == target_vendor && &m.engine == target_eng)
+                .collect()
         } else {
             vec![]
         }
@@ -80,6 +114,7 @@ impl App {
     pub fn handle_down(&mut self) {
         match self.focused_pane {
             FocusedPane::Categories => self.next_cat(),
+            FocusedPane::Vendors => self.next_vendor(),
             FocusedPane::Engines => self.next_eng(),
             FocusedPane::Models => self.next_mod(),
         }
@@ -88,6 +123,7 @@ impl App {
     pub fn handle_up(&mut self) {
         match self.focused_pane {
             FocusedPane::Categories => self.prev_cat(),
+            FocusedPane::Vendors => self.prev_vendor(),
             FocusedPane::Engines => self.prev_eng(),
             FocusedPane::Models => self.prev_mod(),
         }
@@ -99,7 +135,8 @@ impl App {
                 self.should_quit = true;
                 FocusedPane::Categories
             }
-            FocusedPane::Engines => FocusedPane::Categories,
+            FocusedPane::Vendors => FocusedPane::Categories,
+            FocusedPane::Engines => FocusedPane::Vendors,
             FocusedPane::Models => FocusedPane::Engines,
         };
     }
@@ -108,10 +145,7 @@ impl App {
         if self.categories.is_empty() { return; }
         self.selected_category = (self.selected_category + 1) % self.categories.len();
         self.state_cat.select(Some(self.selected_category));
-        self.selected_engine = 0;
-        self.state_eng.select(Some(0));
-        self.selected_model = 0;
-        self.state_mod.select(Some(0));
+        self.reset_vendor();
     }
 
     pub fn prev_cat(&mut self) {
@@ -122,10 +156,27 @@ impl App {
             self.selected_category -= 1;
         }
         self.state_cat.select(Some(self.selected_category));
-        self.selected_engine = 0;
-        self.state_eng.select(Some(0));
-        self.selected_model = 0;
-        self.state_mod.select(Some(0));
+        self.reset_vendor();
+    }
+
+    pub fn next_vendor(&mut self) {
+        let vendors = self.current_vendors();
+        if vendors.is_empty() { return; }
+        self.selected_vendor = (self.selected_vendor + 1) % vendors.len();
+        self.state_vendor.select(Some(self.selected_vendor));
+        self.reset_engine();
+    }
+
+    pub fn prev_vendor(&mut self) {
+        let vendors = self.current_vendors();
+        if vendors.is_empty() { return; }
+        if self.selected_vendor == 0 {
+            self.selected_vendor = vendors.len() - 1;
+        } else {
+            self.selected_vendor -= 1;
+        }
+        self.state_vendor.select(Some(self.selected_vendor));
+        self.reset_engine();
     }
 
     pub fn next_eng(&mut self) {
@@ -133,8 +184,7 @@ impl App {
         if engines.is_empty() { return; }
         self.selected_engine = (self.selected_engine + 1) % engines.len();
         self.state_eng.select(Some(self.selected_engine));
-        self.selected_model = 0;
-        self.state_mod.select(Some(0));
+        self.reset_model();
     }
 
     pub fn prev_eng(&mut self) {
@@ -146,8 +196,7 @@ impl App {
             self.selected_engine -= 1;
         }
         self.state_eng.select(Some(self.selected_engine));
-        self.selected_model = 0;
-        self.state_mod.select(Some(0));
+        self.reset_model();
     }
 
     pub fn next_mod(&mut self) {
@@ -171,6 +220,10 @@ impl App {
     pub fn select(&mut self) {
         match self.focused_pane {
             FocusedPane::Categories => {
+                self.focused_pane = FocusedPane::Vendors;
+                return;
+            }
+            FocusedPane::Vendors => {
                 self.focused_pane = FocusedPane::Engines;
                 return;
             }
@@ -203,6 +256,24 @@ impl App {
             self.context_length /= 2;
         }
     }
+
+    // Reset helpers to cascade selection resets
+    fn reset_vendor(&mut self) {
+        self.selected_vendor = 0;
+        self.state_vendor.select(Some(0));
+        self.reset_engine();
+    }
+
+    fn reset_engine(&mut self) {
+        self.selected_engine = 0;
+        self.state_eng.select(Some(0));
+        self.reset_model();
+    }
+
+    fn reset_model(&mut self) {
+        self.selected_model = 0;
+        self.state_mod.select(Some(0));
+    }
 }
 
 #[cfg(test)]
@@ -216,21 +287,35 @@ mod tests {
             ModelSpec {
                 name: "test-model".to_string(),
                 description: None,
+                vendor: "Google".to_string(),
                 engine: "gemma4".to_string(),
                 repo_id: None,
                 weight_file: None,
                 required_ram_gb: Some(2.0),
                 required_vram_gb: None,
                 default_context_length: Some(4096),
-            }
+            },
+            ModelSpec {
+                name: "test-qwen".to_string(),
+                description: None,
+                vendor: "Qwen".to_string(),
+                engine: "qwen35".to_string(),
+                repo_id: None,
+                weight_file: None,
+                required_ram_gb: Some(2.0),
+                required_vram_gb: None,
+                default_context_length: Some(4096),
+            },
         ]);
         crate::config::Catalog { models }
     }
 
     #[test]
-    fn test_app_focus_toggle() {
+    fn test_app_focus_toggle_4_level() {
         let mut app = App::new(get_dummy_catalog(), false);
         assert!(app.focused_pane == FocusedPane::Categories);
+        app.select();
+        assert!(app.focused_pane == FocusedPane::Vendors);
         app.select();
         assert!(app.focused_pane == FocusedPane::Engines);
         app.select();
@@ -238,7 +323,17 @@ mod tests {
         app.go_back();
         assert!(app.focused_pane == FocusedPane::Engines);
         app.go_back();
+        assert!(app.focused_pane == FocusedPane::Vendors);
+        app.go_back();
         assert!(app.focused_pane == FocusedPane::Categories);
+    }
+
+    #[test]
+    fn test_app_vendor_filtering() {
+        let app = App::new(get_dummy_catalog(), false);
+        let vendors = app.current_vendors();
+        assert!(vendors.contains(&"Google".to_string()));
+        assert!(vendors.contains(&"Qwen".to_string()));
     }
 
     #[test]

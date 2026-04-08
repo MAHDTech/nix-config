@@ -120,7 +120,7 @@ let
       ./scripts/config --module SQUASHFS
       ./scripts/config --module OVERLAY_FS
       ./scripts/config --module BLK_DEV_LOOP
-      ./scripts/config --module MD
+      ./scripts/config --enable MD
       ./scripts/config --module BLK_DEV_DM
       ./scripts/config --module DM_CRYPT
       ./scripts/config --module VFAT_FS
@@ -128,6 +128,17 @@ let
       ./scripts/config --module NLS_CP437
       ./scripts/config --module NLS_ISO8859_1
       ./scripts/config --module NLS_UTF8
+
+      # Make sure crucial drivers aren't dropped by localmodconfig
+      ./scripts/config --enable ARM_SMMU
+      ./scripts/config --enable ARM_SMMU_V3
+      ./scripts/config --enable USB_DWC3
+      ./scripts/config --enable USB_DWC3_QCOM
+      ./scripts/config --enable TYPEC
+      ./scripts/config --enable TYPEC_UCSI
+      ./scripts/config --module UCSI_GLINK
+      ./scripts/config --module PHY_QCOM_QMP_USB
+      ./scripts/config --module PHY_QCOM_QMP_USBC
 
       # Re-sync configuration
       make ARCH=arm64 olddefconfig

@@ -27,7 +27,7 @@ pub struct HfTextConfig {
 #[derive(Deserialize, Debug)]
 pub struct HfGemmaConfig {
     pub text_config: Option<HfTextConfig>,
-    
+
     // Fallback flattened properties for non-multimodal standard base variants
     pub vocab_size: Option<usize>,
     pub hidden_size: Option<usize>,
@@ -62,6 +62,7 @@ pub enum LayerType {
 pub struct LayerConfig {
     pub layer_type: LayerType,
     pub hidden_size: usize,
+    pub head_dim: usize,
     pub n_heads: usize,
     pub n_kv_heads: usize,
     pub intermediate_size: usize,
@@ -108,6 +109,12 @@ impl Gemma4Config {
             }
         };
 
+        // head_dim is explicit in config.json; fallback to hidden_size / num_attention_heads
+        let head_dim = base_config.head_dim
+            .unwrap_or(base_config.hidden_size / base_config.num_attention_heads);
+
+        log::debug!("Resolved head_dim: {}", head_dim);
+
         let mut layers = Vec::new();
         for i in 0..base_config.num_hidden_layers {
             // Check dynamic layer_types string array or fallback to mathematical skipping logic
@@ -118,15 +125,15 @@ impl Gemma4Config {
             };
 
             let n_heads = if is_global {
-                base_config.num_attention_heads
+                base_config.num_attention_heads * 2
             } else {
-                base_config.num_attention_heads / 2
+                base_config.num_attention_heads
             };
 
             let n_kv_heads = if is_global {
-                base_config.num_key_value_heads
+                base_config.num_key_value_heads * 2
             } else {
-                std::cmp::max(1, base_config.num_key_value_heads / 2)
+                base_config.num_key_value_heads
             };
 
             // Calculate cross-layer MLP double expansions specific to Gemma Math
@@ -142,6 +149,9 @@ impl Gemma4Config {
                 base_config.intermediate_size
             };
 
+            log::debug!("Layer {}: is_global={}, n_heads={}, n_kv_heads={}, intermediate_size={}",
+                i, is_global, n_heads, n_kv_heads, intermediate_size);
+
             layers.push(LayerConfig {
                 layer_type: if is_global {
                     LayerType::Global
@@ -149,6 +159,7 @@ impl Gemma4Config {
                     LayerType::Local
                 },
                 hidden_size: base_config.hidden_size,
+                head_dim,
                 n_heads,
                 n_kv_heads,
                 intermediate_size,
@@ -179,7 +190,7 @@ impl Gemma4Config {
 
             let n_heads = if is_global { 16 } else { 8 };
             let n_kv_heads = if is_global { 2 } else { 1 };
-            
+
             // FFN intermediate size doubles after layer 14
             let intermediate_size = if i >= 15 { 12288 } else { 6144 };
 
@@ -190,13 +201,14 @@ impl Gemma4Config {
                     LayerType::Local
                 },
                 hidden_size,
+                head_dim: 256,
                 n_heads,
                 n_kv_heads,
                 intermediate_size,
                 window_size: if is_global { None } else { Some(1024) },
                 rope_theta: if is_global { 1_000_000.0 } else { 10_000.0 },
                 partial_rotary_factor: if is_global { Some(0.25) } else { None },
-                is_shared_kv: false, // E2B parameters suggest standard MHA/GQA projections without full sharing across block boundaries
+                is_shared_kv: false,
             });
         }
 

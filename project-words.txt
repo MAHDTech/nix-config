@@ -920,6 +920,7 @@ relatime
 relativenumber
 remapper
 Remapper
+remoteproc
 remmina
 RENESAS
 Renice
@@ -1215,6 +1216,8 @@ ustated
 ustd
 UWSM
 Uwyv
+USBC
+usize
 vaapi
 vainfo
 valvesoftware

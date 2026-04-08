@@ -37,7 +37,7 @@ fn main() {
     println!("✅ Downloaded / Cached ONNX to: {:?}", onnx_path);
 
     let current_dir = std::env::current_dir().unwrap();
-    let out_dir = current_dir.join("src").join("models").join("generated");
+    let out_dir = current_dir.join("src").join("engine").join("generated");
     if !out_dir.exists() {
         fs::create_dir_all(&out_dir).expect("Failed to create out_dir");
     }
@@ -63,5 +63,5 @@ fn main() {
     }
 
     println!("✅ Generation complete! Look inside {:?}", out_dir.display());
-    println!("You can now wire `{}_generated` into `src/models/mod.rs`!", args.name);
+    println!("You can now wire `{}_generated` into `src/engine/mod.rs`!", args.name);
 }

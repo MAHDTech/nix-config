@@ -9,6 +9,8 @@ pub mod default;
 pub struct ModelSpec {
     pub name: String,
     pub description: Option<String>,
+    #[serde(default = "default_vendor")]
+    pub vendor: String,
     pub engine: String,
     pub repo_id: Option<String>,
     pub weight_file: Option<String>,
@@ -18,6 +20,10 @@ pub struct ModelSpec {
     pub required_vram_gb: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_context_length: Option<usize>,
+}
+
+fn default_vendor() -> String {
+    "Unknown".to_string()
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

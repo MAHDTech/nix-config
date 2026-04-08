@@ -156,6 +156,27 @@ in
       includeDefaultModules = false;
       allowMissingModules = true;
       services.lvm.enable = lib.mkForce false;
+
+      # Prepend a CPIO archive containing DSP firmware into the initrd.
+      # makeModulesClosure can't detect dynamically-constructed firmware paths
+      # used by qcom_q6v5_pas / remoteproc, so we inject them manually.
+      prepend = [
+        "${pkgs.runCommand "zenbook-firmware-initrd"
+          {
+            nativeBuildInputs = [
+              pkgs.cpio
+              pkgs.zstd
+            ];
+          }
+          ''
+            mkdir -p staging/lib/firmware
+            cp -r ${pkgs.callPackage ./firmware.nix { }}/lib/firmware/* staging/lib/firmware/
+            cd staging
+            find . -print0 | cpio --null -oH newc --quiet | zstd > $out
+          ''
+        }"
+      ];
+
       availableKernelModules = lib.mkForce [
         "arm_smmu"
         "ath12k"

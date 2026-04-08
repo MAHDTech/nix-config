@@ -33,10 +33,10 @@ pub async fn run_engine(spec: ModelSpec, force_cpu: bool) -> Result<(), Box<dyn 
 
     let infer_closure = if force_cpu {
         log::info!("🚀 Backend: burn-ndarray (CPU)");
-        crate::models::execute::<NdArray>(&spec, weight_path, config_path)?
+        crate::engine::execute::<NdArray>(&spec, weight_path, config_path)?
     } else {
         log::info!("🚀 Backend: burn-wgpu (GPU via Vulkan/Metal)");
-        crate::models::execute::<Wgpu>(&spec, weight_path, config_path)?
+        crate::engine::execute::<Wgpu>(&spec, weight_path, config_path)?
     };
 
     if let Some(closure) = infer_closure {
