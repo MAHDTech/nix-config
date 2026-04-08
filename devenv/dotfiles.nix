@@ -97,10 +97,10 @@ in
       check-yaml.enable = true;
       commitizen.enable = true;
       convco.enable = true;
-      clippy.enable = false;
-      cargo-check.enable = false;
+      clippy.enable = true;
+      cargo-check.enable = true;
       custom-cargo-test = {
-        enable = false;
+        enable = true;
         name = "cargo-test";
         description = "Run cargo test";
         entry = "cargo test";
