@@ -7,9 +7,6 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tokio_stream::StreamExt;
-use futures_util::stream::Stream;
-use std::convert::Infallible;
 
 #[derive(Deserialize)]
 pub struct ChatRequest {
@@ -17,10 +14,31 @@ pub struct ChatRequest {
     pub stream: Option<bool>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ChatMessage {
     pub role: String,
-    pub content: String,
+    pub content: MessageContent,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(untagged)]
+pub enum MessageContent {
+    Text(String),
+    Multimodal(Vec<MultimodalContent>),
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(tag = "type")]
+pub enum MultimodalContent {
+    #[serde(rename = "text")]
+    Text { text: String },
+    #[serde(rename = "image_url")]
+    ImageUrl { image_url: ImageUrl },
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ImageUrl {
+    pub url: String,
 }
 
 #[derive(Serialize)]
@@ -91,15 +109,45 @@ async fn chat_completions(
 ) -> impl IntoResponse {
 
     // Naively extract the last user message to feed inference
-    let prompt = payload
-        .messages
-        .into_iter()
-        .filter(|m| m.role == "user")
-        .last()
-        .map(|m| m.content)
-        .unwrap_or_else(|| "Hello".to_string());
+    let mut prompt = String::new();
+    let mut images_received = 0;
 
-    println!("📥 Received prompt: {}", prompt);
+    if let Some(user_msg) = payload.messages.into_iter().rfind(|m| m.role == "user") {
+        match user_msg.content {
+            MessageContent::Text(text) => prompt = text,
+            MessageContent::Multimodal(parts) => {
+                for part in parts {
+                    match part {
+                        MultimodalContent::Text { text } => {
+                            if !prompt.is_empty() { prompt.push_str("\n"); }
+                            prompt.push_str(&text);
+                        }
+                        MultimodalContent::ImageUrl { image_url } => {
+                            // Safely extract the Base-64 payload length
+                            if image_url.url.starts_with("data:image/") {
+                                let parts: Vec<&str> = image_url.url.splitn(2, ',').collect();
+                                if parts.len() == 2 {
+                                    images_received += 1;
+                                    let b64_bytes = parts[1].len() * 3 / 4;
+                                    println!("📸 Extracted Visual Payload: {} bytes base64 (Ignoring for now: Gemma vision tower architecture map not built).", b64_bytes);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        prompt = "Hello".to_string();
+    }
+
+    if prompt.is_empty() { prompt = "Hello".to_string(); }
+
+    if images_received > 0 {
+        println!("📥 Received multimodal prompt with {} text bytes and {} image attachments", prompt.len(), images_received);
+    } else {
+        println!("📥 Received prompt: {}", prompt);
+    }
 
     // Execute inference block (could be slow, probably should spawn_blocking, but this is a prototype)
     let infer_fn = state.infer_fn.clone();
@@ -167,7 +215,7 @@ async fn chat_completions(
                 index: 0,
                 message: ChatMessage {
                     role: "assistant".to_string(),
-                    content: generated_text,
+                    content: MessageContent::Text(generated_text),
                 },
                 finish_reason: Some("stop".to_string()),
             }],

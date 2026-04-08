@@ -1,4 +1,5 @@
 pub(crate) mod cache;
+#[allow(clippy::module_inception)]
 pub mod llama;
 pub mod pretrained;
 pub mod sampling;
@@ -10,7 +11,7 @@ use crate::config::ModelSpec;
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 
-pub fn run<B: Backend>(spec: &ModelSpec, model_path: Option<PathBuf>) -> Result<Option<crate::api::InferenceClosure>, String> {
+pub fn run<B: Backend>(spec: &ModelSpec, model_path: Option<PathBuf>, _config_path: Option<PathBuf>) -> Result<Option<crate::api::InferenceClosure>, String> {
     println!("Llama engine bridging for: {}", spec.name);
 
     // We will need to pull the tokenizer based on the spec

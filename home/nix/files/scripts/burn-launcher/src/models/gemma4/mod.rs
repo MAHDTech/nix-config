@@ -17,23 +17,31 @@ use std::path::PathBuf;
 pub fn run<B: Backend>(
     spec: &ModelSpec,
     model_path: Option<PathBuf>,
+    config_path: Option<PathBuf>,
 ) -> Result<Option<crate::api::InferenceClosure>, String> {
-    println!("Executing Burn Gemma 4 logic for {}...", spec.name);
+    log::info!("Executing Burn Gemma 4 logic for {}...", spec.name);
 
-    if let (Some(repo), Some(weights)) = (&spec.repo_id, &model_path) {
-        println!("Weights found at: {:?}", weights);
+    if let (Some(_repo), Some(weights)) = (&spec.repo_id, &model_path) {
+        log::info!("Weights found at: {:?}", weights);
         let device = burn::tensor::Device::<B>::default();
 
-        let base_config = Gemma4Config::e2b(); // Instantiate E2B architecture schema as standard proxy
+        let base_config = if let Some(path) = config_path {
+            log::info!("Parsing explicit config mathematically at {:?}", path);
+            Gemma4Config::from_json(&path).map_err(|e| e.to_string())?
+        } else {
+            log::warn!("⚠️ Fallback to E2B proxy topology (no config.json provided)");
+            Gemma4Config::e2b()
+        };
+
         let config = Gemma4ModelConfig::new(base_config);
         let model = config.init::<B>(&device);
 
         // This will successfully execute if weights perfectly mirror our refactored structures
-        println!("Attaching Gemma 4 Safetensors topological structure mapper...");
+        log::info!("Attaching Gemma 4 Safetensors topological structure mapper...");
         let _model = loader::load_gemma4_safetensors(weights.to_str().unwrap(), model)
             .map_err(|e| format!("Mismatched SafeTensors Architecture: {}", e))?;
 
-        println!("Gemma 4 mathematical abstraction scaffolded seamlessly!");
+        log::info!("Gemma 4 mathematical abstraction scaffolded seamlessly!");
 
         let infer_fn = Box::new(move |prompt: String| -> String {
             format!("(Gemma 4 Engine Generation Placeholder)\nEvaluating Prompt: {}", prompt)

@@ -1,4 +1,5 @@
 /// Pre-trained model metadata.
+#[allow(dead_code)]
 pub struct Pretrained {
     pub(super) name: &'static str,
     pub(super) model: &'static str,

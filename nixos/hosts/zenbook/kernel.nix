@@ -39,6 +39,7 @@ let
       gcc
       gnumake
       python3
+      kmod
     ];
 
     # Apply the patches from the input.

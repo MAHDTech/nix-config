@@ -29,6 +29,9 @@ Verify the USB has a GPT with an ESP:
 ```bash
 sudo fdisk -l ${USB_DRIVE}
 # Should show a GPT with an EFI System partition and a Linux root partition
+
+# Fix the GPT if needed with
+sudo sgdisk -e ${USB_DRIVE}
 ```
 
 ### 3. Boot the Zenbook

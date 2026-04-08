@@ -1,6 +1,6 @@
 use burn::tensor::{backend::Backend, Device, Tensor};
 
-pub(crate) struct AutoregressiveCache<B: Backend> {
+pub struct AutoregressiveCache<B: Backend> {
     /// Tensor cache with shape `[batch_size, num_heads, seq_len, d_model]`
     cache: Tensor<B, 4>,
     pub(crate) max_seq_len: usize,

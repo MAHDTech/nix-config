@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "home/nix/files/scripts/burn-launcher",
+]
+
+resolver = "2"

@@ -171,6 +171,7 @@ corefonts
 coretemp
 coreutils
 cpio
+cpucp
 cpufreq
 cpuset
 criticalthink
@@ -280,6 +281,7 @@ errgroup
 esac
 esbenp
 euao
+eusb
 excepthook
 excludesfile
 execfail
@@ -755,6 +757,7 @@ nushell
 Nutanix
 NVIM
 nvme
+nvmem
 nvmet
 nvml
 nvtop
@@ -839,6 +842,7 @@ pkill
 PLATFORMTHEME
 playerctl
 plugdev
+pmic
 pmset
 pname
 pointsize
@@ -874,6 +878,8 @@ punix
 purescript
 pushd
 pvscsi
+pwrctrl
+pwrseq
 Pwtku
 pxelinux
 pyprland
@@ -926,6 +932,7 @@ restic
 Retab
 reviewone
 rfilename
+rfind
 rgba
 rgbx
 rhasspy
@@ -982,6 +989,7 @@ screenrec
 scriptnames
 scrolljump
 scrolloff
+sdam
 sdhci
 sdnotify
 secretspec
@@ -1050,6 +1058,7 @@ spccol
 specirfic
 spinentry
 splitbelow
+splitn
 spmi
 squashfs
 SQUASHFS
@@ -1119,6 +1128,7 @@ tcgetattr
 tchx
 TCSADRAIN
 tcsetattr
+tcsrcc
 tekumura
 temurin
 tera

@@ -11,6 +11,8 @@ pub fn load_gemma4_safetensors<B: Backend>(
     mut model: Gemma4Model<B>,
 ) -> Result<Gemma4Model<B>, String> {
     let key_mappings = vec![
+        // Gemma 4 multimodal variants (like E2B Base) nest LLM parameters inside `language_model`
+        ("language_model\\.", ""),
         // Gemma 4 uses RMSNorm uniformly: `input_layernorm`, `post_attention_layernorm`, and root `norm`.
         // HuggingFace stores param as `.weight`. Burn's RmsNorm structural record strictly expects `.gamma`.
         ("(.*)norm\\.weight", "${1}norm.gamma"),

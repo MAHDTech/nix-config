@@ -40,6 +40,10 @@ impl<B: Backend> KeyValueCache<B> {
     pub fn len(&self) -> usize {
         self.key.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 /// Configuration to create a [multi-head attention](Gemma4Attention) module.
@@ -140,7 +144,7 @@ impl<B: Backend> Gemma4Attention<B> {
         if seq_len > 1 {
             let cache_len = cache.len();
             // Generate standard causal mask (hide future tokens)
-            let mut mask = Tensor::<B, 2, Bool>::tril_mask(
+            let mask = Tensor::<B, 2, Bool>::tril_mask(
                 [seq_len, cache_len],
                 (cache_len - seq_len) as i64,
                 &device,

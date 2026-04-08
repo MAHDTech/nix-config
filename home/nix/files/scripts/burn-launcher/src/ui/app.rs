@@ -1,5 +1,6 @@
 use ratatui::widgets::ListState;
 use crate::config::{Catalog, ModelSpec};
+use crate::system::HardwareBudget;
 
 #[derive(PartialEq, Eq)]
 pub enum FocusedPane {
@@ -9,6 +10,7 @@ pub enum FocusedPane {
 }
 
 pub struct App {
+    pub hw: HardwareBudget,
     pub catalog: Catalog,
     pub categories: Vec<String>,
     pub selected_category: usize,
@@ -20,14 +22,17 @@ pub struct App {
     pub should_quit: bool,
     pub chosen_model: Option<(String, ModelSpec)>,
     pub focused_pane: FocusedPane,
+    pub context_length: usize,
 }
 
 impl App {
-    pub fn new(catalog: Catalog) -> Self {
+    pub fn new(catalog: Catalog, cpu: bool) -> Self {
         let mut categories: Vec<String> = catalog.models.keys().cloned().collect();
         categories.sort(); // Predictable list
+        let hw = crate::system::get_hardware_budget(cpu);
 
         let mut app = App {
+            hw,
             catalog,
             categories,
             selected_category: 0,
@@ -39,6 +44,7 @@ impl App {
             should_quit: false,
             chosen_model: None,
             focused_pane: FocusedPane::Categories,
+            context_length: 4096,
         };
         app.state_cat.select(Some(0));
         app.state_eng.select(Some(0));
@@ -87,27 +93,14 @@ impl App {
         }
     }
 
-    pub fn toggle_focus(&mut self) {
+    pub fn go_back(&mut self) {
         self.focused_pane = match self.focused_pane {
-            FocusedPane::Categories => FocusedPane::Engines,
-            FocusedPane::Engines => FocusedPane::Models,
-            FocusedPane::Models => FocusedPane::Categories,
-        };
-    }
-
-    pub fn focus_left(&mut self) {
-        self.focused_pane = match self.focused_pane {
-            FocusedPane::Categories => FocusedPane::Models,
+            FocusedPane::Categories => {
+                self.should_quit = true;
+                FocusedPane::Categories
+            }
             FocusedPane::Engines => FocusedPane::Categories,
             FocusedPane::Models => FocusedPane::Engines,
-        };
-    }
-
-    pub fn focus_right(&mut self) {
-        self.focused_pane = match self.focused_pane {
-            FocusedPane::Categories => FocusedPane::Engines,
-            FocusedPane::Engines => FocusedPane::Models,
-            FocusedPane::Models => FocusedPane::Categories,
         };
     }
 
@@ -192,8 +185,69 @@ impl App {
         let models = self.current_models();
         if let Some(&model) = models.get(self.selected_model) {
             let cat = &self.categories[self.selected_category];
-            self.chosen_model = Some((cat.clone(), model.clone()));
+            let mut modified_spec = model.clone();
+            modified_spec.default_context_length = Some(self.context_length);
+            self.chosen_model = Some((cat.clone(), modified_spec));
             self.should_quit = true;
         }
+    }
+
+    pub fn increase_context(&mut self) {
+        if self.context_length < 131072 {
+            self.context_length *= 2;
+        }
+    }
+
+    pub fn decrease_context(&mut self) {
+        if self.context_length > 1024 {
+            self.context_length /= 2;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn get_dummy_catalog() -> Catalog {
+        let mut models = HashMap::new();
+        models.insert("text".to_string(), vec![
+            ModelSpec {
+                name: "test-model".to_string(),
+                description: None,
+                engine: "gemma4".to_string(),
+                repo_id: None,
+                weight_file: None,
+                required_ram_gb: Some(2.0),
+                required_vram_gb: None,
+                default_context_length: Some(4096),
+            }
+        ]);
+        crate::config::Catalog { models }
+    }
+
+    #[test]
+    fn test_app_focus_toggle() {
+        let mut app = App::new(get_dummy_catalog(), false);
+        assert!(app.focused_pane == FocusedPane::Categories);
+        app.select();
+        assert!(app.focused_pane == FocusedPane::Engines);
+        app.select();
+        assert!(app.focused_pane == FocusedPane::Models);
+        app.go_back();
+        assert!(app.focused_pane == FocusedPane::Engines);
+        app.go_back();
+        assert!(app.focused_pane == FocusedPane::Categories);
+    }
+
+    #[test]
+    fn test_app_context_scaling() {
+        let mut app = App::new(get_dummy_catalog(), false);
+        assert_eq!(app.context_length, 4096);
+        app.increase_context();
+        assert_eq!(app.context_length, 8192);
+        app.decrease_context();
+        assert_eq!(app.context_length, 4096);
     }
 }

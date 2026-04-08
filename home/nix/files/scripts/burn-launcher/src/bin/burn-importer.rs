@@ -2,7 +2,6 @@ use clap::Parser;
 use hf_hub::api::sync::Api;
 use burn_onnx::ModelGen;
 use std::fs;
-use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(name = "burn-importer", about = "Imports HuggingFace ONNX models into Rust code for Burn", long_about = None)]

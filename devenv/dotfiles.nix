@@ -15,6 +15,8 @@ let
 
   packages = with pkgs; [
     hello
+    pkg-config
+    openssl
   ];
 
   devPackages = with pkgs; [
@@ -87,7 +89,7 @@ in
       check-merge-conflicts.enable = true;
       check-shebang-scripts-are-executable = {
         excludes = [
-          "**/*.rs"
+          ".*\\.rs$"
         ];
         enable = true;
       };
@@ -95,6 +97,16 @@ in
       check-yaml.enable = true;
       commitizen.enable = true;
       convco.enable = true;
+      clippy.enable = false;
+      cargo-check.enable = false;
+      custom-cargo-test = {
+        enable = false;
+        name = "cargo-test";
+        description = "Run cargo test";
+        entry = "cargo test";
+        pass_filenames = false;
+        types_or = [ "rust" ];
+      };
       deadnix = {
         enable = true;
         settings = {

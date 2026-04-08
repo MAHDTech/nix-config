@@ -166,7 +166,6 @@ impl LlamaConfig {
     /// # Arguments
     /// - `max_seq_len` - The maximum sequence length for input text.
     /// - `device` - The device to load the model on.
-    /// Load pre-trained Llama-3.2-1B model with [Tiktoken](https://github.com/openai/tiktoken) tokenizer.
     #[cfg(feature = "llama3")]
     #[cfg_attr(docsrs, doc(cfg(feature = "llama3")))]
     pub fn load_llama3_2_1b<B: Backend>(
@@ -697,7 +696,6 @@ fn permute_attention_weight<B: Backend>(
     n_heads: usize,
     device: &Device<B>,
 ) -> burn_store::TensorSnapshot {
-    use burn::module::ParamId;
     use burn_store::TensorSnapshot;
 
     let data = snapshot.to_data().expect("Failed to get tensor data");
@@ -713,7 +711,7 @@ fn permute_attention_weight<B: Backend>(
         permuted.to_data(),
         snapshot.path_stack.clone().unwrap_or_default(),
         snapshot.container_stack.clone().unwrap_or_default(),
-        snapshot.tensor_id.unwrap_or_else(ParamId::new),
+        snapshot.tensor_id.unwrap_or_default(),
     )
 }
 
@@ -725,7 +723,6 @@ fn permute_attention_weight_with_dim<B: Backend>(
     out_dim: usize,
     device: &Device<B>,
 ) -> burn_store::TensorSnapshot {
-    use burn::module::ParamId;
     use burn_store::TensorSnapshot;
 
     let data = snapshot.to_data().expect("Failed to get tensor data");
@@ -741,7 +738,7 @@ fn permute_attention_weight_with_dim<B: Backend>(
         permuted.to_data(),
         snapshot.path_stack.clone().unwrap_or_default(),
         snapshot.container_stack.clone().unwrap_or_default(),
-        snapshot.tensor_id.unwrap_or_else(ParamId::new),
+        snapshot.tensor_id.unwrap_or_default(),
     )
 }
 

@@ -584,9 +584,9 @@
                 {
                   devenv.root =
                     let
-                      inline = builtins.toFile "inline" "builtins.toString ./.";
+                      pwd = builtins.getEnv "PWD";
                     in
-                    builtins.dirOf (builtins.toString inline);
+                    if pwd != "" then pwd else builtins.toString ./.;
                 }
                 (import ./devenv/dotfiles.nix)
               ];

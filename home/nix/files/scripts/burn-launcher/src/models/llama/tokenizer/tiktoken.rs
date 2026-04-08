@@ -100,12 +100,11 @@ impl Tokenizer for Tiktoken {
         let eos_token = if eos { vec![self.eos_token_id] } else { vec![] };
 
         let tokens = self.bpe.encode_with_special_tokens(text);
-        let tokens: Vec<u32> = tokens.into_iter().map(|t| t as u32).collect();
+        let tokens: Vec<u32> = tokens.into_iter().collect();
 
         [bos_token, tokens, eos_token]
             .into_iter()
             .flat_map(|t| t.into_iter())
-            .map(|t| t as u32)
             .collect()
     }
 
@@ -116,18 +115,18 @@ impl Tokenizer for Tiktoken {
     }
 
     fn bos_id(&self) -> u32 {
-        self.bos_token_id as u32
+        self.bos_token_id
     }
 
     fn eos_id(&self) -> u32 {
-        self.eos_token_id as u32
+        self.eos_token_id
     }
 
     fn stop_ids(&self) -> Vec<u32> {
         vec![
             self.eos_id(),
-            self.eom_token_id as u32,
-            self.eot_token_id as u32,
+            self.eom_token_id,
+            self.eot_token_id,
         ]
     }
 }

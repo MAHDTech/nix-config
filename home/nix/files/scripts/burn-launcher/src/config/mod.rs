@@ -12,8 +12,12 @@ pub struct ModelSpec {
     pub engine: String,
     pub repo_id: Option<String>,
     pub weight_file: Option<String>,
-    pub required_ram_gb: Option<f32>,
-    pub required_vram_gb: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required_ram_gb: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required_vram_gb: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_context_length: Option<usize>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -60,7 +64,7 @@ impl Catalog {
 
     fn merge_with(&mut self, other: Catalog) {
         for (category, models) in other.models {
-            let existing_models = self.models.entry(category).or_insert_with(Vec::new);
+            let existing_models = self.models.entry(category).or_default();
             for new_model in models {
                 // Avoid duplicating models by name
                 if !existing_models.iter().any(|m| m.name == new_model.name) {

@@ -5,26 +5,38 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 pub async fn run_engine(spec: ModelSpec, force_cpu: bool) -> Result<(), Box<dyn std::error::Error>> {
-    println!("⚙️  Initializing Burn Backend...");
+    log::info!("⚙️  Initializing Burn Backend...");
 
     let mut weight_path: Option<PathBuf> = None;
+    let mut config_path: Option<PathBuf> = None;
     if let Some(repo) = &spec.repo_id {
         if let Some(file) = &spec.weight_file {
-            println!("⏳ Fetching weights from Hugging Face Hub ({})...", repo);
+            log::info!("⏳ Fetching weights from Hugging Face Hub ({})...", repo);
             let api = Api::new()?;
             let repo_api = api.model(repo.clone());
             let path = repo_api.get(file)?;
-            println!("✅ Resolved weights at: {:?}", path);
+            log::info!("✅ Resolved weights at: {:?}", path);
             weight_path = Some(path);
+
+            // Fetch config.json if we are using HuggingFace
+            match repo_api.get("config.json") {
+                Ok(p) => {
+                    log::info!("✅ Resolved config at: {:?}", p);
+                    config_path = Some(p);
+                }
+                Err(e) => {
+                    log::warn!("⚠️ Could not resolve config.json: {}", e);
+                }
+            }
         }
     }
 
     let infer_closure = if force_cpu {
-        println!("🚀 Backend: burn-ndarray (CPU)");
-        crate::models::execute::<NdArray>(&spec, weight_path)?
+        log::info!("🚀 Backend: burn-ndarray (CPU)");
+        crate::models::execute::<NdArray>(&spec, weight_path, config_path)?
     } else {
-        println!("🚀 Backend: burn-wgpu (GPU via Vulkan/Metal)");
-        crate::models::execute::<Wgpu>(&spec, weight_path)?
+        log::info!("🚀 Backend: burn-wgpu (GPU via Vulkan/Metal)");
+        crate::models::execute::<Wgpu>(&spec, weight_path, config_path)?
     };
 
     if let Some(closure) = infer_closure {

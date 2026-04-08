@@ -15,6 +15,7 @@ let
   # Shared build arguments
   commonArgs = {
     inherit src;
+    cargoLock = ../../../../../Cargo.lock;
     nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [ pkgs.openssl.dev ];
   };

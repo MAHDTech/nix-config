@@ -46,7 +46,6 @@ let
 
       echo "ESP: ''${espSizeMB}MB, Root: ''${rootSizeMB}MB, Total: ''${totalSizeMB}MB"
 
-
       # Create the raw disk image
       truncate -s ''${totalSizeMB}M image.raw
 
@@ -156,33 +155,64 @@ in
     initrd = {
       includeDefaultModules = false;
       allowMissingModules = true;
+      services.lvm.enable = lib.mkForce false;
       availableKernelModules = lib.mkForce [
-        "nvme"
-        "msm"
+        "arm_smmu"
         "ath12k"
+        "btrfs"
+        "cdc_ether"
+        "cdc_mbim"
+        "cdc_ncm"
+        "dm_mod"
+        "dwc3"
+        "dwc3_qcom"
+        "ext4"
+        "hid_multitouch"
+        "i2c_hid"
+        "i2c_hid_of"
+        "i2c_qcom_geni"
+        "spi_qcom_geni"
+        "msm"
+        "nvme"
+        "nvmem_qcom_spmi_sdam"
+        "pci_pwrctrl_core"
+        "pci_pwrctrl_pwrseq"
+        "pcie_qcom"
+        "pcie_qcom_ep"
+        "phy_qcom_eusb2_repeater"
+        "phy_qcom_qmp_combo"
+        "phy_qcom_qmp_usb"
+        "phy_qcom_snps_eusb2"
+        "pmic_glink"
+        "pwrseq_core"
+        "qcom_common"
+        "qcom_cpucp_mbox"
+        "qcom_glink_smem"
+        "qcom_geni_se"
+        "qcom_pd_mapper"
+        "qcom_pmic_glink"
+        "qcom_pmic_typec"
+        "qcom_q6v5_pas"
+        "qcom_smd_regulator"
+        "qcom_spmi_pmic"
+        "qcom_spmi_regulator"
+        "qcom_sysmon"
+        "qrtr"
+        "qrtr_smd"
+        "rndis_host"
+        "sd_mod"
+        "snd_soc_x1e80100"
+        "spi_qcom_geni"
+        "tcsrcc_x1e80100"
+        "typec"
+        "typec_ucsi"
+        "uas"
+        "ucsi_glink"
         "usb_storage"
         "usbhid"
-        "xhci_pci"
-        "uas"
-        "sd_mod"
-        "arm_smmu"
-        "qcom_geni_se"
-        "qcom_smd_regulator"
-        "qcom_spmi_regulator"
-        "i2c_hid_of"
-        "i2c_hid"
-        "hid_multitouch"
-        "snd_soc_x1e80100"
-        "qcom_q6v5_pas"
-        "qcom_sysmon"
-        "qrtr_smd"
-        "btrfs"
-        "ext4"
         "usbnet"
-        "cdc_ether"
-        "cdc_ncm"
-        "cdc_mbim"
-        "rndis_host"
+        "xhci_pci"
+        "xhci_plat_hcd"
       ];
     };
 
@@ -199,9 +229,9 @@ in
     ];
 
     supportedFilesystems = lib.mkForce [
-      "vfat"
       "btrfs"
       "ext4"
+      "vfat"
     ];
 
     # Boot is handled by systemd-boot manually installed to the ESP.
@@ -239,8 +269,8 @@ in
     firmware = [ (pkgs.callPackage ./firmware.nix { }) ];
   };
 
-  networking.hostName = "zenbook-installer";
   networking.hostId = "def00003";
+  networking.hostName = "zenbook-installer";
   nixpkgs.hostPlatform = "aarch64-linux";
   system.stateVersion = "26.05";
 }

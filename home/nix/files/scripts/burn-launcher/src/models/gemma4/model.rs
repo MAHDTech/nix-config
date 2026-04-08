@@ -24,9 +24,9 @@ impl Gemma4LayerConfig {
             self.config.hidden_size,
             self.config.n_heads,
             self.config.n_kv_heads,
-            self.config.layer_type.clone(),
+            self.config.layer_type,
         )
-        .with_window_size(self.config.window_size.clone())
+        .with_window_size(self.config.window_size)
         .init(device);
 
         // GeGLU expansion is typically 4/3 * hidden_size in Gemma,
