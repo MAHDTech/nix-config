@@ -16,19 +16,8 @@ use burn_store::{
     KeyRemapper, ModuleSnapshot, PyTorchToBurnAdapter, PytorchStore, SafetensorsStore,
 };
 
-use super::{
-    sampling::Sampler,
-    tokenizer::Tokenizer,
-    transformer::{KeyValueCache, Transformer, TransformerConfig},
-};
-
-#[cfg(feature = "pretrained")]
-#[allow(unused_imports)]
-use super::pretrained::{self, ModelMeta};
-#[cfg(feature = "tiny")]
-use super::tokenizer::SentiencePieceTokenizer;
-#[cfg(feature = "llama3")]
-use super::tokenizer::Tiktoken;
+use crate::engine::shared::sampling::Sampler;
+use super::transformer::{KeyValueCache, Transformer, TransformerConfig};
 
 #[derive(Config, Debug)]
 pub struct LlamaConfig {
@@ -85,185 +74,14 @@ pub struct RopeFrequencyScaling {
 }
 
 impl LlamaConfig {
-    /// Llama-3.2-3B configuration.
-    pub fn llama3_2_3b(tokenizer_path: &str) -> Self {
-        // hidden_size = 8192; vocab_size = 128256
-        Self::new(8192, 128256, tokenizer_path.to_string())
-            .with_d_model(3072)
-            .with_num_hidden_layers(28)
-            .with_num_attention_heads(24)
-            .with_num_key_value_heads(Some(8))
-            .with_rope(
-                RopeConfig::new(500000.0)
-                    .with_scaled(Some(RopeFrequencyScaling::new().with_scale_factor(32.))),
-            )
-    }
-
-    /// Llama-3.2-1B configuration.
-    pub fn llama3_2_1b(tokenizer_path: &str) -> Self {
-        // hidden_size = 8192; vocab_size = 128256
-        Self::new(8192, 128256, tokenizer_path.to_string())
-            .with_d_model(2048)
-            .with_num_hidden_layers(16)
-            .with_num_key_value_heads(Some(8))
-            .with_rope(
-                RopeConfig::new(500000.0)
-                    .with_scaled(Some(RopeFrequencyScaling::new().with_scale_factor(32.))),
-            )
-    }
-
-    /// Llama-3.1-8B configuration.
-    pub fn llama3_1_8b(tokenizer_path: &str) -> Self {
-        // hidden_size = 14336; vocab_size = 128256
-        Self::new(14336, 128256, tokenizer_path.to_string())
-            .with_num_key_value_heads(Some(8))
-            .with_rope(RopeConfig::new(500000.0).with_scaled(Some(RopeFrequencyScaling::new())))
-    }
-
-    /// Llama-3-8B configuration.
-    pub fn llama3_8b(tokenizer_path: &str) -> Self {
-        // hidden_size = 14336; vocab_size = 128256
-        Self::new(14336, 128256, tokenizer_path.to_string())
-            .with_num_key_value_heads(Some(8))
-            .with_rope(RopeConfig::new(500000.0))
-    }
-
-    /// TinyLlama-1.1B Chat v1.0 configuration.
-    pub fn tiny_llama(tokenizer_path: &str) -> Self {
-        // hidden_size = 5632; vocab_size = 32000
-        Self::new(5632, 32000, tokenizer_path.to_string())
-            .with_d_model(2048)
-            .with_num_hidden_layers(22)
-            .with_num_key_value_heads(Some(4))
-            .with_rope(RopeConfig::new(10000.0))
-    }
-
-    /// Load pre-trained Llama-3.2-3B model with [Tiktoken](https://github.com/openai/tiktoken) tokenizer.
-    #[cfg(feature = "llama3")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "llama3")))]
-    pub fn load_llama3_2_3b<B: Backend>(
-        checkpoint: &str,
-        tokenizer_path: &str,
-        max_seq_len: usize,
-        device: &Device<B>,
-    ) -> Result<Llama<B, Tiktoken>, String> {
-        use burn::record::{HalfPrecisionSettings, NamedMpkFileRecorder};
-
-        let mut llama = Self::llama3_2_3b(tokenizer_path)
-            .with_max_seq_len(max_seq_len)
-            .init::<B, Tiktoken>(device)?;
-
-        let recorder = NamedMpkFileRecorder::<HalfPrecisionSettings>::new();
-        llama = llama
-            .load(checkpoint, &recorder)
-            .map_err(|err| format!("Failed to load pre-trained Llama model.\nError: {err}"))?;
-
-        Ok(llama)
-    }
-
-    /// Load pre-trained Llama-3.2-3B-Instruct model with [Tiktoken](https://github.com/openai/tiktoken) tokenizer.
-    ///
-    /// # Arguments
-    /// - `max_seq_len` - The maximum sequence length for input text.
-    /// - `device` - The device to load the model on.
-    #[cfg(feature = "llama3")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "llama3")))]
-    pub fn load_llama3_2_1b<B: Backend>(
-        checkpoint: &str,
-        tokenizer_path: &str,
-        max_seq_len: usize,
-        device: &Device<B>,
-    ) -> Result<Llama<B, Tiktoken>, String> {
-        use burn::record::{HalfPrecisionSettings, NamedMpkFileRecorder};
-
-        let mut llama = Self::llama3_2_1b(tokenizer_path)
-            .with_max_seq_len(max_seq_len)
-            .init::<B, Tiktoken>(device)?;
-
-        let recorder = NamedMpkFileRecorder::<HalfPrecisionSettings>::new();
-        llama = llama
-            .load(checkpoint, &recorder)
-            .map_err(|err| format!("Failed to load pre-trained Llama model.\nError: {err}"))?;
-
-        Ok(llama)
-    }
-
-    /// Load pre-trained Llama-3.1-8B model with [Tiktoken](https://github.com/openai/tiktoken) tokenizer.
-    #[cfg(feature = "llama3")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "llama3")))]
-    pub fn load_llama3_1_8b<B: Backend>(
-        checkpoint: &str,
-        tokenizer_path: &str,
-        max_seq_len: usize,
-        device: &Device<B>,
-    ) -> Result<Llama<B, Tiktoken>, String> {
-        use burn::record::{HalfPrecisionSettings, NamedMpkFileRecorder};
-
-        let mut llama = Self::llama3_1_8b(tokenizer_path)
-            .with_max_seq_len(max_seq_len)
-            .init::<B, Tiktoken>(device)?;
-
-        let recorder = NamedMpkFileRecorder::<HalfPrecisionSettings>::new();
-        llama = llama
-            .load(checkpoint, &recorder)
-            .map_err(|err| format!("Failed to load pre-trained Llama model.\nError: {err}"))?;
-
-        Ok(llama)
-    }
-
-    /// Load pre-trained Llama-3-8B model with [Tiktoken](https://github.com/openai/tiktoken) tokenizer.
-    #[cfg(feature = "llama3")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "llama3")))]
-    pub fn load_llama3_8b<B: Backend>(
-        checkpoint: &str,
-        tokenizer_path: &str,
-        max_seq_len: usize,
-        device: &Device<B>,
-    ) -> Result<Llama<B, Tiktoken>, String> {
-        use burn::record::{HalfPrecisionSettings, NamedMpkFileRecorder};
-
-        let mut llama = Self::llama3_8b(tokenizer_path)
-            .with_max_seq_len(max_seq_len)
-            .init::<B, Tiktoken>(device)?;
-
-        let recorder = NamedMpkFileRecorder::<HalfPrecisionSettings>::new();
-        llama = llama
-            .load(checkpoint, &recorder)
-            .map_err(|err| format!("Failed to load pre-trained Llama model.\nError: {err}"))?;
-
-        Ok(llama)
-    }
-
-    /// Load pre-trained TinyLlama-1.1B Chat v1.0 model with [SentenciePiece](https://github.com/google/sentencepiece) tokenizer.
-    #[cfg(feature = "tiny")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "tiny")))]
-    pub fn load_tiny_llama<B: Backend>(
-        checkpoint: &str,
-        tokenizer_path: &str,
-        max_seq_len: usize,
-        device: &Device<B>,
-    ) -> Result<Llama<B, SentiencePieceTokenizer>, String> {
-        use burn::record::{HalfPrecisionSettings, NamedMpkFileRecorder};
-
-        let mut llama = Self::tiny_llama(tokenizer_path)
-            .with_max_seq_len(max_seq_len)
-            .init::<B, SentiencePieceTokenizer>(device)?;
-
-        let recorder = NamedMpkFileRecorder::<HalfPrecisionSettings>::new();
-        llama = llama
-            .load(checkpoint, &recorder)
-            .map_err(|err| format!("Failed to load pre-trained Llama model.\nError: {err}"))?;
-
-        Ok(llama)
-    }
-
+    // Dynamic loading using HfLlamaConfig is done outside of LlamaConfig, so hardcoded presets have been removed.
 
     /// Initialize a new [Llama] module.
-    pub fn init<B: Backend, T: Tokenizer>(
+    pub fn init<B: Backend>(
         &self,
         device: &Device<B>,
-    ) -> Result<Llama<B, T>, String> {
-        let tokenizer = T::new(&self.tokenizer)?;
+    ) -> Result<Llama<B>, String> {
+        let tokenizer = crate::engine::shared::tokenizer::Tokenizer::new(&self.tokenizer).map_err(|e| e.to_string())?;
         let num_key_value_heads = self.num_key_value_heads.unwrap_or(self.num_attention_heads);
         let model = TransformerConfig::new(
             self.vocab_size,
@@ -315,18 +133,18 @@ impl LlamaConfig {
     ///
     /// Supports both PyTorch (.pt, .pth, .bin) and SafeTensors (.safetensors) formats.
     #[cfg(feature = "import")]
-    pub fn load_pretrained<B: Backend, T: Tokenizer>(
+    pub fn load_pretrained<B: Backend>(
         &self,
         checkpoint: &str,
         device: &Device<B>,
-    ) -> Result<Llama<B, T>, String> {
+    ) -> Result<Llama<B>, String> {
         let mut llama = self.init(device)?;
 
         println!("Loading record...");
         let now = Instant::now();
 
         // Key mappings for HuggingFace -> Burn model tensor names
-        #[cfg(not(feature = "tiny"))]
+        #[cfg(not(feature = "hf-tokenizer"))]
         let key_mappings: Vec<(&str, &str)> = vec![
             // Map layers.[i].feed_forward.w1.* -> layers.[i].feed_forward.swiglu.linear_inner.*
             (
@@ -342,7 +160,7 @@ impl LlamaConfig {
             ("(.*)norm\\.weight", "${1}norm.gamma"),
         ];
 
-        #[cfg(feature = "tiny")]
+        #[cfg(feature = "hf-tokenizer")]
         let key_mappings: Vec<(&str, &str)> = vec![
             // Map lm_head.* -> output.*
             ("lm_head\\.(.+)", "output.$1"),
@@ -425,7 +243,7 @@ impl LlamaConfig {
         let elapsed = now.elapsed().as_secs();
         println!("Loaded in {}s", elapsed);
 
-        #[cfg(feature = "tiny")]
+        #[cfg(feature = "hf-tokenizer")]
         {
             // TinyLlama weights from HuggingFace use a different rotary positional encoding
             // which requires weight permutation for wq/wk tensors.
@@ -458,9 +276,9 @@ pub struct GenerationOutput {
 }
 
 /// Meta Llama large language model and tokenizer.
-pub struct Llama<B: Backend, T: Tokenizer> {
+pub struct Llama<B: Backend> {
     /// The tokenizer.
-    pub tokenizer: T,
+    pub tokenizer: crate::engine::shared::tokenizer::Tokenizer,
     /// Llama decoder-only transformer.
     pub model: Transformer<B>,
     /// Key-value cache for each transformer block.
@@ -470,7 +288,7 @@ pub struct Llama<B: Backend, T: Tokenizer> {
     pub device: Device<B>,
 }
 
-impl<B: Backend, T: Tokenizer> Llama<B, T> {
+impl<B: Backend> Llama<B> {
     /// Generate text sample based on the provided prompt.
     ///
     /// # Arguments
@@ -495,7 +313,7 @@ impl<B: Backend, T: Tokenizer> Llama<B, T> {
         let mut tokens = Tensor::<B, 1, Int>::empty([prompt_len + sample_len], &self.device);
         tokens = tokens.slice_assign([0..prompt_len], input_tokens);
 
-        let stop_tokens = Tensor::from_ints(self.tokenizer.stop_ids().as_slice(), &self.device);
+        let stop_tokens = Tensor::from_ints([self.tokenizer.eos_id()].as_slice(), &self.device);
 
         let mut num_tokens: usize = 0;
         let mut input_pos = Tensor::<B, 1, Int>::arange(0..prompt_len as i64, &self.device);
@@ -541,7 +359,7 @@ impl<B: Backend, T: Tokenizer> Llama<B, T> {
             .map(|t| t.elem::<u32>())
             .collect::<Vec<_>>();
 
-        let generated = self.tokenizer.decode(tokens);
+        let generated = self.tokenizer.decode(&tokens);
         let elapsed = now.elapsed().as_secs_f64();
 
         GenerationOutput {
@@ -553,8 +371,8 @@ impl<B: Backend, T: Tokenizer> Llama<B, T> {
 
     /// Encode a string into a tensor of tokens.
     fn tokenize(&self, text: &str) -> Tensor<B, 1, Int> {
-        let bos = !cfg!(feature = "tiny"); // TinyLlama Chat doesn't prepend BOS token with the chat format
-        let tokens = self.tokenizer.encode(text, bos, false);
+        let mut tokens = self.tokenizer.encode(text);
+        tokens.insert(0, self.tokenizer.bos_id());
 
         let shape = Shape::new([tokens.len()]);
         Tensor::<B, 1, Int>::from_data(TensorData::new(tokens, shape), &self.device)
@@ -658,7 +476,7 @@ pub(crate) fn temperature_scaled_softmax<B: Backend>(
 /// HuggingFace TinyLlama uses interleaved rotary position encoding, while Burn expects
 /// the standard LLaMA format. This function permutes the query and key projection weights
 /// to handle the different conventions.
-#[cfg(all(feature = "tiny", feature = "import"))]
+#[cfg(all(feature = "hf-tokenizer", feature = "import"))]
 fn permute_rotary_weights<B: Backend>(
     model: &mut Transformer<B>,
     n_heads: usize,
@@ -690,7 +508,7 @@ fn permute_rotary_weights<B: Backend>(
 }
 
 /// Helper to permute a single attention weight tensor.
-#[cfg(all(feature = "tiny", feature = "import"))]
+#[cfg(all(feature = "hf-tokenizer", feature = "import"))]
 fn permute_attention_weight<B: Backend>(
     snapshot: &burn_store::TensorSnapshot,
     n_heads: usize,
@@ -716,7 +534,7 @@ fn permute_attention_weight<B: Backend>(
 }
 
 /// Helper to permute attention weight with explicit output dimension.
-#[cfg(all(feature = "tiny", feature = "import"))]
+#[cfg(all(feature = "hf-tokenizer", feature = "import"))]
 fn permute_attention_weight_with_dim<B: Backend>(
     snapshot: &burn_store::TensorSnapshot,
     n_heads: usize,
@@ -742,90 +560,3 @@ fn permute_attention_weight_with_dim<B: Backend>(
     )
 }
 
-#[cfg(test)]
-#[cfg(any(feature = "cuda", feature = "tch-gpu"))]
-mod tests {
-    use super::*;
-    use super::tests::*;
-
-    use burn::tensor::TensorData;
-
-    #[test]
-    fn test_temperature_softmax() {
-        let tensor = TestTensor::<2>::from([[21.3125, 19.859375, 19.0625, 18.75, 18.171875]]);
-
-        let output = super::llama::temperature_scaled_softmax(tensor, 0.6);
-        let expected = TensorData::from([[
-            0.8691406,
-            0.07836914,
-            0.020767212,
-            0.0124053955,
-            0.0047035217,
-        ]]);
-
-        output.into_data().assert_approx_eq(&expected, 3);
-    }
-
-    #[test]
-    fn test_transformer_block() {
-        let device = Default::default();
-
-        let max_seq_len = 16;
-        let block = super::transformer::TransformerBlockConfig::new(
-            /*n_layers=*/ 1, /*d_model=*/ 4, /*hidden_size=*/ 16,
-            /*n_heads=*/ 2, /*n_kv_heads=*/ 1, /*norm_eps=*/ 0.00001,
-        )
-        .init::<TestBackend>(&device);
-        let mut cache = super::transformer::KeyValueCache::new(max_seq_len);
-
-        let rope = RopeConfig::new(500000.0)
-            .with_scaled(Some(RopeFrequencyScaling::new().with_scale_factor(32.)));
-        let scaling = rope.scaled.unwrap();
-        let freq_scaling_fn = move |x| scaling.freq_scaling_by_parts(x);
-
-        let rope = RotaryEncodingConfig::new(max_seq_len * 2, 4 / 2)
-            .with_theta(rope.theta)
-            .init_with_frequency_scaling(freq_scaling_fn, &device);
-
-        // input: [batch_size, seq_len, d_model]
-        let input = TestTensor::<3>::from([[
-            [0.0026, 0.003, -0.006, 0.006],
-            [0.001, 0.0008, 0.0015, -0.016],
-        ]]);
-        let output = block.forward(input, &mut cache, &rope);
-        let expected = TensorData::from([[
-            [-0.04269409, 0.020523071, -0.0791626, 0.12731934],
-            [-0.091674805, -0.013809204, 0.03152466, -0.058776855],
-        ]]);
-
-        output.into_data().assert_approx_eq(&expected, 3);
-    }
-
-    #[test]
-    fn test_rope() {
-        let device = Default::default();
-
-        let max_seq_len = 16;
-        let rope = RopeConfig::new(500000.0)
-            .with_scaled(Some(RopeFrequencyScaling::new().with_scale_factor(32.)));
-        let scaling = rope.scaled.unwrap();
-        let freq_scaling_fn = move |x| scaling.freq_scaling_by_parts(x);
-
-        let rope = RotaryEncodingConfig::new(max_seq_len * 2, 4 / 2)
-            .with_theta(rope.theta)
-            .init_with_frequency_scaling(freq_scaling_fn, &device);
-
-        let input = TestTensor::<4>::from([[
-            [[-0.60253906, -0.035308838], [0.41357422, 0.15100098]],
-            [[-0.044677734, -0.094177246], [0.60546875, 0.2442627]],
-        ]]);
-
-        let output = rope.apply(input, 0);
-        let expected = TensorData::from([[
-            [[-0.60253906, -0.035308838], [0.09643555, 0.42944336]],
-            [[-0.044677734, -0.094177246], [0.12194824, 0.64160156]],
-        ]]);
-
-        output.into_data().assert_approx_eq(&expected, 3);
-    }
-}

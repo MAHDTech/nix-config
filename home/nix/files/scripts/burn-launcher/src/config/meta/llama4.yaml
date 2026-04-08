@@ -1,0 +1,15 @@
+- name: "Llama 4 Maverick 17B-128E Instruct"
+  vendor: "Meta"
+  collection: "Llama 4"
+  engine: "llama"
+  repo_id: "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+  weight_file: "model.safetensors"
+  required_ram_gb: 20.0
+
+- name: "Llama 4 Scout 17B-16E Instruct"
+  vendor: "Meta"
+  collection: "Llama 4"
+  engine: "llama"
+  repo_id: "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+  weight_file: "model.safetensors"
+  required_ram_gb: 20.0

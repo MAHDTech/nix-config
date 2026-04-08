@@ -5,6 +5,7 @@ use std::path::Path;
 pub mod llama;
 pub mod gemma4;
 pub mod qwen35;
+pub mod shared;
 
 /// Error type for engine operations.
 #[derive(Debug)]

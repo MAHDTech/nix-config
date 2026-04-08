@@ -4,6 +4,7 @@ pub mod runner;
 pub mod ui;
 pub mod api;
 pub mod system;
+pub mod utils;
 
 use clap::Parser;
 
@@ -18,6 +19,9 @@ struct Args {
 
     #[arg(long, default_value = "INFO")]
     log_level: String,
+
+    #[arg(long, default_value = "DEBUG")]
+    log_file_level: String,
 }
 
 #[tokio::main]
@@ -46,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .ok_or("No model selected or cancelled.".to_string())?
     };
 
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(&args.log_level)).init();
+    utils::log::setup_tracing(&args.log_level, &args.log_file_level)?;
 
     log::info!("🔥 Launching: {} (Engine: {})", model_spec.name, model_spec.engine);
 

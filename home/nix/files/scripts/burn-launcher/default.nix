@@ -9,8 +9,14 @@ let
   # Pull crane from the global NixOS flake inputs passed via extraSpecialArgs
   crane = inputs.crane.mkLib pkgs;
 
-  # Clean source path. Ensure Cargo.lock is generated and tracked by git later!
-  src = crane.cleanCargoSource ./.;
+  yamlFilter = path: _type: builtins.match ".*yaml$" path != null;
+  yamlOrCargo = path: type: (yamlFilter path type) || (crane.filterCargoSources path type);
+
+  # Clean source path. Includes Rust and YAML files.
+  src = lib.cleanSourceWith {
+    src = ./.;
+    filter = yamlOrCargo;
+  };
 
   # Shared build arguments
   commonArgs = {
@@ -24,9 +30,12 @@ let
   cargoArtifacts = crane.buildDepsOnly commonArgs;
 
   # Build the main binary
-  burn-launcher = crane.buildPackage (commonArgs // {
-    inherit cargoArtifacts;
-  });
+  burn-launcher = crane.buildPackage (
+    commonArgs
+    // {
+      inherit cargoArtifacts;
+    }
+  );
 
   # Make Vulkan and generic cc libraries available for WGPU detection
   wgpuLibPath = lib.makeLibraryPath [

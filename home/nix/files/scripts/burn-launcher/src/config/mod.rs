@@ -4,6 +4,9 @@ use std::fs;
 use std::path::Path;
 
 pub mod default;
+pub mod meta;
+pub mod google;
+pub mod qwen;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ModelSpec {
@@ -11,6 +14,7 @@ pub struct ModelSpec {
     pub description: Option<String>,
     #[serde(default = "default_vendor")]
     pub vendor: String,
+    pub collection: String,
     pub engine: String,
     pub repo_id: Option<String>,
     pub weight_file: Option<String>,
@@ -20,6 +24,23 @@ pub struct ModelSpec {
     pub required_vram_gb: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_context_length: Option<usize>,
+}
+
+impl ModelSpec {
+    pub fn new(name: &str, vendor: &str, collection: &str, engine: &str, repo_id: &str, weight_file: &str, ram_gb: f64) -> Self {
+        Self {
+            name: name.to_string(),
+            description: Some(repo_id.to_string()),
+            vendor: vendor.to_string(),
+            collection: collection.to_string(),
+            engine: engine.to_string(),
+            repo_id: Some(repo_id.to_string()),
+            weight_file: Some(weight_file.to_string()),
+            required_ram_gb: Some(ram_gb),
+            required_vram_gb: None,
+            default_context_length: None,
+        }
+    }
 }
 
 fn default_vendor() -> String {
@@ -33,9 +54,9 @@ pub struct Catalog {
 
 impl Catalog {
     pub fn load_from_default() -> Result<Self, Box<dyn std::error::Error>> {
-        // Embed the base defaults inside the compiled binary
-        let default_content = default::DEFAULT_CONFIG;
-        let mut catalog: Catalog = serde_yaml::from_str(default_content)?;
+        // Build the default catalog from the declarative modules
+        let mut catalog = default::default_catalog();
+        let default_content = serde_yaml::to_string(&catalog)?;
 
         // Resolve user home config dir
         if let Some(home) = std::env::var_os("HOME") {

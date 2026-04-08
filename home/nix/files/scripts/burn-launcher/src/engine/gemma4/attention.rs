@@ -6,7 +6,7 @@ use burn::{
 };
 
 use super::config::LayerType;
-use crate::engine::llama::cache::AutoregressiveCache; // Temporarily using llama's cache
+use crate::engine::shared::cache::AutoregressiveCache;
 
 pub struct KeyValueCache<B: Backend> {
     pub key: AutoregressiveCache<B>,
@@ -43,6 +43,11 @@ impl<B: Backend> KeyValueCache<B> {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn reset(&mut self) {
+        self.key.reset();
+        self.value.reset();
     }
 }
 

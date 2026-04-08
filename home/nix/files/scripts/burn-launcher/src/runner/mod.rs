@@ -40,11 +40,15 @@ pub async fn run_engine(spec: ModelSpec, force_cpu: bool) -> Result<(), Box<dyn 
     };
 
     if let Some(closure) = infer_closure {
+        log::info!("✅ Engine returned inference closure — starting API server");
         let api_state = crate::api::ApiState {
             model_name: spec.name.clone(),
             infer_fn: Arc::new(closure),
         };
         crate::api::start_server(8080, api_state).await?;
+    } else {
+        log::warn!("⚠️ Engine returned no inference closure. Model loaded but cannot serve requests.");
+        log::warn!("   This engine may be a scaffold — check src/engine/{}/mod.rs", spec.engine);
     }
 
     Ok(())

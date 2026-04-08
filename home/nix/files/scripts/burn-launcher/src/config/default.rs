@@ -1,110 +1,18 @@
-pub const DEFAULT_CONFIG: &str = r#"# burn-launcher model catalog
-# Hierarchy: Category → Vendor → Engine → Model
+use crate::config::Catalog;
+use std::collections::HashMap;
 
-models:
-  text:
-    - name: "Llama 3.2 1B (TinyLlama)"
-      description: "Small language model for basic tasks"
-      vendor: "Meta"
-      engine: "llama"
-      repo_id: "tracel-ai/tiny-llama-1.1b-burn"
-      weight_file: "model.mpk"
-      required_ram_gb: 2.0
-    - name: "Gemma 4 31B Instruct (Image-Text)"
-      description: "google/gemma-4-31B-it"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-31B-it"
-      weight_file: "model.safetensors"
-      required_ram_gb: 34.0
-    - name: "Gemma 4 31B Base (Image-Text)"
-      description: "google/gemma-4-31B"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-31B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 34.0
-    - name: "Gemma 4 26B-A4B Instruct (Image-Text)"
-      description: "google/gemma-4-26B-A4B-it"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-26B-A4B-it"
-      weight_file: "model.safetensors"
-      required_ram_gb: 28.0
-    - name: "Gemma 4 26B-A4B Base (Image-Text)"
-      description: "google/gemma-4-26B-A4B"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-26B-A4B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 28.0
-    - name: "Gemma 4 E4B Instruct (Any-to-Any)"
-      description: "google/gemma-4-E4B-it"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-E4B-it"
-      weight_file: "model.safetensors"
-      required_ram_gb: 5.0
-    - name: "Gemma 4 E4B Base (Any-to-Any)"
-      description: "google/gemma-4-E4B"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-E4B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 5.0
-    - name: "Gemma 4 E2B Instruct (Any-to-Any)"
-      description: "google/gemma-4-E2B-it"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-E2B-it"
-      weight_file: "model.safetensors"
-      required_ram_gb: 3.0
-    - name: "Gemma 4 E2B Base (Any-to-Any)"
-      description: "google/gemma-4-E2B"
-      vendor: "Google"
-      engine: "gemma4"
-      repo_id: "google/gemma-4-E2B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 3.0
-    - name: "Qwen 3.5 0.8B (Image-Text)"
-      description: "Qwen/Qwen3.5-0.8B"
-      vendor: "Qwen"
-      engine: "qwen35"
-      repo_id: "Qwen/Qwen3.5-0.8B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 2.0
-    - name: "Qwen 3.5 2B (Image-Text)"
-      description: "Qwen/Qwen3.5-2B"
-      vendor: "Qwen"
-      engine: "qwen35"
-      repo_id: "Qwen/Qwen3.5-2B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 3.0
-    - name: "Qwen 3.5 4B (Image-Text)"
-      description: "Qwen/Qwen3.5-4B"
-      vendor: "Qwen"
-      engine: "qwen35"
-      repo_id: "Qwen/Qwen3.5-4B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 5.0
-    - name: "Qwen 3.5 9B (Image-Text)"
-      description: "Qwen/Qwen3.5-9B"
-      vendor: "Qwen"
-      engine: "qwen35"
-      repo_id: "Qwen/Qwen3.5-9B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 10.0
-    - name: "Qwen 3.5 27B (Image-Text)"
-      description: "Qwen/Qwen3.5-27B"
-      vendor: "Qwen"
-      engine: "qwen35"
-      repo_id: "Qwen/Qwen3.5-27B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 28.0
-    - name: "Qwen 3.5 35B-A3B MoE (Image-Text)"
-      description: "Qwen/Qwen3.5-35B-A3B"
-      vendor: "Qwen"
-      engine: "qwen35"
-      repo_id: "Qwen/Qwen3.5-35B-A3B"
-      weight_file: "model.safetensors"
-      required_ram_gb: 36.0"#;
+use crate::config::{meta, google, qwen};
+
+pub fn default_catalog() -> Catalog {
+    let mut catalog = Catalog {
+        models: HashMap::new(),
+    };
+
+    let mut text_models = Vec::new();
+    text_models.extend(meta::models());
+    text_models.extend(google::models());
+    text_models.extend(qwen::models());
+
+    catalog.models.insert("text".to_string(), text_models);
+    catalog
+}

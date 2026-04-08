@@ -1,0 +1,41 @@
+- name: "Llama 3.3 70B Instruct"
+  vendor: "Meta"
+  collection: "Llama 3.3"
+  engine: "llama"
+  repo_id: "meta-llama/Llama-3.3-70B-Instruct"
+  weight_file: "model.safetensors"
+  required_ram_gb: 80.0
+
+- name: "Llama 3.2 3B Instruct"
+  description: "Versatile capable instructional model"
+  vendor: "Meta"
+  collection: "Llama 3.2"
+  engine: "llama"
+  repo_id: "meta-llama/Llama-3.2-3B-Instruct"
+  weight_file: "model.safetensors"
+  required_ram_gb: 8.0
+
+- name: "Llama 3.2 3B Base"
+  vendor: "Meta"
+  collection: "Llama 3.2"
+  engine: "llama"
+  repo_id: "meta-llama/Llama-3.2-3B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 8.0
+
+- name: "Llama 3.2 1B Instruct"
+  description: "Highly capable edge-device instructional model"
+  vendor: "Meta"
+  collection: "Llama 3.2"
+  engine: "llama"
+  repo_id: "meta-llama/Llama-3.2-1B-Instruct"
+  weight_file: "model.safetensors"
+  required_ram_gb: 4.0
+
+- name: "Llama 3.2 1B Base"
+  vendor: "Meta"
+  collection: "Llama 3.2"
+  engine: "llama"
+  repo_id: "meta-llama/Llama-3.2-1B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 4.0

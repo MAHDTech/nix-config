@@ -1,9 +1,9 @@
-pub(crate) mod cache;
+
 #[allow(clippy::module_inception)]
 pub mod llama;
 pub mod pretrained;
-pub mod sampling;
-pub mod tokenizer;
+pub mod config;
+
 mod transformer;
 
 use burn::tensor::backend::Backend;
@@ -63,36 +63,50 @@ impl<B: Backend> EngineFactory<B> for LlamaFactory {
 
         let device = burn::tensor::Device::<B>::default();
 
-        #[cfg(feature = "tiny")]
-        {
-            if repo.contains("tiny-llama") {
-                let weights_str = weights.to_str().unwrap();
-                let tz_str = tokenizer_path.to_str().unwrap();
-                let model = llama::LlamaConfig::load_tiny_llama::<B>(
-                    weights_str,
-                    tz_str,
-                    128,
-                    &device
-                ).map_err(|e| EngineError::Weights(format!("Failed to load TinyLlama: {}", e)))?;
+        let config_file = "config.json";
+        log::info!("Fetching {}...", config_file);
+        let dynamic_config_path = repo_api.get(config_file)
+            .map_err(|e| EngineError::Config(format!("Failed to fetch config.json: {}", e)))?;
+        log::info!("Resolved config.json at: {:?}", dynamic_config_path);
 
-                let sampler = sampling::Sampler::new_top_p(0.9, 42);
-                let generation_state = Arc::new(Mutex::new((model, sampler)));
+        let hf_config = config::HfLlamaConfig::from_json(&dynamic_config_path)
+            .map_err(|e| EngineError::Config(format!("Failed to parse config.json: {}", e)))?;
 
-                let infer_fn = Box::new(move |prompt: String| -> String {
-                    let mut state = generation_state.lock().unwrap();
-                    let (model, sampler) = &mut *state;
+        let tz_str = tokenizer_path.to_str().unwrap();
+        let mut llama_config = hf_config.to_burn_config(tz_str);
 
-                    let formatted = LlamaFactory::format_chat_prompt(&prompt);
-                    log::info!("Generating answer...");
-                    let generated = model.generate(formatted.as_str(), 100, 0.6, sampler);
-                    generated.text
-                });
-
-                return Ok(Some(infer_fn));
-            }
+        if let Some(ctx) = spec.default_context_length {
+            llama_config.max_seq_len = ctx;
         }
 
-        log::info!("We have the model and tokenizer resolved. Run logic to be expanded!");
-        Ok(None)
+        let weights_str = weights.to_str().unwrap();
+
+        // Dynamically load the Llama configured from JSON using the HuggingFace wrapper
+        #[cfg(feature = "import")]
+        let model = llama_config.load_pretrained::<B>(
+            weights_str,
+            &device
+        ).map_err(|e| EngineError::Weights(format!("Failed to load dynamic Llama: {}", e)))?;
+
+        #[cfg(not(feature = "import"))]
+        return Err(EngineError::Config("The 'import' feature must be enabled to load weights dynamically".to_string()));
+
+        let sampler = crate::engine::shared::sampling::Sampler::new_top_p(0.9, 42);
+        let generation_state = Arc::new(Mutex::new((model, sampler)));
+
+        let infer_fn = Box::new(move |prompt: String| -> String {
+            let mut state = generation_state.lock().unwrap();
+            let (model, sampler) = &mut *state;
+
+            model.reset();
+
+            let formatted = LlamaFactory::format_chat_prompt(&prompt);
+            log::info!("Generating answer (prompt tokens will be computed by model)...");
+            let generated = model.generate(formatted.as_str(), 100, 0.6, sampler);
+            log::info!("Generated {} tokens in {:.2}s", generated.tokens, generated.time);
+            generated.text
+        });
+
+        Ok(Some(infer_fn))
     }
 }
