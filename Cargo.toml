@@ -2,6 +2,27 @@
 
 members = [
     "home/nix/files/scripts/burn-launcher",
+    "home/nix/files/scripts/burn-lm-launcher",
 ]
 
 resolver = "2"
+
+[workspace.dependencies]
+
+burn = { version = "0.20.1", features = ["wgpu", "ndarray", "vision"] }
+clap = { version = "4.6.0", features = ["derive"] }
+crossterm = "0.29.0"
+dirs = "6.0.0"
+hf-hub = { version = "0.5.0" }
+indicatif = "0.18.4"
+log = "0.4.29"
+ratatui = "0.30.0"
+reqwest = { version = "0.13.2", default-features = false, features = ["rustls", "blocking", "json"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+serde_yaml = "0.9.33"
+sysinfo = "0.38.4"
+tokio = { version = "1.51.1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["vendored"] }

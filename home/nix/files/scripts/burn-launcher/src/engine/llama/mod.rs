@@ -51,7 +51,14 @@ impl<B: Backend> EngineFactory<B> for LlamaFactory {
 
         log::info!("Weights found at: {:?}", weights);
 
-        let api = hf_hub::api::sync::Api::new()
+        let mut api_builder = hf_hub::api::sync::ApiBuilder::new();
+        if let Ok(token) = std::env::var("HF_TOKEN").or_else(|_| std::env::var("HUGGING_FACE_HUB_TOKEN")) {
+            let token = token.trim();
+            if !token.is_empty() {
+                api_builder = api_builder.with_token(Some(token.to_string()));
+            }
+        }
+        let api = api_builder.build()
             .map_err(|e| EngineError::Config(format!("Failed to init hf hub api: {}", e)))?;
         let repo_api = api.model(repo.clone());
 

@@ -57,8 +57,24 @@ impl<B: Backend> EngineFactory<B> for Gemma4Factory {
 
         log::info!("Gemma 4 mathematical abstraction scaffolded seamlessly!");
 
-        let tokenizer_path = config_path.unwrap().to_str().unwrap().replace("config.json", "tokenizer.json");
-        let tokenizer = Tokenizer::new(&tokenizer_path)
+        let repo = spec.repo_id.as_ref()
+            .ok_or_else(|| EngineError::Config("No repo_id specified for tokenizer".to_string()))?;
+
+        log::info!("Fetching tokenizer.json...");
+        let mut api_builder = hf_hub::api::sync::ApiBuilder::new();
+        if let Ok(token) = std::env::var("HF_TOKEN").or_else(|_| std::env::var("HUGGING_FACE_HUB_TOKEN")) {
+            let token = token.trim();
+            if !token.is_empty() {
+                api_builder = api_builder.with_token(Some(token.to_string()));
+            }
+        }
+        let api = api_builder.build()
+            .map_err(|e| EngineError::Config(format!("Failed to init hf hub api for tokenizer: {}", e)))?;
+
+        let tokenizer_path = api.model(repo.clone()).get("tokenizer.json")
+            .map_err(|e| EngineError::Weights(format!("Failed to download tokenizer: {}", e)))?;
+
+        let tokenizer = Tokenizer::new(tokenizer_path.to_str().unwrap())
             .map_err(|e| EngineError::Weights(e.to_string()))?;
 
         // max_seq_len from spec
@@ -134,8 +150,8 @@ impl<B: Backend> EngineFactory<B> for Gemma4Factory {
                 current_tokens = vec![next_token_val];
             }
 
-            let text = tokenizer.decode(&tokens);
-            text
+
+            tokenizer.decode(&tokens)
         });
 
         Ok(Some(infer_fn))

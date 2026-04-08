@@ -121,13 +121,23 @@ let
       ./scripts/config --module OVERLAY_FS
       ./scripts/config --module BLK_DEV_LOOP
       ./scripts/config --enable MD
-      ./scripts/config --module BLK_DEV_DM
-      ./scripts/config --module DM_CRYPT
+      ./scripts/config --enable BLK_DEV_DM
+      ./scripts/config --enable DM_CRYPT
       ./scripts/config --module VFAT_FS
       ./scripts/config --module FAT_FS
       ./scripts/config --module NLS_CP437
       ./scripts/config --module NLS_ISO8859_1
       ./scripts/config --module NLS_UTF8
+
+      # System Control and Mailbox Built-ins
+      ./scripts/config --enable QCOM_SCM
+      ./scripts/config --enable QCOM_TZMEM
+      ./scripts/config --enable QCOM_AOSS_QMP
+      ./scripts/config --enable QCOM_IPCC
+      ./scripts/config --enable QCOM_APCS_IPC
+      ./scripts/config --enable ARM_SCMI_PROTOCOL
+      ./scripts/config --enable ARM_SCMI_TRANSPORT_SMC
+      ./scripts/config --enable ARM_SCMI_TRANSPORT_MAILBOX
 
       # Make sure crucial drivers aren't dropped by localmodconfig
       ./scripts/config --enable ARM_SMMU

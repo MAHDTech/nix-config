@@ -1,0 +1,47 @@
+- name: "Qwen 3.5 35B-A3B MoE (Image-Text)"
+  vendor: "Qwen"
+  collection: "Qwen 3.5"
+  engine: "qwen35"
+  repo_id: "Qwen/Qwen3.5-35B-A3B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 36.0
+
+- name: "Qwen 3.5 27B (Image-Text)"
+  vendor: "Qwen"
+  collection: "Qwen 3.5"
+  engine: "qwen35"
+  repo_id: "Qwen/Qwen3.5-27B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 28.0
+
+- name: "Qwen 3.5 9B (Image-Text)"
+  vendor: "Qwen"
+  collection: "Qwen 3.5"
+  engine: "qwen35"
+  repo_id: "Qwen/Qwen3.5-9B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 10.0
+
+- name: "Qwen 3.5 4B (Image-Text)"
+  vendor: "Qwen"
+  collection: "Qwen 3.5"
+  engine: "qwen35"
+  repo_id: "Qwen/Qwen3.5-4B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 5.0
+
+- name: "Qwen 3.5 2B (Image-Text)"
+  vendor: "Qwen"
+  collection: "Qwen 3.5"
+  engine: "qwen35"
+  repo_id: "Qwen/Qwen3.5-2B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 3.0
+
+- name: "Qwen 3.5 0.8B (Image-Text)"
+  vendor: "Qwen"
+  collection: "Qwen 3.5"
+  engine: "qwen35"
+  repo_id: "Qwen/Qwen3.5-0.8B"
+  weight_file: "model.safetensors"
+  required_ram_gb: 2.0

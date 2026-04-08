@@ -1,6 +1,7 @@
 use burn_store::{
-    KeyRemapper, ModuleSnapshot, PyTorchToBurnAdapter, SafetensorsStore,
+    KeyRemapper, ModuleSnapshot, SafetensorsStore,
 };
+use crate::engine::shared::adapter::Bfloat16ToFloat32Adapter;
 use burn::tensor::backend::Backend;
 
 use super::model::Gemma4Model;
@@ -20,9 +21,9 @@ pub fn load_gemma4_safetensors<B: Backend>(
 
     let remapper = KeyRemapper::from_patterns(key_mappings).expect("Invalid key mapping regex");
 
-    // Load from SafeTensors format (using standard PyTorch structural extraction adapter)
+    // Load from SafeTensors format with explicit primitive translation
     let mut store = SafetensorsStore::from_file(checkpoint)
-        .with_from_adapter(PyTorchToBurnAdapter)
+        .with_from_adapter(Bfloat16ToFloat32Adapter::new())
         .remap(remapper);
 
     model

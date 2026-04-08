@@ -13,7 +13,7 @@ use burn::{
 };
 #[cfg(feature = "import")]
 use burn_store::{
-    KeyRemapper, ModuleSnapshot, PyTorchToBurnAdapter, PytorchStore, SafetensorsStore,
+    KeyRemapper, ModuleSnapshot, PytorchStore, SafetensorsStore,
 };
 
 use crate::engine::shared::sampling::Sampler;
@@ -221,10 +221,10 @@ impl LlamaConfig {
 
         // Detect file format and load accordingly
         if checkpoint.ends_with(".safetensors") {
-            // Load from SafeTensors format (with PyTorch weight convention)
+            // Load from SafeTensors format (using explicit primitive primitive adapter)
             let mut store = SafetensorsStore::from_file(checkpoint)
-                .with_from_adapter(PyTorchToBurnAdapter)
-                .remap(remapper);
+                .with_from_adapter(crate::engine::shared::adapter::Bfloat16ToFloat32Adapter::new())
+                .remap(remapper.clone());
 
             llama
                 .model

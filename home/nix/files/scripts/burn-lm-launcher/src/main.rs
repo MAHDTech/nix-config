@@ -1,9 +1,6 @@
 pub mod config;
-pub mod engine;
-pub mod runner;
-pub mod ui;
-pub mod api;
 pub mod system;
+pub mod ui;
 pub mod utils;
 
 use clap::Parser;
@@ -22,6 +19,9 @@ struct Args {
 
     #[arg(long, default_value = "DEBUG")]
     log_file_level: String,
+
+    #[arg(short, long, default_value_t = 8080)]
+    port: u16,
 }
 
 #[tokio::main]
@@ -52,18 +52,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     utils::log::setup_tracing(&args.log_level, &args.log_file_level)?;
 
-    let hf_token_exists = std::env::var("HF_TOKEN").map(|v| !v.trim().is_empty()).unwrap_or(false)
-        || std::env::var("HUGGING_FACE_HUB_TOKEN").map(|v| !v.trim().is_empty()).unwrap_or(false)
-        || dirs::home_dir().map(|h| h.join(".cache/huggingface/token")).filter(|p| p.exists()).is_some();
+    log::info!("🔥 Launching Target: {} (Engine: {})", model_spec.name, model_spec.engine);
 
-    if !hf_token_exists {
-        tracing::warn!("HF_TOKEN is not set and no cached token was found. Models that require authentication will fail to download.");
-    } else {
-        tracing::info!("HF_TOKEN is set and/or a cached token was found. Proceeding with download.");
-    }
-
-    log::info!("🔥 Launching: {} (Engine: {})", model_spec.name, model_spec.engine);
-
+    // Hardware checks native to our launcher before loading the burn-lm instance
     let hw = system::get_hardware_budget(args.cpu);
     let context_length = model_spec.default_context_length.unwrap_or(4096);
     let eval = system::evaluate_memory_with_context(
@@ -87,7 +78,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    runner::run_engine(model_spec, args.cpu).await?;
+    log::info!("Starting Endurance LLM Daemon (Powered by burn-lm-http)");
+    log::info!("Listening on port: {}", args.port);
+    log::info!("The server supports dynamic model orchestration. Initiating Axum loop...");
 
+    // Bypassing upstream `burn-lm-http` hardcoded trace::init() panics via raw pointer mutation
+    // since `App::default()` instantiates the server securely without invoking the trace lock.
+    let mut app = burn_lm_http::App::default();
+    unsafe {
+        let port_ptr = &mut app as *mut _ as *mut u16;
+        *port_ptr = args.port;
+    }
+
+    app.serve().await?;
     Ok(())
 }

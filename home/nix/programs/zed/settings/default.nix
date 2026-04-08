@@ -617,9 +617,81 @@ in
               api_url = "http://127.0.0.1:8080/v1";
               available_models = [
                 {
-                  name = "Local AI";
-                  display_name = "Local AI";
+                  name = "Llama 3 (8B Instruct)";
+                  display_name = "Local - Llama 3 8B";
                   max_tokens = 131072;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = true;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+                {
+                  name = "Llama 3.1 (8B Instruct)";
+                  display_name = "Local - Llama 3.1 8B";
+                  max_tokens = 131072;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = true;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+                {
+                  name = "Llama 3.2 (1B Instruct)";
+                  display_name = "Local - Llama 3.2 1B";
+                  max_tokens = 131072;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = true;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+                {
+                  name = "Llama 3.2 (3B Instruct)";
+                  display_name = "Local - Llama 3.2 3B";
+                  max_tokens = 131072;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = true;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+                {
+                  name = "Llama 3.2 (1BQ4 Instruct)";
+                  display_name = "Local - Llama 3.2 1B (Q4)";
+                  max_tokens = 131072;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = true;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+                {
+                  name = "TinyLlama";
+                  display_name = "Local - TinyLlama";
+                  max_tokens = 4096;
+                  capabilities = {
+                    chat_completions = true;
+                    images = false;
+                    parallel_tool_calls = true;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+                {
+                  name = "Parrot";
+                  display_name = "Local - Mamba Parrot";
+                  max_tokens = 4096;
                   capabilities = {
                     chat_completions = true;
                     images = false;

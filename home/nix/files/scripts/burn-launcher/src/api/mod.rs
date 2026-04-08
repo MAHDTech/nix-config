@@ -119,7 +119,7 @@ async fn chat_completions(
                 for part in parts {
                     match part {
                         MultimodalContent::Text { text } => {
-                            if !prompt.is_empty() { prompt.push_str("\n"); }
+                            if !prompt.is_empty() { prompt.push('\n'); }
                             prompt.push_str(&text);
                         }
                         MultimodalContent::ImageUrl { image_url } => {

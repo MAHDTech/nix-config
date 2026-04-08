@@ -40,8 +40,8 @@ let
       # Calculate sizes
       espSizeMB=512
       rootSizeBytes=$(cat $closureInfo/store-paths | xargs du -sb | awk '{sum += $1} END {print sum}')
-      # Add 4096MB headroom for root to be absolutely safe
-      rootSizeMB=$(( (rootSizeBytes / 1048576) + 4096 ))
+      # Add 1024MB headroom for root to fit comfortably on 4GB/8GB USB drives
+      rootSizeMB=$(( (rootSizeBytes / 1048576) + 1024 ))
       totalSizeMB=$(( espSizeMB + rootSizeMB + 2 ))
 
       echo "ESP: ''${espSizeMB}MB, Root: ''${rootSizeMB}MB, Total: ''${totalSizeMB}MB"
@@ -208,8 +208,8 @@ in
         "pwrseq_core"
         "qcom_common"
         "qcom_cpucp_mbox"
-        "qcom_glink_smem"
         "qcom_geni_se"
+        "qcom_glink_smem"
         "qcom_pd_mapper"
         "qcom_pmic_glink"
         "qcom_pmic_typec"

@@ -1,46 +1,49 @@
 [package]
+
 name = "burn-launcher"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-burn = { version = "0.20.1", features = ["wgpu", "ndarray", "vision"] }
+
+burn = { workspace = true }
 burn-wgpu = "0.20.1"
-ratatui = "0.30.0"
-crossterm = "0.29.0"
-log = "0.4.29"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
-serde_yaml = "0.9.33"
-clap = { version = "4.6.0", features = ["derive"] }
-reqwest = { version = "0.13.2", default-features = false, features = ["rustls", "blocking", "json"] }
-indicatif = "0.18.4"
-hf-hub = { version = "0.5.0" }
-tokio = { version = "1.51.0", features = ["macros", "rt-multi-thread"] }
+clap = { workspace = true }
+crossterm = { workspace = true }
+hf-hub = { workspace = true }
+indicatif = { workspace = true }
+log = { workspace = true }
+ratatui = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tokio = { workspace = true }
 
 # llama-burn
+async-stream = "0.3.6"
+axum = "0.8.8"
+base64 = { version = "0.22.1", optional = true }
 burn-onnx = "0.21.0-pre.1"
 burn-store = { version = "0.20.1", features = ["std", "burnpack"] }
-itertools = { version = "0.14.0", default-features = false, features = ["use_alloc"] }
-dirs = { version = "6.0.0", optional = true }
-tiktoken-rs = { version = "0.9.1", optional = true }
-base64 = { version = "0.22.1", optional = true }
-rustc-hash = { version = "1.1.0", optional = true }
-tokenizers = { version = "0.22.2", default-features = false, features = ["onig"], optional = true }
-rand = { version = "0.10.0", default-features = false, features = ["alloc", "std_rng"] }
-axum = "0.8.8"
-tokio-stream = "0.1.18"
+dirs = { workspace = true, optional = true }
 futures-util = "0.3.32"
-async-stream = "0.3.6"
-sysinfo = "0.38.4"
-tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
+itertools = { version = "0.14.0", default-features = false, features = ["use_alloc"] }
+rand = { version = "0.10.0", default-features = false, features = ["alloc", "std_rng"] }
+rustc-hash = { version = "1.1.0", optional = true }
+sysinfo = { workspace = true }
+tiktoken-rs = { version = "0.10.0", optional = true }
+tokenizers = { version = "0.22.2", default-features = false, features = ["onig"], optional = true }
+tokio-stream = "0.1.18"
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [features]
+
 cuda = []
-tch-gpu = []
-llama3 = ["dep:tiktoken-rs", "dep:rustc-hash", "dep:base64"]
-hf-tokenizer = ["dep:tokenizers"]
-pretrained = ["dirs"]
-import = ["burn-store/pytorch", "burn-store/safetensors"]
 default = ["llama3", "hf-tokenizer", "pretrained", "import"]
+hf-tokenizer = ["dep:tokenizers"]
+import = ["burn-store/pytorch", "burn-store/safetensors"]
+llama3 = ["dep:tiktoken-rs", "dep:rustc-hash", "dep:base64"]
+pretrained = ["dirs"]
+tch-gpu = []

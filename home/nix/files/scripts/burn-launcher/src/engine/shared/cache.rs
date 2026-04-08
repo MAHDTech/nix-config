@@ -69,4 +69,9 @@ impl<B: Backend> AutoregressiveCache<B> {
     pub fn len(&self) -> usize {
         self.cur_seq_len
     }
+
+    /// Returns true if the cache is completely empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }

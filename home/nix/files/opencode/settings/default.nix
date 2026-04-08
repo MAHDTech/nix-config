@@ -61,7 +61,13 @@ in
                   "apiKey": "sk-dummy"
                 },
                 "models": {
-                  "local": { "name": "Local AI Server", "disableTools": true }
+                  "Llama 3 (8B Instruct)": { "name": "Local - Llama 3 8B", "disableTools": true },
+                  "Llama 3.1 (8B Instruct)": { "name": "Local - Llama 3.1 8B", "disableTools": true },
+                  "Llama 3.2 (1B Instruct)": { "name": "Local - Llama 3.2 1B", "disableTools": true },
+                  "Llama 3.2 (3B Instruct)": { "name": "Local - Llama 3.2 3B", "disableTools": true },
+                  "Llama 3.2 (1BQ4 Instruct)": { "name": "Local - Llama 3.2 1B (Q4)", "disableTools": true },
+                  "TinyLlama": { "name": "Local - TinyLlama", "disableTools": true },
+                  "Parrot": { "name": "Local - Mamba Parrot", "disableTools": true }
                 }
               }
             }

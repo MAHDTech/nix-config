@@ -1,6 +1,5 @@
 use crate::config::ModelSpec;
 use burn::backend::{NdArray, Wgpu};
-use hf_hub::api::sync::Api;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -12,7 +11,14 @@ pub async fn run_engine(spec: ModelSpec, force_cpu: bool) -> Result<(), Box<dyn 
     if let Some(repo) = &spec.repo_id {
         if let Some(file) = &spec.weight_file {
             log::info!("⏳ Fetching weights from Hugging Face Hub ({})...", repo);
-            let api = Api::new()?;
+            let mut api_builder = hf_hub::api::sync::ApiBuilder::new();
+            if let Ok(token) = std::env::var("HF_TOKEN").or_else(|_| std::env::var("HUGGING_FACE_HUB_TOKEN")) {
+                let token = token.trim();
+                if !token.is_empty() {
+                    api_builder = api_builder.with_token(Some(token.to_string()));
+                }
+            }
+            let api = api_builder.build()?;
             let repo_api = api.model(repo.clone());
             let path = repo_api.get(file)?;
             log::info!("✅ Resolved weights at: {:?}", path);

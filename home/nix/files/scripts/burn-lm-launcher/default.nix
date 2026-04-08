@@ -20,7 +20,7 @@ let
 
   # Shared build arguments
   commonArgs = {
-    pname = "burn-launcher";
+    pname = "burn-lm-launcher";
     version = "0.1.0";
     inherit src;
     strictDeps = true;
@@ -32,11 +32,11 @@ let
   cargoArtifacts = crane.buildDepsOnly commonArgs;
 
   # Build the main binary isolated via cargo arg constraints
-  burn-launcher = crane.buildPackage (
+  burn-lm-launcher = crane.buildPackage (
     commonArgs
     // {
       inherit cargoArtifacts;
-      cargoExtraArgs = "-p burn-launcher";
+      cargoExtraArgs = "-p burn-lm-launcher";
     }
   );
 
@@ -54,13 +54,13 @@ in
       vulkan-tools
     ];
 
-    file."burn-launcher" = {
-      target = "${config.home.homeDirectory}/.local/bin/burn-launcher";
+    file."burn-lm-launcher" = {
+      target = "${config.home.homeDirectory}/.local/bin/burn-lm-launcher";
       executable = true;
       text = ''
         #!${pkgs.bash}/bin/bash
         export LD_LIBRARY_PATH="${wgpuLibPath}:''${LD_LIBRARY_PATH:-}"
-        exec ${burn-launcher}/bin/burn-launcher "$@"
+        exec ${burn-lm-launcher}/bin/burn-lm-launcher "$@"
       '';
     };
   };
