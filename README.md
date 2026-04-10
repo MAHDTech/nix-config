@@ -292,3 +292,17 @@ nixos-rebuild \
     --refresh \
     --flake 'github:MAHDTech/nix-config#'
 ```
+
+## Ranger
+
+Ranger is a native Burn-based inference engine for Gemma 4 models.
+
+### Usage
+
+To start the system:
+
+```bash
+cargo run -p ranger -- --port 8080
+```
+
+This will bootstrap the API server and the TUI interface.
