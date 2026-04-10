@@ -71,6 +71,6 @@ mod tests {
 
         let quantized = Quantizer::quantize_int8(model, &device);
         // In a real test we'd check internal precision, but for now we verify it runs.
-        assert!(quantized.linear.weight.dims().len() > 0);
+        assert!(!quantized.linear.weight.dims().is_empty());
     }
 }

@@ -9,7 +9,7 @@ impl Sampler {
 
     pub fn sample<B: Backend>(&self, logits: Tensor<B, 1, Float>) -> u32 {
         // Very simple greedy sampling for minimal functional version
-        let [vocab_size] = logits.dims();
+        let [_vocab_size] = logits.dims();
         let argmax = logits.argmax(0).into_scalar();
         // Return as u32
         burn::tensor::cast::ToElement::to_i64(&argmax) as u32

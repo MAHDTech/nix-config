@@ -9,6 +9,8 @@ pub enum EngineError {
     Weights(String),
 }
 
+pub type StreamCallback = Box<dyn FnMut(String) -> String + Send>;
+
 pub trait EngineFactory<B: burn::tensor::backend::Backend> {
     fn id(&self) -> &str;
     fn launch(
@@ -17,5 +19,5 @@ pub trait EngineFactory<B: burn::tensor::backend::Backend> {
         weights_path: Option<&Path>,
         config_path: Option<&Path>,
         device: &burn::tensor::Device<B>,
-    ) -> Result<Option<Box<dyn FnMut(String) -> String + Send>>, EngineError>;
+    ) -> Result<Option<StreamCallback>, EngineError>;
 }
