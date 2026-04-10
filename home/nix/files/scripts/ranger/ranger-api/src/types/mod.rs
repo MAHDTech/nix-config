@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 pub struct ChatRequest {
     pub messages: Vec<ChatMessage>,
     pub stream: Option<bool>,
+    pub model: Option<String>,
+    pub temperature: Option<f32>,
+    pub max_tokens: Option<u32>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -23,14 +26,49 @@ pub struct ChatResponse {
     pub id: String,
     pub object: String,
     pub created: u64,
+    pub model: String,
     pub choices: Vec<ChatChoice>,
+    pub usage: Option<UsageInfo>,
 }
 
 #[derive(Serialize, Debug)]
 pub struct ChatChoice {
     pub index: u32,
     pub message: ChatMessage,
+    pub logprobs: Option<serde_json::Value>,
     pub finish_reason: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct UsageInfo {
+    pub prompt_tokens: u32,
+    pub completion_tokens: u32,
+    pub total_tokens: u32,
+}
+
+#[derive(Serialize, Debug)]
+pub struct ChatStreamResponse {
+    pub id: String,
+    pub object: String,
+    pub created: u64,
+    pub model: String,
+    pub choices: Vec<ChatStreamChoice>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct ChatStreamChoice {
+    pub index: u32,
+    pub delta: ChatMessageDelta,
+    pub logprobs: Option<serde_json::Value>,
+    pub finish_reason: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct ChatMessageDelta {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
 }
 
 #[derive(Serialize, Debug)]

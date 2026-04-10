@@ -1,15 +1,16 @@
-use axum::{
-    routing::get,
-    Router,
-};
+use std::process;
+use tracing_subscriber::fmt;
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
+    // Initialize tracing
+    fmt::init();
 
-    let app = Router::new().route("/", get(|| async { "Hello, Ranger API!" }));
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    println!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    // The start_server function in lib.rs handles initializing the queue,
+    // spawning the background worker, and setting up the routes.
+    let port = 3000;
+    if let Err(e) = ranger_api::start_server(port).await {
+        eprintln!("API Error: {}", e);
+        process::exit(1);
+    }
 }
