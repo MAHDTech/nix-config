@@ -7832,6 +7832,7 @@ dependencies = [
  "log",
  "ranger-core",
  "ratatui 0.30.0",
+ "reqwest 0.13.2",
  "serde",
  "serde_json",
  "sysinfo 0.38.4",

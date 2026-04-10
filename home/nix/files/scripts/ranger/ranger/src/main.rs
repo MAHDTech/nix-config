@@ -12,19 +12,24 @@ struct Args {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    log::info!("Starting Ranger system...");
+    // Setup logging (optional, TUI might suppress it)
+    tracing_subscriber::fmt::init();
 
-    // Spawn API task
-    let api_task = task::spawn(async move {
-        if let Err(e) = ranger_api::start_server(args.port).await {
+    log::info!("Starting Ranger system on port {}...", args.port);
+
+    // 1. Spawn API task in background
+    let port = args.port;
+    let _api_handle = task::spawn(async move {
+        if let Err(e) = ranger_api::start_server(port).await {
             log::error!("API Server failed: {}", e);
         }
     });
 
-    // Dummy TUI task
-    log::info!("TUI started (simulated)");
-
-    let _ = tokio::join!(api_task);
+    // 2. Launch TUI in foreground (main thread)
+    // TUI will talk to the local API
+    if let Err(e) = ranger_tui::run_tui(args.port).await {
+        log::error!("TUI failed: {}", e);
+    }
 
     Ok(())
 }

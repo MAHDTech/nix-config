@@ -13,3 +13,4 @@ serde_json = { workspace = true }
 sysinfo = { workspace = true }
 log = { workspace = true }
 tracing = { workspace = true }
+reqwest = { workspace = true }
