@@ -157,6 +157,31 @@ in
       allowMissingModules = true;
       services.lvm.enable = lib.mkForce false;
 
+      # Force-load USB + filesystem modules so the root partition
+      # on the USB drive is visible before the mount timeout.
+      # availableKernelModules relies on modalias autoloading which
+      # doesn't trigger reliably on this custom ARM64 kernel.
+      kernelModules = [
+        "xhci_pci"
+        "xhci_plat_hcd"
+        "dwc3"
+        "dwc3_qcom"
+        "phy_qcom_qmp_usb"
+        "phy_qcom_snps_eusb2"
+        "phy_qcom_eusb2_repeater"
+        "phy_qcom_qmp_combo"
+        "typec"
+        "typec_ucsi"
+        "ucsi_glink"
+        "pmic_glink"
+        "qcom_pmic_glink"
+        "qcom_pmic_typec"
+        "usb_storage"
+        "uas"
+        "sd_mod"
+        "ext4"
+      ];
+
       # Prepend a CPIO archive containing DSP firmware into the initrd.
       # makeModulesClosure can't detect dynamically-constructed firmware paths
       # used by qcom_q6v5_pas / remoteproc, so we inject them manually.

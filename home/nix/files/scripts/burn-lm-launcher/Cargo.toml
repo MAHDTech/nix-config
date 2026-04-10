@@ -13,6 +13,13 @@ burn-lm-http = "0.0.1"
 burn-lm-inference = "0.0.1"
 burn-lm-registry = "0.0.1"
 
+# Direct Axum deps for custom debug router (bypasses upstream App::serve)
+axum = "0.8"
+tower-http = { version = "0.6", features = ["request-id", "trace", "util"] }
+chrono = "0.4"
+uuid = { version = "1", features = ["v4"] }
+tokio-stream = "0.1"
+
 # TUI & System Dependencies
 clap = { workspace = true }
 crossterm = { workspace = true }

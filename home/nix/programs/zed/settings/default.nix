@@ -623,9 +623,9 @@ in
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = true;
+                    parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = true;
+                    tools = false;
                   };
                 }
                 {
@@ -635,9 +635,9 @@ in
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = true;
+                    parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = true;
+                    tools = false;
                   };
                 }
                 {
@@ -647,9 +647,9 @@ in
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = true;
+                    parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = true;
+                    tools = false;
                   };
                 }
                 {
@@ -659,9 +659,9 @@ in
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = true;
+                    parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = true;
+                    tools = false;
                   };
                 }
                 {
@@ -671,9 +671,9 @@ in
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = true;
+                    parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = true;
+                    tools = false;
                   };
                 }
                 {
@@ -683,9 +683,9 @@ in
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = true;
+                    parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = true;
+                    tools = false;
                   };
                 }
                 {
@@ -695,9 +695,9 @@ in
                   capabilities = {
                     chat_completions = true;
                     images = false;
-                    parallel_tool_calls = true;
+                    parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = true;
+                    tools = false;
                   };
                 }
               ];

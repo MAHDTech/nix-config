@@ -131,6 +131,7 @@ MXTJ
 Mioi
 Modelfile
 Modeswitch
+modalias
 Mxgw
 NATACPI
 NDFJQB
@@ -356,6 +357,7 @@ checkin
 checkjobs
 checkwinsize
 chromeos
+chrono
 chrt
 cifs
 cjdahyofet
@@ -373,6 +375,7 @@ cmdhist
 cmdk
 codegeex
 coex
+colls
 colorprofile
 commitizen
 commitzen
@@ -781,6 +784,7 @@ mkisofs
 mkpasswd
 mkstandalone
 mktemp
+mmap
 mmin
 mmproj
 mnist
@@ -803,6 +807,7 @@ movefocus
 movetoworkspace
 movewindow
 mpfr
+mpsc
 msbc
 mtools
 musnix

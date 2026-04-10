@@ -227,7 +227,7 @@ in
         splash = true;
 
         # How far in % of height to display the splash
-        splash_offset = 2.0;
+        splash_offset = 2;
 
         # Images to preload into memory.
         #preload = [

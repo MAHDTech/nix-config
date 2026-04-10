@@ -1,0 +1,11 @@
+models:
+  text:
+    - id: "gemma-4-e4b-it"
+      name: "Gemma 4 E4B Instruct"
+      vendor: "Google"
+      collection: "Gemma 4"
+      engine: "gemma4"
+      repo_id: "onnx-community/gemma-4-E4B-it-ONNX"
+      onnx_file: "model.onnx"
+      required_ram_gb: 5.0
+      context_length: 128000

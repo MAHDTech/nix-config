@@ -66,7 +66,7 @@ pub fn ui(f: &mut ratatui::Frame, app: &mut App) {
         Line::from(Span::styled("   ██║   ██╔══██║██╔══██╗╚════██║", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))),
         Line::from(Span::styled("   ██║   ██║  ██║██║  ██║███████║", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))),
         Line::from(Span::styled("   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))),
-        Line::from(Span::styled(">> Terminal Agentic Robotic Servant", Style::default().fg(Color::Cyan))),
+        Line::from(Span::styled(">> Task Automation and Resolution System", Style::default().fg(Color::Cyan))),
     ];
     let header = Paragraph::new(ascii_art)
         .alignment(Alignment::Center)
