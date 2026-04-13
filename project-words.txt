@@ -131,7 +131,6 @@ MXTJ
 Mioi
 Modelfile
 Modeswitch
-modalias
 Mxgw
 NATACPI
 NDFJQB
@@ -302,6 +301,7 @@ autotrim
 autowrite
 avahi
 awww
+axum
 ayatana
 aymanbagabas
 barentry
@@ -330,6 +330,7 @@ buildx
 bunx
 burn
 burnpack
+burnpack
 cachix
 caddyfile
 caffeinate
@@ -348,6 +349,7 @@ channelmix
 chara
 charasay
 charmbracelet
+chatcmpl
 chatcmpl
 chatml
 chattr
@@ -397,11 +399,13 @@ cpuset
 criticalthink
 cros
 crossterm
+crossterm
 crudini
 cryptsetup
 csiphy
 cstate
 ctxt
+cubecl
 cumsum
 cursorrules
 cyberjack
@@ -471,6 +475,7 @@ elif
 emul
 endersonmenezes
 endfunction
+endpoint
 endswith
 envfs
 erikgeiser
@@ -503,6 +508,7 @@ ffado
 ffplay
 fgnore
 fgrep
+fifo
 figlet
 filemore
 filereadable
@@ -530,6 +536,7 @@ gamemoderun
 gamescope
 gcroots
 gdrive
+geglu
 gelu
 geminicli
 genai
@@ -606,6 +613,7 @@ hjkl
 hkps
 hlsearch
 hnrg
+horiz
 hostcomplete
 hotreload
 hpet
@@ -643,6 +651,7 @@ incase
 inconsolata
 incsearch
 incusbr
+indicatif
 indicatif
 indicator
 indicatorapp
@@ -771,6 +780,7 @@ maziyarpanahi
 mbim
 mcopy
 memlock
+memmap
 memsize
 memtest
 menuentry
@@ -789,6 +799,7 @@ mmin
 mmproj
 mnist
 mntdir
+modalias
 modeline
 modelines
 modeset
@@ -807,6 +818,8 @@ movefocus
 movetoworkspace
 movewindow
 mpfr
+mpk
+mpsc
 mpsc
 msbc
 mtools
@@ -817,6 +830,7 @@ nargs
 nbctl
 nbsp
 ncdu
+ndarray
 ndarray
 neofetch
 netboot
@@ -888,6 +902,7 @@ onepassword
 oneshot
 onig
 onlyoffice
+oom
 oomd
 openal
 opencl
@@ -988,6 +1003,9 @@ pyprland
 pyproject
 pyyaml
 qrtr
+quantization
+quantized
+quantizer
 racc
 rakr
 raku
@@ -995,6 +1013,7 @@ rando
 randr
 raop
 ratatouille
+ratatui
 ratatui
 rbdrqnjczm
 rcvbuf
@@ -1010,6 +1029,8 @@ regreet
 relatime
 relativenumber
 remapper
+remapper
+remapping
 remmina
 remoteproc
 reparenting
@@ -1036,6 +1057,7 @@ rocm
 rofi
 rohm
 rootwait
+rope
 rpool
 rprint
 rptint
@@ -1050,6 +1072,7 @@ rustls
 rwmk
 saddr
 safenet
+safetensors
 safetensors
 sahilm
 saltlabs
@@ -1128,6 +1151,7 @@ splitn
 spmi
 squashfs
 srcs
+sse
 sshkeys
 sshuttle
 stablediffusionapi
@@ -1169,6 +1193,7 @@ sysfillrect
 sysfs
 sysimgblt
 sysinfo
+sysinfo
 sysinit
 syslinux
 tabdo
@@ -1207,6 +1232,8 @@ tobytes
 togglefloating
 togglesplit
 tokei
+tokenizers
+tokio
 tokyonight
 toplevel
 torchcodec
@@ -1280,6 +1307,7 @@ vlang
 vnoremap
 volblocksize
 volsize
+vram
 vscodevim
 vsctl
 vsonline
@@ -1339,30 +1367,3 @@ zfsutil
 zstd
 zvol
 zvols
-memmap
-mpk
-indicatif
-tokio
-axum
-ratatui
-crossterm
-sysinfo
-safetensors
-burnpack
-cubecl
-ndarray
-geglu
-tokenizers
-rope
-quantizer
-quantized
-quantization
-remapper
-remapping
-endpoint
-fifo
-mpsc
-sse
-chatcmpl
-vram
-oom

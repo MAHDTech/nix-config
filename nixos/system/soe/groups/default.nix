@@ -1,27 +1,33 @@
 {
+
+  ##########################
+  # NOTE:
+  # - System groups are < 1000
+  ##########################
+
   users.groups = {
     "nixos-admins" = {
       gid = 100000;
     };
 
     "plugdev" = {
-      gid = 10000;
+      gid = 980;
     };
 
     "vmware" = {
-      gid = 10001;
+      gid = 981;
     };
 
     "trezord" = {
-      gid = 10002;
+      gid = 982;
     };
 
     "nixos" = {
-      gid = 10003;
+      gid = 983;
     };
 
     "adbusers" = {
-      gid = 10004;
+      gid = 984;
     };
   };
 }

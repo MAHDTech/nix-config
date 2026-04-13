@@ -586,7 +586,7 @@
                     let
                       pwd = builtins.getEnv "PWD";
                     in
-                    if pwd != "" then pwd else builtins.toString ./.;
+                    if pwd != "" then pwd else toString ./.;
                 }
                 (import ./devenv/dotfiles.nix)
               ];
