@@ -3,22 +3,22 @@
     deviceName = "JONS";
     deviceId = "OZ2YWNW-ARZCGC2-XPHTLXN-SNO6VGZ-A4V5JWK-KXS5ISI-3NDFJQB-HSM6VQC";
     otherDevices = [
-      {
-        name = "NUC";
-        id = "XKSODQK-74XAIJW-2RAMYBQ-MJV5DHL-CN6MXTJ-AJ6X6BM-JU2SAXG-TRKDPAN";
-        autoAcceptFolders = false;
-      }
+      #{
+      #  name = "Zenbook";
+      #  id = "XKSODQK-74XAIJW-2RAMYBQ-MJV5DHL-CN6MXTJ-AJ6X6BM-JU2SAXG-TRKDPAN";
+      #  autoAcceptFolders = true;
+      #}
     ];
     syncFolders = {
       "Sync" = {
 
-        enable = true;
+        enable = false;
         id = "syncthing-shared";
         path = "/home/mahdtech/Sync";
         type = "sendreceive";
 
         devices = [
-          #"NUC" # NUC is dead :(
+          #"Zenbook"
         ];
         versioning = {
           type = "simple";

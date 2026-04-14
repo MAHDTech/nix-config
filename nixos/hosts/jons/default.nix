@@ -7,6 +7,9 @@
     hostId = "def10002";
   };
 
+  # Override docker storage driver for ZFS (this host still uses ZFS)
+  virtualisation.docker.storageDriver = "zfs";
+
   imports = [
     # Load hardware specific configuration.
     ./hardware-configuration.nix

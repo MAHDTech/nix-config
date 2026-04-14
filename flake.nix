@@ -217,93 +217,6 @@
       #########################
 
       nixosConfigurations = {
-        # Hostname: TEMPLATE
-        # Description: VMware VM used as a template for new hosts.
-        TEMPLATE = configNixOS {
-          username = globalUsername;
-          system = "x86_64-linux";
-
-          specialArgs = {
-            inherit inputs;
-          };
-
-          extraModules = [
-            { system.stateVersion = globalStateVersion; }
-
-            ./nixos/hosts/template
-
-            inputs.catppuccin.nixosModules.catppuccin
-          ];
-        };
-
-        # Hostname: NIXOS-1
-        # Description: VMware VM running NixOS used as a Jump Box.
-        NIXOS-1 = configNixOS {
-          username = globalUsername;
-          system = "x86_64-linux";
-
-          specialArgs = {
-            inherit inputs;
-          };
-
-          extraModules = [
-            { system.stateVersion = globalStateVersion; }
-
-            ./nixos/hosts/nixos-1
-
-            inputs.catppuccin.nixosModules.catppuccin
-          ];
-        };
-
-        # Hostname: NUC
-        # Description: Intel X15 NUC Laptop with Intel ARC GPU
-        NUC = configNixOS {
-          username = globalUsername;
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit inputs;
-          };
-
-          extraModules = [
-            { system.stateVersion = globalStateVersion; }
-
-            ./nixos/hosts/nuc
-
-            inputs.catppuccin.nixosModules.catppuccin
-            inputs.flatpaks.nixosModules.default
-            inputs.home-manager.nixosModules.home-manager
-            #musnix.nixosModules.default
-            #nixos-cosmic.nixosModules.default
-            inputs.nixos-hardware.nixosModules.common-cpu-intel
-            inputs.nixos-hardware.nixosModules.common-gpu-intel
-            inputs.nixos-hardware.nixosModules.common-hidpi
-            inputs.nixos-hardware.nixosModules.common-pc-laptop
-            inputs.nixos-hardware.nixosModules.common-pc-ssd
-            {
-
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                extraSpecialArgs = {
-                  inherit inputs;
-                  inherit globalStateVersion;
-                  inherit globalUsername;
-                  inherit inCI;
-                }
-                // (import ./nixos/hosts/nuc/home-manager/syncthing.nix);
-                users.${globalUsername} = {
-                  imports = [
-                    ./home
-
-                    inputs.catppuccin.homeManagerModules.catppuccin
-                    inputs.sops-nix.homeManagerModules.sops
-                  ];
-                };
-              };
-            }
-          ];
-        };
-
         # Hostname: JONS
         # Description: Jonsplus Desktop with AMD CPU and Intel ARC GPU
         JONS = configNixOS {
@@ -352,9 +265,9 @@
           ];
         };
 
-        # Hostname: KASMWEB-001
-        # Description: VMware VM running Kasm Web.
-        KASMWEB-001 = configNixOS {
+        # Hostname: ARC
+        # Description: AMD Ryzen Desktop with Intel ARC B580 GPU (BTRFS + Disko)
+        ARC = configNixOS {
           username = globalUsername;
           system = "x86_64-linux";
 
@@ -365,126 +278,41 @@
           extraModules = [
             { system.stateVersion = globalStateVersion; }
 
-            ./nixos/hosts/kasmweb-001
+            ./nixos/hosts/arc
 
+            inputs.disko.nixosModules.disko
             inputs.catppuccin.nixosModules.catppuccin
-          ];
-        };
-
-        # Hostname: HYPERVISOR-1
-        # Description: Hypervisor Node 1
-        HYPERVISOR-1 = configNixOS {
-          username = globalUsername;
-          system = "x86_64-linux";
-
-          specialArgs = {
-            inherit inputs;
-          };
-
-          extraModules = [
-            { system.stateVersion = globalStateVersion; }
-
-            ./nixos/hosts/hypervisor-1
-
-            inputs.catppuccin.nixosModules.catppuccin
+            inputs.flatpaks.nixosModules.default
+            inputs.home-manager.nixosModules.home-manager
             inputs.nixos-hardware.nixosModules.common-cpu-amd
             inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
-            inputs.nixos-hardware.nixosModules.common-gpu-amd
+            inputs.nixos-hardware.nixosModules.common-gpu-intel
+            inputs.nixos-hardware.nixosModules.common-hidpi
             inputs.nixos-hardware.nixosModules.common-pc
             inputs.nixos-hardware.nixosModules.common-pc-ssd
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs;
+                  inherit globalStateVersion;
+                  inherit globalUsername;
+                  inherit inCI;
+                }
+                // (import ./nixos/hosts/arc/home-manager/syncthing.nix);
+                users.${globalUsername} = {
+                  imports = [
+                    ./home
+
+                    inputs.sops-nix.homeManagerModules.sops
+                    inputs.catppuccin.homeManagerModules.catppuccin
+                  ];
+                };
+              };
+            }
           ];
         };
-
-        # Hostname: HYPERVISOR-2
-        # Description: Hypervisor Node 2
-        HYPERVISOR-2 = configNixOS {
-          username = globalUsername;
-          system = "x86_64-linux";
-
-          specialArgs = {
-            inherit inputs;
-          };
-
-          extraModules = [
-            { system.stateVersion = globalStateVersion; }
-
-            ./nixos/hosts/hypervisor-2
-
-            inputs.catppuccin.nixosModules.catppuccin
-            inputs.nixos-hardware.nixosModules.common-cpu-amd
-            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
-            inputs.nixos-hardware.nixosModules.common-gpu-amd
-            inputs.nixos-hardware.nixosModules.common-pc
-            inputs.nixos-hardware.nixosModules.common-pc-ssd
-          ];
-        };
-
-        # Hostname: HYPERVISOR-3
-        # Description: Hypervisor Node 3
-        HYPERVISOR-3 = configNixOS {
-          username = globalUsername;
-          system = "x86_64-linux";
-
-          specialArgs = {
-            inherit inputs;
-          };
-
-          extraModules = [
-            { system.stateVersion = globalStateVersion; }
-
-            ./nixos/hosts/hypervisor-3
-
-            inputs.catppuccin.nixosModules.catppuccin
-            inputs.nixos-hardware.nixosModules.common-cpu-amd
-            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
-            inputs.nixos-hardware.nixosModules.common-gpu-amd
-            inputs.nixos-hardware.nixosModules.common-pc
-            inputs.nixos-hardware.nixosModules.common-pc-ssd
-          ];
-        };
-
-        # Hostname: HYPERVISOR-4
-        # Description: Hypervisor Node 4
-        HYPERVISOR-4 = configNixOS {
-          username = globalUsername;
-          system = "x86_64-linux";
-
-          specialArgs = {
-            inherit inputs;
-          };
-
-          extraModules = [
-            { system.stateVersion = globalStateVersion; }
-
-            ./nixos/hosts/hypervisor-4
-
-            inputs.catppuccin.nixosModules.catppuccin
-            inputs.nixos-hardware.nixosModules.common-cpu-amd
-            inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
-            inputs.nixos-hardware.nixosModules.common-gpu-amd
-            inputs.nixos-hardware.nixosModules.common-pc
-            inputs.nixos-hardware.nixosModules.common-pc-ssd
-          ];
-        };
-
-        # Hostname: OPI-001
-        # Description: Orange PI 5 Pro 1
-        #OPI-001 = configNixOS {
-        #  username = globalUsername;
-        #  system = "aarch64-linux";
-
-        #  specialArgs = {
-        #    inherit inputs;
-        #  };
-
-        #  extraModules = [
-        #    { system.stateVersion = globalStateVersion; }
-
-        #    ./nixos/hosts/opi-001
-
-        #    catppuccin.nixosModules.catppuccin
-        #  ];
-        #};
 
         # Hostname: ZENBOOK
         # Description: ASUS Zenbook A14 Snapdragon X Elite 32GB RAM (UX3407R)
@@ -532,6 +360,17 @@
           ];
         };
 
+        # Hostname: arc-image
+        # Description: AMD Ryzen Desktop with Intel ARC B580 GPU (Bootable installer ISO)
+        arc-image = inputs.nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
+          modules = [
+            { system.stateVersion = globalStateVersion; }
+            ./nixos/hosts/arc/installer.nix
+          ];
+        };
+
         # Hostname: zenbook-image
         # Description: ASUS Zenbook A14 Snapdragon X Elite (Raw EFI disk image)
         zenbook-image = inputs.nixpkgs.lib.nixosSystem {
@@ -542,6 +381,7 @@
             ./nixos/hosts/zenbook/raw-efi.nix
           ];
         };
+
       };
 
       #########################
@@ -565,6 +405,7 @@
 
         #home-manager = self.homeConfigurations.${globalUsername}.activationPackage.${system};
 
+        arc-image = self.nixosConfigurations.arc-image.config.system.build.isoImage;
         zenbook-image = self.nixosConfigurations.zenbook-image.config.system.build.image;
       });
 

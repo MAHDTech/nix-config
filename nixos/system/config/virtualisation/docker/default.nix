@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  ...
+}:
 {
   imports = [ ];
 
@@ -20,8 +24,7 @@
 
       package = pkgs.docker;
       enableOnBoot = true;
-      #storageDriver = "overlay2";
-      storageDriver = "zfs";
+      storageDriver = lib.mkDefault "overlay2";
       logDriver = "journald";
 
       extraOptions = ''

@@ -1,13 +1,13 @@
 # ==========================================================================
-#  JONS-disko — AMD Ryzen Desktop with Intel ARC B580 GPU
+#  ARC — AMD Ryzen Desktop with Intel ARC B580 GPU
 #
-#  Disko-based version of the JONS host.
-#  When ready to migrate, rename jons → jons-old, jons-disko → jons.
+#  Disko-based host with BTRFS RAID 0 across 2× NVMe.
 #
-#  Changes from original JONS:
-#    - Replaced hardware-configuration.nix with disko.nix
+#  Changes from original JONS host:
+#    - Replaced hardware-configuration.nix with disko.nix (BTRFS subvolumes)
 #    - ESP moved from USB drive to NVMe (no USB boot dependency)
 #    - Bootloader changed from GRUB to systemd-boot (UEFI native)
+#    - Removed ZFS (root filesystem is now BTRFS)
 # ==========================================================================
 {
   config,
@@ -36,9 +36,6 @@
     ../../system/config/power
     ../../system/config/printing
     ../../system/config/services
-
-    # Storage
-    ../../system/config/storage/zfs
 
     # Theme
     ../../system/config/theme/catppuccin
@@ -81,7 +78,6 @@
       "ntfs"
       "vfat"
       "xfs"
-      "zfs"
     ];
 
     initrd = {
@@ -95,10 +91,7 @@
         "xhci_pci"
       ];
 
-      kernelModules = [
-        "dm-snapshot"
-        "zfs"
-      ];
+      kernelModules = [ ];
     };
 
     kernelModules = [
@@ -119,8 +112,8 @@
   };
 
   networking = {
-    hostName = "JONS";
-    hostId = "def10002";
+    hostName = "ARC";
+    hostId = "653850a3";
 
     useDHCP = lib.mkDefault false;
     interfaces = {
