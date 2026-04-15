@@ -16,7 +16,7 @@ let
     jq
 
     # AI Agents
-    claude-code-acp
+    claude-agent-acp
     claude-code
     claude-monitor
     gemini-cli

@@ -10,7 +10,7 @@ let
   };
 
   unstablePkgs = with pkgsUnstable; [
-    claude-code-acp
+    claude-agent-acp
     claude-code
     claude-monitor
   ];
