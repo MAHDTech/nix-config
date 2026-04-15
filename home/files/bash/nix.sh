@@ -576,7 +576,7 @@ function dotfiles_all_the_things() {
 		return 1
 	}
 
-	dotfiles check || {
+	dotfiles check --all-systems || {
 		writeLog "ERROR" "Failed to check dotfiles"
 		return 1
 	}
