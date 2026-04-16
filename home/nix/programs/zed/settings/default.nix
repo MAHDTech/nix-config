@@ -93,6 +93,7 @@ in
         "astro"
         "basher"
         "caddyfile"
+        "cargo-appraiser"
         "crates-lsp"
         "docker-compose"
         "dockerfile"
@@ -142,11 +143,6 @@ in
       extraPackages =
         with pkgs;
         [
-          # AI Agents
-          #gemini-cli
-          #mistral-rs
-          #mistral-vibe
-
           # Shared Libraries
           cacert
           openssl
@@ -413,11 +409,14 @@ in
         #########################
 
         agent_servers = {
-          github-copilot-cli = {
-            type = "registry";
-          };
-          gemini = {
-            ignore_system_version = false;
+          "Gemini CLI" = {
+            type = "custom";
+            command = "${pkgsUnstable.gemini-cli}/bin/gemini";
+            args = [
+              "--acp"
+            ];
+            env = {
+            };
           };
           "OpenCode" = {
             type = "custom";

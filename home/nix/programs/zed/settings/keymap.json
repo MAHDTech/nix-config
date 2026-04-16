@@ -20,8 +20,7 @@
   {
     "bindings": {
       "ctrl-right": "editor::SelectLargerSyntaxNode",
-      "ctrl-left": "editor::SelectSmallerSyntaxNode",
-      "cmd-g": ["agent::NewExternalAgentThread", { "agent": "gemini" }]
+      "ctrl-left": "editor::SelectSmallerSyntaxNode"
     }
   },
   {
