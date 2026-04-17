@@ -13,36 +13,36 @@ ACTION=${1:-}
 [ -z "$ACTION" ] && usage
 
 # Associative array:
-#  - KEY = extension name (folder)
-#  - VALUE = extension URL:
+#  - KEY = extension name (internal name used by gemini cli)
+#  - VALUE = extension URL
 declare -A GEMINI_CLI_EXTENSIONS
 GEMINI_CLI_EXTENSIONS=(
-	# [agent-md]="https://github.com/Olshansk/agent-md"
-	# [cloudflare-mcp]="https://github.com/ZhanZiyuan/cloudflare-mcp"
-	# [code-review]="https://github.com/gemini-cli-extensions/code-review"
-	# [commitzen]="https://github.com/fiquellcarter/commitzen"
-	# [conductor]="https://github.com/gemini-cli-extensions/conductor"
-	# [dynatrace-mcp]="https://github.com/dynatrace-oss/dynatrace-mcp"
-	# [elevenlabs-mcp]="https://github.com/elevenlabs/elevenlabs-mcp"
-	# [gcloud]="https://github.com/gemini-cli-extensions/gcloud"
-	# [genai-toolbox]="https://github.com/googleapis/genai-toolbox"
-	# [genkit]="https://github.com/gemini-cli-extensions/genkit"
-	# [github-mcp-server]="https://github.com/github/github-mcp-server"
-	# [gitops-extension]="https://github.com/mikebz/gitops-extension"
-	# [jules]="https://github.com/gemini-cli-extensions/jules"
-	# [mcp-grafana]="https://github.com/grafana/mcp-grafana"
-	# [mcp-redis]="https://github.com/redis/mcp-redis"
-	# [mcp-toolbox]="https://github.com/gemini-cli-extensions/mcp-toolbox"
-	# [nanobanana]="https://github.com/gemini-cli-extensions/nanobanana"
-	# [observability]="https://github.com/gemini-cli-extensions/observability"
-	[pickle - rick - extension]="https://github.com/galz10/pickle-rick-extension"
-	# [postgres]="https://github.com/gemini-cli-extensions/postgres"
-	# [security]="https://github.com/gemini-cli-extensions/security"
-	# [slash-criticalthink]="https://github.com/abagames/slash-criticalthink"
-	# [stripe-ai]="https://github.com/stripe/ai"
-	# [terraform-mcp-server]="https://github.com/hashicorp/terraform-mcp-server"
-	# [vault-mcp-server]="https://github.com/hashicorp/vault-mcp-server"
-	# [workspace]="https://github.com/gemini-cli-extensions/workspace"
+	["agent-md"]="https://github.com/Olshansk/agent-md"
+	# ["cloudflare-mcp"]="https://github.com/ZhanZiyuan/cloudflare-mcp"
+	["code-review"]="https://github.com/gemini-cli-extensions/code-review"
+	["commitzen"]="https://github.com/fiquellcarter/commitzen"
+	# ["conductor"]="https://github.com/gemini-cli-extensions/conductor"
+	# ["dynatrace-mcp"]="https://github.com/dynatrace-oss/dynatrace-mcp"
+	# ["elevenlabs-mcp"]="https://github.com/elevenlabs/elevenlabs-mcp"
+	# ["gcloud"]="https://github.com/gemini-cli-extensions/gcloud"
+	# ["genai-toolbox"]="https://github.com/googleapis/genai-toolbox"
+	# ["genkit"]="https://github.com/gemini-cli-extensions/genkit"
+	["github-mcp-server"]="https://github.com/github/github-mcp-server"
+	["gitops-extension"]="https://github.com/mikebz/gitops-extension"
+	# ["jules"]="https://github.com/gemini-cli-extensions/jules"
+	# ["mcp-grafana"]="https://github.com/grafana/mcp-grafana"
+	# ["mcp-redis"]="https://github.com/redis/mcp-redis"
+	["mcp-toolbox"]="https://github.com/gemini-cli-extensions/mcp-toolbox"
+	["nanobanana"]="https://github.com/gemini-cli-extensions/nanobanana"
+	# ["observability"]="https://github.com/gemini-cli-extensions/observability"
+	["pickle-rick"]="https://github.com/galz10/pickle-rick-extension"
+	# ["postgres"]="https://github.com/gemini-cli-extensions/postgres"
+	# ["security"]="https://github.com/gemini-cli-extensions/security"
+	# ["slash-criticalthink"]="https://github.com/abagames/slash-criticalthink"
+	["stripe-ai"]="https://github.com/stripe/ai"
+	["terraform-mcp-server"]="https://github.com/hashicorp/terraform-mcp-server"
+	["vault-mcp-server"]="https://github.com/hashicorp/vault-mcp-server"
+	# ["workspace"]="https://github.com/gemini-cli-extensions/workspace"
 )
 
 log() {
@@ -77,17 +77,27 @@ success_count=0
 skip_count=0
 fail_count=0
 
+# Get currently installed extensions list
+INSTALLED_EXTENSIONS=$(gemini extensions list --output-format json 2>/dev/null || echo "[]")
+
+is_installed() {
+	local name=$1
+	echo "$INSTALLED_EXTENSIONS" | jq -e ".[] | select(.name == \"$name\")" >/dev/null
+}
+
 case "$ACTION" in
 "install")
 	for ext_name in "${!GEMINI_CLI_EXTENSIONS[@]}"; do
 		ext_url="${GEMINI_CLI_EXTENSIONS[$ext_name]}"
-		if [ -d "$HOME/.gemini/extensions/$ext_name" ]; then
+
+		if is_installed "$ext_name"; then
 			log INFO "Updating gemini cli extension: $ext_name"
 			stderr_tmp=$(mktemp)
 			output=$(gemini extensions update "$ext_name" 2>"$stderr_tmp")
 			cmd_exit=$?
 			captured_stderr=$(cat "$stderr_tmp")
 			rm "$stderr_tmp"
+
 			if [ $cmd_exit -eq 0 ]; then
 				log SUCCESS "Gemini cli extension $ext_name updated successfully"
 				success_count=$((success_count + 1))
@@ -106,13 +116,26 @@ case "$ACTION" in
 			cmd_exit=$?
 			captured_stderr=$(cat "$stderr_tmp")
 			rm "$stderr_tmp"
+
 			if [ $cmd_exit -eq 0 ]; then
 				log SUCCESS "Gemini cli extension $ext_url installed successfully"
 				success_count=$((success_count + 1))
 			else
-				log ERROR "Failed to install gemini cli extension: $ext_url"
-				log ERROR "Output: $output $captured_stderr"
-				fail_count=$((fail_count + 1))
+				# Double check if it failed because it WAS actually installed (race condition or naming mismatch)
+				if [[ "$output $captured_stderr" == *"already installed"* ]]; then
+					log WARN "Extension $ext_name reported as already installed. Attempting update instead..."
+					if output=$(gemini extensions update "$ext_name"); then
+						log SUCCESS "Gemini cli extension $ext_name updated successfully"
+						success_count=$((success_count + 1))
+					else
+						log ERROR "Failed to update gemini cli extension: $ext_name"
+						fail_count=$((fail_count + 1))
+					fi
+				else
+					log ERROR "Failed to install gemini cli extension: $ext_url"
+					log ERROR "Output: $output $captured_stderr"
+					fail_count=$((fail_count + 1))
+				fi
 			fi
 		fi
 	done
