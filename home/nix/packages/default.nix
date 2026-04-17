@@ -5,5 +5,8 @@
 
     # Devenv and Cachix
     ./devenv.nix
+
+    # Custom packages
+    ./custom
   ];
 }

@@ -16,9 +16,6 @@
     # Modules
     ./nix/modules
 
-    # Custom derivations
-    ./nix/derivations
-
     # Secrets
     ./nix/secrets
 
