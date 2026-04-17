@@ -1,3 +1,4 @@
+slurpfile
 aclinherit
 aclmode
 acltype

@@ -12,5 +12,10 @@
     # Sync projects.
     ./sync-projects.nix
 
+    # GitHub
+    ./github.nix
+
+    # DaisyUI
+    ./daisyui.nix
   ];
 }

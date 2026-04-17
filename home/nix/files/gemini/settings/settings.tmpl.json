@@ -29,8 +29,8 @@
       "args": ["-y", "daisyui-blueprint@latest"],
       "command": "bunx",
       "env": {
-        "EMAIL": "$DAISYUI_EMAIL",
-        "LICENSE": "$DAISYUI_LICENSE"
+        "EMAIL": "${config.sops.placeholder.\"daisyui/email\"}",
+        "LICENSE": "${config.sops.placeholder.\"daisyui/license\"}"
       }
     },
     "devenv": {
@@ -42,11 +42,8 @@
       "command": "nix"
     },
     "github": {
-      "args": ["stdio"],
-      "command": "github-mcp-server",
-      "env": {
-        "GITHUB_TOKEN": "$GITHUB_TOKEN"
-      }
+      "command": "/home/mahdtech/.local/bin/github-mcp-server-start",
+      "args": []
     },
     "terraform": {
       "args": ["stdio"],

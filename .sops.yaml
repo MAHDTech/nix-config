@@ -9,7 +9,7 @@
 
 keys:
   # Users (AGE, local)
-  - &admin_mahdtech_nuc_age age1t6p4lhlmqk7gkmp4hxccnqf5g0qu2xecef04hyn4cxlc3gs8fecqhvxmfg
+  - &admin_mahdtech_jons_age age16v936g3sv4c720pmurjut42jradwjdc2u5gt6neu3gqf0cwdlezqelq49a
 
   # Users (AGE)
   - &admin_mahdtech_1password_age age127h9hx8p5tc5chldkhek9a7f4qje25qmngd99y4unl3tyzayr3yq0jp3xn
@@ -47,7 +47,7 @@ creation_rules:
       #####################################################################
       - age:
           # Local
-          - *admin_mahdtech_nuc_age
+          - *admin_mahdtech_jons_age
           # Users
           - *admin_mahdtech_1password_age
           # Systems

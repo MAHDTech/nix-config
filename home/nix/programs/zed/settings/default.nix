@@ -401,7 +401,6 @@ in
         edit_predictions = {
           mode = "eager";
           provider = "zed";
-          #provider = "copilot";
         };
 
         #########################
@@ -409,6 +408,15 @@ in
         #########################
 
         agent_servers = {
+          "Gemini CLI HACK" = {
+            type = "custom";
+            command = "/etc/profiles/per-user/mahdtech/bin/gemini-custom";
+            args = [
+              "--acp"
+            ];
+            env = {
+            };
+          };
           "Gemini CLI" = {
             type = "custom";
             command = "${pkgsUnstable.gemini-cli}/bin/gemini";
@@ -725,18 +733,10 @@ in
           };
 
           daisyui-blueprint = {
-            command = "bunx";
-            args = [
-              "-y"
-              "daisyui-blueprint@latest"
-            ];
-            env =
-              let
-                email = builtins.getEnv "DAISYUI_EMAIL";
-                license = builtins.getEnv "DAISYUI_LICENSE";
-              in
-              lib.optionalAttrs (email != "") { EMAIL = email; }
-              // lib.optionalAttrs (license != "") { LICENSE = license; };
+            # Use a wrapper that injects the DaisyUI license.
+            command = "/home/mahdtech/.local/bin/daisyui-mcp-server-start";
+            args = [ ];
+            env = { };
           };
 
           devenv = {
@@ -756,13 +756,12 @@ in
           };
 
           github = {
-            url = "https://api.githubcopilot.com/mcp/";
-            headers =
-              let
-                token = builtins.getEnv "GITHUB_TOKEN";
-              in
-              lib.optionalAttrs (token != "") { Authorization = "Bearer ${token}"; };
+            # Use a wrapper that injects the GITHUB_TOKEN using gh CLI
+            command = "/home/mahdtech/.local/bin/github-mcp-server-start";
+            args = [ ];
+            env = { };
           };
+
         };
 
         #########################

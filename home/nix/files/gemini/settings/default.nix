@@ -49,17 +49,28 @@ in
   # - Any extra keys written by the CLI are left untouched.
   # ---------------------------------------------------------------------------
 
+  sops = {
+    templates = {
+      # -------------------------------------------------------------------------
+      # Gemini CLI settings template (containers SOPS secrets)
+      # -------------------------------------------------------------------------
+      "geminicli-settings-template" = {
+        content = builtins.readFile ./settings.tmpl.json;
+      };
+    };
+  };
+
   home = {
     file = {
 
       # -------------------------------------------------------------------------
       # Gemini CLI settings template
       # -------------------------------------------------------------------------
-      "geminicli-settings-template" = {
-        target = "${config.home.homeDirectory}/.gemini/settings.tmpl.json";
-        executable = false;
-        source = ./settings.tmpl.json;
-      };
+      #"geminicli-settings-template" = {
+      #  target = "${config.home.homeDirectory}/.gemini/settings.tmpl.json";
+      #  executable = false;
+      #  source = ./settings.tmpl.json;
+      #};
 
       # -------------------------------------------------------------------------
       # Pickle Rick God Mode policies
@@ -75,20 +86,37 @@ in
     # ---------------------------------------------------------------------------
     # Activation script
     # ---------------------------------------------------------------------------
-    activation.mergeGeminiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      TEMPLATE="$HOME/.gemini/settings.tmpl.json"
+    activation.mergeGeminiSettings = lib.hm.dag.entryAfter [ "writeBoundary" "sops-nix.service" ] ''
+      EMAIL_PATH="${config.home.homeDirectory}/.config/sops-nix/secrets/daisyui/email"
+      LICENSE_PATH="${config.home.homeDirectory}/.config/sops-nix/secrets/daisyui/license"
+      TEMPLATE="${./settings.tmpl.json}"
       TARGET="$HOME/.gemini/settings.json"
       TMP_TARGET="$(mktemp)"
 
-      if [ -f "$TARGET" ]; then
-        # Deep-merge: existing keys are base, template keys win for overlapping paths.
-        # This enforces your declarative defaults while preserving CLI-managed keys
-        # (e.g. auth tokens, cached state inside nested objects).
-        ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$TARGET" "$TEMPLATE" > "$TMP_TARGET"
-        mv --force "$TMP_TARGET" "$TARGET"
-      else
-        cp --force "$TEMPLATE" "$TARGET"
+      # Load secrets from SOPS files
+      EMAIL="$(cat "$EMAIL_PATH")"
+      LICENSE="$(cat "$LICENSE_PATH")"
+
+      if [ -f "$TEMPLATE" ];
+      then
+        if [ -f "$TARGET" ];
+        then
+          echo "Merging template with existing Gemini settings"
+        else
+          echo "Creating new Gemini settings file"
+          echo "{}" > "$TARGET"
+        fi
       fi
+
+      jq \
+        --slurpfile existing "$TARGET" \
+        --arg email "$EMAIL" --arg license "$LICENSE" \
+        'if $existing then $existing[0] * . else . end
+        | .mcpServers."daisyui-blueprint".env.EMAIL = $email
+        | .mcpServers."daisyui-blueprint".env.LICENSE = $license' \
+        "$TEMPLATE" > "$TMP_TARGET"
+
+      mv --force "$TMP_TARGET" "$TARGET"
 
       chmod 600 "$TARGET"
     '';

@@ -17,6 +17,9 @@
 
       # Wakatime Home Directory
       WAKATIME_HOME = "${config.home.homeDirectory}/.wakatime";
+
+      # Agent Skills Home Directory
+      AGENT_SKILLS_HOME = "${config.home.homeDirectory}/Projects/syncthing/GitHub/MAHDTech/agent-skills";
     };
   };
 }
