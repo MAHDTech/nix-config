@@ -524,7 +524,6 @@ foldl
 fontconfig
 forcergbx
 fprintd
-framesh
 freedreno
 freetype
 fsetid

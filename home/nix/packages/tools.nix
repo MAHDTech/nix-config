@@ -23,7 +23,6 @@ let
         #google-chrome
         ledger-live-desktop
         onlyoffice-desktopeditors
-        framesh
 
         # Screen recorder
         gpu-screen-recorder
