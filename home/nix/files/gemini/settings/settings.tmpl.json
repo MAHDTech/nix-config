@@ -42,7 +42,7 @@
       "command": "nix"
     },
     "github": {
-      "command": "/home/mahdtech/.local/bin/github-mcp-server-start",
+      "command": "${config.home.homeDirectory}/.local/bin/github-mcp-server-start",
       "args": []
     },
     "terraform": {

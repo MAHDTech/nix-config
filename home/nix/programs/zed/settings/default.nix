@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
@@ -408,24 +409,6 @@ in
         #########################
 
         agent_servers = {
-          "Gemini CLI HACK" = {
-            type = "custom";
-            command = "/etc/profiles/per-user/mahdtech/bin/gemini-custom";
-            args = [
-              "--acp"
-            ];
-            env = {
-            };
-          };
-          "Gemini CLI" = {
-            type = "custom";
-            command = "${pkgsUnstable.gemini-cli}/bin/gemini";
-            args = [
-              "--acp"
-            ];
-            env = {
-            };
-          };
           "OpenCode" = {
             type = "custom";
             command = "${pkgsUnstable.opencode}/bin/opencode";
@@ -583,128 +566,31 @@ in
         #########################
 
         language_models = {
-          x_ai = {
+          open_router = {
             available_models = [
               {
-                name = "grok-4.20-multi-agent-beta-0309";
-                display_name = "Grok 4.2 Multi-Agent";
-                max_tokens = 2000000;
+                name = "openrouter/auto";
+                display_name = "OpenRouter Auto";
+                max_tokens = 128000;
                 supports_tools = true;
                 supports_images = true;
-                parallel_tool_calls = true;
-              }
-              {
-                name = "grok-4.20-beta-0309-reasoning";
-                display_name = "Grok 4.2 Reasoning";
-                max_tokens = 2000000;
-                supports_tools = true;
-                supports_images = true;
-                parallel_tool_calls = true;
-              }
-              {
-                name = "grok-4.20-beta-0309-non-reasoning";
-                display_name = "Grok 4.2";
-                max_tokens = 2000000;
-                supports_tools = true;
-                supports_images = true;
-                parallel_tool_calls = true;
-              }
-              {
-                name = "grok-code-fast-1";
-                display_name = "Grok Code Fast";
-                max_tokens = 256000;
-                supports_tools = true;
-                supports_images = false;
-                parallel_tool_calls = true;
               }
             ];
           };
           openai_compatible = {
-            "Local" = {
+            "Ranger" = {
               api_url = "http://127.0.0.1:8080/v1";
               available_models = [
                 {
-                  name = "Llama 3 (8B Instruct)";
-                  display_name = "Local - Llama 3 8B";
+                  name = "Gemma 4 (8B)";
+                  display_name = "Ranger - Gemma 4 (8B)";
                   max_tokens = 131072;
                   capabilities = {
                     chat_completions = true;
                     images = false;
                     parallel_tool_calls = false;
                     prompt_cache_key = false;
-                    tools = false;
-                  };
-                }
-                {
-                  name = "Llama 3.1 (8B Instruct)";
-                  display_name = "Local - Llama 3.1 8B";
-                  max_tokens = 131072;
-                  capabilities = {
-                    chat_completions = true;
-                    images = false;
-                    parallel_tool_calls = false;
-                    prompt_cache_key = false;
-                    tools = false;
-                  };
-                }
-                {
-                  name = "Llama 3.2 (1B Instruct)";
-                  display_name = "Local - Llama 3.2 1B";
-                  max_tokens = 131072;
-                  capabilities = {
-                    chat_completions = true;
-                    images = false;
-                    parallel_tool_calls = false;
-                    prompt_cache_key = false;
-                    tools = false;
-                  };
-                }
-                {
-                  name = "Llama 3.2 (3B Instruct)";
-                  display_name = "Local - Llama 3.2 3B";
-                  max_tokens = 131072;
-                  capabilities = {
-                    chat_completions = true;
-                    images = false;
-                    parallel_tool_calls = false;
-                    prompt_cache_key = false;
-                    tools = false;
-                  };
-                }
-                {
-                  name = "Llama 3.2 (1BQ4 Instruct)";
-                  display_name = "Local - Llama 3.2 1B (Q4)";
-                  max_tokens = 131072;
-                  capabilities = {
-                    chat_completions = true;
-                    images = false;
-                    parallel_tool_calls = false;
-                    prompt_cache_key = false;
-                    tools = false;
-                  };
-                }
-                {
-                  name = "TinyLlama";
-                  display_name = "Local - TinyLlama";
-                  max_tokens = 4096;
-                  capabilities = {
-                    chat_completions = true;
-                    images = false;
-                    parallel_tool_calls = false;
-                    prompt_cache_key = false;
-                    tools = false;
-                  };
-                }
-                {
-                  name = "Parrot";
-                  display_name = "Local - Mamba Parrot";
-                  max_tokens = 4096;
-                  capabilities = {
-                    chat_completions = true;
-                    images = false;
-                    parallel_tool_calls = false;
-                    prompt_cache_key = false;
-                    tools = false;
+                    tools = true;
                   };
                 }
               ];
@@ -757,7 +643,7 @@ in
 
           github = {
             # Use a wrapper that injects the GITHUB_TOKEN using gh CLI
-            command = "/home/mahdtech/.local/bin/github-mcp-server-start";
+            command = "${config.home.homeDirectory}/.local/bin/github-mcp-server-start";
             args = [ ];
             env = { };
           };
