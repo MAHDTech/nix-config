@@ -595,6 +595,23 @@ in
                 }
               ];
             };
+            "NVIDIA" = {
+              api_url = "https://integrate.api.nvidia.com/v1";
+              available_models = [
+                {
+                  name = "minimaxai/minimax-m2.7";
+                  display_name = "Minimax M2.7";
+                  max_tokens = 8192;
+                  capabilities = {
+                    chat_completions = true;
+                    images = true;
+                    parallel_tool_calls = false;
+                    prompt_cache_key = false;
+                    tools = true;
+                  };
+                }
+              ];
+            };
           };
         };
 

@@ -1367,3 +1367,4 @@ zfsutil
 zstd
 zvol
 zvols
+minimaxai
