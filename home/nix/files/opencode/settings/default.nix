@@ -12,6 +12,7 @@ let
 
   unstablePkgs = with pkgsUnstable; [
     opencode
+    opencode-desktop
   ];
 in
 {
@@ -28,6 +29,9 @@ in
           {
             "$schema": "https://opencode.ai/config.json",
             "autoupdate": false,
+            "plugin" : [
+              "opencode-wakatime"
+            ],
             "mcp": {
               "devenv": {
                 "type": "local",
