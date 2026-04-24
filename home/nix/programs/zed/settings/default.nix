@@ -571,7 +571,8 @@ in
               {
                 name = "openrouter/auto";
                 display_name = "OpenRouter Auto";
-                max_tokens = 128000;
+                context_window = 100000;
+                max_tokens = 100000;
                 supports_tools = true;
                 supports_images = true;
               }
@@ -584,7 +585,8 @@ in
                 {
                   name = "Gemma 4 (8B)";
                   display_name = "Ranger - Gemma 4 (8B)";
-                  max_tokens = 131072;
+                  context_window = 100000;
+                  max_tokens = 100000;
                   capabilities = {
                     chat_completions = true;
                     images = false;
@@ -601,10 +603,11 @@ in
                 {
                   name = "minimaxai/minimax-m2.7";
                   display_name = "Minimax M2.7";
-                  max_tokens = 8192;
+                  context_window = 100000;
+                  max_tokens = 100000;
                   capabilities = {
                     chat_completions = true;
-                    images = true;
+                    images = false;
                     parallel_tool_calls = false;
                     prompt_cache_key = false;
                     tools = true;
