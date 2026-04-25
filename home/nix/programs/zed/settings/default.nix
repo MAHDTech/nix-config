@@ -15,14 +15,6 @@ let
     # Tools
     prettier
     jq
-
-    # AI Agents
-    claude-agent-acp
-    claude-code
-    claude-monitor
-    gemini-cli
-    copilot-language-server
-    opencode
   ];
 
 in
@@ -409,14 +401,11 @@ in
         #########################
 
         agent_servers = {
-          "OpenCode" = {
-            type = "custom";
-            command = "${pkgsUnstable.opencode}/bin/opencode";
-            args = [
-              "acp"
-            ];
-            env = {
-            };
+          "opencode" = {
+            type = "registry";
+          };
+          "gemini" = {
+            type = "registry";
           };
         };
 
@@ -585,24 +574,6 @@ in
                 {
                   name = "Gemma 4 (8B)";
                   display_name = "Ranger - Gemma 4 (8B)";
-                  context_window = 100000;
-                  max_tokens = 100000;
-                  capabilities = {
-                    chat_completions = true;
-                    images = false;
-                    parallel_tool_calls = false;
-                    prompt_cache_key = false;
-                    tools = true;
-                  };
-                }
-              ];
-            };
-            "NVIDIA" = {
-              api_url = "https://integrate.api.nvidia.com/v1";
-              available_models = [
-                {
-                  name = "minimaxai/minimax-m2.7";
-                  display_name = "Minimax M2.7";
                   context_window = 100000;
                   max_tokens = 100000;
                   capabilities = {

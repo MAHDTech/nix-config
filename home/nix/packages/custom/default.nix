@@ -1,6 +1,7 @@
 {
-  pkgs,
-  ...
+  #pkgs,
+  #...
+  _,
 }:
 {
   home.packages = [
@@ -14,7 +15,7 @@
 
     #(pkgs.callPackage ./pivnet.nix {})
 
-    (pkgs.callPackage ./gemini-cli.nix { })
+    #(pkgs.callPackage ./gemini-cli.nix { })
 
     #(pkgs.callPackage ./ls-colors.nix { })
   ];
