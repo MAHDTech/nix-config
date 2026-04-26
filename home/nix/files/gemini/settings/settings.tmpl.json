@@ -73,7 +73,7 @@
     }
   },
   "tools": {
-    "sandbox": "false",
+    "sandbox": false,
     "shell": {
       "showColor": true
     },
