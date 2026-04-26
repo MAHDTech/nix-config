@@ -15,9 +15,9 @@ GEMINI_CLI_EXTENSIONS=(
 	["security"]="https://github.com/gemini-cli-extensions/security"
 	#["slash-criticalthink"]="https://github.com/abagames/slash-criticalthink"
 	#["stripe-ai"]="https://github.com/stripe/ai"
-	["terraform-mcp-server"]="https://github.com/hashicorp/terraform-mcp-server"
+	#["terraform-mcp-server"]="https://github.com/hashicorp/terraform-mcp-server"
 	#["vault-mcp-server"]="https://github.com/hashicorp/vault-mcp-server"
-	["workspace"]="https://github.com/gemini-cli-extensions/workspace"
+	#["workspace"]="https://github.com/gemini-cli-extensions/workspace"
 )
 
 # Logging Levels Priority

@@ -12,7 +12,7 @@
 # Allows the Python script that runs the sub-agent to execute.
 [[rule]]
 toolName = "run_shell_command"
-commandRegex = ".*spawn_morty\\.py.*"
+commandRegex = ".*spawn_morty\\.ts.*"
 decision = "allow"
 priority = 100
 
