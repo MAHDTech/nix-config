@@ -11,8 +11,8 @@ declare -A GEMINI_CLI_EXTENSIONS
 GEMINI_CLI_EXTENSIONS=(
 	["github-mcp-server"]="https://github.com/github/github-mcp-server"
 	#["nanobanana"]="https://github.com/gemini-cli-extensions/nanobanana"
-	["pickle-rick"]="https://github.com/galz10/pickle-rick-extension"
-	["security"]="https://github.com/gemini-cli-extensions/security"
+	#["pickle-rick"]="https://github.com/galz10/pickle-rick-extension"
+	#["security"]="https://github.com/gemini-cli-extensions/security"
 	#["slash-criticalthink"]="https://github.com/abagames/slash-criticalthink"
 	#["stripe-ai"]="https://github.com/stripe/ai"
 	#["terraform-mcp-server"]="https://github.com/hashicorp/terraform-mcp-server"

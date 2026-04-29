@@ -74,11 +74,11 @@ in
       # -------------------------------------------------------------------------
       # Pickle Rick God Mode policies
       # -------------------------------------------------------------------------
-      "geminicli-policy-allowed" = {
-        target = "${config.home.homeDirectory}/.gemini/policies/pickle_rick.toml";
-        executable = false;
-        source = ./pickle_rick.toml;
-      };
+      #"geminicli-policy-allowed" = {
+      #  target = "${config.home.homeDirectory}/.gemini/policies/pickle_rick.toml";
+      #  executable = false;
+      #  source = ./pickle_rick.toml;
+      #};
 
     };
 

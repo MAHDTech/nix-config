@@ -1,6 +1,6 @@
 {
   "context": {
-    "includeDirectories": ["~/.gemini/extensions/pickle-rick"]
+    "includeDirectories": []
   },
   "experimental": {
     "plan": true
