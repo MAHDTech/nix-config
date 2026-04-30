@@ -3,7 +3,17 @@
     "includeDirectories": []
   },
   "experimental": {
-    "plan": true
+    "plan": true,
+    "autoMemory": true,
+    "memoryV2": true,
+    "contextManagement": true,
+    "gemma": true,
+    "voice": {
+      "activationMode": "push-to-talk",
+      "backend": "gemini-live"
+    },
+    "worktrees": true,
+    "modelSteering": true
   },
   "general": {
     "enableAutoUpdate": false,
@@ -16,7 +26,8 @@
     "vimMode": true
   },
   "hooksConfig": {
-    "enabled": true
+    "enabled": true,
+    "notifications": true
   },
   "ide": {
     "enabled": true
