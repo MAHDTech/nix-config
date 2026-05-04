@@ -1,10 +1,11 @@
 {
-  #pkgs,
-  #...
-  _,
+  pkgs,
+  ...
 }:
 {
   home.packages = [
+    (pkgs.callPackage ./OrcaSlicer.nix { })
+
     #(pkgs.callPackage ./cursor.nix {})
 
     #(pkgs.callPackage ./tkg.nix {})

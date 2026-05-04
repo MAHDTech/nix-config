@@ -26,9 +26,11 @@ CACERT
 CAINFO
 CAMCC
 CCID
+CFLAGS
 CLASSH
 CLUST
 CONTIG
+CSTDFLOAT
 CTYPE
 CUDA
 Cascadia
@@ -38,12 +40,15 @@ Clickfinger
 Coldspot
 Confinables
 Coqui
+Creality
 Custor
+DBOOST
 DBUS
 DEVNAME
 DEVPATH
 DEVSHELLS
 DISTRIB
+DMABUF
 DPMS
 DTSI
 Decepticons
@@ -63,6 +68,7 @@ FCFANS
 FCTEMPS
 FIGNORE
 FOWNER
+FPCLASSIFY
 Fancontrol
 Ferdium
 Fira
@@ -81,6 +87,7 @@ GSYNC
 Garuda
 Gdiff
 Ghislain
+GlowSlicer
 Guac
 HMAC
 HYPRCURSOR
@@ -110,7 +117,10 @@ KUBECONFIG
 Kasm
 Keymaps
 Kimi
+LDFLAGS
 LIBGL
+LIBNOISE
+LIBQUADMATH
 LIBSEAT
 LIBVA
 LINSTOR
@@ -134,6 +144,7 @@ Modeswitch
 Mxgw
 NATACPI
 NDFJQB
+NLOPT
 NODENAME
 NOFILE
 NONBLOCK
@@ -161,6 +172,7 @@ PYTHONPATH
 PYTHONVERSION
 Pixelorama
 Pixi
+Prusa
 Pwtku
 Pyrater
 QDQUCLA
@@ -189,6 +201,7 @@ SAXG
 SCMI
 SETFL
 SIGABRT
+SLIC
 SMMU
 SOCIONEXT
 SOLARFLARE
@@ -233,6 +246,7 @@ VIDEODRIVER
 VMALLOC
 Vinarskis
 Virtualenvs
+Voron
 WANGXUN
 WIZNET
 Websearch
@@ -340,12 +354,16 @@ cancelreader
 canmount
 caverav
 cdable
+cdom
+cdor
 cdrkit
 cdrom
 cdspell
+cdtor
 cellbuf
 certutil
 cfgerr
+cgal
 channelmix
 chara
 charasay
@@ -407,6 +425,7 @@ ctxt
 cubecl
 cumsum
 cursorrules
+cxxdev
 cyberjack
 daddr
 daisyui
@@ -467,6 +486,7 @@ edid
 efifb
 efis
 ehthumbs
+eigen
 elevenlabs
 elflord
 elfutils
@@ -504,6 +524,7 @@ fdatasync
 fdinfo
 fdisk
 fetchgit
+fetchpatch
 fetchurl
 ffado
 ffplay
@@ -534,6 +555,7 @@ fullquote
 gamemode
 gamemoderun
 gamescope
+gapps
 gcroots
 gdrive
 geglu
@@ -557,11 +579,15 @@ gitmodules
 gitops
 gitsubmodule
 gitsubmodules
+glew
+glfw
 glink
 glist
 globalasciiranges
 globasciiranges
 glog
+glowstab
+glvnd
 glxinfo
 gnnome
 gnugrep
@@ -646,7 +672,9 @@ ignorecase
 ignoredups
 ignorespace
 iifname
+ilmbase
 imgpkg
+imgproc
 incase
 inconsolata
 incsearch
@@ -710,6 +738,7 @@ laststatus
 latexmk
 layernorm
 ldac
+lboost
 leejet
 lessac
 levelname
@@ -725,10 +754,12 @@ libgbm
 libinput
 liblnss
 libmpc
+libnoise
 libnotify
 libnss
 libpipewire
 libritts
+libslic
 libsecret
 libu
 libusb
@@ -736,6 +767,7 @@ libvdpau
 libvirtd
 libvulkan
 libwayland
+libx
 libxkbcommon
 libze
 liga
@@ -770,6 +802,7 @@ lowbatt
 lsgpu
 lsusb
 lucasb
+ludev
 lydell
 mahdtech
 mailfile
@@ -803,8 +836,6 @@ mntdir
 modalias
 modeline
 modelines
-modeset
-modesetting
 modtime
 modutil
 monitord
@@ -812,7 +843,6 @@ mononoki
 moonshotai
 morty
 mountpoint
-mousefocus
 mousehide
 mousemodel
 movefocus
@@ -826,6 +856,7 @@ mtools
 musnix
 nameref
 nanobanana
+nanum
 nargs
 nbctl
 nbsp
@@ -851,6 +882,7 @@ nixd
 nixfmt
 nixos
 nixpkgs
+nlopt
 nmtui
 nnoremap
 noatime
@@ -893,23 +925,28 @@ nvmet
 nvml
 nvtop
 obsproject
+occt
 oifname
 olddefconfig
 ollama
 ondemand
 onepassword
 oneshot
+onetbb
 onig
 onlyoffice
 oom
 oomd
 openal
+opencascade
 opencl
 opencode
 opengl
 openpgp
 openrouter
 opensc
+opencv
+openvdb
 openvswitch
 optimus
 orama
@@ -931,6 +968,7 @@ pastetoggle
 pavucontrol
 pblp
 pciutils
+pcre
 pcsc
 pcsclite
 peachpuff
@@ -1088,6 +1126,7 @@ scrolloff
 sdam
 sdhci
 sdnotify
+secretstore
 secretspec
 secring
 secureboot
@@ -1164,6 +1203,7 @@ stdenv
 strcmp
 strcoll
 strftime
+stringop
 subgid
 subgids
 submatch
@@ -1264,8 +1304,6 @@ unixctl
 unnamedplus
 unsquashed
 unsqueeze
-upmix
-upmixing
 upower
 urlencode
 usbd
@@ -1321,6 +1359,7 @@ wasmi
 wavelen
 waybar
 wayshot
+webkitgtk
 webp
 webui
 wgetrc
@@ -1338,6 +1377,7 @@ wireplumber
 wlogout
 wpctl
 writecache
+wxwidgets
 xattr
 xdph
 xdphpicker
@@ -1364,6 +1404,7 @@ zeditor
 zenbook
 zerosize
 zfsutil
+zink
 zstd
 zvol
 zvols

@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  ...
+}:
 let
   zfsPoolNames = [
     "zpool"
@@ -20,10 +24,10 @@ in
 
       devNodes = "/dev/disk/by-partuuid";
 
-      forceImportRoot = true;
+      forceImportRoot = lib.mkForce true;
       forceImportAll = true;
 
-      allowHibernation = false;
+      unsafeAllowHibernation = false;
     };
   };
 

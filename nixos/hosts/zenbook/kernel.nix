@@ -162,6 +162,7 @@ let
       mkdir -p $out/boot
       cp arch/arm64/boot/Image $out/boot/vmlinuz
       cp arch/arm64/boot/Image $out/Image
+      cp .config $out/config
       make ARCH=arm64 modules_install INSTALL_MOD_PATH=$out
       make ARCH=arm64 dtbs_install INSTALL_DTBS_PATH=$out/dtbs
 
@@ -176,6 +177,7 @@ let
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];
+      configfile = "${kernelBuild}/config";
       config = {
         isEnabled = _: true;
         isYes = _: true;
