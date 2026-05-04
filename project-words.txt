@@ -836,13 +836,15 @@ mntdir
 modalias
 modeline
 modelines
+modeset
+modesetting
 modtime
 modutil
 monitord
 mononoki
 moonshotai
 morty
-mountpoint
+mousefocus
 mousehide
 mousemodel
 movefocus
@@ -1304,6 +1306,8 @@ unixctl
 unnamedplus
 unsquashed
 unsqueeze
+upmix
+upmixing
 upower
 urlencode
 usbd
