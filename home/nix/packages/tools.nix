@@ -159,6 +159,9 @@ in
       go
       golangci-lint
       gotools
+
+      # 3D Printing
+      orca-slicer # OSS version of Bambu Studio
     ]
     ++ unstablePkgs
     ++ systemArchPackages;
