@@ -1446,6 +1446,7 @@ polyval
 pstore
 pwrkey
 rawmidi
+mountpoint
 regmap
 rfcomm
 rpmsg

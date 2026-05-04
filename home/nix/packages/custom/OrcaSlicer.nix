@@ -40,7 +40,7 @@
   systemd,
   onetbb,
   webkitgtk_4_1,
-  wxwidgets_3_1,
+  wxwidgets_3_3,
   libx11,
   libnoise,
   withSystemd ? stdenv.hostPlatform.isLinux,
@@ -48,11 +48,8 @@
 }:
 let
   wxGTK' =
-    (wxwidgets_3_1.override {
-      withCurl = true;
-      withPrivateFonts = true;
+    (wxwidgets_3_3.override {
       withWebKit = true;
-      withEGL = false;
     }).overrideAttrs
       (old: {
         buildInputs = old.buildInputs ++ [ libsecret ];

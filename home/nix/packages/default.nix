@@ -7,6 +7,6 @@
     ./devenv.nix
 
     # Custom packages
-    #./custom
+    ./custom
   ];
 }
