@@ -206,6 +206,8 @@ stdenv.mkDerivation (finalAttrs: {
     sed -i 's|nlopt_cxx|nlopt|g' cmake/modules/FindNLopt.cmake
     sed -i 's|"libnoise/noise.h"|"noise/noise.h"|' src/libslic3r/PerimeterGenerator.cpp
     sed -i 's|"libnoise/noise.h"|"noise/noise.h"|' src/libslic3r/Feature/FuzzySkin/FuzzySkin.cpp
+    sed -i 's|/OrcaSlicer"|/OrcaSlicerCustom"|g' CMakeLists.txt
+    sed -i 's|"X-BBL-Client-Version", VersionInfo::convert_full_version(SLIC3R_VERSION)|"X-BBL-Client-Version", "01.08.04.51"|g' src/slic3r/GUI/GUI_App.cpp
   '';
 
   cmakeFlags = [
@@ -233,14 +235,16 @@ stdenv.mkDerivation (finalAttrs: {
           glew
         ]
       }"
+      --prefix LD_PRELOAD : "${glew.out}/lib/libGLEW.so"
       --set WEBKIT_DISABLE_COMPOSITING_MODE 1
+      --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+      --set GDK_BACKEND x11
       --set FONTCONFIG_FILE "${fontsConf}"
       ${lib.optionalString withNvidiaGLWorkaround ''
         --set __GLX_VENDOR_LIBRARY_NAME mesa
         --set __EGL_VENDOR_LIBRARY_FILENAMES /run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json
         --set MESA_LOADER_DRIVER_OVERRIDE zink
         --set GALLIUM_DRIVER zink
-        --set WEBKIT_DISABLE_DMABUF_RENDERER 1
       ''}
     )
   '';
@@ -254,12 +258,23 @@ stdenv.mkDerivation (finalAttrs: {
     fi
 
     # Update desktop file
-    if [ -f $out/share/applications/orca-slicer.desktop ]; then
-      mv $out/share/applications/orca-slicer.desktop $out/share/applications/orca-slicer-custom.desktop
-      substituteInPlace $out/share/applications/orca-slicer-custom.desktop \
-        --replace-fail "Exec=orca-slicer" "Exec=orca-slicer-custom" \
-        --replace-fail "Name=OrcaSlicer" "Name=OrcaSlicer Custom"
-    fi
+    for desktop in $out/share/applications/*.desktop; do
+      if [ -f "$desktop" ]; then
+        mv "$desktop" $out/share/applications/orca-slicer-custom.desktop
+        substituteInPlace $out/share/applications/orca-slicer-custom.desktop \
+          --replace-fail "Exec=orca-slicer" "Exec=orca-slicer-custom" \
+          --replace-fail "Name=OrcaSlicer" "Name=OrcaSlicer Custom" \
+          --replace-warn "Icon=OrcaSlicer" "Icon=orca-slicer-custom"
+      fi
+    done
+
+    # Rename icons to avoid collision
+    for size in 32 128 192; do
+      icon_path="$out/share/icons/hicolor/''${size}x''${size}/apps/OrcaSlicer.png"
+      if [ -f "$icon_path" ]; then
+        mv "$icon_path" "$out/share/icons/hicolor/''${size}x''${size}/apps/orca-slicer-custom.png"
+      fi
+    done
   '';
 
   meta = {
