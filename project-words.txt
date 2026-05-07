@@ -1461,3 +1461,4 @@ soundwire
 trng
 ubwc
 worktrees
+rustdesk

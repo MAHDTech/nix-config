@@ -65,5 +65,8 @@
 
     # Games
     ../../system/config/games
+
+    # Virtual Desktop
+    ../../system/config/services/rustdesk
   ];
 }
