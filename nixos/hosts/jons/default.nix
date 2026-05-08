@@ -67,6 +67,6 @@
     ../../system/config/games
 
     # Virtual Desktop
-    ../../system/config/services/rustdesk
+    ../../system/config/services/wayvnc
   ];
 }
