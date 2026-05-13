@@ -37,19 +37,25 @@
     steam = {
       enable = true;
       localNetworkGameTransfers.openFirewall = true;
-      package = pkgs.steam.override {
-        extraPkgs =
-          pkgs: with pkgs; [
-            mangohud # FPS Overlay
-            gamescope # Steam Overlay
-            gamemode # GameMode
-            vulkan-tools # 'vulkaninfo'
-            libva-utils # 'vainfo'
-            openssl
-            libkrb5
-            keyutils
-          ];
-      };
+
+      # Use the module-level extraPackages which correctly handles 32-bit/64-bit merging.
+      extraPackages = with pkgs; [
+        mangohud # FPS Overlay
+        gamescope # Steam Overlay
+        gamemode # GameMode
+        vulkan-tools # 'vulkaninfo'
+        libva-utils # 'vainfo'
+        openssl
+        libkrb5
+        keyutils
+        curl
+        glib
+        glib-networking
+        dbus-glib
+        networkmanager # Essential for Steam's connectivity checks
+        systemd # Provides nss-resolve for DNS inside the FHS sandbox
+      ];
+
       remotePlay = {
         openFirewall = true;
       };

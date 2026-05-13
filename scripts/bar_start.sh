@@ -12,7 +12,7 @@ GAME_BINARY="beyond-all-reason"
 # 1. Environment setup for Intel Arc GPU
 setup_env() {
 	# Wayland settings (since you're using Hyprland)
-	export SDL_VIDEODRIVER=wayland
+	export SDL_VIDEODRIVER=wayland,x11
 	export XDG_SESSION_TYPE=wayland
 	export WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
 	export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}

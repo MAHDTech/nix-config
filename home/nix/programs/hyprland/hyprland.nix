@@ -865,8 +865,8 @@ in
         # Use the New GL renderer
         "GSK_RENDERER,gl"
 
-        # Sets SDL to use Wayland video driver for games and media apps
-        "SDL_VIDEODRIVER,wayland"
+        # Sets SDL to use Wayland video driver for games and media apps, with X11 fallback
+        "SDL_VIDEODRIVER,wayland,x11"
 
         # Forces Qt applications to use Wayland platform instead of X11
         "QT_QPA_PLATFORM,wayland"
