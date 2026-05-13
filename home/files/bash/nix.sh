@@ -263,7 +263,6 @@ function _dotfiles_actions() {
 		nixos-rebuild \
 			"${ACTION}" \
 			--sudo \
-			--upgrade-all \
 			--refresh \
 			--impure \
 			--accept-flake-config \

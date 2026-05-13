@@ -36,6 +36,7 @@
     };
     steam = {
       enable = true;
+      localNetworkGameTransfers.openFirewall = true;
       package = pkgs.steam.override {
         extraPkgs =
           pkgs: with pkgs; [
@@ -44,6 +45,9 @@
             gamemode # GameMode
             vulkan-tools # 'vulkaninfo'
             libva-utils # 'vainfo'
+            openssl
+            libkrb5
+            keyutils
           ];
       };
       remotePlay = {
@@ -64,18 +68,21 @@
     };
   };
 
-  # Allow ports required for Steam Link.
-  networking = {
-    firewall = {
-      allowedUDPPorts = [
-        27031
-        27036
-      ];
-      allowedTCPPorts = [
-        27036
-        27037
-      ];
-    };
+  # Steam Firewall Rules
+  networking.firewall = {
+    allowedTCPPortRanges = [
+      {
+        from = 27014;
+        to = 27050;
+      }
+    ];
+    allowedUDPPortRanges = [
+      {
+        from = 27000;
+        to = 27100;
+      }
+    ];
   };
 
+  # Gamescope and Steam Link configuration are handled above.
 }

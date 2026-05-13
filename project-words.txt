@@ -1464,3 +1464,5 @@ worktrees
 rustdesk
 letmein
 wayvnc
+keyutils
+libkrb

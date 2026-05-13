@@ -171,12 +171,12 @@
       enp10s0 = {
         name = "enp10s0";
         useDHCP = false;
-        mtu = lib.mkForce 9000;
+        mtu = lib.mkForce 1500;
       };
       br0 = {
         name = "br0";
         useDHCP = true;
-        mtu = 9000;
+        mtu = 1500;
       };
     };
     bridges = {

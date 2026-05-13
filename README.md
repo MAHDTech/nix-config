@@ -148,7 +148,6 @@ NIXOS_HOST="NUC"
 nixos-rebuild \
     boot  \
     --sudo \
-    --upgrade-all \
     --refresh \
     --impure \
     --flake ".#${NIXOS_HOST}"
@@ -170,7 +169,6 @@ NixOS changes are applied on each boot.
 nixos-rebuild \
     boot  \
     --sudo \
-    --upgrade-all \
     --refresh \
     --impure \
     --flake '.#'
@@ -182,7 +180,6 @@ Or remotely with;
 nixos-rebuild \
     boot  \
     --sudo \
-    --upgrade-all \
     --refresh \
     --flake 'github:MAHDTech/nix-config#'
 ```
@@ -288,7 +285,6 @@ nixos-enter --root /mnt/nixos
 nixos-rebuild \
     boot  \
     --sudo \
-    --upgrade-all \
     --refresh \
     --flake 'github:MAHDTech/nix-config#'
 ```
