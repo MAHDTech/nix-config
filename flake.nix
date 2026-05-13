@@ -38,14 +38,6 @@
       flake = true;
     };
 
-    #nixpkgs-unstable = {
-    #  type = "github";
-    #  owner = "cachix";
-    #  repo = "devenv-nixpkgs";
-    #  ref = "rolling";
-    #  flake = true;
-    #};
-
     nixos-hardware = {
       type = "github";
       owner = "NixOS";
