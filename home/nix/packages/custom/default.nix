@@ -1,10 +1,11 @@
 {
-  pkgs,
-  ...
+  #pkgs,
+  _,
 }:
 {
   home.packages = [
-    (pkgs.callPackage ./OrcaSlicer.nix { })
+    #(pkgs.callPackage ./BambuStudio.nix { })
+    #(pkgs.callPackage ./OrcaSlicer.nix { })
 
     #(pkgs.callPackage ./cursor.nix {})
 
