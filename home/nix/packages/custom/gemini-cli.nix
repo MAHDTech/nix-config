@@ -11,22 +11,23 @@
   ripgrep,
   nodejs_22,
   nix-update-script,
+  litert-lm,
 }:
 
 buildNpmPackage (finalAttrs: {
   pname = "gemini-cli-custom";
-  version = "0.38.1";
+  version = "0.42.0";
 
   src = fetchFromGitHub {
     owner = "google-gemini";
     repo = "gemini-cli";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-Iq/KxQ8rbLtXDbGzcZxspfFwar189H3mBWwOD4hO7HU=";
+    hash = "sha256-QYSzJdyjJ5SvPkI/uf/wu8MdM76W+djai6zD38IJpos=";
   };
 
   nodejs = nodejs_22;
 
-  npmDepsHash = "sha256-T3fxNFvkLR7f49GQjzzTnl3VM+VUUgJfFF5d2GGe7L4=";
+  npmDepsHash = "sha256-hKNEJ/MAseYs8WLr36h40pYv+5nef8EPhZIfmPKYJPY=";
 
   dontPatchElf = stdenv.isDarwin;
 
@@ -40,6 +41,7 @@ buildNpmPackage (finalAttrs: {
   buildInputs = [
     ripgrep
     libsecret
+    litert-lm
   ];
 
   preConfigure = ''
@@ -100,7 +102,8 @@ buildNpmPackage (finalAttrs: {
 
     makeWrapper "${lib.getExe finalAttrs.nodejs}" "$out/bin/gemini-custom" \
       --add-flags "--no-warnings=DEP0040" \
-      --add-flags "$out/share/gemini-cli-custom/gemini.js"
+      --add-flags "$out/share/gemini-cli-custom/gemini.js" \
+      --prefix PATH : "${lib.makeBinPath [ litert-lm ]}"
 
     runHook postInstall
   '';

@@ -1,7 +1,10 @@
 {
-  #pkgs,
-  _,
+  pkgs,
+  ...
 }:
+let
+  litert-lm = pkgs.callPackage ./litert-lm.nix { };
+in
 {
   home.packages = [
     #(pkgs.callPackage ./BambuStudio.nix { })
@@ -17,8 +20,10 @@
 
     #(pkgs.callPackage ./pivnet.nix {})
 
-    #(pkgs.callPackage ./gemini-cli.nix { })
+    litert-lm
+    (pkgs.callPackage ./gemini-cli.nix { inherit litert-lm; })
 
     #(pkgs.callPackage ./ls-colors.nix { })
+
   ];
 }

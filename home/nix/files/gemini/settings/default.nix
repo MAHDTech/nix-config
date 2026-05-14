@@ -11,6 +11,8 @@ let
     inherit (pkgs.stdenv.hostPlatform) system;
   };
 
+  litert-lm = pkgs.callPackage ../../../packages/custom/litert-lm.nix { };
+
   mcpServerTools = with pkgs; [
     bun
     github-mcp-server
@@ -20,14 +22,14 @@ let
     uv
   ];
 
-  # Wrap gemini-cli so it has the mcpServers in its PATH
+  # Wrap gemini-cli (nixpkgs version) + our litert-lm binary for gemma support
   gemini-cli-wrapped = pkgs.symlinkJoin {
     name = "gemini-cli";
     paths = [ pkgsUnstable.gemini-cli ];
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/gemini \
-        --prefix PATH : ${lib.makeBinPath mcpServerTools}
+        --prefix PATH : ${lib.makeBinPath (mcpServerTools ++ [ litert-lm ])}
     '';
   };
 
@@ -71,14 +73,10 @@ in
       #  source = ./settings.tmpl.json;
       #};
 
-      # -------------------------------------------------------------------------
-      # Pickle Rick God Mode policies
-      # -------------------------------------------------------------------------
-      #"geminicli-policy-allowed" = {
-      #  target = "${config.home.homeDirectory}/.gemini/policies/pickle_rick.toml";
-      #  executable = false;
-      #  source = ./pickle_rick.toml;
-      #};
+      # Link our Nix-packaged litert-lm binary to where gemini-cli expects it
+      ".gemini/bin/litert/lit.linux_x86_64" = {
+        source = lib.getExe litert-lm;
+      };
 
     };
 
