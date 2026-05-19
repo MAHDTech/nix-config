@@ -1,8 +1,7 @@
 {
   syncthingConfig = {
     deviceName = "ORION";
-    # TODO: Get device ID from Syncthing.
-    deviceId = "";
+    deviceId = "BADYXG2-HRDVBNF-QVA742J-VPYZMDN-IED2CTO-VTPXTXQ-J6VRXV6-IIFSMQG";
     otherDevices = [
       {
         name = "JONS";

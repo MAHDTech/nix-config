@@ -10,7 +10,7 @@
       }
       {
         name = "ORION";
-        id = ""; # TODO: Update with ORION device ID once generated
+        id = "BADYXG2-HRDVBNF-QVA742J-VPYZMDN-IED2CTO-VTPXTXQ-J6VRXV6-IIFSMQG";
         autoAcceptFolders = false;
       }
     ];
