@@ -360,6 +360,51 @@
           ];
         };
 
+        # Hostname: ORION
+        # Description: Radxa Orion O6
+        ORION = configNixOS {
+          username = globalUsername;
+          system = "aarch64-linux";
+
+          specialArgs = {
+            inherit inputs;
+          };
+
+          extraModules = [
+            { system.stateVersion = globalStateVersion; }
+
+            ./nixos/hosts/orion
+
+            inputs.disko.nixosModules.disko
+            ./nixos/hosts/orion/disko-config.nix
+
+            inputs.catppuccin.nixosModules.catppuccin
+            inputs.flatpaks.nixosModules.default
+            inputs.home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs;
+                  inherit globalStateVersion;
+                  inherit globalUsername;
+                  inherit inCI;
+                }
+                // (import ./nixos/hosts/orion/home-manager/syncthing.nix);
+                users.${globalUsername} = {
+                  imports = [
+                    ./home
+
+                    inputs.catppuccin.homeManagerModules.catppuccin
+                    inputs.sops-nix.homeManagerModules.sops
+                  ];
+                };
+              };
+            }
+          ];
+        };
+
         # Hostname: arc-image
         # Description: AMD Ryzen Desktop with Intel ARC B580 GPU (Bootable installer ISO)
         arc-image = inputs.nixpkgs.lib.nixosSystem {
@@ -379,6 +424,17 @@
           modules = [
             { system.stateVersion = globalStateVersion; }
             ./nixos/hosts/zenbook/raw-efi.nix
+          ];
+        };
+
+        # Hostname: orion-image
+        # Description: Radxa Orion O6 (Bootable installer ISO)
+        orion-image = inputs.nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          specialArgs = { inherit inputs; };
+          modules = [
+            { system.stateVersion = globalStateVersion; }
+            ./nixos/hosts/orion/installer.nix
           ];
         };
 
@@ -407,6 +463,7 @@
 
         arc-image = self.nixosConfigurations.arc-image.config.system.build.isoImage;
         zenbook-image = self.nixosConfigurations.zenbook-image.config.system.build.image;
+        orion-image = self.nixosConfigurations.orion-image.config.system.build.isoImage;
       });
 
       #########################

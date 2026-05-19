@@ -1,0 +1,30 @@
+On branch trunk                                                                                                                                                                                          
+Your branch is up to date with 'origin/trunk'.                                                                                                                                                           
+                                                                                                                                                                                                         
+Changes to be committed:                                                                                                                                                                                 
+  (use "git restore --staged <file>..." to unstage)                                                                                                                                                      
+        new file:   nixos/hosts/orion/default.nix                                                                                                                                                        
+        new file:   nixos/hosts/orion/disko-config.nix                                                                                                                                                   
+        new file:   nixos/hosts/orion/files/firmware/ath12k/WCN7850/hw2.0/Notice.txt.zst                                                                                                                 
+        new file:   nixos/hosts/orion/files/firmware/ath12k/WCN7850/hw2.0/amss.bin.zst                                                                                                                   
+        new file:   nixos/hosts/orion/files/firmware/ath12k/WCN7850/hw2.0/board-2.bin.zst                                                                                                                
+        new file:   nixos/hosts/orion/files/firmware/ath12k/WCN7850/hw2.0/m3.bin.zst                                                                                                                     
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/adsp_dtbs.elf                                                                                                     
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/adspr.jsn                                                                                                         
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/adsps.jsn                                                                                                         
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/adspua.jsn                                                                                                        
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/battmgr.jsn                                                                                                       
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/cdsp_dtbs.elf                                                                                                     
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/cdspr.jsn                                                                                                         
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/qcadsp8380.mbn                                                                                                    
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/qccdsp8380.mbn                                                                                                    
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/qcdxkmsuc8380.mbn                                                                                                 
+        new file:   nixos/hosts/orion/files/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14/qcdxkmsucpurwa.mbn                                                                                                
+        new file:   nixos/hosts/orion/firmware.nix                                                                                                                                                       
+        new file:   nixos/hosts/orion/hardware-configuration.nix                                                                                                                                         
+        new file:   nixos/hosts/orion/home-manager/syncthing.nix                                                                                                                                         
+        new file:   nixos/hosts/orion/kernel.nix                                                                                                                                                         
+        new file:   nixos/hosts/orion/lsmod.txt                                                                                                                                                          
+        new file:   nixos/hosts/orion/pd-mapper.nix                                                                                                                                                      
+        new file:   nixos/hosts/orion/power.nix                                                                                                                                                          
+        new file:   nixos/hosts/orion/raw-efi.nix                                                                                                                                                        
