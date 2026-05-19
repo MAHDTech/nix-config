@@ -10,7 +10,7 @@
         autoAcceptFolders = false;
       }
       {
-        name = "NUC";
+        name = "ZENBOOK";
         id = "XKSODQK-74XAIJW-2RAMYBQ-MJV5DHL-CN6MXTJ-AJ6X6BM-JU2SAXG-TRKDPAN";
         autoAcceptFolders = false;
       }
@@ -25,7 +25,7 @@
 
         devices = [
           "JONS"
-          "NUC"
+          "ZENBOOK"
         ];
 
         versioning = {

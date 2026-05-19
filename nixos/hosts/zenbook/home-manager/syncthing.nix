@@ -1,8 +1,7 @@
 {
   syncthingConfig = {
     deviceName = "ZENBOOK";
-    # TODO: Get device ID from Syncthing.
-    deviceId = "";
+    deviceId = "XKSODQK-74XAIJW-2RAMYBQ-MJV5DHL-CN6MXTJ-AJ6X6BM-JU2SAXG-TRKDPAN";
     otherDevices = [
       {
         name = "JONS";
@@ -10,8 +9,8 @@
         autoAcceptFolders = false;
       }
       {
-        name = "NUC";
-        id = "XKSODQK-74XAIJW-2RAMYBQ-MJV5DHL-CN6MXTJ-AJ6X6BM-JU2SAXG-TRKDPAN";
+        name = "ORION";
+        id = ""; # TODO: Update with ORION device ID once generated
         autoAcceptFolders = false;
       }
     ];
@@ -25,7 +24,7 @@
 
         devices = [
           "JONS"
-          "NUC"
+          "ORION"
         ];
 
         versioning = {
