@@ -28,7 +28,6 @@ in
       "docker"
       "flatpak"
       "input"
-      "networkmanager"
       "nixos"
       "nixos-admins"
       "pipewire"

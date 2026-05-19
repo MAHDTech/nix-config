@@ -25,7 +25,6 @@ in
       "disk"
       "docker"
       "flatpak"
-      "networkmanager"
       "nixos"
       "pipewire"
       "plugdev"
