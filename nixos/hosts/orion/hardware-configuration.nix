@@ -17,8 +17,8 @@
     kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
 
     extraModulePackages = [
-      (config.boot.kernelPackages.callPackage ./cix-npu-driver.nix { })
-      (config.boot.kernelPackages.callPackage ./cix-vpu-driver.nix { })
+      (config.boot.kernelPackages.callPackage ./packages/cix-npu-driver.nix { })
+      (config.boot.kernelPackages.callPackage ./packages/cix-vpu-driver.nix { })
     ];
 
     initrd = {
