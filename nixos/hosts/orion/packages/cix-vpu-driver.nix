@@ -19,8 +19,12 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = kernel.moduleBuildDependencies;
 
   # The VPU Makefile expects COMPASS_DRV_BTENVAR_KPATH to be the kernel build directory
-  makeFlags = kernel.makeFlags ++ [
+  makeFlags = [
     "COMPASS_DRV_BTENVAR_KPATH=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+  ]
+  ++ lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
+    "ARCH=${stdenv.hostPlatform.linuxArch}"
+    "CROSS_COMPILE=${stdenv.cc.targetPrefix}"
   ];
 
   installPhase = ''

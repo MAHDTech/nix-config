@@ -1488,3 +1488,5 @@ qcadsp
 qccdsp
 qcdxkmsuc
 qcdxkmsucpurwa
+ZHOUYI
+DEVFREQ

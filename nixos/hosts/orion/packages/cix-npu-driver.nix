@@ -19,9 +19,16 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = kernel.moduleBuildDependencies;
 
   # The NPU Makefile expects COMPASS_DRV_BTENVAR_KPATH to be the kernel build directory
-  makeFlags = kernel.makeFlags ++ [
+  makeFlags = [
     "COMPASS_DRV_BTENVAR_KPATH=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
     "BUILD_TARGET_PLATFORM_KMD=BUILD_PLATFORM_SKY1"
+    "BUILD_AIPU_VERSION_KMD=BUILD_ZHOUYI_V3"
+    "BUILD_NPU_DEVFREQ=y"
+    "COMPASS_DRV_BTENVAR_KMD_VERSION=6.1.0"
+  ]
+  ++ lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
+    "ARCH=${stdenv.hostPlatform.linuxArch}"
+    "CROSS_COMPILE=${stdenv.cc.targetPrefix}"
   ];
 
   # The NPU Makefile is actually inside the driver/ subdirectory,
