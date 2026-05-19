@@ -43,6 +43,8 @@
     kernelParams = [
       "console=ttyAMA0,115200n8"
       "console=tty0"
+      "nowatchdog" # Disable hardware watchdog
+      "module_blacklist=sbsa_gwdt" # Disable sbsa_gwdt module (watchdog)
     ];
 
     # Modern boot management

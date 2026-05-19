@@ -1,8 +1,18 @@
-{ ... }:
+{ lib, ... }:
 {
   networking = {
     hostName = "ORION";
     hostId = "def00004";
+  };
+
+  # Disable hardware watchdog. The SBSA Generic Watchdog on this board
+  # initializes with a 10s timeout, causing reboot loops before systemd can pet it.
+  systemd = {
+    settings.Manager = {
+      RuntimeWatchdogSec = lib.mkForce "0";
+      RebootWatchdogSec = lib.mkForce "0";
+      KExecWatchdogSec = lib.mkForce "0";
+    };
   };
 
   imports = [
