@@ -81,7 +81,7 @@
         exit 1
       fi
 
-      BIOS_VERSION="1.1.0-1"
+      BIOS_VERSION="1.2.1"
 
       echo "Downloading Radxa Orion O6 BIOS ''${BIOS_VERSION}..."
       TMPDIR=$(mktemp -d)
