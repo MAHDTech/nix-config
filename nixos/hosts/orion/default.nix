@@ -39,6 +39,9 @@
     ../../system/config/hardware/desktop
     ../../system/config/network/wireless
 
+    # Video / Graphics
+    ../../system/config/video/mali
+
     # Networking
     ../../system/config/network/hosts.nix
 
