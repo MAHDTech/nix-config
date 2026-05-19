@@ -1,3 +1,6 @@
+# Ignore scratch files
+scratch/
+
 # Ignore Nix result file.
 result
 
@@ -38,4 +41,3 @@ WIP/
 
 # PIDs
 *.pid
-
