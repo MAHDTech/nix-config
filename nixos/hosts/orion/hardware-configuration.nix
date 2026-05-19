@@ -73,6 +73,12 @@
         exit 1
       fi
 
+      # Safety check: Ensure network connectivity
+      if ! ${pkgs.iputils}/bin/ping -c 1 -W 2 github.com >/dev/null 2>&1; then
+        echo "ERROR: Cannot reach github.com. Please check your internet connection."
+        exit 1
+      fi
+
       BIOS_VERSION="1.1.0-1"
 
       echo "Downloading Radxa Orion O6 BIOS ''${BIOS_VERSION}..."
