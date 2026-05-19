@@ -17,7 +17,7 @@
     syncFolders = {
       "Sync" = {
 
-        enable = false;
+        enable = true;
         id = "syncthing-shared";
         path = "/home/mahdtech/Sync";
         type = "sendreceive";
