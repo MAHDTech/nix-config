@@ -11,9 +11,10 @@ let
     inherit (pkgs.stdenv.hostPlatform) system;
   };
 
-  isX86 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+  stdenvSystem = pkgs.stdenv.hostPlatform.system;
+  litertSuffix = if stdenvSystem == "aarch64-linux" then "arm64" else "x86_64";
 
-  litert-lm = if isX86 then pkgs.callPackage ../../../packages/custom/litert-lm.nix { } else null;
+  litert-lm = pkgs.callPackage ../../../packages/custom/litert-lm.nix { };
 
   mcpServerTools = with pkgs; [
     bun
@@ -31,7 +32,7 @@ let
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/gemini \
-        --prefix PATH : ${lib.makeBinPath (mcpServerTools ++ (lib.optional isX86 litert-lm))}
+        --prefix PATH : ${lib.makeBinPath (mcpServerTools ++ [ litert-lm ])}
     '';
   };
 
@@ -64,7 +65,7 @@ in
   };
 
   home = {
-    file = lib.optionalAttrs isX86 {
+    file = {
 
       # -------------------------------------------------------------------------
       # Gemini CLI settings template
@@ -76,7 +77,7 @@ in
       #};
 
       # Link our Nix-packaged litert-lm binary to where gemini-cli expects it
-      ".gemini/bin/litert/lit.linux_x86_64" = {
+      ".gemini/bin/litert/lit.linux_${litertSuffix}" = {
         source = lib.getExe litert-lm;
       };
 

@@ -5,7 +5,10 @@
 }:
 let
 
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs.stdenv.hostPlatform) system;
+    config.allowUnfree = true;
+  };
 
   unstablePkgs = with pkgsUnstable; [
     antigravity-fhs
