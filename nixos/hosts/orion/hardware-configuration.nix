@@ -59,6 +59,20 @@
     (pkgs.writeShellScriptBin "update-orion-bios" ''
       set -euo pipefail
 
+      # Safety check: Ensure we are running on the ORION host
+      CURRENT_HOST=$(cat /etc/hostname 2>/dev/null || echo "UNKNOWN")
+      if [ "$CURRENT_HOST" != "ORION" ] && [ "$CURRENT_HOST" != "orion-installer" ]; then
+        echo "ERROR: This script is only intended to be run on the ORION host!"
+        echo "Current host is: $CURRENT_HOST"
+        exit 1
+      fi
+
+      # Safety check: Ensure architecture is aarch64
+      if [ "$(uname -m)" != "aarch64" ]; then
+        echo "ERROR: This script requires an aarch64 architecture!"
+        exit 1
+      fi
+
       BIOS_VERSION="1.1.0-1"
 
       echo "Downloading Radxa Orion O6 BIOS ''${BIOS_VERSION}..."

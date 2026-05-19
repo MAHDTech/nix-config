@@ -238,7 +238,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						ai.selected = !ai.selected
 						items[idx] = ai
 						m.list.SetItems(items)
-						m.fileLogger.Printf("Toggled %s to %t (via space key)", ai.title, ai.selected)
+						m.fileLogger.Printf(
+							"Toggled %s to %t (via space key)",
+							ai.title,
+							ai.selected,
+						)
 					}
 				}
 				return m, nil
@@ -327,7 +331,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case actions.DoneMsg:
 			m.state = "done"
-			m.fileLogger.Printf("Execution completed: %d processed, %d matched", m.processed, m.matched)
+			m.fileLogger.Printf(
+				"Execution completed: %d processed, %d matched",
+				m.processed,
+				m.matched,
+			)
 			return m, nil
 		}
 
