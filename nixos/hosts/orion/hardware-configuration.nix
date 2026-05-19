@@ -115,6 +115,15 @@
     enableRedistributableFirmware = true;
   };
 
+  # Explicitly configure systemd-networkd to manage Ethernet interfaces
+  systemd.network.networks."10-lan" = {
+    matchConfig.Name = [
+      "en*"
+      "eth*"
+    ];
+    networkConfig.DHCP = "yes";
+  };
+
   networking.useDHCP = lib.mkForce true;
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 }
