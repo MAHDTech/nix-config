@@ -58,13 +58,19 @@
   environment.systemPackages = [
     (pkgs.writeShellScriptBin "update-orion-bios" ''
       set -euo pipefail
-      echo "Downloading Radxa Orion O6 BIOS 1.1.0-1..."
+
+      BIOS_VERSION="1.1.0-1"
+
+      echo "Downloading Radxa Orion O6 BIOS ''${BIOS_VERSION}..."
       TMPDIR=$(mktemp -d)
       cd $TMPDIR
-      ${pkgs.curl}/bin/curl -sL https://github.com/radxa-pkg/edk2-cix/releases/download/1.1.0-1/edk2-cix_1.1.0-1_all.deb -o edk2.deb
+      ${pkgs.curl}/bin/curl -sL "https://github.com/radxa-pkg/edk2-cix/releases/download/''${BIOS_VERSION}/edk2-cix_''${BIOS_VERSION}_all.deb" -o edk2.deb
 
       echo "Extracting..."
       ${pkgs.dpkg}/bin/dpkg-deb -x edk2.deb extracted
+
+      echo "Cleaning up old EFI flasher files..."
+      sudo rm -rf /boot/radxa-firmware
 
       echo "Installing EFI flasher to /boot/radxa-firmware..."
       sudo mkdir -p /boot/radxa-firmware
