@@ -12,7 +12,7 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "cixtech";
     repo = "cix_opensource__vpu_driver";
-    rev = "cix_mainline_dev";
+    rev = "eb86680abdf42d45f4b70aa2f7e321bc3be4b8f4"; # Apr 22, 2026 (DPTSW-24525)
     hash = "sha256-YyOsuomP+jpAOoRfYySeCmmK/EzL799WQukaaLMmDdA=";
   };
 

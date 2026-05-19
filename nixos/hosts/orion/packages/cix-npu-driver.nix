@@ -12,7 +12,7 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "cixtech";
     repo = "cix_opensource__npu_driver";
-    rev = "cix_mainline_dev";
+    rev = "193d3650645b1d3de9794aa024675c755d864d57"; # Apr 8, 2026 (DPTSW-24094)
     hash = "sha256-eq95TOZwG7lisyq5koSaoRK4QB+QVQcgDJj+3Ekgf2s=";
   };
 
