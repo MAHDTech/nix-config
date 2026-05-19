@@ -93,9 +93,15 @@ in
       TARGET="$HOME/.gemini/settings.json"
       TMP_TARGET="$(mktemp)"
 
-      # Load secrets from SOPS files
-      EMAIL="$(cat "$EMAIL_PATH")"
-      LICENSE="$(cat "$LICENSE_PATH")"
+      # Safely load secrets from SOPS files if they exist
+      EMAIL=""
+      LICENSE=""
+      if [ -f "$EMAIL_PATH" ]; then
+        EMAIL="$(cat "$EMAIL_PATH")"
+      fi
+      if [ -f "$LICENSE_PATH" ]; then
+        LICENSE="$(cat "$LICENSE_PATH")"
+      fi
 
       if [ -f "$TEMPLATE" ];
       then
