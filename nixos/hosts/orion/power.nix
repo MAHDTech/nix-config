@@ -4,6 +4,7 @@
   services.power-profiles-daemon.enable = lib.mkForce true;
   services.tlp.enable = lib.mkForce false;
 
-  # For ARM, schedutil is usually preferred over performance/powersave
-  powerManagement.cpuFreqGovernor = lib.mkForce "schedutil";
+  # We omit forcing cpuFreqGovernor here because 'schedutil' is often compiled
+  # directly into the kernel on ARM SBCs (built-in instead of a module).
+  # Forcing it causes systemd-modules-load to complain when it can't find 'cpufreq_schedutil.ko'.
 }
