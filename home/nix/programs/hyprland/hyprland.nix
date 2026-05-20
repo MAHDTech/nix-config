@@ -248,6 +248,8 @@ in
   wayland.windowManager.hyprland = {
     enable = true;
 
+    configType = "hyprlang";
+
     # Use the packages from NixOS instead of home-manager
     # https://wiki.hypr.land/Nix/Hyprland-on-Home-Manager/#using-the-home-manager-module-with-nixos
     package = null;
@@ -478,9 +480,6 @@ in
 
           # if enabled, will make the shadows sharp, akin to an infinite render power
           sharp = false;
-
-          # if true, the shadow will not be rendered behind the window itself, only around it.
-          ignore_window = true;
 
           # shadow's color. Alpha dictates shadow's opacity.
           color = "rgba(1a1a1aee)";
@@ -718,9 +717,6 @@ in
         # -1 = random
         force_default_wallpaper = -1;
 
-        # Controls the VFR status of Hyprland.
-        vfr = true;
-
         # Control the VRR status of monitors
         # 0 = off
         # 1 = on
@@ -952,8 +948,6 @@ in
       # https://wiki.hyprland.org/Configuring/Dwindle-Layout/
 
       dwindle = {
-        # Enable psuedotiling where windows retain their floating size when tiled.
-        pseudotile = true;
 
         # Force split
         # 0 = split follows mouse
@@ -1073,7 +1067,7 @@ in
         "$mainMod, M, exit"
         "$mainMod, V, togglefloating"
         "$mainMod, P, pseudo, # dwindle"
-        "$mainMod, J, togglesplit, # dwindle"
+        "$mainMod, J, layoutmsg, togglesplit # dwindle"
 
         # Focus
         "$mainMod, left, movefocus, l"
@@ -1109,11 +1103,6 @@ in
         "$mainMod, mouse_down, workspace, e+1"
         "$mainMod, mouse_up, workspace, e-1"
 
-        # Resize window
-        # https://wiki.hyprland.org/Configuring/Dispatchers/#list-of-dispatchers
-        "bindm = $mainMod, mouse:272, movewindow" # Middle mouse button
-        "bindm = $mainMod, mouse:273, killactive" # Right mouse button
-
         # Multimedia
         "$mainMod, XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
         "$mainMod, XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
@@ -1126,6 +1115,11 @@ in
         "$mainMod, XF86AudioNext, exec, playerctl next"
         "$mainMod, XF86AudioPause, exec, playerctl play-pause"
         "$mainMod, XF86AudioPlay, exec, playerctl play-pause"
+      ];
+
+      bindm = [
+        "$mainMod, mouse:272, movewindow"
+        "$mainMod, mouse:273, resizewindow"
       ];
     };
 

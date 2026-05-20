@@ -1514,3 +1514,6 @@ Xrandr
 libxcb
 libxshmfence
 prek
+hyprlang
+layoutmsg
+resizewindow
