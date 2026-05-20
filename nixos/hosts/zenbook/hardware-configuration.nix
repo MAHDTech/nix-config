@@ -28,6 +28,9 @@
         "usb_storage"
         "usbhid"
         "xhci_pci"
+        "xhci_plat_hcd"
+        "dwc3"
+        "dwc3_qcom"
         "uas"
         "sd_mod"
         "arm_smmu"
@@ -43,6 +46,20 @@
         "qcom_q6v5_pas"
         "qcom_sysmon"
         "qrtr_smd"
+        "pcie_qcom"
+        "pci_pwrctrl_pwrseq"
+        "pci_pwrctrl_core"
+        "phy_qcom_qmp_usb"
+        "phy_qcom_snps_eusb2"
+        "phy_qcom_eusb2_repeater"
+        "phy_qcom_qmp_combo"
+        "typec"
+        "typec_ucsi"
+        "ucsi_glink"
+        "pmic_glink"
+        "qcom_pmic_glink"
+        "qcom_pmic_typec"
+        "qcom_pd_mapper"
         # ISO and Live Media Support
         "iso9660"
         "squashfs"
@@ -50,6 +67,7 @@
         "loop"
         "md_mod"
         "btrfs"
+        "ext4"
         # Plan B: USB Tethering drivers
         "usbnet"
         "cdc_ether"
@@ -70,6 +88,7 @@
       "video=efifb"
       "fbcon=map:0"
       "arm64.nopauth"
+      "pcie_aspm=off"
     ];
 
     # Modern boot management
@@ -87,7 +106,7 @@
     deviceTree = {
       enable = true;
       # The alexVinarskis kernel builds this DTB from its own DTS sources.
-      name = "qcom/x1e80100-asus-zenbook-ux3407.dtb";
+      name = "qcom/x1e80100-asus-zenbook-a14.dtb";
     };
     enableRedistributableFirmware = true;
     firmware = [ (import ./firmware.nix { inherit pkgs; }) ];

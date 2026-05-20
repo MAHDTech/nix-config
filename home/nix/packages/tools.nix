@@ -138,6 +138,9 @@ in
       # Image Viewer
       imv
 
+      # Diagrams
+      drawio
+
       # Video Editor
       shotcut
 
@@ -152,8 +155,6 @@ in
       # Trezor
       trezor-suite
       #trezor-agent
-
-      # Ledger
 
       # Development
       go

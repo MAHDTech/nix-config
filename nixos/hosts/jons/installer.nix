@@ -1,5 +1,4 @@
 {
-  pkgs,
   ...
 }:
 {
@@ -12,9 +11,6 @@
     ../../system/installer/raw-efi-image.nix
   ];
 
-  # Intel ARC B580 usually needs a very fresh kernel
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-
-  networking.hostName = "installer-arc";
-  networking.hostId = "653850a3";
+  networking.hostName = "installer-jons";
+  networking.hostId = "def00001";
 }

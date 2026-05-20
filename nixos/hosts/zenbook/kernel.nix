@@ -10,14 +10,14 @@ let
   kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "latest-zenbook";
     # Set version to match what linux-next reports to avoid mismatch
-    version = "6.19.0-rc4-next-20260109";
+    version = "7.1.0-rc4-next-20260519";
 
     # Pull the absolute latest bleeding edge where Zenbook support lives
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
       # Use the revision mentioned in the README as tested
-      rev = "next-20260109";
-      sha256 = "sha256-wCsWxGnKycbXFY0PEPUKnMFsy6pQ+SaEVDcOkySIzac=";
+      rev = "next-20260519";
+      sha256 = "sha256-aNyDpRAwdXBUgDEPFmv/Ua2Mw0tWtlUzF85oPhEDGHE=";
     };
 
     nativeBuildInputs = with pkgs; [

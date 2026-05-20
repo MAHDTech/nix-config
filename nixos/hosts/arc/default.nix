@@ -10,13 +10,12 @@
 #    - Removed ZFS (root filesystem is now BTRFS)
 # ==========================================================================
 {
-  config,
   lib,
   ...
 }:
 {
   imports = [
-    # disko replaces hardware-configuration.nix for disk layout
+    ./hardware-configuration.nix
     ./disko.nix
 
     # CPU specific configuration.
@@ -58,7 +57,7 @@
     ../../system/config/programs/1password
     ../../system/config/services/trezor
 
-    # Docker
+    # VMware virtualisation and Docker Container Host.
     ../../system/config/virtualisation/docker
 
     # QEMU/KVM Virtualisation
@@ -66,50 +65,10 @@
 
     # Games
     ../../system/config/games
+
+    # Virtual Desktop
+    ../../system/config/services/wayvnc
   ];
-
-  boot = {
-    supportedFilesystems = [
-      "btrfs"
-      "cifs"
-      "exfat"
-      "f2fs"
-      "nfs"
-      "ntfs"
-      "vfat"
-      "xfs"
-    ];
-
-    initrd = {
-      availableKernelModules = [
-        "ahci"
-        "nvme"
-        "sd_mod"
-        "thunderbolt"
-        "usb_storage"
-        "usbhid"
-        "xhci_pci"
-      ];
-
-      kernelModules = [ ];
-    };
-
-    kernelModules = [
-      "kvm-amd"
-    ];
-
-    kernelParams = [
-      "mitigations=off"
-      "threadirqs"
-    ];
-
-    extraModulePackages = [ ];
-
-    loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
-    };
-  };
 
   networking = {
     hostName = "ARC";
@@ -118,12 +77,10 @@
     useDHCP = lib.mkDefault false;
     interfaces = {
       enp10s0 = {
-        name = "enp10s0";
         useDHCP = false;
         mtu = lib.mkForce 9000;
       };
       br0 = {
-        name = "br0";
         useDHCP = true;
         mtu = 9000;
       };
@@ -133,14 +90,6 @@
         interfaces = [ "enp10s0" ];
       };
     };
-  };
-
-  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-
-  hardware = {
-    cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-    enableAllFirmware = true;
-    enableRedistributableFirmware = true;
   };
 
   swapDevices = [ ];
