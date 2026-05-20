@@ -30,6 +30,7 @@ in
         inherit globalUsername globalStateVersion;
       };
       modules = [
+        { system.stateVersion = globalStateVersion; }
         inputs.sops-nix.nixosModules.sops
         inputs.catppuccin.nixosModules.catppuccin
         inputs.flatpaks.nixosModules.default
