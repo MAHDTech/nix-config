@@ -63,35 +63,33 @@
     includes = [ ];
 
     # Apply overrides to specific hosts.
-    matchBlocks = {
+    settings = {
       #########################
       # Global
       #########################
 
       "*" = {
-        compression = true;
+        Compression = "yes";
 
-        controlMaster = "auto";
-        controlPath = "~/.ssh/control-master/%r@%h:%p";
-        controlPersist = "3600";
+        ControlMaster = "auto";
+        ControlPath = "~/.ssh/control-master/%r@%h:%p";
+        ControlPersist = "3600";
 
-        hashKnownHosts = false;
+        HashKnownHosts = "no";
 
-        forwardAgent = true;
+        ForwardAgent = "yes";
 
-        serverAliveCountMax = 3;
-        serverAliveInterval = 60;
+        ServerAliveCountMax = 3;
+        ServerAliveInterval = 60;
 
-        extraOptions = {
-          RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
-          SecurityKeyProvider = "internal";
+        RemoteForward = "/run/user/1000/gnupg/S.gpg-agent.extra /home/mahdtech/.gnupg/S.gpg-agent.extra";
+        SecurityKeyProvider = "internal";
 
-          # Use the 1Password SSH Agent.
-          identityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
+        # Use the 1Password SSH Agent.
+        IdentityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
 
-          # openssh_gssapi pkg includes the needed support.
-          # IgnoreUnknown = "gssapikexalgorithms,gssapiauthentication,gssapidelegatecredentials";
-        };
+        # openssh_gssapi pkg includes the needed support.
+        # IgnoreUnknown = "gssapikexalgorithms,gssapiauthentication,gssapidelegatecredentials";
       };
 
       #########################
@@ -99,23 +97,17 @@
       #########################
 
       "github.com" = {
-        host = "github.com";
-        hostname = "github.com";
-        user = "git";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "github.com";
+        User = "git";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "gitlab.com" = {
-        host = "gitlab.com";
-        hostname = "gitlab.com";
-        user = "git";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "gitlab.com";
+        User = "git";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       #########################
@@ -123,13 +115,10 @@
       #########################
 
       "bootycall" = {
-        host = "bootycall";
-        hostname = "bootycall.saltlabs.cloud";
-        user = "root";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "bootycall.saltlabs.cloud";
+        User = "root";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       ##################################################
@@ -141,13 +130,10 @@
       #########################
 
       "lander-01" = {
-        host = "lander-01";
-        hostname = "lander-01.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lander-01.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       #########################
@@ -155,63 +141,45 @@
       #########################
 
       "horizon-01" = {
-        host = "horizon-01";
-        hostname = "horizon-01.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "horizon-01.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "horizon-02" = {
-        host = "horizon-02";
-        hostname = "horizon-02.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "horizon-02.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "horizon-03" = {
-        host = "horizon-03";
-        hostname = "horizon-03.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "horizon-03.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "horizon-04" = {
-        host = "horizon-04";
-        hostname = "horizon-04.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "horizon-04.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "horizon-05" = {
-        host = "horizon-05";
-        hostname = "horizon-05.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "horizon-05.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "horizon-06" = {
-        host = "horizon-06";
-        hostname = "horizon-06.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "horizon-06.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       #########################
@@ -219,43 +187,31 @@
       #########################
 
       "tesseract-01" = {
-        host = "tesseract-01";
-        hostname = "tesseract-01.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "tesseract-01.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "tesseract-02" = {
-        host = "tesseract-02";
-        hostname = "tesseract-02.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "tesseract-02.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "tesseract-03" = {
-        host = "tesseract-03";
-        hostname = "tesseract-03.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "tesseract-03.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "tesseract-04" = {
-        host = "tesseract-04";
-        hostname = "tesseract-04.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "tesseract-04.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       #########################
@@ -263,123 +219,87 @@
       #########################
 
       "lazarus-01" = {
-        host = "lazarus-01";
-        hostname = "lazarus-01.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-01.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-02" = {
-        host = "lazarus-02";
-        hostname = "lazarus-02.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-02.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-03" = {
-        host = "lazarus-03";
-        hostname = "lazarus-03.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-03.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-04" = {
-        host = "lazarus-04";
-        hostname = "lazarus-04.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-04.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-05" = {
-        host = "lazarus-05";
-        hostname = "lazarus-05.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-05.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-06" = {
-        host = "lazarus-06";
-        hostname = "lazarus-06.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-06.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-07" = {
-        host = "lazarus-07";
-        hostname = "lazarus-07.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-07.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-08" = {
-        host = "lazarus-08";
-        hostname = "lazarus-08.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-08.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-09" = {
-        host = "lazarus-09";
-        hostname = "lazarus-09.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-09.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-10" = {
-        host = "lazarus-10";
-        hostname = "lazarus-10.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-10.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-11" = {
-        host = "lazarus-11";
-        hostname = "lazarus-11.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-11.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       "lazarus-12" = {
-        host = "lazarus-12";
-        hostname = "lazarus-12.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "lazarus-12.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       #########################
@@ -387,13 +307,10 @@
       #########################
 
       "romilly-01" = {
-        host = "romilly-01";
-        hostname = "romilly-01.tars-cloud.ai";
-        user = "cooper";
-        extraOptions = {
-          PasswordAuthentication = "no";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "romilly-01.tars-cloud.ai";
+        User = "cooper";
+        PasswordAuthentication = "no";
+        PubkeyAuthentication = "yes";
       };
 
       #########################
@@ -401,14 +318,11 @@
       #########################
 
       "unifi" = {
-        host = "unifi";
-        hostname = "10.10.1.254";
-        user = "root"; # Use root and not ubnt.
-        extraOptions = {
-          PasswordAuthentication = "yes";
-          PreferredAuthentications = "keyboard-interactive";
-          PubkeyAuthentication = "no";
-        };
+        HostName = "10.10.1.254";
+        User = "root"; # Use root and not ubnt.
+        PasswordAuthentication = "yes";
+        PreferredAuthentications = "keyboard-interactive";
+        PubkeyAuthentication = "no";
       };
 
       #########################
@@ -416,13 +330,10 @@
       #########################
 
       "bingamon-jumpbox" = {
-        host = "bingamon-jumpbox";
-        hostname = "192.168.85.76";
-        user = "linadmin";
-        extraOptions = {
-          PasswordAuthentication = "yes";
-          PubkeyAuthentication = "yes";
-        };
+        HostName = "192.168.85.76";
+        User = "linadmin";
+        PasswordAuthentication = "yes";
+        PubkeyAuthentication = "yes";
       };
     };
   };

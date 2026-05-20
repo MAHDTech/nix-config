@@ -31,6 +31,10 @@ in
       };
       modules = [
         { system.stateVersion = globalStateVersion; }
+        {
+          boot.zfs.forceImportRoot = lib.mkDefault false;
+          boot.zfs.forceImportAll = lib.mkDefault false;
+        }
         inputs.sops-nix.nixosModules.sops
         inputs.catppuccin.nixosModules.catppuccin
         inputs.flatpaks.nixosModules.default
@@ -48,10 +52,14 @@ in
       ...
     }:
     lib.nixosSystem {
-      inherit system;
+      pkgs = pkgsImportSystem system;
       specialArgs = { inherit inputs; };
       modules = [
         { system.stateVersion = globalStateVersion; }
+        {
+          boot.zfs.forceImportRoot = lib.mkDefault false;
+          boot.zfs.forceImportAll = lib.mkDefault false;
+        }
         module
       ];
     };

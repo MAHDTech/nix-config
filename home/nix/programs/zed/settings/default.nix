@@ -404,7 +404,7 @@ in
           "opencode" = {
             type = "registry";
           };
-          "gemini" = {
+          "antigravity" = {
             type = "registry";
           };
         };

@@ -1501,3 +1501,16 @@ lasterror
 Valhall
 DPTSW
 mylib
+deftdawg
+antigravitycli
+pixbuf
+nspr
+pango
+Xcomposite
+Xdamage
+Xext
+Xfixes
+Xrandr
+libxcb
+libxshmfence
+prek

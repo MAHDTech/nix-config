@@ -37,7 +37,9 @@ result
 WIP/
 
 # Ignore AI Agent local config
+.antigravitycli/
 .claude/
+.gemini/
 
 # PIDs
 *.pid

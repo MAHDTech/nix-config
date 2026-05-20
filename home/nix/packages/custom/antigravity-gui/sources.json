@@ -1,0 +1,21 @@
+{
+  "version": "2.0.1",
+  "sources": {
+    "x86_64-darwin": {
+      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.1-6566078776737792/darwin-x64/Antigravity.dmg",
+      "sha512": "fdd61f8c40b45b879cca7298f9cdb465beae26ac2708585987e8968c02d4256bf2820b5097cd5905911d69f08d1c8bfac094cb1576f68c9c328a73009f69be3f"
+    },
+    "aarch64-darwin": {
+      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.1-6566078776737792/darwin-arm/Antigravity.dmg",
+      "sha512": "9f80fe785b28e7ab5d261963c4deba0ab6bfb28b0aa0a50046b64c76456f2b534f31116a4aef7b9132ef6ac4a8c85bf657f5ff419dc092c0a7a502ed17ec1f13"
+    },
+    "x86_64-linux": {
+      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.1-6566078776737792/linux-x64/Antigravity.tar.gz",
+      "sha512": "c27b20aa907f7bc1b12be9e82fcb17d78193e1336e8d90745ffb4a96f5665beb7adc0ce1850108c7ac8b43fef85f216121eaff8760ac6779965da76ab08df152"
+    },
+    "aarch64-linux": {
+      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.1-6566078776737792/linux-arm/Antigravity.tar.gz",
+      "sha512": "4980a6bbe06635b0ca6facd0c3a008244067825c8aa929fbca94704d78516ed309545d986204039d023cda3dca39ad1db2096f4a914b6bfdc4186f3242ca669f"
+    }
+  }
+}

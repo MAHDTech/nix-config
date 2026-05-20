@@ -21,7 +21,8 @@ in
     #(pkgs.callPackage ./pivnet.nix {})
 
     litert-lm
-    (pkgs.callPackage ./gemini-cli.nix { inherit litert-lm; })
+    (pkgs.callPackage ./antigravity-cli { })
+    (pkgs.callPackage ./antigravity-gui { })
 
     #(pkgs.callPackage ./ls-colors.nix { })
 

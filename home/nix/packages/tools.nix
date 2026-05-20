@@ -160,6 +160,7 @@ in
       go
       golangci-lint
       gotools
+      prek
 
       # 3D Printing
       bambu-studio

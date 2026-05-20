@@ -2,7 +2,8 @@
 
 When deploying NixOS via `nixos-anywhere` from a machine that uses 1Password for SSH key management, you will likely encounter SSH authentication errors such as `Too many authentication failures`.
 
-This happens because the 1Password SSH Agent aggressively offers all available keys in your vault to the target host. By default, SSH servers drop connections after 6 failed key attempts (`MaxAuthTries`), which occurs before `nixos-anywhere` can negotiate its connection.
+This happens because the 1Password SSH Agent aggressively offers all available keys in your vault to the target host.
+By default, SSH servers drop connections after 6 failed key attempts (`MaxAuthTries`), which occurs before `nixos-anywhere` can negotiate its connection.
 
 ### The Solution
 

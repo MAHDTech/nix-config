@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   ...
 }:
 let
@@ -23,9 +22,6 @@ in
       extraPools = zfsPoolNames;
 
       devNodes = "/dev/disk/by-partuuid";
-
-      forceImportRoot = lib.mkForce true;
-      forceImportAll = true;
 
       unsafeAllowHibernation = false;
     };

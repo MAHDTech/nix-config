@@ -47,8 +47,5 @@
     efi.canTouchEfiVariables = lib.mkForce false;
   };
 
-  # Allow unfree for firmware
-  nixpkgs.config.allowUnfree = true;
-
   system.stateVersion = "26.05";
 }

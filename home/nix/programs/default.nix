@@ -19,7 +19,6 @@
     ./wakatime.nix
 
     # Editors
-    ./antigravity.nix
     #./cursor.nix
     #./neovim.nix
     ./vim.nix
