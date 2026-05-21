@@ -6,7 +6,8 @@
       wallpaper-manager-daemon = {
         Unit = {
           Description = "Wallpaper Manager Daemon Service";
-          PartOf = [ "hyprland-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
         };
 
         Service = {
@@ -39,16 +40,19 @@
         };
 
         Install = {
-          WantedBy = [ "hyprland-session.target" ];
+          WantedBy = [ "graphical-session.target" ];
         };
       };
 
       wallpaper-manager = {
         Unit = {
           Description = "Wallpaper Manager Service";
-          After = [ "wallpaper-manager-daemon.service" ];
+          After = [
+            "wallpaper-manager-daemon.service"
+            "graphical-session.target"
+          ];
           Requires = [ "wallpaper-manager-daemon.service" ];
-          PartOf = [ "hyprland-session.target" ];
+          PartOf = [ "graphical-session.target" ];
         };
 
         Service = {
@@ -81,7 +85,7 @@
         };
 
         Install = {
-          WantedBy = [ "hyprland-session.target" ];
+          WantedBy = [ "graphical-session.target" ];
         };
       };
     };

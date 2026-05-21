@@ -1126,46 +1126,35 @@ in
     extraConfig = "";
   };
 
-  # Ensure hyprland-session.target starts on login
+  # Ensure services start on graphical session login
   systemd = {
     user = {
-
-      targets = {
-
-        hyprland-session = {
-          Install.WantedBy = [ "default.target" ];
-        };
-
-      };
-
-      # Override the hypridle service to ensure it starts after hyprland-session.target
+      # Override the hypridle service to ensure it starts after graphical-session.target
       services = {
 
         hypridle = {
-          Install.WantedBy = [ "hyprland-session.target" ];
+          Install.WantedBy = [ "graphical-session.target" ];
           Unit = {
-            BindsTo = [ "hyprland-session.target" ];
+            BindsTo = [ "graphical-session.target" ];
             After = [
               "graphical-session.target"
-              "hyprland-session.target"
               config.wayland.systemd.target
             ];
-            Requires = [ "hyprland-session.target" ];
+            Requires = [ "graphical-session.target" ];
             ConditionEnvironment = lib.mkForce "PATH";
           };
         };
 
-        # Override the hyprpaper service to ensure it starts after hyprland-session.target
+        # Override the hyprpaper service to ensure it starts after graphical-session.target
         hyprpaper = {
-          Install.WantedBy = [ "hyprland-session.target" ];
+          Install.WantedBy = [ "graphical-session.target" ];
           Unit = {
-            BindsTo = [ "hyprland-session.target" ];
+            BindsTo = [ "graphical-session.target" ];
             After = [
               "graphical-session.target"
-              "hyprland-session.target"
               config.wayland.systemd.target
             ];
-            Requires = [ "hyprland-session.target" ];
+            Requires = [ "graphical-session.target" ];
           };
         };
       };
