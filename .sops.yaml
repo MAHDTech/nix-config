@@ -9,7 +9,7 @@
 
 keys:
   # Users (AGE, local)
-  - &admin_mahdtech_jons_age age16v936g3sv4c720pmurjut42jradwjdc2u5gt6neu3gqf0cwdlezqelq49a
+  - &admin_mahdtech_jons_age age1t4de3cfjt4j76lm2jqyzsf2kr9xtllvf5lhl8u2n86tt02yj6q2q2njza9
 
   # Users (AGE)
   - &admin_mahdtech_1password_age age127h9hx8p5tc5chldkhek9a7f4qje25qmngd99y4unl3tyzayr3yq0jp3xn
