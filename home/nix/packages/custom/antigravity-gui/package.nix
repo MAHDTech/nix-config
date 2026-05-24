@@ -100,7 +100,7 @@ stdenv.mkDerivation {
 
     # Create symlink/wrapper
     mkdir -p $out/bin
-    makeWrapper $out/opt/antigravity-gui/antigravity $out/bin/antigravity-gui \
+    makeWrapper $out/opt/antigravity-gui/antigravity $out/bin/agy-gui \
       --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ libGL ]}"
 
     runHook postInstall
@@ -114,6 +114,6 @@ stdenv.mkDerivation {
       "x86_64-linux"
       "aarch64-linux"
     ];
-    mainProgram = "antigravity-gui";
+    mainProgram = "agy-gui";
   };
 }

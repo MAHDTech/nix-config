@@ -36,7 +36,7 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/bin
-    cp antigravity $out/bin/antigravity-cli
+    cp antigravity $out/bin/agy
     runHook postInstall
   '';
 
@@ -52,7 +52,7 @@ stdenv.mkDerivation {
       "x86_64-darwin"
       "aarch64-darwin"
     ];
-    mainProgram = "antigravity-cli";
+    mainProgram = "agy";
     maintainers = with maintainers; [
       deftdawg
     ];
