@@ -49,16 +49,6 @@
           gpu-context=wayland
         '';
       };
-
-      # Enable Cosmic theme for GTK applications
-      "gtk-3.0/settings.ini" = {
-        target = "gtk-3.0/settings.ini";
-
-        text = ''
-          [Settings]
-          gtk-theme-name=adw-gtk3
-        '';
-      };
     };
 
     dataFile = {

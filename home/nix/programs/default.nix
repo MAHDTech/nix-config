@@ -14,6 +14,7 @@
     ./htop.nix
     ./password-store.nix
     #./python.nix
+    ./qt.nix
     ./ssh.nix
     ./starship.nix
     ./wakatime.nix
