@@ -11,7 +11,7 @@
 
     gc = {
       automatic = true;
-      dates = "weekly";
+      dates = "Sun 19:00";
       options = "--delete-older-than 14d";
       persistent = true;
       randomizedDelaySec = "1h";
@@ -19,7 +19,7 @@
 
     optimise = {
       automatic = true;
-      dates = [ "weekly" ];
+      dates = [ "Sun 21:00" ];
     };
 
     settings = {
@@ -88,7 +88,7 @@
         "--verbose"
       ];
 
-      dates = "daily";
+      dates = "03:00";
 
       rebootWindow = {
         lower = "02:00";
