@@ -23,7 +23,7 @@
         versioning = {
           type = "simple";
           params = {
-            keep = "10";
+            keep = "3";
           };
         };
       };
