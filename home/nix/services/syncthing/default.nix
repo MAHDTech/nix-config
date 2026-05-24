@@ -6,19 +6,61 @@
 }:
 {
 
-  # Ensure the Syncthing directories exist by creating a .keep file in each folder
+  # Ensure the Syncthing directories exist and have standard .stignore files configured
   home.file = lib.mkIf (syncthingConfig != null) (
     lib.listToAttrs (
-      lib.mapAttrsToList (name: folder: {
-        name = "${name}-keep-file";
-        value = {
-          enable = true;
-          force = true;
-          executable = false;
-          target = "${folder.path}/.keep";
-          text = "This folder named '${name}' is managed by Syncthing.";
-        };
-      }) (syncthingConfig.syncFolders or { })
+      lib.concatLists (
+        lib.mapAttrsToList (name: folder: [
+          {
+            name = "${name}-keep-file";
+            value = {
+              enable = true;
+              force = true;
+              executable = false;
+              target = "${folder.path}/.keep";
+              text = "This folder named '${name}' is managed by Syncthing.";
+            };
+          }
+          {
+            name = "${name}-stignore";
+            value = {
+              enable = true;
+              force = true;
+              executable = false;
+              target = "${folder.path}/.stignore";
+              text = ''
+                // Ephemeral Git state/locks
+                // Sync working directory and git history, but ignore locks
+                (?d).git/*.lock
+                (?d).git/index.lock
+
+                // Nix & Flake Ephemerals
+                result
+                result-*
+                .direnv/
+                .devenv/
+                .pre-commit/
+
+                // Common Build/Language Artifacts
+                node_modules/
+                target/
+                .venv/
+                dist/
+                build/
+                .cache/
+
+                // OS/IDE files
+                .DS_Store
+                .idea/
+                .vscode/
+
+                // Syncthing conflicts
+                (?d)*.sync-conflict-*
+              '';
+            };
+          }
+        ]) (syncthingConfig.syncFolders or { })
+      )
     )
   );
 

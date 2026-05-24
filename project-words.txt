@@ -1517,3 +1517,4 @@ prek
 hyprlang
 layoutmsg
 resizewindow
+stignore
