@@ -325,8 +325,25 @@ export STARSHIP_CACHE="${HOME}/.cache/starship"
 export CODEQL_DOTFILES="True"
 export CODEQL_SETUP_SUBMODULES="True"
 
-########################################
 # Other
 ########################################
+
+# Ensure the nix directory and placeholder token file exist so Nix doesn't fail
+# due to the !include directive in ~/.config/nix/nix.conf
+if [[ ! -d "${HOME}/.config/nix" ]]; then
+	mkdir -p "${HOME}/.config/nix"
+fi
+
+if [[ ! -f "${HOME}/.config/nix/github-token.conf" ]]; then
+	echo "# Placeholder for GitHub Token" >"${HOME}/.config/nix/github-token.conf"
+fi
+
+if command -v gh &>/dev/null; then
+	GH_TOKEN=$(gh auth token 2>/dev/null)
+	if [[ -n ${GH_TOKEN} ]]; then
+		echo "access-tokens = github.com=${GH_TOKEN}" >"${HOME}/.config/nix/github-token.conf"
+		export NIX_CONFIG="access-tokens = github.com=${GH_TOKEN}"
+	fi
+fi
 
 # EOF

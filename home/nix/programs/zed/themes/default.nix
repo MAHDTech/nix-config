@@ -38,7 +38,7 @@
       dark = "TARS Dark";
     };
 
-    icon_theme = {
+    icon_theme = lib.mkForce {
       mode = "system";
       light = "Catppuccin Latte";
       dark = "Catppuccin Mocha";

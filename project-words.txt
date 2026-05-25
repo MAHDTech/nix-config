@@ -1518,3 +1518,5 @@ hyprlang
 layoutmsg
 resizewindow
 stignore
+kvantum
+Kvantum

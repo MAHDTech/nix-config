@@ -40,6 +40,13 @@ in
         inputs.flatpaks.nixosModules.default
         ../nixos/system/home-manager.nix # Standard HM integration
         ../nixos/hosts/${lib.toLower name}
+        (_: {
+          catppuccin.sources =
+            lib.mkForce
+              (import "${inputs.catppuccin}/default.nix" {
+                pkgs = pkgsImportSystem "x86_64-linux";
+              }).packages;
+        })
       ]
       ++ extraModules;
     };
@@ -74,8 +81,15 @@ in
       pkgs = pkgsImportSystem system;
       modules = [
         ../home
-        inputs.catppuccin.homeManagerModules.catppuccin
+        inputs.catppuccin.homeModules.catppuccin
         inputs.sops-nix.homeManagerModules.sops
+        (_: {
+          catppuccin.sources =
+            lib.mkForce
+              (import "${inputs.catppuccin}/default.nix" {
+                pkgs = pkgsImportSystem "x86_64-linux";
+              }).packages;
+        })
       ];
       extraSpecialArgs = {
         inherit

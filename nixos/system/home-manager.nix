@@ -39,7 +39,19 @@
       imports = [
         ../../home
         inputs.sops-nix.homeManagerModules.sops
-        inputs.catppuccin.homeManagerModules.catppuccin
+        inputs.catppuccin.homeModules.catppuccin
+        (_: {
+          catppuccin.sources =
+            lib.mkForce
+              (import "${inputs.catppuccin}/default.nix" {
+                pkgs = import inputs.nixpkgs {
+                  system = "x86_64-linux";
+                  config = {
+                    allowUnfree = true;
+                  };
+                };
+              }).packages;
+        })
       ];
     };
   };

@@ -5,6 +5,16 @@
     accent = "mauve";
     flavor = "mocha";
 
+    kvantum = {
+      enable = false;
+    };
+
+    gtk = {
+      icon = {
+        enable = false;
+      };
+    };
+
     bottom = {
       enable = true;
     };
@@ -14,7 +24,7 @@
     };
 
     cursors = {
-      enable = true;
+      enable = false;
     };
 
     delta = {
@@ -27,11 +37,6 @@
 
     fzf = {
       enable = true;
-    };
-
-    gtk = {
-      enable = true;
-      gnomeShellTheme = false;
     };
 
     hyprland = {
@@ -59,7 +64,7 @@
     };
 
     starship = {
-      enable = true;
+      enable = false;
     };
   };
 }

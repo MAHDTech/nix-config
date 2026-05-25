@@ -14,7 +14,7 @@
           "notifications": true,
           "permissions": {
             "allow": [
-              "command(devenv)"
+              "command(devenv)",
               "command(nix)"
             ]
           },

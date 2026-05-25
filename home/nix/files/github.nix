@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   ...
 }:
@@ -11,6 +12,14 @@
 
   xdg = {
     configFile = {
+      # Nix user configuration containing dynamic token inclusion
+      "nix-user-config" = {
+        target = "nix/nix.conf";
+        text = ''
+          !include ${config.home.homeDirectory}/.config/nix/github-token.conf
+        '';
+      };
+
       # GitHub Label "pineapple"
       "github-label-pineapple" = {
         target = "github/labels/pineapple.json";

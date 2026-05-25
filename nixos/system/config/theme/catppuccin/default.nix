@@ -14,7 +14,7 @@
     };
 
     tty = {
-      enable = true;
+      enable = false;
     };
   };
 }

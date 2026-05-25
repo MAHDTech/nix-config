@@ -22,7 +22,7 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "git+https://github.com/NixOS/nixpkgs?ref=release-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     systems.url = "github:nix-systems/default";
@@ -35,7 +35,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flatpaks.url = "github:in-a-dil-emma/declarative-flatpak/latest";
-    catppuccin.url = "github:catppuccin/nix/release-1.x";
+    catppuccin.url = "github:catppuccin/nix/release-25.11";
     devenv.url = "github:cachix/devenv/main";
     impermanence.url = "github:nix-community/impermanence/master";
     zenbook-linux = {
@@ -92,10 +92,10 @@
         )
       );
 
-      devShells = forEachSystem (system: {
-        default = inputs.devenv.lib.mkShell {
+      devShells = {
+        x86_64-linux.default = inputs.devenv.lib.mkShell {
           inherit inputs;
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
           modules = [
             {
               devenv.root =
@@ -107,6 +107,7 @@
             (import ./devenv/dotfiles.nix)
           ];
         };
-      });
+        aarch64-linux.default = inputs.nixpkgs.legacyPackages.aarch64-linux.mkShell { };
+      };
     };
 }
