@@ -20,12 +20,6 @@
         devices = [
           #"Zenbook"
         ];
-        versioning = {
-          type = "simple";
-          params = {
-            keep = "3";
-          };
-        };
       };
     };
   };

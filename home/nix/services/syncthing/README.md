@@ -62,7 +62,13 @@ Each machine gets configured with:
 ### Optional Parameters
 
 - `otherDevices`: List of other devices to connect to
-- `syncFolders`: Folders to sync with other devices
+- `syncFolders`: Folders to sync with other devices. Each folder accepts:
+  - `id`: Folder ID
+  - `path`: Folder path
+  - `type`: Sync type (default: "sendreceive")
+  - `devices`: List of device names to sync with
+  - `versioning`: Optional folder versioning configuration
+  - `rescanIntervalS`: Full rescan interval in seconds (default: `86400` / 24 hours)
 - `username`: Username for path construction (default: "mahdtech")
 - `guiAddress`: Address for web GUI (default: "127.0.0.1:8384")
 

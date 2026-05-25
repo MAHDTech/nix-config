@@ -29,6 +29,9 @@
               executable = false;
               target = "${folder.path}/.stignore";
               text = ''
+                // Ignore all Git history and metadata
+                // (?d).git/
+
                 // Ephemeral Git state/locks
                 // Sync working directory and git history, but ignore locks
                 (?d).git/*.lock
@@ -92,10 +95,18 @@
             type
             enable
             devices
-            versioning
             ;
           label = folderName;
           copyOwnershipFromParent = false;
+          rescanIntervalS = folderConfig.rescanIntervalS or 86400;
+          versioning =
+            folderConfig.versioning or {
+              type = "staggered";
+              params = {
+                cleanInterval = "3600"; # Clean hourly
+                maxAge = "31536000"; # Keep versions for up to 365 days
+              };
+            };
         }) (syncthingConfig.syncFolders or { });
 
         options = {

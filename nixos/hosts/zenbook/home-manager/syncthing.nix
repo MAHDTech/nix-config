@@ -27,12 +27,6 @@
           "ORION"
         ];
 
-        versioning = {
-          type = "simple";
-          params = {
-            keep = "3";
-          };
-        };
       };
     };
   };
