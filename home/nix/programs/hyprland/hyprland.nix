@@ -876,6 +876,7 @@ in
         # Cursors (Standardised to 48 for HiDPI)
         "HYPRCURSOR_SIZE,48"
         "XCURSOR_SIZE,48"
+        "XCURSOR_THEME,Bibata-Modern-Classic"
       ];
 
       ###################
@@ -902,9 +903,6 @@ in
 
         # Start the bar if not running
         "pidof $barCommand || $barCommand"
-
-        # Start a terminal if not running
-        "pidof $terminal || $terminal"
       ];
 
       ####################

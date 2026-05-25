@@ -11,6 +11,11 @@
   gtk = {
     enable = true;
 
+    theme = {
+      name = "Tokyonight-Dark";
+      package = pkgs.tokyonight-gtk-theme;
+    };
+
     gtk3.extraConfig = {
       gtk-application-prefer-dark-theme = 1;
     };
@@ -20,11 +25,13 @@
     };
 
     cursorTheme = {
-      name = "Pop";
+      name = "Bibata-Modern-Classic";
+      package = pkgs.bibata-cursors;
+      size = 48;
     };
 
     iconTheme = {
-      name = "Zafiro-icons-Light";
+      name = "Zafiro-icons-Dark";
     };
   };
 }
