@@ -873,9 +873,9 @@ in
         # 1Password authentication dialog fix
         "GTK_USE_PORTAL,1"
 
-        # Cursors (Standardised to 48 for HiDPI)
-        "HYPRCURSOR_SIZE,48"
-        "XCURSOR_SIZE,48"
+        # Cursors (Standardised to 24 for standard displays)
+        "HYPRCURSOR_SIZE,24"
+        "XCURSOR_SIZE,24"
         "XCURSOR_THEME,Bibata-Modern-Classic"
       ];
 
