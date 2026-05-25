@@ -6,64 +6,47 @@
 }:
 {
 
-  # Ensure the Syncthing directories exist and have standard .stignore files configured
+  # Ensure the Syncthing directories have standard .stignore files configured
   home.file = lib.mkIf (syncthingConfig != null) (
     lib.listToAttrs (
-      lib.concatLists (
-        lib.mapAttrsToList (name: folder: [
-          {
-            name = "${name}-keep-file";
-            value = {
-              enable = true;
-              force = true;
-              executable = false;
-              target = "${folder.path}/.keep";
-              text = "This folder named '${name}' is managed by Syncthing.";
-            };
-          }
-          {
-            name = "${name}-stignore";
-            value = {
-              enable = true;
-              force = true;
-              executable = false;
-              target = "${folder.path}/.stignore";
-              text = ''
-                // Ignore all Git history and metadata
-                // (?d).git/
+      lib.mapAttrsToList (name: folder: {
+        name = "${name}-stignore";
+        value = {
+          enable = true;
+          force = true;
+          executable = false;
+          target = "${folder.path}/.stignore";
+          text = ''
+            // Ephemeral Git state/locks
+            // Sync working directory and git history, but ignore locks
+            (?d).git/*.lock
+            (?d).git/index.lock
 
-                // Ephemeral Git state/locks
-                // Sync working directory and git history, but ignore locks
-                (?d).git/*.lock
-                (?d).git/index.lock
+            // Nix & Flake Ephemerals
+            result
+            result-*
+            .direnv/
+            .devenv/
+            .pre-commit/
 
-                // Nix & Flake Ephemerals
-                result
-                result-*
-                .direnv/
-                .devenv/
-                .pre-commit/
+            // Common Build/Language Artifacts
+            node_modules/
+            target/
+            .venv/
+            dist/
+            build/
+            .cache/
 
-                // Common Build/Language Artifacts
-                node_modules/
-                target/
-                .venv/
-                dist/
-                build/
-                .cache/
+            // OS/IDE files
+            .DS_Store
+            .idea/
+            .vscode/
 
-                // OS/IDE files
-                .DS_Store
-                .idea/
-                .vscode/
-
-                // Syncthing conflicts
-                (?d)*.sync-conflict-*
-              '';
-            };
-          }
-        ]) (syncthingConfig.syncFolders or { })
-      )
+            // Syncthing conflicts
+            (?d)*.sync-conflict-*
+          '';
+        };
+      }) (syncthingConfig.syncFolders or { })
     )
   );
 
