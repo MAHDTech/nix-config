@@ -61,6 +61,9 @@
         default = [
           "gtk"
         ];
+        "org.freedesktop.impl.portal.Settings" = [
+          "gtk"
+        ];
       };
       hyprland = {
         default = [
@@ -70,6 +73,9 @@
         # Enable secret portal for authentication dialogue boxes (like 1password SSH)
         "org.freedesktop.impl.portal.Secret" = [
           "gnome-keyring"
+        ];
+        "org.freedesktop.impl.portal.Settings" = [
+          "gtk"
         ];
       };
     };
