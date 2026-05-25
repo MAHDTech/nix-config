@@ -30,7 +30,7 @@
     ../../system/config/fonts
     ../../system/config/power
     ../../system/config/printing
-    #../../system/config/services
+    ../../system/config/services
 
     # Theme
     ../../system/config/theme/catppuccin
