@@ -81,9 +81,14 @@
 
       packages = forEachSystem (
         system:
-        {
-          devenv-up = self.devShells.${system}.default.config.procfileScript;
-        }
+        (
+          if system == "x86_64-linux" then
+            {
+              devenv-up = self.devShells.${system}.default.config.procfileScript;
+            }
+          else
+            { }
+        )
         // builtins.listToAttrs (
           map (host: {
             name = "installer-${lib.toLower host.name}";
