@@ -26,6 +26,7 @@
         system
         ;
       inCI = false;
+      isNixosHM = true;
     }
     // (
       let

@@ -100,6 +100,8 @@ in
           username
           ;
         inCI = false;
+        isNixosHM = false;
+        syncthingConfig = null;
       };
     };
 }

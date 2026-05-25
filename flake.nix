@@ -81,14 +81,13 @@
 
       packages = forEachSystem (
         system:
-        (
-          if system == "x86_64-linux" then
-            {
-              devenv-up = self.devShells.${system}.default.config.procfileScript;
-            }
-          else
-            { }
-        )
+        {
+          devenv-up =
+            if system == builtins.currentSystem then
+              self.devShells.${system}.default.config.procfileScript
+            else
+              inputs.nixpkgs.legacyPackages.${system}.hello;
+        }
         // builtins.listToAttrs (
           map (host: {
             name = "installer-${lib.toLower host.name}";
@@ -97,22 +96,27 @@
         )
       );
 
-      devShells = {
-        x86_64-linux.default = inputs.devenv.lib.mkShell {
-          inherit inputs;
-          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-          modules = [
-            {
-              devenv.root =
-                let
-                  pwd = builtins.getEnv "PWD";
-                in
-                if pwd != "" then pwd else toString ./.;
+      devShells = forEachSystem (system: {
+        default =
+          if system == builtins.currentSystem then
+            inputs.devenv.lib.mkShell {
+              inherit inputs;
+              pkgs = inputs.nixpkgs.legacyPackages.${system};
+              modules = [
+                {
+                  devenv.root =
+                    let
+                      pwd = builtins.getEnv "PWD";
+                    in
+                    if pwd != "" then pwd else toString ./.;
+                }
+                (import ./devenv/dotfiles.nix)
+              ];
             }
-            (import ./devenv/dotfiles.nix)
-          ];
-        };
-        aarch64-linux.default = inputs.nixpkgs.legacyPackages.aarch64-linux.mkShell { };
-      };
+          else
+            inputs.nixpkgs.legacyPackages.${system}.mkShell {
+              name = "dotfiles-cross-shell";
+            };
+      });
     };
 }

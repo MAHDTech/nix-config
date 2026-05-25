@@ -8,7 +8,11 @@ let
   # Get hostname for conditional configuration
   # When running as NixOS module, use osConfig, otherwise fallback to file
   hostname =
-    if builtins.hasAttr "networking" osConfig && builtins.hasAttr "hostName" osConfig.networking then
+    if
+      osConfig != null
+      && builtins.hasAttr "networking" osConfig
+      && builtins.hasAttr "hostName" osConfig.networking
+    then
       osConfig.networking.hostName
     else
       (lib.fileContents /proc/sys/kernel/hostname);

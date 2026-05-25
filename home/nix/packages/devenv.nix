@@ -1,18 +1,23 @@
 {
   inputs,
   pkgs,
+  isNixosHM ? false,
   ...
 }:
 let
+  targetSystem = pkgs.stdenv.hostPlatform.system;
 
-  isX86 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+  # Disable devenv packages inside NixOS Home Manager on aarch64 to prevent
+  # cross-compilation IFD bootstrap failures on AMD64. It remains fully enabled
+  # in standalone Home Manager (on your ARM64 dev station) and native AMD64 hosts!
+  devenvEnabled = !(isNixosHM && targetSystem == "aarch64-linux");
 
   devenvPkgs =
-    if isX86 then
+    if devenvEnabled then
       [
-        inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.cachix
-        inputs.devenv.packages.${pkgs.stdenv.hostPlatform.system}.devenv
-        inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.secretspec
+        pkgs.cachix
+        inputs.devenv.packages.${targetSystem}.devenv
+        inputs.nixpkgs-unstable.legacyPackages.${targetSystem}.secretspec
       ]
     else
       [ ];
