@@ -23,7 +23,8 @@
           "permissions": {
             "allow": [
               "command(devenv)",
-              "command(nix)"
+              "command(nix)",
+              "mcp(tars/*)"
             ]
           }
         }
