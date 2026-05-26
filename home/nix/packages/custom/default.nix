@@ -22,7 +22,7 @@ in
 
     litert-lm
     (pkgs.callPackage ./antigravity-cli { })
-    (pkgs.callPackage ./antigravity-gui { })
+    (pkgs.callPackage ./antigravity-hub { })
 
     #(pkgs.callPackage ./ls-colors.nix { })
 
