@@ -1,14 +1,12 @@
 { config, ... }:
 {
   home.file = {
-    "antigravity-settings" = {
+    "antigravity-cli-settings" = {
       target = "${config.home.homeDirectory}/.gemini/antigravity-cli/settings.json";
       executable = false;
 
       text = ''
         {
-          "allowNonWorkspaceAccess": true,
-          "altScreenMode": "always",
           "colorScheme": "tokyo night",
           "model": "Gemini 3.5 Flash (High)",
           "notifications": true,
@@ -19,11 +17,30 @@
             ]
           },
           "trustedWorkspaces": [
-            "/boot/nixos/nix-config",
-            "/home/mahdtech/Projects/syncthing/GitHub/tars-cloud",
-            "/home/mahdtech/Projects/syncthing/GitHub/tars-cloud/platform",
-            "/home/mahdtech/Projects/syncthing/GitHub/tars-cloud/antigravity-plugin"
           ]
+        }
+      '';
+    };
+
+    "antigravity-hub-config" = {
+      target = "${config.home.homeDirectory}/.gemini/config/config.json";
+      executable = false;
+
+      text = ''
+        {
+          "userSettings": {
+            "customThemeSeedsLight": {
+              "background": "#EAECF0",
+              "foregroundOverride": "#4C4F69",
+              "primary": "#8839EF"
+            },
+            "globalPermissionGrants": {
+              "allow": [
+                "mcp(tars/*)"
+              ]
+            },
+            "themeMode": "THEME_MODE_INHERIT"
+          }
         }
       '';
     };
