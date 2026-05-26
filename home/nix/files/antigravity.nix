@@ -17,6 +17,7 @@
       text = ''
         {
           "colorScheme": "tokyo night",
+          "enableTerminalSandbox": true,
           "model": "Gemini 3.5 Flash (High)",
           "notifications": true,
           "permissions": {
@@ -24,9 +25,7 @@
               "command(devenv)",
               "command(nix)"
             ]
-          },
-          "trustedWorkspaces": [
-          ]
+          }
         }
       '';
     };
