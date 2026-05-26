@@ -41,6 +41,11 @@
       text = ''
         {
           "userSettings": {
+            "customThemeSeedsDark": {
+              "background": "#24273A",
+              "foregroundOverride": "#CAD3F5",
+              "primary": "#C6A0F6"
+            },
             "customThemeSeedsLight": {
               "background": "#EAECF0",
               "foregroundOverride": "#4C4F69",
