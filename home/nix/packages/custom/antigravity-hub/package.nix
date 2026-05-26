@@ -43,6 +43,7 @@
   makeDesktopItem,
   makeWrapper,
   mesa,
+  nodejs,
   nspr,
   nss,
   pango,
@@ -110,6 +111,7 @@ let
       or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
 
   runtimePath = [
+    nodejs
     xdg-utils
   ]
   ++ lib.optionals (stdenv.hostPlatform.system == "x86_64-linux" && google-chrome != null) [
