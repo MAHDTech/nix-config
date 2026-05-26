@@ -52,6 +52,7 @@
   vulkan-loader,
   wayland,
   xdg-utils,
+  google-chrome ? null,
 }:
 
 let
@@ -107,6 +108,13 @@ let
   systemSource =
     sources.sources.${stdenv.hostPlatform.system}
       or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
+
+  runtimePath = [
+    xdg-utils
+  ]
+  ++ lib.optionals (stdenv.hostPlatform.system == "x86_64-linux" && google-chrome != null) [
+    google-chrome
+  ];
 in
 stdenv.mkDerivation {
   pname = "antigravity-hub";
@@ -154,7 +162,7 @@ stdenv.mkDerivation {
       --add-flags "--no-sandbox" \
       --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations}}" \
       ${lib.optionalString (passwordStore != "") "--add-flags --password-store=${passwordStore}"} \
-      --prefix PATH : ${lib.makeBinPath [ xdg-utils ]} \
+      --prefix PATH : ${lib.makeBinPath runtimePath} \
       --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath desktopLibs} \
       --prefix XDG_DATA_DIRS : "${gsettings-desktop-schemas}/share/gsettings-schemas/${gsettings-desktop-schemas.name}" \
       --prefix XDG_DATA_DIRS : "${gtk3}/share/gsettings-schemas/${gtk3.name}"
