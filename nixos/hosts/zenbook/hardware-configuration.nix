@@ -88,8 +88,8 @@
     graphics.enable = true;
     deviceTree = {
       enable = true;
-      # The alexVinarskis kernel builds this DTB from its own DTS sources.
-      name = "qcom/x1e80100-asus-zenbook-a14.dtb";
+      # Use the EL2-specialized device tree to support firmware booting in EL2 mode
+      name = "qcom/x1e80100-asus-zenbook-a14-el2.dtb";
     };
     enableRedistributableFirmware = true;
     firmware = [ (pkgs.callPackage ./firmware.nix { }) ];
