@@ -9,7 +9,7 @@ The custom image contains the exact kernel and firmware needed for the Snapdrago
 On your **source machine** (must have Nix installed), build the raw EFI disk image:
 
 ```bash
-nix build .#zenbook-image
+nix build .#installer-zenbook --impure --print-build-logs
 ```
 
 ### 2. Prepare the USB

@@ -39,8 +39,11 @@ in
   systemd.services.pd-mapper = {
     description = "Qualcomm Protection Domain Mapper";
     documentation = [ "https://github.com/andersson/pd-mapper" ];
-    wantedBy = [ "multi-user.target" ];
-    after = [ "qrtr-ns.service" ];
+    wantedBy = [ "basic.target" ];
+    after = [
+      "qrtr-ns.service"
+      "systemd-udev-trigger.service"
+    ];
     requires = [ "qrtr-ns.service" ];
     serviceConfig = {
       ExecStart = "${pd-mapper}/bin/pd-mapper";
@@ -52,9 +55,9 @@ in
   # QRTR Name Service is also required
   systemd.services.qrtr-ns = {
     description = "Qualcomm IPC Router Name Service";
-    wantedBy = [ "multi-user.target" ];
+    wantedBy = [ "basic.target" ];
     serviceConfig = {
-      ExecStart = "${pkgs.qrtr}/bin/qrtr-ns -f 1";
+      ExecStart = "${pkgs.qrtr}/bin/qrtr-ns 1";
       Restart = "always";
     };
   };

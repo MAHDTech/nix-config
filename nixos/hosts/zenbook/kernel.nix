@@ -10,14 +10,14 @@ let
   kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "latest-zenbook";
     # Set version to match what linux-next reports to avoid mismatch
-    version = "7.1.0-rc4-next-20260519";
+    version = "7.1.0-rc5-next-20260528";
 
     # Pull the absolute latest bleeding edge where Zenbook support lives
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
       # Use the revision mentioned in the README as tested
-      rev = "next-20260519";
-      sha256 = "sha256-aNyDpRAwdXBUgDEPFmv/Ua2Mw0tWtlUzF85oPhEDGHE=";
+      rev = "next-20260528";
+      sha256 = "sha256-86TmX6XmHk0pLorcK/ZQ5AHsGj/c6mKQlLdT0DX2ltA=";
     };
 
     nativeBuildInputs = with pkgs; [
@@ -31,12 +31,10 @@ let
       mpfr
       util-linux
       elfutils
-      binutils
       flex
       bison
       pahole
       zstd
-      gcc
       gnumake
       python3
       kmod
@@ -64,6 +62,9 @@ let
 
       echo "Applying opt-in configuration via localmodconfig..."
       LSMOD=${./lsmod.txt} make ARCH=arm64 localmodconfig
+
+      # Explicitly enable Ext4 support for mounting the installer root filesystem
+      ./scripts/config --enable EXT4_FS
 
       # Ensure critical Snapdragon features are built-in or enabled
       ./scripts/config --enable EFI_STUB
@@ -173,7 +174,7 @@ let
 
     # satisfy the kernel modules expectations
     passthru = rec {
-      modDirVersion = "6.19.0-rc4-next-20260109";
+      modDirVersion = "7.1.0-rc5-next-20260528";
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];

@@ -17,7 +17,7 @@
       text = ''
         {
           "colorScheme": "tokyo night",
-          "enableTerminalSandbox": true,
+          "enableTerminalSandbox": false,
           "model": "Gemini 3.5 Flash (High)",
           "notifications": true,
           "permissions": {
@@ -57,7 +57,8 @@
                 "mcp(tars/*)"
               ]
             },
-            "themeMode": "THEME_MODE_INHERIT"
+            "themeMode": "THEME_MODE_INHERIT",
+            "useAiCredits": true
           }
         }
       '';

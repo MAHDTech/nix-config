@@ -44,7 +44,7 @@ in
           catppuccin.sources =
             lib.mkForce
               (import "${inputs.catppuccin}/default.nix" {
-                pkgs = pkgsImportSystem "x86_64-linux";
+                pkgs = pkgsImportSystem system;
               }).packages;
         })
       ]
@@ -87,7 +87,7 @@ in
           catppuccin.sources =
             lib.mkForce
               (import "${inputs.catppuccin}/default.nix" {
-                pkgs = pkgsImportSystem "x86_64-linux";
+                pkgs = pkgsImportSystem system;
               }).packages;
         })
       ];

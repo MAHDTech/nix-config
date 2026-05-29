@@ -8,7 +8,7 @@
   imports = [ ];
 
   boot = {
-    supportedFilesystems = lib.mkForce [
+    supportedFilesystems = lib.mkDefault [
       "vfat"
       "btrfs"
     ];
@@ -37,13 +37,10 @@
         "qcom_geni_se"
         "qcom_smd_regulator"
         "qcom_spmi_regulator"
-        "ath12k"
         "msm"
         "i2c_hid_of"
         "i2c_hid"
         "hid_multitouch"
-        "snd_soc_x1e80100"
-        "qcom_q6v5_pas"
         "qcom_sysmon"
         "qrtr_smd"
         "pcie_qcom"
@@ -75,7 +72,7 @@
         "cdc_mbim"
         "rndis_host"
       ];
-      kernelModules = [ "kvm" ];
+      kernelModules = [ ];
     };
 
     kernelParams = [
@@ -109,7 +106,7 @@
       name = "qcom/x1e80100-asus-zenbook-a14.dtb";
     };
     enableRedistributableFirmware = true;
-    firmware = [ (import ./firmware.nix { inherit pkgs; }) ];
+    firmware = [ (pkgs.callPackage ./firmware.nix { }) ];
   };
 
   # Audio (Pull UCM files from the patched kernel tree)
