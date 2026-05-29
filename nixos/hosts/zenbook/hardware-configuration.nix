@@ -78,6 +78,7 @@
     kernelParams = [
       "clk_ignore_unused"
       "pd_ignore_unused"
+      "regulator_ignore_unused"
       "console=ttyAMA0,115200n8"
       "console=tty0"
       "earlyprintk"
