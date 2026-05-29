@@ -60,9 +60,6 @@ let
       patchShebangs scripts/config
       make ARCH=arm64 defconfig
 
-      echo "Applying opt-in configuration via localmodconfig..."
-      LSMOD=${./lsmod.txt} make ARCH=arm64 localmodconfig
-
       # Explicitly enable Ext4 support for mounting the installer root filesystem
       ./scripts/config --enable EXT4_FS
 
@@ -141,13 +138,13 @@ let
       ./scripts/config --enable ARM_SCMI_TRANSPORT_MAILBOX
 
       # Core Qualcomm Clocks and Interconnects (must be built-in)
-      ./scripts/config --enable CONFIG_COMMON_CLK_QCOM
-      ./scripts/config --enable CONFIG_CLK_X1E80100_GCC
-      ./scripts/config --enable CONFIG_CLK_X1E80100_DISPCC
-      ./scripts/config --enable CONFIG_CLK_X1E80100_GPUCC
-      ./scripts/config --enable CONFIG_INTERCONNECT
-      ./scripts/config --enable CONFIG_INTERCONNECT_QCOM
-      ./scripts/config --enable CONFIG_INTERCONNECT_QCOM_X1E80100
+      ./scripts/config --enable COMMON_CLK_QCOM
+      ./scripts/config --enable CLK_X1E80100_GCC
+      ./scripts/config --enable CLK_X1E80100_DISPCC
+      ./scripts/config --enable CLK_X1E80100_GPUCC
+      ./scripts/config --enable INTERCONNECT
+      ./scripts/config --enable INTERCONNECT_QCOM
+      ./scripts/config --enable INTERCONNECT_QCOM_X1E80100
 
       # Make sure crucial drivers aren't dropped by localmodconfig
       ./scripts/config --enable ARM_SMMU
@@ -156,9 +153,16 @@ let
       ./scripts/config --enable USB_DWC3_QCOM
       ./scripts/config --enable TYPEC
       ./scripts/config --enable TYPEC_UCSI
-      ./scripts/config --module UCSI_GLINK
-      ./scripts/config --module PHY_QCOM_QMP_USB
-      ./scripts/config --module PHY_QCOM_QMP_USBC
+      ./scripts/config --enable UCSI_PMIC_GLINK
+      ./scripts/config --enable PCIE_QCOM
+      ./scripts/config --enable PHY_QCOM_QMP_USB
+      ./scripts/config --enable PHY_QCOM_QMP_USBC
+      ./scripts/config --enable PHY_QCOM_SNPS_EUSB2
+      ./scripts/config --enable PHY_QCOM_EUSB2_REPEATER
+      ./scripts/config --enable PHY_QCOM_QMP_COMBO
+      ./scripts/config --enable QCOM_PMIC_GLINK
+      ./scripts/config --enable TYPEC_QCOM_PMIC
+      ./scripts/config --enable USB_UAS
 
       # Re-sync configuration
       make ARCH=arm64 olddefconfig

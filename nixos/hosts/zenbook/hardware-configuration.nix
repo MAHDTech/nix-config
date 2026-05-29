@@ -27,6 +27,7 @@
         # NVMe / Storage & Bus Controllers
         "nvme"
         "usb_storage"
+        "usbhid"
         "uas"
         "sd_mod"
         "xhci_pci"
@@ -39,12 +40,20 @@
         "qcom_spmi_regulator"
         "qcom_geni_se"
 
+        # USB transceivers, PHYs, and PMIC power state mapping (required for USB ports)
+        "phy_qcom_qmp_usb"
+        "phy_qcom_snps_eusb2"
+        "phy_qcom_eusb2_repeater"
+        "phy_qcom_qmp_combo"
+        "pmic_glink"
+        "qcom_pmic_glink"
+        "qcom_pmic_typec"
+
         # Filesystem and Live Media Support
         "iso9660"
         "squashfs"
         "overlay"
         "loop"
-        "md_mod"
         "btrfs"
         "ext4"
       ];
