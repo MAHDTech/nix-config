@@ -24,40 +24,22 @@
       includeDefaultModules = false;
       allowMissingModules = true;
       availableKernelModules = [
+        # NVMe / Storage & Bus Controllers
         "nvme"
         "usb_storage"
-        "usbhid"
+        "uas"
+        "sd_mod"
         "xhci_pci"
         "xhci_plat_hcd"
         "dwc3"
         "dwc3_qcom"
-        "uas"
-        "sd_mod"
+        "pcie_qcom"
         "arm_smmu"
-        "qcom_geni_se"
         "qcom_smd_regulator"
         "qcom_spmi_regulator"
-        "msm"
-        "i2c_hid_of"
-        "i2c_hid"
-        "hid_multitouch"
-        "qcom_sysmon"
-        "qrtr_smd"
-        "pcie_qcom"
-        "pci_pwrctrl_pwrseq"
-        "pci_pwrctrl_core"
-        "phy_qcom_qmp_usb"
-        "phy_qcom_snps_eusb2"
-        "phy_qcom_eusb2_repeater"
-        "phy_qcom_qmp_combo"
-        "typec"
-        "typec_ucsi"
-        "ucsi_glink"
-        "pmic_glink"
-        "qcom_pmic_glink"
-        "qcom_pmic_typec"
-        "qcom_pd_mapper"
-        # ISO and Live Media Support
+        "qcom_geni_se"
+
+        # Filesystem and Live Media Support
         "iso9660"
         "squashfs"
         "overlay"
@@ -65,12 +47,6 @@
         "md_mod"
         "btrfs"
         "ext4"
-        # Plan B: USB Tethering drivers
-        "usbnet"
-        "cdc_ether"
-        "cdc_ncm"
-        "cdc_mbim"
-        "rndis_host"
       ];
       kernelModules = [ ];
     };

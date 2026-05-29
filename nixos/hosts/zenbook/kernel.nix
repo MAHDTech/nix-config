@@ -140,6 +140,15 @@ let
       ./scripts/config --enable ARM_SCMI_TRANSPORT_SMC
       ./scripts/config --enable ARM_SCMI_TRANSPORT_MAILBOX
 
+      # Core Qualcomm Clocks and Interconnects (must be built-in)
+      ./scripts/config --enable CONFIG_COMMON_CLK_QCOM
+      ./scripts/config --enable CONFIG_CLK_X1E80100_GCC
+      ./scripts/config --enable CONFIG_CLK_X1E80100_DISPCC
+      ./scripts/config --enable CONFIG_CLK_X1E80100_GPUCC
+      ./scripts/config --enable CONFIG_INTERCONNECT
+      ./scripts/config --enable CONFIG_INTERCONNECT_QCOM
+      ./scripts/config --enable CONFIG_INTERCONNECT_QCOM_X1E80100
+
       # Make sure crucial drivers aren't dropped by localmodconfig
       ./scripts/config --enable ARM_SMMU
       ./scripts/config --enable ARM_SMMU_V3
