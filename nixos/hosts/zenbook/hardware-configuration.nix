@@ -23,14 +23,19 @@
     initrd = {
       includeDefaultModules = false;
       allowMissingModules = true;
+      # Use systemd-based initrd for proper ARM64 hardware initialization and
+      # device dependency resolution (proven critical for Snapdragon X Elite)
+      systemd.enable = true;
       availableKernelModules = [
         # NVMe / Storage & Bus Controllers
         "nvme"
         "usb_storage"
         "usbhid"
+        "hid_generic"
         "uas"
         "sd_mod"
         "xhci_pci"
+        "xhci_hcd"
         "xhci_plat_hcd"
         "dwc3"
         "dwc3_qcom"
@@ -48,6 +53,13 @@
         "pmic_glink"
         "qcom_pmic_glink"
         "qcom_pmic_typec"
+
+        # Keyboard and Touchpad (I2C HID — critical for built-in laptop input)
+        "i2c_hid"
+        "i2c_hid_of"
+        "i2c_qcom_geni"
+        "hid_multitouch"
+        "evdev"
 
         # Filesystem and Live Media Support
         "iso9660"

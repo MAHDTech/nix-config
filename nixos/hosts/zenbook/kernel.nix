@@ -154,6 +154,9 @@ let
       ./scripts/config --set-val I2C_HID_OF y
       ./scripts/config --set-val I2C_HID_OF_ELAN y
       ./scripts/config --set-val I2C_HID_OF_GOODIX y
+      ./scripts/config --module HID_GENERIC
+      ./scripts/config --module HID_MULTITOUCH
+      ./scripts/config --set-val INPUT_EVDEV y
 
       # Core Qualcomm Clocks and Interconnects (must be built-in)
       ./scripts/config --enable COMMON_CLK_QCOM
