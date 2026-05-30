@@ -136,6 +136,24 @@ let
       ./scripts/config --enable ARM_SCMI_PROTOCOL
       ./scripts/config --enable ARM_SCMI_TRANSPORT_SMC
       ./scripts/config --enable ARM_SCMI_TRANSPORT_MAILBOX
+      ./scripts/config --set-val MAILBOX y
+      ./scripts/config --set-val QCOM_SMEM y
+      ./scripts/config --set-val QCOM_SMSM y
+      ./scripts/config --set-val QCOM_SMEM_STATE y
+      ./scripts/config --set-val QCOM_SMP2P y
+      ./scripts/config --set-val RPMSG_QCOM_GLINK y
+      ./scripts/config --set-val RPMSG_QCOM_GLINK_SMEM y
+      ./scripts/config --set-val QCOM_PDR_HELPERS y
+      ./scripts/config --set-val QCOM_QMI_HELPERS y
+      ./scripts/config --set-val QCOM_CPUCP_MBOX y
+
+      # Keyboard and Input Bus Built-ins
+      ./scripts/config --set-val I2C_QCOM_GENI y
+      ./scripts/config --set-val I2C_HID y
+      ./scripts/config --set-val I2C_HID_CORE y
+      ./scripts/config --set-val I2C_HID_OF y
+      ./scripts/config --set-val I2C_HID_OF_ELAN y
+      ./scripts/config --set-val I2C_HID_OF_GOODIX y
 
       # Core Qualcomm Clocks and Interconnects (must be built-in)
       ./scripts/config --enable COMMON_CLK_QCOM
@@ -151,18 +169,26 @@ let
       ./scripts/config --enable ARM_SMMU_V3
       ./scripts/config --enable USB_DWC3
       ./scripts/config --enable USB_DWC3_QCOM
-      ./scripts/config --enable TYPEC
-      ./scripts/config --enable TYPEC_UCSI
-      ./scripts/config --enable UCSI_PMIC_GLINK
-      ./scripts/config --enable PCIE_QCOM
-      ./scripts/config --enable PHY_QCOM_QMP_USB
-      ./scripts/config --enable PHY_QCOM_QMP_USBC
-      ./scripts/config --enable PHY_QCOM_SNPS_EUSB2
-      ./scripts/config --enable PHY_QCOM_EUSB2_REPEATER
-      ./scripts/config --enable PHY_QCOM_QMP_COMBO
-      ./scripts/config --enable QCOM_PMIC_GLINK
-      ./scripts/config --enable TYPEC_QCOM_PMIC
+      ./scripts/config --enable USB_STORAGE
       ./scripts/config --enable USB_UAS
+      ./scripts/config --set-val TYPEC y
+      ./scripts/config --set-val TYPEC_UCSI y
+      ./scripts/config --set-val UCSI_PMIC_GLINK y
+      ./scripts/config --set-val QCOM_PMIC_GLINK y
+      ./scripts/config --set-val PHY_QCOM_QMP y
+      ./scripts/config --set-val PHY_QCOM_QMP_PCIE y
+      ./scripts/config --set-val PCIE_QCOM y
+
+      ./scripts/config --set-val PHY_QCOM_QMP_USB y
+      ./scripts/config --set-val PHY_QCOM_QMP_USBC y
+      ./scripts/config --set-val PHY_QCOM_SNPS_EUSB2 y
+      ./scripts/config --set-val PHY_QCOM_USB_SNPS_FEMTO_V2 y
+      ./scripts/config --set-val PHY_QCOM_QUSB2 y
+      ./scripts/config --set-val PHY_QCOM_EUSB2_REPEATER y
+      ./scripts/config --set-val PHY_QCOM_QMP_COMBO y
+
+
+
 
       # Re-sync configuration
       make ARCH=arm64 olddefconfig

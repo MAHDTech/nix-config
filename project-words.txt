@@ -1539,3 +1539,7 @@ Bohdan
 Tkachenko
 
 sulogin
+SMSM
+GOODIX
+QUSB
+FEMTO

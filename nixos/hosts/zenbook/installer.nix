@@ -20,4 +20,7 @@
 
   # Disable emergency mode to prevent sulogin console locking on boot timeouts
   systemd.enableEmergencyMode = false;
+
+  # Allow unauthenticated access to the initrd emergency console for active debugging
+  boot.initrd.systemd.emergencyAccess = true;
 }
