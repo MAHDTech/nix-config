@@ -1,9 +1,8 @@
 { pkgs, ... }:
 {
-  boot.initrd.kernelModules = [
-    "panthor" # Modern ARM Mali CSF GPUs (G720, G615, etc.)
-    "panfrost" # Legacy/Standard ARM Mali GPUs (Valhall, Bifrost, Midgard)
-  ];
+  # Panthor for CSF-based Mali GPUs (G720, G615, etc.)
+  # Loaded via boot.kernelModules in host hardware-configuration.nix
+  # NOTE: panfrost is for older non-CSF GPUs (Bifrost/Midgard) — do NOT load both
 
   hardware.graphics = {
     enable = true;

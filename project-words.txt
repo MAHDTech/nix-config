@@ -1564,3 +1564,11 @@ HIDP
 QSEECOM
 UEFISECAPP
 retimers
+devmem
+rmem
+wmem
+qdisc
+IORT
+STREAMID
+EVTQEN
+evtq

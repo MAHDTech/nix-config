@@ -28,24 +28,42 @@
         "usbhid"
         "xhci_pci"
         "uas"
-        "r8169" # Realtek network
-        "r8152" # Realtek USB network
-        "panthor" # Immortalis G720 GPU
-        "panfrost"
+        "r8169" # Realtek RTL8126 5GbE (mainline r8169 supports PCI ID 10ec:8126)
+        "r8152" # Realtek USB Ethernet (fallback for USB dongles)
+        "dwc3" # DWC3 USB3 controller
       ];
-      kernelModules = [
-        "kvm"
-        "aipu"
-        "amvx"
-      ];
+      kernelModules = [ ];
     };
+
+    # Load after boot (not needed during initrd)
+    kernelModules = [
+      "kvm"
+      "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
+      "aipu" # CIX NPU
+      "amvx" # CIX VPU
+    ];
+
+    # Prevent panfrost from auto-loading (wrong driver for G720, use panthor)
+    blacklistedKernelModules = [ "panfrost" ];
 
     kernelParams = [
       "console=ttyAMA0,115200n8"
       "console=tty0"
       "nowatchdog" # Disable hardware watchdog
-      "module_blacklist=sbsa_gwdt" # Disable sbsa_gwdt module (watchdog)
+      "module_blacklist=sbsa_gwdt" # Disable sbsa_gwdt module (watchdog reboot loops)
     ];
+
+    # 5GbE and network performance tuning
+    kernel.sysctl = {
+      "net.core.rmem_max" = 16777216;
+      "net.core.wmem_max" = 16777216;
+      "net.core.rmem_default" = 1048576;
+      "net.core.wmem_default" = 1048576;
+      "net.ipv4.tcp_rmem" = "4096 1048576 16777216";
+      "net.ipv4.tcp_wmem" = "4096 1048576 16777216";
+      "net.core.default_qdisc" = "fq";
+      "net.ipv4.tcp_congestion_control" = "bbr";
+    };
 
     # Modern boot management
     loader = {
@@ -165,7 +183,10 @@
     enableRedistributableFirmware = true;
   };
 
-  # Explicitly configure systemd-networkd to manage Ethernet interfaces
+  # Use systemd-networkd for Ethernet management
+  networking.useNetworkd = true;
+  networking.useDHCP = lib.mkForce false;
+
   systemd.network.networks."10-lan" = {
     matchConfig.Name = [
       "en*"
@@ -174,6 +195,5 @@
     networkConfig.DHCP = "yes";
   };
 
-  networking.useDHCP = lib.mkForce true;
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 }

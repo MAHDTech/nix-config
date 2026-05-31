@@ -25,6 +25,9 @@
     # Power management and optimizations
     ./power.nix
 
+    # SMMU IORT firmware bug workaround (EDK2 <= 1.2.1)
+    ./smmu-fix.nix
+
     # System configuration
     ../../system/config/audio
     ../../system/config/bluetooth

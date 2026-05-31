@@ -4,7 +4,8 @@
   services.power-profiles-daemon.enable = lib.mkForce true;
   services.tlp.enable = lib.mkForce false;
 
-  # We omit forcing cpuFreqGovernor here because 'schedutil' is often compiled
-  # directly into the kernel on ARM SBCs (built-in instead of a module).
-  # Forcing it causes systemd-modules-load to complain when it can't find 'cpufreq_schedutil.ko'.
+  # Override system-wide "performance" governor — schedutil is optimal for
+  # the CIX P1 tri-cluster big.LITTLE architecture (4xA720 + 4xA720 + 4xA520).
+  # PPD will manage governor switching dynamically (balanced/performance profiles).
+  powerManagement.cpuFreqGovernor = lib.mkForce "schedutil";
 }
