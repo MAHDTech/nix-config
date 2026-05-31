@@ -4,6 +4,11 @@
   pkgs,
   ...
 }:
+let
+  cix-noe-umd = pkgs.callPackage ./packages/cix-noe-umd.nix { };
+  cix-dsp-firmware = pkgs.callPackage ./packages/cix-dsp-firmware.nix { };
+  sky1-firmware = pkgs.callPackage ./packages/sky1-firmware.nix { };
+in
 {
   imports = [ ];
 
@@ -13,8 +18,12 @@
       "btrfs"
     ];
 
-    # Use the latest kernel for newer ARM boards
-    kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+    # Custom patched mainline v7.0 kernel is configured dynamically
+    kernelPackages =
+      let
+        kernelBuild = pkgs.callPackage ./kernel.nix { };
+      in
+      lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 
     extraModulePackages = [
       (config.boot.kernelPackages.callPackage ./packages/cix-npu-driver.nix { })
@@ -92,6 +101,7 @@
   };
 
   environment.systemPackages = [
+    cix-noe-umd
     (pkgs.writeShellScriptBin "update-orion-bios" ''
       set -euo pipefail
 
@@ -181,6 +191,19 @@
 
   hardware = {
     enableRedistributableFirmware = true;
+    firmware = [
+      sky1-firmware
+      cix-dsp-firmware
+    ];
+  };
+
+  services.udev.extraRules = ''
+    KERNEL=="aipu", MODE="0660", GROUP="render"
+  '';
+
+  environment.variables = {
+    AIPULIB_PATH = "${cix-noe-umd}/lib";
+    LD_LIBRARY_PATH = [ "${cix-noe-umd}/lib" ];
   };
 
   # Use systemd-networkd for Ethernet management

@@ -16,6 +16,10 @@ stdenv.mkDerivation rec {
     hash = "sha256-eq95TOZwG7lisyq5koSaoRK4QB+QVQcgDJj+3Ekgf2s=";
   };
 
+  patches = [
+    ./cix-npu-driver-race-condition-fix.patch
+  ];
+
   nativeBuildInputs = kernel.moduleBuildDependencies;
 
   # The NPU Makefile expects COMPASS_DRV_BTENVAR_KPATH to be the kernel build directory

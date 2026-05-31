@@ -82,6 +82,12 @@
         "ext4"
       ];
       kernelModules = [ ];
+
+      # Load crucial platform firmware directly in stage 1 to prevent driver crashes
+      extraFirmwarePaths = [
+        "qcom"
+        "ath12k"
+      ];
     };
 
     kernelParams = [
@@ -122,7 +128,26 @@
       name = "qcom/x1e80100-asus-zenbook-a14.dtb";
     };
     enableRedistributableFirmware = true;
-    firmware = [ (pkgs.callPackage ./firmware.nix { }) ];
+    firmware = [
+      (pkgs.callPackage ./firmware.nix { })
+      (pkgs.runCommand "zenbook-initrd-firmware" { } ''
+        mkdir -p $out/lib/firmware/qcom
+        mkdir -p $out/lib/firmware/ath12k/WCN7850/hw2.0
+
+        # Copy GPU firmware
+        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen70500_*.fw $out/lib/firmware/qcom/
+
+        # Copy ath12k WiFi firmware
+        cp -r ${pkgs.linux-firmware}/lib/firmware/ath12k/WCN7850/hw2.0/* $out/lib/firmware/ath12k/WCN7850/hw2.0/
+
+        # Make files writeable so we can remove them
+        chmod -R +w $out
+
+        # Clean up text files and symlinks to satisfy Nix's broken symlinks check
+        find $out -type l -exec rm -f {} +
+        find $out -name "*.txt" -exec rm -f {} +
+      '')
+    ];
   };
 
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.

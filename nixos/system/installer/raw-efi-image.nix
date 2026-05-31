@@ -107,8 +107,9 @@ let
       # Write ESP image into the disk image
       dd if=esp.img of=image.raw seek=$espStartSector bs=512 conv=notrunc
 
-      # Create root filesystem image
-      rootSectors=$(( (totalSizeMB * 1048576 / 512) - rootStartSector - 34 ))
+      # Get exact start and size of root partition allocated by sfdisk
+      rootStartSector=$(sfdisk -d image.raw | grep 'name="nixos-root"' | sed -E 's/.*start=\s*([0-9]+),.*/\1/')
+      rootSectors=$(sfdisk -d image.raw | grep 'name="nixos-root"' | sed -E 's/.*size=\s*([0-9]+),.*/\1/')
       rootBytes=$(( rootSectors * 512 ))
       truncate -s $rootBytes root.img
 
@@ -142,5 +143,6 @@ in
   fileSystems."/" = lib.mkForce {
     device = "/dev/disk/by-label/nixos-root";
     fsType = "ext4";
+    noCheck = true;
   };
 }
