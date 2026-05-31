@@ -107,8 +107,8 @@
     firmware = [ (pkgs.callPackage ./firmware.nix { }) ];
   };
 
-  # Audio (Pull UCM files from the patched kernel tree)
-  environment.etc."alsa/ucm2".source = "${inputs.zenbook-linux}/ucm2";
+  # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
+  # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
 
   networking.useDHCP = lib.mkDefault false;
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";

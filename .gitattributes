@@ -1,0 +1,2 @@
+# Treat Qualcomm firmware files as binary to prevent line ending normalization/corruption
+nixos/hosts/zenbook/files/firmware/** binary

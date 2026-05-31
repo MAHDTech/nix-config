@@ -1544,3 +1544,7 @@ GOODIX
 QUSB
 FEMTO
 evdev
+Hamoa
+Purwa
+tplg
+qupv
