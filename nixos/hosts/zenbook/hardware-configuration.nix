@@ -47,12 +47,14 @@
 
         # USB transceivers, PHYs, and PMIC power state mapping (required for USB ports)
         "phy_qcom_qmp_usb"
-        "phy_qcom_snps_eusb2"
+        "phy_snps_eusb2"
         "phy_qcom_eusb2_repeater"
         "phy_qcom_qmp_combo"
+        "ptn3222"
         "pmic_glink"
         "qcom_pmic_glink"
         "qcom_pmic_typec"
+        "typec_mux_ps883x"
 
         # Keyboard and Touchpad (I2C HID — critical for built-in laptop input)
         "i2c_hid"
@@ -60,6 +62,16 @@
         "i2c_qcom_geni"
         "hid_multitouch"
         "evdev"
+
+        # Bluetooth (WCN7850-BT)
+        "bluetooth"
+        "btqca"
+        "hci_uart"
+        "bnep"
+        "rfcomm"
+
+        # WiFi/BT power sequencing
+        "pwrseq_qcom_wcn"
 
         # Filesystem and Live Media Support
         "iso9660"
@@ -84,7 +96,13 @@
       "fbcon=map:0"
       "arm64.nopauth"
       "pcie_aspm=off"
+      "efi=noruntime"
     ];
+
+    # Speaker safety interlock — required by snd-soc-x1e80100 driver
+    extraModprobeConfig = ''
+      options snd-soc-x1e80100 i_accept_the_danger=1
+    '';
 
     # Modern boot management
     loader = {

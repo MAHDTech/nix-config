@@ -66,6 +66,13 @@ let
       # Ensure critical Snapdragon features are built-in or enabled
       ./scripts/config --enable EFI_STUB
       ./scripts/config --enable DRM_MSM
+      ./scripts/config --enable DRM_MSM_DPU
+      ./scripts/config --enable DRM_MSM_DP
+      ./scripts/config --enable DRM_MSM_DSI
+      ./scripts/config --module DRM_PANEL_EDP
+      ./scripts/config --module DRM_PANEL_SIMPLE
+      ./scripts/config --enable BACKLIGHT_CLASS_DEVICE
+      ./scripts/config --enable DRM_DISPLAY_DSC_HELPER
       ./scripts/config --enable PINCTRL_X1E80100
       ./scripts/config --enable QCOM_COMMAND_DB
       ./scripts/config --enable QCOM_RPMH
@@ -92,7 +99,10 @@ let
       ./scripts/config --disable NET_VENDOR_SOCIONEXT
       ./scripts/config --disable NET_VENDOR_WANGXUN
 
-      # Explicitly re-enable Audio (often missing in generic builds)
+      # ── Audio (SoundWire bus MUST come before machine driver) ──
+      ./scripts/config --module SOUNDWIRE
+      ./scripts/config --module SOUNDWIRE_QCOM
+      ./scripts/config --module QCOM_APR
       ./scripts/config --module SND_SOC_QCOM
       ./scripts/config --module SND_SOC_X1E80100
       ./scripts/config --module SND_SOC_LPASS_WSA_MACRO
@@ -100,18 +110,48 @@ let
       ./scripts/config --module SND_SOC_LPASS_RX_MACRO
       ./scripts/config --module SND_SOC_LPASS_TX_MACRO
       ./scripts/config --module SND_SOC_WSA884X
-      ./scripts/config --module SND_SOC_WCD938X
-      ./scripts/config --module SND_SOC_WCD_CLASSH
+      ./scripts/config --module SND_SOC_WCD938X_SDW
 
-      # Camera (OV02C10 mentioned in Vinarskis patches)
+      # ── Camera (OV02C10 mentioned in Vinarskis patches) ──
       ./scripts/config --module VIDEO_OV02C10
       ./scripts/config --enable VIDEO_V4L2_SUBDEV_API
+      ./scripts/config --module VIDEO_QCOM_CAMSS
 
-      # WiFi/BT co-existence and routing
+      # ── WiFi (WCN7850 via ath12k) ──
       ./scripts/config --module ATH12K
+      ./scripts/config --module ATH12K_PCI
+      ./scripts/config --module CFG80211
+      ./scripts/config --enable CFG80211_DEFAULT_PS
+      ./scripts/config --module MAC80211
+      ./scripts/config --enable MAC80211_LEDS
+      ./scripts/config --module RFKILL
+      ./scripts/config --module RFKILL_GPIO
       ./scripts/config --module QRTR_SMD
       ./scripts/config --module QRTR_MHI
       ./scripts/config --module QCOM_PD_MAPPER
+
+      # ── Bluetooth (WCN7850-BT via hci_uart/btqca) ──
+      ./scripts/config --module BT
+      ./scripts/config --module BT_HCIUART
+      ./scripts/config --set-val BT_HCIUART_SERDEV y
+      ./scripts/config --set-val BT_HCIUART_QCA y
+      ./scripts/config --module BT_HCIBTUSB
+      ./scripts/config --module BT_RFCOMM
+      ./scripts/config --set-val BT_RFCOMM_TTY y
+      ./scripts/config --module BT_BNEP
+      ./scripts/config --set-val BT_BNEP_MC_FILTER y
+      ./scripts/config --set-val BT_BNEP_PROTO_FILTER y
+      ./scripts/config --module BT_HIDP
+      ./scripts/config --enable BT_LE
+      ./scripts/config --enable BT_LEDS
+
+      # ── WCN7850 Power Sequencing (BT + WiFi shared PMU) ──
+      ./scripts/config --module POWER_SEQUENCING_QCOM_WCN
+      ./scripts/config --module POWER_SEQUENCING_PCIE_M2
+
+      # ── Hardware video decoder (Qualcomm Iris V4L2) ──
+      ./scripts/config --module VIDEO_QCOM_IRIS
+      ./scripts/config --enable MEDIA_SUPPORT
 
       # Essential for ISO/Live media
       ./scripts/config --module ISO9660_FS
@@ -127,12 +167,30 @@ let
       ./scripts/config --module NLS_ISO8859_1
       ./scripts/config --module NLS_UTF8
 
-      # System Control and Mailbox Built-ins
+      # System Control, Security, and Mailbox Built-ins
       ./scripts/config --enable QCOM_SCM
       ./scripts/config --enable QCOM_TZMEM
+      ./scripts/config --enable QCOM_TZMEM_MODE_SHMBRIDGE
+      ./scripts/config --enable QCOM_QSEECOM
+      ./scripts/config --enable QCOM_QSEECOM_UEFISECAPP
+      ./scripts/config --module QCOM_FASTRPC
+      ./scripts/config --module RPMSG_CHAR
+      ./scripts/config --module RPMSG_CTRL
+      ./scripts/config --module QCOM_Q6V5_ADSP
+      ./scripts/config --module LEDS_QCOM_LPG
       ./scripts/config --enable QCOM_AOSS_QMP
       ./scripts/config --enable QCOM_IPCC
       ./scripts/config --enable QCOM_APCS_IPC
+      ./scripts/config --enable QCOM_PDC
+      ./scripts/config --enable QCOM_LLCC
+      ./scripts/config --enable QCOM_GENI_SE
+      ./scripts/config --enable QCOM_CLK_RPMH
+      ./scripts/config --enable ARM_QCOM_CPUFREQ_HW
+      ./scripts/config --enable QCOM_TSENS
+      ./scripts/config --module QCOM_SPMI_TEMP_ALARM
+      ./scripts/config --module QCOM_ICC_BWMON
+      ./scripts/config --enable REMOTEPROC
+      ./scripts/config --module QCOM_Q6V5_PAS
       ./scripts/config --enable ARM_SCMI_PROTOCOL
       ./scripts/config --enable ARM_SCMI_TRANSPORT_SMC
       ./scripts/config --enable ARM_SCMI_TRANSPORT_MAILBOX
@@ -167,31 +225,81 @@ let
       ./scripts/config --enable INTERCONNECT_QCOM
       ./scripts/config --enable INTERCONNECT_QCOM_X1E80100
 
-      # Make sure crucial drivers aren't dropped by localmodconfig
+      # IOMMU — Qualcomm-specific SMMU + lazy TLB for performance
       ./scripts/config --enable ARM_SMMU
       ./scripts/config --enable ARM_SMMU_V3
+      ./scripts/config --enable ARM_SMMU_QCOM
+      ./scripts/config --enable IOMMU_DEFAULT_DMA_LAZY
+
+      # USB Core — explicitly enable full XHCI stack
+      ./scripts/config --enable USB_SUPPORT
+      ./scripts/config --enable USB
+      ./scripts/config --enable USB_ANNOUNCE_NEW_DEVICES
+      ./scripts/config --enable USB_XHCI_HCD
+      ./scripts/config --enable USB_XHCI_PCI
+      ./scripts/config --enable USB_XHCI_PLATFORM
+      ./scripts/config --enable USBHID
       ./scripts/config --enable USB_DWC3
       ./scripts/config --enable USB_DWC3_QCOM
+      ./scripts/config --enable USB_DWC3_DUAL_ROLE
+      ./scripts/config --enable USB_GADGET
       ./scripts/config --enable USB_STORAGE
       ./scripts/config --enable USB_UAS
+      ./scripts/config --set-val USB_ROLE_SWITCH y
+
+      # Type-C — UCSI, PMIC GLINK, alt modes, retimers
       ./scripts/config --set-val TYPEC y
       ./scripts/config --set-val TYPEC_UCSI y
       ./scripts/config --set-val UCSI_PMIC_GLINK y
       ./scripts/config --set-val QCOM_PMIC_GLINK y
+      ./scripts/config --set-val QCOM_PMIC_GLINK_ALTMODE y
+      ./scripts/config --set-val TYPEC_DP_ALTMODE y
+      ./scripts/config --set-val TYPEC_MUX_PS883X y
+      ./scripts/config --module TYPEC_MUX_NB7VPQ904M
+      ./scripts/config --module TYPEC_MUX_PTN36502
+
+      # PCIe
       ./scripts/config --set-val PHY_QCOM_QMP y
       ./scripts/config --set-val PHY_QCOM_QMP_PCIE y
       ./scripts/config --set-val PCIE_QCOM y
 
+      # USB PHYs — eUSB2, QMP combo, PTN3222 redriver
       ./scripts/config --set-val PHY_QCOM_QMP_USB y
-      ./scripts/config --set-val PHY_QCOM_QMP_USBC y
-      ./scripts/config --set-val PHY_QCOM_SNPS_EUSB2 y
+      ./scripts/config --set-val PHY_SNPS_EUSB2 y
       ./scripts/config --set-val PHY_QCOM_USB_SNPS_FEMTO_V2 y
       ./scripts/config --set-val PHY_QCOM_QUSB2 y
       ./scripts/config --set-val PHY_QCOM_EUSB2_REPEATER y
       ./scripts/config --set-val PHY_QCOM_QMP_COMBO y
+      # eUSB2-to-USB2 redriver — required for DWC3 USB to probe on x1e80100
+      ./scripts/config --set-val PHY_NXP_PTN3222 y
 
+      # ── Power/Battery ──
+      ./scripts/config --enable POWER_SUPPLY
+      ./scripts/config --module BATTERY_QCOM_BATTMGR
 
+      # ── Suspend/Resume & Power Efficiency ──
+      ./scripts/config --enable WQ_POWER_EFFICIENT_DEFAULT
 
+      # ── PMIC/Regulators (voltage rail management) ──
+      ./scripts/config --enable REGULATOR_QCOM_RPMH
+      ./scripts/config --enable REGULATOR_QCOM_SPMI
+      ./scripts/config --enable MFD_SPMI_PMIC
+      ./scripts/config --enable SPMI_MSM_PMIC_ARB
+      ./scripts/config --enable INPUT_PM8941_PWRKEY
+      ./scripts/config --module POWER_RESET_QCOM_PON
+
+      # ── Watchdog & RTC ──
+      ./scripts/config --module QCOM_WDT
+      ./scripts/config --module RTC_DRV_PM8XXX
+      ./scripts/config --module QCOM_STATS
+
+      # ── Sensors (HID IIO — accelerometer, ALS, gyroscope) ──
+      ./scripts/config --module HID_SENSOR_HUB
+      ./scripts/config --module HID_SENSOR_IIO_COMMON
+      ./scripts/config --module HID_SENSOR_ACCEL_3D
+      ./scripts/config --module HID_SENSOR_ALS
+      ./scripts/config --module HID_SENSOR_GYRO_3D
+      ./scripts/config --enable IIO
 
       # Re-sync configuration
       make ARCH=arm64 olddefconfig
