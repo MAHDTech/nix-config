@@ -33,7 +33,6 @@ let
       elfutils
       flex
       bison
-      pahole
       zstd
       gnumake
       python3
@@ -247,6 +246,16 @@ let
       ./scripts/config --enable USB_UAS
       ./scripts/config --set-val USB_ROLE_SWITCH y
 
+      # USB Ethernet Drivers
+      ./scripts/config --enable NETDEVICES
+      ./scripts/config --enable USB_NET_DRIVERS
+      ./scripts/config --module USB_NET_AX88179_178A
+      ./scripts/config --module USB_RTL8152
+      ./scripts/config --module USB_USBNET
+      ./scripts/config --module USB_NET_CDCETHER
+      ./scripts/config --module USB_NET_CDC_NCM
+      ./scripts/config --module USB_NET_RNDIS_HOST
+
       # Type-C — UCSI, PMIC GLINK, alt modes, retimers
       ./scripts/config --set-val TYPEC y
       ./scripts/config --set-val TYPEC_UCSI y
@@ -300,6 +309,12 @@ let
       ./scripts/config --module HID_SENSOR_ALS
       ./scripts/config --module HID_SENSOR_GYRO_3D
       ./scripts/config --enable IIO
+
+      # Disable debug symbols and BTF to reduce build size, compile time, and memory usage
+      ./scripts/config --disable DEBUG_INFO
+      ./scripts/config --disable DEBUG_INFO_BTF
+      ./scripts/config --disable DEBUG_INFO_DWARF5
+      ./scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
 
       # Re-sync configuration
       make ARCH=arm64 olddefconfig
