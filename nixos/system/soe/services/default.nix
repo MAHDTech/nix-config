@@ -4,6 +4,7 @@
     ./clamav
     ./cron
     ./envfs
+    ./fwupd
     ./pam
     ./pcscd
     ./resolved

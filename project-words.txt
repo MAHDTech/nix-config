@@ -1595,3 +1595,5 @@ symvers
 NETDEVICES
 CDCETHER
 Kbuild
+fwupd
+lvfs

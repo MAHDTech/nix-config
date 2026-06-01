@@ -107,6 +107,11 @@ let
       ./scripts/config --disable DEBUG_INFO_DWARF5
       ./scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
 
+      # Disable massive unnecessary PCIe graphics drivers to avoid compilation failures and speed up builds
+      ./scripts/config --disable DRM_AMDGPU
+      ./scripts/config --disable DRM_NOUVEAU
+      ./scripts/config --disable DRM_RADEON
+
       # Re-sync configuration
       make ARCH=arm64 olddefconfig
     '';
