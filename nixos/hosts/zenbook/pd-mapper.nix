@@ -4,12 +4,12 @@ let
   # Required for WiFi, Bluetooth, and Audio on Snapdragon X Elite
   pd-mapper = pkgs.stdenv.mkDerivation {
     pname = "pd-mapper";
-    version = "unstable-2025-12-30";
+    version = "1.1";
 
     src = pkgs.fetchFromGitHub {
-      owner = "andersson";
+      owner = "linux-msm";
       repo = "pd-mapper";
-      rev = "5ecd2fe926aca7abfe40724177f63b942cff3947";
+      rev = "v1.1";
       sha256 = "sha256-I5/N24KONtNRSub00Mqh1GoMHO2qQKTj/ts2N6DQdPc=";
     };
 
@@ -26,7 +26,7 @@ let
 
     meta = with pkgs.lib; {
       description = "Qualcomm Protection Domain Mapper";
-      homepage = "https://github.com/andersson/pd-mapper";
+      homepage = "https://github.com/linux-msm/pd-mapper";
       license = licenses.bsd3;
       platforms = platforms.linux;
     };
@@ -38,13 +38,30 @@ in
   # PD Mapper service is critical for firmware loading on DSPs
   systemd.services.pd-mapper = {
     description = "Qualcomm Protection Domain Mapper";
-    documentation = [ "https://github.com/andersson/pd-mapper" ];
+    documentation = [ "https://github.com/linux-msm/pd-mapper" ];
     wantedBy = [ "basic.target" ];
     after = [
       "qrtr-ns.service"
       "systemd-udev-trigger.service"
     ];
     requires = [ "qrtr-ns.service" ];
+
+    preStart = ''
+      mkdir -p /var/lib/pd-mapper
+      # NixOS compresses firmware files to *.zst by default. Since pd-mapper is a C daemon
+      # that doesn't understand zstd-compressed mapping files, we decompress them to /var/lib/pd-mapper/
+      # so that pd-mapper can find and read the subsystem descriptors correctly.
+      if [ -d /run/current-system/firmware ]; then
+        find /run/current-system/firmware -name "*.jsn.zst" -exec sh -c '
+          for f; do
+            outname=$(basename "$f" .zst)
+            ${pkgs.zstd}/bin/zstd -d -c "$f" > "/var/lib/pd-mapper/$outname"
+          done
+        ' _ {} +
+        find /run/current-system/firmware -name "*.jsn" -exec cp -f {} /var/lib/pd-mapper/ \;
+      fi
+    '';
+
     serviceConfig = {
       ExecStart = "${pd-mapper}/bin/pd-mapper";
       Restart = "always";

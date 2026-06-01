@@ -50,6 +50,9 @@ let
       elfutils
     ];
 
+    # Enable Armv8 Cryptography Extensions (AES/NEON) to fix crypto/aegis128-neon-inner assembler failures
+    NIX_CFLAGS_COMPILE = "-march=armv8-a+crypto";
+
     # Apply all 32 enablement patches sequentially
     prePatch = ''
       echo "Applying CIX mainline patches from ${cixPatches}..."

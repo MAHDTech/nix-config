@@ -108,6 +108,7 @@
       "arm64.nopauth"
       "pcie_aspm=off"
       "efi=noruntime"
+      "usbcore.quirks=0b95:1790:k"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
