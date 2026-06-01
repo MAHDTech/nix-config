@@ -5,9 +5,9 @@
   ...
 }:
 let
-  cix-noe-umd = pkgs.callPackage ./packages/cix-noe-umd.nix { };
-  cix-dsp-firmware = pkgs.callPackage ./packages/cix-dsp-firmware.nix { };
-  sky1-firmware = pkgs.callPackage ./packages/sky1-firmware.nix { };
+  cix-noe-umd = pkgs.callPackage ../packages/cix-noe-umd.nix { };
+  cix-dsp-firmware = pkgs.callPackage ../packages/cix-dsp-firmware.nix { };
+  sky1-firmware = pkgs.callPackage ../packages/sky1-firmware.nix { };
 in
 {
   imports = [ ];
@@ -21,13 +21,13 @@ in
     # Custom patched mainline v7.0 kernel is configured dynamically
     kernelPackages =
       let
-        kernelBuild = pkgs.callPackage ./kernel.nix { };
+        kernelBuild = pkgs.callPackage ../kernel.nix { };
       in
       lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 
     extraModulePackages = [
-      (config.boot.kernelPackages.callPackage ./packages/cix-npu-driver.nix { })
-      (config.boot.kernelPackages.callPackage ./packages/cix-vpu-driver.nix { })
+      (config.boot.kernelPackages.callPackage ../packages/cix-npu-driver.nix { })
+      (config.boot.kernelPackages.callPackage ../packages/cix-vpu-driver.nix { })
     ];
 
     initrd = {

@@ -9,6 +9,7 @@
     ./pcscd
     ./resolved
     ./scheduler
+    ./smartd
     ./sshd
     ./systemd
     ./tlp

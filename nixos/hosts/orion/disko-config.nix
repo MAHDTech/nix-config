@@ -29,25 +29,34 @@
                 type = "btrfs";
                 extraArgs = [ "-f" ]; # Override existing partition
                 subvolumes = {
-                  "/root" = {
+                  "root" = {
                     mountpoint = "/";
                     mountOptions = [
                       "compress=zstd"
                       "noatime"
+                      "ssd"
+                      "space_cache=v2"
+                      "discard=async"
                     ];
                   };
-                  "/home" = {
+                  "home" = {
                     mountpoint = "/home";
                     mountOptions = [
                       "compress=zstd"
                       "noatime"
+                      "ssd"
+                      "space_cache=v2"
+                      "discard=async"
                     ];
                   };
-                  "/nix" = {
+                  "nix" = {
                     mountpoint = "/nix";
                     mountOptions = [
                       "compress=zstd"
                       "noatime"
+                      "ssd"
+                      "space_cache=v2"
+                      "discard=async"
                     ];
                   };
                 };

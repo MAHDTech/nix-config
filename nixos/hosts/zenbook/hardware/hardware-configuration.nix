@@ -16,7 +16,7 @@
     # Use the specific kernel tree for Zenbook A14 support
     kernelPackages =
       let
-        kernelBuild = pkgs.callPackage ./kernel.nix { inherit inputs; };
+        kernelBuild = pkgs.callPackage ../kernel.nix { inherit inputs; };
       in
       lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 

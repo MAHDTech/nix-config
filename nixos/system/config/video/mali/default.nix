@@ -7,6 +7,10 @@
   hardware.graphics = {
     enable = true;
     enable32Bit = false;
+    extraPackages = with pkgs; [
+      vulkan-loader
+      vulkan-tools
+    ];
   };
 
   environment.systemPackages = with pkgs; [

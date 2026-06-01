@@ -16,7 +16,7 @@
 #   - QUPv3 firmware (qupv3fw.elf)
 pkgs.runCommand "zenbook-firmware"
   {
-    srcFirmware = ./files/firmware;
+    srcFirmware = ../files/firmware;
   }
   ''
     mkdir -p $out/lib/firmware

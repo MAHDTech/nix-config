@@ -13,6 +13,8 @@
         settings = {
           General = {
             EnableNetworkConfiguration = true;
+            AddressRandomization = "network";
+            AddressRandomizationRange = "nic";
           };
           Network = {
             EnableIPv6 = true;

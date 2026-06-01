@@ -17,16 +17,19 @@
 
   imports = [
     # Load hardware specific configuration.
-    ./hardware-configuration.nix
-
-    # Load system standard-operating-environment.
-    ../../system/soe
+    ./hardware
 
     # Power management and optimizations
     ./power.nix
 
-    # SMMU IORT firmware bug workaround (EDK2 <= 1.2.1)
-    ./smmu-fix.nix
+    # CPU specific configuration.
+    ../../system/config/virtualisation/cpu/cix.nix
+
+    # GPU specific configuration.
+    ../../system/config/video/mali
+
+    # Load system standard-operating-environment.
+    ../../system/soe
 
     # System configuration
     ../../system/config/audio
@@ -36,20 +39,22 @@
     ../../system/config/printing
     ../../system/config/services
 
+    # Desktop Environment
+    ../../system/config/desktop-environment/hyprland.nix
+
     # Theme
     ../../system/config/theme/catppuccin
 
-    # Desktop Environment
+    # Form Factor: Desktop
     ../../system/config/hardware/desktop
+
+    # Networking (Wired and Wireless)
+    ../../system/config/network/hosts.nix
     ../../system/config/network/wireless
 
-    # Video / Graphics
-    ../../system/config/video/mali
+    # Desktop Applications and Services
+    ../../system/config/programs/1password
+    ../../system/config/services/trezor
 
-    # Networking
-    ../../system/config/network/hosts.nix
-
-    # Desktop Environment
-    ../../system/config/desktop-environment/hyprland.nix
   ];
 }
