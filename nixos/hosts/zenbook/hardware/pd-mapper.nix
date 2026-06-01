@@ -57,14 +57,25 @@ in
   #    /sys/module/firmware_class/parameters/path (defaults to /lib/firmware).
   #    We set that kernel parameter to /var/lib/pd-mapper where we stage the files,
   #    ensuring the binary finds them without patching.
-  # 3. qrtr-ns removed: the kernel handles QRTR natively since 5.15. Running the
-  #    userspace qrtr-ns daemon causes a "nameserver already running" conflict and
-  #    pd-mapper fails to register. Confirmed on live device.
+  # 3. Remove qrtr-ns userspace service: kernel handles QRTR natively since 5.15.
+  #    Confirmed on live device: Address already in use error means pd-mapper
+  #    cannot register services. Removing the userspace service resolves the
+  #    QRTR nameserver conflict.
+  # 4. add -L to find: NixOS firmware dir entries are symlinks. Without -L,
+  #    find returns 0 results (confirmed on live device: 0 without -L, 100 with).
+  # 5. pd-mapper reads /sys/class/remoteproc to discover DSP instances. With
+  #    qcom_q6v5_pas blacklisted, /sys/class/remoteproc is empty and pd-mapper
+  #    exits immediately with 'no pd maps available'. This is expected — guard
+  #    with ConditionPathIsDirectory so the service is a no-op when DSPs are off.
   systemd.services.pd-mapper = {
     description = "Qualcomm Protection Domain Mapper";
     documentation = [ "https://github.com/linux-msm/pd-mapper" ];
     wantedBy = [ "basic.target" ];
     after = [ "systemd-udev-trigger.service" ];
+    # Only run if at least one remoteproc (DSP) is registered in sysfs.
+    # With qcom_q6v5_pas blacklisted, this directory does not exist.
+    unitConfig.ConditionPathIsDirectory = "/sys/class/remoteproc";
+    unitConfig.ConditionPathExistsGlob = "/sys/class/remoteproc/remoteproc*";
 
     preStart = ''
       mkdir -p /var/lib/pd-mapper
@@ -73,7 +84,7 @@ in
       # IMPORTANT: Use readlink -f to resolve Nix store symlinks before calling zstd.
       # zstd silently skips symlinks without --force, producing no output.
       if [ -d /run/current-system/firmware ]; then
-        find /run/current-system/firmware -name "*.jsn.zst" | while read -r f; do
+        find -L /run/current-system/firmware -name "*.jsn.zst" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           outname=$(basename "$f" .zst)
           ${pkgs.zstd}/bin/zstd -d -c "$real" > "/var/lib/pd-mapper/$outname" 2>/dev/null \
@@ -81,7 +92,7 @@ in
             || echo "pd-mapper: failed to decompress $real"
         done
         # Copy any uncompressed .jsn files directly
-        find /run/current-system/firmware -name "*.jsn" | while read -r f; do
+        find -L /run/current-system/firmware -name "*.jsn" | while read -r f; do
           cp -f "$f" /var/lib/pd-mapper/
         done
       fi
@@ -96,11 +107,10 @@ in
 
     serviceConfig = {
       ExecStart = "${pd-mapper}/bin/pd-mapper";
-      Restart = "on-failure";
-      RestartSec = "5";
-      # Limit restart attempts — if DSPs are blacklisted, pd-mapper has nothing to do
-      StartLimitIntervalSec = "60";
-      StartLimitBurst = "3";
+      # Do not restart — if pd-mapper exits, it means DSPs are not running.
+      # Restarting endlessly burns CPU and obscures real issues. The service
+      # will be re-enabled once qcom_q6v5_pas is unblocked.
+      Restart = "no";
     };
   };
 }
