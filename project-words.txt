@@ -1601,3 +1601,4 @@ usbcore
 Armv
 smartd
 fTPM
+simpledrm

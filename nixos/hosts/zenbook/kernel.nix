@@ -66,6 +66,14 @@ let
       ./scripts/config --enable TCG_CRB
       ./scripts/config --enable TCG_FTPM_TEE
 
+      # Enable display, simpledrm, panel, and GPU drivers as built-ins to prevent boot hangs and blinking cursor
+      ./scripts/config --enable DRM_SIMPLEDRM
+      ./scripts/config --enable DRM_PANEL_EDP
+      ./scripts/config --enable DRM_PANEL_SIMPLE
+      ./scripts/config --enable DRM_PANEL_SAMSUNG_ATNA33XC20
+      ./scripts/config --enable DRM_MSM
+      ./scripts/config --enable DRM_SCHED
+
       # Re-sync configuration against the active kernel tree
       make ARCH=arm64 olddefconfig
     '';
