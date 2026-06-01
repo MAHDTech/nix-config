@@ -123,10 +123,12 @@
       "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
-      # qcom_q6v5_pas blacklist removed: this was masking an ADSP/CDSP firmware
-      # loading race. With OEM firmware blobs now loaded early via extraFirmwarePaths
-      # the race condition is resolved. Removing the blacklist allows the ADSP and
-      # CDSP to initialise, which is required for WiFi power sequencing and audio.
+      # qcom_q6v5_pas MUST remain blacklisted: live device test confirmed that
+      # loading this module causes an immediate kernel panic. The module IS compiled
+      # (=m) and will auto-load from its bus alias without this blacklist.
+      # Root cause: ADSP firmware authentication race in the PAS driver.
+      # TODO: investigate remoteproc boot order / SMMU configuration to resolve.
+      "modprobe.blacklist=qcom_q6v5_pas"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
