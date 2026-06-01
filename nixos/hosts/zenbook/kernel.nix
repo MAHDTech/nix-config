@@ -21,22 +21,28 @@ let
     };
 
     nativeBuildInputs = with pkgs; [
-      perl
       bc
-      nettools
-      openssl
-      rsync
-      gmp
-      libmpc
-      mpfr
-      util-linux
+      bison
       elfutils
       flex
-      bison
-      zstd
+      gmp
       gnumake
-      python3
       kmod
+      libmpc
+      mpfr
+      nettools
+      openssl
+      perl
+      python3
+      rsync
+      util-linux
+      zlib
+      zstd
+    ];
+
+    buildInputs = with pkgs; [
+      zlib
+      elfutils
     ];
 
     # Apply the patches from the input.
@@ -58,7 +64,7 @@ let
     configurePhase = ''
       patchShebangs scripts/config
 
-      # Use our beautifully optimized whitelisted config (Automated Hardware Profile)
+      # Use the Automated Hardware Profile
       cp ${./files/config/zenbook.defconfig} .config
 
       # Enable core TPM 2.0 drivers to prevent boot hangs and enable fTPM

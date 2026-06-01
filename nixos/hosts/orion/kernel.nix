@@ -26,23 +26,23 @@ let
     };
 
     nativeBuildInputs = with pkgs; [
-      perl
       bc
-      nettools
-      openssl
-      rsync
-      gmp
-      libmpc
-      mpfr
-      util-linux
+      bison
       elfutils
       flex
-      bison
-      zstd
+      gmp
       gnumake
-      python3
       kmod
+      libmpc
+      mpfr
+      nettools
+      openssl
+      perl
+      python3
+      rsync
+      util-linux
       zlib
+      zstd
     ];
 
     buildInputs = with pkgs; [
@@ -66,8 +66,19 @@ let
       patchShebangs scripts
       patchShebangs tools
 
-      # Use CIX's official verified defconfig directly
-      cp ${cixPatches}/config/config-7.0.defconfig .config
+      # Use our whitelisted local defconfig (Automated Hardware Profile)
+      cp ${./files/config/orion.defconfig} .config
+
+      # Enable core TPM 2.0 drivers (physical TPM chip on Orion)
+      ./scripts/config --enable TCG_TPM
+      ./scripts/config --enable TCG_TIS
+      ./scripts/config --enable TCG_TIS_CORE
+
+      # Enable display, simpledrm, and panthor GPU drivers as built-ins to prevent console boot hangs
+      ./scripts/config --enable DRM_SIMPLEDRM
+      ./scripts/config --enable DRM_PANEL_SIMPLE
+      ./scripts/config --enable DRM_PANEL_EDP
+      ./scripts/config --module DRM_PANTHOR
 
       # Run olddefconfig to expand it cleanly for our build
       make ARCH=arm64 olddefconfig
