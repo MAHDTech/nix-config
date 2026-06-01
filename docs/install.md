@@ -160,6 +160,14 @@ Both accounts use password `nixos`. SSH password authentication is enabled in al
 
 Run from your **source machine** in the root of this repository.
 
+> [!NOTE]
+> `--build-on remote` is preferred for **cross-architecture installs** (e.g. x86_64 JONS
+> building for aarch64 ZENBOOK). It builds the system closure natively on the target's
+> CPU instead of using slow QEMU binfmt emulation on the source machine.
+>
+> The installer nix store is sized at **32 GB minimum** to ensure there is always enough
+> room for the target system closure (~8-15 GB) during a remote build.
+
 ### Standard install (no 1Password)
 
 ```bash
@@ -194,16 +202,16 @@ env SSH_AUTH_SOCK="" nix run github:nix-community/nixos-anywhere -- \
 
 ### Flag reference
 
-| Flag                                | Purpose                                                         |
-| ----------------------------------- | --------------------------------------------------------------- |
-| `--flake .#${HOST_NAME}`            | The NixOS configuration to install                              |
-| `--target-host root@${TARGET_IP}`   | SSH target on the installer                                     |
-| `--build-on remote`                 | Build the closure on the target's CPU (required for cross-arch) |
-| `--phases disko,install`            | Skip kexec + auto-reboot (required for ARM64)                   |
-| `env SSH_AUTH_SOCK=""`              | Hide 1Password agent socket from the shell                      |
-| `-i ${SSH_KEY}`                     | Explicit private key, bypasses agent                            |
-| `--ssh-option "IdentitiesOnly=yes"` | Only use the key provided with `-i`                             |
-| `--ssh-option "IdentityAgent=none"` | Ignore `IdentityAgent` in `~/.ssh/config`                       |
+| Flag                                | Purpose                                                       |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `--flake .#${HOST_NAME}`            | The NixOS configuration to install                            |
+| `--target-host root@${TARGET_IP}`   | SSH target on the installer                                   |
+| `--build-on remote`                 | Build on the target's native CPU (avoids QEMU for cross-arch) |
+| `--phases disko,install`            | Skip kexec + auto-reboot (required for ARM64)                 |
+| `env SSH_AUTH_SOCK=""`              | Hide 1Password agent socket from the shell                    |
+| `-i ${SSH_KEY}`                     | Explicit private key, bypasses agent                          |
+| `--ssh-option "IdentitiesOnly=yes"` | Only use the key provided with `-i`                           |
+| `--ssh-option "IdentityAgent=none"` | Ignore `IdentityAgent` in `~/.ssh/config`                     |
 
 ---
 
@@ -223,11 +231,14 @@ Remove the USB drive when the machine powers off. On next boot, select the new
 
 ## Troubleshooting
 
-| Symptom                            | Cause                                      | Fix                                                                              |
-| ---------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------- |
-| USB not found in boot menu         | Image wasn't written as a raw GPT disk     | Re-flash with `dd`, verify with `fdisk -l`                                       |
-| Black screen during install        | `kexec` failed on ARM64                    | Add `--phases disko,install`                                                     |
-| `Too many authentication failures` | 1Password SSH agent offering too many keys | Use `env SSH_AUTH_SOCK=""` and `-i` flag variant above                           |
-| NVMe not found during install      | Missing initrd modules in hardware config  | Check `hardware-configuration.nix` for `nvme` in `initrd.availableKernelModules` |
-| WiFi not available in installer    | May need USB Ethernet adapter as fallback  | Configure WiFi via `iwctl` (iwd): `iwctl station wlan0 connect <SSID>`           |
-| `disko` fails with device busy     | Previous partition table still mounted     | Run `umount -R /mnt` and retry                                                   |
+| Symptom                                  | Cause                                      | Fix                                                                           |
+| ---------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
+| USB not found in boot menu               | Image wasn't written as a raw GPT disk     | Re-flash with `dd`, verify with `fdisk -l`                                    |
+| Black screen during install              | `kexec` failed on ARM64                    | Add `--phases disko,install`                                                  |
+| `Too many authentication failures`       | 1Password SSH agent offering too many keys | Use `env SSH_AUTH_SOCK=""` and `-i` flag variant above                        |
+| `libsystemd-shared-*.so` not found       | Non-interactive SSH session missing PATH   | Rebuild installer — `SetEnv PATH` fix is now in `base.nix`                    |
+| `No space left on device` during install | Installer nix store full                   | Rebuild installer — 32 GB minimum is now in `raw-efi-image.nix`               |
+| `zfs-user could not be realised`         | disko closure includes ZFS; store full     | Same — rebuild installer with 32 GB minimum                                   |
+| NVMe not found during install            | Missing initrd modules in hardware config  | Add `nvme` to `initrd.availableKernelModules` in `hardware-configuration.nix` |
+| WiFi not available in installer          | May need USB Ethernet adapter as fallback  | Configure WiFi via `iwctl` (iwd): `iwctl station wlan0 connect <SSID>`        |
+| `disko` fails with device busy           | Previous partition table still mounted     | Run `umount -R /mnt` and retry                                                |

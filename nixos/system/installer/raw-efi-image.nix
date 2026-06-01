@@ -47,8 +47,12 @@ let
       # Calculate sizes
       espSizeMB=512
       rootSizeBytes=$(cat $closureInfo/store-paths | xargs du -sb | awk '{sum += $1} END {print sum}')
-      # Add 1GB headroom
-      rootSizeMB=$(( (rootSizeBytes / 1048576) + 1024 ))
+      # Add 1GB headroom above the installer closure, then enforce a 32GB
+      # minimum. The minimum ensures --build-on remote always has space for
+      # the full target system closure (~8-15 GB) on any host.
+      closureSizeMB=$(( (rootSizeBytes / 1048576) + 1024 ))
+      minRootSizeMB=32768
+      rootSizeMB=$(( closureSizeMB > minRootSizeMB ? closureSizeMB : minRootSizeMB ))
       totalSizeMB=$(( espSizeMB + rootSizeMB + 2 ))
 
       echo "ESP: ''${espSizeMB}MB, Root: ''${rootSizeMB}MB, Total: ''${totalSizeMB}MB"

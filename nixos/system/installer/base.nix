@@ -16,6 +16,13 @@
     settings = {
       PermitRootLogin = "yes";
       PasswordAuthentication = true;
+      # Inject the NixOS PATH into every SSH session (interactive and
+      # non-interactive). nixos-anywhere runs systemd-detect-virt via a
+      # non-interactive SSH command which skips /etc/profile and therefore
+      # never gets /run/current-system/sw/bin on $PATH. Without it, systemd
+      # binaries cannot find libsystemd-shared-*.so and nixos-anywhere aborts
+      # at the "Gathering machine facts" phase.
+      SetEnv = "PATH=/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin";
     };
   };
 

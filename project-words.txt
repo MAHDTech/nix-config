@@ -711,6 +711,7 @@ LIBSEAT
 libsecret
 libslic
 libstdc
+libsystemd
 libu
 libusb
 libuuid
@@ -1509,6 +1510,7 @@ viminfo
 vimingo
 vimrc
 Vinarskis
+virt
 virtualenv
 Virtualenvs
 vlang
