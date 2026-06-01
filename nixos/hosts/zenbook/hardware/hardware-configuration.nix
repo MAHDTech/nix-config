@@ -60,6 +60,8 @@
         "qcom_pmic_glink"
         "qcom_pmic_typec"
         "typec_mux_ps883x"
+        "ucsi_glink"
+        "typec_ucsi"
 
         # Keyboard and Touchpad (I2C HID — critical for built-in laptop input)
         "i2c_hid"
@@ -68,14 +70,7 @@
         "hid_multitouch"
         "evdev"
 
-        # Bluetooth (WCN7850-BT)
-        "bluetooth"
-        "btqca"
-        "hci_uart"
-        "bnep"
-        "rfcomm"
-
-        # WiFi/BT power sequencing
+        # WiFi/BT power sequencing (keep core power sequencer)
         "pwrseq_qcom_wcn"
 
         # Filesystem and Live Media Support
@@ -109,6 +104,8 @@
       "pcie_aspm=off"
       "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
+      "systemd.tpm2_wait=0"
+      "modprobe.blacklist=qcom_q6v5_pas"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
