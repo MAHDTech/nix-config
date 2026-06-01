@@ -83,9 +83,10 @@ let
       ./scripts/config --enable DRM_SCHED
 
       # WiFi: alexVinarskis patch set reorganises ath12k into a wifi7/ subdirectory.
-      # The PCIe bus module is ath12k_wifi7_pci (not ath12k_pci).
-      # Enable the parent split-driver config symbol.
-      ./scripts/config --module ATH12K_WIFI7_PCI
+      # The kernel config symbol is still CONFIG_ATH12K (covers both PCI and AHB) — no
+      # separate ATH12K_WIFI7_PCI kernel config symbol exists. The on-disk module name
+      # is ath12k_wifi7_pci. CONFIG_ATH12K=m in the defconfig is sufficient.
+      # (No scripts/config call needed here — defconfig already has ATH12K=m)
 
       # USB-C: UCSI over Qualcomm PMIC glink — required for PD negotiation and
       # DisplayPort alt-mode on the USB-C ports.
