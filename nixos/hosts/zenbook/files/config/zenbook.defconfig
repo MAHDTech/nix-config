@@ -2703,6 +2703,8 @@ CONFIG_WLAN_VENDOR_ATH=y
 # CONFIG_ATH11K is not set
 CONFIG_ATH12K=m
 # CONFIG_ATH12K_AHB is not set
+# WCN7850 WiFi connects over PCIe — this is the required bus driver
+CONFIG_ATH12K_PCI=m
 # CONFIG_ATH12K_DEBUG is not set
 # CONFIG_ATH12K_COREDUMP is not set
 CONFIG_WLAN_VENDOR_ATMEL=y
@@ -3405,7 +3407,8 @@ CONFIG_SPI_ROCKCHIP=y
 # CONFIG_SPI_QCOM_QSPI is not set
 # CONFIG_SPI_QPIC_SNAND is not set
 CONFIG_SPI_QUP=y
-# CONFIG_SPI_QCOM_GENI is not set
+# SPI_QCOM_GENI: Qualcomm GENI SE SPI bus — needed for on-board SPI peripherals
+CONFIG_SPI_QCOM_GENI=m
 CONFIG_SPI_S3C64XX=y
 # CONFIG_SPI_SC18IS602 is not set
 # CONFIG_SPI_SH_MSIOF is not set
@@ -5460,8 +5463,10 @@ CONFIG_DRM_PANEL_SAMSUNG_ATNA33XC20=m
 # CONFIG_DRM_PANEL_SONY_TD4353_JDI is not set
 # CONFIG_DRM_PANEL_SONY_TULIP_TRULY_NT35521 is not set
 # CONFIG_DRM_PANEL_STARTEK_KD070FHFID015 is not set
-# CONFIG_DRM_PANEL_EDP is not set
-# CONFIG_DRM_PANEL_SIMPLE is not set
+# DRM_PANEL_EDP/SIMPLE forced =y (built-in) to guarantee early framebuffer output.
+# When set to =m they are not available during the initrd stage causing a black screen.
+CONFIG_DRM_PANEL_EDP=y
+CONFIG_DRM_PANEL_SIMPLE=y
 # CONFIG_DRM_PANEL_SUMMIT is not set
 # CONFIG_DRM_PANEL_SYNAPTICS_R63353 is not set
 # CONFIG_DRM_PANEL_SYNAPTICS_TDDI is not set
@@ -5500,7 +5505,9 @@ CONFIG_DRM_PANEL_SAMSUNG_ATNA33XC20=m
 # Drivers for system framebuffers
 #
 # CONFIG_DRM_EFIDRM is not set
-# CONFIG_DRM_SIMPLEDRM is not set
+# DRM_SIMPLEDRM forced =y (built-in) for early EFI framebuffer hand-off.
+# As a module it cannot activate until after initrd pivot, causing a black screen.
+CONFIG_DRM_SIMPLEDRM=y
 # end of Drivers for system framebuffers
 
 # CONFIG_DRM_TEGRA is not set
@@ -9669,9 +9676,11 @@ CONFIG_FUSE_IO_URING=y
 #
 # DOS/FAT/EXFAT/NT Filesystems
 #
-CONFIG_FAT_FS=m
-# CONFIG_MSDOS_FS is not set
-CONFIG_VFAT_FS=m
+# FAT/VFAT forced =y (built-in) — the EFI System Partition (/boot) is vfat.
+# With includeDefaultModules=false, a module here would leave /boot unmountable
+# in any initrd path that needs to re-access the ESP.
+CONFIG_FAT_FS=y
+CONFIG_VFAT_FS=y
 CONFIG_FAT_DEFAULT_CODEPAGE=437
 CONFIG_FAT_DEFAULT_IOCHARSET="iso8859-1"
 # CONFIG_FAT_DEFAULT_UTF8 is not set

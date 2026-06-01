@@ -68,17 +68,31 @@ let
       cp ${./files/config/zenbook.defconfig} .config
 
       # Enable core TPM 2.0 drivers to prevent boot hangs and enable fTPM
-      ./scripts/config --enable TCG_TIS
+      # TCG_TIS is x86 LPC-only — removed. CRB and FTPM_TEE cover ARM64/fTPM.
       ./scripts/config --enable TCG_CRB
       ./scripts/config --enable TCG_FTPM_TEE
 
-      # Enable display, simpledrm, panel, and GPU drivers as built-ins to prevent boot hangs and blinking cursor
-      ./scripts/config --enable DRM_SIMPLEDRM
-      ./scripts/config --enable DRM_PANEL_EDP
-      ./scripts/config --enable DRM_PANEL_SIMPLE
-      ./scripts/config --enable DRM_PANEL_SAMSUNG_ATNA33XC20
+      # Force display and panel drivers as built-ins (=y) to ensure framebuffer
+      # output is available from the very first kernel stage. Using --set-val y
+      # prevents olddefconfig from demoting them to modules (=m).
+      ./scripts/config --set-val DRM_SIMPLEDRM y
+      ./scripts/config --set-val DRM_PANEL_EDP y
+      ./scripts/config --set-val DRM_PANEL_SIMPLE y
+      ./scripts/config --set-val DRM_PANEL_SAMSUNG_ATNA33XC20 y
       ./scripts/config --enable DRM_MSM
       ./scripts/config --enable DRM_SCHED
+
+      # WiFi: WCN7850 is on PCIe — ATH12K_PCI is the required bus variant
+      ./scripts/config --module ATH12K_PCI
+
+      # USB-C: UCSI over Qualcomm PMIC glink — required for PD negotiation and
+      # DisplayPort alt-mode on the USB-C ports.
+      # Note: kernel config symbol is UCSI_PMIC_GLINK (not UCSI_GLINK); module name is ucsi_glink.
+      # Already =m in the defconfig; this ensures it survives any future defconfig regeneration.
+      ./scripts/config --module UCSI_PMIC_GLINK
+
+      # SPI via GENI SE — needed for some on-board SPI peripherals
+      ./scripts/config --module SPI_QCOM_GENI
 
       # Re-sync configuration against the active kernel tree
       make ARCH=arm64 olddefconfig

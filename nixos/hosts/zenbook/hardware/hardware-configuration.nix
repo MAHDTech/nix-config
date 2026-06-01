@@ -60,6 +60,9 @@
         "qcom_pmic_glink"
         "qcom_pmic_typec"
         "typec_mux_ps883x"
+        # ucsi_glink: UCSI over Qualcomm PMIC glink — USB-C PD and DP alt-mode.
+        # Kernel config symbol: UCSI_PMIC_GLINK (=m in defconfig; enforced in kernel.nix).
+        # Linux module name on-disk is ucsi_glink.
         "ucsi_glink"
         "typec_ucsi"
 
@@ -70,10 +73,26 @@
         "hid_multitouch"
         "evdev"
 
-        # WiFi/BT power sequencing (keep core power sequencer)
+        # WiFi/BT power sequencing
+        # ath12k_pci: WCN7850 WiFi is PCIe-attached; requires CONFIG_ATH12K_PCI=m
+        # (added to kernel.nix). Must be in initrd for early network.
+        "ath12k_pci"
         "pwrseq_qcom_wcn"
 
-        # Filesystem and Live Media Support
+        # Early display — drm_simpledrm and panel drivers are forced =y (built-in)
+        # in kernel.nix so these module entries are belt-and-suspenders only.
+        # They ensure the modules are in the initrd even if a future build
+        # regresses them back to =m.
+        "drm_simpledrm"
+        "drm_panel_edp"
+        "drm_panel_simple"
+        "drm_panel_samsung_atna33xc20"
+
+        # Filesystems
+        # vfat/fat: required for the ESP (/boot) — CONFIG_VFAT_FS is =m in the
+        # defconfig. With includeDefaultModules=false these must be explicit.
+        "vfat"
+        "fat"
         "iso9660"
         "squashfs"
         "overlay"
@@ -105,7 +124,10 @@
       "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
-      "modprobe.blacklist=qcom_q6v5_pas"
+      # qcom_q6v5_pas blacklist removed: this was masking an ADSP/CDSP firmware
+      # loading race. With OEM firmware blobs now loaded early via extraFirmwarePaths
+      # the race condition is resolved. Removing the blacklist allows the ADSP and
+      # CDSP to initialise, which is required for WiFi power sequencing and audio.
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
