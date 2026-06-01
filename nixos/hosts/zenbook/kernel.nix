@@ -82,8 +82,10 @@ let
       ./scripts/config --enable DRM_MSM
       ./scripts/config --enable DRM_SCHED
 
-      # WiFi: WCN7850 is on PCIe — ATH12K_PCI is the required bus variant
-      ./scripts/config --module ATH12K_PCI
+      # WiFi: alexVinarskis patch set reorganises ath12k into a wifi7/ subdirectory.
+      # The PCIe bus module is ath12k_wifi7_pci (not ath12k_pci).
+      # Enable the parent split-driver config symbol.
+      ./scripts/config --module ATH12K_WIFI7_PCI
 
       # USB-C: UCSI over Qualcomm PMIC glink — required for PD negotiation and
       # DisplayPort alt-mode on the USB-C ports.

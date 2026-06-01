@@ -74,16 +74,15 @@
         "evdev"
 
         # WiFi/BT power sequencing
-        # ath12k_pci: WCN7850 WiFi is PCIe-attached; requires CONFIG_ATH12K_PCI=m
-        # (added to kernel.nix). Must be in initrd for early network.
-        "ath12k_pci"
+        # ath12k_wifi7_pci: alexVinarskis patch set reorganises ath12k into a wifi7/
+        # subdirectory. Confirmed on live device: driver is ath12k_wifi7_pci.
+        "ath12k_wifi7_pci"
         "pwrseq_qcom_wcn"
 
-        # Early display — drm_simpledrm and panel drivers are forced =y (built-in)
-        # in kernel.nix so these module entries are belt-and-suspenders only.
-        # They ensure the modules are in the initrd even if a future build
-        # regresses them back to =m.
-        "drm_simpledrm"
+        # Early display — drm panel drivers are forced =y (built-in) in kernel.nix.
+        # Note: drm_simpledrm is NOT a separate loadable module in this kernel
+        # (confirmed on live device — efifb handles early display, MSM DRM takes over).
+        # Panel entries below are belt-and-suspenders in case of future =m regressions.
         "drm_panel_edp"
         "drm_panel_simple"
         "drm_panel_samsung_atna33xc20"
