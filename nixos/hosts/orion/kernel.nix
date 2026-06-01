@@ -190,6 +190,15 @@ let
       find $out/lib/modules/${modDirVersion}/build/scripts -name "*.cmd" -exec rm -f {} +
       find $out/lib/modules/${modDirVersion}/build/tools -name "*.o" -exec rm -f {} +
       find $out/lib/modules/${modDirVersion}/build/tools -name "*.cmd" -exec rm -f {} +
+
+      # Remove dangling symlinks from the kernel build tree.
+      # The kernel source has symlinks in two places that point to dirs we don't copy:
+      #   - scripts/dtc/include-prefixes/{arm,mips,powerpc,riscv,...} -> arch/*/boot/dts
+      #     (we only ship arch/arm64; other arch DTS dirs are irrelevant for this build)
+      #   - tools/testing/selftests/{bpf,vfio,powerpc,...} -> kernel/bpf/, drivers/dma/, arch/powerpc/
+      #     (kernel self-tests are not needed for out-of-tree NPU/VPU module builds)
+      # Nix's fixupPhase noBrokenSymlinks check will fail on these, so remove them now.
+      find $out/lib/modules/${modDirVersion}/build -xtype l -delete
     '';
 
     # Satisfy kernel modules and build expectations (e.g. for NPU/VPU drivers)

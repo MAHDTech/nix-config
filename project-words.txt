@@ -1156,6 +1156,7 @@ rgba
 rgbx
 rhasspy
 ripsecrets
+riscv
 rivo
 rknpu
 rkvdec
@@ -1225,6 +1226,7 @@ secretstore
 secring
 secureboot
 Seedable
+selftests
 sendonly
 sendreceive
 Sentencie
@@ -1499,6 +1501,7 @@ venv
 venvs
 versionnr
 vfat
+vfio
 VIDEOBUF
 VIDEODRIVER
 videolan
@@ -1584,6 +1587,7 @@ Xresources
 xsrnkagsaz
 xtts
 xtuner
+xtype
 xunlong
 xwayland
 yaru

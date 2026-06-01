@@ -1,7 +1,9 @@
 # NixOS Installation Guide
 
 End-to-end instructions for building a NixOS installer image, flashing it to USB, and
-installing via `nixos-anywhere`. All commands are copy-paste-ready once you set the
+installing via `nixos-anywhere`.
+
+All commands are copy-paste-ready once you set the
 variables at the top of each section.
 
 ---
@@ -23,6 +25,8 @@ Each installer image includes:
 - SSH enabled with password authentication (`root` / `nixos`, password `nixos`)
 - `nixos` user also set to password `nixos` for SSH access
 - Tools: `git`, `vim`, `curl`, `parted`, `htop`, `pciutils`, `usbutils`
+
+**NOTE:** To show all available flake targets, run `nix flake show --impure --all-systems`.
 
 ---
 
@@ -54,13 +58,13 @@ SSH_KEY="$HOME/.ssh/id_ed25519"
 ### List all available installers
 
 ```bash
-nix flake show 2>/dev/null | grep installer
+nix flake show --impure --all-systems 2>/dev/null | grep installer
 ```
 
 ### Build the installer image
 
 ```bash
-nix build .#${INSTALLER_NAME} --print-build-logs
+nix build .#${INSTALLER_NAME} --print-build-logs --impure
 ```
 
 > The output is a raw EFI disk image at `./result/` (a `.raw` file).
