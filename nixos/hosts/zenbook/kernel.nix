@@ -72,15 +72,18 @@ let
       ./scripts/config --enable TCG_CRB
       ./scripts/config --enable TCG_FTPM_TEE
 
-      # Force display and panel drivers as built-ins (=y) to ensure framebuffer
-      # output is available from the very first kernel stage. Using --set-val y
-      # prevents olddefconfig from demoting them to modules (=m).
+      # DRM: force parent DRM subsystem =y first. With DRM=m (default), olddefconfig
+      # cannot promote any child (DRM_PANEL_EDP, DRM_SIMPLEDRM, etc.) to =y since
+      # built-in drivers cannot depend on a loadable module. DRM=y allows all panel
+      # and display drivers to be compiled in for early framebuffer availability.
+      ./scripts/config --set-val DRM y
+      ./scripts/config --set-val DRM_KMS_HELPER y
       ./scripts/config --set-val DRM_SIMPLEDRM y
       ./scripts/config --set-val DRM_PANEL_EDP y
       ./scripts/config --set-val DRM_PANEL_SIMPLE y
       ./scripts/config --set-val DRM_PANEL_SAMSUNG_ATNA33XC20 y
-      ./scripts/config --enable DRM_MSM
-      ./scripts/config --enable DRM_SCHED
+      ./scripts/config --set-val DRM_MSM y
+      ./scripts/config --set-val DRM_SCHED y
 
       # WiFi: alexVinarskis patch set reorganises ath12k into a wifi7/ subdirectory.
       # The kernel config symbol is still CONFIG_ATH12K (covers both PCI and AHB) — no

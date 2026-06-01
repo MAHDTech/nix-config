@@ -5194,7 +5194,7 @@ CONFIG_SCREEN_INFO=y
 CONFIG_VIDEO=y
 # CONFIG_AUXDISPLAY is not set
 # CONFIG_TEGRA_HOST1X is not set
-CONFIG_DRM=m
+CONFIG_DRM=y
 
 #
 # DRM debugging options
