@@ -19,8 +19,14 @@
     };
   };
 
-  # Known password for initial access
+  # Known password for initial access — both root and nixos accounts.
+  # installation-device.nix sets nixos user with an empty password (console
+  # auto-login) which blocks SSH password auth. Override both explicitly.
   users.users.root = {
+    password = lib.mkForce "nixos";
+    initialHashedPassword = lib.mkForce null;
+  };
+  users.users.nixos = {
     password = lib.mkForce "nixos";
     initialHashedPassword = lib.mkForce null;
   };
