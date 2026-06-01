@@ -10,6 +10,7 @@
     extraPackages = with pkgs; [
       vulkan-loader
       vulkan-tools
+      vulkan-validation-layers # GPU driver debugging (Panthor/Immortalis-G720)
     ];
   };
 

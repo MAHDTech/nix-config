@@ -8,10 +8,12 @@ let
   modDirVersion = "7.0.0";
 
   # Fetch CIX Technology's mainline patches repository
+  # Pinned to specific commit SHA for reproducibility — update with date comment when bumping
+  # Latest verified: 2026-05-07 — "DPTSW-23786: update README about firmware requirement"
   cixPatches = pkgs.fetchFromGitHub {
     owner = "cixtech";
     repo = "cix-linux-main";
-    rev = "main";
+    rev = "3aad82491a599648d87ba1c47cec7968862fa165"; # 2026-05-07
     hash = "sha256-ntc23Nh3eOWgRcfZTTUWigLrs/LqEtIrYhFwiFiSDUc=";
   };
 
@@ -107,6 +109,8 @@ let
       ./scripts/config --enable SECCOMP
 
       # Enable standard USB Ethernet drivers (UGREEN CR111 and common USB-C docks)
+      # Note: PCIe WiFi on Orion O6 is Intel AX210 (iwlwifi) — not MT7925E
+      # AX210 uses linux-firmware blobs via hardware.enableRedistributableFirmware
       ./scripts/config --enable USB_NET_DRIVERS
       ./scripts/config --module USB_NET_AX88179_178A
       ./scripts/config --module USB_RTL8152
@@ -114,6 +118,22 @@ let
       ./scripts/config --module USB_NET_CDCETHER
       ./scripts/config --module USB_NET_CDC_NCM
       ./scripts/config --module USB_NET_RNDIS_HOST
+
+      # SBSA Generic Watchdog: demote from built-in (=y) to module (=m)
+      # The defconfig has CONFIG_ARM_SBSA_WATCHDOG=y which is compiled built-in.
+      # Built-in drivers are immune to module_blacklist= kernel param.
+      # Demoting to =m makes the blacklist effective as a belt-and-suspenders measure.
+      # (nowatchdog param already suppresses it at platform level regardless)
+      ./scripts/config --module ARM_SBSA_WATCHDOG
+
+      # NVMe: force built-in for robust early-boot root mount
+      # CONFIG_BLK_DEV_NVME=m works via initrd but =y eliminates any module-load race
+      ./scripts/config --enable BLK_DEV_NVME
+
+      # CIX DSP communications driver (HiFi5 DSP IPC/mailbox)
+      # Prerequisite for future HDMI/DP audio when SND_HDA_CIX_IPBLOQ lands upstream
+      # Tracking: https://github.com/cixtech/cix-linux-main (DP Sound: TODO as of 2026-05-07)
+      ./scripts/config --module CIX_DSP
 
       # Disable debug symbols and BTF to reduce build size, compile time, and memory usage
       ./scripts/config --disable DEBUG_INFO

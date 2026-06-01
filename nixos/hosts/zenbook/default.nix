@@ -13,8 +13,9 @@
     # Power management and optimizations
     ./power.nix
 
-    # CPU specific configuration.
+    # CPU and Virtualisation
     ../../system/config/virtualisation/cpu/qcom.nix
+    ../../system/config/virtualisation/host/qemu
 
     # GPU specific configuration.
     ../../system/config/video/qcom

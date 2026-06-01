@@ -1602,3 +1602,9 @@ Armv
 smartd
 fTPM
 simpledrm
+IPBLOQ
+Tensilica
+cdnsp
+CPPC
+getrandom
+getcap

@@ -22,8 +22,12 @@
     # Power management and optimizations
     ./power.nix
 
-    # CPU specific configuration.
+    # CIX P1 HDMI/DP audio stub (driver pending upstream in cix-linux-main)
+    ./audio.nix
+
+    # CPU and Virtualisation
     ../../system/config/virtualisation/cpu/cix.nix
+    ../../system/config/virtualisation/host/qemu
 
     # GPU specific configuration.
     ../../system/config/video/mali

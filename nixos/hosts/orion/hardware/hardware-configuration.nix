@@ -8,6 +8,9 @@ let
   cix-noe-umd = pkgs.callPackage ../packages/cix-noe-umd.nix { };
   cix-dsp-firmware = pkgs.callPackage ../packages/cix-dsp-firmware.nix { };
   sky1-firmware = pkgs.callPackage ../packages/sky1-firmware.nix { };
+  # EDK2 BIOS version for the BIOS update script
+  # TODO: Update when Radxa ships EDK2 with the IORT SMMU fix
+  orionBiosVersion = "1.2.1";
 in
 {
   imports = [ ];
@@ -45,7 +48,10 @@ in
         "cdc_ncm" # CDC NCM USB Ethernet
         "cdc_ether" # CDC Ether USB Ethernet
         "usbnet" # USB network core
-        "dwc3" # DWC3 USB3 controller
+        # Cadence cdns3 USB controller (PCIe-attached on CIX P1)
+        # Live device shows cdns3_pci_wrap / cdnsp_udc_pci loading, not generic dwc3
+        "cdns3"
+        "cdns3_pci_wrap"
       ];
       kernelModules = [ ];
     };
@@ -56,16 +62,33 @@ in
       "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
       "aipu" # CIX NPU
       "amvx" # CIX VPU
+      # USB-C Power Delivery and DisplayPort Alt Mode
+      # Orion O6 has 2x USB-C ports; one supports DP Alt Mode
+      # These modules exist in defconfig as =m but are never auto-loaded
+      "typec"
+      "typec_ucsi"
+      "ucsi_acpi"
+      "typec_displayport"
+      # ACPI CPPC cpufreq — confirmed auto-loading on live device, explicit for clarity
+      "acpi_cppc_cpufreq"
     ];
 
-    # Prevent panfrost from auto-loading (wrong driver for G720, use panthor)
+    # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
+    # Belt-and-suspenders: NixOS blacklistedKernelModules option not working on live device;
+    # also add via module_blacklist= kernel param below
     blacklistedKernelModules = [ "panfrost" ];
 
     kernelParams = [
       "console=ttyAMA0,115200n8"
       "console=tty0"
-      "nowatchdog" # Disable hardware watchdog
-      "module_blacklist=sbsa_gwdt" # Disable sbsa_gwdt module (watchdog reboot loops)
+      "nowatchdog" # Suppress all platform watchdogs at boot (works on built-in drivers too)
+      # Belt-and-suspenders panfrost blacklist via kernel param (NixOS option alone not sufficient)
+      "module_blacklist=panfrost"
+      # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
+      # Required on CIX P1 to avoid slow boot and hardware init races
+      "clk_ignore_unused"
+      # NOTE: module_blacklist=sbsa_gwdt removed — sbsa_gwdt is built-in (not a module)
+      # so blacklisting it has no effect. nowatchdog handles watchdog suppression instead.
     ];
 
     # 5GbE and network performance tuning
@@ -108,6 +131,7 @@ in
 
   environment.systemPackages = [
     cix-noe-umd
+    pkgs.tpm2-tools # TPM 2.0 userspace tools (future use — tpm2_getrandom, tpm2_getcap, etc.)
     (pkgs.writeShellScriptBin "update-orion-bios" ''
       set -euo pipefail
 
@@ -131,7 +155,7 @@ in
         exit 1
       fi
 
-      BIOS_VERSION="1.2.1"
+      BIOS_VERSION="${orionBiosVersion}"
 
       echo "Downloading Radxa Orion O6 BIOS ''${BIOS_VERSION}..."
       TMPDIR=$(mktemp -d)
@@ -207,9 +231,10 @@ in
     KERNEL=="aipu", MODE="0660", GROUP="render"
   '';
 
-  environment.variables = {
+  # AIPULIB_PATH: scoped to interactive sessions only
+  # NPU applications are launched via nix-shell; global LD_LIBRARY_PATH breaks system tools
+  environment.sessionVariables = {
     AIPULIB_PATH = "${cix-noe-umd}/lib";
-    LD_LIBRARY_PATH = [ "${cix-noe-umd}/lib" ];
   };
 
   # Use systemd-networkd for Ethernet management
