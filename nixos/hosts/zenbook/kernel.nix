@@ -61,6 +61,11 @@ let
       # Use our beautifully optimized whitelisted config (Automated Hardware Profile)
       cp ${./files/config/zenbook.defconfig} .config
 
+      # Enable core TPM 2.0 drivers to prevent boot hangs and enable fTPM
+      ./scripts/config --enable TCG_TIS
+      ./scripts/config --enable TCG_CRB
+      ./scripts/config --enable TCG_FTPM_TEE
+
       # Re-sync configuration against the active kernel tree
       make ARCH=arm64 olddefconfig
     '';

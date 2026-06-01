@@ -1600,3 +1600,4 @@ lvfs
 usbcore
 Armv
 smartd
+fTPM
