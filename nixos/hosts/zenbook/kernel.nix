@@ -103,6 +103,46 @@ let
       # Enable USB4/Thunderbolt support for docking stations
       ./scripts/config --module USB4
 
+      # Enable MGLRU (Multi-Gen LRU) for memory optimization
+      ./scripts/config --enable LRU_GEN
+      ./scripts/config --enable LRU_GEN_ENABLED
+
+      # Enable standard kernel Crypto APIs required by iwd for WiFi authentication
+      ./scripts/config --enable CRYPTO_USER_API_HASH
+      ./scripts/config --enable CRYPTO_USER_API_SKCIPHER
+      ./scripts/config --enable KEY_DH_OPERATIONS
+      ./scripts/config --enable CRYPTO_ECB
+      ./scripts/config --enable CRYPTO_MD5
+      ./scripts/config --enable CRYPTO_CBC
+      ./scripts/config --enable CRYPTO_SHA256
+      ./scripts/config --enable CRYPTO_AES
+      ./scripts/config --enable CRYPTO_DES
+      ./scripts/config --enable CRYPTO_CMAC
+      ./scripts/config --enable CRYPTO_HMAC
+      ./scripts/config --enable CRYPTO_SHA512
+      ./scripts/config --enable CRYPTO_SHA1
+
+      # Enable Netfilter and nftables kernel support for firewall
+      ./scripts/config --enable NF_TABLES
+      ./scripts/config --enable NF_TABLES_INET
+      ./scripts/config --enable NF_TABLES_NETDEV
+      ./scripts/config --enable NFT_CT
+      ./scripts/config --enable NFT_LOG
+      ./scripts/config --enable NFT_LIMIT
+      ./scripts/config --enable NFT_MASQ
+      ./scripts/config --enable NFT_REDIR
+      ./scripts/config --enable NFT_REJECT
+      ./scripts/config --enable NFT_COMPAT
+      ./scripts/config --enable NF_TABLES_IPV4
+      ./scripts/config --enable NF_TABLES_IPV6
+      ./scripts/config --enable NFT_FIB
+      ./scripts/config --enable NFT_FIB_INET
+      ./scripts/config --enable NFT_FIB_IPV4
+      ./scripts/config --enable NFT_FIB_IPV6
+      ./scripts/config --enable NFT_NAT
+      ./scripts/config --enable NF_NAT
+      ./scripts/config --enable NF_CONNTRACK
+
       # Re-sync configuration against the active kernel tree
       make ARCH=arm64 olddefconfig
     '';

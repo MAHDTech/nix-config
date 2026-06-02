@@ -180,6 +180,7 @@ let
       cp -r include $out/lib/modules/${modDirVersion}/build/
       mkdir -p $out/lib/modules/${modDirVersion}/build/arch/arm64
       cp -r arch/arm64/include $out/lib/modules/${modDirVersion}/build/arch/arm64/
+      cp arch/arm64/Makefile $out/lib/modules/${modDirVersion}/build/arch/arm64/
 
       # Copy scripts and tools which contain host-compiled binaries needed by make modules
       cp -r scripts $out/lib/modules/${modDirVersion}/build/
