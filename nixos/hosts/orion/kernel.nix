@@ -136,8 +136,8 @@ let
       # CONFIG_BLK_DEV_NVME=m works via initrd but =y eliminates any module-load race
       ./scripts/config --enable BLK_DEV_NVME
 
-      # Disable CIX ACPI USB scanning to allow standard xHCI to bind to PNP0D10 devices
-      ./scripts/config --disable CIX_ACPI_USB_SCAN
+      # Enable CIX ACPI USB scanning to prevent device-tree/ACPI resource overlaps and boot loops
+      ./scripts/config --enable CIX_ACPI_USB_SCAN
 
       # Disable strict devmem to allow userspace register access for early-boot SMMU bug workaround
       ./scripts/config --disable STRICT_DEVMEM
