@@ -105,9 +105,8 @@ in
 
       # Point the kernel firmware loader at our staging directory so pd-mapper
       # finds the .jsn files via /sys/module/firmware_class/parameters/path.
-      # Note: echo with newline is used so the pd-mapper sysfs read doesn't truncate the path.
       if [ -f /sys/module/firmware_class/parameters/path ]; then
-        echo "/var/lib/pd-mapper" > /sys/module/firmware_class/parameters/path \
+        echo -n "/var/lib/pd-mapper" > /sys/module/firmware_class/parameters/path \
           || true
       fi
     '';
