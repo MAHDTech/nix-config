@@ -136,6 +136,13 @@ let
       # CONFIG_BLK_DEV_NVME=m works via initrd but =y eliminates any module-load race
       ./scripts/config --enable BLK_DEV_NVME
 
+      # Disable CIX ACPI USB scanning to allow standard xHCI to bind to PNP0D10 devices
+      ./scripts/config --disable CIX_ACPI_USB_SCAN
+
+      # Disable strict devmem to allow userspace register access for early-boot SMMU bug workaround
+      ./scripts/config --disable STRICT_DEVMEM
+      ./scripts/config --disable IO_STRICT_DEVMEM
+
       # CIX DSP communications driver (HiFi5 DSP IPC/mailbox)
       # Prerequisite for future HDMI/DP audio when SND_HDA_CIX_IPBLOQ lands upstream
       # Tracking: https://github.com/cixtech/cix-linux-main (DP Sound: TODO as of 2026-05-07)
