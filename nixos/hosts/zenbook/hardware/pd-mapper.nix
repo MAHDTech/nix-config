@@ -72,10 +72,10 @@ in
     documentation = [ "https://github.com/linux-msm/pd-mapper" ];
     wantedBy = [ "basic.target" ];
     after = [ "systemd-udev-trigger.service" ];
-    # Only run if at least one remoteproc (DSP) is registered in sysfs.
-    # With qcom_q6v5_pas blacklisted, this directory does not exist.
+    # Wait for the remoteproc subsystem to be created by the driver.
+    # If the specific remoteproc devices are not yet registered,
+    # the service will exit and restart automatically.
     unitConfig.ConditionPathIsDirectory = "/sys/class/remoteproc";
-    unitConfig.ConditionPathExistsGlob = "/sys/class/remoteproc/remoteproc*";
 
     preStart = ''
       mkdir -p /var/lib/pd-mapper
@@ -113,10 +113,9 @@ in
 
     serviceConfig = {
       ExecStart = "${pd-mapper}/bin/pd-mapper";
-      # Do not restart — if pd-mapper exits, it means DSPs are not running.
-      # Restarting endlessly burns CPU and obscures real issues. The service
-      # will be re-enabled once qcom_q6v5_pas is unblocked.
-      Restart = "no";
+      # Restart on failure to handle asynchronous remoteproc driver registration on boot.
+      Restart = "on-failure";
+      RestartSec = "2s";
     };
   };
 }
