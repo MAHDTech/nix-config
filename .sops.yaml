@@ -13,6 +13,7 @@ keys:
 
   # Users (AGE)
   - &admin_mahdtech_1password_age age127h9hx8p5tc5chldkhek9a7f4qje25qmngd99y4unl3tyzayr3yq0jp3xn
+  - &admin_mahdtech_zenbook_age age1eu5qsarj08hrx9u3sqm9dw2p5rmya0064c3534ug9u2l3ghqkfkstfznu5
 
   # Users (GPG)
   - &admin_mahdtech_yubikey_gpg C8007116A87DB942310AD5FC218703275A091016
@@ -20,6 +21,7 @@ keys:
   # Systems (AGE)
   - &system_jons_age age1l4zs9vmtnsck7t2nqhqt7rnpske9eajlwqr5zr2ggjrf2cfjds4sx6y2rf
   - &system_nuc_age age12m5c674qsrm4l8kszzm9mtfcc6x4gf0lj2dn8m7pau2alafduvmsmffndy
+  - &system_zenbook_age age18trecqlsvku5qymzegez9srhufqems6e8yda8u5fl5aa4ggvqf3st24luq
 
   # Systems (AGE, Hypervisors)
   - &system_hypervisor_1_age age15yruthjnsterawg009na6th6v4avvg47u5el5e5a56caqgsuavysjktv4j
@@ -50,9 +52,11 @@ creation_rules:
           - *admin_mahdtech_jons_age
           # Users
           - *admin_mahdtech_1password_age
+          - *admin_mahdtech_zenbook_age
           # Systems
           - *system_jons_age
           - *system_nuc_age
+          - *system_zenbook_age
           # Hypervisors
           - *system_hypervisor_1_age
           - *system_hypervisor_2_age

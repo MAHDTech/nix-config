@@ -14,11 +14,6 @@
         [[ssh-keys]]
         account = "my.1password.com"
         vault = "Private"
-
-        # Enable all keys in the IntelliScope vault
-        [[ssh-keys]]
-        account = "my.1password.com"
-        vault = "IntelliScope"
       '';
     };
   };
