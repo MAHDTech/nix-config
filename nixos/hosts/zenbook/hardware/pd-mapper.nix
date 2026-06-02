@@ -80,27 +80,34 @@ in
     preStart = ''
       mkdir -p /var/lib/pd-mapper
 
-      # Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/.
-      # IMPORTANT: Use readlink -f to resolve Nix store symlinks before calling zstd.
-      # zstd silently skips symlinks without --force, producing no output.
+      # Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/,
+      # preserving the original directory structure (pd-mapper searches subdirectories
+      # corresponding to the remoteproc firmware path).
       if [ -d /run/current-system/firmware ]; then
         find -L /run/current-system/firmware -name "*.jsn.zst" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
-          outname=$(basename "$f" .zst)
+          relpath=''${f#/run/current-system/firmware/}
+          reldir=$(dirname "$relpath")
+          mkdir -p "/var/lib/pd-mapper/$reldir"
+          outname=''${relpath%.zst}
           ${pkgs.zstd}/bin/zstd -d -c "$real" > "/var/lib/pd-mapper/$outname" 2>/dev/null \
             && echo "pd-mapper: staged $outname" \
             || echo "pd-mapper: failed to decompress $real"
         done
-        # Copy any uncompressed .jsn files directly
+        # Copy any uncompressed .jsn files directly, preserving subdirectories
         find -L /run/current-system/firmware -name "*.jsn" | while read -r f; do
-          cp -f "$f" /var/lib/pd-mapper/
+          relpath=''${f#/run/current-system/firmware/}
+          reldir=$(dirname "$relpath")
+          mkdir -p "/var/lib/pd-mapper/$reldir"
+          cp -f "$f" "/var/lib/pd-mapper/$relpath"
         done
       fi
 
       # Point the kernel firmware loader at our staging directory so pd-mapper
       # finds the .jsn files via /sys/module/firmware_class/parameters/path.
+      # Note: echo with newline is used so the pd-mapper sysfs read doesn't truncate the path.
       if [ -f /sys/module/firmware_class/parameters/path ]; then
-        echo -n "/var/lib/pd-mapper" > /sys/module/firmware_class/parameters/path \
+        echo "/var/lib/pd-mapper" > /sys/module/firmware_class/parameters/path \
           || true
       fi
     '';

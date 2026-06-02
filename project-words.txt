@@ -1241,6 +1241,8 @@ regmap
 regreet
 relatime
 relativenumber
+reldir
+relpath
 remapper
 remapping
 remmina
