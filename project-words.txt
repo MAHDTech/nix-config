@@ -1110,6 +1110,7 @@ optimus
 orama
 orangepi
 overlayfs
+overcurrent
 ovnnb
 ovnsb
 ovsdb
@@ -1533,6 +1534,7 @@ utopia
 vaapi
 vainfo
 valvesoftware
+vblank
 vcsh
 vdir
 vegeta

@@ -20,8 +20,8 @@
   ];
 
   environment.variables = {
-    # Force Mesa to use the freedreno driver if needed (though it should auto-detect)
-    # GALLIUM_DRIVER = "freedreno";
-    # MESA_LOADER_DRIVER_OVERRIDE = "msm";
+    # Force VSync/frame limits on Qualcomm Snapdragon GPU to prevent overcurrent regulator watchdogs
+    vblank_mode = "3";
+    MESA_VK_WSI_PRESENT_MODE = "fifo";
   };
 }
