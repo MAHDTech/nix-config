@@ -1621,3 +1621,5 @@ zink
 zstd
 zvol
 zvols
+CIXH
+USBSSP
