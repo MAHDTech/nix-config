@@ -1,58 +1,57 @@
-diff --git a/armchina-npu/aipu_job_manager.c b/armchina-npu/aipu_job_manager.c
-index 193d365..5d864d5 100644
 --- a/armchina-npu/aipu_job_manager.c
 +++ b/armchina-npu/aipu_job_manager.c
-@@ -438,6 +438,8 @@ static int schedule_v3_job_no_lock(struct aipu_job_manager *manager, struct aipu
-         struct command_pool *pool = &manager->pools[partition_id];
-         struct qos *qlist = NULL;
-+        struct aipu_job *check_job = NULL;
-+        bool has_running_job = false;
-         struct aipu_hold_tcb_buf *htbuf = NULL;
+@@ -439,6 +439,8 @@
+ 	struct aipu_partition *partition = &manager->partitions[partition_id];
+ 	struct command_pool *pool = &manager->pools[partition_id];
+ 	struct qos *qlist = NULL;
++	struct aipu_job *check_job = NULL;
++	bool has_running_job = false;
+ 	struct aipu_hold_tcb_buf *htbuf = NULL;
 
-         if (!pool)
-@@ -458,8 +460,38 @@ static int schedule_v3_job_no_lock(struct aipu_job_manager *manager, struct aipu
--        if (!pool->created)
--                trigger_type = ZHOUYI_TRIGGER_TYPE_CREATE;
--        else if (pool->aborted || !qlist->pool_head)
--                trigger_type = ZHOUYI_TRIGGER_TYPE_UPDATE_DISPATCH;
--        else
--                trigger_type = ZHOUYI_TRIGGER_TYPE_DISPATCH;
-+        /*
-+         * Fix v4 for second inference hang: If all previous jobs completed but
-+         * the command pool wasn't destroyed yet (race condition), we must
-+         * destroy the hardware command pool before creating a new one.
-+         */
-+        has_running_job = false;
-+        list_for_each_entry(check_job, &manager->scheduled_head->node, node) {
-+                if (check_job->state == AIPU_JOB_STATE_RUNNING) {
-+                        has_running_job = true;
-+                        break;
-+                }
-+        }
+ 	if (!pool)
+@@ -455,12 +457,42 @@
+ 	else
+ 		qlist = &pool->qlist[AIPU_JOB_QOS_FAST];
+
+-	if (!pool->created)
++	/*
++	 * Fix v4 for second inference hang: If all previous jobs completed but
++	 * the command pool wasn't destroyed yet (race condition), we must
++	 * destroy the hardware command pool before creating a new one.
++	 */
++	has_running_job = false;
++	list_for_each_entry(check_job, &manager->scheduled_head->node, node) {
++		if (check_job->state == AIPU_JOB_STATE_RUNNING) {
++			has_running_job = true;
++			break;
++		}
++	}
 +
-+        if (!pool->created) {
-+                trigger_type = ZHOUYI_TRIGGER_TYPE_CREATE;
-+        } else if (!has_running_job && qlist->pool_head) {
-+                /*
-+                 * Stale pool detected: all jobs completed but pool still exists.
-+                 * Destroy the hardware command pool and reset software state.
-+                 */
-+                partition->ops->destroy_command_pool(partition, 0);
-+                memset(pool->qlist, 0, sizeof(*pool->qlist) * AIPU_JOB_QOS_MAX);
-+                pool->created = false;
-+                manager->tec_intr_en = false;
-+                aipu_mm_set_final_htbuf_index(manager->mm, -1);
-+                /* Re-select qlist after clearing */
-+                if (job->desc.exec_flag & AIPU_JOB_EXEC_FLAG_QOS_SLOW)
-+                        qlist = &pool->qlist[AIPU_JOB_QOS_SLOW];
-+                else
-+                        qlist = &pool->qlist[AIPU_JOB_QOS_FAST];
-+                trigger_type = ZHOUYI_TRIGGER_TYPE_CREATE;
-+        } else if (pool->aborted || !qlist->pool_head) {
-+                trigger_type = ZHOUYI_TRIGGER_TYPE_UPDATE_DISPATCH;
-+        } else {
-+                trigger_type = ZHOUYI_TRIGGER_TYPE_DISPATCH;
-+        }
++	if (!pool->created) {
++		trigger_type = ZHOUYI_TRIGGER_TYPE_CREATE;
++	} else if (!has_running_job && qlist->pool_head) {
++		/*
++		 * Stale pool detected: all jobs completed but pool still exists.
++		 * Destroy the hardware command pool and reset software state.
++		 */
++		partition->ops->destroy_command_pool(partition, 0);
++		memset(pool->qlist, 0, sizeof(*pool->qlist) * AIPU_JOB_QOS_MAX);
++		pool->created = false;
++		manager->tec_intr_en = false;
++		aipu_mm_set_final_htbuf_index(manager->mm, -1);
++		/* Re-select qlist after clearing */
++		if (job->desc.exec_flag & AIPU_JOB_EXEC_FLAG_QOS_SLOW)
++			qlist = &pool->qlist[AIPU_JOB_QOS_SLOW];
++		else
++			qlist = &pool->qlist[AIPU_JOB_QOS_FAST];
+ 		trigger_type = ZHOUYI_TRIGGER_TYPE_CREATE;
+-	else if (pool->aborted || !qlist->pool_head)
++	} else if (pool->aborted || !qlist->pool_head) {
+ 		trigger_type = ZHOUYI_TRIGGER_TYPE_UPDATE_DISPATCH;
+-	else
++	} else {
+ 		trigger_type = ZHOUYI_TRIGGER_TYPE_DISPATCH;
++	}
 
-         check_enable_tec_interrupts(manager, job);
+ 	check_enable_tec_interrupts(manager, job);
 
