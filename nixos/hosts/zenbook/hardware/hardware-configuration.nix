@@ -126,12 +126,8 @@
       "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
-      # qcom_q6v5_pas MUST remain blacklisted: live device test confirmed that
-      # loading this module causes an immediate kernel panic. The module IS compiled
-      # (=m) and will auto-load from its bus alias without this blacklist.
-      # Root cause: ADSP firmware authentication race in the PAS driver.
-      # TODO: investigate remoteproc boot order / SMMU configuration to resolve.
-      "modprobe.blacklist=qcom_q6v5_pas"
+      # qcom_q6v5_pas unblocked for testing (monitored via rollback generation)
+      # "modprobe.blacklist=qcom_q6v5_pas"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
