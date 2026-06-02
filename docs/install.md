@@ -39,16 +39,16 @@ Set these once. Every command below uses them verbatim.
 INSTALLER_NAME="installer-zenbook"
 
 # The NixOS host configuration to install (uppercase, matches flake)
-HOST_NAME="ZENBOOK"
+NIXOS_HOST_NAME="ZENBOOK"
 
 # USB drive to flash the installer image to (check with: lsblk)
 USB_DRIVE="/dev/sdX"
 
 # IP address of the target machine once booted into the installer
-TARGET_IP="10.10.1.126"
+NIXOS_TARGET_IP="10.10.1.126"
 
 # Your local SSH private key (used to bypass 1Password agent)
-SSH_KEY="$HOME/.ssh/id_ed25519"
+NIXOS_SSH_KEY="$HOME/.ssh/id_ed25519"
 ```
 
 ---
@@ -135,7 +135,7 @@ nmap -sn 10.10.1.0/24
 Then set your variable:
 
 ```bash
-TARGET_IP="<address shown above>"
+NIXOS_TARGET_IP="<address shown above>"
 ```
 
 ---
@@ -146,10 +146,10 @@ Confirm you can reach the installer before running `nixos-anywhere`:
 
 ```bash
 # As root (password: nixos)
-ssh root@${TARGET_IP}
+ssh root@${NIXOS_TARGET_IP}
 
 # Or as nixos user (password: nixos)
-ssh nixos@${TARGET_IP}
+ssh nixos@${NIXOS_TARGET_IP}
 ```
 
 Both accounts use password `nixos`. SSH password authentication is enabled in all installers.
@@ -172,8 +172,8 @@ Run from your **source machine** in the root of this repository.
 
 ```bash
 nix run github:nix-community/nixos-anywhere -- \
-  --flake .#${HOST_NAME} \
-  --target-host root@${TARGET_IP} \
+  --flake .#${NIXOS_HOST_NAME} \
+  --target-host root@${NIXOS_TARGET_IP} \
   --build-on remote \
   --phases disko,install
 ```
@@ -186,11 +186,11 @@ SSH drops the connection after 6 failed attempts (`MaxAuthTries`) before
 
 ```bash
 env SSH_AUTH_SOCK="" nix run github:nix-community/nixos-anywhere -- \
-  --flake .#${HOST_NAME} \
-  --target-host root@${TARGET_IP} \
+  --flake .#${NIXOS_HOST_NAME} \
+  --target-host root@${NIXOS_TARGET_IP} \
   --build-on remote \
   --phases disko,install \
-  -i ${SSH_KEY} \
+  -i ${NIXOS_SSH_KEY} \
   --ssh-option "IdentitiesOnly=yes" \
   --ssh-option "IdentityAgent=none"
 ```
@@ -202,16 +202,16 @@ env SSH_AUTH_SOCK="" nix run github:nix-community/nixos-anywhere -- \
 
 ### Flag reference
 
-| Flag                                | Purpose                                                       |
-| ----------------------------------- | ------------------------------------------------------------- |
-| `--flake .#${HOST_NAME}`            | The NixOS configuration to install                            |
-| `--target-host root@${TARGET_IP}`   | SSH target on the installer                                   |
-| `--build-on remote`                 | Build on the target's native CPU (avoids QEMU for cross-arch) |
-| `--phases disko,install`            | Skip kexec + auto-reboot (required for ARM64)                 |
-| `env SSH_AUTH_SOCK=""`              | Hide 1Password agent socket from the shell                    |
-| `-i ${SSH_KEY}`                     | Explicit private key, bypasses agent                          |
-| `--ssh-option "IdentitiesOnly=yes"` | Only use the key provided with `-i`                           |
-| `--ssh-option "IdentityAgent=none"` | Ignore `IdentityAgent` in `~/.ssh/config`                     |
+| Flag                                    | Purpose                                                       |
+| --------------------------------------- | ------------------------------------------------------------- |
+| `--flake .#${NIXOS_HOST_NAME}`          | The NixOS configuration to install                            |
+| `--target-host root@${NIXOS_TARGET_IP}` | SSH target on the installer                                   |
+| `--build-on remote`                     | Build on the target's native CPU (avoids QEMU for cross-arch) |
+| `--phases disko,install`                | Skip kexec + auto-reboot (required for ARM64)                 |
+| `env SSH_AUTH_SOCK=""`                  | Hide 1Password agent socket from the shell                    |
+| `-i ${NIXOS_SSH_KEY}`                   | Explicit private key, bypasses agent                          |
+| `--ssh-option "IdentitiesOnly=yes"`     | Only use the key provided with `-i`                           |
+| `--ssh-option "IdentityAgent=none"`     | Ignore `IdentityAgent` in `~/.ssh/config`                     |
 
 ---
 
@@ -221,7 +221,7 @@ Once `nixos-anywhere` finishes:
 
 ```bash
 # On the target machine — reboot into the new system
-ssh root@${TARGET_IP} reboot
+ssh root@${NIXOS_TARGET_IP} reboot
 ```
 
 Remove the USB drive when the machine powers off. On next boot, select the new
