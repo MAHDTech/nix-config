@@ -78,6 +78,7 @@
         # subdirectory. Confirmed on live device: driver is ath12k_wifi7_pci.
         "ath12k_wifi7_pci"
         "pwrseq_qcom_wcn"
+        "thunderbolt"
 
         # Early display — drm panel drivers are forced =y (built-in) in kernel.nix.
         # Note: drm_simpledrm is NOT a separate loadable module in this kernel
@@ -99,7 +100,9 @@
         "btrfs"
         "ext4"
       ];
-      kernelModules = [ ];
+      kernelModules = [
+        "msm"
+      ];
 
       # Load crucial platform firmware directly in stage 1 to prevent driver crashes
       extraFirmwarePaths = [
@@ -161,7 +164,7 @@
         mkdir -p $out/lib/firmware/ath12k/WCN7850/hw2.0
 
         # Copy GPU firmware
-        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen70500_*.fw $out/lib/firmware/qcom/
+        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen70500_* $out/lib/firmware/qcom/
 
         # Copy ath12k WiFi firmware
         cp -r ${pkgs.linux-firmware}/lib/firmware/ath12k/WCN7850/hw2.0/* $out/lib/firmware/ath12k/WCN7850/hw2.0/
@@ -178,6 +181,15 @@
 
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
   # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
+
+  # Use systemd-networkd for Ethernet management
+  systemd.network.networks."10-lan" = {
+    matchConfig.Name = [
+      "en*"
+      "eth*"
+    ];
+    networkConfig.DHCP = "yes";
+  };
 
   networking.useDHCP = lib.mkDefault false;
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";

@@ -47,7 +47,7 @@
     ../../system/config/desktop-environment/hyprland.nix
 
     # Theme
-    ../../system/config/theme/catppuccin
+    ../../system/config/theme/stylix
 
     # Form Factor: Desktop
     ../../system/config/hardware/desktop

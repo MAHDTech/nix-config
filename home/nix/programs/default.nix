@@ -3,7 +3,6 @@
     #./alacritty.nix
     ./bash.nix
     ./btop.nix
-    ./catppuccin.nix
     ./command-not-found.nix
     ./dconf.nix
     ./direnv.nix
@@ -14,9 +13,10 @@
     ./htop.nix
     ./password-store.nix
     #./python.nix
-    ./qt.nix
+    #./qt.nix
     ./ssh.nix
     ./starship.nix
+    ./stylix.nix
     ./wakatime.nix
 
     # Editors

@@ -163,7 +163,6 @@ in
       prek
 
       # 3D Printing
-      bambu-studio
       orca-slicer # OSS version of Bambu Studio
     ]
     ++ unstablePkgs

@@ -36,17 +36,10 @@ in
           boot.zfs.forceImportAll = lib.mkDefault false;
         }
         inputs.sops-nix.nixosModules.sops
-        inputs.catppuccin.nixosModules.catppuccin
+        inputs.stylix.nixosModules.stylix
         inputs.flatpaks.nixosModules.default
         ../nixos/system/home-manager.nix # Standard HM integration
         ../nixos/hosts/${lib.toLower name}
-        (_: {
-          catppuccin.sources =
-            lib.mkForce
-              (import "${inputs.catppuccin}/default.nix" {
-                pkgs = pkgsImportSystem system;
-              }).packages;
-        })
       ]
       ++ extraModules;
     };
@@ -81,15 +74,8 @@ in
       pkgs = pkgsImportSystem system;
       modules = [
         ../home
-        inputs.catppuccin.homeModules.catppuccin
+        inputs.stylix.homeManagerModules.stylix
         inputs.sops-nix.homeManagerModules.sops
-        (_: {
-          catppuccin.sources =
-            lib.mkForce
-              (import "${inputs.catppuccin}/default.nix" {
-                pkgs = pkgsImportSystem system;
-              }).packages;
-        })
       ];
       extraSpecialArgs = {
         inherit

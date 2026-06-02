@@ -37,7 +37,7 @@
     ../../system/config/services
 
     # Theme
-    ../../system/config/theme/catppuccin
+    ../../system/config/theme/stylix
 
     # Desktop
     ../../system/config/hardware/desktop

@@ -8,9 +8,9 @@ index 193d365..5d864d5 100644
 +        struct aipu_job *check_job = NULL;
 +        bool has_running_job = false;
          struct aipu_hold_tcb_buf *htbuf = NULL;
+
          if (!pool)
-                 return -EINVAL;
-@@ -458,6 +460,36 @@ static int schedule_v3_job_no_lock(struct aipu_job_manager *manager, struct aipu
+@@ -458,8 +460,38 @@ static int schedule_v3_job_no_lock(struct aipu_job_manager *manager, struct aipu
 -        if (!pool->created)
 -                trigger_type = ZHOUYI_TRIGGER_TYPE_CREATE;
 -        else if (pool->aborted || !qlist->pool_head)

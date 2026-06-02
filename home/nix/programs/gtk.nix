@@ -11,10 +11,10 @@
   gtk = {
     enable = true;
 
-    theme = {
-      name = "Tokyonight-Dark";
-      package = pkgs.tokyonight-gtk-theme;
-    };
+    # theme = {
+    #   name = "Tokyonight-Dark";
+    #   package = pkgs.tokyonight-gtk-theme;
+    # };
 
     gtk3.extraConfig = {
       gtk-application-prefer-dark-theme = 1;

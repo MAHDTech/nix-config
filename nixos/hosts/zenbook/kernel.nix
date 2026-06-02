@@ -100,6 +100,9 @@ let
       # SPI via GENI SE — needed for some on-board SPI peripherals
       ./scripts/config --module SPI_QCOM_GENI
 
+      # Enable USB4/Thunderbolt support for docking stations
+      ./scripts/config --module USB4
+
       # Re-sync configuration against the active kernel tree
       make ARCH=arm64 olddefconfig
     '';

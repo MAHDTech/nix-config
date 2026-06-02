@@ -1,29 +1,43 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   nix.settings = {
     substituters = [ "https://hyprland.cachix.org" ];
     trusted-public-keys = [ "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" ];
   };
 
-  environment.systemPackages = with pkgs; [
-    # Hyprland
-    #pyprland
-    hyprpicker
-    hyprcursor
-    hyprlock
-    hypridle
-    hyprpaper
+  environment = {
+    systemPackages = with pkgs; [
+      # Hyprland
+      #pyprland
+      hyprpicker
+      hyprcursor
+      hyprlock
+      hypridle
+      hyprpaper
 
-    # Terminal
-    kitty
+      # Terminal
+      kitty
 
-    # Greeter
-    tuigreet
+      # Greeter
+      tuigreet
 
-    # XDG
-    xdg-utils
-    xdg-launch
-  ];
+      # XDG
+      xdg-utils
+      xdg-launch
+    ];
+
+    sessionVariables = {
+      NIXOS_OZONE_WL = "1";
+      COSMIC_DATA_CONTROL_ENABLED = "1";
+
+      # Fix 1Password desktop integration for authentication dialogue boxes.
+      GTK_USE_PORTAL = "1";
+    };
+
+    variables = {
+      QT_QPA_PLATFORMTHEME = lib.mkForce "gtk4";
+    };
+  };
 
   services = {
     xserver = {
@@ -95,15 +109,6 @@
         hyprlock = { };
       };
     };
-  };
-
-  environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1";
-    COSMIC_DATA_CONTROL_ENABLED = "1";
-
-    # Fix 1Password desktop integration for authentication dialogue boxes.
-    GTK_USE_PORTAL = "1";
-    QT_QPA_PLATFORMTHEME = "gtk4";
   };
 
   # Greeter (GUI)

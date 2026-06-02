@@ -44,6 +44,7 @@ in
         "uas"
         "r8169" # Realtek RTL8126 5GbE (mainline r8169 supports PCI ID 10ec:8126)
         "r8152" # Realtek USB Ethernet (fallback for USB dongles)
+        "thunderbolt"
         "ax88179_178a" # ASIX AX88179 USB Ethernet
         "cdc_ncm" # CDC NCM USB Ethernet
         "cdc_ether" # CDC Ether USB Ethernet

@@ -35,7 +35,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flatpaks.url = "github:in-a-dil-emma/declarative-flatpak/latest";
-    catppuccin.url = "github:catppuccin/nix/release-25.11";
+    stylix.url = "github:nix-community/stylix";
+    stylix.inputs.nixpkgs.follows = "nixpkgs";
     devenv.url = "github:cachix/devenv/main";
     impermanence.url = "github:nix-community/impermanence/master";
     zenbook-linux = {
