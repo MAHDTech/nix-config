@@ -20,7 +20,7 @@ fi
 
 echo "Launching nix-shell with glxgears (mesa-demos), vkmark, glmark2, and xrandr..."
 
-nix-shell -p mesa-demos vkmark glmark2 xorg.xrandr --run "
+nix-shell -p mesa-demos vkmark glmark2 xrandr --run "
   # Determine resolution to use
   if [ -n \"$USER_RES\" ]; then
       RESOLUTION=\"$USER_RES\"
