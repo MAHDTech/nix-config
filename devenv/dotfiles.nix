@@ -82,6 +82,7 @@ in
       "^secrets/keys/.*\\.asc$"
       "^secrets/keystore.yaml$"
       "^vendor(/.*)?$"
+      ".sops.yaml"
     ];
     hooks = {
       actionlint.enable = true;

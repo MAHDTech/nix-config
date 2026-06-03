@@ -13,7 +13,7 @@ keys:
 
   # Users (AGE)
   - &admin_mahdtech_1password_age age127h9hx8p5tc5chldkhek9a7f4qje25qmngd99y4unl3tyzayr3yq0jp3xn
-  - &admin_mahdtech_zenbook_age age1eu5qsarj08hrx9u3sqm9dw2p5rmya0064c3534ug9u2l3ghqkfkstfznu5
+  - &admin_mahdtech_zenbook_age age1q883r08k4ureg7gpkwycnqlv093j8mmdhryzdc2jmh945ganmp3sje67xp
 
   # Users (GPG)
   - &admin_mahdtech_yubikey_gpg C8007116A87DB942310AD5FC218703275A091016
