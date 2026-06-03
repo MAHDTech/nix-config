@@ -227,7 +227,7 @@ in
       cix-dsp-firmware
     ];
     deviceTree = {
-      enable = true;
+      enable = false;
       name = "cix/sky1-orion-o6.dtb";
     };
   };
