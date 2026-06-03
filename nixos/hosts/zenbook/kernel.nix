@@ -1,7 +1,5 @@
 {
-  pkgs,
   lib,
-  inputs,
   ...
 }:
 
@@ -10,14 +8,14 @@ let
   kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "latest-zenbook";
     # Set version to match what linux-next reports to avoid mismatch
-    version = "7.1.0-rc5-next-20260528";
+    version = "7.1.0-rc6-next-20260602";
 
     # Pull the absolute latest bleeding edge where Zenbook support lives
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
       # Use the revision mentioned in the README as tested
-      rev = "next-20260528";
-      sha256 = "sha256-86TmX6XmHk0pLorcK/ZQ5AHsGj/c6mKQlLdT0DX2ltA=";
+      rev = "next-20260602";
+      sha256 = "sha256-Ovr1EdeRUsv+lhsIJ/OWhAlhtmUJ6/pJ87TNJ1CKr4U=";
     };
 
     nativeBuildInputs = with pkgs; [
@@ -47,8 +45,8 @@ let
 
     # Apply the patches from the input.
     prePatch = ''
-      echo "Applying Zenbook patches from ${inputs.zenbook-linux}..."
-      for patch in ${inputs.zenbook-linux}/*.patch; do
+      echo "Applying local Zenbook patches..."
+      for patch in ${./files/patches}/*.patch; do
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
@@ -166,7 +164,7 @@ let
 
     # satisfy the kernel modules expectations
     passthru = rec {
-      modDirVersion = "7.1.0-rc5-next-20260528";
+      modDirVersion = "7.1.0-rc6-next-20260602";
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];

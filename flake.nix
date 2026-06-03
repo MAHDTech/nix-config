@@ -39,10 +39,6 @@
     stylix.inputs.nixpkgs.follows = "nixpkgs";
     devenv.url = "github:cachix/devenv/main";
     impermanence.url = "github:nix-community/impermanence/master";
-    zenbook-linux = {
-      url = "github:alexVinarskis/linux-x1e80100-zenbook-a14";
-      flake = false;
-    };
     crane.url = "github:ipetkov/crane";
     disko = {
       url = "github:nix-community/disko";

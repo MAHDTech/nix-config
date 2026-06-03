@@ -650,8 +650,7 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
-        "systems": "systems_2",
-        "zenbook-linux": "zenbook-linux"
+        "systems": "systems_2"
       }
     },
     "rust-overlay": {
@@ -842,22 +841,6 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "zenbook-linux": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1769902004,
-        "narHash": "sha256-v8w3MnGpVNmdMFB/KE9REyq+EmojOZUb11qIs50PRDM=",
-        "owner": "alexVinarskis",
-        "repo": "linux-x1e80100-zenbook-a14",
-        "rev": "7c0c549bc1d53909b274b4b989abb3bbe792f2da",
-        "type": "github"
-      },
-      "original": {
-        "owner": "alexVinarskis",
-        "repo": "linux-x1e80100-zenbook-a14",
         "type": "github"
       }
     }
