@@ -19,10 +19,4 @@ _: {
       };
     };
   };
-
-  # Declaratively ensure `/etc/opnix-token` is readable by the `wheel` group
-  # so Home Manager (running as user) can fetch user-level secrets.
-  systemd.tmpfiles.rules = [
-    "z /etc/opnix-token 0640 root wheel - -"
-  ];
 }

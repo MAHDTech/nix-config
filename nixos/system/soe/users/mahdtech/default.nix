@@ -27,6 +27,7 @@ in
       "input"
       "nixos"
       "nixos-admins"
+      "onepassword-secrets"
       "pipewire"
       "plugdev"
       "rtkit"
