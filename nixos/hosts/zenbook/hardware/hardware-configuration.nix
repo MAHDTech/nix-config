@@ -111,6 +111,8 @@
       ];
     };
 
+    blacklistedKernelModules = [ "qcom_q6v5_pas" ];
+
     kernelParams = [
       "clk_ignore_unused"
       "pd_ignore_unused"
@@ -133,6 +135,8 @@
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
     extraModprobeConfig = ''
       options snd-soc-x1e80100 i_accept_the_danger=1
+      blacklist qcom_q6v5_pas
+      install qcom_q6v5_pas /bin/false
     '';
 
     # Modern boot management
