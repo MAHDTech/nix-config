@@ -78,7 +78,17 @@ in
     unitConfig.ConditionPathIsDirectory = "/sys/class/remoteproc";
 
     preStart = ''
+      # Clean up the old directory to ensure a clean slate
+      rm -rf /var/lib/pd-mapper
       mkdir -p /var/lib/pd-mapper
+
+      # Recreate the symlink forest of the system firmware so the kernel can find
+      # other firmware files (like audio topology) even when firmware_class.path is
+      # set to /var/lib/pd-mapper.
+      if [ -d /run/current-system/firmware ]; then
+        cp -as /run/current-system/firmware/* /var/lib/pd-mapper/
+        chmod -R +w /var/lib/pd-mapper
+      fi
 
       # Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/,
       # preserving the original directory structure (pd-mapper searches subdirectories
@@ -90,6 +100,8 @@ in
           reldir=$(dirname "$relpath")
           mkdir -p "/var/lib/pd-mapper/$reldir"
           outname=''${relpath%.zst}
+          # Remove the symlink if it was copied by cp -as to prevent writing through it
+          rm -f "/var/lib/pd-mapper/$outname"
           ${pkgs.zstd}/bin/zstd -d -c "$real" > "/var/lib/pd-mapper/$outname" 2>/dev/null \
             && echo "pd-mapper: staged $outname" \
             || echo "pd-mapper: failed to decompress $real"
@@ -99,6 +111,8 @@ in
           relpath=''${f#/run/current-system/firmware/}
           reldir=$(dirname "$relpath")
           mkdir -p "/var/lib/pd-mapper/$reldir"
+          # Remove the symlink if it was copied by cp -as to prevent writing through it
+          rm -f "/var/lib/pd-mapper/$relpath"
           cp -f "$f" "/var/lib/pd-mapper/$relpath"
         done
       fi

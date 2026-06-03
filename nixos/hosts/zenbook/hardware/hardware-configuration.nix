@@ -147,8 +147,19 @@
 
   services.udev.extraRules = ''
     # Limit Adreno GPU max frequency to prevent overcurrent crashes
-    ACTION=="add", SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ATTR{max_freq}="800000000"
+    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ATTR{max_freq}="800000000"
   '';
+
+  systemd.services.gpu-frequency-cap = {
+    description = "Limit Adreno GPU max frequency to prevent overcurrent crashes";
+    after = [ "systemd-udev-settle.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'if [ -f /sys/class/devfreq/3d00000.gpu/max_freq ]; then echo 800000000 > /sys/class/devfreq/3d00000.gpu/max_freq; fi'";
+      RemainAfterExit = true;
+    };
+  };
 
   hardware = {
     graphics.enable = true;
@@ -170,6 +181,16 @@
 
         # Copy ath12k WiFi firmware
         cp -r ${pkgs.linux-firmware}/lib/firmware/ath12k/WCN7850/hw2.0/* $out/lib/firmware/ath12k/WCN7850/hw2.0/
+
+        # Copy audio topology file to both expected paths (directly under x1e80100 and inside ASUSTeK/zenbook-a14)
+        mkdir -p $out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14
+        if [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin ]; then
+          cp ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/x1e80100/
+          cp ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14/
+        elif [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst ]; then
+          ${pkgs.zstd}/bin/zstd -d ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst -o $out/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin
+          cp $out/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14/
+        fi
 
         # Make files writeable so we can remove them
         chmod -R +w $out

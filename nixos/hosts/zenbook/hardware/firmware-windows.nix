@@ -59,8 +59,8 @@ pkgs.stdenv.mkDerivation {
 
     echo "Attached container at offset $attached_offset, size $cab_size"
 
-    # Extract the CAB using dd
-    dd if="$exe_path" of=attached.cab bs=1 skip="$attached_offset" count="$cab_size" 2>/dev/null
+    # Extract the CAB using dd (using bs=1M and byte flags to prevent extremely slow byte-by-byte copies)
+    dd if="$exe_path" of=attached.cab bs=1M iflag=skip_bytes,count_bytes skip="$attached_offset" count="$cab_size" 2>/dev/null
 
     # Step 3: Extract the CAB to get the MSI
     mkdir cab_out
