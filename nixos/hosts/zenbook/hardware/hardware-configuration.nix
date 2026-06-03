@@ -126,8 +126,8 @@
       "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
-      # qcom_q6v5_pas unblocked for testing (monitored via rollback generation)
-      # "modprobe.blacklist=qcom_q6v5_pas"
+      # Blacklist qcom_q6v5_pas to prevent NVMe/PCIe power domain/SMMU crashes
+      "modprobe.blacklist=qcom_q6v5_pas"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
