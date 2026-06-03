@@ -62,9 +62,6 @@ let
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
-
-      echo "Applying SCMI probe recursion fix..."
-      sed -i 's/device_set_node(&spdev->dev, dev->fwnode);/if (!dev->of_node) device_set_node(\&spdev->dev, dev->fwnode);/' drivers/firmware/arm_scmi/common.h
     '';
 
     configurePhase = ''
@@ -85,11 +82,14 @@ let
       ./scripts/config --enable DRM_PANEL_EDP
       ./scripts/config --module DRM_PANTHOR
 
-      # Enable native Display (Komeda) and DesignWare HDMI/DP controllers
-      ./scripts/config --enable DRM_KOMEDA
-      ./scripts/config --enable DRM_DW_HDMI
-      ./scripts/config --enable DRM_DW_HDMI_QP
-      ./scripts/config --enable DRM_DW_DP
+      # Enable native CIX display (Linlon/Trilinear) and PHY drivers
+      ./scripts/config --enable DRM_CIX
+      ./scripts/config --enable DRM_LINLONDP
+      ./scripts/config --enable DRM_LINLONDP_CLOCK_FIXED
+      ./scripts/config --enable DRM_TRILIN_DP_CIX
+      ./scripts/config --enable DRM_TRILIN_DPSUB
+      ./scripts/config --enable DRM_TRILIN_CADENCE_PHY
+      ./scripts/config --enable DRM_CIX_EDP_PANEL
 
       # Disable Cadence USBSSP Platform and CIX Sky1 glue drivers to prevent MMIO collisions/crashes
       # and allow generic xhci-hcd to safely handle USB controllers.
