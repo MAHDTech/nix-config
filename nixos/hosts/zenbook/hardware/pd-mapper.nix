@@ -82,43 +82,39 @@ in
       rm -rf /var/lib/pd-mapper
       mkdir -p /var/lib/pd-mapper
 
-      # Recreate the directory structure and copy/symlink files safely to avoid
-      # recursive directory symlinks to read-only Nix store.
-      if [ -d /run/current-system/firmware ]; then
-        # 1. Create all subdirectories as real, writable directories first
-        find -L /run/current-system/firmware -type d | while read -r d; do
-          relpath=''${d#/run/current-system/firmware}
-          # Avoid empty relpath (which is the root firmware dir itself)
-          if [ -n "$relpath" ]; then
-            mkdir -p "/var/lib/pd-mapper/$relpath"
-          fi
+      # Recreate the qcom directory structure as real, writable directories.
+      # Only qcom/ contains .jsn files, so we only need qcom/ subdirectories to be
+      # writable. Other directories (like intel, rockchip) can remain read-only symlinks.
+      if [ -d /run/current-system/firmware/qcom ]; then
+        find -L /run/current-system/firmware/qcom -type d | while read -r d; do
+          relpath=''${d#/run/current-system/firmware/}
+          mkdir -p "/var/lib/pd-mapper/$relpath"
         done
+      fi
 
-        # 2. Link all files recursively. Since all directories already exist as real
-        # directories under /var/lib/pd-mapper, cp -as will only create symlinks for
-        # regular files, not directories, keeping the directory tree writable.
+      # Link all files recursively. Since qcom directories already exist as real
+      # directories, cp -as will merge inside them and link individual files, while
+      # linking other non-qcom top-level directories directly as directory symlinks.
+      if [ -d /run/current-system/firmware ]; then
         cp -as /run/current-system/firmware/* /var/lib/pd-mapper/
-        # Make the staged tree writable so we can delete/write files inside it
-        chmod -R +w /var/lib/pd-mapper
+        # Make the staged tree writable so we can delete/write files inside qcom/
+        chmod -R +w /var/lib/pd-mapper/qcom
 
-        # 3. Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/,
-        # preserving the original directory structure (pd-mapper searches subdirectories
-        # corresponding to the remoteproc firmware path).
-        find -L /run/current-system/firmware -name "*.jsn.zst" | while read -r f; do
+        # Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/
+        find -L /run/current-system/firmware/qcom -name "*.jsn.zst" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           relpath=''${f#/run/current-system/firmware/}
           outname=''${relpath%.zst}
-          # Remove the symlink created by cp -as to prevent writing through it
+          # Remove the symlinks created by cp -as to prevent writing through them
           rm -f "/var/lib/pd-mapper/$outname"
-          # Also remove the original .jsn.zst symlink so we don't pollute the directory
           rm -f "/var/lib/pd-mapper/$relpath"
           ${pkgs.zstd}/bin/zstd -d -c "$real" > "/var/lib/pd-mapper/$outname" 2>/dev/null \
             && echo "pd-mapper: staged $outname" \
             || echo "pd-mapper: failed to decompress $real"
         done
 
-        # 4. Copy/link any uncompressed .jsn files directly, preserving subdirectories
-        find -L /run/current-system/firmware -name "*.jsn" | while read -r f; do
+        # Copy any uncompressed .jsn files directly, preserving subdirectories
+        find -L /run/current-system/firmware/qcom -name "*.jsn" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           relpath=''${f#/run/current-system/firmware/}
           # Remove the symlink created by cp -as to prevent writing through it
