@@ -94,8 +94,8 @@ in
           fi
         done
 
-        # Symlink all non-jsn and non-zst files to preserve other firmware
-        find -L /run/current-system/firmware -type f ! -name "*.jsn" ! -name "*.jsn.zst" ! -name "*.zst" | while read -r f; do
+        # Symlink all non-jsn and non-jsn.zst files to preserve other firmware (including compressed ones)
+        find -L /run/current-system/firmware -type f ! -name "*.jsn" ! -name "*.jsn.zst" | while read -r f; do
           relpath=''${f#/run/current-system/firmware/}
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           ln -sf "$real" "/var/lib/pd-mapper/$relpath"
