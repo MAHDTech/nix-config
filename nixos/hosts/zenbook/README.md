@@ -270,23 +270,45 @@ _Items moved here after testing confirms the fix._
 - The 390 MHz cap prevents hard reboots but GPU still hangs on Vulkan `DEVICE_LOST`
 - Need to test Vulkan under native Wayland WSI (not XWayland/XCB)
 
+### 2026-06-04 — Native kernel build crash
+
+| Test                                          | Result    | Details                                     |
+| --------------------------------------------- | --------- | ------------------------------------------- |
+| `nixos-upgrade` (native aarch64 kernel build) | 🔴 Reboot | Hard reset during sustained CPU compilation |
+
+**Key takeaway**: The reboot issue is **NOT GPU-specific**. Sustained CPU load
+(compiling a kernel natively on aarch64) also triggers a hard PMIC reset.
+This means the power regulation problem is **system-wide** — the dummy
+regulators and missing DT power descriptions affect CPU power delivery too,
+not just the GPU. The GPU freq cap at 390 MHz only reduced one source of
+power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
+
 ---
 
 ## Platform Context
 
 ### Known Upstream Limitations (not fixable in this config)
 
-- **GPU dummy regulators** (`vdd`/`vddcx`) — device tree for x1e80100 doesn't describe GPU power supplies. Tracked upstream in QCOM DTS.
-- **GPU clock controller sync_state()** — `gpucc` and `gcc` can't finalize due to GMU not fully probing. Related to regulator issue.
-- **PCIe dummy regulators** (`vdda`/`vddpe-3v3`) — DT doesn't describe PCIe regulator supplies for controller `1c08000`.
-- **I2C HID dummy regulators** — touchpad/keyboard `vdd`/`vddl` not in DT. Devices functional.
+- **System-wide power regulation** — hard reboots under sustained CPU OR GPU
+  load. PMIC overcurrent/brownout triggers hardware reset. Affects both CPU
+  (kernel compilation) and GPU (uncapped rendering). Root cause: device tree
+  doesn't fully describe power supply relationships for x1e80100.
+- **GPU dummy regulators** (`vdd`/`vddcx`) — DT doesn't describe GPU power
+  supplies. Tracked upstream in QCOM DTS.
+- **GPU clock controller sync_state()** — `gpucc` and `gcc` can't finalize
+  due to GMU not fully probing. Related to regulator issue.
+- **PCIe dummy regulators** (`vdda`/`vddpe-3v3`) — DT doesn't describe PCIe
+  regulator supplies for controller `1c08000`.
+- **I2C HID dummy regulators** — touchpad/keyboard `vdd`/`vddl` not in DT.
+  Devices functional.
 - **WCN7850 WiFi dummy regulator** — `vddio1p2` not in DT. WiFi functional.
-- **`*_ignore_unused` boot params** — necessary until DT power descriptions mature.
+- **`*_ignore_unused` boot params** — necessary until DT power descriptions
+  mature.
 
 ### Working Hardware
 
 - ✅ GPU — OpenGL 4.6 (glxgears 3000+ FPS @ 390 MHz)
-- 🟡 GPU — Vulkan 1.4.348 via Turnip (initializes but rendering broken — DEVICE_LOST)
+- 🟡 GPU — Vulkan 1.4.348 via Turnip (init OK, rendering broken — DRM_SYNCOBJ fix pending)
 - ✅ Display (eDP-1 + 4 DP controllers)
 - ✅ WiFi (ath12k/WCN7850)
 - ✅ NVMe (PCIe, btrfs)
@@ -294,4 +316,5 @@ _Items moved here after testing confirms the fix._
 - ✅ USB-C (PD, DP alt-mode, UCSI)
 - ✅ Keyboard/Touchpad (I2C HID)
 - ✅ Thermals (GPU 33-34°C idle)
-- ✅ Boot (systemd-boot, systemd initrd, clean reboots)
+- 🔴 Stability — hard reboots under sustained CPU or GPU load
+- ✅ Boot (systemd-boot, systemd initrd, clean reboots when not under load)

@@ -90,6 +90,13 @@ let
       ./scripts/config --enable DRM_SYNCOBJ
       ./scripts/config --enable DRM_SYNCOBJ_TIMELINE_EXPORT
 
+      # Qualcomm Limits Management Hardware (LMH): provides hardware-level
+      # overcurrent and thermal throttling for CPU/GPU. Without this, sustained
+      # CPU load (e.g. kernel compilation) causes PMIC overcurrent hard resets.
+      # The hardware can throttle independently via TrustZone firmware, but the
+      # kernel driver is needed to properly configure thresholds and interrupts.
+      ./scripts/config --enable QCOM_LMH
+
       # WiFi: alexVinarskis patch set reorganises ath12k into a wifi7/ subdirectory.
       # The kernel config symbol is still CONFIG_ATH12K (covers both PCI and AHB) — no
       # separate ATH12K_WIFI7_PCI kernel config symbol exists. The on-disk module name
