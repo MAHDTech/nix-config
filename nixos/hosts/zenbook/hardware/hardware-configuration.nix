@@ -149,11 +149,6 @@
     };
   };
 
-  services.udev.extraRules = ''
-    # Limit Adreno GPU max frequency to prevent overcurrent crashes
-    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ATTR{max_freq}="390000000"
-  '';
-
   systemd.services.gpu-frequency-cap = {
     description = "Limit Adreno GPU max frequency to prevent overcurrent crashes";
     after = [ "systemd-udev-settle.service" ];

@@ -73,39 +73,58 @@ in
     wantedBy = [ "basic.target" ];
     after = [ "systemd-udev-trigger.service" ];
     # Wait for the remoteproc subsystem to be created by the driver.
-    # If the specific remoteproc devices are not yet registered,
-    # the service will exit and restart automatically.
-    unitConfig.ConditionPathIsDirectory = "/sys/class/remoteproc";
+    # Also ensure the qcom_q6v5_pas module is loaded to prevent an infinite restart loop when blacklisted.
+    unitConfig = {
+      ConditionPathIsDirectory = "/sys/class/remoteproc";
+      ConditionPathExists = "/sys/module/qcom_q6v5_pas";
+    };
 
     preStart = ''
       # Clean up the old directory to ensure a clean slate
       rm -rf /var/lib/pd-mapper
       mkdir -p /var/lib/pd-mapper
 
-      # Recreate the qcom directory structure as real, writable directories.
-      # Only qcom/ contains .jsn files, so we only need qcom/ subdirectories to be
-      # writable. Other directories (like intel, rockchip) can remain read-only symlinks.
-      if [ -d /run/current-system/firmware/qcom ]; then
-        find -L /run/current-system/firmware/qcom -type d | while read -r d; do
-          relpath=''${d#/run/current-system/firmware/}
-          mkdir -p "/var/lib/pd-mapper/$relpath"
+      # Function to convert a symlinked directory into a real directory containing individual symlinks.
+      # This handles component-by-component materialization from top to bottom.
+      materialize_dir() {
+        local path="$1"
+        local current="/var/lib/pd-mapper"
+        IFS='/' read -ra ADDR <<< "$path"
+        for i in "''${ADDR[@]}"; do
+          if [ -z "$i" ]; then continue; fi
+          current="$current/$i"
+          if [ -L "$current" ]; then
+            local target=$(readlink -f "$current")
+            rm -f "$current"
+            mkdir -p "$current"
+            if [ -d "$target" ]; then
+              for f in "$target"/*; do
+                if [ -e "$f" ]; then
+                  ln -sf "$f" "$current/$(basename "$f")"
+                fi
+              done
+            fi
+          fi
         done
-      fi
+      }
 
-      # Link all files recursively. Since qcom directories already exist as real
-      # directories, cp -as will merge inside them and link individual files, while
-      # linking other non-qcom top-level directories directly as directory symlinks.
+      # 1. Symlink all top-level files/directories from the system firmware.
       if [ -d /run/current-system/firmware ]; then
         cp -as /run/current-system/firmware/* /var/lib/pd-mapper/
-        # Make the staged tree writable so we can delete/write files inside qcom/
-        chmod -R +w /var/lib/pd-mapper/qcom
+      fi
 
-        # Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/
+      # 2. Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/
+      if [ -d /run/current-system/firmware/qcom ]; then
         find -L /run/current-system/firmware/qcom -name "*.jsn.zst" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           relpath=''${f#/run/current-system/firmware/}
           outname=''${relpath%.zst}
-          # Remove the symlinks created by cp -as to prevent writing through them
+          reldir=$(dirname "$relpath")
+
+          # Materialize the path inside /var/lib/pd-mapper
+          materialize_dir "$reldir"
+
+          # Remove the symlink if it was copied by cp -as to prevent writing through it
           rm -f "/var/lib/pd-mapper/$outname"
           rm -f "/var/lib/pd-mapper/$relpath"
           ${pkgs.zstd}/bin/zstd -d -c "$real" > "/var/lib/pd-mapper/$outname" 2>/dev/null \
@@ -113,10 +132,15 @@ in
             || echo "pd-mapper: failed to decompress $real"
         done
 
-        # Copy any uncompressed .jsn files directly, preserving subdirectories
+        # 3. Copy any uncompressed .jsn files directly, preserving subdirectories
         find -L /run/current-system/firmware/qcom -name "*.jsn" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           relpath=''${f#/run/current-system/firmware/}
+          reldir=$(dirname "$relpath")
+
+          # Materialize the path inside /var/lib/pd-mapper
+          materialize_dir "$reldir"
+
           # Remove the symlink created by cp -as to prevent writing through it
           rm -f "/var/lib/pd-mapper/$relpath"
           ln -sf "$real" "/var/lib/pd-mapper/$relpath"
