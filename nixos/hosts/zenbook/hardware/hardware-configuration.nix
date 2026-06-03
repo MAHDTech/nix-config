@@ -137,7 +137,7 @@
 
     # Modern boot management
     loader = {
-       systemd-boot.enable = true;
+      systemd-boot.enable = true;
       efi = {
         canTouchEfiVariables = true;
         efiSysMountPoint = lib.mkForce "/boot";

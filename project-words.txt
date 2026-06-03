@@ -36,6 +36,7 @@ CAMCC
 CCID
 CDCETHER
 CFLAGS
+CIXH
 CLASSH
 CLUST
 CMAC
@@ -76,6 +77,7 @@ EDITMSG
 EINVAL
 EMEA
 ENVFILES
+EVENTQEN
 EVTQEN
 Ecosia
 Eemshaven
@@ -170,7 +172,9 @@ MINSTART
 MINSTOP
 MINTEMP
 MKNOD
+MMIO
 MOTORCOMM
+MSCF
 MXTJ
 Mioi
 Modelfile
@@ -290,6 +294,7 @@ UESP
 UGREEN
 UNIFI
 USBC
+USBSSP
 UWSM
 Ultrawide
 Ungated
@@ -410,6 +415,7 @@ blkid
 blueman
 bluetoothctl
 bnep
+bootstrapper
 bootycall
 borderangle
 boto
@@ -822,6 +828,7 @@ junegunn
 kamadorueda
 kapp
 kasmwebconfig
+kbcs
 kbld
 kctrl
 keepkey
@@ -841,6 +848,7 @@ kmod
 koehler
 kpack
 krita
+ksqs
 ksshaskpass
 kubetail
 kvantum
@@ -1002,6 +1010,9 @@ mpfr
 mpk
 mpsc
 msbc
+mscf
+msiextract
+msitools
 mtools
 musnix
 mylib
@@ -1081,6 +1092,7 @@ nvmet
 nvml
 nvtop
 obsproject
+ocab
 occt
 ocmem
 oifname
@@ -1109,8 +1121,9 @@ openvswitch
 optimus
 orama
 orangepi
-overlayfs
+ostage
 overcurrent
+overlayfs
 ovnnb
 ovnsb
 ovsdb
@@ -1208,9 +1221,12 @@ pyprland
 pyproject
 pyyaml
 qcadsp
+qcav
 qccdsp
+qcdxkmbase
 qcdxkmsuc
 qcdxkmsucpurwa
+qcvss
 qdisc
 qlist
 qrtr
@@ -1625,7 +1641,3 @@ zink
 zstd
 zvol
 zvols
-CIXH
-USBSSP
-MMIO
-EVENTQEN

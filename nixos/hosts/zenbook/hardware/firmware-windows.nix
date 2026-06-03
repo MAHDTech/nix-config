@@ -29,7 +29,7 @@ pkgs.stdenv.mkDerivation {
 
     echo "Extracting outer ZIP archive..."
     unzip -q $src
-    
+
     # Locate the nested WiX Burn bootstrapper EXE
     exe_path=$(find . -name "*.exe" -type f | head -n1)
     if [[ -z "$exe_path" ]]; then
