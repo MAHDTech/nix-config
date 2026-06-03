@@ -137,13 +137,18 @@
 
     # Modern boot management
     loader = {
-      systemd-boot.enable = true;
+       systemd-boot.enable = true;
       efi = {
         canTouchEfiVariables = true;
         efiSysMountPoint = lib.mkForce "/boot";
       };
     };
   };
+
+  services.udev.extraRules = ''
+    # Limit Adreno GPU max frequency to prevent overcurrent crashes
+    ACTION=="add", SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ATTR{max_freq}="800000000"
+  '';
 
   hardware = {
     graphics.enable = true;
@@ -155,6 +160,7 @@
     enableRedistributableFirmware = true;
     firmware = [
       (pkgs.callPackage ./firmware.nix { })
+      (pkgs.callPackage ./firmware-windows.nix { })
       (pkgs.runCommand "zenbook-initrd-firmware" { } ''
         mkdir -p $out/lib/firmware/qcom
         mkdir -p $out/lib/firmware/ath12k/WCN7850/hw2.0

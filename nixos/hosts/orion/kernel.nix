@@ -82,8 +82,10 @@ let
       ./scripts/config --enable DRM_PANEL_EDP
       ./scripts/config --module DRM_PANTHOR
 
-      # Enable Cadence USBSSP Platform and CIX Sky1 glue drivers as modules for CIXH2030/CIXH2031 USB controllers
+      # Enable Cadence USBSSP Platform and CIX Sky1 glue drivers for CIXH2030/CIXH2031 USB controllers
       ./scripts/config --module USB_CDNSP
+      ./scripts/config --enable USB_CDNSP_GADGET
+      ./scripts/config --enable USB_CDNSP_HOST
       ./scripts/config --module USB_CDNSP_SKY1
 
       # Run olddefconfig to expand it cleanly for our build
