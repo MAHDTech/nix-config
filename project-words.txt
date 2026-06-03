@@ -976,6 +976,8 @@ metacharacters
 mglru
 milli
 minimaxai
+misconfigurations
+misconfigures
 mistralrs
 mkhl
 mkiso
@@ -997,6 +999,7 @@ modtime
 modutil
 monitord
 mononoki
+moonlander
 moonshotai
 morty
 mountpoint
@@ -1529,6 +1532,7 @@ unsqueeze
 upmix
 upmixing
 upower
+upstreaming
 urlencode
 usbcore
 usbd
