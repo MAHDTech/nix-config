@@ -147,7 +147,7 @@
 
   services.udev.extraRules = ''
     # Limit Adreno GPU max frequency to prevent overcurrent crashes
-    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ATTR{max_freq}="800000000"
+    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ATTR{max_freq}="550000000"
   '';
 
   systemd.services.gpu-frequency-cap = {
@@ -156,7 +156,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'if [ -f /sys/class/devfreq/3d00000.gpu/max_freq ]; then echo 800000000 > /sys/class/devfreq/3d00000.gpu/max_freq; fi'";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'if [ -f /sys/class/devfreq/3d00000.gpu/max_freq ]; then echo 550000000 > /sys/class/devfreq/3d00000.gpu/max_freq; fi'";
       RemainAfterExit = true;
     };
   };

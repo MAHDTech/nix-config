@@ -9,14 +9,6 @@
   ];
 
   systemd = {
-    timers.suspend-on-low-battery = {
-      wantedBy = [ "multi-user.target" ];
-
-      timerConfig = {
-        OnUnitActiveSec = "120";
-        OnBootSec = "120";
-      };
-    };
 
     network = {
       enable = true;

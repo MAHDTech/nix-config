@@ -898,9 +898,6 @@ in
       "$switcher" = "walker";
 
       exec-once = [
-        # Start the notification manager if not running
-        "pidof $notificationManager || $notificationManager"
-
         # Start the bar if not running
         "pidof $barCommand || $barCommand"
       ];
