@@ -63,10 +63,6 @@ in
       "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
       "aipu" # CIX NPU
       "amvx" # CIX VPU
-      # Vendor Cadence USB SSP host/device glue drivers
-      # Loaded in stage 2 to enable USB clocks (sky1_usb_clk_enable_all) safely
-      "cdnsp"
-      "cdnsp-sky1"
       # USB-C Power Delivery and DisplayPort Alt Mode
       # Orion O6 has 2x USB-C ports; one supports DP Alt Mode
       # These modules exist in defconfig as =m but are never auto-loaded
