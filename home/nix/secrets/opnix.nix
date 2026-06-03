@@ -12,6 +12,11 @@ _: {
         path = ".config/daisyui/license";
         mode = "0600";
       };
+      "sshPrivateKey" = {
+        reference = "op://fleet/SSH Key/private key";
+        path = ".ssh/id_ed25519";
+        mode = "0600";
+      };
     };
   };
 }
