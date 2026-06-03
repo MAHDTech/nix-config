@@ -21,7 +21,7 @@ keys:
   # Systems (AGE)
   - &system_jons_age age1l4zs9vmtnsck7t2nqhqt7rnpske9eajlwqr5zr2ggjrf2cfjds4sx6y2rf
   - &system_nuc_age age12m5c674qsrm4l8kszzm9mtfcc6x4gf0lj2dn8m7pau2alafduvmsmffndy
-  - &system_zenbook_age age18trecqlsvku5qymzegez9srhufqems6e8yda8u5fl5aa4ggvqf3st24luq
+  - &system_zenbook_age age1ppt7xfmvua6enmf28ty98fnd4h5mddcqlfd6nw89q9ltqqupy4mstae34a
 
   # Systems (AGE, Hypervisors)
   - &system_hypervisor_1_age age15yruthjnsterawg009na6th6v4avvg47u5el5e5a56caqgsuavysjktv4j
