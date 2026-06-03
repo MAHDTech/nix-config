@@ -5,7 +5,3 @@
 
 ## Ignore all of .git
 .git/
-
-# Ignore secrets
-secrets/
-

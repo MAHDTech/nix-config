@@ -79,7 +79,6 @@ in
       "^\\.git(/.*)?$"
       "^docs/agents/.*"
       "^nixos/hosts/.*/files/.*$"
-      "^secrets/keys/.*\\.asc$"
       "^vendor(/.*)?$"
     ];
     hooks = {

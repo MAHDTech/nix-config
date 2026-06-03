@@ -31,7 +31,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flatpaks.url = "github:in-a-dil-emma/declarative-flatpak/latest";
-    stylix.url = "github:nix-community/stylix";
+    stylix.url = "github:nix-community/stylix?ref=release-26.05";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
     devenv.url = "github:cachix/devenv/main";
     impermanence.url = "github:nix-community/impermanence/master";

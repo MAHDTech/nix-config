@@ -11,8 +11,6 @@ in
       enableCache = false;
       includes = {
         "abstractions/base" = ''
-          # Allow incus to execute wrapped binaries for image unpacking.
-          /nix/store/**/.*-wrapped rix,
           /dev/tty rw,
         '';
       };

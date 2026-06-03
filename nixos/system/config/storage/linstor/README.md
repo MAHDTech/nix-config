@@ -17,7 +17,6 @@
     - [Create Resource Group](#create-resource-group)
     - [Running a test](#running-a-test)
     - [Create Volumes](#create-volumes)
-  - [Incus and LINSTOR (Manual)](#incus-and-linstor-manual)
 
 ## Overview
 
@@ -146,8 +145,6 @@ sudo zfs create -o mountpoint=none zpool/var/lib/storage-pools/linstor-iso
 # Create a ZFS dataset for LINSTOR Instances storage pool
 sudo zfs create -o mountpoint=none zpool/var/lib/storage-pools/linstor-instances
 
-# Create a ZFS dataset for Local storage pool (Used by Incus, not LINSTOR)
-sudo zfs create -o mountpoint=none zpool/var/lib/storage-pools/local
 
 # Verify the dataset exists
 zfs list | egrep 'linstor|drbd'
@@ -263,7 +260,7 @@ linstor resource list
 
 Once storage pools and resource groups are set up, you can create volumes that will be automatically replicated.
 
-These can be managed by incus, or manually with these commands:
+These can be managed manually with these commands:
 
 ```bash
 # Create a volume with 3-way replication
@@ -274,52 +271,4 @@ linstor resource list
 
 # Check DRBD status to see the replicated resources
 drbdadm status
-```
-
-## Incus and LINSTOR (Manual)
-
-Manual setup steps for when Incus preseed is being annoying.
-
-```bash
-# Create the 'linstor' storage pool on each Node in a "PENDING" state.
-incus storage create linstor-instances linstor --target HYPERVISOR-1
-incus storage create linstor-instances linstor --target HYPERVISOR-2
-incus storage create linstor-instances linstor --target HYPERVISOR-3
-incus storage create linstor-instances linstor --target HYPERVISOR-4
-
-# Create the 'iso' storage pool on each Node in a "PENDING" state.
-incus storage create linstor-iso linstor --target HYPERVISOR-1
-incus storage create linstor-iso linstor --target HYPERVISOR-2
-incus storage create linstor-iso linstor --target HYPERVISOR-3
-incus storage create linstor-iso linstor --target HYPERVISOR-4
-
-# Should show as "PENDING"
-incus storage list
-
-# Create the 'linstor' storage pool on each Node in a "CREATED" state.
-incus storage create linstor-instances linstor
-
-# Create the 'iso' storage pool on each Node in a "CREATED" state.
-incus storage create linstor-iso linstor
-
-# Should show as "CREATED"
-incus storage list
-
-# Configure the storage pool settings for 'linstor'
-incus storage set linstor-instances --property "description" "LINSTOR Storage Pool"
-incus storage set linstor-instances "drbd.auto_add_quorum_tiebreaker" "true"
-incus storage set linstor-instances "drbd.auto_diskful" "1h"
-incus storage set linstor-instances "drbd.on_no_quorum" "suspend-io"
-incus storage set linstor-instances "linstor.resource_group.name" "linstor-instances"
-incus storage set linstor-instances "linstor.resource_group.place_count" "1"
-incus storage set linstor-instances "linstor.resource_group.storage_pool" "linstor-instances"
-
-# Configure the storage pool settings for 'iso'
-incus storage set linstor-iso --property "description" "ISO Storage Pool"
-incus storage set linstor-iso "drbd.auto_add_quorum_tiebreaker" "true"
-incus storage set linstor-iso "drbd.auto_diskful" "1h"
-incus storage set linstor-iso "drbd.on_no_quorum" "suspend-io"
-incus storage set linstor-iso "linstor.resource_group.name" "linstor-iso"
-incus storage set linstor-iso "linstor.resource_group.place_count" "1"
-incus storage set linstor-iso "linstor.resource_group.storage_pool" "linstor-iso"
 ```
