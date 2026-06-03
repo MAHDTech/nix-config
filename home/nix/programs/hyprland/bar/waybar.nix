@@ -133,7 +133,7 @@
 
           "custom/nixos-check-updates" = {
             exec = "nixos-check-updates";
-            on-click = "nixos-check-updates && notify-send 'NixOS updates complete!'";
+            on-click = "nixos-check-updates && ${pkgs.libnotify}/bin/notify-send 'NixOS updates complete!'";
             interval = 86400;
             tooltip = true;
             return-type = "json";

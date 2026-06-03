@@ -162,7 +162,7 @@ in
 
         general = {
           # Lock command
-          lock_cmd = "notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
+          lock_cmd = "${pkgs.libnotify}/bin/notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
 
           # Unlock command
           #unlock_cmd = "";
@@ -190,17 +190,17 @@ in
             timeout = 300;
 
             # Lock screen after timeout.
-            on-timeout = "notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
+            on-timeout = "${pkgs.libnotify}/bin/notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
           }
           {
             # Turn off the monitors after 15 mins.
             timeout = 900;
 
             # Power off monitors.
-            on-timeout = "notify-send 'Sleeping...' ; hyprctl dispatch dpms off, all";
+            on-timeout = "${pkgs.libnotify}/bin/notify-send 'Sleeping...' ; hyprctl dispatch dpms off, all";
 
             # Power on monitors.
-            on-resume = "notify-send 'Resuming...' ; hyprctl dispatch dpms on, all";
+            on-resume = "${pkgs.libnotify}/bin/notify-send 'Resuming...' ; hyprctl dispatch dpms on, all";
           }
         ];
       };

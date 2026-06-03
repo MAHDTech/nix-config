@@ -9,7 +9,15 @@
 
     package = pkgs.polkit;
 
-    extraConfig = "";
+    extraConfig = ''
+      polkit.addRule(function(action, subject) {
+        if ((action.id == "org.freedesktop.fwupd.refresh-remote" ||
+          action.id == "org.freedesktop.fwupd.get-remotes") &&
+          subject.user == "fwupd-refresh") {
+          return polkit.Result.YES;
+        }
+      });
+    '';
 
     debug = false;
 
