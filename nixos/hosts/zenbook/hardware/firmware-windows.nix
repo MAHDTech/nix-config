@@ -67,7 +67,7 @@ pkgs.stdenv.mkDerivation {
     7z x attached.cab -ocab_out -y >/dev/null
 
     # Locate the MSI file
-    msi_path=$(find cab_out -name "*.msi" -type f | head -n1)
+    msi_path=$(find cab_out -type f | head -n1)
     if [[ -z "$msi_path" ]]; then
       echo "ERROR: No MSI found in CAB container"
       exit 1
