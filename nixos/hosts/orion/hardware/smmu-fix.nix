@@ -24,7 +24,7 @@
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = pkgs.writeShellScript "smmu-evtq-fix" ''
-        val=$(${pkgs.devmem2}/bin/devmem2 0x0b010020 | awk -F': ' '/Value at address/ {print $2}')
+        val=$(${pkgs.devmem2}/bin/devmem2 0x0b010020 | ${pkgs.gawk}/bin/awk -F': ' '/Value at address/ {print $2}')
         if [ -n "$val" ]; then
           # Clear EVENTQEN (bit 2, value 4)
           new_val=$(printf "0x%X" $((val & 0xFFFFFFFB)))
