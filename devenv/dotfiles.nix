@@ -80,9 +80,7 @@ in
       "^docs/agents/.*"
       "^nixos/hosts/.*/files/.*$"
       "^secrets/keys/.*\\.asc$"
-      "^secrets/keystore.yaml$"
       "^vendor(/.*)?$"
-      ".sops.yaml"
     ];
     hooks = {
       actionlint.enable = true;
@@ -148,10 +146,6 @@ in
       };
       mixed-line-endings.enable = true;
       nixfmt.enable = true;
-      pre-commit-hook-ensure-sops = {
-        enable = true;
-        files = "^secrets/keystore.yaml";
-      };
       prettier = {
         enable = true;
         package = pkgs.prettier;

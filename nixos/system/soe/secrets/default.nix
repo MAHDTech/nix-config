@@ -1,5 +1,5 @@
 {
   imports = [
-    ./sops-nix
+    ./opnix.nix
   ];
 }

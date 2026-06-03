@@ -35,7 +35,7 @@ in
           boot.zfs.forceImportRoot = lib.mkDefault false;
           boot.zfs.forceImportAll = lib.mkDefault false;
         }
-        inputs.sops-nix.nixosModules.sops
+        inputs.opnix.nixosModules.default
         inputs.stylix.nixosModules.stylix
         inputs.flatpaks.nixosModules.default
         ../nixos/system/home-manager.nix # Standard HM integration
@@ -75,7 +75,7 @@ in
       modules = [
         ../home
         inputs.stylix.homeManagerModules.stylix
-        inputs.sops-nix.homeManagerModules.sops
+        inputs.opnix.homeManagerModules.default
       ];
       extraSpecialArgs = {
         inherit

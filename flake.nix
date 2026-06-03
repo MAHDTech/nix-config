@@ -30,10 +30,6 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    sops-nix = {
-      url = "github:Mic92/sops-nix/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     flatpaks.url = "github:in-a-dil-emma/declarative-flatpak/latest";
     stylix.url = "github:nix-community/stylix";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
@@ -42,6 +38,10 @@
     crane.url = "github:ipetkov/crane";
     disko = {
       url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    opnix = {
+      url = "github:brizzbuzz/opnix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

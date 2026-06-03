@@ -1489,8 +1489,8 @@ in
             # Requires OVN/OVS
             "sdn-ready.target"
 
-            # Requires SOPS
-            "sops-nix.service"
+            # Requires OpNix
+            "onepassword-secrets.service"
           ];
           wants = lib.mkAfter [
             "sdn-ready.target"
@@ -1506,7 +1506,14 @@ in
             ];
 
           serviceConfig = {
-            EnvironmentFile = config.sops.templates."incus-acme.env".path;
+            EnvironmentFile = [
+              (pkgs.writeText "incus-acme-static.env" ''
+                CLOUDFLARE_POLLING_INTERVAL="3"
+                CLOUDFLARE_PROPAGATION_TIMEOUT="900"
+                CLOUDFLARE_TTL="120"
+              '')
+              "/run/secrets/incus-acme.env"
+            ];
             ExecStartPre = pkgs.writeShellScript "incus-pre-start" ''
               if [[ ! -f "/usr/share/linstor-server/bin/Satellite" ]];
               then
@@ -1531,8 +1538,8 @@ in
             # Requires OVN/OVS
             "sdn-ready.target"
 
-            # Requires SOPS
-            "sops-nix.service"
+            # Requires OpNix
+            "onepassword-secrets.service"
           ];
           wants = lib.mkAfter [
             "sdn-ready.target"
@@ -1548,7 +1555,14 @@ in
             ];
 
           serviceConfig = {
-            EnvironmentFile = config.sops.templates."incus-acme.env".path;
+            EnvironmentFile = [
+              (pkgs.writeText "incus-acme-static.env" ''
+                CLOUDFLARE_POLLING_INTERVAL="3"
+                CLOUDFLARE_PROPAGATION_TIMEOUT="900"
+                CLOUDFLARE_TTL="120"
+              '')
+              "/run/secrets/incus-acme.env"
+            ];
             ExecStartPre = pkgs.writeShellScript "incus-preseed-pre-start" ''
               if [[ ! -f "/usr/share/linstor-server/bin/Satellite" ]];
               then

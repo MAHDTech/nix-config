@@ -39,7 +39,7 @@
     users.${username} = {
       imports = [
         ../../home
-        inputs.sops-nix.homeManagerModules.sops
+        inputs.opnix.homeManagerModules.default
       ];
     };
   };

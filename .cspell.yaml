@@ -15,7 +15,6 @@ ignorePaths:
   - .devenv
   - .direnv
   - .git
-  - .sops.yaml
   - devenv.nix
   - docs/agents/**
   - docs/issues/**
@@ -24,7 +23,6 @@ ignorePaths:
   - public/config-client.json
   - public/workers
   - "*.svg"
-  - secrets
   - vendor
 ignoreRegExpList:
   - /-----BEGIN PGP PUBLIC KEY BLOCK-----[\s\S]*?-----END PGP PUBLIC KEY BLOCK-----/

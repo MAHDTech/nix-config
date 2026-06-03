@@ -23,8 +23,8 @@ in
         text = ''
           #!/usr/bin/env bash
           set -a
-          export EMAIL="$(cat ${config.sops.secrets."daisyui/email".path})"
-          export LICENSE="$(cat ${config.sops.secrets."daisyui/license".path})"
+          export EMAIL="$(cat ${config.home.homeDirectory}/.config/daisyui/email)"
+          export LICENSE="$(cat ${config.home.homeDirectory}/.config/daisyui/license)"
           set +a
           exec bunx daisyui-blueprint@latest -y "$@"
         '';

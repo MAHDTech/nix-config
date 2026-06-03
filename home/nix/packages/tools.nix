@@ -120,8 +120,6 @@ in
       xxd
       zip
 
-      # Sops
-      sops
       age
       age-plugin-fido2-hmac
       age-plugin-ledger
