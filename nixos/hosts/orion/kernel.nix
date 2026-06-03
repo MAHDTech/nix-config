@@ -82,12 +82,6 @@ let
       ./scripts/config --enable DRM_PANEL_EDP
       ./scripts/config --module DRM_PANTHOR
 
-      # Enable native Display (Komeda) and DesignWare HDMI/DP controllers
-      ./scripts/config --enable DRM_KOMEDA
-      ./scripts/config --enable DRM_DW_HDMI
-      ./scripts/config --enable DRM_DW_HDMI_QP
-      ./scripts/config --enable DRM_DW_DP
-
       # Disable Cadence USBSSP Platform and CIX Sky1 glue drivers to prevent MMIO collisions/crashes
       # and allow generic xhci-hcd to safely handle USB controllers.
       ./scripts/config --disable USB_CDNSP
