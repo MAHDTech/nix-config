@@ -1,3 +1,4 @@
+ABRT
 aclinherit
 aclmode
 acltype
@@ -366,6 +367,7 @@ extdebug
 extest
 extglob
 extquote
+Exynos
 failglob
 fakeroot
 Fancontrol
@@ -498,6 +500,7 @@ gpgconf
 gptcommit
 gptfdisk
 gpucc
+gpuss
 gpuvm
 graphviz
 greetd
@@ -679,6 +682,7 @@ lasterror
 lastpipe
 laststatus
 latexmk
+Lavapipe
 lavfi
 layernorm
 layoutmsg
@@ -800,6 +804,7 @@ mbhc
 mbim
 mcopy
 MDIO
+Mediatek
 memlock
 memmap
 memset
@@ -945,6 +950,7 @@ NSSDB
 nssmdns
 NUC
 nullglob
+numjobs
 numlock
 nushell
 Nutanix
@@ -1057,6 +1063,7 @@ playerctl
 plugdev
 pmic
 pmset
+PMSG
 pname
 pointsize
 polkit
@@ -1132,9 +1139,11 @@ Radxa
 rakr
 raku
 ramfs
+ramoops
 RAMYBQ
 rando
 randr
+randrw
 raop
 ratatouille
 ratatui
@@ -1381,6 +1390,9 @@ swww
 sxlzii
 symkey
 symvers
+syncobj
+SYNCOBJ
+syncobjs
 syncoid
 synctex
 Syncthing
@@ -1391,6 +1403,7 @@ sysimgblt
 sysinfo
 sysinit
 syslinux
+sysrq
 SYSV
 tabdo
 tabl
@@ -1406,6 +1419,7 @@ tchx
 TCSADRAIN
 tcsetattr
 tcsrcc
+Tegra
 tekumura
 temurin
 Tensilica
@@ -1480,6 +1494,7 @@ UGREEN
 uhwd
 Ultrawide
 unapsd
+unblacklisting
 unetbootin
 unevictable
 unfullscreen
@@ -1523,6 +1538,10 @@ Valhall
 valvesoftware
 vblank
 vcsh
+vdda
+vddcx
+vddio
+vddl
 VDEC
 vdir
 VDPAU

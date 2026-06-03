@@ -84,6 +84,12 @@ let
       ./scripts/config --set-val DRM_MSM y
       ./scripts/config --set-val DRM_SCHED y
 
+      # DRM syncobj: required by Turnip (freedreno Vulkan driver) for GPU command
+      # synchronization. Without this, Vulkan renders one frame then hangs because
+      # the driver cannot signal/wait on submission fences between frames.
+      ./scripts/config --enable DRM_SYNCOBJ
+      ./scripts/config --enable DRM_SYNCOBJ_TIMELINE_EXPORT
+
       # WiFi: alexVinarskis patch set reorganises ath12k into a wifi7/ subdirectory.
       # The kernel config symbol is still CONFIG_ATH12K (covers both PCI and AHB) — no
       # separate ATH12K_WIFI7_PCI kernel config symbol exists. The on-disk module name

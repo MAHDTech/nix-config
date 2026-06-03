@@ -6,7 +6,6 @@
     extraPackages = with pkgs; [
       libva-utils
       vulkan-loader
-      vulkan-tools
       vulkan-validation-layers
     ];
   };
@@ -17,6 +16,9 @@
 
     # Mesa utilities (glxinfo, etc) for debugging
     mesa-demos
+
+    # Vulkan tools (vulkaninfo, vkcube) — needs to be here for PATH, not in extraPackages
+    vulkan-tools
   ];
 
   environment.variables = {
