@@ -29,6 +29,8 @@ let
       ./config-ZENBOOK.yaml
     else if lib.hasInfix "JONS" hostname then
       ./config-JONS.yaml
+    else if lib.hasInfix "ORION" hostname then
+      ./config-ORION.yaml
     else
       ./config.yaml; # Fallback
 in

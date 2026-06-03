@@ -26,6 +26,8 @@ let
       ./config/NUC.nix
     else if lib.hasInfix "ZENBOOK" hostname then
       ./config/ZENBOOK.nix
+    else if lib.hasInfix "ORION" hostname then
+      ./config/ORION.nix
     else
       ./config/default.nix;
 

@@ -695,11 +695,13 @@ glew
 glfw
 glink
 glist
+glmark
 globalasciiranges
 globasciiranges
 glog
 glowstab
 glvnd
+glxgears
 glxinfo
 gnnome
 gnugrep
@@ -1571,6 +1573,7 @@ vimingo
 vimrc
 virt
 virtualenv
+vkmark
 vlang
 vnoremap
 volblocksize
