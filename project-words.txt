@@ -143,6 +143,7 @@ Jurong
 KAMN
 KASMWEB
 KIPP
+KOMEDA
 KPATH
 KREW
 KUBECONFIG
@@ -150,6 +151,7 @@ Kasm
 Kbuild
 Keymaps
 Kimi
+Komeda
 Kvantum
 LDFLAGS
 LIBGL
@@ -276,6 +278,7 @@ SwiGLU
 Syncthing
 TCSADRAIN
 TMPFS
+TMPVID
 TPACPI
 TPSMAPI
 TRKDPAN
@@ -770,6 +773,7 @@ httping
 httpstat
 huggingface
 huponexit
+hwaccel
 hwdec
 hwmon
 hwmons
@@ -847,6 +851,7 @@ keytar
 keyutils
 killactive
 kmod
+kmscube
 koehler
 kpack
 krita
@@ -865,6 +870,7 @@ lasterror
 lastpipe
 laststatus
 latexmk
+lavfi
 layernorm
 layoutmsg
 lboost
@@ -1155,6 +1161,7 @@ peachpuff
 pgrep
 pgxz
 phaserjs
+phong
 pidfile
 pigpipe
 piix
@@ -1475,6 +1482,7 @@ termenv
 termguicolors
 terminfo
 tessen
+testsrc
 tflint
 tftpboot
 thermald
@@ -1573,6 +1581,7 @@ vimingo
 vimrc
 virt
 virtualenv
+vkcube
 vkmark
 vlang
 vnoremap
@@ -1583,6 +1592,7 @@ vscodevim
 vsctl
 vsonline
 vswitchd
+vsync
 vsyslog
 vtsls
 vulkaninfo
@@ -1626,6 +1636,7 @@ xhci
 xhost
 xiaoxiangmoe
 xlong
+xorg
 xrdb
 xsrnkagsaz
 xtts

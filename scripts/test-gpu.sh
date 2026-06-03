@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # GPU burn-in, acceleration, and rendering test suite
 # Designed to be SCP'd to a box and run over SSH.
 # All visual tests render on the physical display.
@@ -14,9 +15,10 @@ set -euo pipefail
 ###############################################################################
 # Configuration - exported so they survive into nix-shell
 ###############################################################################
-export GPU_TEST_DURATION=${1:-30}
+
+export GPU_TEST_DURATION=${1:-60}
 export GPU_TEST_USER_RES=${2:-}
-export GPU_TEST_BURN_IN=${BURN_IN:-0}
+export GPU_TEST_BURN_IN=${BURN_IN:-60}
 export GPU_TEST_BURN_DURATION=${BURN_DURATION:-300}
 export GPU_TEST_SKIP_INFO=${SKIP_INFO:-0}
 export GPU_TEST_LOG_FILE=${LOG_FILE:-/tmp/gpu-test-$(date +%Y%m%d-%H%M%S).log}
@@ -24,6 +26,7 @@ export GPU_TEST_LOG_FILE=${LOG_FILE:-/tmp/gpu-test-$(date +%Y%m%d-%H%M%S).log}
 ###############################################################################
 # Display detection (before entering nix-shell)
 ###############################################################################
+
 if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
 	# Try to find an active X session
 	display=$(w -hs 2>/dev/null | awk '{print $3}' | grep -E '^:[0-9]' | head -n1 || true)
@@ -46,8 +49,10 @@ if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
 	if [ -z "${DISPLAY:-}" ]; then
 		wl_display=$(find /run/user/*/wayland-* -maxdepth 0 -name 'wayland-[0-9]*' 2>/dev/null | head -n1 || true)
 		if [ -n "$wl_display" ]; then
-			export WAYLAND_DISPLAY=$(basename "$wl_display")
-			export XDG_RUNTIME_DIR=$(dirname "$wl_display")
+			export WAYLAND_DISPLAY
+			WAYLAND_DISPLAY=$(basename "$wl_display")
+			export XDG_RUNTIME_DIR
+			XDG_RUNTIME_DIR=$(dirname "$wl_display")
 			echo "Auto-detected WAYLAND_DISPLAY=$WAYLAND_DISPLAY"
 		fi
 	fi
@@ -72,6 +77,7 @@ echo ""
 ###############################################################################
 # Enter nix-shell with all required packages
 ###############################################################################
+
 exec nix-shell -p \
 	mesa-demos \
 	vulkan-tools \
@@ -100,14 +106,29 @@ USER_RES="$GPU_TEST_USER_RES"
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
-banner()  { echo ""; echo -e "${CYAN}${BOLD}==========================================${NC}"; echo -e "${CYAN}${BOLD}  $1${NC}"; echo -e "${CYAN}${BOLD}==========================================${NC}"; }
-section() { echo ""; echo -e "${YELLOW}------------------------------------------${NC}"; echo -e "${YELLOW}  $1${NC}"; echo -e "${YELLOW}------------------------------------------${NC}"; }
-ok()      { echo -e "${GREEN}[OK]${NC} $1"; }
-warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
-fail()    { echo -e "${RED}[FAIL]${NC} $1"; }
-has_cmd() { command -v "$1" &>/dev/null; }
+function banner() {
+	echo ""
+	echo -e "${CYAN}${BOLD}==========================================${NC}"
+	echo -e "${CYAN}${BOLD}  $1${NC}"
+	echo -e "${CYAN}${BOLD}==========================================${NC}"
+}
 
-run_test() {
+function section() {
+	echo ""
+	echo -e "${YELLOW}------------------------------------------${NC}"
+	echo -e "${YELLOW}  $1${NC}"
+	echo -e "${YELLOW}------------------------------------------${NC}"
+}
+
+function ok()      { echo -e "${GREEN}[OK]${NC} $1"; }
+
+function warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
+
+function fail()    { echo -e "${RED}[FAIL]${NC} $1"; }
+
+function has_cmd() { command -v "$1" &>/dev/null; }
+
+function run_test() {
     local name="$1"; shift
     section "$name"
     set +e

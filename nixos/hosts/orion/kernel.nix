@@ -184,6 +184,8 @@ let
       # Copy DTBs
       mkdir -p $out/boot/dts/cix
       cp arch/arm64/boot/dts/cix/*.dtb $out/boot/dts/cix/
+      mkdir -p $out/dtbs/cix
+      cp arch/arm64/boot/dts/cix/*.dtb $out/dtbs/cix/
 
       # Install kernel modules
       make ARCH=arm64 INSTALL_MOD_PATH=$out modules_install
