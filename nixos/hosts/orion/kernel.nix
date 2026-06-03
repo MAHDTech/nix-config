@@ -62,6 +62,9 @@ let
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
+
+      echo "Applying custom fixed regulator ACPI match patch..."
+      patch -p1 < ${./files/patches/fixed-regulator-acpi.patch}
     '';
 
     configurePhase = ''
@@ -90,6 +93,16 @@ let
       ./scripts/config --enable DRM_TRILIN_DPSUB
       ./scripts/config --enable DRM_TRILIN_CADENCE_PHY
       ./scripts/config --enable DRM_CIX_EDP_PANEL
+
+      # Enable CIX PWM support (needed for eDP backlight)
+      ./scripts/config --enable PWM_SKY1
+
+      # Enable USB Type-C and CIX Combo PHY as built-in to prevent early boot probe warnings/failures
+      ./scripts/config --enable TYPEC
+      ./scripts/config --enable PHY_CIX_USBDP
+      ./scripts/config --enable PHY_CIX_PCIE
+      ./scripts/config --enable PHY_CIX_USB2
+      ./scripts/config --enable PHY_CIX_USB3
 
       # Disable Cadence USBSSP Platform and CIX Sky1 glue drivers to prevent MMIO collisions/crashes
       # and allow generic xhci-hcd to safely handle USB controllers.

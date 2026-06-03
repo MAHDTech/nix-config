@@ -304,6 +304,7 @@ dotglob
 dpkg
 DPMS
 dport
+dpsub
 DPTSW
 drbdadm
 drbdmeta
@@ -745,6 +746,8 @@ lilyinstarlight
 linadmin
 linbit
 linespace
+linlon
+linlondp
 LINSTOR
 linuxbase
 linuxx
@@ -1449,6 +1452,7 @@ tracel
 tracelai
 trezord
 tril
+trilin
 triu
 TRKDPAN
 trng
@@ -1494,6 +1498,7 @@ urlencode
 USBC
 usbcore
 usbd
+usbdp
 usbhid
 usbnet
 USBSSP

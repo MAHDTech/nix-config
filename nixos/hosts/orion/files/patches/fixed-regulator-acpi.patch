@@ -1,0 +1,79 @@
+--- a/drivers/regulator/fixed.c	2026-06-04 09:30:52.379373648 +1000
++++ b/drivers/regulator/fixed.c	2026-06-04 09:30:52.379373648 +1000
+@@ -29,6 +29,7 @@
+ #include <linux/regulator/of_regulator.h>
+ #include <linux/regulator/machine.h>
+ #include <linux/clk.h>
++#include <linux/property.h>
+ 
+ /* Default time in millisecond to wait for emergency shutdown */
+ #define FV_DEF_EMERG_SHUTDWN_TMO	10
+@@ -163,6 +164,55 @@
+  * Return: Pointer to a populated &struct fixed_voltage_config or %NULL if
+  *	   memory allocation fails.
+  */
++
++static struct fixed_voltage_config *
++generic_get_fixed_voltage_config(struct device *dev,
++				 const struct regulator_desc *desc)
++{
++	struct fixed_voltage_config *config;
++	struct regulator_init_data *init_data;
++	const char *name = NULL;
++	u32 microvolts = 0;
++
++	config = devm_kzalloc(dev, sizeof(struct fixed_voltage_config), GFP_KERNEL);
++	if (!config)
++		return ERR_PTR(-ENOMEM);
++
++	init_data = devm_kzalloc(dev, sizeof(struct regulator_init_data), GFP_KERNEL);
++	if (!init_data)
++		return ERR_PTR(-ENOMEM);
++
++	device_property_read_string(dev, "regulator-name", &name);
++	if (name) {
++		init_data->constraints.name = name;
++		config->supply_name = name;
++	} else {
++		init_data->constraints.name = dev_name(dev);
++		config->supply_name = dev_name(dev);
++	}
++
++	device_property_read_u32(dev, "regulator-min-microvolt", &microvolts);
++	if (!microvolts)
++		device_property_read_u32(dev, "regulator-max-microvolt", &microvolts);
++	config->microvolts = microvolts;
++	init_data->constraints.min_uV = microvolts;
++	init_data->constraints.max_uV = microvolts;
++
++	if (device_property_read_bool(dev, "regulator-boot-on"))
++		config->enabled_at_boot = true;
++	if (device_property_read_bool(dev, "regulator-always-on"))
++		init_data->constraints.always_on = true;
++
++	device_property_read_u32(dev, "startup-delay-us", &config->startup_delay);
++	device_property_read_u32(dev, "off-on-delay-us", &config->off_on_delay);
++
++	if (device_property_present(dev, "vin-supply"))
++		config->input_supply = "vin";
++
++	config->init_data = init_data;
++	return config;
++}
++
+ static struct fixed_voltage_config *
+ of_get_fixed_voltage_config(struct device *dev,
+ 			    const struct regulator_desc *desc)
+@@ -234,9 +284,9 @@
+ 	if (!drvdata)
+ 		return -ENOMEM;
+ 
+-	if (pdev->dev.of_node) {
+-		config = of_get_fixed_voltage_config(&pdev->dev,
+-						     &drvdata->desc);
++	if (pdev->dev.of_node || dev_fwnode(&pdev->dev)) {
++		config = generic_get_fixed_voltage_config(&pdev->dev,
++							 &drvdata->desc);
+ 		if (IS_ERR(config))
+ 			return PTR_ERR(config);
+ 	} else {
