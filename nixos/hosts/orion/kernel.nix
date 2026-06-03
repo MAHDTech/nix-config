@@ -82,10 +82,9 @@ let
       ./scripts/config --enable DRM_PANEL_EDP
       ./scripts/config --module DRM_PANTHOR
 
-      # Disable Cadence USBSSP Platform and CIX Sky1 glue drivers to prevent MMIO collisions/crashes
-      # and allow generic xhci-hcd to safely handle USB controllers.
-      ./scripts/config --disable USB_CDNSP
-      ./scripts/config --disable USB_CDNSP_SKY1
+      # Enable Cadence USBSSP Platform and CIX Sky1 glue drivers as modules for CIXH2030/CIXH2031 USB controllers
+      ./scripts/config --module USB_CDNSP
+      ./scripts/config --module USB_CDNSP_SKY1
 
       # Run olddefconfig to expand it cleanly for our build
       make ARCH=arm64 olddefconfig
@@ -135,8 +134,8 @@ let
       # CONFIG_BLK_DEV_NVME=m works via initrd but =y eliminates any module-load race
       ./scripts/config --enable BLK_DEV_NVME
 
-      # Disable CIX ACPI USB scanning to allow standard xHCI to bind to PNP0D10 devices
-      ./scripts/config --disable CIX_ACPI_USB_SCAN
+      # Enable CIX ACPI USB scanning to route USB exclusively to cdnsp-sky1 and prevent conflicts
+      ./scripts/config --enable CIX_ACPI_USB_SCAN
 
       # Disable strict devmem to allow userspace register access for early-boot SMMU bug workaround
       ./scripts/config --disable STRICT_DEVMEM
