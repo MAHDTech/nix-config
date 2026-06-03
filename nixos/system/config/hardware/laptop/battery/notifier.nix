@@ -62,7 +62,28 @@ in
         ExecStart = pkgs.writeShellScript "lowbatt-start" ''
           ${pkgs.coreutils}/bin/echo "Executing start script for lowbatt"
 
-          export battery_capacity=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/capacity)
+          if [ -f /sys/class/power_supply/${cfg.device}/capacity ]; then
+            export battery_capacity=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/capacity)
+          elif [ -f /sys/class/power_supply/${cfg.device}/energy_now ] && [ -f /sys/class/power_supply/${cfg.device}/energy_full ]; then
+            energy_now=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/energy_now)
+            energy_full=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/energy_full)
+            if [ "$energy_full" -gt 0 ]; then
+              export battery_capacity=$(( energy_now * 100 / energy_full ))
+            else
+              export battery_capacity=100
+            fi
+          elif [ -f /sys/class/power_supply/${cfg.device}/charge_now ] && [ -f /sys/class/power_supply/${cfg.device}/charge_full ]; then
+            charge_now=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/charge_now)
+            charge_full=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/charge_full)
+            if [ "$charge_full" -gt 0 ]; then
+              export battery_capacity=$(( charge_now * 100 / charge_full ))
+            else
+              export battery_capacity=100
+            fi
+          else
+            export battery_capacity=100
+          fi
+
           export battery_status=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/status)
 
           if [[ $battery_capacity -le ${builtins.toString cfg.notifyCapacity} && $battery_status = "Discharging" ]];
