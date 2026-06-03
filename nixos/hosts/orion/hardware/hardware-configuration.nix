@@ -53,8 +53,6 @@ in
         # Live device shows cdns3_pci_wrap / cdnsp_udc_pci loading, not generic dwc3
         "cdns3"
         "cdns3_pci_wrap"
-        "cdnsp"
-        "cdnsp-sky1"
       ];
       kernelModules = [ ];
     };
