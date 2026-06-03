@@ -85,7 +85,7 @@ in
       # Recreate the directory structure and copy/symlink files safely to avoid
       # recursive directory symlinks to read-only Nix store.
       if [ -d /run/current-system/firmware ]; then
-        # Create all subdirectories as real directories
+        # 1. Create all subdirectories as real, writable directories first
         find -L /run/current-system/firmware -type d | while read -r d; do
           relpath=''${d#/run/current-system/firmware}
           # Avoid empty relpath (which is the root firmware dir itself)
@@ -94,29 +94,34 @@ in
           fi
         done
 
-        # Symlink all non-jsn and non-jsn.zst files to preserve other firmware (including compressed ones)
-        find -L /run/current-system/firmware -type f ! -name "*.jsn" ! -name "*.jsn.zst" | while read -r f; do
-          relpath=''${f#/run/current-system/firmware/}
-          real=$(${pkgs.coreutils}/bin/readlink -f "$f")
-          ln -sf "$real" "/var/lib/pd-mapper/$relpath"
-        done
+        # 2. Link all files recursively. Since all directories already exist as real
+        # directories under /var/lib/pd-mapper, cp -as will only create symlinks for
+        # regular files, not directories, keeping the directory tree writable.
+        cp -as /run/current-system/firmware/* /var/lib/pd-mapper/
+        # Make the staged tree writable so we can delete/write files inside it
+        chmod -R +w /var/lib/pd-mapper
 
-        # Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/,
+        # 3. Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/,
         # preserving the original directory structure (pd-mapper searches subdirectories
         # corresponding to the remoteproc firmware path).
         find -L /run/current-system/firmware -name "*.jsn.zst" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           relpath=''${f#/run/current-system/firmware/}
           outname=''${relpath%.zst}
+          # Remove the symlink created by cp -as to prevent writing through it
+          rm -f "/var/lib/pd-mapper/$outname"
+          # Also remove the original .jsn.zst symlink so we don't pollute the directory
+          rm -f "/var/lib/pd-mapper/$relpath"
           ${pkgs.zstd}/bin/zstd -d -c "$real" > "/var/lib/pd-mapper/$outname" 2>/dev/null \
             && echo "pd-mapper: staged $outname" \
             || echo "pd-mapper: failed to decompress $real"
         done
 
-        # Copy any uncompressed .jsn files directly, preserving subdirectories
+        # 4. Copy/link any uncompressed .jsn files directly, preserving subdirectories
         find -L /run/current-system/firmware -name "*.jsn" | while read -r f; do
           real=$(${pkgs.coreutils}/bin/readlink -f "$f")
           relpath=''${f#/run/current-system/firmware/}
+          # Remove the symlink created by cp -as to prevent writing through it
           rm -f "/var/lib/pd-mapper/$relpath"
           ln -sf "$real" "/var/lib/pd-mapper/$relpath"
         done
