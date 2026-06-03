@@ -102,6 +102,9 @@ let
       # Enable USB4/Thunderbolt support for docking stations
       ./scripts/config --module USB4
 
+      # Audio amplifier codecs for Zenbook speakers
+      ./scripts/config --module SND_SOC_WSA884X
+
       # Enable MGLRU (Multi-Gen LRU) for memory optimization
       ./scripts/config --enable LRU_GEN
       ./scripts/config --enable LRU_GEN_ENABLED
