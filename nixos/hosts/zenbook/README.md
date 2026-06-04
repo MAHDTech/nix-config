@@ -55,7 +55,7 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 2: Iris video codec firmware path mismatch
 
-- [ ] **Status**: Not started
+- [x] **Status**: Resolved (GStreamer hardware encode pipeline verified successfully, firmware `qcvss8380.mbn.zst` correctly loaded and decompressed from `/run/current-system/firmware`)
 - **Severity**: P1 — No hardware video decode/encode
 - **Symptom**: Repeated dmesg errors:
   ```
