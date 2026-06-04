@@ -56,8 +56,14 @@ in
 
   systemd.services.smmu-evtq-fix = {
     description = "Disable SMMUv3 event queue (IORT firmware bug workaround)";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "sysinit.target" ];
+    wantedBy = [ "sysinit.target" ];
+    before = [
+      "systemd-modules-load.service"
+      "systemd-udev-trigger.service"
+      "network-pre.target"
+    ];
+    after = [ "local-fs.target" ];
+    unitConfig.DefaultDependencies = false;
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
