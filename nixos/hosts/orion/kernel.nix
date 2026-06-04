@@ -160,9 +160,12 @@ let
       # Disable CIX ACPI USB scanning to allow standard xHCI to bind to PNP0D10 devices
       ./scripts/config --disable CIX_ACPI_USB_SCAN
 
-      # Disable strict devmem to allow userspace register access for early-boot SMMU bug workaround
-      ./scripts/config --disable STRICT_DEVMEM
-      ./scripts/config --disable IO_STRICT_DEVMEM
+      # Enable SMMU bypass by default to prevent early display DMA translation faults/interrupt storm
+      ./scripts/config --disable ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT
+
+      # Enable strict devmem for kernel security (userspace workaround removed)
+      ./scripts/config --enable STRICT_DEVMEM
+      ./scripts/config --enable IO_STRICT_DEVMEM
 
       # CIX DSP communications driver (HiFi5 DSP IPC/mailbox)
       # Prerequisite for future HDMI/DP audio when SND_HDA_CIX_IPBLOQ lands upstream

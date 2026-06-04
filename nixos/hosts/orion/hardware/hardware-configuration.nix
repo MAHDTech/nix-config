@@ -91,6 +91,8 @@ in
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
       # Required on CIX P1 to avoid slow boot and hardware init races
       "clk_ignore_unused"
+      # Enable SMMUv3 bypass for unmapped early DMA streams (prevents interrupt storm)
+      "arm-smmu-v3.disable_bypass=0"
       # NOTE: module_blacklist=sbsa_gwdt removed — sbsa_gwdt is built-in (not a module)
       # so blacklisting it has no effect. nowatchdog handles watchdog suppression instead.
     ];
