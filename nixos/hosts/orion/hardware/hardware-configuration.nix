@@ -63,6 +63,9 @@ in
       "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
       "aipu" # CIX NPU
       "amvx" # CIX VPU
+      # CIX Display and DisplayPort controller modules (loaded post-initrd to avoid SMMU race)
+      "linlon-dp"
+      "trilin-dpsub"
       # USB-C Power Delivery and DisplayPort Alt Mode
       # Orion O6 has 2x USB-C ports; one supports DP Alt Mode
       # These modules exist in defconfig as =m but are never auto-loaded

@@ -85,14 +85,14 @@ let
       ./scripts/config --enable DRM_PANEL_EDP
       ./scripts/config --module DRM_PANTHOR
 
-      # Enable native CIX display (Linlon/Trilinear) and PHY drivers
-      ./scripts/config --enable DRM_CIX
-      ./scripts/config --enable DRM_LINLONDP
+      # Enable native CIX display (Linlon/Trilinear) and PHY drivers as modules
+      ./scripts/config --module DRM_CIX
+      ./scripts/config --module DRM_LINLONDP
       ./scripts/config --enable DRM_LINLONDP_CLOCK_FIXED
-      ./scripts/config --enable DRM_TRILIN_DP_CIX
-      ./scripts/config --enable DRM_TRILIN_DPSUB
-      ./scripts/config --enable DRM_TRILIN_CADENCE_PHY
-      ./scripts/config --enable DRM_CIX_EDP_PANEL
+      ./scripts/config --module DRM_TRILIN_DP_CIX
+      ./scripts/config --module DRM_TRILIN_DPSUB
+      ./scripts/config --module DRM_TRILIN_CADENCE_PHY
+      ./scripts/config --module DRM_CIX_EDP_PANEL
 
       # Enable CIX PWM support (needed for eDP backlight)
       ./scripts/config --enable PWM_SKY1
