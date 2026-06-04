@@ -23,6 +23,7 @@ ignorePaths:
   - public/config-client.json
   - public/workers
   - "*.svg"
+  - "secrets/**"
   - vendor
 ignoreRegExpList:
   - /-----BEGIN PGP PUBLIC KEY BLOCK-----[\s\S]*?-----END PGP PUBLIC KEY BLOCK-----/
