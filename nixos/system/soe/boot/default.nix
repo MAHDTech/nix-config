@@ -107,7 +107,7 @@ in
 
         configurationLimit = 10;
 
-        editor = false;
+        editor = true;
       };
 
       grub = {
