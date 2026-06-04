@@ -57,9 +57,10 @@
         "phy_qcom_qmp_combo"
         "ptn3222"
         "pmic_glink"
+        "pmic_glink_altmode"
         "qcom_pmic_glink"
         "qcom_pmic_typec"
-        "typec_mux_ps883x"
+        "ps883x"
         # ucsi_glink: UCSI over Qualcomm PMIC glink — USB-C PD and DP alt-mode.
         # Kernel config symbol: UCSI_PMIC_GLINK (=m in defconfig; enforced in kernel.nix).
         # Linux module name on-disk is ucsi_glink.

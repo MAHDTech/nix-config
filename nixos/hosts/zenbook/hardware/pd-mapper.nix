@@ -73,10 +73,8 @@ in
     wantedBy = [ "basic.target" ];
     after = [ "systemd-udev-trigger.service" ];
     # Wait for the remoteproc subsystem to be created by the driver.
-    # Also ensure the qcom_q6v5_pas module is loaded to prevent an infinite restart loop when blacklisted.
     unitConfig = {
       ConditionPathIsDirectory = "/sys/class/remoteproc";
-      ConditionPathExists = "/sys/module/qcom_q6v5_pas";
     };
 
     preStart = ''

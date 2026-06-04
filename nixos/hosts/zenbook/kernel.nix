@@ -11,6 +11,8 @@ let
     # Set version to match what linux-next reports to avoid mismatch
     version = "7.1.0-rc5-next-20260528";
 
+    enableParallelBuilding = true;
+
     # Pull the absolute latest bleeding edge where Zenbook support lives
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
@@ -125,6 +127,8 @@ let
 
       # Enable USB4/Thunderbolt support for docking stations
       ./scripts/config --module USB4
+      ./scripts/config --module TYPEC_DP_ALTMODE
+      ./scripts/config --module TYPEC_TBT_ALTMODE
 
       # Audio amplifier codecs for Zenbook speakers
       ./scripts/config --module SND_SOC_WSA884X

@@ -11,7 +11,7 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 1: Vulkan rendering broken (vkcube blank, vkmark DEVICE_LOST)
 
-- [ ] **Status**: Fix applied, pending rebuild and test
+- [x] **Status**: Resolved (DRM_SYNCOBJ fix verified with vkcube running stable under Wayland)
 - **Severity**: P0 — Vulkan apps don't render / crash
 - **Symptom**:
   - `vkcube` renders one frame (static cube) then hangs — "application not responding"
@@ -157,7 +157,7 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 5: pstore/ramoops not configured for crash debugging
 
-- [ ] **Status**: Not started
+- [/] **Status**: Fix applied, build completed, currently deploying
 - **Severity**: P2 — No crash dumps captured on hard reset
 - **Symptom**: `/sys/fs/pstore/` is empty. `CONFIG_PSTORE=y` but `CONFIG_PSTORE_RAM` is not set.
 - **Root Cause**: PSTORE is enabled in the kernel but `PSTORE_RAM` (ramoops) is
@@ -203,7 +203,7 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 7: DSP subsystem (qcom_q6v5_pas) enablement
 
-- [ ] **Status**: Not started
+- [x] **Status**: Resolved (ADSP/CDSP are unblacklisted, audio speakers/microphones functional, and remoteproc is active)
 - **Severity**: P3 — Future improvement
 - **Symptom**: `qcom_q6v5_pas` is triple-blacklisted (kernel param + blacklistedKernelModules + modprobe install). ADSP/CDSP firmware and pd-mapper configs are bundled but unused.
 - **Root Cause**: Previously caused NVMe/PCIe power domain/SMMU crashes.
@@ -242,6 +242,25 @@ Work through issues **one at a time** — build, test, verify, then check off be
   # Monitor power:
   cat /sys/class/power_supply/qcom-battmgr-bat/current_now
   ```
+
+### Issue 9: Razer Thunderbolt 5 Dock Ethernet regression (USB disconnect / Alt Mode negotiation failure)
+
+- [ ] **Status**: Fix proposed, building new kernel and stage 1 initrd configuration
+- **Severity**: P0 — High-speed dock peripherals and Ethernet not detected
+- **Symptoms**:
+  - The Razer TB5 Dock USB tree initializes during early boot but is disconnected as soon as the ADSP remoteproc boots and `pmic-glink` initiates Type-C port manager negotiation.
+  - High-speed USB hub and Realtek Gigabit NIC fail to reconnect.
+- **Root Cause**:
+  - The Type-C port manager attempts to negotiate alternate modes, causing a connection reset.
+  - However, because the kernel lacks DisplayPort and Thunderbolt Alt Mode drivers (`CONFIG_TYPEC_DP_ALTMODE` and `CONFIG_TYPEC_TBT_ALTMODE`),
+  - and because the Parade PS883X retimer driver is loaded too late (stage 2 instead of initrd stage 1,
+  - causing a `pmic-glink` device link failure), the negotiation fails.
+  - The dock gets stuck in a failed state where high-speed ports do not reconnect.
+- **Files**:
+  - `nixos/hosts/zenbook/kernel.nix` — Enable Alt Mode drivers
+  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` — Load `ps883x` and `pmic_glink_altmode` in initrd
+  - `nixos/hosts/zenbook/hardware/pd-mapper.nix` — Fix systemd condition guard
+- **Test**: After rebooting, check if `/sys/bus/thunderbolt/devices` registers the Barlow Ridge controller, and if `lsusb -t` shows the VIA Hub and Realtek NIC connected.
 
 ---
 
@@ -308,7 +327,7 @@ power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
 ### Working Hardware
 
 - ✅ GPU — OpenGL 4.6 (glxgears 3000+ FPS @ 390 MHz)
-- 🟡 GPU — Vulkan 1.4.348 via Turnip (init OK, rendering broken — DRM_SYNCOBJ fix pending)
+- ✅ GPU — Vulkan 1.4.348 via Turnip (fully working, verified stable with vkcube)
 - ✅ Display (eDP-1 + 4 DP controllers)
 - ✅ WiFi (ath12k/WCN7850)
 - ✅ NVMe (PCIe, btrfs)

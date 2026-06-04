@@ -1671,3 +1671,5 @@ zvol
 zvols
 screencopy
 Kconfig
+retimer
+unblacklisted
