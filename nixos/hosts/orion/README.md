@@ -104,5 +104,5 @@ We are tracking the following upstream development items and firmware updates:
 - [x] Trigger deployment of Generation 38 (Failed to boot due to missing initrd script package)
 - [x] Investigate boot failure of Generation 38 (Root cause: initrd script not in boot.initrd.systemd.storePaths)
 - [x] Add initrd script to boot.initrd.systemd.storePaths
-- [x] Verify NixOS configuration syntax and build ORION system configuration (Generation 31 built with modular display drivers and rescheduled SMMU workaround)
+- [x] Verify NixOS configuration syntax and build ORION system configuration (Generation 32 built with modular display drivers, early stage-2 workaround, and deadlock-breaking dependencies)
 - [ ] Trigger deployment on Orion host, confirm successful boot and system stability (Ready for reboot test)
