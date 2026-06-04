@@ -157,7 +157,7 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 5: pstore/ramoops not configured for crash debugging
 
-- [/] **Status**: Fix applied, build completed, currently deploying
+- [x] **Status**: Resolved (PSTORE_RAM enabled in kernel config, memory map parameters configured, verified active in boot log: `ramoops: using 0x100000@0xbed00000`)
 - **Severity**: P2 — No crash dumps captured on hard reset
 - **Symptom**: `/sys/fs/pstore/` is empty. `CONFIG_PSTORE=y` but `CONFIG_PSTORE_RAM` is not set.
 - **Root Cause**: PSTORE is enabled in the kernel but `PSTORE_RAM` (ramoops) is
