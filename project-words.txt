@@ -1669,3 +1669,5 @@ Zram
 zstd
 zvol
 zvols
+screencopy
+Kconfig

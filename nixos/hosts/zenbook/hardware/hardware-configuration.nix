@@ -111,7 +111,7 @@
       ];
     };
 
-    blacklistedKernelModules = [ "qcom_q6v5_pas" ];
+    blacklistedKernelModules = [ ];
 
     kernelParams = [
       "clk_ignore_unused"
@@ -128,15 +128,20 @@
       "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
-      # Blacklist qcom_q6v5_pas to prevent NVMe/PCIe power domain/SMMU crashes
-      "modprobe.blacklist=qcom_q6v5_pas"
+
+      # PSTORE Ramoops memory allocation and parameters for crash debugging
+      "memmap=1M$0xbed00000"
+      "ramoops.mem_address=0xbed00000"
+      "ramoops.mem_size=0x100000"
+      "ramoops.console_size=0x60000"
+      "ramoops.record_size=0x10000"
+      "ramoops.pmsg_size=0x20000"
+      "ramoops.ecc=1"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
     extraModprobeConfig = ''
       options snd-soc-x1e80100 i_accept_the_danger=1
-      blacklist qcom_q6v5_pas
-      install qcom_q6v5_pas /bin/false
     '';
 
     # Modern boot management

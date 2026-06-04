@@ -72,20 +72,8 @@ in
         #########################
 
         general = {
-          # Disable the loading bar at the bottom of the screen.
-          disable_loading_bar = false;
-
           # Hide the cursor
           hide_cursor = true;
-
-          # The amount of time in seconds of idle until lock activates.
-          grace = 300;
-
-          # Disable fade in animation
-          no_fade_in = false;
-
-          # Disable fade out animation
-          no_fade_out = false;
 
           # Skip validation when no password is provided.
           ignore_empty_input = false;
@@ -93,20 +81,24 @@ in
           # Immediately draw widgets
           immediate_render = false;
 
-          # PAM module used for authentication
-          pam_module = "hyprlock";
-
           # Enable to trim text
           text_trim = true;
 
           # Use fractional scaling, 0=disabled, 1=enabled, 2=auto
           fractional_scaling = 2;
 
-          # Enable fingerprint auth with fprintd
-          enable_fingerprint = false;
+          # Use SHM (CPU) screencopy mode to avoid DMA-BUF allocation failures
+          # on simple-framebuffer systems.
+          screencopy_mode = 1;
+        };
 
-          # Fingerprint message
-          fingerprint_present_message = "Scanning fingerprint...";
+        #########################
+        # Hyprlock Auth Options (v0.4.0+)
+        #########################
+
+        auth = {
+          "pam:module" = "hyprlock";
+          "fingerprint:enabled" = false;
         };
 
         #########################
@@ -164,11 +156,8 @@ in
           # Lock command
           lock_cmd = "${pkgs.libnotify}/bin/notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
 
-          # Unlock command
-          #unlock_cmd = "";
-
           # Before sleep command
-          before_sleep_cmd = "hyprlock";
+          before_sleep_cmd = "loginctl lock-session";
 
           # Preparing to sleep command
           after_sleep_cmd = "hyprctl dispatch dpms on";
@@ -190,7 +179,7 @@ in
             timeout = 300;
 
             # Lock screen after timeout.
-            on-timeout = "${pkgs.libnotify}/bin/notify-send 'Locking screen...' ; pidof hyprlock || hyprlock";
+            on-timeout = "loginctl lock-session";
           }
           {
             # Turn off the monitors after 15 mins.

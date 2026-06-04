@@ -20,7 +20,11 @@ let
 
   # Check if a Device Tree is configured
   dtbPath = config.hardware.deviceTree.name;
-  dtbTarget = if dtbPath != null then "${config.hardware.deviceTree.package}/${dtbPath}" else null;
+  dtbTarget =
+    if config.hardware.deviceTree.enable && dtbPath != null then
+      "${config.hardware.deviceTree.package}/${dtbPath}"
+    else
+      null;
 
   # The closure info for the root partition
   closureInfo = pkgs.closureInfo { rootPaths = [ config.system.build.toplevel ]; };

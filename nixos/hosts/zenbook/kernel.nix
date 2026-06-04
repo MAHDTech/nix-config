@@ -60,6 +60,9 @@ let
       sed -i '/&cci1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
       sed -i '/&cci1_i2c1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
       sed -i '/&csiphy4 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+
+      echo "Patching DRM_MSM Kconfig to select DRM_SYNCOBJ..."
+      sed -i '/^config DRM_MSM$/a \\tselect DRM_SYNCOBJ\n\tselect DRM_SYNCOBJ_TIMELINE_EXPORT' drivers/gpu/drm/msm/Kconfig
     '';
 
     configurePhase = ''
@@ -72,6 +75,12 @@ let
       # TCG_TIS is x86 LPC-only — removed. CRB and FTPM_TEE cover ARM64/fTPM.
       ./scripts/config --enable TCG_CRB
       ./scripts/config --enable TCG_FTPM_TEE
+
+      # Enable PSTORE_RAM (ramoops) for crash debugging
+      ./scripts/config --enable PSTORE
+      ./scripts/config --enable PSTORE_RAM
+      ./scripts/config --enable PSTORE_CONSOLE
+      ./scripts/config --enable PSTORE_PMSG
 
       # DRM: force parent DRM subsystem =y first. With DRM=m (default), olddefconfig
       # cannot promote any child (DRM_PANEL_EDP, DRM_SIMPLEDRM, etc.) to =y since

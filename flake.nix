@@ -80,7 +80,7 @@
         system:
         {
           devenv-up =
-            if system == builtins.currentSystem then
+            if builtins ? currentSystem && system == builtins.currentSystem then
               self.devShells.${system}.default.config.procfileScript
             else
               inputs.nixpkgs.legacyPackages.${system}.hello;
@@ -95,7 +95,7 @@
 
       devShells = forEachSystem (system: {
         default =
-          if system == builtins.currentSystem then
+          if builtins ? currentSystem && system == builtins.currentSystem then
             inputs.devenv.lib.mkShell {
               inherit inputs;
               pkgs = inputs.nixpkgs.legacyPackages.${system};
