@@ -104,10 +104,12 @@ let
       ./scripts/config --enable PHY_CIX_USB2
       ./scripts/config --enable PHY_CIX_USB3
 
-      # Disable Cadence USBSSP Platform and CIX Sky1 glue drivers to prevent MMIO collisions/crashes
-      # and allow generic xhci-hcd to safely handle USB controllers.
-      ./scripts/config --disable USB_CDNSP
-      ./scripts/config --disable USB_CDNSP_SKY1
+      # Enable Cadence USBSSP Platform and CIX Sky1 glue drivers (required for stable USB ports)
+      ./scripts/config --enable USB_CDNSP
+      ./scripts/config --enable USB_CDNSP_PCI
+      ./scripts/config --enable USB_CDNSP_GADGET
+      ./scripts/config --enable USB_CDNSP_HOST
+      ./scripts/config --enable USB_CDNSP_SKY1
 
       # Run olddefconfig to expand it cleanly for our build
       make ARCH=arm64 olddefconfig
@@ -157,8 +159,8 @@ let
       # CONFIG_BLK_DEV_NVME=m works via initrd but =y eliminates any module-load race
       ./scripts/config --enable BLK_DEV_NVME
 
-      # Disable CIX ACPI USB scanning to allow standard xHCI to bind to PNP0D10 devices
-      ./scripts/config --disable CIX_ACPI_USB_SCAN
+      # Enable CIX ACPI USB scanning to route USB controllers to cdnsp-sky1
+      ./scripts/config --enable CIX_ACPI_USB_SCAN
 
       # Enable SMMU bypass by default to prevent early display DMA translation faults/interrupt storm
       ./scripts/config --disable ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT
