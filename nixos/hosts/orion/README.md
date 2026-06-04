@@ -100,6 +100,9 @@ We are tracking the following upstream development items and firmware updates:
 ## 4. Task Tracker (Across Sessions)
 
 - [x] Investigate early-boot NVMe timeout crash of Generation 37 (Root cause: SMMUv3 event storm triggered by display driver DMA before systemd service runs)
-- [x] Shift SMMU event queue workaround into stage-1 initrd (`boot.initrd.postDeviceCommands`)
-- [x] Verify NixOS configuration syntax and build ORION system configuration
-- [/] Trigger deployment on Orion host, confirm successful boot and system stability
+- [x] Shift SMMU event queue workaround into stage-1 initrd (`boot.initrd.systemd.services`)
+- [x] Trigger deployment of Generation 38 (Failed to boot due to missing initrd script package)
+- [x] Investigate boot failure of Generation 38 (Root cause: initrd script not in boot.initrd.systemd.storePaths)
+- [x] Add initrd script to boot.initrd.systemd.storePaths
+- [/] Verify NixOS configuration syntax and build ORION system configuration
+- [ ] Trigger deployment on Orion host, confirm successful boot and system stability
