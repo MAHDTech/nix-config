@@ -9,14 +9,16 @@ let
   kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "latest-zenbook";
     # Set version to match what linux-next reports to avoid mismatch
-    version = "7.1.0-rc6-next-20260602";
+    version = "7.1.0-rc5-next-20260528";
 
     # Pull the absolute latest bleeding edge where Zenbook support lives
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-      # Use the revision mentioned in the README as tested
-      rev = "next-20260602";
-      sha256 = "sha256-Ovr1EdeRUsv+lhsIJ/OWhAlhtmUJ6/pJ87TNJ1CKr4U=";
+      # Pin to rc5-based snapshot — rc6 (next-20260602) has a regression causing
+      # hard PMIC resets under sustained CPU load. Confirmed: installer kernel on
+      # next-20260528 survives 120s full CPU stress at 95°C; rc6 crashes at 35°C.
+      rev = "next-20260528";
+      sha256 = "sha256-86TmX6XmHk0pLorcK/ZQ5AHsGj/c6mKQlLdT0DX2ltA=";
     };
 
     nativeBuildInputs = with pkgs; [
@@ -181,7 +183,7 @@ let
 
     # satisfy the kernel modules expectations
     passthru = rec {
-      modDirVersion = "7.1.0-rc6-next-20260602";
+      modDirVersion = "7.1.0-rc5-next-20260528";
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];
