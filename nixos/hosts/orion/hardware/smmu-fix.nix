@@ -16,6 +16,29 @@
 
   environment.systemPackages = [ pkgs.devmem2 ];
 
+  boot.initrd.systemd.services.smmu-evtq-fix-initrd = {
+    description = "Disable SMMUv3 event queue in initrd (IORT firmware bug workaround)";
+    wantedBy = [ "sysinit.target" ];
+    before = [ "sysinit.target" ];
+    unitConfig.DefaultDependencies = false;
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "smmu-evtq-fix-initrd" ''
+        val=$(${pkgs.devmem2}/bin/devmem2 0x0b010020 | ${pkgs.gawk}/bin/awk -F': ' '/Value at address/ {print $2}')
+        if [ -n "$val" ]; then
+          # Clear EVENTQEN (bit 2, value 4)
+          new_val=$(printf "0x%X" $((val & 0xFFFFFFFB)))
+          echo "Current SMMU CR0: $val, disabling EVENTQEN: $new_val"
+          ${pkgs.devmem2}/bin/devmem2 0x0b010020 w $new_val
+        else
+          echo "Error: Could not read SMMU CR0 register in initrd"
+          exit 1
+        fi
+      '';
+    };
+  };
+
   systemd.services.smmu-evtq-fix = {
     description = "Disable SMMUv3 event queue (IORT firmware bug workaround)";
     wantedBy = [ "multi-user.target" ];

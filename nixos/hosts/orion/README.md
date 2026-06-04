@@ -94,3 +94,12 @@ We are tracking the following upstream development items and firmware updates:
    - **Action Item**: Once the code lands and audio firmware is provided, we will update the config to pull the new firmware package and load the DSP kernel module.
 3. **TPM Support**:
    - **Waiting For**: Either a firmware-based TPM (fTPM) option inside the UEFI / OP-TEE secure world, or manual soldering of an SPI TPM 2.0 chip to the motherboard's open TPM header.
+
+---
+
+## 4. Task Tracker (Across Sessions)
+
+- [x] Investigate early-boot NVMe timeout crash of Generation 37 (Root cause: SMMUv3 event storm triggered by display driver DMA before systemd service runs)
+- [x] Shift SMMU event queue workaround into stage-1 initrd (`boot.initrd.postDeviceCommands`)
+- [x] Verify NixOS configuration syntax and build ORION system configuration
+- [/] Trigger deployment on Orion host, confirm successful boot and system stability
