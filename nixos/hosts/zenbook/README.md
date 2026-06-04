@@ -133,7 +133,7 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 4: Firmware source consolidation / audit
 
-- [ ] **Status**: Not started
+- [x] **Status**: Resolved (Audit report completed. Verified 100% clean separation of files between local OEM-signed ADSP/CDSP sources, Qualcomm build-time zip extraction, and upstream linux-firmware)
 - **Severity**: P2 — Risk of version conflicts
 - **Symptom**: Three separate firmware sources provide overlapping GPU firmware files
 - **Root Cause**: The firmware loading chain has three packages:
