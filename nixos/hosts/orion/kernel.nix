@@ -109,9 +109,9 @@ let
 
       # --- CIX PHY drivers (USB-C DP alt mode, PCIe, USB2/3) ---
       ./scripts/config --enable PHY_CIX_USBDP
-      ./scripts/config --enable PHY_CIX_PCIE
-      ./scripts/config --enable PHY_CIX_USB2
-      ./scripts/config --enable PHY_CIX_USB3
+      ./scripts/config --disable PHY_CIX_PCIE
+      ./scripts/config --disable PHY_CIX_USB2
+      ./scripts/config --disable PHY_CIX_USB3
 
       # --- Cadence USBSSP Platform and CIX Sky1 glue drivers ---
       ./scripts/config --enable USB_CDNSP
@@ -199,7 +199,7 @@ let
       for opt in \
         DRM_CIX DRM_LINLONDP DRM_TRILIN_DPSUB DRM_TRILIN_DP_CIX \
         DRM_TRILIN_CADENCE_PHY DRM_CIX_EDP_PANEL DRM_PANTHOR \
-        PHY_CIX_USBDP PHY_CIX_USB2 PHY_CIX_USB3 PHY_CIX_PCIE \
+        PHY_CIX_USBDP \
         USB_CDNSP CIX_ACPI_USB_SCAN PWM_SKY1 CIX_DSP; do
         if ! grep -q "CONFIG_''${opt}=[ym]" .config; then
           echo "FATAL: CONFIG_''${opt} is not enabled in .config!" >&2
