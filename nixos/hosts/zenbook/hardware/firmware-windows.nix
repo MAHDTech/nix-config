@@ -80,8 +80,9 @@ pkgs.stdenv.mkDerivation {
     cd ..
 
     # Step 5: Locate and copy target firmware files to output path
-    out_fw_dir=$out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14
-    mkdir -p $out_fw_dir
+    out_fw_dir_elite=$out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14
+    out_fw_dir_plus=$out/lib/firmware/qcom/x1p42100/ASUSTeK/zenbook-a14
+    mkdir -p $out_fw_dir_elite $out_fw_dir_plus
 
     firmware_files=(
       qcav1e8380.mbn
@@ -107,7 +108,8 @@ pkgs.stdenv.mkDerivation {
     for fw_name in "''${firmware_files[@]}"; do
       fw_path=$(find msi_out -iname "$fw_name" -type f | head -n1)
       if [[ -n "$fw_path" ]]; then
-        cp "$fw_path" "$out_fw_dir/$fw_name"
+        cp "$fw_path" "$out_fw_dir_elite/$fw_name"
+        cp "$fw_path" "$out_fw_dir_plus/$fw_name"
         found_count=$((found_count + 1))
       fi
     done

@@ -1,9 +1,14 @@
 # ASUS Zenbook A14 — NixOS Issue Tracker
 
-> Snapdragon X Plus (SC8380XP / x1e80100) · Adreno X1-85 · aarch64
-> Kernel: linux-next `next-20260602` · Mesa 26.1.1 (freedreno) · NixOS 26.05
+> Snapdragon X Elite (X1E80100 / UX3407RA) · Adreno X1-85 · aarch64
+> Kernel: linux-next `next-20260528` (pinned — rc6 regression) · Mesa 26.1.1 (freedreno) · NixOS 26.05
 
 Work through issues **one at a time** — build, test, verify, then check off before moving on.
+
+> [!IMPORTANT]
+> **Last bootable generation**: Gen 4. Gen 5+ changed kernel size
+> (45→33 MB) and Gen 7 crashed due to wrong DTB (`x1p42100` vs
+> `x1e80100`). Next deploy via nixos-anywhere will repartition.
 
 ---
 
@@ -157,40 +162,62 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 5: pstore/ramoops not configured for crash debugging
 
-- [x] **Status**: Resolved (PSTORE_RAM enabled in kernel config, memory map parameters configured, verified active in boot log: `ramoops: using 0x100000@0xbed00000`)
-- **Severity**: P2 — No crash dumps captured on hard reset
-- **Symptom**: `/sys/fs/pstore/` is empty. `CONFIG_PSTORE=y` but `CONFIG_PSTORE_RAM` is not set.
-- **Root Cause**: PSTORE is enabled in the kernel but `PSTORE_RAM` (ramoops) is
-  not configured, and no `ramoops` reserved memory region is defined in the
-  device tree. Without ramoops, kernel panics that cause hard resets leave no trace.
-- **File**: `nixos/hosts/zenbook/kernel.nix` (configurePhase)
-- **Fix**: Enable in kernel config:
-  ```
-  ./scripts/config --enable PSTORE_RAM
-  ./scripts/config --enable PSTORE_CONSOLE
-  ./scripts/config --enable PSTORE_PMSG
-  ```
-  Then add a kernel parameter for ramoops memory reservation (needs a safe address from the DT reserved regions).
+- [/] **Status**: In progress — code changes committed, pending deploy via nixos-anywhere
+- **Severity**: P0 — No crash dumps captured on any crash type
+- **Symptom**: `/sys/fs/pstore/` is empty after every boot. `ramoops: uncorrectable error in header` ×10 on every boot.
+- **Root Cause**: Three independent failures:
+  1. **`memmap=` is x86-only** — ARM64 ignores it entirely (kernel says `Unknown kernel command line parameters: memmap=1M$0xbed00000`)
+  2. **No ramoops node in DTB** — ARM64 requires `reserved-memory` with `no-map` in the Device Tree
+  3. **`efi=noruntime` blocks EFI pstore** — disables `SetVariable()` needed by `efi_pstore`
+- **Compounding factors**:
+  - `panic_on_oops=0` — oops events never flush to pstore
+  - `panic=0` — system hangs forever on panic instead of rebooting
+  - `sysrq=16` — only sync allowed, no emergency crash dump trigger
+  - PMIC hard resets (hardware power cut) — no kernel execution time to write pstore
+- **Files changed**:
+  - `nixos/hosts/zenbook/files/ramoops-overlay.dts` — [NEW] DT overlay reserving 2MB at `0xb7000000` with `no-map`
+  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` —
+    Removed broken `memmap=`/`ramoops.*` params; added DTB overlay,
+    panic settings, `netconsole`, sysctl, fixed `ttyAMA0`→`ttyMSM0`
+  - `nixos/hosts/zenbook/kernel.nix` — Added `CONFIG_NETCONSOLE`, `CONFIG_NETCONSOLE_DYNAMIC`, `CONFIG_PSTORE_BLK`
+  - `nixos/hosts/zenbook/disko-config.nix` — Added 16MB `pstore` partition for future pstore-blk
+  - `nixos/hosts/jons/default.nix` — Added netconsole receiver service (ncat UDP 6666 → `/var/log/netconsole-zenbook.log`) and firewall rule
+- **Crash capture layers** (defense in depth):
+  | Layer | Captures panics? | Captures PMIC resets? | Status |
+  |:---|:---:|:---:|:---|
+  | DTB ramoops (2MB reserved) | ✅ | ❌ | Code ready, pending deploy |
+  | Panic escalation settings | ✅ (enables flush) | ❌ | Code ready, pending deploy |
+  | Netconsole → JONS:6666 | ✅ (live) | ⚠️ Pre-crash only | JONS receiver active |
+  | pstore-blk (NVMe partition) | ✅ | ⚠️ Maybe | Partition in disko, kernel config ready |
 - **Test**:
   ```bash
-  ls /sys/fs/pstore/  # Should show ramoops backend available
-  # Trigger a test: echo c > /proc/sysrq-trigger  (causes panic — DO THIS CAREFULLY)
-  # After reboot, check /sys/fs/pstore/ for crash dump
+  # 1. Verify ramoops DTB node
+  cat /sys/firmware/devicetree/base/reserved-memory/ramoops@b7000000/compatible
+  # 2. Verify pstore registered without errors
+  dmesg | grep -i 'ramoops\|pstore'  # Should show 0x200000@0xb7000000, NO uncorrectable errors
+  # 3. Test pmsg persistence
+  echo "test_$(date)" > /dev/pmsg0 && reboot
+  cat /sys/fs/pstore/pmsg-ramoops-0  # Should show test message
+  # 4. Test netconsole (check JONS)
+  ssh JONS cat /var/log/netconsole-zenbook.log
+  # 5. Controlled panic test (CAREFUL)
+  echo c > /proc/sysrq-trigger  # Will reboot in 30s
+  cat /sys/fs/pstore/dmesg-ramoops-0  # Should show panic trace
   ```
-- **Notes**: Finding a safe reserved memory address for ramoops on x1e80100
-  requires checking the device tree for unused reserved memory regions.
-  The kernel already reserves `pld-gmu@81f36000` (4 KiB) — ramoops needs
-  ~2 MiB elsewhere.
 
 ---
 
 ### Issue 6: Defconfig regeneration and platform trimming
 
-- [ ] **Status**: Not started
+- [/] **Status**: In progress (defconfig regenerated and platform
+  drivers trimmed. Core `MAILBOX` and `ARM_SCMI_PROTOCOL` were
+  disabled by cascading pruning — force-enabled in `kernel.nix`)
 - **Severity**: P3 — Housekeeping
 - **Symptom**: Defconfig header says `7.1.0-rc5` but kernel source is `rc6`. Many non-Qualcomm platforms enabled (Exynos, Tegra, Mediatek, etc.) increasing kernel size.
-- **File**: `nixos/hosts/zenbook/files/config/zenbook.defconfig`
-- **Fix**: Regenerate defconfig from the running kernel (`zcat /proc/config.gz > zenbook.defconfig`), then trim non-Qualcomm `ARCH_*` entries.
+- **Root Cause**: The trimming process disabled core `MAILBOX` and
+  `ARM_SCMI_PROTOCOL` frameworks, which Qualcomm platforms require
+  for PMIC/firmware clock and regulator communication during boot.
+- **Fix**: Force-enable SCMI and Mailbox config flags in `kernel.nix` during configurePhase.
 - **Test**:
   ```bash
   # Rebuild and boot — verify no regressions
@@ -245,7 +272,10 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 9: Razer Thunderbolt 5 Dock Ethernet regression (USB disconnect / Alt Mode negotiation failure)
 
-- [/] **Status**: In progress (Unloaded `thunderbolt` and added both `thunderbolt` and `typec_thunderbolt` to `blacklistedKernelModules` to bypass Alt Mode lockup and force USB 3.x fallback)
+- [x] **Status**: Resolved (Removed `thunderbolt` from
+      `availableKernelModules` and blacklisted `thunderbolt` /
+      `typec_thunderbolt` to bypass Alt Mode lockups and force USB 3.x
+      fallback for the dock)
 - **Severity**: P0 — High-speed dock peripherals and Ethernet not detected
 - **Symptoms**:
   - The Razer TB5 Dock USB tree initializes during early boot but is disconnected as soon as the ADSP remoteproc boots and `pmic-glink` initiates Type-C port manager negotiation.
@@ -261,6 +291,76 @@ Work through issues **one at a time** — build, test, verify, then check off be
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` — Load `ps883x` and `pmic_glink_altmode` in initrd
   - `nixos/hosts/zenbook/hardware/pd-mapper.nix` — Fix systemd condition guard
 - **Test**: After rebooting, check if `/sys/bus/thunderbolt/devices` registers the Barlow Ridge controller, and if `lsusb -t` shows the VIA Hub and Realtek NIC connected.
+
+---
+
+### Issue 10: Battery manager PMIC-glink uevent failure
+
+- [ ] **Status**: Not started
+- **Severity**: P2 — Battery capacity not readable, upower reports NaN
+- **Symptom**: All four power supply devices fail during early boot:
+  ```
+  qcom-battmgr-ac: uevent: failed to send synthetic uevent: -11
+  qcom-battmgr-bat: uevent: failed to send synthetic uevent: -11
+  qcom-battmgr-usb: uevent: failed to send synthetic uevent: -11
+  qcom-battmgr-wls: uevent: failed to send synthetic uevent: -11
+  ```
+  Battery capacity returns empty. `Not charging` reported despite AC connected.
+- **Root Cause**: PMIC-glink power supply subsystem races during early boot. The battmgr udev uevents fire before the subsystem is ready (error -11 = EAGAIN).
+- **Fix**: Consider a systemd service that retriggers uevents after boot settles, or add an `After=` dependency to delay battmgr probe.
+- **Test**:
+  ```bash
+  cat /sys/class/power_supply/qcom-battmgr-bat/capacity  # Should return percentage
+  upower -i /org/freedesktop/UPower/devices/battery_qcom_battmgr_bat  # Should show percentage
+  ```
+
+---
+
+### Issue 11: SoundWire controller error storm
+
+- [ ] **Status**: Not started
+- **Severity**: P2 — Continuous errors every 2–5 seconds, CPU overhead
+- **Symptom**: Continuous errors in dmesg:
+  ```
+  qcom-soundwire 6b10000.soundwire: SWR CMD error, fifo status 0x4e00c00f, flushing fifo
+  ```
+- **Root Cause**: WSA884x speaker amplifier codec cannot communicate
+  over the SoundWire bus. The ADSP firmware handoff timing may be
+  off, or the SoundWire controller init has a race with
+  `snd-soc-x1e80100`.
+- **Fix**: Options:
+  1. Blacklist `snd_soc_wsa884x` if speakers aren't critical
+  2. Investigate ADSP handoff timing in `qcom_q6v5_pas` logs
+  3. Check if `i_accept_the_danger=1` modprobe option is still valid for this kernel version
+- **Test**:
+  ```bash
+  dmesg | grep -c 'SWR CMD error'  # Should be 0 after fix
+  aplay -l  # Should list audio devices
+  speaker-test -D plughw:0,0 -c 2  # Test speakers
+  ```
+
+---
+
+### Issue 12: Missing kernel modules (cpufreq_schedutil, nf_nat_ftp)
+
+- [ ] **Status**: Not started
+- **Severity**: P3 — Suboptimal CPU frequency scaling, no FTP NAT
+- **Symptom**:
+  ```
+  systemd-modules-load: Failed to find module 'cpufreq_schedutil'
+  systemd-modules-load: Failed to find module 'nf_nat_ftp'
+  ```
+- **Root Cause**: Modules not compiled in the custom kernel. `cpufreq_schedutil` is needed for the `schedutil` governor set in `power.nix`. Without it, the system falls back to another governor.
+- **Fix**: Add to `kernel.nix` configurePhase:
+  ```nix
+  ./scripts/config --module CPU_FREQ_GOV_SCHEDUTIL
+  ./scripts/config --module NF_NAT_FTP
+  ```
+- **Test**:
+  ```bash
+  cat /sys/devices/system/cpu/cpufreq/policy*/scaling_governor  # Should say 'schedutil'
+  lsmod | grep cpufreq
+  ```
 
 ---
 
@@ -304,6 +404,26 @@ power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
 
 ---
 
+## Deployment Plan
+
+> [!IMPORTANT]
+> **Current state**: Gen 4 is bootable but has errors. Gen 5+ require reinstall via nixos-anywhere due to disko partition changes (new 16MB pstore partition).
+
+### Next Steps
+
+- [ ] Verify JONS netconsole receiver is running (`systemctl status netconsole-receiver`)
+- [ ] Boot zenbook from NixOS live installer USB
+- [ ] SSH to installer and run nixos-anywhere with `--phases disko,install --build-on remote`
+- [ ] Reboot into new system
+- [ ] Verify ramoops: `dmesg | grep ramoops` — no uncorrectable errors, `0x200000@0xb7000000`
+- [ ] Verify pstore: `ls /sys/fs/pstore/`
+- [ ] Test pmsg persistence: write → reboot → read
+- [ ] Verify netconsole: check `/var/log/netconsole-zenbook.log` on JONS
+- [ ] Controlled panic test (`echo c > /proc/sysrq-trigger`) to verify full capture pipeline
+- [ ] Validate pstore-blk partition exists: `lsblk | grep pstore`
+
+---
+
 ## Platform Context
 
 ### Known Upstream Limitations (not fixable in this config)
@@ -331,9 +451,11 @@ power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
 - ✅ Display (eDP-1 + 4 DP controllers)
 - ✅ WiFi (ath12k/WCN7850)
 - ✅ NVMe (PCIe, btrfs)
-- ✅ Audio (x1e80100 codec, speaker safety interlock)
+- ✅ Audio (x1e80100 codec, speaker safety interlock — SoundWire errors present)
 - ✅ USB-C (PD, DP alt-mode, UCSI)
 - ✅ Keyboard/Touchpad (I2C HID)
-- ✅ Thermals (GPU 33-34°C idle)
+- ✅ Thermals (GPU 33-34°C idle, CPU 37-39°C idle)
 - 🔴 Stability — hard reboots under sustained CPU or GPU load
+- 🔴 Crash capture — pstore/ramoops non-functional (fix deployed, pending verify)
+- 🔴 Battery — capacity not readable, uevent race
 - ✅ Boot (systemd-boot, systemd initrd, clean reboots when not under load)

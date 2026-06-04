@@ -1,10 +1,30 @@
 {
+  pkgs,
   ...
 }:
 {
   networking = {
     hostName = "JONS";
     hostId = "def10002";
+
+    # Allow netconsole UDP receiver from Zenbook
+    firewall.allowedUDPPorts = [ 6666 ];
+  };
+
+  # Netconsole receiver: captures kernel messages from Zenbook crash events
+  systemd.services.netconsole-receiver = {
+    description = "Netconsole UDP receiver for Zenbook crash capture";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.nmap}/bin/ncat --udp -l 6666 -k";
+      StandardOutput = "append:/var/log/netconsole-zenbook.log";
+      StandardError = "journal";
+      Restart = "always";
+      RestartSec = 5;
+    };
   };
 
   # Override docker storage driver for ZFS (this host still uses ZFS)

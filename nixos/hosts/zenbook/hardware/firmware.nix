@@ -17,8 +17,12 @@ pkgs.runCommand "zenbook-firmware"
     srcFirmware = ../files/firmware;
   }
   ''
-    mkdir -p $out/lib/firmware
+    mkdir -p $out/lib/firmware/qcom/x1e80100
+    mkdir -p $out/lib/firmware/qcom/x1p42100
 
-    # Copy the device-specific extracted blobs
-    cp -r --no-preserve=mode,ownership $srcFirmware/* $out/lib/firmware/
+    # Copy the device-specific extracted blobs to both paths to support Elite and Plus variants
+    if [ -d $srcFirmware/qcom/x1e80100 ]; then
+      cp -r --no-preserve=mode,ownership $srcFirmware/qcom/x1e80100/* $out/lib/firmware/qcom/x1e80100/
+      cp -r --no-preserve=mode,ownership $srcFirmware/qcom/x1e80100/* $out/lib/firmware/qcom/x1p42100/
+    fi
   ''

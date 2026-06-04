@@ -1,0 +1,31 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "asus,zenbook-a14-ux3407ra", "qcom,x1e80100";
+
+    fragment@0 {
+        target-path = "/reserved-memory";
+        __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+
+            ramoops@b7000000 {
+                compatible = "ramoops";
+                /*
+                 * 2MB at 0xb7000000 — chosen because:
+                 *   - Inside System RAM range a7f0d000-c2fe2fff
+                 *   - Outside the kernel reserved sub-region bc2e0000-be2f5fff
+                 *   - Does not overlap any DTB reserved-memory node
+                 *   - no-map prevents kernel from allocating this memory
+                 */
+                reg = <0x0 0xb7000000 0x0 0x200000>;
+                record-size  = <0x20000>;   /* 128K per oops/panic record */
+                console-size = <0x100000>;  /* 1MB for continuous console log */
+                pmsg-size    = <0x40000>;   /* 256K for userspace pmsg */
+                ecc-size     = <16>;
+                no-map;
+            };
+        };
+    };
+};

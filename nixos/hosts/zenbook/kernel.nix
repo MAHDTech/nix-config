@@ -72,11 +72,40 @@ let
 
       # Use the Automated Hardware Profile
       cp ${./files/config/zenbook.defconfig} .config
+      chmod +w .config
+
+      # Restore critical Qualcomm inter-processor communication & mailbox drivers
+      # which are required for boot but got disabled due to cascading defconfig dependencies
+      ./scripts/config --enable MAILBOX
+      ./scripts/config --enable QCOM_CPUCP_MBOX
+      ./scripts/config --enable QCOM_AOSS_QMP
+      ./scripts/config --enable QCOM_APCS_IPC
+      ./scripts/config --enable QCOM_IPCC
+      ./scripts/config --enable QCOM_MPM
+      ./scripts/config --enable QCOM_SMEM_STATE
+      ./scripts/config --enable QCOM_SMP2P
+      ./scripts/config --enable QCOM_SMSM
+      ./scripts/config --enable RPMSG_QCOM_GLINK
+      ./scripts/config --enable RPMSG_QCOM_GLINK_RPM
+      ./scripts/config --enable RPMSG_QCOM_GLINK_SMEM
+      ./scripts/config --enable RPMSG_QCOM_SMD
 
       # Enable core TPM 2.0 drivers to prevent boot hangs and enable fTPM
       # TCG_TIS is x86 LPC-only — removed. CRB and FTPM_TEE cover ARM64/fTPM.
       ./scripts/config --enable TCG_CRB
       ./scripts/config --enable TCG_FTPM_TEE
+      # Enable core SCMI drivers required for Snapdragon X Elite clocks/regulators/power/CPUs
+      ./scripts/config --enable ARM_SCMI_PROTOCOL
+      ./scripts/config --enable ARM_SCMI_TRANSPORT_MAILBOX
+      ./scripts/config --enable ARM_SCMI_TRANSPORT_SMC
+      ./scripts/config --enable ARM_SCMI_TRANSPORT_OPTEE
+      ./scripts/config --enable SENSORS_ARM_SCMI
+      ./scripts/config --enable REGULATOR_ARM_SCMI
+      ./scripts/config --enable COMMON_CLK_SCMI
+      ./scripts/config --enable ARM_SCMI_CPUFREQ
+      ./scripts/config --enable ARM_SCMI_POWER_DOMAIN
+      ./scripts/config --enable ARM_SCMI_PERF_DOMAIN
+      ./scripts/config --enable RESET_SCMI
 
       # Enable PSTORE_RAM (ramoops) for crash debugging
       ./scripts/config --enable PSTORE
@@ -172,6 +201,17 @@ let
       ./scripts/config --enable NFT_NAT
       ./scripts/config --enable NF_NAT
       ./scripts/config --enable NF_CONNTRACK
+
+      # Enable netconsole for remote crash capture over UDP
+      ./scripts/config --module NETCONSOLE
+      ./scripts/config --enable NETCONSOLE_DYNAMIC
+
+      # Enable pstore-blk for NVMe-backed crash storage (future use)
+      ./scripts/config --enable PSTORE_BLK
+      ./scripts/config --set-val PSTORE_BLK_KMSG_SIZE 64
+      ./scripts/config --set-val PSTORE_BLK_CONSOLE_SIZE 64
+      ./scripts/config --set-val PSTORE_BLK_PMSG_SIZE 64
+      ./scripts/config --set-val PSTORE_BLK_MAX_REASON 2
 
       # Re-sync configuration against the active kernel tree
       make ARCH=arm64 olddefconfig

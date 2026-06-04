@@ -79,7 +79,6 @@
         # subdirectory. Confirmed on live device: driver is ath12k_wifi7_pci.
         "ath12k_wifi7_pci"
         "pwrseq_qcom_wcn"
-        "thunderbolt"
 
         # Early display — drm panel drivers are forced =y (built-in) in kernel.nix.
         # Note: drm_simpledrm is NOT a separate loadable module in this kernel
@@ -121,9 +120,8 @@
       "clk_ignore_unused"
       "pd_ignore_unused"
       "regulator_ignore_unused"
-      "console=ttyAMA0,115200n8"
+      "console=ttyMSM0,115200n8"
       "console=tty0"
-      "earlyprintk"
       "cma=128M"
       "video=efifb"
       "fbcon=map:0"
@@ -133,20 +131,24 @@
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
 
-      # PSTORE Ramoops memory allocation and parameters for crash debugging
-      "memmap=1M$0xbed00000"
-      "ramoops.mem_address=0xbed00000"
-      "ramoops.mem_size=0x100000"
-      "ramoops.console_size=0x60000"
-      "ramoops.record_size=0x10000"
-      "ramoops.pmsg_size=0x20000"
-      "ramoops.ecc=1"
+      # Crash capture: ramoops is now in DTB overlay (ARM64 ignores memmap=)
+      # Escalate oops to panic so pstore gets flushed
+      "panic_on_oops=1"
+      # Auto-reboot 30 seconds after panic
+      "panic=30"
+      # Print all useful info on panic (tasks, memory, timers, locks, ftrace, all CPUs)
+      "panic_print=0x7ff"
+      # Full kernel log verbosity for crash forensics
+      "loglevel=7"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
     extraModprobeConfig = ''
       options snd-soc-x1e80100 i_accept_the_danger=1
+      options netconsole netconsole=@/enu2c2,6666@10.10.1.97/
     '';
+
+    kernelModules = [ "netconsole" ];
 
     # Modern boot management
     loader = {
@@ -175,6 +177,12 @@
       enable = true;
       # The alexVinarskis kernel builds this DTB from its own DTS sources.
       name = "qcom/x1e80100-asus-zenbook-a14.dtb";
+      overlays = [
+        {
+          name = "ramoops-overlay";
+          dtsFile = ../files/ramoops-overlay.dts;
+        }
+      ];
     };
     enableRedistributableFirmware = true;
     firmware = [
@@ -184,21 +192,29 @@
         mkdir -p $out/lib/firmware/qcom
         mkdir -p $out/lib/firmware/ath12k/WCN7850/hw2.0
 
-        # Copy GPU firmware
+        # Copy GPU firmware (both Elite and Plus variants)
         cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen70500_* $out/lib/firmware/qcom/
+        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen71500_* $out/lib/firmware/qcom/
+        mkdir -p $out/lib/firmware/qcom/x1p42100
+        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/x1p42100/gen71500_* $out/lib/firmware/qcom/x1p42100/
 
         # Copy ath12k WiFi firmware
         cp -r ${pkgs.linux-firmware}/lib/firmware/ath12k/WCN7850/hw2.0/* $out/lib/firmware/ath12k/WCN7850/hw2.0/
 
-        # Copy audio topology file to both expected paths (directly under x1e80100 and inside ASUSTeK/zenbook-a14)
-        mkdir -p $out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14
-        if [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin ]; then
-          cp ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/x1e80100/
-          cp ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14/
-        elif [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst ]; then
-          ${pkgs.zstd}/bin/zstd -d ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst -o $out/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin
-          cp $out/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/x1e80100/ASUSTeK/zenbook-a14/
-        fi
+        # Copy audio topology file to both expected paths (directly under x1e80100/x1p42100 and inside ASUSTeK/zenbook-a14)
+        for soc in x1e80100 x1p42100; do
+          mkdir -p $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14
+          if [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin ]; then
+            cp ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/
+            cp ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14/
+          elif [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst ]; then
+            ${pkgs.zstd}/bin/zstd -d ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst -o $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin
+            cp $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14/
+          elif [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst ]; then
+            ${pkgs.zstd}/bin/zstd -d ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst -o $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin
+            cp $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14/
+          fi
+        done
 
         # Make files writeable so we can remove them
         chmod -R +w $out
@@ -224,4 +240,12 @@
 
   networking.useDHCP = lib.mkDefault false;
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
+
+  # Crash capture: ensure panic settings survive into running system
+  boot.kernel.sysctl = {
+    "kernel.panic_on_oops" = 1;
+    "kernel.panic" = 30;
+    "kernel.panic_print" = 2047; # 0x7ff — all info
+    "kernel.sysrq" = 1; # enable all sysrq functions for emergency debugging
+  };
 }

@@ -1673,3 +1673,14 @@ screencopy
 Kconfig
 retimer
 unblacklisted
+netconcole
+optee
+KMSG
+blkdev
+partlabel
+netconsole
+uevent
+uevents
+plughw
+ncat
+EAGAIN
