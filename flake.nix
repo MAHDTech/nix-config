@@ -19,6 +19,8 @@
       salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
     ";
     warn-dirty = true;
+    cores = 0;
+    max-jobs = "auto";
   };
 
   inputs = {

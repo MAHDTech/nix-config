@@ -245,7 +245,7 @@ Work through issues **one at a time** — build, test, verify, then check off be
 
 ### Issue 9: Razer Thunderbolt 5 Dock Ethernet regression (USB disconnect / Alt Mode negotiation failure)
 
-- [ ] **Status**: Fix proposed, building new kernel and stage 1 initrd configuration
+- [/] **Status**: In progress (Unloaded `thunderbolt` and added both `thunderbolt` and `typec_thunderbolt` to `blacklistedKernelModules` to bypass Alt Mode lockup and force USB 3.x fallback)
 - **Severity**: P0 — High-speed dock peripherals and Ethernet not detected
 - **Symptoms**:
   - The Razer TB5 Dock USB tree initializes during early boot but is disconnected as soon as the ADSP remoteproc boots and `pmic-glink` initiates Type-C port manager negotiation.

@@ -112,7 +112,10 @@
       ];
     };
 
-    blacklistedKernelModules = [ ];
+    blacklistedKernelModules = [
+      "typec_thunderbolt"
+      "thunderbolt"
+    ];
 
     kernelParams = [
       "clk_ignore_unused"

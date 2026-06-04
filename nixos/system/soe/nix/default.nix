@@ -23,6 +23,7 @@
     };
 
     settings = {
+      cores = 0;
       max-jobs = "auto";
       require-sigs = true;
       sandbox = true;
