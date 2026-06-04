@@ -62,7 +62,6 @@ in
       "systemd-udev-trigger.service"
       "network-pre.target"
     ];
-    after = [ "local-fs.target" ];
     unitConfig.DefaultDependencies = false;
     serviceConfig = {
       Type = "oneshot";
