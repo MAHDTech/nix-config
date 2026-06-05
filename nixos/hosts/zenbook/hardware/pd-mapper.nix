@@ -1,5 +1,11 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 let
+  isInstaller = config.networking.hostName == "installer-zenbook";
   # pd-mapper: Protection Domain Mapper for Qualcomm DSPs
   # Reads .jsn subsystem descriptor files and publishes Protection Domain
   # service registrations over QRTR so DSP clients can locate their subsystems.
@@ -70,7 +76,7 @@ in
   systemd.services.pd-mapper = {
     description = "Qualcomm Protection Domain Mapper";
     documentation = [ "https://github.com/linux-msm/pd-mapper" ];
-    wantedBy = [ "basic.target" ];
+    wantedBy = lib.optionals (!isInstaller) [ "basic.target" ];
     after = [ "systemd-udev-trigger.service" ];
     # Wait for the remoteproc subsystem to be created by the driver.
     unitConfig = {
