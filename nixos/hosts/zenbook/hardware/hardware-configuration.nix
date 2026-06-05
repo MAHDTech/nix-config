@@ -98,7 +98,6 @@ in
         # subdirectory. Confirmed on live device: driver is ath12k_wifi7_pci.
         "ath12k_wifi7_pci"
         "pwrseq_qcom_wcn"
-        "qcom_q6v5_pas"
 
         # Early display — drm panel drivers are forced =y (built-in) in kernel.nix.
         # Note: drm_simpledrm is NOT a separate loadable module in this kernel
@@ -108,9 +107,7 @@ in
         "drm_panel_simple"
         "drm_panel_samsung_atna33xc20"
       ];
-      kernelModules = lib.optionals (!isInstaller) [
-        "msm"
-      ];
+      kernelModules = [ ];
 
       # Load crucial platform firmware directly in stage 1 to prevent driver crashes
       extraFirmwarePaths = [
@@ -119,7 +116,11 @@ in
       ];
     };
 
-    blacklistedKernelModules = lib.optionals isInstaller [
+    blacklistedKernelModules = [
+      "typec_thunderbolt"
+      "thunderbolt"
+    ]
+    ++ lib.optionals isInstaller [
       "qcom_q6v5_pas"
       "msm"
     ];
@@ -138,6 +139,7 @@ in
       "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
+      "ip=10.10.1.91::10.10.1.1:255.255.255.0:zenbook:enu2c2:none"
 
       # Crash capture: ramoops is now in DTB overlay (ARM64 ignores memmap=)
       # Escalate oops to panic so pstore gets flushed
@@ -156,7 +158,13 @@ in
       options netconsole netconsole=@/enu2c2,6666@10.10.1.97/
     '';
 
-    kernelModules = [ "netconsole" ];
+    kernelModules = [
+      "netconsole"
+    ]
+    ++ lib.optionals (!isInstaller) [
+      "qcom_q6v5_pas"
+      "msm"
+    ];
 
     # Modern boot management
     loader = {
@@ -199,6 +207,10 @@ in
       (pkgs.runCommand "zenbook-initrd-firmware" { } ''
         mkdir -p $out/lib/firmware/qcom
         mkdir -p $out/lib/firmware/ath12k/WCN7850/hw2.0
+
+        # Copy and decompress wireless regulatory database to resolve WiFi channel scan issues
+        mkdir -p $out/lib/firmware
+        cp -f ${pkgs.wireless-regdb}/lib/firmware/regulatory.db* $out/lib/firmware/
 
         # Copy GPU firmware (both Elite and Plus variants)
         cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen70500_* $out/lib/firmware/qcom/
