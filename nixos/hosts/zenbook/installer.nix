@@ -25,4 +25,7 @@
     enable = true;
     emergencyAccess = true;
   };
+
+  # Disable nix-channel-init service since the raw image closure doesn't pre-pack nixos channel sources
+  systemd.services.nix-channel-init.enable = false;
 }
