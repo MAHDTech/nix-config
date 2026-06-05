@@ -1507,6 +1507,7 @@ UESP
 uevent
 uevents
 UGREEN
+UHCI
 uhwd
 Ultrawide
 unapsd

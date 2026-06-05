@@ -103,6 +103,7 @@ let
       ./scripts/config --enable CGROUPS
       ./scripts/config --enable SECCOMP
       ./scripts/config --module TCG_TIS
+      ./scripts/config --module USB_UHCI_HCD
 
       # --- BTRFS crypto dependencies (not in CIX defconfig) ---
       # NixOS uses BTRFS with crc32c checksums; blake2b and xxhash are also
