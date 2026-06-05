@@ -117,7 +117,10 @@ in
       ];
     };
 
-    blacklistedKernelModules = [ ];
+    blacklistedKernelModules = lib.optionals isInstaller [
+      "qcom_q6v5_pas"
+      "msm"
+    ];
 
     kernelParams = [
       "clk_ignore_unused"
