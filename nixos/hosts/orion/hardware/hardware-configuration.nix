@@ -61,40 +61,30 @@ in
     };
 
     # Load after boot (not needed during initrd)
-    # In installer mode, skip all non-critical modules — GPU, display, NPU,
-    # VPU, and Type-C are unnecessary for SSH-based nixos-anywhere installs
-    # and the display driver (linlon-dp) causes flip timeout errors.
-    kernelModules = lib.optionals (!isInstaller) [
-      "kvm"
+    # In installer mode, only load display essentials. Skip NPU, VPU, KVM,
+    # Type-C, and cpufreq — they're unnecessary for SSH-based installs.
+    kernelModules = [
+      # Display pipeline — always loaded (user needs screen output)
       "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
+      "linlon-dp" # CIX Display controller
+      "trilin-dpsub" # CIX DisplayPort subsystem
+    ]
+    ++ lib.optionals (!isInstaller) [
+      "kvm"
       "aipu" # CIX NPU
       "amvx" # CIX VPU
-      # CIX Display and DisplayPort controller modules (loaded post-initrd to avoid SMMU race)
-      "linlon-dp"
-      "trilin-dpsub"
       # USB-C Power Delivery and DisplayPort Alt Mode
-      # Orion O6 has 2x USB-C ports; one supports DP Alt Mode
-      # These modules exist in defconfig as =m but are never auto-loaded
       "typec"
       "typec_ucsi"
       "ucsi_acpi"
       "typec_displayport"
-      # ACPI CPPC cpufreq — confirmed auto-loading on live device, explicit for clarity
+      # ACPI CPPC cpufreq
       "acpi_cppc_cpufreq"
     ];
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
-    # Belt-and-suspenders: NixOS blacklistedKernelModules option not working on live device;
-    # also add via module_blacklist= kernel param below
-    blacklistedKernelModules = [
-      "panfrost"
-    ]
-    ++ lib.optionals isInstaller [
-      # During install, also blacklist drivers that cause errors or are unnecessary
-      "panthor"
-      "linlon_dp"
-      "trilin_dpsub"
-    ];
+    # Belt-and-suspenders: also add via module_blacklist= kernel param below
+    blacklistedKernelModules = [ "panfrost" ];
 
     kernelParams = [
       "console=ttyAMA0,115200n8"

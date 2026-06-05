@@ -32,10 +32,18 @@
   users.users.root = {
     password = lib.mkForce "nixos";
     initialHashedPassword = lib.mkForce null;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHLEPFnH5qCksDIv/vcbm7H7p+OWEqiqKyWdAtEo+/UU 1Password SSH Key"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAvQpgd14xx/ZZeIFzoa2ztmk0MNjHObmIbbnkxzCSvV Local SSH Key"
+    ];
   };
   users.users.nixos = {
     password = lib.mkForce "nixos";
     initialHashedPassword = lib.mkForce null;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHLEPFnH5qCksDIv/vcbm7H7p+OWEqiqKyWdAtEo+/UU 1Password SSH Key"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAvQpgd14xx/ZZeIFzoa2ztmk0MNjHObmIbbnkxzCSvV Local SSH Key"
+    ];
   };
 
   # Tools useful for manual rescue or investigation
