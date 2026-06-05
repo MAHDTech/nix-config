@@ -21,9 +21,15 @@ in
       name,
       system,
       extraModules ? [ ],
+      overlays ? [ ],
     }:
     lib.nixosSystem {
-      pkgs = pkgsImportSystem system;
+      pkgs = import inputs.nixpkgs {
+        inherit system overlays;
+        config = {
+          allowUnfree = true;
+        };
+      };
       specialArgs = {
         inherit inputs system name;
         username = globalUsername;

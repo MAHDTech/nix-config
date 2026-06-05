@@ -71,14 +71,4 @@
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="CIXH5010:03", SYMLINK+="dri/cix-display"
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="CIXH5000:00", SYMLINK+="dri/cix-gpu"
   '';
-
-  nixpkgs.overlays = [
-    (_final: prev: {
-      libdrm = prev.libdrm.overrideAttrs (oldAttrs: {
-        patches = (oldAttrs.patches or [ ]) ++ [
-          ./patches/libdrm-acpi-modalias.patch
-        ];
-      });
-    })
-  ];
 }
