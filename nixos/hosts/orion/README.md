@@ -54,11 +54,11 @@ This directory contains the NixOS host configuration for the Radxa Orion O6 boar
 - **Native Display (Linlon/Trilinear DP)**
   - **Hardware Spec**: CIX Display Controller + DisplayPort
   - **Linux Driver**: `linlon-dp`, `trilin-dpsub`
-  - **Status**: ⚠️ Partially Working
-  - **Details**: Display works via `simpledrm` EFI framebuffer fallback. Native CIX
-    display drivers (`DRM_CIX`, `DRM_LINLONDP`, `DRM_TRILIN_DPSUB`) were being silently
-    dropped by `make olddefconfig` during kernel build. Fix applied in `kernel.nix`
-    (configurePhase restructuring) — pending rebuild and verification.
+  - **Status**: ✅ Working
+  - **Details**:
+    - Fully operational.
+    - The native CIX display drivers load on boot.
+    - By applying the custom `libdrm` modalias overlay, Hyprland/Aquamarine successfully query and detect the display as `DP-3` with correct EDID resolution (showing Kogan model details).
 
 ---
 
@@ -92,6 +92,18 @@ Due to the pre-production/early-stage nature of the CIX P1 UEFI firmware and ker
 - **Location**: `hardware/hardware-configuration.nix` (under `boot.kernelParams`)
 - **Mechanism**: Explicitly blacklists the legacy `panfrost` module.
 - **Why**: Prevents the kernel from trying to bind the legacy Mali `panfrost` driver to the Immortalis-G720 GPU, ensuring `panthor` takes sole control.
+
+### 4. Custom `libdrm` ACPI Modalias Fallback Patch
+
+- **Location**: `lib/default.nix` (`mkHost` overlays parameter) and `nixos/hosts/default.nix` (`ORION` overlays)
+- **Mechanism**: Replaces standard `libdrm` `MODALIAS` extraction with direct `readlink` resolution of `/sys/dev/char/%d:%d/device`.
+- **Why**:
+  - Standard `libdrm`'s `drmParseOFBusInfo` falls back to parsing `MODALIAS` on ACPI platforms.
+  - On the CIX Sky1 board, the ACPI platform driver exposes `MODALIAS` with a trailing colon (e.g., `acpi:CIXH5010:`).
+  - This is causing the parser to extract an empty string `""` as the device name.
+  - This fails to match the actual sysfs platform directory (`CIXH5010:03`), causing `drmGetDevice` to return `-ENOENT`.
+  - This also is preventing Wayland compositors (Hyprland/Aquamarine) from initializing the renderer for both `cix-display` and `cix-gpu`.
+  - Resolving the symlink directly bypasses the `MODALIAS` parser bug.
 
 ---
 
@@ -172,24 +184,26 @@ We are tracking the following upstream development items and firmware updates:
 - [x] Remove userspace SMMU workaround (`smmu-fix.nix`) — replaced with kernel-level bypass (commit `a168ba2`)
 - [x] Re-enable `CONFIG_STRICT_DEVMEM` and `CONFIG_IO_STRICT_DEVMEM` (done in `kernel.nix`)
 - [x] Deploy Generation 33 — booted successfully via SSH
-
-### In Progress
-
-- [/] Fix `make olddefconfig` silently dropping CIX kernel config options (17+ options
-  affected: display, PHY, USB, PWM). Root cause: `scripts/config` edits placed
-  before `olddefconfig` in `kernel.nix` configurePhase. Fix: restructured
-  configurePhase to place all edits after `olddefconfig` with validation gate.
+- [x] Fix `make olddefconfig` silently dropping CIX kernel config options
+  - 17+ options affected: display, PHY, USB, PWM).
+  - Root cause: `scripts/config` edits placed before `olddefconfig` in `kernel.nix` configurePhase.
+  - Fix: restructured configurePhase to place all edits after `olddefconfig` with validation gate.
   - [x] Diagnose root cause (audit session 2026-06-04)
   - [x] Implement fix in `kernel.nix`
   - [x] Fix first boot SError kernel panic by disabling `PHY_CIX_PCIE`/`USB2`/`USB3` in `kernel.nix`
   - [x] Fix second boot SError kernel panic by disabling `USB_CDNSP` and `CIX_ACPI_USB_SCAN` in `kernel.nix`
-  - [ ] Rebuild kernel and deploy
-  - [ ] Verify CIX display modules (`linlon-dp`, `trilin-dpsub`) load on boot
-  - [ ] Verify native display output (not simpledrm fallback)
+  - [x] Rebuild kernel and deploy
+  - [x] Verify CIX display modules (`linlon-dp`, `trilin-dpsub`) load on boot
+  - [x] Verify native display output (not simpledrm fallback)
+- [x] Resolve Hyprland/Aquamarine GPU renderer failure on ACPI boot (Root cause: ACPI trailing colon MODALIAS bug in libdrm; Fix: custom libdrm patch overlay generically integrated in mkHost).
+- [x] Transition monitor configurations and workspace rules to physically mapped `DP-3` connector (previously hardcoded to `DP-1` which caused layout failures).
+
+### In Progress
+
+- [/] Housekeeping: run `nix-collect-garbage`, configure `boot.loader.systemd-boot.configurationLimit` to auto-prune old generations
 
 ### Pending
 
 - [ ] Investigate voltage regulator probe failures (11 regulators, error -12) — enable `CONFIG_REGULATOR_DEBUG=y` and compare with Ubuntu CIX kernel
 - [ ] Investigate boot timing — reduce `systemd-networkd-wait-online` 10s delay
-- [ ] Housekeeping: run `nix-collect-garbage`, configure `boot.loader.systemd-boot.configurationLimit` to auto-prune old generations
 - [ ] Trim `orion.defconfig` — remove irrelevant SoC platform drivers (Qualcomm, Tegra, Rockchip, etc.) to reduce compile time

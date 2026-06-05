@@ -54,22 +54,12 @@ in
         "qcom_spmi_regulator"
         "qcom_geni_se"
 
-        # USB transceivers, PHYs, and PMIC power state mapping (required for USB ports)
+        # Physical-layer USB transceivers/PHYs (required to detect USB devices in installer)
         "phy_qcom_qmp_usb"
         "phy_snps_eusb2"
         "phy_qcom_eusb2_repeater"
         "phy_qcom_qmp_combo"
         "ptn3222"
-        "pmic_glink"
-        "pmic_glink_altmode"
-        "qcom_pmic_glink"
-        "qcom_pmic_typec"
-        "ps883x"
-        # ucsi_glink: UCSI over Qualcomm PMIC glink — USB-C PD and DP alt-mode.
-        # Kernel config symbol: UCSI_PMIC_GLINK (=m in defconfig; enforced in kernel.nix).
-        # Linux module name on-disk is ucsi_glink.
-        "ucsi_glink"
-        "typec_ucsi"
 
         # Keyboard and Touchpad (I2C HID — critical for built-in laptop input)
         "i2c_hid"
@@ -91,6 +81,18 @@ in
         "ext4"
       ]
       ++ lib.optionals (!isInstaller) [
+        # USB Type-C power state, alternate modes, and PMIC GLINK mapping (requires ADSP/remoteprocs)
+        "pmic_glink"
+        "pmic_glink_altmode"
+        "qcom_pmic_glink"
+        "qcom_pmic_typec"
+        "ps883x"
+        # ucsi_glink: UCSI over Qualcomm PMIC glink — USB-C PD and DP alt-mode.
+        # Kernel config symbol: UCSI_PMIC_GLINK (=m in defconfig; enforced in kernel.nix).
+        # Linux module name on-disk is ucsi_glink.
+        "ucsi_glink"
+        "typec_ucsi"
+
         # WiFi/BT power sequencing
         # ath12k_wifi7_pci: alexVinarskis patch set reorganises ath12k into a wifi7/
         # subdirectory. Confirmed on live device: driver is ath12k_wifi7_pci.
