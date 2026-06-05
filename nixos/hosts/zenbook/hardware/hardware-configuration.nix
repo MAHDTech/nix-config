@@ -162,6 +162,7 @@ in
     ++ lib.optionals (!isInstaller) [
       "qcom_q6v5_pas"
       "msm"
+      "thunderbolt"
     ];
 
     # Modern boot management
