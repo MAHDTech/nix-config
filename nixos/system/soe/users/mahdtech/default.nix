@@ -12,6 +12,9 @@ in
     shell = pkgs.bashInteractive;
     group = username;
 
+    # Enable linger
+    linger = true;
+
     # NOTE: To generate run;
     # mkpasswd --method=SHA-512 --stdin
     initialHashedPassword = "$6$0fQUL.dlpw4kaVRc$/cbRiuWeR5Pu9yc7uvF2sktWtGOtTjtXviU.mAtWZlOwURJ0Ld1Ccxo5K9yiQ7LqPMU3NCcGGrk3Q7jmiFgS21"; # spellchecker:ignore-line

@@ -47,19 +47,19 @@ in
       "ironbar-config" = {
         source = configFile;
         target = "ironbar/config.yaml";
-        onChange = "${pkgs.ironbar}/bin/ironbar reload";
+        onChange = "pgrep ironbar && ${pkgs.ironbar}/bin/ironbar reload || true";
       };
 
       "ironbar-style" = {
         source = ./style.css;
         target = "ironbar/style.css";
-        onChange = "${pkgs.ironbar}/bin/ironbar reload";
+        onChange = "pgrep ironbar && ${pkgs.ironbar}/bin/ironbar reload || true";
       };
 
       "ironbar-scripts" = {
         source = ./scripts;
         target = "ironbar/scripts";
-        onChange = "${pkgs.ironbar}/bin/ironbar reload";
+        onChange = "pgrep ironbar && ${pkgs.ironbar}/bin/ironbar reload || true";
       };
     };
   };

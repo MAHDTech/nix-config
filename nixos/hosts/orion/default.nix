@@ -61,4 +61,9 @@
     ../../system/config/services/trezor
 
   ];
+
+  environment.sessionVariables = {
+    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/platform-CIXH5010:03-card:/dev/dri/by-path/platform-CIXH5000:00-card";
+    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/platform-CIXH5010:03-card:/dev/dri/by-path/platform-CIXH5000:00-card";
+  };
 }
