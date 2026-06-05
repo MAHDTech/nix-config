@@ -56,7 +56,7 @@ This directory contains the NixOS host configuration for the Radxa Orion O6 boar
   - **Linux Driver**: `linlon-dp`, `trilin-dpsub`
   - **Status**: ✅ Working
   - **Details**:
-    - Fully operational.
+    - Fully operational with intermittent flip timeouts (see Known Issue #7).
     - The native CIX display drivers load on boot.
     - By applying the custom `libdrm` modalias overlay, Hyprland/Aquamarine successfully query and detect the display as `DP-3` with correct EDID resolution (showing Kogan model details).
 
@@ -131,10 +131,16 @@ Due to the pre-production/early-stage nature of the CIX P1 UEFI firmware and ker
 
 ### 3. ramoops Probe Failure
 
-- **Severity**: 🟢 Low
+- **Severity**: 🟢 Low (mitigated by pstore-blk)
 - **Symptom**: `ramoops PRP0001:03: probe failed with error -22 (EINVAL)` — ACPI node `\_SB_.RAOP` defines ramoops but with invalid platform data parameters.
 - **Impact**: Kernel crash dump logging to persistent RAM is non-functional. Crashes leave no pstore record.
-- **Waiting On**: BIOS update with corrected ramoops ACPI parameters.
+- **Mitigation**: `pstore-blk` configured as alternative crash capture backend.
+  A 16M raw `pstore` partition has been added to `disko-config.nix` and kernel
+  params include `pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore`.
+  Panic escalation settings (`panic_on_oops=1`, `panic=30`, `panic_print=0x7ff`)
+  and crash capture sysctl entries also added.
+  **Requires repartition via nixos-anywhere to take effect.**
+- **Waiting On**: BIOS update with corrected ramoops ACPI parameters (for native ramoops support).
 
 ### 4. Boot Timing — Network Wait (10s)
 
@@ -214,6 +220,7 @@ We are tracking the following upstream development items and firmware updates:
   - [x] Verify native display output (not simpledrm fallback)
 - [x] Resolve Hyprland/Aquamarine GPU renderer failure on ACPI boot (Root cause: ACPI trailing colon MODALIAS bug in libdrm; Fix: custom libdrm patch overlay generically integrated in mkHost).
 - [x] Transition monitor configurations and workspace rules to physically mapped `DP-3` connector (previously hardcoded to `DP-1` which caused layout failures).
+- [x] Fix NixOS auto-upgrade failures — removed `--impure` and `--refresh` flags from SOE config, removed `NIXPKGS_ALLOW_INSECURE`, added 2h service timeout
 
 ### In Progress
 
@@ -224,3 +231,6 @@ We are tracking the following upstream development items and firmware updates:
 - [ ] Investigate voltage regulator probe failures (11 regulators, error -12) — enable `CONFIG_REGULATOR_DEBUG=y` and compare with Ubuntu CIX kernel
 - [ ] Investigate boot timing — reduce `systemd-networkd-wait-online` 10s delay
 - [ ] Trim `orion.defconfig` — remove irrelevant SoC platform drivers (Qualcomm, Tegra, Rockchip, etc.) to reduce compile time
+- [ ] Repartition with pstore partition — `disko-config.nix` updated (ESP / pstore / btrfs root), requires reinstall via nixos-anywhere
+- [ ] Investigate rtkit lacking RT capabilities — `Failed to make ourselves RT: Operation not permitted` affects PipeWire latency
+- [ ] Clean up 39 generations — disk at 64% (588G/931G), verify nix-collect-garbage is running

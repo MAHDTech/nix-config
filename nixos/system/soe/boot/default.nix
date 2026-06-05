@@ -107,7 +107,7 @@ in
 
         configurationLimit = 10;
 
-        editor = true;
+        editor = false; # Security: prevent kernel command line editing from boot menu
       };
 
       grub = {

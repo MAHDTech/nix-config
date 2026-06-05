@@ -62,6 +62,21 @@ in
         ExecStart = pkgs.writeShellScript "lowbatt-start" ''
           ${pkgs.coreutils}/bin/echo "Executing start script for lowbatt"
 
+          # Guard: exit gracefully if battery device is not yet available
+          # (Qualcomm ADSP may not have initialised qcom-battmgr-bat yet)
+          if [ ! -d /sys/class/power_supply/${cfg.device} ]; then
+            ${pkgs.coreutils}/bin/echo "Battery device ${cfg.device} not yet available, skipping check"
+            exit 0
+          fi
+
+          export battery_status=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/status 2>/dev/null || echo "Unknown")
+
+          # Skip check if battery status is not yet meaningful
+          if [ "$battery_status" = "Unknown" ] || [ "$battery_status" = "" ]; then
+            ${pkgs.coreutils}/bin/echo "Battery status is '$battery_status', skipping check"
+            exit 0
+          fi
+
           if [ -f /sys/class/power_supply/${cfg.device}/capacity ]; then
             export battery_capacity=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/capacity)
           elif [ -f /sys/class/power_supply/${cfg.device}/energy_now ] && [ -f /sys/class/power_supply/${cfg.device}/energy_full ]; then
@@ -83,8 +98,6 @@ in
           else
             export battery_capacity=100
           fi
-
-          export battery_status=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/${cfg.device}/status)
 
           if [[ $battery_capacity -le ${builtins.toString cfg.notifyCapacity} && $battery_status = "Discharging" ]];
           then

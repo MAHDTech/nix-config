@@ -107,6 +107,15 @@ let
       ./scripts/config --enable PSTORE_PMSG
       ./scripts/config --enable PSTORE_RAM
 
+      # --- zram: compressed RAM swap (required by NixOS zramSwap module) ---
+      ./scripts/config --module ZRAM
+      ./scripts/config --enable ZRAM_DEF_COMP_ZSTD
+
+      # --- AppArmor: mandatory access control ---
+      # Required by security.apparmor.enable = true in the SOE security config
+      ./scripts/config --enable SECURITY_APPARMOR
+      ./scripts/config --enable DEFAULT_SECURITY_APPARMOR
+
       # --- NixOS boot requirements (not in CIX defconfig) ---
       ./scripts/config --enable DEVTMPFS_MOUNT
       ./scripts/config --enable CGROUPS

@@ -149,7 +149,8 @@ in
       # Full kernel log verbosity for crash forensics
       "loglevel=7"
       # pstore-blk: persistent crash store on dedicated 16M partition (survives reboot + power loss)
-      "pstore_blk.blkdev=/dev/disk/by-partlabel/pstore"
+      # disko labels partitions as disk-{name}-{part}
+      "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver

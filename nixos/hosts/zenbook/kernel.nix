@@ -166,6 +166,16 @@ let
       ./scripts/config --enable LRU_GEN
       ./scripts/config --enable LRU_GEN_ENABLED
 
+      # zram: compressed RAM swap — required by NixOS zramSwap module
+      # Without this, zramSwap.enable = true silently does nothing
+      ./scripts/config --module ZRAM
+      ./scripts/config --enable ZRAM_DEF_COMP_ZSTD
+
+      # AppArmor: mandatory access control — required by security.apparmor.enable = true
+      # Without this, NixOS enables AppArmor userspace but the kernel has no LSM support
+      ./scripts/config --enable SECURITY_APPARMOR
+      ./scripts/config --enable DEFAULT_SECURITY_APPARMOR
+
       # Enable standard kernel Crypto APIs required by iwd for WiFi authentication
       ./scripts/config --enable CRYPTO_USER_API_HASH
       ./scripts/config --enable CRYPTO_USER_API_SKCIPHER

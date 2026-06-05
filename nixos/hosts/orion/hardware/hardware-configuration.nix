@@ -97,7 +97,8 @@ in
       # NOTE: module_blacklist=sbsa_gwdt removed — sbsa_gwdt is built-in (not a module)
       # so blacklisting it has no effect. nowatchdog handles watchdog suppression instead.
       # Crash capture: persistent store on dedicated 16M partition + panic escalation
-      "pstore_blk.blkdev=/dev/disk/by-partlabel/pstore"
+      # disko labels partitions as disk-{name}-{part}
+      "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
       "panic_on_oops=1"
       "panic=30"
       "panic_print=0x7ff"

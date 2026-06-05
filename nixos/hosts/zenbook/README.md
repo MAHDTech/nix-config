@@ -206,7 +206,13 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 5: pstore/ramoops not configured for crash debugging
 
-- [/] **Status**: In progress — code changes committed, pending deploy via nixos-anywhere
+- [/] **Status**: Partially verified on Gen 6 (2026-06-06):
+  - ✅ **ramoops**: `pstore: Registered ramoops as persistent store backend`, `using 0x200000@0xb7000000, ecc: 0` — NO ECC errors!
+  - ✅ **netconsole**: systemd service `active (exited)`, configured with source IP `10.10.1.90 → 10.10.1.97:6666`, `network logging started`
+  - ✅ **panic settings**: `panic_on_oops=1 panic=30 panic_print=0x7ff` confirmed in kernel params
+  - ✅ **efi-runtime-test**: specialisation boot entry present in systemd-boot
+  - ⚠️ **pstore-blk**: partition exists (`disk-main-pstore`, 16M) but kernel param had wrong label — **fixed** (was `/dev/disk/by-partlabel/pstore`, now `/dev/disk/by-partlabel/disk-main-pstore`)
+  - ❌ **pstore dir**: empty (no crashes yet — expected)
 - **Severity**: P0 — No crash dumps captured on any crash type
 - **Symptom**: `/sys/fs/pstore/` is empty after every boot. `ramoops: uncorrectable error in header` ×10 on every boot.
 - **Root Cause**: Three independent failures:
@@ -219,20 +225,25 @@ We are running testing on Ubuntu first to identify working configurations, then 
   - `sysrq=16` — only sync allowed, no emergency crash dump trigger
   - PMIC hard resets (hardware power cut) — no kernel execution time to write pstore
 - **Files changed**:
-  - `nixos/hosts/zenbook/files/ramoops-overlay.dts` — [NEW] DT overlay reserving 2MB at `0xb7000000` with `no-map`
+  - `nixos/hosts/zenbook/files/ramoops-overlay.dts` — DT overlay reserving 2MB at `0xb7000000` with `no-map`. ECC disabled (`ecc-size=0`) — headers never initialise cleanly on this platform.
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` —
     Removed broken `memmap=`/`ramoops.*` params; added DTB overlay,
-    panic settings, `netconsole`, sysctl, fixed `ttyAMA0`→`ttyMSM0`
+    panic settings, sysctl, pstore-blk kernel param. Removed netconsole
+    from boot-time modules (moved to systemd service). Added `efi-runtime-test`
+    specialisation to test removing `efi=noruntime`.
+  - `nixos/hosts/zenbook/netconsole.nix` — [NEW] Systemd service that loads
+    netconsole after `network-online.target`, dynamically discovering source IP
+    from `enu2c2`. Replaces unreliable boot-time module loading.
   - `nixos/hosts/zenbook/kernel.nix` — Added `CONFIG_NETCONSOLE`, `CONFIG_NETCONSOLE_DYNAMIC`, `CONFIG_PSTORE_BLK`
-  - `nixos/hosts/zenbook/disko-config.nix` — Added 16MB `pstore` partition for future pstore-blk
+  - `nixos/hosts/zenbook/disko-config.nix` — Added 16MB `pstore` partition for pstore-blk
   - `nixos/hosts/jons/default.nix` — Added netconsole receiver service (ncat UDP 6666 → `/var/log/netconsole-zenbook.log`) and firewall rule
 - **Crash capture layers** (defense in depth):
   | Layer | Captures panics? | Captures PMIC resets? | Status |
   |:---|:---:|:---:|:---|
-  | DTB ramoops (2MB reserved) | ✅ | ❌ | Code ready, pending deploy |
-  | Panic escalation settings | ✅ (enables flush) | ❌ | Code ready, pending deploy |
-  | Netconsole → JONS:6666 | ✅ (live) | ⚠️ Pre-crash only | JONS receiver active |
-  | pstore-blk (NVMe partition) | ✅ | ⚠️ Maybe | Partition in disko, kernel config ready |
+  | DTB ramoops (2MB reserved) | ✅ | ❌ | ✅ **Verified Gen 6** — ecc: 0, no errors |
+  | Panic escalation settings | ✅ (enables flush) | ❌ | ✅ **Verified Gen 6** — kernel params confirmed |
+  | Netconsole → JONS:6666 | ✅ (live) | ⚠️ Pre-crash only | ✅ **Verified Gen 6** — systemd service active, logging started |
+  | pstore-blk (NVMe partition) | ✅ | ⚠️ Maybe | ⚠️ Partition exists, label fix pending rebuild |
 - **Test**:
   ```bash
   # 1. Verify ramoops DTB node
@@ -372,7 +383,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 11: SoundWire controller error storm
 
-- [x] **Status**: Resolved (Speakers are functional and the SoundWire error storm stops once ADSP is brought online post-boot)
+- [x] **Status**: Resolved (Speakers functional. Boot-time FIFO errors mitigated by `softdep snd-soc-wsa884x pre: qcom_q6v5_pas` in modprobe config to improve load ordering)
 - **Severity**: P2 — Continuous errors every 2–5 seconds, CPU overhead
 - **Symptom**: Continuous errors in dmesg:
   ```
@@ -393,17 +404,20 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 12: Missing kernel modules (cpufreq_schedutil, nf_nat_ftp)
 
-- [ ] **Status**: Not started
+- [x] **Status**: Resolved (`schedutil` is built-in `=y`, not a loadable module)
 - **Severity**: P3 — Suboptimal CPU frequency scaling, no FTP NAT
 - **Symptom**:
   ```
   systemd-modules-load: Failed to find module 'cpufreq_schedutil'
   systemd-modules-load: Failed to find module 'nf_nat_ftp'
   ```
-- **Root Cause**: Modules not compiled in the custom kernel. `cpufreq_schedutil` is needed for the `schedutil` governor set in `power.nix`. Without it, the system falls back to another governor.
-- **Fix**: Add to `kernel.nix` configurePhase:
+- **Root Cause**: `cpufreq_schedutil` is compiled **built-in**
+  (`CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y`) — it is NOT a loadable module.
+  The `systemd-modules-load` error is cosmetic and expected. The `schedutil`
+  governor is confirmed active on all 12 cores. `nf_nat_ftp` is still missing
+  if FTP NAT is needed.
+- **Fix**: `schedutil` requires no fix (built-in). For `nf_nat_ftp`, add to `kernel.nix` configurePhase if FTP NAT is needed:
   ```nix
-  ./scripts/config --module CPU_FREQ_GOV_SCHEDUTIL
   ./scripts/config --module NF_NAT_FTP
   ```
 - **Test**:
@@ -411,6 +425,50 @@ We are running testing on Ubuntu first to identify working configurations, then 
   cat /sys/devices/system/cpu/cpufreq/policy*/scaling_governor  # Should say 'schedutil'
   lsmod | grep cpufreq
   ```
+
+---
+
+### Issue 13: No swap configured (30 GiB RAM, zero swap)
+
+- [/] **Status**: Blocked — `CONFIG_ZRAM` is not set in the custom kernel.
+  NixOS `zramSwap` module requires kernel ZRAM support. **Fixed**: added `CONFIG_ZRAM=m` and
+  `CONFIG_ZRAM_DEF_COMP_ZSTD=y` to `kernel.nix`. Requires kernel rebuild to take effect.
+- **Severity**: P1 — OOM risk under heavy workloads
+- **Symptom**: `free -h` showed 0 B swap. 30 GiB RAM with no swap partition or zram.
+- **Root Cause**: `power.nix` only configured governor and power-profiles-daemon. Orion had zram but Zenbook didn't.
+- **Fix**: Added `zramSwap = { enable = true; algorithm = "zstd"; memoryPercent = 100; };` to `power.nix`, matching Orion's configuration.
+- **File**: `nixos/hosts/zenbook/power.nix`
+- **Test**:
+  ```bash
+  free -h           # Should show ~30G swap
+  zramctl           # Should show zstd algorithm
+  swapon --show     # Should list /dev/zram0
+  ```
+
+---
+
+### Issue 14: `efi=noruntime` blocks fwupd firmware updates
+
+- [/] **Status**: In progress — `efi-runtime-test` specialisation boot entry added for safe testing
+- **Severity**: P1 — Firmware is 6 months stale (UX3407RA.312, 2025-11-07)
+- **Symptom**: `efibootmgr -v` fails, `fwupd` cannot stage UEFI capsule
+  updates, `/sys/firmware/efi/efivars/` inaccessible.
+- **Root Cause**: `efi=noruntime` in kernel params disables EFI runtime
+  services entirely. This was added at some point (no documented reason) and
+  blocks `SetVariable()` needed by `fwupd`, `efibootmgr`, and EFI pstore.
+- **Fix**: Added a `specialisation.efi-runtime-test` boot entry that removes
+  `efi=noruntime` from kernel params. Select "NixOS (efi-runtime-test)" from
+  systemd-boot to test. If stable for 24h, permanently remove `efi=noruntime`.
+- **File**: `nixos/hosts/zenbook/hardware/hardware-configuration.nix`
+- **Test**:
+  ```bash
+  # Boot into efi-runtime-test specialisation, then:
+  ls /sys/firmware/efi/efivars/ | wc -l   # Should be >99
+  sudo efibootmgr -v                       # Should succeed
+  sudo fwupdmgr get-devices                # Should list devices
+  sudo fwupdmgr get-updates                # Should show available updates
+  ```
+- **Risk**: Qualcomm's UEFI on X1E80100 has known bugs. If EFI runtime causes hangs, hard power cycle and re-add `efi=noruntime`.
 
 ---
 
@@ -471,7 +529,8 @@ power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
 ## Deployment Plan
 
 > [!IMPORTANT]
-> **Current state**: Gen 4 is bootable but has errors. Gen 5+ require reinstall via nixos-anywhere due to disko partition changes (new 16MB pstore partition).
+> **Current state**: Gen 6 is current (2026-06-06). ramoops and netconsole verified working.
+> zram swap requires kernel rebuild (CONFIG_ZRAM was missing). pstore-blk label fix pending rebuild.
 
 ### Next Steps
 
@@ -479,12 +538,16 @@ power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
 - [ ] Boot zenbook from NixOS live installer USB
 - [ ] SSH to installer and run nixos-anywhere with `--phases disko,install --build-on remote`
 - [ ] Reboot into new system
-- [ ] Verify ramoops: `dmesg | grep ramoops` — no uncorrectable errors, `0x200000@0xb7000000`
+- [x] Verify ramoops: `dmesg | grep ramoops` — ✅ `ecc: 0`, `0x200000@0xb7000000`, NO uncorrectable errors
 - [ ] Verify pstore: `ls /sys/fs/pstore/`
+- [ ] Verify pstore-blk: `dmesg | grep pstore_blk` — partition label fix pending rebuild
 - [ ] Test pmsg persistence: write → reboot → read
-- [ ] Verify netconsole: check `/var/log/netconsole-zenbook.log` on JONS
+- [x] Verify netconsole systemd service: `systemctl status netconsole` — ✅ active, IP `10.10.1.90`, logging started
+- [ ] Verify netconsole on JONS: check `/var/log/netconsole-zenbook.log`
 - [ ] Controlled panic test (`echo c > /proc/sysrq-trigger`) to verify full capture pipeline
-- [ ] Validate pstore-blk partition exists: `lsblk | grep pstore`
+- [x] Validate pstore-blk partition exists: `lsblk | grep pstore` — ✅ `nvme0n1p2 16M disk-main-pstore`
+- [ ] Verify zram swap: `free -h` — ⚠️ currently 0B (CONFIG_ZRAM missing, fix pending kernel rebuild)
+- [ ] Test efi-runtime-test specialisation: boot into it, run `efibootmgr -v` — specialisation confirmed present
 
 ---
 
@@ -520,6 +583,7 @@ power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
 - ✅ Keyboard/Touchpad (I2C HID)
 - ✅ Thermals (GPU 33-34°C idle, CPU 37-39°C idle)
 - 🔴 Stability — hard reboots under sustained CPU or GPU load
-- 🔴 Crash capture — pstore/ramoops non-functional (fix deployed, pending verify)
+- ✅ Crash capture — ramoops working (ecc: 0), netconsole active (systemd service), pstore-blk label fix pending
+- ⚠️ Swap — zram configured but `CONFIG_ZRAM` missing from kernel (fix pending rebuild)
 - ✅ Battery — capacity and charging status fully functional when ADSP is started post-boot
 - ✅ Boot (systemd-boot, systemd initrd, clean reboots when not under load)

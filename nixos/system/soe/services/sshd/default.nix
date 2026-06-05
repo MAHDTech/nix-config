@@ -4,7 +4,14 @@
 
   environment.systemPackages = with pkgs; [ ];
 
-  services.sshd = {
+  services.openssh = {
     enable = true;
+
+    settings = {
+      # Security hardening: key-based auth only
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
   };
 }
