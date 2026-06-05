@@ -1,15 +1,10 @@
-{ lib, ... }:
+{ ... }:
 {
 
   networking = {
     hostName = "ZENBOOK";
     hostId = "def00003";
   };
-
-  # Enable auto-upgrades but disable the timer to prevent automatic boot-time runs.
-  # This keeps the service file valid for manual triggering via 'sudo systemctl start nixos-upgrade'.
-  system.autoUpgrade.enable = lib.mkForce true;
-  systemd.timers.nixos-upgrade.enable = lib.mkForce false;
 
   imports = [
     # Load hardware specific configuration.
