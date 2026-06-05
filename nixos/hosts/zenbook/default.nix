@@ -7,7 +7,7 @@
   };
 
   # Disable automatic upgrades to prevent immediate 100% CPU spikes on boot (PMIC overcurrent safety)
-  system.autoUpgrade.enable = false;
+  system.autoUpgrade.enable = lib.mkForce false;
 
   imports = [
     # Load hardware specific configuration.
