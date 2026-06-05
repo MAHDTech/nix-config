@@ -103,6 +103,13 @@ let
       ./scripts/config --enable CGROUPS
       ./scripts/config --enable SECCOMP
 
+      # --- BTRFS crypto dependencies (not in CIX defconfig) ---
+      # NixOS uses BTRFS with crc32c checksums; blake2b and xxhash are also
+      # required as loadable modules for the initrd to mount the root filesystem.
+      ./scripts/config --module CRYPTO_BLAKE2B
+      ./scripts/config --module CRYPTO_CRC32C
+      ./scripts/config --module CRYPTO_XXHASH
+
       # --- NixOS filesystem codepage support (not in CIX defconfig) ---
       ./scripts/config --module NLS_CP437
       ./scripts/config --module NLS_UTF8
