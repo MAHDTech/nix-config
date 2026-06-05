@@ -123,7 +123,7 @@ let
       ./scripts/config --set-val DRM_PANEL_EDP y
       ./scripts/config --set-val DRM_PANEL_SIMPLE y
       ./scripts/config --set-val DRM_PANEL_SAMSUNG_ATNA33XC20 y
-      ./scripts/config --set-val DRM_MSM y
+      ./scripts/config --module DRM_MSM
       ./scripts/config --set-val DRM_SCHED y
 
       # DRM syncobj: required by Turnip (freedreno Vulkan driver) for GPU command

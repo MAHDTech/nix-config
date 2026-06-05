@@ -2,8 +2,12 @@
   lib,
   pkgs,
   inputs,
+  config,
   ...
 }:
+let
+  isInstaller = config.networking.hostName == "installer-zenbook";
+in
 {
   imports = [ ];
 
@@ -50,6 +54,26 @@
         "qcom_spmi_regulator"
         "qcom_geni_se"
 
+        # Keyboard and Touchpad (I2C HID — critical for built-in laptop input)
+        "i2c_hid"
+        "i2c_hid_of"
+        "i2c_qcom_geni"
+        "hid_multitouch"
+        "evdev"
+
+        # Filesystems
+        # vfat/fat: required for the ESP (/boot) — CONFIG_VFAT_FS is =m in the
+        # defconfig. With includeDefaultModules=false these must be explicit.
+        "vfat"
+        "fat"
+        "iso9660"
+        "squashfs"
+        "overlay"
+        "loop"
+        "btrfs"
+        "ext4"
+      ]
+      ++ lib.optionals (!isInstaller) [
         # USB transceivers, PHYs, and PMIC power state mapping (required for USB ports)
         "phy_qcom_qmp_usb"
         "phy_snps_eusb2"
@@ -67,18 +91,12 @@
         "ucsi_glink"
         "typec_ucsi"
 
-        # Keyboard and Touchpad (I2C HID — critical for built-in laptop input)
-        "i2c_hid"
-        "i2c_hid_of"
-        "i2c_qcom_geni"
-        "hid_multitouch"
-        "evdev"
-
         # WiFi/BT power sequencing
         # ath12k_wifi7_pci: alexVinarskis patch set reorganises ath12k into a wifi7/
         # subdirectory. Confirmed on live device: driver is ath12k_wifi7_pci.
         "ath12k_wifi7_pci"
         "pwrseq_qcom_wcn"
+        "qcom_q6v5_pas"
 
         # Early display — drm panel drivers are forced =y (built-in) in kernel.nix.
         # Note: drm_simpledrm is NOT a separate loadable module in this kernel
@@ -87,20 +105,8 @@
         "drm_panel_edp"
         "drm_panel_simple"
         "drm_panel_samsung_atna33xc20"
-
-        # Filesystems
-        # vfat/fat: required for the ESP (/boot) — CONFIG_VFAT_FS is =m in the
-        # defconfig. With includeDefaultModules=false these must be explicit.
-        "vfat"
-        "fat"
-        "iso9660"
-        "squashfs"
-        "overlay"
-        "loop"
-        "btrfs"
-        "ext4"
       ];
-      kernelModules = [
+      kernelModules = lib.optionals (!isInstaller) [
         "msm"
       ];
 
@@ -111,10 +117,7 @@
       ];
     };
 
-    blacklistedKernelModules = [
-      "typec_thunderbolt"
-      "thunderbolt"
-    ];
+    blacklistedKernelModules = [ ];
 
     kernelParams = [
       "clk_ignore_unused"
@@ -215,6 +218,9 @@
             cp $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14/
           fi
         done
+
+        # Decompress any .zst files we copied to ensure they are raw .fw/bin files
+        find $out -name "*.zst" -exec ${pkgs.zstd}/bin/zstd -d --rm {} \;
 
         # Make files writeable so we can remove them
         chmod -R +w $out
