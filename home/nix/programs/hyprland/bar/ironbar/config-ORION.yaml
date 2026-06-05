@@ -6,7 +6,7 @@
 icon_theme: "Zafiro-icons-Light"
 
 monitors:
-  DP-1:
+  DP-3:
     - name: "top"
       popup_autohide: false
       position: "top"
