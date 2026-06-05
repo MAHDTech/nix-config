@@ -55,152 +55,87 @@ let
     # Enable Armv8 Cryptography Extensions (AES/NEON) to fix crypto/aegis128-neon-inner assembler failures
     NIX_CFLAGS_COMPILE = "-march=armv8-a+crypto";
 
-    # Apply all 32 enablement patches sequentially
+    # Apply all 32 CIX enablement patches sequentially
     prePatch = ''
       echo "Applying CIX mainline patches from ${cixPatches}..."
       for patch in ${cixPatches}/patches-7.0/*.patch; do
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
-
-      echo "Applying custom fixed regulator ACPI match patch..."
-      patch -p1 < ${./files/patches/fixed-regulator-acpi.patch}
     '';
 
     configurePhase = ''
       patchShebangs scripts
       patchShebangs tools
 
-      # ── Phase 1: Load defconfig and resolve Kconfig defaults ──────────────
-      # Use our whitelisted local defconfig (Automated Hardware Profile)
-      cp ${./files/config/orion.defconfig} .config
+      # ── Phase 1: Load CIX's official defconfig ──────────────────────────────
+      # Use CIX Technology's tested defconfig for the Orion O6 / Sky1 SoC.
+      # This is a purpose-built ~3,000-option config that includes all CIX
+      # display (DRM_CIX, LINLONDP, TRILIN_DPSUB), USB-C (CDNSP, RTS5453,
+      # TYPEC=y, UCSI), PHY (CIX_USBDP), GPU (PANTHOR), audio (HDA CIX),
+      # and peripheral drivers in a validated configuration.
+      cp ${cixPatches}/config/config-7.0.defconfig .config
 
-      # Single olddefconfig pass: resolve the full Kconfig dependency tree
-      # against the defconfig baseline. All CIX patch-introduced symbols
-      # get their default values here.
+      # Single olddefconfig pass: resolve the full Kconfig dependency tree.
       make ARCH=arm64 olddefconfig
 
-      # ── Phase 2: Apply ALL config overrides ───────────────────────────────
+      # ── Phase 2: NixOS-specific overrides ───────────────────────────────────
       # IMPORTANT: All ./scripts/config calls MUST go AFTER olddefconfig.
-      # scripts/config does raw text edits that bypass Kconfig dependency
-      # resolution. Placing them before olddefconfig causes it to silently
-      # discard options whose 'depends on' chains aren't satisfied.
-      # By placing them after, these edits become the final word.
-      # Any genuine dependency issues will surface as compile errors
-      # (which is preferable to silent config drops).
+      # Only options that differ from CIX's defconfig or are NixOS-specific
+      # need to be set here.
 
-      # --- CIX Display Pipeline (Linlon/Trilinear DP) ---
-      ./scripts/config --module DRM_CIX
-      ./scripts/config --module DRM_LINLONDP
-      ./scripts/config --enable DRM_LINLONDP_CLOCK_FIXED
-      ./scripts/config --module DRM_TRILIN_DP_CIX
-      ./scripts/config --module DRM_TRILIN_DPSUB
-      ./scripts/config --module DRM_TRILIN_CADENCE_PHY
-      ./scripts/config --module DRM_CIX_EDP_PANEL
-
-      # --- GPU and Framebuffer ---
+      # --- Fallback display (not in CIX defconfig) ---
       ./scripts/config --enable DRM_SIMPLEDRM
-      ./scripts/config --enable DRM_PANEL_SIMPLE
-      ./scripts/config --enable DRM_PANEL_EDP
-      ./scripts/config --module DRM_PANTHOR
 
-      # --- CIX PWM (needed for eDP backlight) ---
-      ./scripts/config --enable PWM_SKY1
+      # --- Display pipeline extras (not in CIX defconfig, may be auto-selected) ---
+      ./scripts/config --enable DRM_LINLONDP_CLOCK_FIXED
+      ./scripts/config --module DRM_TRILIN_CADENCE_PHY
 
-      # --- CIX PHY drivers (USB-C DP alt mode, PCIe, USB2/3) ---
-      ./scripts/config --enable PHY_CIX_USBDP
-      ./scripts/config --disable PHY_CIX_PCIE
-      ./scripts/config --disable PHY_CIX_USB2
-      ./scripts/config --disable PHY_CIX_USB3
-
-      # --- Cadence USBSSP Platform and CIX Sky1 glue drivers ---
-      ./scripts/config --disable USB_CDNSP
-      ./scripts/config --disable USB_CDNSP_PCI
-      ./scripts/config --disable USB_CDNSP_GADGET
-      ./scripts/config --disable USB_CDNSP_HOST
-      ./scripts/config --disable USB_CDNSP_SKY1
-
-      # --- CIX ACPI USB scanning (route USB controllers to cdnsp-sky1) ---
-      ./scripts/config --disable CIX_ACPI_USB_SCAN
-
-      # --- USB Type-C ---
-      ./scripts/config --enable TYPEC
-
-      # --- TPM 2.0 ---
-      ./scripts/config --enable TCG_TPM
-      ./scripts/config --enable TCG_TIS
-      ./scripts/config --enable TCG_TIS_CORE
-
-      # --- SMMU bypass (prevent early display DMA faults/interrupt storm) ---
-      ./scripts/config --disable ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT
-
-      # --- Strict devmem for kernel security (userspace workaround removed) ---
+      # --- Strict devmem for kernel security (not in CIX defconfig) ---
       ./scripts/config --enable STRICT_DEVMEM
-      ./scripts/config --enable IO_STRICT_DEVMEM
 
       # --- NVMe: force built-in for robust early-boot root mount ---
+      # CIX defconfig has NVMe as module; NixOS needs built-in for root on NVMe
       ./scripts/config --enable BLK_DEV_NVME
 
-      # --- SBSA Generic Watchdog: demote to module for blacklist effectiveness ---
-      ./scripts/config --module ARM_SBSA_WATCHDOG
-
-      # --- CIX DSP communications (HiFi5 DSP IPC/mailbox, prereq for future HDMI/DP audio) ---
-      ./scripts/config --module CIX_DSP
-
-      # --- NixOS filesystem and installer requirements ---
-      ./scripts/config --enable EXT4_FS
-      ./scripts/config --enable DEVTMPFS
+      # --- NixOS boot requirements (not in CIX defconfig) ---
       ./scripts/config --enable DEVTMPFS_MOUNT
-      ./scripts/config --module ISO9660_FS
-      ./scripts/config --module SQUASHFS
-      ./scripts/config --module OVERLAY_FS
-      ./scripts/config --module BLK_DEV_LOOP
-      ./scripts/config --enable MD
-      ./scripts/config --enable BLK_DEV_DM
-      ./scripts/config --enable DM_CRYPT
-      ./scripts/config --module VFAT_FS
-      ./scripts/config --module FAT_FS
-      ./scripts/config --module NLS_CP437
-      ./scripts/config --module NLS_ISO8859_1
-      ./scripts/config --module NLS_UTF8
-
-      # --- systemd support requirements ---
       ./scripts/config --enable CGROUPS
-      ./scripts/config --enable AUTOFS_FS
-      ./scripts/config --enable TMPFS_POSIX_ACL
       ./scripts/config --enable SECCOMP
 
-      # --- USB Ethernet drivers (UGREEN CR111 and common USB-C docks) ---
-      ./scripts/config --enable USB_NET_DRIVERS
+      # --- NixOS filesystem codepage support (not in CIX defconfig) ---
+      ./scripts/config --module NLS_CP437
+      ./scripts/config --module NLS_UTF8
+
+      # --- USB Ethernet drivers (specific adapters not in CIX defconfig) ---
       ./scripts/config --module USB_NET_AX88179_178A
-      ./scripts/config --module USB_RTL8152
-      ./scripts/config --module USB_USBNET
       ./scripts/config --module USB_NET_CDCETHER
       ./scripts/config --module USB_NET_CDC_NCM
-      ./scripts/config --module USB_NET_RNDIS_HOST
 
       # --- Disable debug symbols to reduce build size and compile time ---
+      # CIX defconfig enables BTF and DWARF5; disable to save ~500MB build output
       ./scripts/config --disable DEBUG_INFO
       ./scripts/config --disable DEBUG_INFO_BTF
       ./scripts/config --disable DEBUG_INFO_DWARF5
       ./scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
 
-      # --- Disable irrelevant PCIe GPU drivers ---
+      # --- Disable irrelevant PCIe GPU drivers (CIX defconfig enables these) ---
       ./scripts/config --disable DRM_AMDGPU
       ./scripts/config --disable DRM_NOUVEAU
       ./scripts/config --disable DRM_RADEON
 
       # ── Phase 3: Validation gate ─────────────────────────────────────────
-      # Verify critical CIX options survived configuration.
+      # Verify critical CIX and NixOS options survived configuration.
       # If any are missing, the build fails immediately rather than
       # producing a kernel with silently disabled drivers.
       echo "Validating kernel configuration..."
       MISSING=0
       for opt in \
         DRM_CIX DRM_LINLONDP DRM_TRILIN_DPSUB DRM_TRILIN_DP_CIX \
-        DRM_TRILIN_CADENCE_PHY DRM_CIX_EDP_PANEL DRM_PANTHOR \
-        PHY_CIX_USBDP \
-        PWM_SKY1 CIX_DSP; do
+        DRM_CIX_EDP_PANEL DRM_PANTHOR \
+        PHY_CIX_USBDP PWM_SKY1 CIX_DSP \
+        USB_CDNSP TYPEC TYPEC_RTS5453 \
+        BLK_DEV_NVME; do
         if ! grep -q "CONFIG_''${opt}=[ym]" .config; then
           echo "FATAL: CONFIG_''${opt} is not enabled in .config!" >&2
           MISSING=$((MISSING + 1))

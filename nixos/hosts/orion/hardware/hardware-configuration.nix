@@ -91,8 +91,10 @@ in
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
       # Required on CIX P1 to avoid slow boot and hardware init races
       "clk_ignore_unused"
-      # Enable SMMUv3 bypass for unmapped early DMA streams (prevents interrupt storm)
-      "arm-smmu-v3.disable_bypass=0"
+      # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
+      # BIOS 1.2.1 may have fixed the IORT table. Re-add if NVMe crashes:
+      #   "arm-smmu-v3.disable_bypass=0"
+      # and add to kernel.nix: ./scripts/config --disable ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT
       # NOTE: module_blacklist=sbsa_gwdt removed — sbsa_gwdt is built-in (not a module)
       # so blacklisting it has no effect. nowatchdog handles watchdog suppression instead.
     ];
