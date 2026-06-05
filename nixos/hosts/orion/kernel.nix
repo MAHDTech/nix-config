@@ -114,14 +114,14 @@ let
       ./scripts/config --disable PHY_CIX_USB3
 
       # --- Cadence USBSSP Platform and CIX Sky1 glue drivers ---
-      ./scripts/config --enable USB_CDNSP
-      ./scripts/config --enable USB_CDNSP_PCI
-      ./scripts/config --enable USB_CDNSP_GADGET
-      ./scripts/config --enable USB_CDNSP_HOST
-      ./scripts/config --enable USB_CDNSP_SKY1
+      ./scripts/config --disable USB_CDNSP
+      ./scripts/config --disable USB_CDNSP_PCI
+      ./scripts/config --disable USB_CDNSP_GADGET
+      ./scripts/config --disable USB_CDNSP_HOST
+      ./scripts/config --disable USB_CDNSP_SKY1
 
       # --- CIX ACPI USB scanning (route USB controllers to cdnsp-sky1) ---
-      ./scripts/config --enable CIX_ACPI_USB_SCAN
+      ./scripts/config --disable CIX_ACPI_USB_SCAN
 
       # --- USB Type-C ---
       ./scripts/config --enable TYPEC
@@ -200,7 +200,7 @@ let
         DRM_CIX DRM_LINLONDP DRM_TRILIN_DPSUB DRM_TRILIN_DP_CIX \
         DRM_TRILIN_CADENCE_PHY DRM_CIX_EDP_PANEL DRM_PANTHOR \
         PHY_CIX_USBDP \
-        USB_CDNSP CIX_ACPI_USB_SCAN PWM_SKY1 CIX_DSP; do
+        PWM_SKY1 CIX_DSP; do
         if ! grep -q "CONFIG_''${opt}=[ym]" .config; then
           echo "FATAL: CONFIG_''${opt} is not enabled in .config!" >&2
           MISSING=$((MISSING + 1))

@@ -181,7 +181,8 @@ We are tracking the following upstream development items and firmware updates:
   configurePhase to place all edits after `olddefconfig` with validation gate.
   - [x] Diagnose root cause (audit session 2026-06-04)
   - [x] Implement fix in `kernel.nix`
-  - [x] Fix boot SError kernel panic by disabling `PHY_CIX_PCIE`/`USB2`/`USB3` in `kernel.nix`
+  - [x] Fix first boot SError kernel panic by disabling `PHY_CIX_PCIE`/`USB2`/`USB3` in `kernel.nix`
+  - [x] Fix second boot SError kernel panic by disabling `USB_CDNSP` and `CIX_ACPI_USB_SCAN` in `kernel.nix`
   - [ ] Rebuild kernel and deploy
   - [ ] Verify CIX display modules (`linlon-dp`, `trilin-dpsub`) load on boot
   - [ ] Verify native display output (not simpledrm fallback)
