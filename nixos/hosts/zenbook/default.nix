@@ -6,8 +6,10 @@
     hostId = "def00003";
   };
 
-  # Disable automatic upgrades to prevent immediate 100% CPU spikes on boot (PMIC overcurrent safety)
-  system.autoUpgrade.enable = lib.mkForce false;
+  # Enable auto-upgrades but disable the timer to prevent automatic boot-time runs.
+  # This keeps the service file valid for manual triggering via 'sudo systemctl start nixos-upgrade'.
+  system.autoUpgrade.enable = lib.mkForce true;
+  systemd.timers.nixos-upgrade.enable = lib.mkForce false;
 
   imports = [
     # Load hardware specific configuration.
