@@ -63,7 +63,12 @@
   ];
 
   environment.sessionVariables = {
-    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/platform-CIXH5010:03-card:/dev/dri/by-path/platform-CIXH5000:00-card";
-    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/platform-CIXH5010:03-card:/dev/dri/by-path/platform-CIXH5000:00-card";
+    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/cix-display:/dev/dri/cix-gpu";
+    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/cix-display:/dev/dri/cix-gpu";
   };
+
+  services.udev.extraRules = ''
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="CIXH5010:03", SYMLINK+="dri/cix-display"
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="CIXH5000:00", SYMLINK+="dri/cix-gpu"
+  '';
 }
