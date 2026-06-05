@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   # Snapdragon X Elite (ARM64) power management
   services = {
