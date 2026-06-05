@@ -13,6 +13,14 @@
   # For ARM, schedutil is usually preferred over performance/powersave
   powerManagement.cpuFreqGovernor = lib.mkForce "schedutil";
 
+  # zram swap for memory pressure relief
+  # Laptop has 30 GiB RAM — zram gives ~60 GiB effective with zstd compression
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 100;
+  };
+
   # Limit CPU max frequency to prevent PMIC overcurrent resets under full 12-core load
   systemd.services.limit-cpu-freq = {
     description = "Limit CPU max frequency to prevent overcurrent crashes";

@@ -150,6 +150,23 @@ Due to the pre-production/early-stage nature of the CIX P1 UEFI firmware and ker
 - **Root Cause**: Desktop NixOS module defines a battery suspend timer; Orion O6 has no battery.
 - **Fix**: Disable the timer if possible, or ignore.
 
+### 6. HDMI/DP Audio — ASoC ENODEV Errors
+
+- **Severity**: Medium (no HDMI/DP audio output)
+- **Symptom**: `hdmi-audio-codec hdmi-audio-codec.{0,1,2,4}: ASoC error (-19)` at boot on all HDMI/DP ports
+- **Root cause**: `hdmi-audio-codec` platform device registered by linlon-dp display driver, but no matching CIX ASoC codec driver (`SND_HDA_CIX_IPBLOQ`) exists in patches-7.0
+- **Impact**: Audio output limited to Bluetooth. HDMI/DP audio non-functional.
+- **Fix**: Waiting on CIX to upstream `SND_HDA_CIX_IPBLOQ` and `SND_SOC_CIX` drivers
+- **Workaround**: None — platform device, cannot be blacklisted or deferred
+
+### 7. Display Flip Timeouts (Intermittent)
+
+- **Severity**: Low-Medium (intermittent, can cause brief display freezes)
+- **Symptom**: `linlondp CIXH5010:03: wait pipe0 flip done timeout` (3× at boot, occasional at runtime)
+- **Root cause**: CIX Linlon display processor DRM driver timing issue in page flip completion
+- **Mitigation**: `DRM_LINLONDP_CLOCK_FIXED` already enabled in kernel config
+- **Fix**: Waiting on CIX driver update in future patches release
+
 ---
 
 ## 4. What We Are Waiting On

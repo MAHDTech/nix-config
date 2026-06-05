@@ -96,10 +96,16 @@ in
       # and add to kernel.nix: ./scripts/config --disable ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT
       # NOTE: module_blacklist=sbsa_gwdt removed — sbsa_gwdt is built-in (not a module)
       # so blacklisting it has no effect. nowatchdog handles watchdog suppression instead.
+      # Crash capture: persistent store on dedicated 16M partition + panic escalation
+      "pstore_blk.blkdev=/dev/disk/by-partlabel/pstore"
+      "panic_on_oops=1"
+      "panic=30"
+      "panic_print=0x7ff"
     ];
 
     # 5GbE and network performance tuning
     kernel.sysctl = {
+      # 5GbE and network performance tuning
       "net.core.rmem_max" = 16777216;
       "net.core.wmem_max" = 16777216;
       "net.core.rmem_default" = 1048576;
@@ -108,6 +114,10 @@ in
       "net.ipv4.tcp_wmem" = "4096 1048576 16777216";
       "net.core.default_qdisc" = "fq";
       "net.ipv4.tcp_congestion_control" = "bbr";
+      # Crash capture: ensure panic settings survive into running system
+      "kernel.panic_on_oops" = 1;
+      "kernel.panic" = 30;
+      "kernel.panic_print" = 2047; # 0x7ff — all info
     };
 
     # Modern boot management

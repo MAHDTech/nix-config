@@ -98,6 +98,15 @@ let
       # CIX defconfig has NVMe as module; NixOS needs built-in for root on NVMe
       ./scripts/config --enable BLK_DEV_NVME
 
+      # --- Persistent crash capture via block device (pstore-blk) ---
+      # Captures panic/oops/console logs to a dedicated 16M raw partition
+      # Survives reboot and power loss (unlike ramoops which needs reserved RAM)
+      ./scripts/config --enable PSTORE
+      ./scripts/config --enable PSTORE_BLK
+      ./scripts/config --enable PSTORE_CONSOLE
+      ./scripts/config --enable PSTORE_PMSG
+      ./scripts/config --enable PSTORE_RAM
+
       # --- NixOS boot requirements (not in CIX defconfig) ---
       ./scripts/config --enable DEVTMPFS_MOUNT
       ./scripts/config --enable CGROUPS
@@ -144,7 +153,7 @@ let
         DRM_CIX_EDP_PANEL DRM_PANTHOR \
         PHY_CIX_USBDP PWM_SKY1 CIX_DSP \
         USB_CDNSP TYPEC TYPEC_RTS5453 \
-        BLK_DEV_NVME; do
+        BLK_DEV_NVME PSTORE PSTORE_BLK; do
         if ! grep -q "CONFIG_''${opt}=[ym]" .config; then
           echo "FATAL: CONFIG_''${opt} is not enabled in .config!" >&2
           MISSING=$((MISSING + 1))

@@ -65,9 +65,11 @@
   systemd.services.nixos-upgrade = {
     environment = {
       NIXPKGS_ALLOW_BROKEN = "0";
-      NIXPKGS_ALLOW_INSECURE = "1";
       NIXPKGS_ALLOW_UNFREE = "1";
+      # NIXPKGS_ALLOW_INSECURE removed — use nixpkgs.config.permittedInsecurePackages instead
     };
+    # Prevent indefinite hangs during unattended upgrades
+    serviceConfig.TimeoutStartSec = "2h";
   };
 
   system = {
@@ -82,10 +84,9 @@
 
       flags = [
         "--accept-flake-config"
-        "--impure"
-        "--refresh"
         "--show-trace"
-        "--verbose"
+        # Removed: --impure (legacy, breaks reproducibility)
+        # Removed: --refresh (forces full NAR info re-download, causes timeouts)
       ];
 
       dates = "03:00";

@@ -148,18 +148,19 @@ in
       "panic_print=0x7ff"
       # Full kernel log verbosity for crash forensics
       "loglevel=7"
+      # pstore-blk: persistent crash store on dedicated 16M partition (survives reboot + power loss)
+      "pstore_blk.blkdev=/dev/disk/by-partlabel/pstore"
     ];
 
     # Speaker safety interlock — required by snd-soc-x1e80100 driver
     extraModprobeConfig = ''
       options snd-soc-x1e80100 i_accept_the_danger=1
-      options netconsole netconsole=@/enu2c2,6666@10.10.1.97/
+      # SoundWire boot ordering: ensure ADSP remoteproc loads before speaker codec
+      softdep snd-soc-wsa884x pre: qcom_q6v5_pas
     '';
 
-    kernelModules = [
-      "netconsole"
-    ]
-    ++ lib.optionals (!isInstaller) [
+    # netconsole moved to systemd service (netconsole.nix) — loads after network is up
+    kernelModules = lib.optionals (!isInstaller) [
       "qcom_q6v5_pas"
       "msm"
       "thunderbolt"
@@ -269,5 +270,15 @@ in
     "kernel.panic" = 30;
     "kernel.panic_print" = 2047; # 0x7ff — all info
     "kernel.sysrq" = 1; # enable all sysrq functions for emergency debugging
+  };
+
+  # EFI runtime test specialisation — select from systemd-boot menu to test
+  # removing efi=noruntime. If stable, efi=noruntime can be permanently removed
+  # to re-enable fwupd firmware updates and EFI pstore.
+  specialisation.efi-runtime-test.configuration = {
+    boot.kernelParams = lib.mkForce (
+      builtins.filter (p: p != "efi=noruntime") config.boot.kernelParams
+    );
+    system.nixos.tags = [ "efi-runtime-test" ];
   };
 }

@@ -23,6 +23,13 @@
                 ];
               };
             };
+            pstore = {
+              priority = 2;
+              name = "pstore";
+              size = "16M";
+              # Raw partition — pstore-blk uses the block device directly
+              # Configure via: boot.kernelParams = [ "pstore_blk.blkdev=/dev/disk/by-partlabel/pstore" ]
+            };
             root = {
               size = "100%";
               content = {
