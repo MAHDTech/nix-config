@@ -11,6 +11,10 @@ let
   # EDK2 BIOS version for the BIOS update script
   # TODO: Update when Radxa ships EDK2 with the IORT SMMU fix
   orionBiosVersion = "1.2.1";
+
+  # Detect installer mode — when true, only load critical drivers
+  # (NVMe, USB, ethernet) and skip GPU, display, NPU, VPU, Type-C
+  isInstaller = config.networking.hostName == "installer-orion";
 in
 {
   imports = [ ];
@@ -28,7 +32,7 @@ in
       in
       lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 
-    extraModulePackages = [
+    extraModulePackages = lib.optionals (!isInstaller) [
       (config.boot.kernelPackages.callPackage ../packages/cix-npu-driver.nix { })
       (config.boot.kernelPackages.callPackage ../packages/cix-vpu-driver.nix { })
     ];
@@ -57,7 +61,10 @@ in
     };
 
     # Load after boot (not needed during initrd)
-    kernelModules = [
+    # In installer mode, skip all non-critical modules — GPU, display, NPU,
+    # VPU, and Type-C are unnecessary for SSH-based nixos-anywhere installs
+    # and the display driver (linlon-dp) causes flip timeout errors.
+    kernelModules = lib.optionals (!isInstaller) [
       "kvm"
       "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
       "aipu" # CIX NPU
@@ -79,7 +86,15 @@ in
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
     # Belt-and-suspenders: NixOS blacklistedKernelModules option not working on live device;
     # also add via module_blacklist= kernel param below
-    blacklistedKernelModules = [ "panfrost" ];
+    blacklistedKernelModules = [
+      "panfrost"
+    ]
+    ++ lib.optionals isInstaller [
+      # During install, also blacklist drivers that cause errors or are unnecessary
+      "panthor"
+      "linlon_dp"
+      "trilin_dpsub"
+    ];
 
     kernelParams = [
       "console=ttyAMA0,115200n8"
