@@ -62,4 +62,8 @@ in
       gid = 1000;
     };
   };
+
+  systemd.services."home-manager-${username}" = {
+    serviceConfig.SupplementaryGroups = [ "onepassword-secrets" ];
+  };
 }
