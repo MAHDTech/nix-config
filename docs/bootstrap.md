@@ -203,3 +203,21 @@ ssh root@${NIXOS_TARGET_IP} reboot
 ```bash
 systemctl status onepassword-secrets.service
 ```
+
+## 9. Upgrading
+
+The `nixos-upgrade` service runs daily, but you can also trigger it manually:
+
+```bash
+sudo systemctl restart nixos-upgrade & sudo journalctl -fu nixos-upgrade
+```
+
+Or, push from another host:
+
+```bash
+nixos-rebuild switch \
+	--flake $NIXOS_HOSTNAME \
+	--target-host ${NIXOS_TARGET_IP} \
+	--use-remote-sudo \
+	--build-host localhost
+```

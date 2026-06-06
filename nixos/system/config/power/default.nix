@@ -12,10 +12,8 @@
   powerManagement = {
     enable = true;
 
-    # Enabling powertop will enable autotune.
+    # Don't enable powertop as it auto-enables autotune.
     powertop.enable = false;
-
-    cpuFreqGovernor = "performance";
 
     resumeCommands = ''
       echo "Resuming from suspend..."

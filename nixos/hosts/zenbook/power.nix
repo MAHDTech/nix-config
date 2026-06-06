@@ -1,17 +1,10 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 {
   # Snapdragon X Elite (ARM64) power management
   services = {
-
-    power-profiles-daemon.enable = lib.mkForce true;
-    tlp.enable = lib.mkForce false;
-
     # Override the battery device name to point to Snapdragon native path
     batteryNotifier.device = "qcom-battmgr-bat";
   };
-
-  # For ARM, schedutil is usually preferred over performance/powersave
-  powerManagement.cpuFreqGovernor = lib.mkForce "schedutil";
 
   # zram swap for memory pressure relief
   # Laptop has 30 GiB RAM — zram gives ~60 GiB effective with zstd compression

@@ -153,7 +153,7 @@ in
 
       # Safety check: Ensure we are running on the ORION host
       CURRENT_HOST=$(cat /etc/hostname 2>/dev/null || echo "UNKNOWN")
-      if [ "$CURRENT_HOST" != "ORION" ] && [ "$CURRENT_HOST" != "orion-installer" ]; then
+      if [ "$CURRENT_HOST" != "ORION" ] && [ "$CURRENT_HOST" != "installer-orion" ]; then
         echo "ERROR: This script is only intended to be run on the ORION host!"
         echo "Current host is: $CURRENT_HOST"
         exit 1

@@ -12,6 +12,6 @@
     ./smartd
     ./sshd
     ./systemd
-    ./tlp
+    ./ppd
   ];
 }

@@ -147,6 +147,11 @@ let
       ./scripts/config --disable DRM_NOUVEAU
       ./scripts/config --disable DRM_RADEON
 
+      # --- Disable irrelevant SoC architectures to optimize compile time ---
+      ./scripts/config --disable ARCH_QCOM
+      ./scripts/config --disable ARCH_TEGRA
+      ./scripts/config --disable ARCH_ROCKCHIP
+
       # ── Phase 3: Validation gate ─────────────────────────────────────────
       # Verify critical CIX and NixOS options survived configuration.
       # If any are missing, the build fails immediately rather than
