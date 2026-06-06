@@ -30,7 +30,7 @@ NIXOS_TARGET_IP="10.10.1.126"
 NIXOS_SSH_KEY="$HOME/.ssh/id_ed25519"
 
 # Your 1Password Service Account Token for this host (generated in Section 5)
-OPNIX_TOKEN="ov_token_..."
+OPNIX_TOKEN="ops_..."
 ```
 
 ---
