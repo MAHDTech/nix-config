@@ -516,7 +516,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 17: Home Manager fails — opnix token unreadable
 
-- [ ] **Status**: Open
+- [x] **Status**: ✅ Resolved
 - **Severity**: P2 — HM activation blocked, opnix secrets missing
 - **Symptom**: `home-manager-mahdtech.service` fails with:
   ```
@@ -530,14 +530,9 @@ We are running testing on Ubuntu first to identify working configurations, then 
   activation time (early boot, before user session).
 - **Also**: `pgrep: command not found` during HM activation
   (procps missing from system packages).
-- **Fix**: Either change opnix token to group-readable for the
-  service context, or ensure the HM service runs with correct
-  supplementary groups. Add `procps` to system packages.
-- **Test**:
-  ```bash
-  sudo systemctl restart home-manager-mahdtech.service
-  systemctl status home-manager-mahdtech.service
-  ```
+- **Fix**: Added `onepassword-secrets` to `SupplementaryGroups`
+  for `home-manager-mahdtech` service. Added `procps` to SOE
+  `environment.systemPackages`.
 
 ---
 
