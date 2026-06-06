@@ -466,21 +466,16 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 15: AppArmor not active — missing from LSM cmdline
 
-- [ ] **Status**: Open
+- [x] **Status**: ✅ Resolved
 - **Severity**: P1 — Security policy not enforced
 - **Symptom**: `cat /sys/kernel/security/lsm` shows only `capability`.
   `cat /sys/module/apparmor/parameters/enabled` returns `N`.
   `aa-status` not found.
-- **Root Cause**: Kernel has `CONFIG_SECURITY_APPARMOR=y` and
-  `CONFIG_DEFAULT_SECURITY_APPARMOR=y` compiled in, but the NixOS
-  systemd boot adds `lsm=landlock,yama,bpf` to the cmdline which
-  **overrides** the compiled-in default. `apparmor` is not in the
-  explicit `lsm=` list.
-- **Fix**: Add `apparmor` to the `lsm=` kernel parameter. NixOS
-  `security.apparmor.enable = true` should handle this, but the
-  explicit `lsm=` in the boot params takes precedence. May need
-  to add `"lsm=landlock,lockdown,yama,apparmor,bpf"` to
-  `boot.kernelParams`.
+- **Root Cause**: The AppArmor config `config/security/apparmor/default.nix`
+  was completely orphaned and never imported by the SOE.
+- **Fix**: Refactored AppArmor config to separate enablement from policies.
+  Created `soe/security/apparmor/default.nix` (imported by `soe/security/default.nix`)
+  which correctly sets `security.apparmor.enable = true` and `security.lsm = [ "apparmor" ]`.
 - **Test**:
   ```bash
   cat /sys/kernel/security/lsm          # Should include apparmor
