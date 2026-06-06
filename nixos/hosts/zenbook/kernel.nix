@@ -9,18 +9,15 @@ let
   kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "latest-zenbook";
     # Set version to match what linux-next reports to avoid mismatch
-    version = "7.1.0-rc5-next-20260528";
+    version = "7.1.0-rc6-next-20260605";
 
     enableParallelBuilding = true;
 
     # Pull the absolute latest bleeding edge where Zenbook support lives
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-      # Pin to rc5-based snapshot — rc6 (next-20260602) has a regression causing
-      # hard PMIC resets under sustained CPU load. Confirmed: installer kernel on
-      # next-20260528 survives 120s full CPU stress at 95°C; rc6 crashes at 35°C.
-      rev = "next-20260528";
-      sha256 = "sha256-86TmX6XmHk0pLorcK/ZQ5AHsGj/c6mKQlLdT0DX2ltA=";
+      rev = "next-20260605";
+      sha256 = "sha256-tkBYk1CSWonH8P2T3+SVX6mJF4RuTU4+35ZD42ff0Xw=";
     };
 
     nativeBuildInputs = with pkgs; [
@@ -55,13 +52,6 @@ let
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
-
-      echo "Fixing DTSI camera errors (camss/cci1/csiphy missing in this linux-next)..."
-      # Comment out the camera sections that refer to missing labels
-      sed -i '/&camss {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
-      sed -i '/&cci1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
-      sed -i '/&cci1_i2c1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
-      sed -i '/&csiphy4 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
 
       echo "Patching DRM_MSM Kconfig to select DRM_SYNCOBJ..."
       sed -i '/^config DRM_MSM$/a \\tselect DRM_SYNCOBJ\n\tselect DRM_SYNCOBJ_TIMELINE_EXPORT' drivers/gpu/drm/msm/Kconfig
@@ -246,7 +236,7 @@ let
 
     # satisfy the kernel modules expectations
     passthru = rec {
-      modDirVersion = "7.1.0-rc5-next-20260528";
+      modDirVersion = "7.1.0-rc6-next-20260605";
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];

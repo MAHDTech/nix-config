@@ -177,17 +177,6 @@ in
     };
   };
 
-  systemd.services.gpu-frequency-cap = {
-    description = "Limit Adreno GPU max frequency to prevent overcurrent crashes";
-    after = [ "systemd-udev-settle.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'if [ -f /sys/class/devfreq/3d00000.gpu/max_freq ]; then echo 390000000 > /sys/class/devfreq/3d00000.gpu/max_freq; fi'";
-      RemainAfterExit = true;
-    };
-  };
-
   hardware = {
     graphics.enable = true;
     deviceTree = {

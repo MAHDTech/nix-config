@@ -1,7 +1,7 @@
 # ASUS Zenbook A14 — NixOS Issue Tracker
 
 > Snapdragon X Elite (X1E80100 / UX3407RA) · Adreno X1-85 · aarch64
-> Kernel: linux-next `next-20260528` (pinned — rc6 regression) · Mesa 26.1.1 (freedreno) · NixOS 26.05
+> Kernel: linux-next `next-20260605` · Mesa 26.1.1 (freedreno) · NixOS 26.05
 
 Work through issues **one at a time** — build, test, verify, then check off before moving on.
 
@@ -138,7 +138,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 3: GPU frequency hard-capped at 390 MHz
 
-- [ ] **Status**: Not started
+- [/] **Status**: Testing removal of limits on `next-20260605`. Service `gpu-frequency-cap` has been removed.
 - **Severity**: P1 — GPU at ~31% max performance
 - **Symptom**: `cat /sys/class/devfreq/3d00000.gpu/max_freq` → `390000000`
 - **Root Cause**: `systemd.services.gpu-frequency-cap` in `hardware-configuration.nix`
@@ -327,10 +327,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 9: Razer Thunderbolt 5 Dock Ethernet regression (USB disconnect / Alt Mode negotiation failure)
 
-- [x] **Status**: Resolved (Removed `thunderbolt` from
-      `availableKernelModules` and blacklisted `thunderbolt` /
-      `typec_thunderbolt` to bypass Alt Mode lockups and force USB 3.x
-      fallback for the dock)
+- [/] **Status**: Upstream fixes (`ps883x` retimers and `UCSI_USB4_IMPLIES_USB`) integrated in `next-20260605`. Testing if Alt Mode lockups are resolved.
 - **Severity**: P0 — High-speed dock peripherals and Ethernet not detected
 - **Symptoms**:
   - The Razer TB5 Dock USB tree initializes during early boot but is disconnected as soon as the ADSP remoteproc boots and `pmic-glink` initiates Type-C port manager negotiation.
@@ -487,7 +484,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 16: Thunderbolt 5 dock drops to USB 2.0 full-speed
 
-- [ ] **Status**: Open — known from Ubuntu testing, persists on NixOS
+- [/] **Status**: Testing fix. Upstream fixes in `next-20260605` expected to resolve this.
 - **Severity**: P1 — No dock ethernet, no DP alt-mode
 - **Symptom**: Razer TB5 Dock (1532:0f53) enumerates on USB bus 5
   as full-speed. The entire USB tree disconnects at t=17s then
@@ -626,9 +623,7 @@ under NixOS.
 ## Deployment Plan
 
 > [!IMPORTANT]
-> **Current state**: Gen 1 (fresh install, 2026-06-06). Ramoops,
-> netconsole, zram all verified working. AppArmor and TB dock need
-> fixes.
+> **Current state**: Gen 2 (next-20260605 upgrade). Kernel updated, GPU limits removed, testing if PMIC hard resets re-occur.
 
 ### Next Steps
 
