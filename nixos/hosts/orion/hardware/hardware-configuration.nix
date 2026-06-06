@@ -28,14 +28,9 @@ in
     # Custom patched mainline v7.0 kernel is configured dynamically
     kernelPackages =
       let
-        kernelBuild = pkgs.callPackage ../kernel.nix { };
+        kernelBuild = pkgs.callPackage ../kernel { };
       in
       lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
-
-    extraModulePackages = lib.optionals (!isInstaller) [
-      (config.boot.kernelPackages.callPackage ../packages/cix-npu-driver.nix { })
-      (config.boot.kernelPackages.callPackage ../packages/cix-vpu-driver.nix { })
-    ];
 
     initrd = {
       availableKernelModules = [
@@ -76,10 +71,7 @@ in
       # USB-C Power Delivery and DisplayPort Alt Mode
       "typec"
       "typec_ucsi"
-      "ucsi_acpi"
       "typec_displayport"
-      # ACPI CPPC cpufreq
-      "acpi_cppc_cpufreq"
     ];
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)

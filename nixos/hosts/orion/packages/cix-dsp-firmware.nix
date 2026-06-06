@@ -8,7 +8,7 @@
 # Source: github.com/cixtech/cix_proprietary__cix_proprietary
 # Branch: cix_p1_k6.6_master (branch name contains "k6.6" but firmware is kernel-version-independent)
 # Version: 1.0.0 (no semantic versioning in upstream repo — update hash below if the file changes)
-# Required for: CIX DSP IPC driver (CONFIG_CIX_DSP=m enabled in kernel.nix)
+# Required for: CIX DSP IPC driver (CONFIG_CIX_DSP=m enabled in kernel/default.nix)
 # Future: will also be required by SND_HDA_CIX_IPBLOQ when HDMI/DP audio driver ships
 stdenv.mkDerivation rec {
   pname = "cix-dsp-firmware";

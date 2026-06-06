@@ -11,7 +11,7 @@
 #   - UCM2 profiles: included in sky1-firmware (dd81690, 2026-02-10)
 #
 # When SND_HDA_CIX_IPBLOQ lands in cix-linux-main patches-7.0:
-#   1. Add to kernel.nix configurePhase:
+#   1. Add to kernel/default.nix configurePhase:
 #        ./scripts/config --module SND_HDA_CIX_IPBLOQ
 #        ./scripts/config --module SND_SOC_CIX
 #   2. Populate this file with ALSA UCM card configuration

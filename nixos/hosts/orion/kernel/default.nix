@@ -5,16 +5,15 @@
 }:
 
 let
-  modDirVersion = "7.0.0";
+  modDirVersion = "6.19.4";
 
-  # Fetch CIX Technology's mainline patches repository
-  # Pinned to specific commit SHA for reproducibility — update with date comment when bumping
-  # Latest verified: 2026-05-07 — "DPTSW-23786: update README about firmware requirement"
-  cixPatches = pkgs.fetchFromGitHub {
-    owner = "cixtech";
-    repo = "cix-linux-main";
-    rev = "3aad82491a599648d87ba1c47cec7968862fa165"; # 2026-05-07
-    hash = "sha256-ntc23Nh3eOWgRcfZTTUWigLrs/LqEtIrYhFwiFiSDUc=";
+  # Fetch Sky1-Linux patches repository
+  # Pinned to specific commit SHA for reproducibility
+  sky1Patches = pkgs.fetchFromGitHub {
+    owner = "Sky1-Linux";
+    repo = "linux-sky1";
+    rev = "57e018a398248d7e5e4d798610df79a557c0629f";
+    hash = "sha256-cPQdu9pTNsn3gAcX5kr8VxxLMorD8FQoDFu7t63Zo2A=";
   };
 
   # Build the custom patched v7.0 kernel
@@ -23,8 +22,8 @@ let
     version = modDirVersion;
 
     src = pkgs.fetchurl {
-      url = "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.tar.xz";
-      hash = "sha256-u39tgLOHx1e30Uu5MCj8uQ95PFwNNnc27oFaEAs4kfA=";
+      url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.4.tar.xz";
+      hash = "sha256-1b68i7z91fbs1zayzzzf71g9ilfk0wi2fr8nralha60xq723p6r7";
     };
 
     nativeBuildInputs = with pkgs; [
@@ -55,10 +54,10 @@ let
     # Enable Armv8 Cryptography Extensions (AES/NEON) to fix crypto/aegis128-neon-inner assembler failures
     NIX_CFLAGS_COMPILE = "-march=armv8-a+crypto";
 
-    # Apply all 32 CIX enablement patches sequentially
+    # Apply Sky1 enablement patches sequentially (v7.0 targeted)
     prePatch = ''
-      echo "Applying CIX mainline patches from ${cixPatches}..."
-      for patch in ${cixPatches}/patches-7.0/*.patch; do
+      echo "Applying Sky1 patches from ${sky1Patches}..."
+      for patch in ${sky1Patches}/patches-latest/*.patch; do
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
@@ -68,13 +67,10 @@ let
       patchShebangs scripts
       patchShebangs tools
 
-      # ── Phase 1: Load CIX's official defconfig ──────────────────────────────
-      # Use CIX Technology's tested defconfig for the Orion O6 / Sky1 SoC.
-      # This is a purpose-built ~3,000-option config that includes all CIX
-      # display (DRM_CIX, LINLONDP, TRILIN_DPSUB), USB-C (CDNSP, RTS5453,
-      # TYPEC=y, UCSI), PHY (CIX_USBDP), GPU (PANTHOR), audio (HDA CIX),
-      # and peripheral drivers in a validated configuration.
-      cp ${cixPatches}/config/config-7.0.defconfig .config
+      # ── Phase 1: Load Sky1's official config ────────────────────────────────
+      # Use Sky1-Linux's tested configuration for the Orion O6 / Sky1 SoC.
+      # This includes NPU, VPU, display, and required peripheral drivers.
+      cp ${sky1Patches}/config/config.sky1-latest .config
 
       # Single olddefconfig pass: resolve the full Kconfig dependency tree.
       make ARCH=arm64 olddefconfig
@@ -234,7 +230,7 @@ let
 
     # Satisfy kernel modules and build expectations (e.g. for NPU/VPU drivers)
     passthru = rec {
-      modDirVersion = "7.0.0";
+      modDirVersion = "6.19.4";
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];

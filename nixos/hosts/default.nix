@@ -68,15 +68,6 @@ in
         inputs.disko.nixosModules.disko
         ./orion/disko-config.nix
       ];
-      overlays = [
-        (_final: prev: {
-          libdrm = prev.libdrm.overrideAttrs (oldAttrs: {
-            patches = (oldAttrs.patches or [ ]) ++ [
-              ./orion/patches/libdrm-acpi-modalias.patch
-            ];
-          });
-        })
-      ];
     };
   };
 }

@@ -1704,3 +1704,5 @@ zramctl
 zstd
 zvol
 zvols
+DKMS
+patchset
