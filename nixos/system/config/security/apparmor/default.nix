@@ -5,24 +5,5 @@ let
 in
 
 {
-  security = {
-    apparmor = {
-      enable = true;
-      enableCache = false;
-      includes = {
-        "abstractions/base" = ''
-          /dev/tty rw,
-        '';
-      };
-      killUnconfinedConfinables = false;
-      packages = [ ];
-      policies = apparmorPolicies;
-    };
-  };
-
-  services = {
-    dbus = {
-      apparmor = "enabled";
-    };
-  };
+  security.apparmor.policies = apparmorPolicies;
 }

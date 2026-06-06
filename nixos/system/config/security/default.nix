@@ -1,7 +1,6 @@
 {
 
   imports = [
-    ./apparmor
     ./wrappers
   ];
 
