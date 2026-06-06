@@ -131,18 +131,19 @@ in
       systemd-boot = {
         enable = true;
 
-        extraFiles = {
-          "efi/shell.efi" = "${pkgs.edk2-uefi-shell}/shell.efi";
-        };
+        # Disabled temporarily due to upstream edk2 build failure
+        # extraFiles = {
+        #   "efi/shell.efi" = "${pkgs.edk2-uefi-shell}/shell.efi";
+        # };
 
-        extraEntries = {
-          "update-bios.conf" = ''
-            title Update Radxa BIOS
-            efi /efi/shell.efi
-            options -delay 0 \radxa-firmware\update-bios.nsh
-            sort-key z_update_bios
-          '';
-        };
+        # extraEntries = {
+        #   "update-bios.conf" = ''
+        #     title Update Radxa BIOS
+        #     efi /efi/shell.efi
+        #     options -delay 0 \radxa-firmware\update-bios.nsh
+        #     sort-key z_update_bios
+        #   '';
+        # };
       };
 
       efi = {
