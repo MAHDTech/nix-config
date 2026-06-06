@@ -6,414 +6,406 @@
       executable = true;
 
       text = ''
-        #!/usr/bin/env bash
+                #!/usr/bin/env bash
 
-        set -euo pipefail
+                set -euo pipefail
 
-        ACTION="''${1:-}"
+                ACTION="''${1:-}"
 
-        if [[ "''${ACTION:-EMPTY}" == "EMPTY" ]];
-        then
-          echo "Please specify an action. Valid options are; 'backup', 'restore' or 'bisync'"
-          exit 1
-        fi
-
-        if type rclone >/dev/null 2>&1;
-        then
-          RCLONE_ENABLED=true
-          RSYNC_ENABLED=false
-        else
-          RCLONE_ENABLED=false
-          if type rsync >/dev/null 2>&1;
-          then
-            RSYNC_ENABLED=true
-          else
-            RSYNC_ENABLED=false
-          fi
-        fi
-
-        if [[ "''${RCLONE_ENABLED:-false}" == "false" && "''${RSYNC_ENABLED:-false}" == "false" ]];
-        then
-          echo "You need either have rclone or rsync installed"
-          exit 1
-        fi
-
-        case "''${OS_LAYER:-EMPTY}" in
-
-          "crostini" )
-
-            PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
-            BACKUP_LOCAL="''${HOME}/Backup/rclone"
-
-            RSYNC_PROJECTS_REMOTE="/mnt/chromeos/GoogleDrive/MyDrive/Projects/Backup/"
-
-            RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
-            RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
-
-          ;;
-
-          "wsl" )
-
-            PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
-            BACKUP_LOCAL="''${HOME}/Backup/rclone"
-
-            RSYNC_PROJECTS_REMOTE="/mnt/g/My Drive/Projects/Backup/"
-
-            RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
-            RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
-
-          ;;
-
-          * )
-
-            # If not a layer, what OS?
-            case "''${OS_NAME:-EMPTY}" in
-
-              "nixos" )
-
-                # NixOS needs to have insync or syncthing installed.
-                if ! type insync 2>/dev/null && ! type syncthing 2>/dev/null;
+                if [[ "''${ACTION:-EMPTY}" == "EMPTY" ]];
                 then
-                  echo "On NixOS, insync or syncthing needs to be installed to take care of remote sync."
-                  exit 2
-                else
-                  # InSync or Syncthing is used for remote upload.
-                  RCLONE_ENABLED=false
+                  echo "Please specify an action. Valid options are; 'backup', 'restore' or 'bisync'"
+                  exit 1
                 fi
 
-                PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
-                BACKUP_LOCAL="''${HOME}/Backup/rclone"
+                if type rclone >/dev/null 2>&1;
+                then
+                  RCLONE_ENABLED=true
+                  RSYNC_ENABLED=false
+                else
+                  RCLONE_ENABLED=false
+                  if type rsync >/dev/null 2>&1;
+                  then
+                    RSYNC_ENABLED=true
+                  else
+                    RSYNC_ENABLED=false
+                  fi
+                fi
 
-                RSYNC_PROJECTS_REMOTE="''${HOME}/Sync/Projects/Backup/"
+                if [[ "''${RCLONE_ENABLED:-false}" == "false" && "''${RSYNC_ENABLED:-false}" == "false" ]];
+                then
+                  echo "You need either have rclone or rsync installed"
+                  exit 1
+                fi
 
-                RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
-                RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
+                case "''${OS_LAYER:-EMPTY}" in
 
-              ;;
+                  "crostini" )
 
-              * )
+                    PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
+                    BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
-                echo "Unknown OS Layer ''${OS_LAYER:-EMPTY} and unsupported OS ''${OS_NAME:-EMPTY}"
-                exit 1
+                    RSYNC_PROJECTS_REMOTE="/mnt/chromeos/GoogleDrive/MyDrive/Projects/Backup/"
 
-              ;;
+                    RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
+                    RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
 
-            esac
+                  ;;
 
-          ;;
+                  "wsl" )
 
-        esac
+                    PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
+                    BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
-        # shellcheck disable=SC1091
-        source "''${HOME}/.config/bash/logging.sh" || {
-          echo "Failed to source logging.sh"
-          exit 1
-        }
+                    RSYNC_PROJECTS_REMOTE="/mnt/g/My Drive/Projects/Backup/"
 
-        ##################################################
-        # Functions
-        ##################################################
+                    RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
+                    RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
 
-        function checkFolders() {
+                  ;;
 
-          # Make sure the local backup directories exist.
-          if [[ ! -d "''${BACKUP_LOCAL}" ]]; then
-            writeLog "WARN" "The local backup directory does not exist, creating it"
-            mkdir --parents "''${BACKUP_LOCAL}" || {
-              writeLog "ERROR" "Failed to create backup directory ''${BACKUP_LOCAL}"
-              return 1
-            }
-          else
-            writeLog "DEBUG" "The local backup directory exists"
-          fi
+                  * )
 
-          # Make sure the local and remote directories exist.
-          if [[ ! -d "''${PROJECTS_LOCAL}" ]]; then
-            writeLog "ERROR" "The local projects directory does not exist"
-            return 1
-          else
-            writeLog "DEBUG" "The local projects directory exists"
-          fi
+                    # If not a layer, what OS?
+                    case "''${OS_NAME:-EMPTY}" in
 
-          if [[ "''${RSYNC_ENABLED:-false}" == "true" ]];
-          then
-            if [[ ! -d "''${RSYNC_PROJECTS_REMOTE}" ]];
-            then
-              writeLog "ERROR" "The remote projects directory does not exist"
-              return 1
-            else
-              writeLog "DEBUG" "The remote projects directory exists"
-            fi
-          fi
+                      "nixos" )
 
-          return 0
+                        # NixOS needs to have insync or syncthing installed.
+                        if ! type insync 2>/dev/null && ! type syncthing 2>/dev/null;
+                        then
+                          echo "On NixOS, insync or syncthing needs to be installed to take care of remote sync."
+                          exit 2
+                        else
+                          # InSync or Syncthing is used for remote upload.
+                          RCLONE_ENABLED=false
+                        fi
 
-        }
+                        PROJECTS_LOCAL="''${HOME}/Projects/gdrive"
+                        BACKUP_LOCAL="''${HOME}/Backup/rclone"
 
-        function backupProjects() {
+                        RSYNC_PROJECTS_REMOTE="''${HOME}/Sync/Projects/Backup/"
 
-          if [[ "''${RCLONE_ENABLED:-false}" == "true" ]];
-          then
-            backupProjectsRclone || return 1
-          fi
+                        RCLONE_PROJECTS_REMOTE="gdrive:Projects/Backup/"
+                        RCLONE_BACKUP_REMOTE="gdrive:Backup/rclone"
 
-          if [[ "''${RSYNC_ENABLED:-false}" == "true" ]];
-          then
-            backupProjectsRsync || return 1
-          fi
+                      ;;
 
-          return 0
+                      * )
 
-        }
+                        echo "Unknown OS Layer ''${OS_LAYER:-EMPTY} and unsupported OS ''${OS_NAME:-EMPTY}"
+                        exit 1
 
-        function backupProjectsRclone() {
+                      ;;
 
-          read -rp "This will backup using rclone from ''${PROJECTS_LOCAL} to ''${RCLONE_PROJECTS_REMOTE}. Are you sure? (y/n) " -n 1 -r
-          echo
-          if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
-          then
-            writeLog "ERROR" "User cancelled backup"
-            return 1
-          fi
+                    esac
 
-          # Make sure rclone is installed.
-          if ! type rclone >/dev/null 2>&1;
-          then
-            writeLog "ERROR" "Please install rclone"
-            return 1
-          fi
+                  ;;
 
-          rclone sync \
-            "''${PROJECTS_LOCAL}" \
-            "''${RCLONE_PROJECTS_REMOTE}" \
-            --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-backup" \
-            --checksum \
-            --update \
-            --ignore-times \
-            --track-renames \
-            --copy-links \
-            --create-empty-src-dirs \
-            --delete-excluded \
-            --retries-sleep 30s \
-            --exclude=".devenv/**" \
-            --exclude=".direnv/**" \
-            --exclude="node_modules/**" \
-            --verbose \
-          || {
-            writeLog "ERROR" "Failed to backup projects"
-            return 1
-          }
+                esac
 
-          return 0
+                # shellcheck disable=SC1091
+                source "''${HOME}/.config/bash/logging.sh" || {
+                  echo "Failed to source logging.sh"
+                  exit 1
+                }
 
-        }
+                ##################################################
+                # Functions
+                ##################################################
 
-        function backupProjectsRsync() {
+                function checkFolders() {
 
-          read -rp "This will backup using rsync from ''${PROJECTS_LOCAL} to ''${RSYNC_PROJECTS_REMOTE}. Are you sure? (y/n) " -n 1 -r
-          echo
-          if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
-          then
-            writeLog "ERROR" "User cancelled backup"
-            return 1
-          fi
+                  # Make sure the local backup directories exist.
+                  if [[ ! -d "''${BACKUP_LOCAL}" ]]; then
+                    writeLog "WARN" "The local backup directory does not exist, creating it"
+                    mkdir --parents "''${BACKUP_LOCAL}" || {
+                      writeLog "ERROR" "Failed to create backup directory ''${BACKUP_LOCAL}"
+                      return 1
+                    }
+                  else
+                    writeLog "DEBUG" "The local backup directory exists"
+                  fi
 
-          # Make sure rsync is installed.
-          if ! type rsync >/dev/null 2>&1;
-          then
-            writeLog "ERROR" "Please install rsync"
-            return 1
-          fi
+                  # Make sure the local and remote directories exist.
+                  if [[ ! -d "''${PROJECTS_LOCAL}" ]]; then
+                    writeLog "ERROR" "The local projects directory does not exist"
+                    return 1
+                  else
+                    writeLog "DEBUG" "The local projects directory exists"
+                  fi
 
-          # Run rsync to backup the projects.
-          rsync \
-            --progress \
-            --archive \
-            --verbose \
-            --human-readable \
-            --partial \
-            --delete \
-            --force \
-            --exclude=".devenv" \
-            --exclude=".direnv" \
-            --exclude="node_modules" \
-            "''${PROJECTS_LOCAL}" \
-            "''${RSYNC_PROJECTS_REMOTE}" \
-          || {
-            writeLog "ERROR" "Failed to backup projects"
-            return 1
-          }
+                  if [[ "''${RSYNC_ENABLED:-false}" == "true" ]];
+                  then
+                    if [[ ! -d "''${RSYNC_PROJECTS_REMOTE}" ]];
+                    then
+                      writeLog "ERROR" "The remote projects directory does not exist"
+                      return 1
+                    else
+                      writeLog "DEBUG" "The remote projects directory exists"
+                    fi
+                  fi
 
-          return 0
+                  return 0
 
-        }
+                }
 
-        function restoreProjects() {
+                function backupProjects() {
 
-          if [[ "''${RCLONE_ENABLED:-false}" == "true" ]];
-          then
-            restoreProjectsRclone || return 1
-          fi
+                  if [[ "''${RCLONE_ENABLED:-false}" == "true" ]];
+                  then
+                    backupProjectsRclone || return 1
+                  fi
 
-          if [[ "''${RSYNC_ENABLED:-false}" == "true" ]];
-          then
-            restoreProjectsRsync || return 1
-          fi
+                  if [[ "''${RSYNC_ENABLED:-false}" == "true" ]];
+                  then
+                    backupProjectsRsync || return 1
+                  fi
 
-          return 0
+                  return 0
 
-        }
+                }
 
-        function restoreProjectsRclone() {
+                function backupProjectsRclone() {
 
-          read -rp "This will restore using rclone from ''${RCLONE_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
-          echo
-          if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
-          then
-            writeLog "ERROR" "User cancelled restore"
-            return 1
-          fi
+                  read -rp "This will backup using rclone from ''${PROJECTS_LOCAL} to ''${RCLONE_PROJECTS_REMOTE}. Are you sure? (y/n) " -n 1 -r
+                  echo
+                  if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
+                  then
+                    writeLog "ERROR" "User cancelled backup"
+                    return 1
+                  fi
 
-          # Make sure rclone is installed.
-          if ! type rclone >/dev/null 2>&1;
-          then
-            writeLog "ERROR" "Please install rclone"
-            return 1
-          fi
+                  # Make sure rclone is installed.
+                  if ! type rclone >/dev/null 2>&1;
+                  then
+                    writeLog "ERROR" "Please install rclone"
+                    return 1
+                  fi
 
-          rclone sync \
-            "''${RCLONE_PROJECTS_REMOTE}" \
-            "''${PROJECTS_LOCAL}" \
-            --backup-dir "''${BACKUP_LOCAL}/$(date +%Y-%m-%d_%H-%M-%S)-restore" \
-            --checksum \
-            --update \
-            --ignore-times \
-            --track-renames \
-            --copy-links \
-            --create-empty-src-dirs \
-            --delete-excluded \
-            --retries-sleep 30s \
-            --exclude=".devenv/**" \
-            --exclude=".direnv/**" \
-            --exclude="node_modules/**" \
-            --verbose \
-          || {
-            writeLog "ERROR" "Failed to restore projects"
-            return 1
-          }
+                  rclone sync \
+                    "''${PROJECTS_LOCAL}" \
+                    "''${RCLONE_PROJECTS_REMOTE}" \
+                    --backup-dir "''${RCLONE_BACKUP_REMOTE}/$(date +%Y-%m-%d_%H-%M-%S)-backup" \
+                    --checksum \
+                    --update \
 
-        }
+                    --retries-sleep 30s \
+                    --exclude=".devenv/**" \
+                    --exclude=".direnv/**" \
+                    --exclude="node_modules/**" \
+                    --verbose \
+                  || {
+                    writeLog "ERROR" "Failed to backup projects"
+                    return 1
+                  }
 
-        function restoreProjectsRsync() {
+                  return 0
 
-          read -rp "This will restore using rsync from ''${RSYNC_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
-          echo
-          if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
-          then
-            writeLog "ERROR" "User cancelled restore"
-            return 1
-          fi
+                }
 
-          # Make sure rsync is installed.
-          if ! type rsync >/dev/null 2>&1;
-          then
-            writeLog "ERROR" "Please install rsync"
-            return 1
-          fi
+                function backupProjectsRsync() {
 
-          # Run rsync to restore the projects.
-          rsync \
-            --progress \
-            --archive \
-            --verbose \
-            --human-readable \
-            --partial \
-            --exclude=".devenv" \
-            --exclude=".direnv" \
-            --exclude=".git" \
-            --exclude="node_modules" \
-            "''${RSYNC_PROJECTS_REMOTE}" \
-            "''${PROJECTS_LOCAL}" \
-          || {
-            writeLog "ERROR" "Failed to restore projects"
-            return 1
-          }
+                  read -rp "This will backup using rsync from ''${PROJECTS_LOCAL} to ''${RSYNC_PROJECTS_REMOTE}. Are you sure? (y/n) " -n 1 -r
+                  echo
+                  if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
+                  then
+                    writeLog "ERROR" "User cancelled backup"
+                    return 1
+                  fi
 
-          return 0
+                  # Make sure rsync is installed.
+                  if ! type rsync >/dev/null 2>&1;
+                  then
+                    writeLog "ERROR" "Please install rsync"
+                    return 1
+                  fi
 
-        }
+                  # Run rsync to backup the projects.
+                  rsync \
+                    --progress \
+                    --archive \
+                    --verbose \
+                    --human-readable \
+                    --partial \
+                    --delete \
+                    --force \
+                    --exclude=".devenv" \
+                    --exclude=".direnv" \
+                    --exclude="node_modules" \
+                    "''${PROJECTS_LOCAL}" \
+                    "''${RSYNC_PROJECTS_REMOTE}" \
+                  || {
+                    writeLog "ERROR" "Failed to backup projects"
+                    return 1
+                  }
 
-        function bisyncProjects() {
+                  return 0
 
-          rclone bisync \
-            "''${PROJECTS_LOCAL}" \
-            "''${RCLONE_PROJECTS_REMOTE}" \
-            --compare "size,modtime,checksum" \
-            --create-empty-src-dirs \
-            --delete-excluded \
-            --exclude=".devenv/**" \
-            --exclude=".direnv/**" \
-            --exclude="node_modules/**" \
-            --verbose \
-          || {
-            writeLog "ERROR" "Failed to bi-sync projects"
-            return 1
-          }
+                }
 
-        }
+                function restoreProjects() {
 
-        ##################################################
-        # Main
-        ##################################################
+                  if [[ "''${RCLONE_ENABLED:-false}" == "true" ]];
+                  then
+                    restoreProjectsRclone || return 1
+                  fi
 
-        # Make sure the folders exist.
-        checkFolders || {
-          writeLog "ERROR" "Failed to check folders"
-          exit 1
-        }
+                  if [[ "''${RSYNC_ENABLED:-false}" == "true" ]];
+                  then
+                    restoreProjectsRsync || return 1
+                  fi
 
-        # Run the action
-        case "''${ACTION}" in
+                  return 0
 
-          "backup" )
-            echo "Starting backup of projects"
-            backupProjects || {
-              writeLog "ERROR" "Failed to backup projects"
-              exit 1
-            }
-          ;;
+                }
 
-          "restore" )
-            echo "Starting restore of projects"
-            restoreProjects || {
-              writeLog "ERROR" "Failed to restore projects"
-              exit 1
-            }
-          ;;
+                function restoreProjectsRclone() {
 
-          "bisync" )
-            # Bisync only works with rclone.
-            if [[ "''${RCLONE_ENABLED:-false}" == "false" ]];
-            then
-              echo "Bisync only works with rclone"
-              exit 1
-            fi
+                  read -rp "This will restore using rclone from ''${RCLONE_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
+                  echo
+                  if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
+                  then
+                    writeLog "ERROR" "User cancelled restore"
+                    return 1
+                  fi
 
-            echo "Starting bi-directional sync of projects"
-            bisyncProjects || {
-              writeLog "ERROR" "Failed bi-directional sync of projects"
-              exit 1
-            }
-          ;;
+                  # Make sure rclone is installed.
+                  if ! type rclone >/dev/null 2>&1;
+                  then
+                    writeLog "ERROR" "Please install rclone"
+                    return 1
+                  fi
 
-          * )
-            echo "Unknown action ''${ACTION}"
-            exit 1
-          ;;
+                  rclone sync \
+                    "''${RCLONE_PROJECTS_REMOTE}" \
+                    "''${PROJECTS_LOCAL}" \
+                    --backup-dir "''${BACKUP_LOCAL}/$(date +%Y-%m-%d_%H-%M-%S)-restore" \
+                    --checksum \
+                    --update \
+        s
+                    --retries-sleep 30s \
+                    --exclude=".devenv/**" \
+                    --exclude=".direnv/**" \
+                    --exclude="node_modules/**" \
+                    --verbose \
+                  || {
+                    writeLog "ERROR" "Failed to restore projects"
+                    return 1
+                  }
 
-        esac
+                }
 
-        echo "Completed ''${ACTION} of projects"
+                function restoreProjectsRsync() {
+
+                  read -rp "This will restore using rsync from ''${RSYNC_PROJECTS_REMOTE} to ''${PROJECTS_LOCAL}. Are you sure? (y/n) " -n 1 -r
+                  echo
+                  if [[ ! "''${REPLY:-n}" =~ ^[Yy]$ ]];
+                  then
+                    writeLog "ERROR" "User cancelled restore"
+                    return 1
+                  fi
+
+                  # Make sure rsync is installed.
+                  if ! type rsync >/dev/null 2>&1;
+                  then
+                    writeLog "ERROR" "Please install rsync"
+                    return 1
+                  fi
+
+                  # Run rsync to restore the projects.
+                  rsync \
+                    --progress \
+                    --archive \
+                    --verbose \
+                    --human-readable \
+                    --partial \
+                    --exclude=".devenv" \
+                    --exclude=".direnv" \
+                    --exclude=".git" \
+                    --exclude="node_modules" \
+                    "''${RSYNC_PROJECTS_REMOTE}" \
+                    "''${PROJECTS_LOCAL}" \
+                  || {
+                    writeLog "ERROR" "Failed to restore projects"
+                    return 1
+                  }
+
+                  return 0
+
+                }
+
+                function bisyncProjects() {
+
+                  rclone bisync \
+                    "''${PROJECTS_LOCAL}" \
+                    "''${RCLONE_PROJECTS_REMOTE}" \
+                    --compare "size,modtime,checksum" \
+                    --create-empty-src-dirs \
+                    --delete-excluded \
+                    --exclude=".devenv/**" \
+                    --exclude=".direnv/**" \
+                    --exclude="node_modules/**" \
+                    --verbose \
+                  || {
+                    writeLog "ERROR" "Failed to bi-sync projects"
+                    return 1
+                  }
+
+                }
+
+                ##################################################
+                # Main
+                ##################################################
+
+                # Make sure the folders exist.
+                checkFolders || {
+                  writeLog "ERROR" "Failed to check folders"
+                  exit 1
+                }
+
+                # Run the action
+                case "''${ACTION}" in
+
+                  "backup" )
+                    echo "Starting backup of projects"
+                    backupProjects || {
+                      writeLog "ERROR" "Failed to backup projects"
+                      exit 1
+                    }
+                  ;;
+
+                  "restore" )
+                    echo "Starting restore of projects"
+                    restoreProjects || {
+                      writeLog "ERROR" "Failed to restore projects"
+                      exit 1
+                    }
+                  ;;
+
+                  "bisync" )
+                    # Bisync only works with rclone.
+                    if [[ "''${RCLONE_ENABLED:-false}" == "false" ]];
+                    then
+                      echo "Bisync only works with rclone"
+                      exit 1
+                    fi
+
+                    echo "Starting bi-directional sync of projects"
+                    bisyncProjects || {
+                      writeLog "ERROR" "Failed bi-directional sync of projects"
+                      exit 1
+                    }
+                  ;;
+
+                  * )
+                    echo "Unknown action ''${ACTION}"
+                    exit 1
+                  ;;
+
+                esac
+
+                echo "Completed ''${ACTION} of projects"
 
       '';
     };

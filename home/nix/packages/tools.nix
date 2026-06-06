@@ -137,7 +137,7 @@ in
       imv
 
       # Diagrams
-      #drawio
+      drawio
 
       # Video Editor
       shotcut
@@ -146,7 +146,7 @@ in
       zathura
 
       # GUI
-      #signal-desktop
+      signal-desktop
       remmina
       brave
 

@@ -89,11 +89,7 @@ in
         excludes = [
           ".*\\.rs$"
         ];
-        enable = true;
       };
-      check-symlinks.enable = true;
-      check-yaml.enable = true;
-      commitizen.enable = true;
       convco.enable = true;
       clippy.enable = true;
       cargo-check.enable = true;

@@ -23,7 +23,7 @@ let
 
     src = pkgs.fetchurl {
       url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.4.tar.xz";
-      hash = "sha256-1b68i7z91fbs1zayzzzf71g9ilfk0wi2fr8nralha60xq723p6r7";
+      sha256 = "1b68i7z91fbs1zayzzzf71g9ilfk0wi2fr8nralha60xq723p6r7";
     };
 
     nativeBuildInputs = with pkgs; [
