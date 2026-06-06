@@ -171,7 +171,7 @@ in
     loader = {
       systemd-boot.enable = true;
       efi = {
-        canTouchEfiVariables = true;
+        canTouchEfiVariables = false;
         efiSysMountPoint = lib.mkForce "/boot";
       };
     };
