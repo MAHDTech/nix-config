@@ -200,6 +200,7 @@ CMAC
 cman
 cmdhist
 cmdk
+cmdline
 codegeex
 codel
 coex
@@ -688,6 +689,7 @@ kwalletd
 kwalletmanager
 labelclear
 lalt
+landlock
 langservers
 lasterror
 lastpipe
@@ -902,6 +904,7 @@ netdev
 NETDEVICES
 netdevs
 Netfilter
+netlink
 netrwhist
 nettools
 networkd
@@ -1398,6 +1401,7 @@ submatch
 substituters
 subuid
 subuids
+subvols
 subvolumes
 sulogin
 suppressevent

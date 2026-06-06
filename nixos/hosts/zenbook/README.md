@@ -6,9 +6,9 @@
 Work through issues **one at a time** — build, test, verify, then check off before moving on.
 
 > [!IMPORTANT]
-> **Last bootable generation**: Gen 4. Gen 5+ changed kernel size
-> (45→33 MB) and Gen 7 crashed due to wrong DTB (`x1p42100` vs
-> `x1e80100`). Next deploy via nixos-anywhere will repartition.
+> **Current generation**: Gen 1 (fresh nixos-anywhere install, 2026-06-06).
+> Partition layout: ESP (1G) / pstore (16M) / btrfs (953G).
+> Previous generations wiped — this is a clean install.
 
 ---
 
@@ -430,45 +430,134 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 13: No swap configured (30 GiB RAM, zero swap)
 
-- [/] **Status**: Blocked — `CONFIG_ZRAM` is not set in the custom kernel.
-  NixOS `zramSwap` module requires kernel ZRAM support. **Fixed**: added `CONFIG_ZRAM=m` and
-  `CONFIG_ZRAM_DEF_COMP_ZSTD=y` to `kernel.nix`. Requires kernel rebuild to take effect.
+- [x] **Status**: ✅ Resolved — verified on Gen 1 (2026-06-06).
+      `zram0` active at 30.7 GiB with zstd compression.
 - **Severity**: P1 — OOM risk under heavy workloads
-- **Symptom**: `free -h` showed 0 B swap. 30 GiB RAM with no swap partition or zram.
-- **Root Cause**: `power.nix` only configured governor and power-profiles-daemon. Orion had zram but Zenbook didn't.
-- **Fix**: Added `zramSwap = { enable = true; algorithm = "zstd"; memoryPercent = 100; };` to `power.nix`, matching Orion's configuration.
-- **File**: `nixos/hosts/zenbook/power.nix`
-- **Test**:
-  ```bash
-  free -h           # Should show ~30G swap
-  zramctl           # Should show zstd algorithm
-  swapon --show     # Should list /dev/zram0
+- **Symptom**: `free -h` showed 0 B swap. 30 GiB RAM with no swap.
+- **Root Cause**: `CONFIG_ZRAM` was missing from the custom kernel.
+- **Fix**: Added `CONFIG_ZRAM=m` and `CONFIG_ZRAM_DEF_COMP_ZSTD=y`
+  to `kernel.nix`, plus `zramSwap` config in `power.nix`.
+- **Verified**:
+  ```
+  zram0  30.7G  disk  swap  zram0  [SWAP]
   ```
 
 ---
 
 ### Issue 14: `efi=noruntime` blocks fwupd firmware updates
 
-- [/] **Status**: In progress — `efi-runtime-test` specialisation boot entry added for safe testing
-- **Severity**: P1 — Firmware is 6 months stale (UX3407RA.312, 2025-11-07)
-- **Symptom**: `efibootmgr -v` fails, `fwupd` cannot stage UEFI capsule
-  updates, `/sys/firmware/efi/efivars/` inaccessible.
-- **Root Cause**: `efi=noruntime` in kernel params disables EFI runtime
-  services entirely. This was added at some point (no documented reason) and
-  blocks `SetVariable()` needed by `fwupd`, `efibootmgr`, and EFI pstore.
-- **Fix**: Added a `specialisation.efi-runtime-test` boot entry that removes
-  `efi=noruntime` from kernel params. Select "NixOS (efi-runtime-test)" from
-  systemd-boot to test. If stable for 24h, permanently remove `efi=noruntime`.
-- **File**: `nixos/hosts/zenbook/hardware/hardware-configuration.nix`
+- [/] **Status**: In progress — efivars ARE readable (despite
+  `efi=noruntime`), but `efibootmgr` is not installed. `fwupd`
+  found NVMe and listed devices successfully. Need to test writes.
+- **Severity**: P1 — Firmware is 6 months stale
+- **Symptom**: `efibootmgr` not found. `fwupd` can list devices.
+- **Root Cause**: `efi=noruntime` in kernel params. Reads work but
+  write operations (capsule updates) may be blocked.
+- **Fix**: `efi-runtime-test` specialisation boot entry present.
+  Also need to add `efibootmgr` to system packages.
 - **Test**:
   ```bash
   # Boot into efi-runtime-test specialisation, then:
-  ls /sys/firmware/efi/efivars/ | wc -l   # Should be >99
-  sudo efibootmgr -v                       # Should succeed
-  sudo fwupdmgr get-devices                # Should list devices
-  sudo fwupdmgr get-updates                # Should show available updates
+  ls /sys/firmware/efi/efivars/ | wc -l
+  sudo fwupdmgr get-updates
   ```
-- **Risk**: Qualcomm's UEFI on X1E80100 has known bugs. If EFI runtime causes hangs, hard power cycle and re-add `efi=noruntime`.
+
+---
+
+### Issue 15: AppArmor not active — missing from LSM cmdline
+
+- [ ] **Status**: Open
+- **Severity**: P1 — Security policy not enforced
+- **Symptom**: `cat /sys/kernel/security/lsm` shows only `capability`.
+  `cat /sys/module/apparmor/parameters/enabled` returns `N`.
+  `aa-status` not found.
+- **Root Cause**: Kernel has `CONFIG_SECURITY_APPARMOR=y` and
+  `CONFIG_DEFAULT_SECURITY_APPARMOR=y` compiled in, but the NixOS
+  systemd boot adds `lsm=landlock,yama,bpf` to the cmdline which
+  **overrides** the compiled-in default. `apparmor` is not in the
+  explicit `lsm=` list.
+- **Fix**: Add `apparmor` to the `lsm=` kernel parameter. NixOS
+  `security.apparmor.enable = true` should handle this, but the
+  explicit `lsm=` in the boot params takes precedence. May need
+  to add `"lsm=landlock,lockdown,yama,apparmor,bpf"` to
+  `boot.kernelParams`.
+- **Test**:
+  ```bash
+  cat /sys/kernel/security/lsm          # Should include apparmor
+  cat /sys/module/apparmor/parameters/enabled  # Should be Y
+  sudo aa-status                        # Should list profiles
+  ```
+
+---
+
+### Issue 16: Thunderbolt 5 dock drops to USB 2.0 full-speed
+
+- [ ] **Status**: Open — known from Ubuntu testing, persists on NixOS
+- **Severity**: P1 — No dock ethernet, no DP alt-mode
+- **Symptom**: Razer TB5 Dock (1532:0f53) enumerates on USB bus 5
+  as full-speed. The entire USB tree disconnects at t=17s then
+  reconnects at t=19s as full-speed (USB 1.1). No Thunderbolt
+  domains register (`/sys/bus/thunderbolt/devices/` is empty).
+  Dock ethernet (`enu1u4u1`) does not appear.
+- **Root Cause**: ADSP starting `pmic_glink_altmode` triggers
+  Type-C lane renegotiation. The retimer (`ps883x`) and QMP combo
+  PHY (`phy@fd5000`) have dependency cycles causing the dock's USB
+  lanes to misconfigure. `thunderbolt` module loads (323K) but no
+  USB4 router is discovered.
+- **dmesg sequence**:
+  ```
+  t=15s  usb 5-1.5: new full-speed (dock first enum)
+  t=17s  usb 5-1: USB disconnect (entire hub tree drops)
+  t=19s  usb 5-1.5: new full-speed (dock re-enums as USB 1.1)
+  ```
+- **Workaround**: Use USB-to-Ethernet adapter (`usb-to-eth`,
+  `enu2c2` at 10.10.1.90) as primary network path.
+- **Investigation needed**:
+  - Check if `CONFIG_USB4_NET` should be enabled
+  - Test with dock plugged in after boot vs during boot
+  - Check ASUS BIOS TB security level settings
+
+---
+
+### Issue 17: Home Manager fails — opnix token unreadable
+
+- [ ] **Status**: Open
+- **Severity**: P2 — HM activation blocked, opnix secrets missing
+- **Symptom**: `home-manager-mahdtech.service` fails with:
+  ```
+  ERROR: Cannot read system token at /etc/opnix-token
+  INFO: Make sure the system token can be accessed by your user
+  ```
+- **Root Cause**: `/etc/opnix-token` has permissions
+  `-rw-r----- root onepassword-secrets`. The `mahdtech` user IS in
+  group `onepassword-secrets` (993), but HM runs as a systemd
+  service which may not have supplementary groups loaded at
+  activation time (early boot, before user session).
+- **Also**: `pgrep: command not found` during HM activation
+  (procps missing from system packages).
+- **Fix**: Either change opnix token to group-readable for the
+  service context, or ensure the HM service runs with correct
+  supplementary groups. Add `procps` to system packages.
+- **Test**:
+  ```bash
+  sudo systemctl restart home-manager-mahdtech.service
+  systemctl status home-manager-mahdtech.service
+  ```
+
+---
+
+### Issue 18: pmic_glink uevent failures
+
+- [ ] **Status**: Open — cosmetic but may indicate deeper issue
+- **Severity**: P3 — Low (battery still works)
+- **Symptom**: `synth uevent: failed to send uevent` for
+  `qcom-battmgr-ac`, `qcom-battmgr-bat`, `qcom-battmgr-usb`,
+  `qcom-battmgr-wls` power supply devices.
+- **Root Cause**: uevent delivery fails during PMIC GLINK init,
+  possibly due to userspace not ready or netlink buffer overflow.
+  Battery status/capacity still functional via sysfs.
+- **Impact**: udev rules that depend on power supply events may
+  not fire. Battery notifier timer should still work.
 
 ---
 
@@ -480,74 +569,92 @@ _Items moved here after testing confirms the fix._
 
 ## Test Results Log
 
+### 2026-06-06 — Gen 1 Fresh Install Audit
+
+Fresh NixOS install via nixos-anywhere. Partition layout:
+ESP (1G) / pstore (16M, raw) / btrfs root (953G, subvols: root, home, nix).
+
+| Check         | Status | Detail                                     |
+| ------------- | ------ | ------------------------------------------ |
+| Kernel        | ✅     | `7.1.0-rc5-next-20260528`                  |
+| Ramoops       | ✅     | `0x200000@0xb7000000, ecc: 0` — no errors  |
+| Netconsole    | ✅     | Active, `10.10.1.90 → 10.10.1.97:6666`     |
+| pstore-blk    | ✅     | Partition exists, label `disk-main-pstore` |
+| ZRAM swap     | ✅     | `zram0 30.7G` active                       |
+| SSH hardening | ✅     | password=no, root=no, kbd=no               |
+| Boot editor   | ✅     | `editor 0`                                 |
+| opnix token   | ✅     | Present, 853 bytes, correct group          |
+| CPU governor  | ✅     | `schedutil`                                |
+| Remoteprocs   | ✅     | ADSP + CDSP running                        |
+| WiFi          | ✅     | ath12k firmware loaded (wcn7850 hw2.0)     |
+| Display       | ✅     | card0: eDP-1, DP-1, DP-2, HDMI-A-1         |
+| Battery       | ⚠️     | Status works, `capacity` sysfs missing     |
+| AppArmor      | ❌     | Kernel compiled but not in LSM cmdline     |
+| TB5 Dock      | ❌     | Drops to USB 2.0, no tunnel                |
+| Home Manager  | ❌     | opnix token read failure                   |
+| Thermals      | ✅     | 29-30°C idle                               |
+
 ### 2026-06-05 — Fullscreen Stress Tests (Wayland / Native 3K Resolution)
 
-We successfully verified the system under maximum CPU and GPU stress for 20 minutes continuously on Ubuntu, confirming absolute power/thermal stability on this kernel.
+We successfully verified the system under maximum CPU and GPU stress
+for 20 minutes continuously on Ubuntu, confirming absolute
+power/thermal stability on this kernel.
 
 #### Baseline Performance Results (Ubuntu 26.04)
 
-We ran a combined **12-core CPU stress + Vulkan GPU stress** test for 60 seconds at native **3072x1920** fullscreen resolution to establish a performance baseline:
+We ran a combined **12-core CPU stress + Vulkan GPU stress** test
+for 60 seconds at native **3072x1920** fullscreen resolution to
+establish a performance baseline:
 
-- **GPU Vulkan Score (`vkmark`)**: `3735` (4-second duration per scene, run fullscreen under 100% 12-core CPU load).
-  - _Note_: Without background CPU load, the standalone fullscreen score is `5884`.
-- **CPU Stress-ng Metrics (`stress-ng --cpu 12`)**: `4633.54` bogo ops/sec.
+- **GPU Vulkan Score (`vkmark`)**: `3735` (4-second duration per
+  scene, run fullscreen under 100% 12-core CPU load).
+  - _Note_: Without background CPU load, the standalone fullscreen
+    score is `5884`.
+- **CPU Stress-ng Metrics (`stress-ng --cpu 12`)**: `4633.54` bogo
+  ops/sec.
 
-This establishes our baseline to ensure we get comparable results under NixOS.
+This establishes our baseline to ensure we get comparable results
+under NixOS.
 
 ### 2026-06-04 — test-gpu.sh at 390 MHz GPU cap
 
-| Test                                   | Result   | Details                                                         |
-| -------------------------------------- | -------- | --------------------------------------------------------------- |
-| glxgears (vblank_mode=0, fullscreen)   | ✅ Pass  | 3000-3500 FPS, stable for 60s                                   |
-| vkcube (XCB WSI, default present)      | 🟡 Blank | Window opens but nothing renders, no crash                      |
-| vkmark (immediate present, fullscreen) | 🔴 Crash | `ErrorDeviceLost` on `[vertex]` test, core dump (signal 6/ABRT) |
-| glmark2 (vblank_mode=0, fullscreen)    | ⏳ TBD   | Started running, output cut off                                 |
-| vulkaninfo --summary                   | ✅ Pass  | Adreno X1-85, Turnip, Vulkan 1.4.348                            |
-
-**Key takeaways**:
-
-- OpenGL acceleration is fully functional and stable at 390 MHz
-- Vulkan driver (Turnip) initializes but **cannot render** — XCB WSI shows blank, GPU hangs under Vulkan workloads
-- The 390 MHz cap prevents hard reboots but GPU still hangs on Vulkan `DEVICE_LOST`
-- Need to test Vulkan under native Wayland WSI (not XWayland/XCB)
+| Test                                   | Result   | Details                              |
+| -------------------------------------- | -------- | ------------------------------------ |
+| glxgears (vblank_mode=0, fullscreen)   | ✅ Pass  | 3000-3500 FPS                        |
+| vkcube (XCB WSI, default present)      | 🟡 Blank | Window opens, no render              |
+| vkmark (immediate present, fullscreen) | 🔴 Crash | `ErrorDeviceLost`                    |
+| vulkaninfo --summary                   | ✅ Pass  | Adreno X1-85, Turnip, Vulkan 1.4.348 |
 
 ### 2026-06-04 — Native kernel build crash
 
-| Test                                          | Result    | Details                                     |
-| --------------------------------------------- | --------- | ------------------------------------------- |
-| `nixos-upgrade` (native aarch64 kernel build) | 🔴 Reboot | Hard reset during sustained CPU compilation |
-
-**Key takeaway**: The reboot issue is **NOT GPU-specific**. Sustained CPU load
-(compiling a kernel natively on aarch64) also triggers a hard PMIC reset.
-This means the power regulation problem is **system-wide** — the dummy
-regulators and missing DT power descriptions affect CPU power delivery too,
-not just the GPU. The GPU freq cap at 390 MHz only reduced one source of
-power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
+| Test                                          | Result    | Details                       |
+| --------------------------------------------- | --------- | ----------------------------- |
+| `nixos-upgrade` (native aarch64 kernel build) | 🔴 Reboot | Hard reset during compilation |
 
 ---
 
 ## Deployment Plan
 
 > [!IMPORTANT]
-> **Current state**: Gen 6 is current (2026-06-06). ramoops and netconsole verified working.
-> zram swap requires kernel rebuild (CONFIG_ZRAM was missing). pstore-blk label fix pending rebuild.
+> **Current state**: Gen 1 (fresh install, 2026-06-06). Ramoops,
+> netconsole, zram all verified working. AppArmor and TB dock need
+> fixes.
 
 ### Next Steps
 
-- [ ] Verify JONS netconsole receiver is running (`systemctl status netconsole-receiver`)
-- [ ] Boot zenbook from NixOS live installer USB
-- [ ] SSH to installer and run nixos-anywhere with `--phases disko,install --build-on remote`
-- [ ] Reboot into new system
-- [x] Verify ramoops: `dmesg | grep ramoops` — ✅ `ecc: 0`, `0x200000@0xb7000000`, NO uncorrectable errors
-- [ ] Verify pstore: `ls /sys/fs/pstore/`
-- [ ] Verify pstore-blk: `dmesg | grep pstore_blk` — partition label fix pending rebuild
-- [ ] Test pmsg persistence: write → reboot → read
-- [x] Verify netconsole systemd service: `systemctl status netconsole` — ✅ active, IP `10.10.1.90`, logging started
-- [ ] Verify netconsole on JONS: check `/var/log/netconsole-zenbook.log`
-- [ ] Controlled panic test (`echo c > /proc/sysrq-trigger`) to verify full capture pipeline
-- [x] Validate pstore-blk partition exists: `lsblk | grep pstore` — ✅ `nvme0n1p2 16M disk-main-pstore`
-- [ ] Verify zram swap: `free -h` — ⚠️ currently 0B (CONFIG_ZRAM missing, fix pending kernel rebuild)
-- [ ] Test efi-runtime-test specialisation: boot into it, run `efibootmgr -v` — specialisation confirmed present
+- [x] Verify ramoops: ✅ `ecc: 0`, `0x200000@0xb7000000`
+- [x] Verify netconsole: ✅ active, logging to `10.10.1.97:6666`
+- [x] Verify pstore-blk partition: ✅ `disk-main-pstore` 16M
+- [x] Verify zram swap: ✅ `zram0 30.7G`
+- [x] Verify SSH hardening: ✅ password auth disabled, root disabled
+- [x] Verify opnix token: ✅ present with correct permissions
+- [x] Verify boot editor disabled: ✅ `editor 0`
+- [ ] Fix AppArmor LSM cmdline (Issue 15)
+- [ ] Investigate TB5 dock full-speed fallback (Issue 16)
+- [ ] Fix Home Manager opnix read failure (Issue 17)
+- [ ] Test efi-runtime-test specialisation (Issue 14)
+- [ ] Controlled panic test to verify full capture pipeline
+- [ ] Verify netconsole receiver on JONS
 
 ---
 
@@ -555,35 +662,38 @@ power draw; it didn't fix the underlying PMIC overcurrent/brownout issue.
 
 ### Known Upstream Limitations (not fixable in this config)
 
-- **System-wide power regulation** — hard reboots under sustained CPU OR GPU
-  load. PMIC overcurrent/brownout triggers hardware reset. Affects both CPU
-  (kernel compilation) and GPU (uncapped rendering). Root cause: device tree
-  doesn't fully describe power supply relationships for x1e80100.
-- **GPU dummy regulators** (`vdd`/`vddcx`) — DT doesn't describe GPU power
-  supplies. Tracked upstream in QCOM DTS.
-- **GPU clock controller sync_state()** — `gpucc` and `gcc` can't finalize
-  due to GMU not fully probing. Related to regulator issue.
-- **PCIe dummy regulators** (`vdda`/`vddpe-3v3`) — DT doesn't describe PCIe
-  regulator supplies for controller `1c08000`.
-- **I2C HID dummy regulators** — touchpad/keyboard `vdd`/`vddl` not in DT.
-  Devices functional.
-- **WCN7850 WiFi dummy regulator** — `vddio1p2` not in DT. WiFi functional.
-- **`*_ignore_unused` boot params** — necessary until DT power descriptions
-  mature.
+- **System-wide power regulation** — hard reboots under sustained
+  CPU OR GPU load. PMIC overcurrent/brownout triggers hardware
+  reset. Root cause: device tree doesn't fully describe power supply
+  relationships for x1e80100.
+- **GPU dummy regulators** (`vdd`/`vddcx`) — DT doesn't describe
+  GPU power supplies. Tracked upstream in QCOM DTS.
+- **GPU clock controller sync_state()** — `gpucc` and `gcc` can't
+  finalize due to GMU not fully probing.
+- **PCIe dummy regulators** (`vdda`/`vddpe-3v3`) — DT doesn't
+  describe PCIe regulator supplies.
+- **I2C HID dummy regulators** — touchpad/keyboard `vdd`/`vddl`
+  not in DT. Devices functional.
+- **WCN7850 WiFi dummy regulator** — `vddio1p2` not in DT. WiFi
+  functional.
+- **`*_ignore_unused` boot params** — necessary until DT power
+  descriptions mature.
 
 ### Working Hardware
 
 - ✅ GPU — OpenGL 4.6 (glxgears 3000+ FPS @ 390 MHz)
-- ✅ GPU — Vulkan 1.4.348 via Turnip (fully working, verified stable with vkcube)
-- ✅ Display (eDP-1 + 4 DP controllers)
+- ✅ GPU — Vulkan 1.4.348 via Turnip
+- ✅ Display (eDP-1 + DP-1, DP-2, HDMI-A-1)
 - ✅ WiFi (ath12k/WCN7850)
-- ✅ NVMe (PCIe, btrfs)
-- ✅ Audio (x1e80100 codec, speakers/mics fully functional when ADSP is started post-boot)
-- ✅ USB-C (PD, DP alt-mode, UCSI)
+- ✅ NVMe (PCIe, btrfs with subvols)
+- ✅ Audio (x1e80100 codec via ADSP)
+- ✅ USB-C (PD, UCSI)
 - ✅ Keyboard/Touchpad (I2C HID)
-- ✅ Thermals (GPU 33-34°C idle, CPU 37-39°C idle)
+- ✅ Thermals (29-30°C idle)
+- ✅ Crash capture — ramoops + netconsole + pstore-blk
+- ✅ Swap — zram 30.7G active
+- ✅ Battery — status and energy readings working
+- ✅ Boot (systemd-boot, editor disabled, efi-runtime-test entry)
+- ❌ AppArmor — kernel compiled but not in LSM cmdline
+- ❌ Thunderbolt 5 Dock — drops to USB 2.0 full-speed
 - 🔴 Stability — hard reboots under sustained CPU or GPU load
-- ✅ Crash capture — ramoops working (ecc: 0), netconsole active (systemd service), pstore-blk label fix pending
-- ⚠️ Swap — zram configured but `CONFIG_ZRAM` missing from kernel (fix pending rebuild)
-- ✅ Battery — capacity and charging status fully functional when ADSP is started post-boot
-- ✅ Boot (systemd-boot, systemd initrd, clean reboots when not under load)
