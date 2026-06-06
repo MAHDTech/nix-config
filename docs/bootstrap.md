@@ -15,7 +15,7 @@ Set these environment variables in your terminal before running any subsequent c
 
 ```bash
 # Name of the host configuration (uppercase, matches flake target)
-NIXOS_HOST_NAME="ZENBOOK"
+NIXOS_HOSTNAME="ZENBOOK"
 
 # Name of the installer configuration (from the list below)
 INSTALLER_NAME="installer-zenbook"
@@ -109,7 +109,7 @@ OpNix decrypts and mounts host secrets at runtime via a 1Password Service Accoun
 Make sure you are logged in to the `op` CLI locally, and then run:
 
 ```bash
-op service-account create "$NIXOS_HOST_NAME" --vault "fleet:read_items"
+op service-account create "$NIXOS_HOSTNAME" --vault "fleet:read_items"
 ```
 
 > [!IMPORTANT]
@@ -151,7 +151,7 @@ Run the standard deployment:
 ```bash
 nix run github:nix-community/nixos-anywhere -- \
   --extra-files "$OPNIX_TEMP" \
-  --flake .#${NIXOS_HOST_NAME} \
+  --flake .#${NIXOS_HOSTNAME^^} \
   --target-host root@${NIXOS_TARGET_IP} \
   --build-on remote \
   --phases disko,install
@@ -164,7 +164,7 @@ Use this variation if your local SSH setup attempts all keys in your 1Password a
 ```bash
 env SSH_AUTH_SOCK="" nix run github:nix-community/nixos-anywhere -- \
   --extra-files "$OPNIX_TEMP" \
-  --flake .#${NIXOS_HOST_NAME} \
+  --flake .#${NIXOS_HOSTNAME^^} \
   --target-host root@${NIXOS_TARGET_IP} \
   --build-on remote \
   --phases disko,install \
