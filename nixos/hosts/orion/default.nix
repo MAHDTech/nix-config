@@ -60,7 +60,15 @@
     ../../system/config/programs/1password
     ../../system/config/services/trezor
 
+    # Backup
+    ../../system/config/disk/backup
   ];
+
+  services.tars-backup = {
+    enable = true;
+    userName = "mahdtech";
+    diskUuids = [ ];
+  };
 
   environment.sessionVariables = {
     AQ_DRM_DEVICES = lib.mkForce "/dev/dri/cix-display:/dev/dri/cix-gpu";

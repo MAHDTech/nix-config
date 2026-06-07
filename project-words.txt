@@ -1706,3 +1706,5 @@ zvol
 zvols
 DKMS
 patchset
+vorta
+borgbackup
