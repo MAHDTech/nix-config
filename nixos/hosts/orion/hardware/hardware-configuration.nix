@@ -84,6 +84,7 @@ in
     kernelParams = [
       "console=ttyAMA0,115200n8"
       "console=tty0"
+      "fbcon=map:1" # Map the system console to the native display framebuffer (fb1) rather than simpledrm (fb0)
       "acpi=off" # Force Device Tree by completely ignoring the EDK2 BIOS ACPI tables
       "nowatchdog" # Suppress all platform watchdogs at boot (works on built-in drivers too)
       # Belt-and-suspenders panfrost blacklist via kernel param (NixOS option alone not sufficient)
@@ -91,8 +92,8 @@ in
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
       # Required on CIX P1 to avoid slow boot and hardware init races
       "clk_ignore_unused"
-      # Configure global SMMU to use identity mappings (bypass) by default to prevent early-boot display DMA faults
-      "iommu.default_domain_type=identity"
+      # Configure global SMMU to use passthrough mappings (bypass) by default to prevent early-boot display DMA faults
+      "iommu.default_domain_type=passthrough"
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
       # BIOS 1.2.1 may have fixed the IORT table. Re-add if NVMe crashes:
       #   "arm-smmu-v3.disable_bypass=0"
