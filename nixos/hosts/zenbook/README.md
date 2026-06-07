@@ -264,9 +264,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 6: Defconfig regeneration and platform trimming
 
-- [/] **Status**: In progress (defconfig regenerated and platform
-  drivers trimmed. Core `MAILBOX` and `ARM_SCMI_PROTOCOL` were
-  disabled by cascading pruning — force-enabled in `kernel.nix`)
+- [x] **Status**: Resolved (Disabled irrelevant SoC architectures like Exynos, Tegra, Mediatek, and Rockchip to significantly reduce kernel compile times).
 - **Severity**: P3 — Housekeeping
 - **Symptom**: Defconfig header says `7.1.0-rc5` but kernel source is `rc6`. Many non-Qualcomm platforms enabled (Exynos, Tegra, Mediatek, etc.) increasing kernel size.
 - **Root Cause**: The trimming process disabled core `MAILBOX` and
@@ -308,7 +306,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 8: PCIe ASPM re-enablement for battery life
 
-- [ ] **Status**: Not started
+- [x] **Status**: Resolved (`pcie_aspm=off` removed, allowing hardware-managed link states and extending battery life)
 - **Severity**: P3 — Battery optimization
 - **Symptom**: `pcie_aspm=off` in kernel params disables PCIe Active State Power Management system-wide. PCIe dummy regulators retry ~20x during boot for controller `1c08000`.
 - **File**: `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (kernelParams)
@@ -634,9 +632,9 @@ under NixOS.
 - [x] Verify SSH hardening: ✅ password auth disabled, root disabled
 - [x] Verify opnix token: ✅ present with correct permissions
 - [x] Verify boot editor disabled: ✅ `editor 0`
-- [ ] Fix AppArmor LSM cmdline (Issue 15)
+- [x] Fix AppArmor LSM cmdline (Issue 15)
 - [ ] Investigate TB5 dock full-speed fallback (Issue 16)
-- [ ] Fix Home Manager opnix read failure (Issue 17)
+- [x] Fix Home Manager opnix read failure (Issue 17)
 - [ ] Test efi-runtime-test specialisation (Issue 14)
 - [ ] Controlled panic test to verify full capture pipeline
 - [ ] Verify netconsole receiver on JONS

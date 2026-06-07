@@ -64,6 +64,12 @@ let
       cp ${./files/config/zenbook.defconfig} .config
       chmod +w .config
 
+      # Disable irrelevant architectures to drastically reduce compile time
+      ./scripts/config --disable ARCH_EXYNOS
+      ./scripts/config --disable ARCH_TEGRA
+      ./scripts/config --disable ARCH_MEDIATEK
+      ./scripts/config --disable ARCH_ROCKCHIP
+
       # Restore critical Qualcomm inter-processor communication & mailbox drivers
       # which are required for boot but got disabled due to cascading defconfig dependencies
       ./scripts/config --enable MAILBOX

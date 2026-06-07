@@ -152,6 +152,11 @@ let
       ./scripts/config --disable ARCH_TEGRA
       ./scripts/config --disable ARCH_ROCKCHIP
 
+      # --- Disable built-in extra firmware ---
+      # CIX defconfig includes extra firmware (e.g. rtw89 binaries) built-in.
+      # This fails in the NixOS isolated build sandbox which has no /lib/firmware.
+      ./scripts/config --set-str EXTRA_FIRMWARE ""
+
       # ── Phase 3: Validation gate ─────────────────────────────────────────
       # Verify critical CIX and NixOS options survived configuration.
       # If any are missing, the build fails immediately rather than
