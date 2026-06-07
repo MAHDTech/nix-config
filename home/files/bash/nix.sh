@@ -461,14 +461,26 @@ function dotfiles() {
 
 	check)
 
+		local CHECK_ARGS=(--keep-going --accept-flake-config --impure)
+		local NIX_ARGS=()
+		local SHOULD_BUILD="FALSE"
+		for arg in "${EXTRA_ARGS[@]}"; do
+			if [[ $arg == "--build" ]]; then
+				SHOULD_BUILD="TRUE"
+			else
+				NIX_ARGS+=("$arg")
+			fi
+		done
+
+		if [[ $SHOULD_BUILD == "FALSE" ]]; then
+			CHECK_ARGS+=(--no-build)
+		fi
+
 		# When remote the URL is passed, otherwise the local flake is used.
 		nix flake check \
-			--no-build \
-			--keep-going \
-			--accept-flake-config \
-			--impure \
+			"${CHECK_ARGS[@]}" \
 			"${FLAKE_LOCATION}" \
-			"${EXTRA_ARGS[@]}" || {
+			"${NIX_ARGS[@]}" || {
 			writeLog "WARN" "Failed flake check!"
 			return 1
 		}
