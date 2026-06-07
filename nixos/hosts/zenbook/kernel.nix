@@ -219,6 +219,10 @@ let
       ./scripts/config --set-val PSTORE_BLK_PMSG_SIZE 64
       ./scripts/config --set-val PSTORE_BLK_MAX_REASON 2
 
+      # Enable firmware loader compression support for compressed firmware files on NixOS
+      ./scripts/config --enable FW_LOADER_COMPRESS
+      ./scripts/config --enable FW_LOADER_COMPRESS_ZSTD
+
       # Re-sync configuration against the active kernel tree
       make ARCH=arm64 olddefconfig
     '';

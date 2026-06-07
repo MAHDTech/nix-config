@@ -117,7 +117,12 @@ let
       ./scripts/config --enable CGROUPS
       ./scripts/config --enable SECCOMP
       ./scripts/config --module TCG_TIS
+      ./scripts/config --module TCG_CRB
       ./scripts/config --module USB_UHCI_HCD
+
+      # --- Firmware compression support (NixOS compresses firmware with ZSTD) ---
+      ./scripts/config --enable FW_LOADER_COMPRESS
+      ./scripts/config --enable FW_LOADER_COMPRESS_ZSTD
 
       # --- BTRFS crypto dependencies (not in CIX defconfig) ---
       # NixOS uses BTRFS with crc32c checksums; blake2b and xxhash are also
@@ -156,6 +161,9 @@ let
       # CIX defconfig includes extra firmware (e.g. rtw89 binaries) built-in.
       # This fails in the NixOS isolated build sandbox which has no /lib/firmware.
       ./scripts/config --set-str EXTRA_FIRMWARE ""
+
+      # Run olddefconfig again to resolve all new config overrides and dependencies non-interactively
+      make ARCH=arm64 olddefconfig
 
       # ── Phase 3: Validation gate ─────────────────────────────────────────
       # Verify critical CIX and NixOS options survived configuration.

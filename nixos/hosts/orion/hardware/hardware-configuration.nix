@@ -33,6 +33,7 @@ in
       lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 
     initrd = {
+      includeDefaultModules = false;
       availableKernelModules = [
         "nvme"
         "usb_storage"
@@ -41,7 +42,8 @@ in
         "xhci_hcd"
         "xhci_plat_hcd"
         "uas"
-        "r8169" # Realtek RTL8126 5GbE (mainline r8169 supports PCI ID 10ec:8126)
+        "r8126" # Realtek RTL8126 5GbE (in-tree sky1 driver)
+        "r8125" # Realtek RTL8125 2.5GbE (in-tree sky1 driver)
         "r8152" # Realtek USB Ethernet (fallback for USB dongles)
         "ax88179_178a" # ASIX AX88179 USB Ethernet
         "cdc_ncm" # CDC NCM USB Ethernet
@@ -63,15 +65,16 @@ in
       "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
       "linlon-dp" # CIX Display controller
       "trilin-dpsub" # CIX DisplayPort subsystem
+
+      # USB-C Power Delivery and DisplayPort Alt Mode (Required for pure DT boot)
+      "typec"
+      "typec_ucsi"
+      "typec_displayport"
     ]
     ++ lib.optionals (!isInstaller) [
       "kvm"
       "aipu" # CIX NPU
       "amvx" # CIX VPU
-      # USB-C Power Delivery and DisplayPort Alt Mode
-      "typec"
-      "typec_ucsi"
-      "typec_displayport"
     ];
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
@@ -81,12 +84,15 @@ in
     kernelParams = [
       "console=ttyAMA0,115200n8"
       "console=tty0"
+      "acpi=off" # Force Device Tree by completely ignoring the EDK2 BIOS ACPI tables
       "nowatchdog" # Suppress all platform watchdogs at boot (works on built-in drivers too)
       # Belt-and-suspenders panfrost blacklist via kernel param (NixOS option alone not sufficient)
       "module_blacklist=panfrost"
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
       # Required on CIX P1 to avoid slow boot and hardware init races
       "clk_ignore_unused"
+      # Configure global SMMU to use identity mappings (bypass) by default to prevent early-boot display DMA faults
+      "iommu.default_domain_type=identity"
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
       # BIOS 1.2.1 may have fixed the IORT table. Re-add if NVMe crashes:
       #   "arm-smmu-v3.disable_bypass=0"
@@ -244,6 +250,31 @@ in
     deviceTree = {
       enable = true;
       name = "cix/sky1-orion-o6.dtb";
+      overlays = [
+        {
+          name = "smmu-mmhub-bypass";
+          dtsText = ''
+            /dts-v1/;
+            /plugin/;
+
+            / {
+              compatible = "cix,sky1";
+              fragment@0 {
+                target-path = "/iommu@b1b0000";
+                __overlay__ {
+                  arm,boot-active-sids = <
+                    0x00 0x01 0x03 0x04 0x05
+                    0x06 0x07 0x09 0x0a 0x0b
+                    0x0c 0x0d 0x0f 0x10 0x11
+                    0x12 0x13 0x15 0x16 0x17
+                    0x18 0x19 0x1b 0x1c 0x1d
+                  >;
+                };
+              };
+            };
+          '';
+        }
+      ];
     };
   };
 

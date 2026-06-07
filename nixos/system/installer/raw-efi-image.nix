@@ -30,12 +30,12 @@ let
   closureInfo = pkgs.closureInfo { rootPaths = [ config.system.build.toplevel ]; };
 
   # Build the raw EFI disk image with proper GPT + ESP
-  rawEfiImage = pkgs.stdenv.mkDerivation {
+  rawEfiImage = pkgs.pkgsBuildHost.stdenv.mkDerivation {
     name = "nixos-raw-efi-image-${config.networking.hostName}";
 
     requiredSystemFeatures = [ "uid-range" ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with pkgs.buildPackages; [
       dosfstools
       e2fsprogs
       util-linux
@@ -113,7 +113,7 @@ let
       ${lib.optionalString (dtbTarget != null) "mcopy -i esp.img ${dtbTarget} ::nixos/dtb"}
 
       # Write ESP image into the disk image
-      dd if=esp.img of=image.raw seek=$espStartSector bs=512 conv=notrunc
+      dd if=esp.img of=image.raw seek=$((espStartSector / 2048)) bs=1M conv=notrunc
 
       # Get exact start and size of root partition allocated by sfdisk
       rootStartSector=$(sfdisk -d image.raw | grep 'name="nixos-root"' | sed -E 's/.*start=\s*([0-9]+),.*/\1/')
@@ -136,7 +136,7 @@ let
       mkfs.ext4 -L nixos-root -d root-mnt root.img
 
       # Write root image into the disk image
-      dd if=root.img of=image.raw seek=$rootStartSector bs=512 conv=notrunc
+      dd if=root.img of=image.raw seek=$((rootStartSector / 2048)) bs=1M conv=notrunc
 
       # Output
       mkdir -p $out
