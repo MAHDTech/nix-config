@@ -285,6 +285,10 @@ in
     # Disable runtime suspend for Cadence USB controllers to prevent IRQ storm/hang when Type-C mode switches
     SUBSYSTEM=="platform", DRIVERS=="cdnsp-sky1", ATTR{power/control}="on"
     SUBSYSTEM=="platform", DRIVERS=="cdns-usbssp", ATTR{power/control}="on"
+
+    # Disable USB 3.0 port 1 on Bus 14 (widescreen monitor DisplayPort Alt Mode lane sharing mismatch)
+    # to prevent loop resets and log spam, since only keyboard/mouse are connected via USB 2.0
+    KERNEL=="usb14-port1", ATTR{disable}="1"
   '';
 
   # AIPULIB_PATH: scoped to interactive sessions only
