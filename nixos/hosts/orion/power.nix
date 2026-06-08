@@ -12,4 +12,8 @@
     algorithm = "zstd";
     memoryPercent = 100;
   };
+
+  powerManagement = {
+    cpuFreqGovernor = "performance";
+  };
 }

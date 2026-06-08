@@ -1714,3 +1714,4 @@ udphy
 PKTTYPE
 IPRANGE
 RPFILTER
+cpuidle

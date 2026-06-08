@@ -94,6 +94,8 @@ in
       "clk_ignore_unused"
       # Configure global SMMU to use passthrough mappings (bypass) by default to prevent early-boot display DMA faults
       "iommu.default_domain_type=passthrough"
+      # Disable deep CPU idle states to prevent register corruption
+      "cpuidle.off=1"
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
       # BIOS 1.2.1 may have fixed the IORT table. Re-add if NVMe crashes:
       #   "arm-smmu-v3.disable_bypass=0"
