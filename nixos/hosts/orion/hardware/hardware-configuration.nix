@@ -281,6 +281,10 @@ in
 
   services.udev.extraRules = ''
     KERNEL=="aipu", MODE="0660", GROUP="render"
+
+    # Disable runtime suspend for Cadence USB controllers to prevent IRQ storm/hang when Type-C mode switches
+    SUBSYSTEM=="platform", DRIVERS=="cdnsp-sky1", ATTR{power/control}="on"
+    SUBSYSTEM=="platform", DRIVERS=="cdns-usbssp", ATTR{power/control}="on"
   '';
 
   # AIPULIB_PATH: scoped to interactive sessions only

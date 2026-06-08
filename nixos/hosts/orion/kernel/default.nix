@@ -61,6 +61,10 @@ let
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
+
+      # Force USB-C DP Alt Mode to use 2-lane DP + 2-lane USB3 (UDPHY_MODE_DP_USB) instead of 4-lane DP,
+      # which allows the widescreen monitor's USB 3.0 hub/dock to work at SuperSpeed.
+      sed -i 's/udphy->next_mode = UDPHY_MODE_DP;/udphy->next_mode = UDPHY_MODE_DP_USB;/g' drivers/phy/cix/phy-cix-usbdp.c
     '';
 
     configurePhase = ''
@@ -119,6 +123,12 @@ let
       ./scripts/config --module TCG_TIS
       ./scripts/config --module TCG_CRB
       ./scripts/config --module USB_UHCI_HCD
+
+      # --- NixOS Firewall/Netfilter requirements ---
+      ./scripts/config --module NETFILTER_XT_MATCH_PKTTYPE
+      ./scripts/config --module NETFILTER_XT_MATCH_IPRANGE
+      ./scripts/config --module IP_NF_MATCH_RPFILTER
+      ./scripts/config --module IP6_NF_MATCH_RPFILTER
 
       # --- Firmware compression support (NixOS compresses firmware with ZSTD) ---
       ./scripts/config --enable FW_LOADER_COMPRESS
