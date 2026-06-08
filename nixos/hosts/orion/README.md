@@ -7,10 +7,13 @@ This directory contains the NixOS host configuration for the Radxa Orion O6 boar
 ## 1. Hardware Support & Status Matrix
 
 - **USB-A & USB-C**
-  - **Hardware Spec**: Generic USB Host Controller
-  - **Linux Driver**: `xhci-hcd`
+  - **Hardware Spec**: Generic USB Host Controller + Type-C PD Controller (Realtek RTS5453)
+  - **Linux Driver**: `xhci-hcd`, `cdnsp-sky1`, `cdns-usbssp`, `rts5453`
   - **Status**: ✅ Working
-  - **Details**: Stable generic USB-A and USB-C ports. Powered peripherals (like ZSA Moonlander keyboard) are fully operational.
+  - **Details**: USB-A and USB-C ports are fully operational. DisplayPort Alt
+    Mode is supported. Note: 4-lane DP alt-mode (required by widescreen monitors)
+    electrically disables USB 3.0 speeds on the shared cable, but USB 2.0
+    remains active for keyboard/mouse. Runtime PM suspend crashes are prevented.
 - **GPU**
   - **Hardware Spec**: Mali Immortalis-G720 MC10
   - **Linux Driver**: `panthor`
@@ -68,7 +71,25 @@ This directory contains the NixOS host configuration for the Radxa Orion O6 boar
 - **Mechanism**: Explicitly blacklists the legacy `panfrost` module.
 - **Why**: Prevents the kernel from trying to bind the legacy Mali `panfrost` driver to the Immortalis-G720 GPU, ensuring `panthor` takes sole control.
 
-_(Note: The previous SMMU IORT bypass and `libdrm` ACPI hacks have been completely removed as they are obsolete under native Device Tree booting)._
+### 3. USB Runtime Suspend Disablement (IRQ 60 Fix)
+
+- **Location**: `hardware/hardware-configuration.nix` (under `services.udev.extraRules`)
+- **Mechanism**: udev rules setting `power/control` to `on` for `cdnsp-sky1` and `cdns-usbssp` drivers.
+- **Why**: Prevents the kernel from attempting to runtime-suspend the Cadence
+  USB controller to D3 when the USB link goes down (such as switching to
+  DP-only mode). In D3 with clocks gated, register access is cut off, causing
+  a level-triggered interrupt loop (IRQ 60 storm / "nobody cared" crash).
+
+### 4. USB-C Port Disablement (Widescreen Log Spam Fix)
+
+- **Location**: `hardware/hardware-configuration.nix` (under `services.udev.extraRules`)
+- **Mechanism**: udev rule setting `disable` to `1` for the `usb14-port1` kernel device.
+- **Why**: Since widescreen monitors negotiate 4-lane DisplayPort, the USB
+  3.0 lines are electrically disconnected. Disabling this port prevents the
+  XHCI controller from constantly retrying connection, silences the log
+  warning loop (`usb usb14-port1: Cannot enable`), and keeps system logs clean.
+
+_Note: SMMU Display early boot bypass is handled via a custom device tree overlay._
 
 ---
 
@@ -121,9 +142,13 @@ _(Note: The previous SMMU IORT bypass and `libdrm` ACPI hacks have been complete
 - [x] Remove ACPI-specific `libdrm` overlay and restore binary caching for the graphics stack.
 - [x] Repartition with 16MB raw pstore partition for persistent crash logging.
 - [x] Deploy Generation 38+ (Successfully evaluated and rebuilt with `nixos-anywhere`).
+- [x] Trim `config.sky1-next` kernel config to remove irrelevant SoC platform drivers (Qualcomm, Tegra, Rockchip) to reduce compile time.
+- [x] Resolve Early Boot USB-C Display blank screen via custom SMMU bypass DT overlay.
+- [x] Resolve USB controller suspend crash (IRQ storm) on DisplayPort Alt Mode entry.
+- [x] Silence widescreen USB 3.0 loop warning log spam by disabling the inactive port.
+- [x] Fix firewall netfilter match kernel config options to enable NixOS firewall.
 
 ### Pending
 
-- [ ] Trim `config.sky1-next` kernel config to remove irrelevant SoC platform drivers (Qualcomm, Tegra, Rockchip) to reduce compile time.
 - [ ] Investigate boot timing — reduce `systemd-networkd-wait-online` 10s delay.
 - [ ] Investigate rtkit lacking RT capabilities — `Failed to make ourselves RT: Operation not permitted` affects PipeWire latency.
