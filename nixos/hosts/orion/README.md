@@ -148,8 +148,11 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - [x] Silence widescreen USB 3.0 loop warning log spam by disabling the inactive port.
 - [x] Fix firewall netfilter match kernel config options to enable NixOS firewall.
 - [x] Upgrade kernel to 6.19.14 (resolving the Netfilter/nftables UAF memory corruption boot crash).
+- [x] Resolve target boot crash (udev rules mismatch) by updating DRM device matching rules for Device Tree mode.
+- [x] Clean up duplicate "Linux Boot Loader" UEFI variables in NVRAM and set `boot.loader.efi.canTouchEfiVariables = false` to prevent future pollution.
+- [x] Mitigate boot timing delay by configuring `systemd.network.wait-online.anyInterface = true` to skip waiting on inactive ports.
 
 ### Pending
 
-- [ ] Investigate boot timing — reduce `systemd-networkd-wait-online` 10s delay.
 - [ ] Investigate rtkit lacking RT capabilities — `Failed to make ourselves RT: Operation not permitted` affects PipeWire latency.
+- [ ] Investigate zramSwap warning — algorithm "zstd" not recognized (kernel lacks CRYPTO_ZSTD/ZSTD_COMPRESS support).

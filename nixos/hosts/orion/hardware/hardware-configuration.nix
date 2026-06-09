@@ -302,6 +302,7 @@ in
   # Use systemd-networkd for Ethernet management
   networking.useNetworkd = true;
   networking.useDHCP = lib.mkForce false;
+  systemd.network.wait-online.anyInterface = true;
 
   systemd.network.networks."10-lan" = {
     matchConfig.Name = [

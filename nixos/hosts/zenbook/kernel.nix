@@ -17,7 +17,7 @@ let
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
       rev = "next-20260608";
-      sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+      sha256 = "sha256-oKUfIVZyGAzLfjksWvyWvMSdJy3sHvBryGofBABoJR4=";
     };
 
     nativeBuildInputs = with pkgs; [

@@ -71,8 +71,8 @@
   };
 
   environment.sessionVariables = {
-    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/cix-display:/dev/dri/cix-gpu";
-    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/cix-display:/dev/dri/cix-gpu";
+    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/cix-gpu:/dev/dri/cix-display";
+    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/cix-gpu:/dev/dri/cix-display";
   };
 
   services.udev.extraRules = ''
