@@ -70,6 +70,7 @@ DMABUF
 DPMS
 DPTSW
 DTSI
+DVFS
 Decepticons
 Dedup
 Disko
@@ -102,6 +103,7 @@ Ferdium
 Fira
 Flatpaks
 Flatseal
+GDSC
 GELU
 GETFL
 GGML
@@ -322,6 +324,7 @@ UHCI
 UNIFI
 USBC
 USBSSP
+UVLO
 UWSM
 Ultrawide
 Ungated
@@ -575,6 +578,7 @@ dejavu
 desktopeditors
 devenv
 devicetree
+devm
 devmem
 dhcpcd
 dialout

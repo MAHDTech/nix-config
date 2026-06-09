@@ -144,16 +144,34 @@ We are running testing on Ubuntu first to identify working configurations, then 
 - **Severity**: P1 — GPU at ~31% max performance
 - **Symptom**: `cat /sys/class/devfreq/3d00000.gpu/max_freq` → `390000000`
 - **Root Cause**:
-  - `systemd.services.gpu-frequency-cap` in `hardware-configuration.nix` writes `390000000` to prevent overcurrent crashes caused by GPU dummy regulators
-    (`vdd` and `vddcx` on `regulator-dummy` at 0mV/0mA). On x1e80100.
-  - voltage is managed by RPMh Power Domains and the GMU.
-  - Because `vddcx-supply` isn't mapped to a physical RPMh regulator node in the device tree, `regulator_set_voltage()` does nothing. When frequency scales up, voltage remains low.
-  - This causes massive current spikes that trip the PMIC's hardware Overcurrent Protection (OCP) and reboot the system.
+  - The generic MSM kernel GPU driver (`drivers/gpu/drm/msm/msm_gpu.c`)
+    queries `vdd` and `vddcx` regulators via `devm_regulator_get` for legacy
+    compatibility. Because these are absent in the modern `hamoa.dtsi` device
+    tree, they fallback to `regulator-dummy` (0mV).
+  - **This is harmless and by design:** On the Snapdragon X Elite, GPU voltage
+    and frequency scaling (DVFS) are managed autonomously in hardware by the
+    **GMU (Graphics Management Unit)** firmware and **RPMh (Resource Power Manager
+    Hardened)**. The GMU votes on the `GPU_CX_GDSC` and `GPU_GX_GDSC` power
+    domains, and RPMh handles the hardware-level rails. Software-level
+    `regulator_set_voltage()` is not used.
+  - **Tripping PMIC Overcurrent:** The actual system resets under load are due
+    to a lack of active **limits management (Qualcomm LMH)** and **SCMI power
+    limits** in the Linux configuration. Under Windows, the proprietary Power
+    Engine Plug-in (PEP) and SCMI framework enforce strict power envelopes,
+    throttling CPU/GPU current draw. Under Linux, the absence of active
+    power/thermal limiting allows CPU/GPU current spikes to exceed the PMIC's
+    physical capacity, triggering instantaneous hardware Overcurrent Protection
+    (OCP) / Under-Voltage Lockout (UVLO).
 - **Fix Strategy**:
-  - Upstream resolution involves proper GMU / RPMh Power Domain mapping,
-  - and the newly introduced **GPU ACD (Adaptive Clock Distribution)** patches.
-  - These are specifically designed for the Adreno X1-85 to prevent current spikes.
-  - Until ACD patches are ported/stabilised in our kernel, we must maintain a conservative frequency cap.
+  - **Wait for Upstream:** We are waiting for upstream device tree
+    configurations and patches to fully support the Snapdragon X Elite LMH
+    (Limits Management Hardware) interrupts, SCMI power-capping domains, and
+    Adreno ACD (Adaptive Clock Distribution) to dynamically throttle current
+    draw under Linux.
+  - **Temporary Mitigation:** Until limits are fully integrated, we must
+    enforce conservative software frequency caps (e.g. 390 MHz, or testing up
+    to 550/687 MHz) and limit CPU parallelism during high-load operations to
+    prevent PMIC brownouts.
 - **File**: `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (line ~152-161)
 - **Fix**: Incrementally raise the cap and stress-test at each step. Test order:
   1. `550000000` (550 MHz — ~44% max)
@@ -334,17 +352,25 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 9: Razer Thunderbolt 5 Dock Ethernet regression (USB disconnect / Alt Mode negotiation failure)
 
-- [/] **Status**: Upstream fixes (`ps883x` retimers and `UCSI_USB4_IMPLIES_USB`) integrated in `next-20260605`. Testing if Alt Mode lockups are resolved.
+- [/] **Status**: Investigating installer diff. Verified that blacklisting `qcom_q6v5_pas` (ADSP) on the installer keeps Ethernet stable in USB 2.0 fallback.
 - **Severity**: P0 — High-speed dock peripherals and Ethernet not detected
 - **Symptoms**:
   - The Razer TB5 Dock USB tree initializes during early boot but is disconnected as soon as the ADSP remoteproc boots and `pmic-glink` initiates Type-C port manager negotiation.
-  - High-speed USB hub and Realtek Gigabit NIC fail to reconnect.
+  - High-speed USB hub and Realtek Gigabit NIC fail to reconnect on the installed OS, but work perfectly at USB 2.0 speed (480 Mbps) on the installer.
 - **Root Cause**:
-  - The Type-C port manager attempts to negotiate alternate modes, causing a connection reset.
-  - However, because the kernel lacks DisplayPort and Thunderbolt Alt Mode drivers (`CONFIG_TYPEC_DP_ALTMODE` and `CONFIG_TYPEC_TBT_ALTMODE`),
-  - and because the Parade PS883X retimer driver is loaded too late (stage 2 instead of initrd stage 1,
-  - causing a `pmic-glink` device link failure), the negotiation fails.
-  - The dock gets stuck in a failed state where high-speed ports do not reconnect.
+  - **The Installer Fallback:** The installer blacklists `qcom_q6v5_pas`
+    (ADSP) to prevent boot hangs. Since ADSP is offline, the Type-C port
+    manager (`pmic_glink_altmode` / `ucsi_glink`) never runs, and Alt Mode
+    negotiation is skipped. The hardware link defaults to a stable **USB 2.0
+    High-Speed Fallback mode** (480 Mbps), where the dock's Realtek RTL8153
+    Ethernet adapter is exposed and functional.
+  - **The Installed OS Alt Mode Failure:** On the installed OS, ADSP runs and
+    triggers Alt Mode negotiation. However, because the Parade PS883X retimer
+    driver (`ps883x`) is loaded too late (stage 2 instead of initrd stage 1)
+    and the kernel lacks device-tree bindings for the integrated Snapdragon X
+    Elite USB4 Host Router, Alt Mode negotiation fails. The connection resets,
+    and the dock drops to **USB 1.1 Billboard mode** (12 Mbps), completely
+    disconnecting high-speed hubs and Ethernet.
 - **Files**:
   - `nixos/hosts/zenbook/kernel.nix` — Enable Alt Mode drivers
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` — Load `ps883x` and `pmic_glink_altmode` in initrd
@@ -663,12 +689,21 @@ under NixOS.
 
 ### Known Upstream Limitations (not fixable in this config)
 
-- **System-wide power regulation** — hard reboots under sustained
-  CPU OR GPU load. PMIC overcurrent/brownout triggers hardware
-  reset. Root cause: device tree doesn't fully describe power supply
-  relationships for x1e80100.
-- **GPU dummy regulators** (`vdd`/`vddcx`) — DT doesn't describe
-  GPU power supplies. Tracked upstream in QCOM DTS.
+- **System-wide power regulation (Hard Reboots)** — Hard reboots under
+  sustained CPU or GPU load are caused by the PMIC triggering hardware-level
+  Overcurrent Protection (OCP) or Under-Voltage Lockout (UVLO). The root cause
+  is the lack of active SCMI power limit capping, thermal zones config, and
+  Qualcomm limits management hardware (LMH) interrupts in Linux. Without these
+  limits (which are handled in Windows by the PEP/ACPI framework), the
+  hardware draws current spikes that exceed the PMIC envelope, triggering an
+  instant shutdown.
+- **GPU dummy regulators (`vdd`/`vddcx`)** — The warning about `vdd` and
+  `vddcx` regulators falling back to `regulator-dummy` is a harmless legacy
+  compatibility lookup from the `msm` driver. On Snapdragon X Elite SoCs, GPU
+  DVFS (voltage/frequency scaling) is managed autonomously in hardware by the
+  GMU (Graphics Management Unit) firmware and RPMh (Resource Power Manager
+  Hardened) voting on GDSCs (`GPU_CX_GDSC` and `GPU_GX_GDSC`). Mappings are
+  not required in the device tree, and this fallback is by design.
 - **GPU clock controller sync_state()** — `gpucc` and `gcc` can't
   finalize due to GMU not fully probing.
 - **PCIe dummy regulators** (`vdda`/`vddpe-3v3`) — DT doesn't

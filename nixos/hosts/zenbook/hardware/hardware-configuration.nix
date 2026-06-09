@@ -128,10 +128,14 @@ in
       ];
     };
 
-    blacklistedKernelModules = lib.optionals isInstaller [
+    blacklistedKernelModules = [
+      # TODO: Remove qcom_q6v5_pas from blacklist once TB5 Dock Alt Mode negotiation and retimer driver (ps883x) are fully stable.
+      # Blacklisting ADSP (qcom_q6v5_pas) disables battery/audio, but prevents Alt Mode negotiation failures that drop the TB5 dock to USB 1.1 Billboard.
+      "qcom_q6v5_pas"
+    ]
+    ++ lib.optionals isInstaller [
       "typec_thunderbolt"
       "thunderbolt"
-      "qcom_q6v5_pas"
       "msm"
     ];
 

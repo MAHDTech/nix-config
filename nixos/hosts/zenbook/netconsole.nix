@@ -2,7 +2,7 @@
 {
   # Netconsole: remote kernel crash capture over UDP
   #
-  # Sends kernel panic/oops output to JONS (10.10.1.97:6666) where a
+  # Sends kernel panic/oops output to JONS (10.10.1.93:6666) where a
   # ncat receiver logs it to /var/log/netconsole-zenbook.log.
   #
   # Loaded as a late systemd service because the USB-ethernet adapter (enu2c2)
