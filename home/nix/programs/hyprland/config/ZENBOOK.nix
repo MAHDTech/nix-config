@@ -8,6 +8,9 @@
 
 {
   monitorConfig = [
+    # Let Hyprland automatically detect and configure the monitor
+    #",preferred,auto,1"
+
     # Built-in Zenbook display (eDP-1) gets Workspace 1
     # Center-bottom position below HP monitor when docked (HP starts at y=900, height 2160/1.6=1350, so HP ends at y=2250)
     # HP scaled width: 3840 / 1.6 = 2400. Zenbook scaled width: 1920 / 1.25 = 1536. Centering x-offset: (2400 - 1536) / 2 = 432.
