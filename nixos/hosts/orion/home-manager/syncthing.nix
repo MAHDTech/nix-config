@@ -1,7 +1,7 @@
 {
   syncthingConfig = {
     deviceName = "ORION";
-    deviceId = "BADYXG2-HRDVBNF-QVA742J-VPYZMDN-IED2CTO-VTPXTXQ-J6VRXV6-IIFSMQG";
+    deviceId = "JEGNUGP-VXS5XP6-UDTMO77-MDXQUUY-X26NX3S-RTPGMWU-SI7FHD3-FSHHMQU";
     otherDevices = [
       {
         name = "JONS";
@@ -10,7 +10,7 @@
       }
       {
         name = "ZENBOOK";
-        id = "XKSODQK-74XAIJW-2RAMYBQ-MJV5DHL-CN6MXTJ-AJ6X6BM-JU2SAXG-TRKDPAN";
+        id = "QCAO364-XNCZATQ-VMKLC24-BVW4EYA-WGDBR7L-QXCLFO7-OLOGKSX-BJ52LQW";
         autoAcceptFolders = false;
       }
     ];

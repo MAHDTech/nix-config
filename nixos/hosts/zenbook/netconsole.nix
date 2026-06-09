@@ -25,8 +25,8 @@
           echo "netconsole: enu2c2 has no IP, skipping"
           exit 0
         fi
-        ${pkgs.kmod}/bin/modprobe netconsole "netconsole=@$SRC_IP/enu2c2,6666@10.10.1.97/"
-        echo "netconsole: configured with source IP $SRC_IP → 10.10.1.97:6666"
+        ${pkgs.kmod}/bin/modprobe netconsole "netconsole=@$SRC_IP/enu2c2,6666@10.10.1.93/"
+        echo "netconsole: configured with source IP $SRC_IP → 10.10.1.93:6666"
       '';
       ExecStop = "${pkgs.kmod}/bin/modprobe -r netconsole";
     };

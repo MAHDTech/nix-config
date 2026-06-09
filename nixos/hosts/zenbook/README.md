@@ -217,7 +217,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 - [/] **Status**: Partially verified on Gen 6 (2026-06-06):
   - ✅ **ramoops**: `pstore: Registered ramoops as persistent store backend`, `using 0x200000@0xb7000000, ecc: 0` — NO ECC errors!
-  - ✅ **netconsole**: systemd service `active (exited)`, configured with source IP `10.10.1.90 → 10.10.1.97:6666`, `network logging started`
+  - ✅ **netconsole**: systemd service `active (exited)`, configured with source IP `10.10.1.90 → 10.10.1.93:6666`, `network logging started`
   - ✅ **panic settings**: `panic_on_oops=1 panic=30 panic_print=0x7ff` confirmed in kernel params
   - ✅ **efi-runtime-test**: specialisation boot entry present in systemd-boot
   - ⚠️ **pstore-blk**: partition exists (`disk-main-pstore`, 16M) but kernel param had wrong label — **fixed** (was `/dev/disk/by-partlabel/pstore`, now `/dev/disk/by-partlabel/disk-main-pstore`)
@@ -578,7 +578,7 @@ ESP (1G) / pstore (16M, raw) / btrfs root (953G, subvols: root, home, nix).
 | ------------- | ------ | ------------------------------------------ |
 | Kernel        | ✅     | `7.1.0-rc5-next-20260528`                  |
 | Ramoops       | ✅     | `0x200000@0xb7000000, ecc: 0` — no errors  |
-| Netconsole    | ✅     | Active, `10.10.1.90 → 10.10.1.97:6666`     |
+| Netconsole    | ✅     | Active, `10.10.1.90 → 10.10.1.93:6666`     |
 | pstore-blk    | ✅     | Partition exists, label `disk-main-pstore` |
 | ZRAM swap     | ✅     | `zram0 30.7G` active                       |
 | SSH hardening | ✅     | password=no, root=no, kbd=no               |
@@ -644,7 +644,7 @@ under NixOS.
 ### Next Steps
 
 - [x] Verify ramoops: ✅ `ecc: 0`, `0x200000@0xb7000000`
-- [x] Verify netconsole: ✅ active, logging to `10.10.1.97:6666`
+- [x] Verify netconsole: ✅ active, logging to `10.10.1.93:6666`
 - [x] Verify pstore-blk partition: ✅ `disk-main-pstore` 16M
 - [x] Verify zram swap: ✅ `zram0 30.7G`
 - [x] Verify SSH hardening: ✅ password auth disabled, root disabled

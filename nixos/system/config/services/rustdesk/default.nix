@@ -14,7 +14,7 @@
     enable = true;
     signal = {
       enable = true;
-      relayHosts = [ "10.10.1.97" ];
+      relayHosts = [ "10.10.1.93" ];
       extraArgs = [
       ];
     };
