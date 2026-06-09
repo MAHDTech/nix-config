@@ -91,7 +91,7 @@ in
 
       efi = {
         efiSysMountPoint = "/boot/efi";
-        canTouchEfiVariables = true;
+        canTouchEfiVariables = false;
       };
 
       generationsDir = {

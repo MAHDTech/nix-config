@@ -148,7 +148,7 @@ in
       };
 
       efi = {
-        canTouchEfiVariables = true;
+        canTouchEfiVariables = false;
         efiSysMountPoint = lib.mkForce "/boot";
       };
     };

@@ -76,7 +76,7 @@
   };
 
   services.udev.extraRules = ''
-    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="CIXH5010:03", SYMLINK+="dri/cix-display"
-    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="CIXH5000:00", SYMLINK+="dri/cix-gpu"
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="14160000.disp-controller", SYMLINK+="dri/cix-display"
+    SUBSYSTEM=="drm", KERNEL=="card*", DRIVERS=="panthor", SYMLINK+="dri/cix-gpu"
   '';
 }
