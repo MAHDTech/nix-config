@@ -17,15 +17,19 @@
   # Enable SSH inside the installer for NixOS Anywhere
   services.openssh.enable = true;
 
-  # Disable emergency mode to prevent sulogin console locking on boot timeouts
-  systemd.enableEmergencyMode = false;
-
   # Use systemd-based initrd for proper ARM64 hardware initialization
   boot.initrd.systemd = {
     enable = true;
     emergencyAccess = true;
   };
 
-  # Disable nix-channel-init service since the raw image closure doesn't pre-pack nixos channel sources
-  systemd.services.nix-channel-init.enable = false;
+  systemd = {
+    # Disable emergency mode to prevent sulogin console locking on boot timeouts
+    enableEmergencyMode = false;
+
+    # Disable nix-channel-init service since the raw image closure doesn't pre-pack nixos channel sources
+    services = {
+      nix-channel-init.enable = false;
+    };
+  };
 }

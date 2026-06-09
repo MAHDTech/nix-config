@@ -48,13 +48,15 @@
 
   # Tools useful for manual rescue or investigation
   environment.systemPackages = with pkgs; [
+    curl
     git
     htop
     parted
-    vim
-    curl
     pciutils
+    rsync
     usbutils
+    vim
+    wget
   ];
 
   # Networking
