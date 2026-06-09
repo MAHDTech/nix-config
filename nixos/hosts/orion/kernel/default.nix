@@ -5,7 +5,7 @@
 }:
 
 let
-  modDirVersion = "6.19.4";
+  modDirVersion = "6.19.14";
 
   # Fetch Sky1-Linux patches repository
   # Pinned to specific commit SHA for reproducibility
@@ -22,8 +22,8 @@ let
     version = modDirVersion;
 
     src = pkgs.fetchurl {
-      url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.4.tar.xz";
-      sha256 = "1b68i7z91fbs1zayzzzf71g9ilfk0wi2fr8nralha60xq723p6r7";
+      url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.14.tar.xz";
+      sha256 = "11giqsz9qa7s9lm94nn4h1bcb2411crsbfyvzrvhfjmy75kvzs6d";
     };
 
     nativeBuildInputs = with pkgs; [
@@ -58,9 +58,16 @@ let
     prePatch = ''
       echo "Applying Sky1 patches from ${sky1Patches}..."
       for patch in ${sky1Patches}/patches-latest/*.patch; do
-        echo "Applying $patch"
-        patch -p1 < "$patch"
+        if [[ "$(basename "$patch")" == "0056-ASoC-ALSA-CIX-Sky1-audio-fixes.patch" ]]; then
+          echo "Skipping original $patch (applying 6.19.14 rebased version instead)"
+        else
+          echo "Applying $patch"
+          patch -p1 < "$patch"
+        fi
       done
+
+      echo "Applying 6.19.14 rebased audio patch..."
+      patch -p1 < ${./patches/0056-ASoC-ALSA-CIX-Sky1-audio-fixes-6.19.14.patch}
 
       # Force USB-C DP Alt Mode to use 2-lane DP + 2-lane USB3 (UDPHY_MODE_DP_USB) instead of 4-lane DP,
       # which allows the widescreen monitor's USB 3.0 hub/dock to work at SuperSpeed.
@@ -258,7 +265,7 @@ let
 
     # Satisfy kernel modules and build expectations (e.g. for NPU/VPU drivers)
     passthru = rec {
-      modDirVersion = "6.19.4";
+      modDirVersion = "6.19.14";
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];

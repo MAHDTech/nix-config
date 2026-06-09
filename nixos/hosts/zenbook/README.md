@@ -6,7 +6,7 @@
 Work through issues **one at a time** — build, test, verify, then check off before moving on.
 
 > [!IMPORTANT]
-> **Current generation**: Gen 1 (fresh nixos-anywhere install, 2026-06-06).
+> **Current generation**: Gen 5 (next-20260605 upgrade, 2026-06-09).
 > Partition layout: ESP (1G) / pstore (16M) / btrfs (953G).
 > Previous generations wiped — this is a clean install.
 
@@ -138,7 +138,9 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 3: GPU frequency hard-capped at 390 MHz
 
-- [/] **Status**: Testing removal of limits on `next-20260605`. Service `gpu-frequency-cap` has been removed.
+- [ ] **Status**: Regression in Gen 2. Removing the cap allowed the GPU to reach
+      `1.25 GHz` but caused an instant PMIC overcurrent hard reboot under GPU load
+      (`vkmark`). We must restore a conservative cap (e.g. 550 MHz or 687 MHz).
 - **Severity**: P1 — GPU at ~31% max performance
 - **Symptom**: `cat /sys/class/devfreq/3d00000.gpu/max_freq` → `390000000`
 - **Root Cause**: `systemd.services.gpu-frequency-cap` in `hardware-configuration.nix`
@@ -441,9 +443,10 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 14: `efi=noruntime` blocks fwupd firmware updates
 
-- [/] **Status**: In progress — efivars ARE readable (despite
-  `efi=noruntime`), but `efibootmgr` is not installed. `fwupd`
-  found NVMe and listed devices successfully. Need to test writes.
+- [x] **Status**: Resolved. Verified `efibootmgr` and `fwupdmgr` can read and write
+      variables (e.g. bootloader timeout written successfully). `efi=noruntime` has
+      been permanently removed from default boot arguments and the specialisation
+      cleaned up.
 - **Severity**: P1 — Firmware is 6 months stale
 - **Symptom**: `efibootmgr` not found. `fwupd` can list devices.
 - **Root Cause**: `efi=noruntime` in kernel params. Reads work but
@@ -621,7 +624,10 @@ under NixOS.
 ## Deployment Plan
 
 > [!IMPORTANT]
-> **Current state**: Gen 2 (next-20260605 upgrade). Kernel updated, GPU limits removed, testing if PMIC hard resets re-occur.
+> **Current state**: Gen 5 (next-20260605 upgrade). Confirmed that running GPU
+> uncapped at 1.25 GHz or even 550 MHz causes PMIC overcurrent resets under
+> Vulkan load. GPU is now capped at 390 MHz for stability. EFI runtime is
+> permanently enabled. Now debugging Thunderbolt 5 dock.
 
 ### Next Steps
 
@@ -635,9 +641,9 @@ under NixOS.
 - [x] Fix AppArmor LSM cmdline (Issue 15)
 - [ ] Investigate TB5 dock full-speed fallback (Issue 16)
 - [x] Fix Home Manager opnix read failure (Issue 17)
-- [ ] Test efi-runtime-test specialisation (Issue 14)
+- [x] Test efi-runtime-test specialisation (Issue 14)
 - [ ] Controlled panic test to verify full capture pipeline
-- [ ] Verify netconsole receiver on JONS
+- [x] Verify netconsole receiver on JONS
 
 ---
 
@@ -664,7 +670,7 @@ under NixOS.
 
 ### Working Hardware
 
-- ✅ GPU — OpenGL 4.6 (glxgears 3000+ FPS @ 390 MHz)
+- ✅ GPU — OpenGL 4.6 (up to 1.25 GHz, capped for stability)
 - ✅ GPU — Vulkan 1.4.348 via Turnip
 - ✅ Display (eDP-1 + DP-1, DP-2, HDMI-A-1)
 - ✅ WiFi (ath12k/WCN7850)
@@ -677,6 +683,6 @@ under NixOS.
 - ✅ Swap — zram 30.7G active
 - ✅ Battery — status and energy readings working
 - ✅ Boot (systemd-boot, editor disabled, efi-runtime-test entry)
-- ❌ AppArmor — kernel compiled but not in LSM cmdline
+- ✅ AppArmor — active in LSM command line and verified working
 - ❌ Thunderbolt 5 Dock — drops to USB 2.0 full-speed
 - 🔴 Stability — hard reboots under sustained CPU or GPU load

@@ -134,7 +134,6 @@ in
       "fbcon=map:0"
       "arm64.nopauth"
       "pcie_aspm=off"
-      "efi=noruntime"
       "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
       "ip=10.10.1.91::10.10.1.1:255.255.255.0:zenbook:enu2c2:none"
@@ -158,6 +157,7 @@ in
       options snd-soc-x1e80100 i_accept_the_danger=1
       # SoundWire boot ordering: ensure ADSP remoteproc loads before speaker codec
       softdep snd-soc-wsa884x pre: qcom_q6v5_pas
+      softdep snd-soc-wcd938x-sdw pre: qcom_q6v5_pas
     '';
 
     # netconsole moved to systemd service (netconsole.nix) — loads after network is up
@@ -242,13 +242,40 @@ in
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
   # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
 
-  # Use systemd-networkd for Ethernet management
-  systemd.network.networks."10-lan" = {
-    matchConfig.Name = [
-      "en*"
-      "eth*"
-    ];
-    networkConfig.DHCP = "yes";
+  systemd = {
+    # Use systemd-networkd for Ethernet management
+    network.networks."10-lan" = {
+      matchConfig.Name = [
+        "en*"
+        "eth*"
+      ];
+      networkConfig.DHCP = "yes";
+    };
+
+    services.gpu-frequency-cap = {
+      description = "Limit Adreno GPU max frequency to prevent overcurrent crashes";
+      after = [ "systemd-udev-settle.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.bash}/bin/bash -c 'if [ -f /sys/class/devfreq/3d00000.gpu/max_freq ]; then echo 390000000 > /sys/class/devfreq/3d00000.gpu/max_freq; fi'";
+        RemainAfterExit = true;
+      };
+    };
+
+    services.qcom-remoteproc-start = {
+      description = "Start all offline Qualcomm remoteproc devices";
+      after = [
+        "local-fs.target"
+        "systemd-udev-settle.service"
+      ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.bash}/bin/bash -c 'for dev in /sys/class/remoteproc/remoteproc*; do if [ -f \"$dev/state\" ] && [ \"$(cat \"$dev/state\")\" = \"offline\" ]; then echo start > \"$dev/state\"; fi; done'";
+        RemainAfterExit = true;
+      };
+    };
   };
 
   networking.useDHCP = lib.mkDefault false;
@@ -262,13 +289,4 @@ in
     "kernel.sysrq" = 1; # enable all sysrq functions for emergency debugging
   };
 
-  # EFI runtime test specialisation — select from systemd-boot menu to test
-  # removing efi=noruntime. If stable, efi=noruntime can be permanently removed
-  # to re-enable fwupd firmware updates and EFI pstore.
-  specialisation.efi-runtime-test.configuration = {
-    boot.kernelParams = lib.mkForce (
-      builtins.filter (p: p != "efi=noruntime") config.boot.kernelParams
-    );
-    system.nixos.tags = [ "efi-runtime-test" ];
-  };
 }

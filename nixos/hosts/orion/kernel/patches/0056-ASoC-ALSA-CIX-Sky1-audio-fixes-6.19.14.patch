@@ -1,0 +1,170 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Entrpi <entrpi@proton.me>
+Date: Thu, 5 Feb 2026 23:32:47 +1100
+Subject: [PATCH] ASoC/ALSA: CIX Sky1 audio fixes
+
+HDA:
+- Add CIX Phecda board fixup (SSID 0x10ec:0x129e) to disable
+  auto mic switching, allowing internal DMIC use with headset
+
+I2S-SC:
+- Change startup to prepare callback for proper FIFO reset timing
+- Drain TX FIFO before disable to fix residue data in full-duplex
+- Fix 192KHz mclk_fs from 128 to 256 for proper codec operation
+- Set trigger ordering for DMA vs I2S sequencing
+---
+ sound/hda/codecs/realtek/alc269.c | 23 +++++++++++++++++++++++
+ sound/soc/cix/card-utils.c        |  6 +++++-
+ sound/soc/cix/cdns_i2s_sc.c       | 28 ++++++++++++++++++----------
+ 3 files changed, 46 insertions(+), 11 deletions(-)
+
+diff --git a/sound/hda/codecs/realtek/alc269.c b/sound/hda/codecs/realtek/alc269.c
+index a8b7cd2df95c..6c4b9cd8fa2d 100644
+--- a/sound/hda/codecs/realtek/alc269.c
++++ b/sound/hda/codecs/realtek/alc269.c
+@@ -4123,6 +4123,7 @@ enum {
+ 	ALC245_FIXUP_BASS_HP_DAC,
+ 	ALC245_FIXUP_ACER_MICMUTE_LED,
+ 	ALC245_FIXUP_CS35L41_I2C_2_MUTE_LED,
++	ALC256_FIXUP_CIX_PHECDA,
+ };
+
+ /* A special fixup for Lenovo C940 and Yoga Duet 7;
+@@ -4159,6 +4160,22 @@ static void alc287_fixup_lenovo_yoga_book_9i(struct hda_codec *codec,
+ 	__snd_hda_apply_fixup(codec, id, action, 0);
+ }
+
++static void alc_fixup_cix_phecda(struct hda_codec *codec,
++				 const struct hda_fixup *fix, int action)
++{
++	struct alc_spec *spec = codec->spec;
++
++	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
++		/*
++		 * CIX Sky1 platform: disable auto mic switching by default
++		 * so users can use the internal DMIC even with headset plugged in.
++		 * Also disable 3K pull-low for headset detection.
++		 */
++		spec->en_3kpull_low = false;
++		spec->gen.suppress_auto_mic = true;
++	}
++}
++
+ static const struct hda_fixup alc269_fixups[] = {
+ 	[ALC269_FIXUP_GPIO2] = {
+ 		.type = HDA_FIXUP_FUNC,
+@@ -6658,7 +6675,11 @@ static const struct hda_fixup alc269_fixups[] = {
+ 		.v.func = alc245_fixup_hp_mute_led_coefbit,
+ 		.chained = true,
+ 		.chain_id = ALC287_FIXUP_CS35L41_I2C_2,
+-	}
++	},
++	[ALC256_FIXUP_CIX_PHECDA] = {
++		.type = HDA_FIXUP_FUNC,
++		.v.func = alc_fixup_cix_phecda,
++	},
+ };
+
+ static const struct hda_quirk alc269_fixup_tbl[] = {
+@@ -7400,6 +7421,7 @@ static const struct hda_quirk alc269_fixup_tbl[] = {
+ 	SND_PCI_QUIRK(0x10ec, 0x124c, "Intel Reference board", ALC295_FIXUP_CHROME_BOOK),
+ 	SND_PCI_QUIRK(0x10ec, 0x1252, "Intel Reference board", ALC295_FIXUP_CHROME_BOOK),
+ 	SND_PCI_QUIRK(0x10ec, 0x1254, "Intel Reference board", ALC295_FIXUP_CHROME_BOOK),
++	SND_PCI_QUIRK(0x10ec, 0x129e, "CIX Sky1 Phecda Board", ALC256_FIXUP_CIX_PHECDA),
+ 	SND_PCI_QUIRK(0x10ec, 0x12cc, "Intel Reference board", ALC295_FIXUP_CHROME_BOOK),
+ 	SND_PCI_QUIRK(0x10ec, 0x12f6, "Intel Reference board", ALC295_FIXUP_CHROME_BOOK),
+ 	SND_PCI_QUIRK(0x10f7, 0x8338, "Panasonic CF-SZ6", ALC269_FIXUP_ASPIRE_HEADSET_MIC),
+diff --git a/sound/soc/cix/card-utils.c b/sound/soc/cix/card-utils.c
+index f349edad35d83..880f3e011aa2e 100644
+--- a/sound/soc/cix/card-utils.c
++++ b/sound/soc/cix/card-utils.c
+@@ -163,7 +163,7 @@ static int dai_set_sysclk(struct snd_pcm_substream *substream,
+ 			mclk_fs = 256;
+ 			mclk_div = 2;
+ 		} else if (sample_rate == 192000) {
+-			mclk_fs = 128;
++			mclk_fs = 256;
+ 			mclk_div = 0;
+ 		}
+
+@@ -465,6 +465,10 @@ int cix_card_parse_of(struct cix_asoc_card *priv)
+ 	if (!link_info)
+ 		return -ENOMEM;
+
++	/* DMA trigger ordering: start before I2S, stop after I2S */
++	link->trigger_start = SND_SOC_TRIGGER_ORDER_DEFAULT;
++	link->trigger_stop = SND_SOC_TRIGGER_ORDER_LDC;
++
+ 	card->num_links = num_links;
+ 	card->dai_link = link;
+ 	card->suspend_post = cix_card_suspend_post;
+diff --git a/sound/soc/cix/cdns_i2s_sc.c b/sound/soc/cix/cdns_i2s_sc.c
+index d117c14c83157..59e9b98ca7fac 100644
+--- a/sound/soc/cix/cdns_i2s_sc.c
++++ b/sound/soc/cix/cdns_i2s_sc.c
+@@ -339,31 +339,39 @@ static void cdns_i2s_sc_rxtx_common_config(struct cdns_i2s_sc_priv *i2s_sc_priv,
+
+ static void cdns_i2s_sc_tx_config(struct cdns_i2s_sc_priv *i2s_sc_priv, bool on)
+ {
+-	u32 irq_mask = 0;
+-
+-	irq_mask |= I2S_CTRL_I2S_MASK;
++	u32 irq_mask = I2S_CTRL_I2S_MASK;
+
+ 	if (on) {
+ 		cdns_i2s_sc_rxtx_common_config(i2s_sc_priv, on);
+
+-		/* Transmitter data underrun interrupt unmask */
+ 		regmap_update_bits(i2s_sc_priv->regmap, I2S_CTRL, irq_mask, irq_mask);
+
+ 		if (i2s_sc_priv->is_tdm_mode)
+-			/* TDM mode channels transmit enale */
+ 			regmap_update_bits(i2s_sc_priv->regmap, I2S_TDM_FD_DIR, I2S_TDM_FD_DIR_CHN_TXEN,
+ 					   FIELD_PREP(I2S_TDM_FD_DIR_CHN_TXEN, i2s_sc_priv->tdm_config.tx_mask));
+
+-		/* Full-duplex mode transmitter enable */
+ 		regmap_update_bits(i2s_sc_priv->regmap, I2S_CTRL_FDX,
+ 				   I2S_CTRL_FDX_I2S_FTX_EN, I2S_CTRL_FDX_I2S_FTX_EN);
+-
+-		/* Transceiver enable */
+ 		regmap_update_bits(i2s_sc_priv->regmap, I2S_CTRL,
+ 				   I2S_CTRL_I2S_EN, I2S_CTRL_I2S_EN);
+
+ 		i2s_sc_priv->tx_start = true;
+ 	} else {
++		unsigned int timeout = 16;
++		u32 fifo_level;
++
++		/* Drain TX FIFO to avoid residue data in full-duplex mode */
++		while (timeout--) {
++			regmap_read(i2s_sc_priv->regmap, I2S_FIFO_LEVEL, &fifo_level);
++			if (!fifo_level)
++				break;
++			udelay(125);
++		}
++		if (!timeout)
++			dev_warn(i2s_sc_priv->dev, "tx fifo drain timeout\n");
++		else
++			udelay(250); /* Generate underrun to clear internal state */
++
+ 		i2s_sc_priv->tx_start = false;
+
+ 		regmap_update_bits(i2s_sc_priv->regmap, I2S_CTRL_FDX,
+@@ -567,7 +575,7 @@ static int cdns_i2s_sc_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
+ 	return 0;
+ }
+
+-static int cdns_i2s_sc_startup(struct snd_pcm_substream *substream,
++static int cdns_i2s_sc_prepare(struct snd_pcm_substream *substream,
+ 			       struct snd_soc_dai *cpu_dai)
+ {
+ 	struct cdns_i2s_sc_priv *i2s_sc_priv = snd_soc_dai_get_drvdata(cpu_dai);
+@@ -821,8 +829,8 @@ static const struct snd_soc_dai_ops cdns_i2s_sc_dai_ops = {
+ 	.set_tdm_slot = cdns_i2s_sc_set_tdm_slot,
+ 	.set_fmt = cdns_i2s_sc_set_fmt,
+
+-	.startup = cdns_i2s_sc_startup,
+ 	.hw_params = cdns_i2s_sc_hw_params,
++	.prepare = cdns_i2s_sc_prepare,
+ 	.trigger = cdns_i2s_sc_trigger,
+ };
