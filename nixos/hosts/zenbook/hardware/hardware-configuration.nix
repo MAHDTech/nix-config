@@ -82,6 +82,7 @@ in
       ]
       ++ lib.optionals (!isInstaller) [
         # USB Type-C power state, alternate modes, and PMIC GLINK mapping (requires ADSP/remoteprocs)
+        "qcom_q6v5_pas"
         "pmic_glink"
         "pmic_glink_altmode"
         "qcom_pmic_glink"
@@ -165,7 +166,6 @@ in
 
     # netconsole moved to systemd service (netconsole.nix) — loads after network is up
     kernelModules = lib.optionals (!isInstaller) [
-      "qcom_q6v5_pas"
       "msm"
     ];
 

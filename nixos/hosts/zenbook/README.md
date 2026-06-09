@@ -143,10 +143,17 @@ We are running testing on Ubuntu first to identify working configurations, then 
       (`vkmark`). We must restore a conservative cap (e.g. 550 MHz or 687 MHz).
 - **Severity**: P1 — GPU at ~31% max performance
 - **Symptom**: `cat /sys/class/devfreq/3d00000.gpu/max_freq` → `390000000`
-- **Root Cause**: `systemd.services.gpu-frequency-cap` in `hardware-configuration.nix`
-  writes `390000000` to prevent overcurrent crashes caused by GPU dummy regulators
-  (`vdd` and `vddcx` on `regulator-dummy` at 0mV/0mA). Without real PMIC-backed
-  voltage scaling, high GPU clocks draw unregulated current.
+- **Root Cause**:
+  - `systemd.services.gpu-frequency-cap` in `hardware-configuration.nix` writes `390000000` to prevent overcurrent crashes caused by GPU dummy regulators
+    (`vdd` and `vddcx` on `regulator-dummy` at 0mV/0mA). On x1e80100.
+  - voltage is managed by RPMh Power Domains and the GMU.
+  - Because `vddcx-supply` isn't mapped to a physical RPMh regulator node in the device tree, `regulator_set_voltage()` does nothing. When frequency scales up, voltage remains low.
+  - This causes massive current spikes that trip the PMIC's hardware Overcurrent Protection (OCP) and reboot the system.
+- **Fix Strategy**:
+  - Upstream resolution involves proper GMU / RPMh Power Domain mapping,
+  - and the newly introduced **GPU ACD (Adaptive Clock Distribution)** patches.
+  - These are specifically designed for the Adreno X1-85 to prevent current spikes.
+  - Until ACD patches are ported/stabilised in our kernel, we must maintain a conservative frequency cap.
 - **File**: `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (line ~152-161)
 - **Fix**: Incrementally raise the cap and stress-test at each step. Test order:
   1. `550000000` (550 MHz — ~44% max)

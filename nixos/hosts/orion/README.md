@@ -147,6 +147,7 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - [x] Resolve USB controller suspend crash (IRQ storm) on DisplayPort Alt Mode entry.
 - [x] Silence widescreen USB 3.0 loop warning log spam by disabling the inactive port.
 - [x] Fix firewall netfilter match kernel config options to enable NixOS firewall.
+- [x] Upgrade kernel to 6.19.14 (resolving the Netfilter/nftables UAF memory corruption boot crash).
 
 ### Pending
 
