@@ -16,5 +16,8 @@
         vault = "Private"
       '';
     };
+    ".1password/agent.sock" = {
+      source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/1Password/ssh/agent.sock";
+    };
   };
 }

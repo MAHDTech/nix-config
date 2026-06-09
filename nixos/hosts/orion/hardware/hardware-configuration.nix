@@ -289,8 +289,9 @@ in
     SUBSYSTEM=="platform", DRIVERS=="cdns-usbssp", ATTR{power/control}="on"
 
     # Disable USB 3.0 port 1 on Bus 14 (widescreen monitor DisplayPort Alt Mode lane sharing mismatch)
-    # to prevent loop resets and log spam, since only keyboard/mouse are connected via USB 2.0
-    KERNEL=="usb14-port1", ATTR{disable}="1"
+    # to prevent loop resets and log spam, since only keyboard/mouse are connected via USB 2.0.
+    # We do this by de-authorizing the entire usb14 root hub (which only hosts this single port).
+    SUBSYSTEM=="usb", KERNEL=="usb14", ATTR{authorized}="0"
   '';
 
   # AIPULIB_PATH: scoped to interactive sessions only

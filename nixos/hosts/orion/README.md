@@ -82,12 +82,14 @@ This directory contains the NixOS host configuration for the Radxa Orion O6 boar
 
 ### 4. USB-C Port Disablement (Widescreen Log Spam Fix)
 
-- **Location**: `hardware/hardware-configuration.nix` (under `services.udev.extraRules`)
-- **Mechanism**: udev rule setting `disable` to `1` for the `usb14-port1` kernel device.
+- **Location**: `default.nix` (under `boot.postBootCommands`)
+- **Mechanism**: Writing `1` directly to `/sys/bus/usb/devices/usb14-port1/disable` at boot.
 - **Why**: Since widescreen monitors negotiate 4-lane DisplayPort, the USB
   3.0 lines are electrically disconnected. Disabling this port prevents the
   XHCI controller from constantly retrying connection, silences the log
   warning loop (`usb usb14-port1: Cannot enable`), and keeps system logs clean.
+  A udev rule cannot be used here because the virtual port device lacks a
+  `subsystem` link in sysfs, causing systemd-udevd to ignore it.
 
 _Note: SMMU Display early boot bypass is handled via a custom device tree overlay._
 
@@ -122,6 +124,49 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - **Symptom**: `linlondp CIXH5010:03: wait pipe0 flip done timeout` (3× at boot, occasional at runtime)
 - **Mitigation**: `DRM_LINLONDP_CLOCK_FIXED` already enabled in kernel config.
 
+### 5. Hyprland Boot Hang — Buffer Import Rejection
+
+- **Severity**: 🔴 Critical
+- **Symptom**: The physical display hangs on the TTY console showing `Forked systemctl...` while Hyprland runs in the background.
+- **Root Cause**: The `linlon-dp` display controller driver rejects GPU-rendered framebuffers when using DRM modifiers.
+- **Fix**: Disable DRM modifiers by setting `AQ_NO_MODIFIERS = "1";` and `WLR_DRM_NO_MODIFIERS = "1";` in `environment.sessionVariables`.
+
+### 6. DisplayPort Link Training Failure (Hyprland "Stuck" Boot)
+
+- **Severity**: 🔴 Critical
+- **Symptom**: System boots to tty but appears "stuck" on `Forked systemctl, PID xxx`. Hyprland is actually running in the background but cannot render to the screen.
+- **Root Cause**:
+  - The DisplayPort hardware fails link training (`[drm:trilin_dp_train][ERROR]failed to trilin_dp_link_train_cr`).
+  - Because of this, the `linlondp` DRM driver fails to initialize a display pipeline.
+  - This leaves Hyprland without any CRTCs or DRM connectors to output to.
+- **Fix**: Needs further investigation into DP PHY training, possible kernel driver patch, or different DP cable/monitor negotiation.
+
+### 6. Widescreen USB Log Spam udev Rule Failing
+
+- **Severity**: 🟡 Medium (Log spam)
+- **Symptom**: `usb usb14-port1: Cannot enable. Maybe the USB cable is bad?` prints every 4 seconds in the kernel log.
+- **Root Cause**: The udev fix `ATTR{disable}="1"` relies on a sysfs attribute that does not exist in this kernel (`/sys/bus/usb/devices/usb14-port1/disable` is missing).
+- **Fix**: Rewrite the udev rule to target the `usb_port` class or use USB authorization (`authorized="0"`).
+
+### 7. Panfrost Vulkan (`panvk`) Implementation Errors
+
+- **Severity**: 🟡 Medium
+- **Symptom**: Wayland clients (`swaync`, `hypridle`) crash or fail to initialize buffers with `VK_ERROR_INCOMPATIBLE_DRIVER` and `[sc] Failed to create a wayland buffer`.
+- **Root Cause**: The experimental `panvk` driver is being loaded for the Immortalis-G720 but fails to provide a conformant Vulkan implementation.
+- **Fix**: Force clients to use GLES or disable the Vulkan backend in wlroots clients.
+
+### 8. Missing SSH Agent Socket
+
+- **Severity**: 🟢 Low
+- **Symptom**: `Error connecting to agent: No such file or directory` at shell login.
+- **Root Cause**: The 1Password SSH socket at `/home/mahdtech/.1password/agent.sock` is missing.
+
+### 9. I2C & Touchscreen Errors
+
+- **Severity**: 🟢 Low
+- **Symptom**: Errors in dmesg like `cros-ec-i2c 6-0076: Cannot identify the EC: error -28` and `Goodix-TS 2-0014: I2C communication failure: -6`.
+- **Root Cause**: Physical components might be disconnected or I2C bus speeds/pinmux are incorrect in the Device Tree.
+
 ---
 
 ## 4. What We Are Waiting On
@@ -145,7 +190,7 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - [x] Trim `config.sky1-next` kernel config to remove irrelevant SoC platform drivers (Qualcomm, Tegra, Rockchip) to reduce compile time.
 - [x] Resolve Early Boot USB-C Display blank screen via custom SMMU bypass DT overlay.
 - [x] Resolve USB controller suspend crash (IRQ storm) on DisplayPort Alt Mode entry.
-- [x] Silence widescreen USB 3.0 loop warning log spam by disabling the inactive port.
+- [x] Silence widescreen USB 3.0 loop warning log spam by de-authorizing the inactive root hub.
 - [x] Fix firewall netfilter match kernel config options to enable NixOS firewall.
 - [x] Upgrade kernel to 6.19.14 (resolving the Netfilter/nftables UAF memory corruption boot crash).
 - [x] Resolve target boot crash (udev rules mismatch) by updating DRM device matching rules for Device Tree mode.
@@ -154,5 +199,12 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 
 ### Pending
 
-- [ ] Investigate rtkit lacking RT capabilities — `Failed to make ourselves RT: Operation not permitted` affects PipeWire latency.
-- [ ] Investigate zramSwap warning — algorithm "zstd" not recognized (kernel lacks CRYPTO_ZSTD/ZSTD_COMPRESS support).
+- [ ] Disable DRM modifiers for Aquamarine/wlroots in `default.nix` to fix Hyprland boot hang.
+- [ ] Move USB-C port disablement to `boot.postBootCommands` instead of the ignored udev rule.
+- [ ] Fix `config-mglru.service` boot failure by enabling `CONFIG_LRU_GEN=y` in custom kernel configuration.
+- [ ] Enable `CONFIG_ZRAM_BACKEND_ZSTD=y` in custom kernel configuration to resolve zramSwap warning.
+- [x] Investigate rtkit lacking RT capabilities — Verified working (mahdtech has `ulimit -r` of 95; `rtkit-daemon` is active; no errors logged).
+- [ ] Investigate DisplayPort Link Training failure (`failed to trilin_dp_link_train_cr`) causing Hyprland to run headless.
+- [ ] Mitigate `panvk` Vulkan driver crashing Wayland clients (swaync, hypridle).
+- [ ] Resolve missing 1Password SSH agent socket.
+- [ ] Investigate I2C/Touchscreen errors (`cros-ec-i2c`, `Goodix-TS`).

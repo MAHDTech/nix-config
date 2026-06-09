@@ -117,6 +117,9 @@ let
       # --- zram: compressed RAM swap (required by NixOS zramSwap module) ---
       ./scripts/config --module ZRAM
       ./scripts/config --enable ZRAM_DEF_COMP_ZSTD
+      ./scripts/config --enable LRU_GEN
+      ./scripts/config --enable LRU_GEN_ENABLED
+      ./scripts/config --enable ZRAM_BACKEND_ZSTD
 
       # --- AppArmor: mandatory access control ---
       # Required by security.apparmor.enable = true in the SOE security config
