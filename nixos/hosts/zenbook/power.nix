@@ -17,6 +17,7 @@
   # Limit CPU max frequency to prevent PMIC overcurrent resets under full 12-core load
   systemd.services.limit-cpu-freq = {
     description = "Limit CPU max frequency to prevent overcurrent crashes";
+    unitConfig.DefaultDependencies = false;
     before = [ "sysinit.target" ];
     wantedBy = [ "sysinit.target" ];
     serviceConfig = {

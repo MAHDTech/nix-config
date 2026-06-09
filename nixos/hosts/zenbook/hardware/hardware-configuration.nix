@@ -140,6 +140,7 @@ in
     ];
 
     kernelParams = [
+      "module_blacklist=qcom_q6v5_pas"
       "clk_ignore_unused"
       "pd_ignore_unused"
       "regulator_ignore_unused"
