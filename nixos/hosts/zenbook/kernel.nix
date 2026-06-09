@@ -166,6 +166,7 @@ let
       # zram: compressed RAM swap — required by NixOS zramSwap module
       # Without this, zramSwap.enable = true silently does nothing
       ./scripts/config --module ZRAM
+      ./scripts/config --enable ZRAM_BACKEND_ZSTD
       ./scripts/config --enable ZRAM_DEF_COMP_ZSTD
 
       # AppArmor: mandatory access control — required by security.apparmor.enable = true
@@ -187,6 +188,7 @@ let
       ./scripts/config --enable CRYPTO_HMAC
       ./scripts/config --enable CRYPTO_SHA512
       ./scripts/config --enable CRYPTO_SHA1
+      ./scripts/config --enable CRYPTO_ZSTD
 
       # Enable Netfilter and nftables kernel support for firewall
       ./scripts/config --enable NF_TABLES
@@ -214,7 +216,7 @@ let
       ./scripts/config --enable NETCONSOLE_DYNAMIC
 
       # Enable pstore-blk for NVMe-backed crash storage (future use)
-      ./scripts/config --enable PSTORE_BLK
+      ./scripts/config --module PSTORE_BLK
       ./scripts/config --set-val PSTORE_BLK_KMSG_SIZE 64
       ./scripts/config --set-val PSTORE_BLK_CONSOLE_SIZE 64
       ./scripts/config --set-val PSTORE_BLK_PMSG_SIZE 64

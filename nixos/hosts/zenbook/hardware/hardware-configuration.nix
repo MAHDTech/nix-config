@@ -175,6 +175,7 @@ in
     # netconsole moved to systemd service (netconsole.nix) — loads after network is up
     kernelModules = lib.optionals (!isInstaller) [
       "msm"
+      "pstore_blk"
     ];
 
     # Modern boot management
@@ -262,16 +263,10 @@ in
       networkConfig.DHCP = "yes";
     };
 
-    services.gpu-frequency-cap = {
-      description = "Limit Adreno GPU max frequency to prevent overcurrent crashes";
-      after = [ "systemd-udev-settle.service" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.bash}/bin/bash -c 'if [ -f /sys/class/devfreq/3d00000.gpu/max_freq ]; then echo 390000000 > /sys/class/devfreq/3d00000.gpu/max_freq; fi'";
-        RemainAfterExit = true;
-      };
-    };
+    services.udev.extraRules = ''
+      # TODO: Remove this frequency cap when the underlying PMIC overcurrent regulator issue is resolved
+      SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
+    '';
 
     services.qcom-remoteproc-start = {
       description = "Start all offline Qualcomm remoteproc devices";

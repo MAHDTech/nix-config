@@ -13,6 +13,16 @@
       RebootWatchdogSec = lib.mkForce "0";
       KExecWatchdogSec = lib.mkForce "0";
     };
+
+    # Mitigate panvk Vulkan driver crashes on startup for Wayland services.
+    # Force them to use OpenGL/GLES fallback by unsetting VK_ICD_FILENAMES.
+    # TODO: Remove these overrides once the kernel repeated mapping support (e.g. Adrián Larumbe's
+    # "Support repeated mappings in GPUVM and Panthor" patch series, introducing OP_MAP_REPEAT)
+    # is merged upstream and our kernel/Mesa is updated.
+    user.services = {
+      hypridle.serviceConfig.Environment = [ "VK_ICD_FILENAMES=" ];
+      swaync.serviceConfig.Environment = [ "VK_ICD_FILENAMES=" ];
+    };
   };
 
   imports = [

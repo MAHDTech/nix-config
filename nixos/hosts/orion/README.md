@@ -133,13 +133,13 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 
 ### 6. DisplayPort Link Training Failure (Hyprland "Stuck" Boot)
 
-- **Severity**: 🔴 Critical
+- **Severity**: 🟢 Resolved
 - **Symptom**: System boots to tty but appears "stuck" on `Forked systemctl, PID xxx`. Hyprland is actually running in the background but cannot render to the screen.
 - **Root Cause**:
   - The DisplayPort hardware fails link training (`[drm:trilin_dp_train][ERROR]failed to trilin_dp_link_train_cr`).
   - Because of this, the `linlondp` DRM driver fails to initialize a display pipeline.
   - This leaves Hyprland without any CRTCs or DRM connectors to output to.
-- **Fix**: Needs further investigation into DP PHY training, possible kernel driver patch, or different DP cable/monitor negotiation.
+- **Fix**: Reverted the kernel patch that forced 2-lane DP + 2-lane USB3 alt mode sharing. Reverting to 4-lane DisplayPort mode allows the DP link training to succeed cleanly with 4 lanes.
 
 ### 7. Widescreen USB Log Spam udev Rule Failing
 
@@ -150,10 +150,21 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 
 ### 8. Panfrost Vulkan (`panvk`) Implementation Errors
 
-- **Severity**: 🟡 Medium
-- **Symptom**: Wayland clients (`swaync`, `hypridle`) crash or fail to initialize buffers with `VK_ERROR_INCOMPATIBLE_DRIVER` and `[sc] Failed to create a wayland buffer`.
-- **Root Cause**: The experimental `panvk` driver is being loaded for the Immortalis-G720 but fails to provide a conformant Vulkan implementation.
-- **Fix**: Force clients to use GLES or disable the Vulkan backend in wlroots clients.
+- Severity: 🟡 Medium (Mitigated)
+- Symptom: Wayland clients (`swaync`, `hypridle`) crash or fail to initialize buffers with `VK_ERROR_INCOMPATIBLE_DRIVER` and `[sc] Failed to create a wayland buffer` on startup.
+- Root Cause:
+  - Modern GTK4/libadwaita applications and Wayland desktop components utilize Vulkan sparse resources.
+  - On CSF-based Mali GPUs (Immortalis-G720), unmapped pages must be mapped to a dummy Buffer Object (BO) to avoid GPU page faults.
+  - Lacking kernel-level repeated mapping support, this mapping currently requires
+    thousands of individual VM bind (`VM_BIND`) operations (e.g. ~24,000 operations
+    for a 100MB range), resulting in driver exhaustion and crashes.
+  - Upstream patch series: **"Support repeated mappings in GPUVM and Panthor"**
+    (v5, March 2026, by Adrián Larumbe) introduces the `OP_MAP_REPEAT` flag to
+    perform this repeatedly in a single operation. As of June 2026, these patches
+    are still under review on `dri-devel` and not yet merged.
+- Fix:
+  - Forced GLES/OpenGL fallback for the affected Wayland user services (`swaync` and `hypridle`) by unsetting `VK_ICD_FILENAMES` in their systemd user service configurations in `default.nix`.
+  - Added a `TODO` comment in `default.nix` to re-evaluate this when the kernel repeated mapping support is merged upstream.
 
 ### 9. Missing SSH Agent Socket
 
@@ -217,7 +228,12 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - [x] Move USB-C port disablement to `boot.postBootCommands` (unbinding `usb14` from the driver) to completely silence DisplayPort Alt Mode warning log spam.
 - [x] Close I2C & Touchscreen errors as Won't Fix (no physical touchscreen/EC hardware on the Orion desktop board).
 
+- [x] Resolve DisplayPort link training failure (mismatch with forced 2-lane PHY configuration) by removing the kernel patch that forced UDPHY_MODE_DP_USB, enabling full 4-lane DisplayPort Alt Mode.
+- [x] Mitigate `panvk` Vulkan driver crashing Wayland clients (`swaync`, `hypridle`)
+      on startup by overriding their systemd user environment to force OpenGL/GLES
+      fallback, and documented the upstream `OP_MAP_REPEAT` repeated mapping
+      kernel patches.
+
 ### Pending
 
-- [ ] Investigate DisplayPort Link Training failure (`failed to trilin_dp_link_train_cr`) causing Hyprland to run headless.
-- [ ] Mitigate `panvk` Vulkan driver crashing Wayland clients (swaync, hypridle).
+- None!

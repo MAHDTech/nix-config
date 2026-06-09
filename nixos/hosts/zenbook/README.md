@@ -77,7 +77,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
   - `nixos/system/config/video/qcom/default.nix` — Moved `vulkan-tools` to `environment.systemPackages`
 - **Files**:
   - `nixos/system/config/video/qcom/default.nix` — Move `vulkan-tools` to `environment.systemPackages` so `vulkaninfo`/`vkcube` are on PATH without nix-shell
-  - `scripts/test-gpu.sh` — Consider adding Wayland WSI tests (run vkcube under Wayland directly)
+  - `scripts/test-hardware.sh` — Consider adding Wayland WSI tests (run vkcube under Wayland directly)
 - **Investigation**:
 
   ```bash
