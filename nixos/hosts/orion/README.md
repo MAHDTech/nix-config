@@ -196,15 +196,15 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - [x] Resolve target boot crash (udev rules mismatch) by updating DRM device matching rules for Device Tree mode.
 - [x] Clean up duplicate "Linux Boot Loader" UEFI variables in NVRAM and set `boot.loader.efi.canTouchEfiVariables = false` to prevent future pollution.
 - [x] Mitigate boot timing delay by configuring `systemd.network.wait-online.anyInterface = true` to skip waiting on inactive ports.
+- [x] Disable DRM modifiers for Aquamarine/wlroots in default.nix to fix Hyprland boot hang.
+- [x] Fix config-mglru.service boot failure by enabling CONFIG_LRU_GEN=y in custom kernel configuration.
+- [x] Enable CONFIG_ZRAM_BACKEND_ZSTD=y in custom kernel configuration to resolve zramSwap warning.
+- [x] Resolve missing 1Password SSH agent socket.
+- [x] Investigate rtkit lacking RT capabilities — Verified working (mahdtech has `ulimit -r` of 95; `rtkit-daemon` is active; no errors logged).
 
 ### Pending
 
-- [ ] Disable DRM modifiers for Aquamarine/wlroots in `default.nix` to fix Hyprland boot hang.
-- [ ] Move USB-C port disablement to `boot.postBootCommands` instead of the ignored udev rule.
-- [ ] Fix `config-mglru.service` boot failure by enabling `CONFIG_LRU_GEN=y` in custom kernel configuration.
-- [ ] Enable `CONFIG_ZRAM_BACKEND_ZSTD=y` in custom kernel configuration to resolve zramSwap warning.
-- [x] Investigate rtkit lacking RT capabilities — Verified working (mahdtech has `ulimit -r` of 95; `rtkit-daemon` is active; no errors logged).
+- [ ] Move USB-C port disablement to boot.postBootCommands instead of the ignored udev rule.
 - [ ] Investigate DisplayPort Link Training failure (`failed to trilin_dp_link_train_cr`) causing Hyprland to run headless.
 - [ ] Mitigate `panvk` Vulkan driver crashing Wayland clients (swaync, hypridle).
-- [ ] Resolve missing 1Password SSH agent socket.
 - [ ] Investigate I2C/Touchscreen errors (`cros-ec-i2c`, `Goodix-TS`).
