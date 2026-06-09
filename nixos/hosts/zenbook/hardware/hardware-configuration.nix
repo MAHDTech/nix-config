@@ -92,6 +92,9 @@ in
         # Linux module name on-disk is ucsi_glink.
         "ucsi_glink"
         "typec_ucsi"
+        "typec_thunderbolt"
+        "typec_displayport"
+        "thunderbolt"
 
         # WiFi/BT power sequencing
         # ath12k_wifi7_pci: alexVinarskis patch set reorganises ath12k into a wifi7/
@@ -164,7 +167,6 @@ in
     kernelModules = lib.optionals (!isInstaller) [
       "qcom_q6v5_pas"
       "msm"
-      "thunderbolt"
     ];
 
     # Modern boot management

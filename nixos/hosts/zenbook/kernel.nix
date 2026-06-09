@@ -152,6 +152,7 @@ let
 
       # Enable USB4/Thunderbolt support for docking stations
       ./scripts/config --module USB4
+      ./scripts/config --module USB4_NET
       ./scripts/config --module TYPEC_DP_ALTMODE
       ./scripts/config --module TYPEC_TBT_ALTMODE
 
@@ -228,7 +229,7 @@ let
     '';
 
     buildPhase = ''
-      make ARCH=arm64 -j$NIX_BUILD_CORES
+      make ARCH=arm64 -j4
     '';
 
     installPhase = ''
