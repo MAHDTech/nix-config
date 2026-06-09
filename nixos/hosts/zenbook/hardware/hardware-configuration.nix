@@ -253,6 +253,11 @@ in
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
   # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
 
+  services.udev.extraRules = ''
+    # TODO: Remove this frequency cap when the underlying PMIC overcurrent regulator issue is resolved
+    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
+  '';
+
   systemd = {
     # Use systemd-networkd for Ethernet management
     network.networks."10-lan" = {
@@ -262,11 +267,6 @@ in
       ];
       networkConfig.DHCP = "yes";
     };
-
-    services.udev.extraRules = ''
-      # TODO: Remove this frequency cap when the underlying PMIC overcurrent regulator issue is resolved
-      SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
-    '';
 
     services.qcom-remoteproc-start = {
       description = "Start all offline Qualcomm remoteproc devices";
