@@ -4,8 +4,11 @@
 
 {
   monitorConfig = [
-    # DP-3 is the Kogan Monitor (native resolution 5120x1440)
-    "DP-3,5120x1440@60,0x0,1"
+    # DP-3 is the Kogan Monitor (forced to 2560x1440 due to 2-lane DP bandwidth limits)
+    #"DP-3,preferred,auto,1"
+
+    # Test automatic monitor detection
+    ",preferred,auto,1"
   ];
 
   extraSettings = {

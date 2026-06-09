@@ -1,6 +1,8 @@
 {
   config,
   pkgs,
+  lib,
+  osConfig ? null,
   ...
 }:
 {
@@ -49,7 +51,32 @@
           gpu-context=wayland
         '';
       };
-    };
+    }
+    // (
+      let
+        hostname =
+          if
+            osConfig != null
+            && builtins.hasAttr "networking" osConfig
+            && builtins.hasAttr "hostName" osConfig.networking
+          then
+            osConfig.networking.hostName
+          else
+            "";
+      in
+      if lib.hasInfix "ORION" hostname then
+        {
+          "uwsm/env" = {
+            target = "uwsm/env";
+            text = ''
+              export AQ_DRM_DEVICES="/dev/dri/cix-gpu:/dev/dri/cix-display"
+              export AQ_NO_MODIFIERS=1
+            '';
+          };
+        }
+      else
+        { }
+    );
 
     dataFile = {
       "1password.desktop" = {
