@@ -5,10 +5,10 @@
 {
   monitorConfig = [
     # Let Hyprland automatically detect and configure the monitor
-    #",preferred,auto,1"
+    ",preferred,auto,1"
 
     # Kogan Monitor on DisplayPort
-    "desc:KOGAN AUSTRALIA PTY LTD KAMN49QDQUCLA 0000000000000,5120x1440@60,450x675,1.6,bitdepth,10"
+    #"desc:KOGAN AUSTRALIA PTY LTD KAMN49QDQUCLA 0000000000000,5120x1440@60,450x675,1.6,bitdepth,10"
   ];
 
   extraSettings = {
