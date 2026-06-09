@@ -68,10 +68,6 @@ let
 
       echo "Applying 6.19.14 rebased audio patch..."
       patch -p1 < ${./patches/0056-ASoC-ALSA-CIX-Sky1-audio-fixes-6.19.14.patch}
-
-      # Force USB-C DP Alt Mode to use 2-lane DP + 2-lane USB3 (UDPHY_MODE_DP_USB) instead of 4-lane DP,
-      # which allows the widescreen monitor's USB 3.0 hub/dock to work at SuperSpeed.
-      sed -i 's/udphy->next_mode = UDPHY_MODE_DP;/udphy->next_mode = UDPHY_MODE_DP_USB;/g' drivers/phy/cix/phy-cix-usbdp.c
     '';
 
     configurePhase = ''

@@ -164,9 +164,10 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 
 ### 10. I2C & Touchscreen Errors
 
-- **Severity**: 🟢 Low
+- **Severity**: 🟢 Closed (Won't Fix)
 - **Symptom**: Errors in dmesg like `cros-ec-i2c 6-0076: Cannot identify the EC: error -28` and `Goodix-TS 2-0014: I2C communication failure: -6`.
-- **Root Cause**: Physical components might be disconnected or I2C bus speeds/pinmux are incorrect in the Device Tree.
+- **Root Cause**: Physical touchscreen and laptop EC components are not present on the Orion desktop board, but remain listed in the generic CIX P1 reference Device Tree.
+- **Fix**: Closed as "Won't Fix" (no physical hardware exists on this host).
 
 ### 11. Hardware Resolution Width Limitation (5120x1440 Unsupported)
 
@@ -214,9 +215,9 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - [x] Clean up all manual configuration overrides (`~/.config/uwsm` and `~/.config/hypr/hyprland.conf`) to ensure pure declarative Home Manager state.
 - [x] Document physical 4096px display controller hardware resolution width limit.
 - [x] Move USB-C port disablement to `boot.postBootCommands` (unbinding `usb14` from the driver) to completely silence DisplayPort Alt Mode warning log spam.
+- [x] Close I2C & Touchscreen errors as Won't Fix (no physical touchscreen/EC hardware on the Orion desktop board).
 
 ### Pending
 
 - [ ] Investigate DisplayPort Link Training failure (`failed to trilin_dp_link_train_cr`) causing Hyprland to run headless.
 - [ ] Mitigate `panvk` Vulkan driver crashing Wayland clients (swaync, hypridle).
-- [ ] Investigate I2C/Touchscreen errors (`cros-ec-i2c`, `Goodix-TS`).
