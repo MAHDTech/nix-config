@@ -81,6 +81,9 @@ in
         "ext4"
       ]
       ++ lib.optionals (!isInstaller) [
+        # QRTR sockets for QMI communication (required by ADSP)
+        "qrtr"
+        "qrtr_smd"
         # USB Type-C power state, alternate modes, and PMIC GLINK mapping (requires ADSP/remoteprocs)
         "qcom_q6v5_pas"
         "pmic_glink"
@@ -111,7 +114,12 @@ in
         "drm_panel_simple"
         "drm_panel_samsung_atna33xc20"
       ];
-      kernelModules = [ ];
+      kernelModules = [
+        # Force load Alt Mode drivers to ensure they are present before early-boot Type-C negotiation
+        "typec_thunderbolt"
+        "typec_displayport"
+        "pmic_glink_altmode"
+      ];
 
       # Load crucial platform firmware directly in stage 1 to prevent driver crashes
       extraFirmwarePaths = [

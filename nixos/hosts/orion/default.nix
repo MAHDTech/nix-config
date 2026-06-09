@@ -81,4 +81,13 @@
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="14160000.disp-controller", SYMLINK+="dri/cix-display"
     SUBSYSTEM=="drm", KERNEL=="card*", DRIVERS=="panthor", SYMLINK+="dri/cix-gpu"
   '';
+
+  boot.postBootCommands = ''
+    # Disable USB 3.0 Bus 14 root hub to prevent DisplayPort Alt Mode lane sharing mismatch warnings/log spam.
+    # The udev ATTR{disable}="1" rule fails because the sysfs disable attribute does not exist on this kernel.
+    # Unbinding the root hub device "usb14" from the usb driver stops the training loop completely.
+    if [ -e /sys/bus/usb/drivers/usb/unbind ]; then
+      echo "usb14" > /sys/bus/usb/drivers/usb/unbind
+    fi
+  '';
 }

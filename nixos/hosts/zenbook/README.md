@@ -492,18 +492,23 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 16: Thunderbolt 5 dock drops to USB 2.0 full-speed
 
-- [/] **Status**: Testing fix. Upstream fixes in `next-20260605` expected to resolve this.
+- [/] **Status**:
+  - Blocked on upstream kernel patches.
+  - Major patches to decouple the Thunderbolt subsystem from PCIe and add USB4 PHY programming.
+  - These were submitted in May 2026 and are currently under review.
 - **Severity**: P1 — No dock ethernet, no DP alt-mode
 - **Symptom**: Razer TB5 Dock (1532:0f53) enumerates on USB bus 5
   as full-speed. The entire USB tree disconnects at t=17s then
   reconnects at t=19s as full-speed (USB 1.1). No Thunderbolt
   domains register (`/sys/bus/thunderbolt/devices/` is empty).
   Dock ethernet (`enu1u4u1`) does not appear.
-- **Root Cause**: ADSP starting `pmic_glink_altmode` triggers
-  Type-C lane renegotiation. The retimer (`ps883x`) and QMP combo
-  PHY (`phy@fd5000`) have dependency cycles causing the dock's USB
-  lanes to misconfigure. `thunderbolt` module loads (323K) but no
-  USB4 router is discovered.
+- **Root Cause**:
+  - ADSP starting `pmic_glink_altmode` triggers Type-C lane renegotiation.
+  - Native Thunderbolt 5 tunneling is structurally impossible right now.
+  - The Snapdragon X Elite USB4 Host Router is an integrated platform device.
+  - But the Linux `thunderbolt` subsystem currently assumes all Host Routers are PCIe devices.
+  - Furthermore, the `qcom,x1e80100-usb4-hr` (Host Router) device tree node is completely absent from `linux-next`.
+  - Because no Host Router binds, the dock eventually times out during Alt Mode negotiation and drops back to USB 2.0 Billboard fallback mode.
 - **dmesg sequence**:
   ```
   t=15s  usb 5-1.5: new full-speed (dock first enum)
@@ -512,10 +517,10 @@ We are running testing on Ubuntu first to identify working configurations, then 
   ```
 - **Workaround**: Use USB-to-Ethernet adapter (`usb-to-eth`,
   `enu2c2` at 10.10.1.90) as primary network path.
-- **Investigation needed**:
-  - Check if `CONFIG_USB4_NET` should be enabled
-  - Test with dock plugged in after boot vs during boot
-  - Check ASUS BIOS TB security level settings
+- **Upstream Tracking (May 2026)**: Look out for these patch series merging into mainline:
+  - `[PATCH v5 0/4] Prepwork for non-PCIe NHI/TBT hosts` (Refactors `tb_nhi` away from `pci_device`)
+  - `[PATCH 0/5] USB4 mode programming for QMMPHY on X1E` (Adds physical layer USB4 configurations)
+  - `[PATCH RFC] dt-bindings: thunderbolt: Add Qualcomm USB4 Host Router` (Adds `qcom,x1e80100-usb4-hr` dt-bindings)
 
 ---
 

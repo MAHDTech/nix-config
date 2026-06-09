@@ -126,10 +126,10 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 
 ### 5. Hyprland Boot Hang — Buffer Import Rejection
 
-- **Severity**: 🔴 Critical
+- **Severity**: 🟢 Resolved
 - **Symptom**: The physical display hangs on the TTY console showing `Forked systemctl...` while Hyprland runs in the background.
 - **Root Cause**: The `linlon-dp` display controller driver rejects GPU-rendered framebuffers when using DRM modifiers.
-- **Fix**: Disable DRM modifiers by setting `AQ_NO_MODIFIERS = "1";` and `WLR_DRM_NO_MODIFIERS = "1";` in `environment.sessionVariables`.
+- **Fix**: Disabled DRM modifiers by setting `AQ_NO_MODIFIERS = "1";` and `WLR_DRM_NO_MODIFIERS = "1";` in `environment.sessionVariables`.
 
 ### 6. DisplayPort Link Training Failure (Hyprland "Stuck" Boot)
 
@@ -141,31 +141,41 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
   - This leaves Hyprland without any CRTCs or DRM connectors to output to.
 - **Fix**: Needs further investigation into DP PHY training, possible kernel driver patch, or different DP cable/monitor negotiation.
 
-### 6. Widescreen USB Log Spam udev Rule Failing
+### 7. Widescreen USB Log Spam udev Rule Failing
 
 - **Severity**: 🟡 Medium (Log spam)
 - **Symptom**: `usb usb14-port1: Cannot enable. Maybe the USB cable is bad?` prints every 4 seconds in the kernel log.
 - **Root Cause**: The udev fix `ATTR{disable}="1"` relies on a sysfs attribute that does not exist in this kernel (`/sys/bus/usb/devices/usb14-port1/disable` is missing).
 - **Fix**: Rewrite the udev rule to target the `usb_port` class or use USB authorization (`authorized="0"`).
 
-### 7. Panfrost Vulkan (`panvk`) Implementation Errors
+### 8. Panfrost Vulkan (`panvk`) Implementation Errors
 
 - **Severity**: 🟡 Medium
 - **Symptom**: Wayland clients (`swaync`, `hypridle`) crash or fail to initialize buffers with `VK_ERROR_INCOMPATIBLE_DRIVER` and `[sc] Failed to create a wayland buffer`.
 - **Root Cause**: The experimental `panvk` driver is being loaded for the Immortalis-G720 but fails to provide a conformant Vulkan implementation.
 - **Fix**: Force clients to use GLES or disable the Vulkan backend in wlroots clients.
 
-### 8. Missing SSH Agent Socket
+### 9. Missing SSH Agent Socket
 
-- **Severity**: 🟢 Low
+- **Severity**: 🟢 Resolved
 - **Symptom**: `Error connecting to agent: No such file or directory` at shell login.
-- **Root Cause**: The 1Password SSH socket at `/home/mahdtech/.1password/agent.sock` is missing.
+- **Root Cause**: The 1Password SSH socket at `/home/mahdtech/.1password/agent.sock` was missing.
+- **Fix**: Added out-of-store symlink in Home Manager configuration.
 
-### 9. I2C & Touchscreen Errors
+### 10. I2C & Touchscreen Errors
 
 - **Severity**: 🟢 Low
 - **Symptom**: Errors in dmesg like `cros-ec-i2c 6-0076: Cannot identify the EC: error -28` and `Goodix-TS 2-0014: I2C communication failure: -6`.
 - **Root Cause**: Physical components might be disconnected or I2C bus speeds/pinmux are incorrect in the Device Tree.
+
+### 11. Hardware Resolution Width Limitation (5120x1440 Unsupported)
+
+- **Severity**: 🟡 Medium
+- **Symptom**: Widescreen monitors fail to negotiate resolutions wider than 4096 pixels (e.g. `5120x1440`). The native resolution option is completely missing from the detected modes list.
+- **Root Cause**: The integrated display controller (`linlondp` / ARM Mali-D71 IP register-compatible) has a hard-coded maximum display scanline width limit of **4096 pixels**.
+- **Fix**:
+  - Widescreen monitors must be run at a lower supported mode under the 4096-pixel limit, such as `2560x1440` (at 60Hz or 120Hz).
+  - This is an SoC hardware architecture design limit, not a USB-C or link bandwidth issue.
 
 ---
 
@@ -201,10 +211,12 @@ _Note: SMMU Display early boot bypass is handled via a custom device tree overla
 - [x] Enable CONFIG_ZRAM_BACKEND_ZSTD=y in custom kernel configuration to resolve zramSwap warning.
 - [x] Resolve missing 1Password SSH agent socket.
 - [x] Investigate rtkit lacking RT capabilities — Verified working (mahdtech has `ulimit -r` of 95; `rtkit-daemon` is active; no errors logged).
+- [x] Clean up all manual configuration overrides (`~/.config/uwsm` and `~/.config/hypr/hyprland.conf`) to ensure pure declarative Home Manager state.
+- [x] Document physical 4096px display controller hardware resolution width limit.
+- [x] Move USB-C port disablement to `boot.postBootCommands` (unbinding `usb14` from the driver) to completely silence DisplayPort Alt Mode warning log spam.
 
 ### Pending
 
-- [ ] Move USB-C port disablement to boot.postBootCommands instead of the ignored udev rule.
 - [ ] Investigate DisplayPort Link Training failure (`failed to trilin_dp_link_train_cr`) causing Hyprland to run headless.
 - [ ] Mitigate `panvk` Vulkan driver crashing Wayland clients (swaync, hypridle).
 - [ ] Investigate I2C/Touchscreen errors (`cros-ec-i2c`, `Goodix-TS`).

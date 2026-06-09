@@ -288,10 +288,9 @@ in
     SUBSYSTEM=="platform", DRIVERS=="cdnsp-sky1", ATTR{power/control}="on"
     SUBSYSTEM=="platform", DRIVERS=="cdns-usbssp", ATTR{power/control}="on"
 
-    # Disable USB 3.0 port 1 on Bus 14 (widescreen monitor DisplayPort Alt Mode lane sharing mismatch)
-    # to prevent loop resets and log spam, since only keyboard/mouse are connected via USB 2.0.
-    # We do this by de-authorizing the entire usb14 root hub (which only hosts this single port).
-    SUBSYSTEM=="usb", KERNEL=="usb14", ATTR{authorized}="0"
+    # Note: Disable USB 3.0 Bus 14 root hub to prevent log spam/training loop.
+    # This is handled via boot.postBootCommands (unbind usb14) in hosts/orion/default.nix
+    # because the udev disable attribute is missing on this kernel.
   '';
 
   # AIPULIB_PATH: scoped to interactive sessions only
