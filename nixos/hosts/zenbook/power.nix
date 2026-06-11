@@ -15,6 +15,9 @@
 
   powerManagement.enable = true;
 
+  # Override the battery device name to point to Snapdragon native path
+  services.batteryNotifier.device = "qcom-battmgr-bat";
+
   # zram swap for memory pressure relief
   # Laptop has 30 GiB RAM — zram gives ~60 GiB effective with zstd compression
   zramSwap = {
