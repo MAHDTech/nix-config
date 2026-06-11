@@ -7,14 +7,12 @@
 
 ## Active Status & Task Tracker
 
-| Issue | Description | Severity | Status / Traffic Light |
-|---|---|---|---|
-| **Issue 3** | [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) | P1 | 🟡 **Amber** (Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up) |
-| **Issue 5** | [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) | 🟡 **Amber** (Ramoops overlay disabled temporarily for Gen 30/31 debugging; `pstore-blk` partition label fixed) |
-| **Issue 7** | [DSP subsystem (qcom_q6v5_pas) enablement](#issue-7-dsp-subsystem-qcom_q6v5_pas-enablement) | P3 | 🟡 **Amber** (Late-load crash analyzed; Stage 1 firmware fix deployed in Gen 32) |
-| **Issue 16** | [Thunderbolt 5 dock drops to USB 2.0 full-speed](#issue-16-thunderbolt-5-dock-drops-to-usb-2-0-full-speed) | P1 | 🟡 **Amber** (Blocked on upstream kernel patches for non-PCIe host routers) |
-| **Issue 18** | [pmic_glink uevent failures & battery notifier](#issue-18-pmic_glink-uevent-failures) | P3 | 🟡 **Amber** (Open; battery telemetry works via sysfs but battery notifier requires a device override) |
-| **Issue 20** | [PMIC Hard Reset on Every NixOS Boot](#issue-20-pmic-hard-reset-on-every-nixos-boot-systematic-debug-2026-06-11) | P0 | 🔴 **Red** (Fix deployed & testing on Gen 32; verifying Stage 1 firmware load) |
+*   🔴 **Issue 20**: [PMIC Hard Reset on Every NixOS Boot](#issue-20-pmic-hard-reset-on-every-nixos-boot-systematic-debug-2026-06-11) (P0) — *Fix Deployed & Testing on Gen 32; verifying Stage 1 firmware load.*
+*   🟡 **Issue 3**: [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) (P1) — *Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up.*
+*   🟡 **Issue 5**: [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) (P0) — *Ramoops overlay disabled temporarily for debugging; `pstore-blk` label fixed.*
+*   🟡 **Issue 7**: [DSP subsystem (qcom_q6v5_pas) enablement](#issue-7-dsp-subsystem-qcom_q6v5_pas-enablement) (P3) — *Late-load crash analyzed; Stage 1 firmware fix deployed in Gen 32.*
+*   🟡 **Issue 16**: [Thunderbolt 5 dock drops to USB 2.0 full-speed](#issue-16-thunderbolt-5-dock-drops-to-usb-2-0-full-speed) (P1) — *Blocked on upstream kernel patches for non-PCIe host routers.*
+*   🟡 **Issue 18**: [pmic_glink uevent failures & battery notifier](#issue-18-pmic_glink-uevent-failures) (P3) — *Open; battery telemetry works via sysfs but battery notifier requires a device override.*
 
 > [!NOTE]
 > All **fully resolved issues** (Issues 1, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, and 17) have been archived in [resolved_issues.md](file:///boot/nixos/nix-config/nixos/hosts/zenbook/resolved_issues.md) to keep this main issue tracker focused and actionable.
@@ -61,6 +59,11 @@
 * **Root Cause & Fix Strategy**:
   * ARM64 ignores the standard `memmap=` kernel boot arguments, requiring a Device Tree overlay (`ramoops-overlay.dts`) to reserve memory (`2MB` at `0xb7000000` with `no-map`).
   * **Current State**: The `ramoops-overlay` was temporarily disabled in `hardware-configuration.nix` (`deviceTree.overlays = [ ]`) to isolate a boot-loop regression. Once Stage 1 boot stability is verified, this overlay must be re-enabled.
+- **Crash capture layers** (defense in depth):
+  * **DTB ramoops (2MB reserved)**: Captures panics (✅), captures PMIC resets (❌). Status: ✅ *Verified Gen 6 (ecc: 0, no errors).*
+  * **Panic escalation settings**: Captures panics (✅, enables flush), captures PMIC resets (❌). Status: ✅ *Verified Gen 6 (kernel params confirmed).*
+  * **Netconsole → JONS:6666**: Captures panics (✅, live), captures PMIC resets (⚠️ Pre-crash only). Status: ✅ *Verified Gen 6 (systemd service active, logging started).*
+  * **pstore-blk (NVMe partition)**: Captures panics (✅), captures PMIC resets (⚠️ Maybe). Status: ⚠️ *Partition exists, label fix pending rebuild.*
 
 ---
 
