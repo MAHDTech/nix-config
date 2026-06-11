@@ -123,8 +123,29 @@ in
 
       # Load crucial platform firmware directly in stage 1 to prevent driver crashes
       extraFirmwarePaths = [
-        "qcom"
-        "ath12k"
+        # ADSP / CDSP / battmgr OEM firmware files for Elite SoC
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/qcadsp8380.mbn"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/qccdsp8380.mbn"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/adsp_dtbs.elf"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/cdsp_dtbs.elf"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/adspr.jsn"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/adsps.jsn"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/adspua.jsn"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/battmgr.jsn"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/cdspr.jsn"
+        "qcom/x1e80100/ASUSTeK/zenbook-a14/wpssr.jsn"
+
+        # ADSP / CDSP / battmgr OEM firmware files for Plus SoC
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/qcadsp8380.mbn"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/qccdsp8380.mbn"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/adsp_dtbs.elf"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/cdsp_dtbs.elf"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/adspr.jsn"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/adsps.jsn"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/adspua.jsn"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/battmgr.jsn"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/cdspr.jsn"
+        "qcom/x1p42100/ASUSTeK/zenbook-a14/wpssr.jsn"
       ];
     };
 
