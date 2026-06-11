@@ -240,11 +240,21 @@ in
     firmwareCompression = "none";
     firmware = [
       # OEM firmware: device-specific blobs NOT available in upstream linux-firmware.
-      # Provides: ADSP/CDSP (qcadsp8380.mbn, qccdsp8380.mbn), video codec (qcvss8380.mbn),
-      # AV1 decoder (qcav1e8380.mbn), pd-mapper descriptors (*.jsn), GPU SQE microcode.
-      # linux-firmware (via enableRedistributableFirmware) provides: WiFi, Bluetooth,
-      # audio topology, GPU GMU/ZAP shaders, and other SoC-generic firmware.
-      (pkgs.callPackage ./firmware.nix { })
+      # Provides:
+      #   - ADSP/CDSP (qcadsp8380.mbn, qccdsp8380.mbn)
+      #   - Video codec (qcvss8380.mbn)
+      #   - AV1 decoder (qcav1e8380.mbn)
+      #   - pd-mapper descriptors (*.jsn)
+      #   - GPU SQE microcode
+      #
+      # linux-firmware (via enableRedistributableFirmware)
+      # Provides:
+      #   - WiFi
+      #   - Bluetooth
+      #   - audio topology
+      #   - GPU GMU/ZAP shaders
+      #   - and other SoC-generic firmware.
+      (pkgs.callPackage ./firmware/asus.nix { })
     ];
   };
 

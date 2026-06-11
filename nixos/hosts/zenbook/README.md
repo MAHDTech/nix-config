@@ -6,10 +6,9 @@
 Work through issues **one at a time** — build, test, verify, then check off before moving on.
 
 > [!IMPORTANT]
-> **Current generation**: Gen 31 (2026-06-11).
-> **STATUS: ALL BOOTS CRASHING** — every installed NixOS generation hard resets
-> within <1 min. Only the installer is stable. See **Issue 20** for full debug log.
-> **Next action**: Boot `nixos-rescue.conf` (rescue.target) to isolate services vs kernel.
+> **Current generation**: Gen 32 (2026-06-11).
+> **STATUS: FIX DEPLOYED & TESTING** — Identified Stage-1 initrd firmware omission bug in Nixpkgs. Listed explicit ADSP/CDSP firmware files in `extraFirmwarePaths` to bypass the directory copy bug.
+> **Next action**: Complete `nixos-anywhere` deployment and verify successful Stage-1 firmware load.
 > Partition layout: ESP (1G) / pstore (16M) / btrfs (953G).
 
 ---
@@ -597,7 +596,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 20: PMIC Hard Reset on Every NixOS Boot (Systematic Debug — 2026-06-11)
 
-- [/] **Status**: In Progress — rescue.target test pending
+- [/] **Status**: Fix Deployed & Testing — verifying Stage-1 initrd firmware inclusion
 - **Severity**: P0 — System unusable, every boot crashes within <1 min
 - **Symptom**: Every installed NixOS generation (Gen 25–31) hard resets
   within 30–60 seconds of boot. The **installer** is completely stable
@@ -677,25 +676,15 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 #### Next Steps (Resume Here)
 
-1. **[PENDING] Boot rescue.target** — `nixos-rescue.conf` entry is already
-   created on the ESP. This boots with `systemd.unit=rescue.target` (root
-   shell only, no services). If stable → services are the trigger. If crash
-   → initrd/root-mount/basic-systemd is the issue.
-
-2. **If rescue is stable** — binary search services:
-   - Disable ClamAV, opnix, home-manager, netconsole
-   - Test with `systemd.unit=multi-user.target` but minimal services
-   - Narrow to the specific service that triggers the crash
-
-3. **If rescue crashes** — the difference is the initrd or root mount:
-   - Compare initrd contents (modules, firmware, init scripts)
-   - Test with `init=/bin/sh` to skip systemd entirely
-   - Test with ext4 instead of BTRFS
-   - Test without AppArmor LSM
-
-4. **Firmware upgrade test** — newer Qualcomm GPU firmware from
-   `firmware-windows.nix` (v31.0.148.0) has updated zap shader and
-   GMU variants. Worth testing if rescue.target doesn't resolve.
+1. **Root Cause Identified**: The Stage 1 `initrd` built with `extraFirmwarePaths = [ "qcom" "ath12k" ];` completely omitted the `qcom` firmware. This is due to a Nixpkgs `modules-closure.sh` script bug where it invokes `cp` without a `-r` flag, silently failing to copy directory paths.
+2. **Casading Crash Trigger**: Because the ADSP firmware was missing, the `qcom_q6v5_pas` driver failed to load it in Stage 1 (`request_firmware failed: -2`). Although the firmware successfully loaded late during Stage 2, this out-of-order load resulted in `qcom-apm` and SoundWire driver timeouts. When the kernel attempted deferred regulator cleanup (`regulator: Not disabling unused regulators`), unclocked components triggered a Secure World (TrustZone) hardware panic and PMIC hard reset.
+3. **Implemented Fix**: Listed individual ADSP/CDSP firmware files in `boot.initrd.extraFirmwarePaths` in `hardware-configuration.nix` to bypass the `modules-closure.sh` copy limitation.
+4. **Current Status**: Rebuilding the configuration natively on the Zenbook (`--build-on remote`) and installing it via `nixos-anywhere`.
+5. **Pending Verification**:
+   - Verify that the newly built initrd file contains the firmware files under `/lib/firmware/...`.
+   - Boot the Zenbook.
+   - Verify that the remoteproc drivers successfully load the ADSP/CDSP firmware in Stage 1 (no firmware failures in dmesg/netconsole).
+   - Confirm that the system stays stable past the 1-minute mark and no longer resets.
 
 #### Files Modified During This Session
 
