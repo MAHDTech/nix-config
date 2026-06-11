@@ -81,31 +81,6 @@ in
         "ext4"
       ]
       ++ lib.optionals (!isInstaller) [
-        # QRTR sockets for QMI communication (required by ADSP)
-        "qrtr"
-        "qrtr_smd"
-        # USB Type-C power state, alternate modes, and PMIC GLINK mapping (requires ADSP/remoteprocs)
-        "qcom_q6v5_pas"
-        "pmic_glink"
-        "pmic_glink_altmode"
-        "qcom_pmic_glink"
-        "qcom_pmic_typec"
-        "ps883x"
-        # ucsi_glink: UCSI over Qualcomm PMIC glink — USB-C PD and DP alt-mode.
-        # Kernel config symbol: UCSI_PMIC_GLINK (=m in defconfig; enforced in kernel.nix).
-        # Linux module name on-disk is ucsi_glink.
-        "ucsi_glink"
-        "typec_ucsi"
-        "typec_thunderbolt"
-        "typec_displayport"
-        "thunderbolt"
-
-        # WiFi/BT power sequencing
-        # ath12k_wifi7_pci: alexVinarskis patch set reorganises ath12k into a wifi7/
-        # subdirectory. Confirmed on live device: driver is ath12k_wifi7_pci.
-        "ath12k_wifi7_pci"
-        "pwrseq_qcom_wcn"
-
         # Early display — drm panel drivers are forced =y (built-in) in kernel.nix.
         # Note: drm_simpledrm is NOT a separate loadable module in this kernel
         # (confirmed on live device — efifb handles early display, MSM DRM takes over).
@@ -114,39 +89,11 @@ in
         "drm_panel_simple"
         "drm_panel_samsung_atna33xc20"
       ];
-      kernelModules = [
-        # Force load Alt Mode drivers to ensure they are present before early-boot Type-C negotiation
-        "typec_thunderbolt"
-        "typec_displayport"
-        "pmic_glink_altmode"
-      ];
+      kernelModules = [ ];
 
       # Load crucial platform firmware directly in stage 1 to prevent driver crashes
-      extraFirmwarePaths = [
-        # ADSP / CDSP / battmgr OEM firmware files for Elite SoC
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/qcadsp8380.mbn"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/qccdsp8380.mbn"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/adsp_dtbs.elf"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/cdsp_dtbs.elf"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/adspr.jsn"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/adsps.jsn"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/adspua.jsn"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/battmgr.jsn"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/cdspr.jsn"
-        "qcom/x1e80100/ASUSTeK/zenbook-a14/wpssr.jsn"
-
-        # ADSP / CDSP / battmgr OEM firmware files for Plus SoC
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/qcadsp8380.mbn"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/qccdsp8380.mbn"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/adsp_dtbs.elf"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/cdsp_dtbs.elf"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/adspr.jsn"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/adsps.jsn"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/adspua.jsn"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/battmgr.jsn"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/cdspr.jsn"
-        "qcom/x1p42100/ASUSTeK/zenbook-a14/wpssr.jsn"
-      ];
+      # (Not needed anymore since remoteproc and Type-C modules are moved to Stage 2)
+      extraFirmwarePaths = [ ];
     };
 
     blacklistedKernelModules = [
