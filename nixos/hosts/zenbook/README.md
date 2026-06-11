@@ -8,7 +8,7 @@
 ## Active Status & Task Tracker
 
 - 🔴 **Issue 20**: [PMIC Hard Reset on Every NixOS Boot](#issue-20-pmic-hard-reset-on-every-nixos-boot-systematic-debug-2026-06-11) (P0)
-  — _Fix Deployed & Testing on Gen 32; verifying Stage 1 firmware load._
+  — _Fix Deployed & Testing; verifying Stage-2 pd-mapper race fix (commit `2df9277`)._
 - 🟡 **Issue 3**: [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) (P1) — _Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up._
 - 🟡 **Issue 5**: [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) (P0)
   — _Ramoops overlay disabled temporarily for debugging; `pstore-blk` label fixed._
@@ -146,27 +146,29 @@
 
 ### Issue 20: PMIC Hard Reset on Every NixOS Boot (Systematic Debug — 2026-06-11)
 
-- [/] **Status**: Fix Deployed & Testing — verifying Stage-1 initrd firmware inclusion
+- [/] **Status**: Fix Deployed & Testing — verifying Stage-2 pd-mapper race fix (commit `2df9277`)
 - **Severity**: P0 — System unusable, every boot crashes within <1 min.
-- **Symptom**: Every installed NixOS generation (Gen 25–31) hard resets within 30–60 seconds of boot. The installer is completely stable.
-- **Crash Signature**: The last kernel message before every crash is:
+- **Symptom**: System hard-resets within ~24-27 seconds of boot.
+- **Crash Signature**: The last netconsole messages before crash are:
   ```
-  regulator: Not disabling unused regulators
+  [   24.292138] qcom-apm gprsvc:service:2:1: CMD timeout for [1001021] opcode
+  [   27.059856] qcom-soundwire 6ad0000.soundwire: qcom_swrm_irq_handler: SWR CMD error...
   ```
-  The crash occurs ~15 seconds after `multi-user.target` is reached.
 - **Root Cause & Resolution**:
-  - **Nixpkgs initrd Firmware Bug**: The Stage 1 `initrd` built with
-    `extraFirmwarePaths = [ "qcom" "ath12k" ];` completely omitted the `qcom`
-    firmware. This is due to a Nixpkgs `modules-closure.sh` script bug where it
-    invokes `cp` without a `-r` flag, silently failing to copy directory paths.
-  - **Cascading Reset Trigger**: Because the ADSP firmware was missing, the
-    `qcom_q6v5_pas` driver failed to load it in Stage 1 (`request_firmware
-failed: -2`). Although the firmware successfully loaded late during Stage 2,
-    this out-of-order load resulted in `qcom-apm` and SoundWire driver
-    timeouts. When the kernel attempted deferred regulator cleanup (`regulator:
-Not disabling unused regulators`), unclocked components triggered a Secure
-    World (TrustZone) hardware panic and PMIC hard reset.
-  - **Resolution (Gen 32)**: Listed the individual ADSP/CDSP firmware files in
-    `boot.initrd.extraFirmwarePaths` in `hardware-configuration.nix` to bypass
-    the `modules-closure.sh` copy limitation.
-  - **Current State**: The fix is deployed and currently rebuilding natively on the target host via `nixos-anywhere` with `--build-on remote`.
+  <!-- cspell:ignore gprsvc swrm -->
+  - **pd-mapper / remoteproc Race**: When `qcom_q6v5_pas` is blacklisted (to
+    prevent early boot NVMe conflicts), systemd evaluates `pd-mapper.service`
+    prior to running the startup service. However, `pd-mapper.service` has a
+    `ConditionPathIsDirectory = "/sys/class/remoteproc"` guard. Because the
+    driver has not yet been loaded, the directory does not exist, and systemd
+    silently skips starting `pd-mapper`. The start service then loads the
+    module and boots the DSPs, but since `pd-mapper` is not running, the DSPs
+    time out waiting for Protection Domain mapping, triggering a PMIC hard
+    reset.
+  - **Resolution (commit `2df9277`)**: Split remoteproc actions into two
+    services: `qcom-remoteproc-load.service` (loads the module) and
+    `qcom-remoteproc-start.service` (boots the DSPs). Configured
+    `pd-mapper.service` to require and run `after` the load service. This
+    ensures the remoteproc directory exists before `pd-mapper`'s condition
+    check runs, allowing the daemon to start successfully before the DSPs boot.
+  - **Current State**: Fix committed and ready for user validation.
