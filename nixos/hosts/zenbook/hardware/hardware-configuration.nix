@@ -105,6 +105,7 @@ in
       "snd_soc_wcd938x" # headphone codec
       "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport
       "snd_soc_wcd_common" # WCD common ops
+      "qcom_q6v5_pas" # Blacklist remoteproc to prevent early udev auto-boot before pd-mapper is up
     ]
     ++ lib.optionals isInstaller [
       "typec_thunderbolt"
@@ -236,7 +237,7 @@ in
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.bash}/bin/bash -c 'for dev in /sys/class/remoteproc/remoteproc*; do if [ -f \"$dev/state\" ] && [ \"$(cat \"$dev/state\")\" = \"offline\" ]; then echo start > \"$dev/state\"; fi; done'";
+        ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.kmod}/bin/modprobe qcom_q6v5_pas && for dev in /sys/class/remoteproc/remoteproc*; do if [ -f \"\$dev/state\" ] && [ \"\$(cat \"\$dev/state\")\" = \"offline\" ]; then echo start > \"\$dev/state\"; fi; done'";
         RemainAfterExit = true;
       };
     };

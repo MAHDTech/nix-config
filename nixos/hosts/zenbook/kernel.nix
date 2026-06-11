@@ -115,10 +115,10 @@ let
       # Ubuntu's linux-qcom-x1e kernel has this enabled — it was MISSING from our config
       # and is the most likely root cause fix for PMIC overcurrent resets.
       ./scripts/config --enable POWERCAP
-      ./scripts/config --module ARM_SCMI_POWERCAP
+      ./scripts/config --enable ARM_SCMI_POWERCAP
 
       # SCMI power control and debugfs — matches Ubuntu's linux-qcom-x1e kernel
-      ./scripts/config --module ARM_SCMI_POWER_CONTROL
+      ./scripts/config --enable ARM_SCMI_POWER_CONTROL
       ./scripts/config --enable ARM_SCMI_NEED_DEBUGFS
       ./scripts/config --enable ARM_SCMI_QUIRKS
 
