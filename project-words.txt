@@ -1606,6 +1606,7 @@ uhwd
 unapsd
 unblacklisted
 unblacklisting
+unclocked
 unetbootin
 unevictable
 unfullscreen
