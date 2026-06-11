@@ -9,15 +9,16 @@ let
   kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "latest-zenbook";
     # Set version to match what linux-next reports to avoid mismatch
-    version = "7.1.0-rc7-next-20260608";
+    version = "7.1.0-rc5-next-20260528";
 
     enableParallelBuilding = true;
 
-    # Pull the absolute latest bleeding edge where Zenbook support lives
+    # Pin to stable rc5-based snapshot — rc6/rc7 have a regression causing
+    # hard PMIC resets under sustained CPU load.
     src = pkgs.fetchgit {
       url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-      rev = "next-20260608";
-      sha256 = "sha256-oKUfIVZyGAzLfjksWvyWvMSdJy3sHvBryGofBABoJR4=";
+      rev = "next-20260528";
+      sha256 = "sha256-86TmX6XmHk0pLorcK/ZQ5AHsGj/c6mKQlLdT0DX2ltA=";
     };
 
     nativeBuildInputs = with pkgs; [
@@ -52,6 +53,12 @@ let
         echo "Applying $patch"
         patch -p1 < "$patch"
       done
+
+      echo "Fixing DTSI camera errors (camss/cci1/csiphy missing in next-20260528)..."
+      sed -i '/&camss {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+      sed -i '/&cci1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+      sed -i '/&cci1_i2c1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+      sed -i '/&csiphy4 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
 
       echo "Patching DRM_MSM Kconfig to select DRM_SYNCOBJ..."
       sed -i '/^config DRM_MSM$/a \\tselect DRM_SYNCOBJ\n\tselect DRM_SYNCOBJ_TIMELINE_EXPORT' drivers/gpu/drm/msm/Kconfig
@@ -102,6 +109,22 @@ let
       ./scripts/config --enable ARM_SCMI_POWER_DOMAIN
       ./scripts/config --enable ARM_SCMI_PERF_DOMAIN
       ./scripts/config --enable RESET_SCMI
+
+      # SCMI Powercap: enforces power budget limits through firmware.
+      # This is the Linux equivalent of the Windows Power Engine Plug-in (PEP).
+      # Ubuntu's linux-qcom-x1e kernel has this enabled — it was MISSING from our config
+      # and is the most likely root cause fix for PMIC overcurrent resets.
+      ./scripts/config --enable POWERCAP
+      ./scripts/config --module ARM_SCMI_POWERCAP
+
+      # SCMI power control and debugfs — matches Ubuntu's linux-qcom-x1e kernel
+      ./scripts/config --module ARM_SCMI_POWER_CONTROL
+      ./scripts/config --enable ARM_SCMI_NEED_DEBUGFS
+      ./scripts/config --enable ARM_SCMI_QUIRKS
+
+      # Qualcomm Subsystem Power Manager — manages SoC low-power states.
+      # Built-in (=y) in Ubuntu's kernel. Required for proper power state transitions.
+      ./scripts/config --enable QCOM_SPM
 
       # Enable PSTORE_RAM (ramoops) for crash debugging
       ./scripts/config --enable PSTORE
@@ -249,7 +272,7 @@ let
 
     # satisfy the kernel modules expectations
     passthru = rec {
-      modDirVersion = "7.1.0-rc7-next-20260608";
+      modDirVersion = "7.1.0-rc5-next-20260528";
       version = modDirVersion;
       dev = kernelBuild;
       moduleBuildDependencies = [ ];

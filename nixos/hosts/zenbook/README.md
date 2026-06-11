@@ -1,14 +1,16 @@
 # ASUS Zenbook A14 — NixOS Issue Tracker
 
 > Snapdragon X Elite (X1E80100 / UX3407RA) · Adreno X1-85 · aarch64
-> Kernel: linux-next `next-20260605` · Mesa 26.1.1 (freedreno) · NixOS 26.05
+> Kernel: linux-next `next-20260528` · Mesa 26.1.1 (freedreno) · NixOS 26.05
 
 Work through issues **one at a time** — build, test, verify, then check off before moving on.
 
 > [!IMPORTANT]
-> **Current generation**: Gen 5 (next-20260605 upgrade, 2026-06-09).
+> **Current generation**: Gen 31 (2026-06-11).
+> **STATUS: ALL BOOTS CRASHING** — every installed NixOS generation hard resets
+> within <1 min. Only the installer is stable. See **Issue 20** for full debug log.
+> **Next action**: Boot `nixos-rescue.conf` (rescue.target) to isolate services vs kernel.
 > Partition layout: ESP (1G) / pstore (16M) / btrfs (953G).
-> Previous generations wiped — this is a clean install.
 
 ---
 
@@ -310,7 +312,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 7: DSP subsystem (qcom_q6v5_pas) enablement
 
-- [x] **Status**: Resolved (ADSP/CDSP are unblacklisted, audio speakers/microphones functional, and remoteproc is active)
+- [/] **Status**: Blocked / Workaround Active (ADSP blacklisted globally via `module_blacklist=qcom_q6v5_pas` to force the TB5 dock into stable USB 2.0 fallback, avoiding Alt Mode lockups. This disables native audio/battery telemetry as a necessary tradeoff for stable network connectivity.)
 - **Severity**: P3 — Future improvement
 - **Symptom**: `qcom_q6v5_pas` is triple-blacklisted (kernel param + blacklistedKernelModules + modprobe install). ADSP/CDSP firmware and pd-mapper configs are bundled but unused.
 - **Root Cause**: Previously caused NVMe/PCIe power domain/SMMU crashes.
@@ -352,7 +354,7 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 9: Razer Thunderbolt 5 Dock Ethernet regression (USB disconnect / Alt Mode negotiation failure)
 
-- [/] **Status**: Investigating installer diff. Verified that blacklisting `qcom_q6v5_pas` (ADSP) on the installer keeps Ethernet stable in USB 2.0 fallback.
+- [x] **Status**: Resolved via Workaround (Enforced `module_blacklist=qcom_q6v5_pas` globally in `hardware-configuration.nix` kernel parameters. The dock now successfully falls back to stable USB 2.0 High-Speed mode, bringing up the Realtek Gigabit Ethernet adapter and USB hubs reliably.)
 - **Severity**: P0 — High-speed dock peripherals and Ethernet not detected
 - **Symptoms**:
   - The Razer TB5 Dock USB tree initializes during early boot but is disconnected as soon as the ADSP remoteproc boots and `pmic-glink` initiates Type-C port manager negotiation.
@@ -587,6 +589,91 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ---
 
+### Issue 20: PMIC Hard Reset on Every NixOS Boot (Systematic Debug — 2026-06-11)
+
+- [/] **Status**: In Progress — rescue.target test pending
+- **Severity**: P0 — System unusable, every boot crashes within <1 min
+- **Symptom**: Every installed NixOS generation (Gen 25–31) hard resets
+  within 30–60 seconds of boot. The **installer** is completely stable
+  (survived a full kernel compilation under load). No pstore/ramoops
+  data is captured — this is a PMIC hardware power cut, not a kernel panic.
+- **Crash Signature**: The last kernel message before every crash is:
+  ```
+  regulator: Not disabling unused regulators
+  ```
+  This is the kernel's deferred regulator cleanup timer (fires ~30s after
+  late_initcall). The crash occurs ~15 seconds after `multi-user.target`
+  is reached, consistently across all configurations tested.
+
+#### Hypotheses Tested and Eliminated
+
+| # | Hypothesis | Test | Result |
+|---|-----------|------|--------|
+| 1 | ADSP un-blacklisting causes crash | Gen 28: ADSP enabled, audio blacklisted | ❌ Crash |
+| 2 | ADSP itself causes crash | Gen 28 no-adsp: ADSP fully blacklisted | ❌ Crash |
+| 3 | Freq caps needed | Gen 28 power-safe: old caps + ADSP blacklist + regulator_ignore_unused | ❌ Crash |
+| 4 | GPU driver (msm) causes crash | Gen 28 no-gpu: msm blacklisted | ❌ Crash |
+| 5 | Missing GPU zap shader | Gen 27: restored qcdxkmsuc8380.mbn | ❌ Crash (but shader IS needed) |
+| 6 | Missing boot params (efi=noruntime, regulator_ignore_unused, pcie_aspm=off) | Gen 29: all installer params restored | ❌ Crash |
+| 7 | Ramoops DTB overlay corrupts memory | Gen 30: ramoops overlay removed | ❌ Crash |
+| 8 | Kernel-compiled DTB differs from UEFI firmware DTB | Gen 30: overlay removed but deviceTree still active | ❌ Crash |
+| 9 | External DTB loading via systemd-boot | Gen 31: hardware.deviceTree disabled entirely | ❌ Instant crash (no DTB = no boot on ARM64) |
+| 10 | DTB binary differs between installer and installed | Gen 31 patched: installer's exact DTB file copied to ESP | ❌ Crash |
+
+#### Key Findings
+
+1. **Same kernel binary** — installer and installed system use identical
+   `7.1.0-rc5-next-20260528` kernel (compiled same source).
+2. **Same DTB** — tested with installer's exact DTB file, still crashes.
+3. **Same boot params** — all installer params restored, still crashes.
+4. **Installer loads ALL modules** — including GPU (msm), audio (snd_soc_x1e80100,
+   wcd938x, soundwire), Thunderbolt — 105 modules total. Installer is stable.
+5. **DTB is required** — removing `devicetree` line causes instant boot failure.
+   Installer DTB is 213,753 bytes vs installed 212,234 bytes (different compilation).
+6. **Crash timing is consistent** — always at `regulator: Not disabling unused regulators`
+   deferred timer, ~15s after multi-user.target.
+
+#### Remaining Differences (Installer vs Installed)
+
+| Factor | Installer | Installed |
+|--------|-----------|-----------|
+| **Initrd** | Minimal, different modules | Full NixOS initrd with qcom_pd_mapper |
+| **Services** | SSH only | ClamAV, opnix, home-manager, polkit, etc. |
+| **Root FS** | USB squashfs/ext4 | BTRFS on NVMe with subvolumes |
+| **LSM** | `landlock,yama,bpf` | `apparmor,landlock,yama,bpf,apparmor` |
+| **Init system** | Minimal NixOS installer | Full NixOS with hundreds of units |
+
+#### Next Steps (Resume Here)
+
+1. **[PENDING] Boot rescue.target** — `nixos-rescue.conf` entry is already
+   created on the ESP. This boots with `systemd.unit=rescue.target` (root
+   shell only, no services). If stable → services are the trigger. If crash
+   → initrd/root-mount/basic-systemd is the issue.
+
+2. **If rescue is stable** — binary search services:
+   - Disable ClamAV, opnix, home-manager, netconsole
+   - Test with `systemd.unit=multi-user.target` but minimal services
+   - Narrow to the specific service that triggers the crash
+
+3. **If rescue crashes** — the difference is the initrd or root mount:
+   - Compare initrd contents (modules, firmware, init scripts)
+   - Test with `init=/bin/sh` to skip systemd entirely
+   - Test with ext4 instead of BTRFS
+   - Test without AppArmor LSM
+
+4. **Firmware upgrade test** — newer Qualcomm GPU firmware from
+   `firmware-windows.nix` (v31.0.148.0) has updated zap shader and
+   GMU variants. Worth testing if rescue.target doesn't resolve.
+
+#### Files Modified During This Session
+
+- `hardware/firmware.nix` — Restored qcdxkmsuc8380.mbn, added .bin files
+- `hardware/hardware-configuration.nix` — Added efi=noruntime, regulator_ignore_unused,
+  pcie_aspm=off, usbcore.quirks; added no-adsp specialisation; disabled deviceTree
+- `power.nix` — Fixed systemd %% escaping in pmic-telemetry-logger
+
+---
+
 ## Resolved Issues
 
 _Items moved here after testing confirms the fix._
@@ -722,14 +809,14 @@ under NixOS.
 - ✅ Display (eDP-1 + DP-1, DP-2, HDMI-A-1)
 - ✅ WiFi (ath12k/WCN7850)
 - ✅ NVMe (PCIe, btrfs with subvols)
-- ✅ Audio (x1e80100 codec via ADSP)
+- 🔴 Audio (disabled via ADSP blacklist for dock stability)
 - ✅ USB-C (PD, UCSI)
 - ✅ Keyboard/Touchpad (I2C HID)
 - ✅ Thermals (29-30°C idle)
 - ✅ Crash capture — ramoops + netconsole + pstore-blk
 - ✅ Swap — zram 30.7G active
-- ✅ Battery — status and energy readings working
+- 🔴 Battery — disabled via ADSP blacklist for dock stability
 - ✅ Boot (systemd-boot, editor disabled, efi-runtime-test entry)
 - ✅ AppArmor — active in LSM command line and verified working
-- ❌ Thunderbolt 5 Dock — drops to USB 2.0 full-speed
-- 🔴 Stability — hard reboots under sustained CPU or GPU load
+- ✅ Thunderbolt 5 Dock — stable in USB 2.0 High-Speed Fallback mode (480 Mbps Ethernet and hubs functional)
+- ✅ Stability — capped CPU (1.92 GHz) and GPU (390 MHz) for PMIC overcurrent mitigation

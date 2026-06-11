@@ -1,10 +1,19 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   # Snapdragon X Elite (ARM64) power management
-  services = {
-    # Override the battery device name to point to Snapdragon native path
-    batteryNotifier.device = "qcom-battmgr-bat";
-  };
+  #
+  # Previous configuration force-disabled all power management and hardlocked
+  # CPU frequencies to 1.92 GHz as a workaround for PMIC overcurrent resets.
+  # Root cause analysis revealed the resets were caused by:
+  #   - Missing ARM_SCMI_POWERCAP kernel config (no firmware power budget enforcement)
+  #   - ADSP blacklisted (broke PMIC power cooperation loop)
+  #   - All *_ignore_unused boot params (every subsystem drawing current simultaneously)
+  #   - PCIe ASPM + USB autosuspend disabled (wasted power headroom)
+  #
+  # With those root causes addressed, power management is now enabled and
+  # frequency scaling is handled by firmware (SCMI + GMU + LMH).
+
+  powerManagement.enable = true;
 
   # zram swap for memory pressure relief
   # Laptop has 30 GiB RAM — zram gives ~60 GiB effective with zstd compression
@@ -14,16 +23,18 @@
     memoryPercent = 100;
   };
 
-  # Limit CPU max frequency to prevent PMIC overcurrent resets under full 12-core load
-  systemd.services.limit-cpu-freq = {
-    description = "Limit CPU max frequency to prevent overcurrent crashes";
-    unitConfig.DefaultDependencies = false;
-    before = [ "sysinit.target" ];
-    wantedBy = [ "sysinit.target" ];
+  # PMIC telemetry logger — writes CPU/GPU frequencies and thermal data to
+  # /dev/pmsg0 at 100ms intervals for post-crash forensics via pstore.
+  systemd.services.pmic-telemetry-logger = {
+    description = "High-frequency PMIC Telemetry Logger (Ramoops pmsg0)";
+    after = [ "local-fs.target" ];
+    wantedBy = [ "multi-user.target" ];
     serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'echo 1920000 | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq > /dev/null'";
-      RemainAfterExit = true;
+      Type = "simple";
+      # NOTE: systemd interprets %X as specifiers. Use %% to produce a literal %.
+      ExecStart = "${pkgs.bash}/bin/bash -c 'while true; do timestamp=$(date +%%T.%%3N); cpu_freqs=$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq 2>/dev/null | tr \"\\n\" \",\" | sed \"s/,$//\"); gpu_freq=$(cat /sys/class/devfreq/3d00000.gpu/cur_freq 2>/dev/null); temps=$(cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | tr \"\\n\" \",\" | sed \"s/,$//\"); echo \"[$timestamp] CPU_FREQS:$cpu_freqs GPU:$gpu_freq TEMPS:$temps\" > /dev/pmsg0; sleep 0.1; done'";
+      Restart = "always";
+      RestartSec = "1s";
     };
   };
 }

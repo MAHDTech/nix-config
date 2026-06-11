@@ -80,7 +80,7 @@ in
       pkgs = pkgsImportSystem system;
       modules = [
         ../home
-        inputs.stylix.homeManagerModules.stylix
+        inputs.stylix.homeModules.stylix
         inputs.opnix.homeManagerModules.default
       ];
       extraSpecialArgs = {

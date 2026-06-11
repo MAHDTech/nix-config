@@ -76,7 +76,7 @@ in
   systemd.services.pd-mapper = {
     description = "Qualcomm Protection Domain Mapper";
     documentation = [ "https://github.com/linux-msm/pd-mapper" ];
-    wantedBy = lib.optionals (!isInstaller) [ "basic.target" ];
+    wantedBy = [ "multi-user.target" ];
     after = [ "systemd-udev-trigger.service" ];
     # Wait for the remoteproc subsystem to be created by the driver.
     unitConfig = {

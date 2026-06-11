@@ -129,9 +129,14 @@ in
     };
 
     blacklistedKernelModules = [
-      # TODO: Remove qcom_q6v5_pas from blacklist once TB5 Dock Alt Mode negotiation and retimer driver (ps883x) are fully stable.
-      # Blacklisting ADSP (qcom_q6v5_pas) disables battery/audio, but prevents Alt Mode negotiation failures that drop the TB5 dock to USB 1.1 Billboard.
-      "qcom_q6v5_pas"
+      # Blacklist audio codecs — ADSP starts for battery/USB-C PD but the audio
+      # subsystem (SoundWire + WCD938x + WSA884x + APM) causes qcom-apm CMD
+      # timeouts that trigger cascading USB/PMIC failures.
+      "snd_soc_x1e80100" # machine driver
+      "snd_soc_wsa884x" # speaker amplifier codec
+      "snd_soc_wcd938x" # headphone codec
+      "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport
+      "snd_soc_wcd_common" # WCD common ops
     ]
     ++ lib.optionals isInstaller [
       "typec_thunderbolt"
@@ -140,18 +145,25 @@ in
     ];
 
     kernelParams = [
-      "module_blacklist=qcom_q6v5_pas"
+      # Platform workarounds — these match the STABLE installer config exactly.
+      # The installer survived a full kernel compilation; every installed boot crashed.
+      # efi=noruntime: CRITICAL on ARM64 Qualcomm — EFI runtime services cause hard
+      # crashes when the kernel accesses UEFI variables/services post-boot.
+      "efi=noruntime"
+      "fw_devlink=permissive"
       "clk_ignore_unused"
       "pd_ignore_unused"
       "regulator_ignore_unused"
+      "pcie_aspm=off"
+      "usbcore.quirks=0b95:1790:k"
+
+      # Console and display
       "console=ttyMSM0,115200n8"
       "console=tty0"
       "cma=128M"
       "video=efifb"
       "fbcon=map:0"
       "arm64.nopauth"
-      "pcie_aspm=off"
-      "usbcore.quirks=0b95:1790:k"
       "systemd.tpm2_wait=0"
       "ip=10.10.1.91::10.10.1.1:255.255.255.0:zenbook:enu2c2:none"
 
@@ -186,6 +198,7 @@ in
     # Modern boot management
     loader = {
       systemd-boot.enable = true;
+      systemd-boot.editor = lib.mkForce true;
       efi = {
         canTouchEfiVariables = lib.mkForce false;
         efiSysMountPoint = lib.mkForce "/boot";
@@ -195,73 +208,32 @@ in
 
   hardware = {
     graphics.enable = true;
+    # We restore the external DTB because the UEFI DTB might be missing nodes
+    # causing instant reboots or missing dependencies for USB/DSPs.
     deviceTree = {
       enable = true;
-      # The alexVinarskis kernel builds this DTB from its own DTS sources.
       name = "qcom/x1e80100-asus-zenbook-a14.dtb";
-      overlays = [
-        {
-          name = "ramoops-overlay";
-          dtsFile = ../files/ramoops-overlay.dts;
-        }
-      ];
+      overlays = [ ];
     };
     enableRedistributableFirmware = true;
+    firmwareCompression = "none";
     firmware = [
+      # OEM firmware: device-specific blobs NOT available in upstream linux-firmware.
+      # Provides: ADSP/CDSP (qcadsp8380.mbn, qccdsp8380.mbn), video codec (qcvss8380.mbn),
+      # AV1 decoder (qcav1e8380.mbn), pd-mapper descriptors (*.jsn), GPU SQE microcode.
+      # linux-firmware (via enableRedistributableFirmware) provides: WiFi, Bluetooth,
+      # audio topology, GPU GMU/ZAP shaders, and other SoC-generic firmware.
       (pkgs.callPackage ./firmware.nix { })
-      (pkgs.callPackage ./firmware-windows.nix { })
-      (pkgs.runCommand "zenbook-initrd-firmware" { } ''
-        mkdir -p $out/lib/firmware/qcom
-        mkdir -p $out/lib/firmware/ath12k/WCN7850/hw2.0
-
-        # Copy and decompress wireless regulatory database to resolve WiFi channel scan issues
-        mkdir -p $out/lib/firmware
-        cp -f ${pkgs.wireless-regdb}/lib/firmware/regulatory.db* $out/lib/firmware/
-
-        # Copy GPU firmware (both Elite and Plus variants)
-        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen70500_* $out/lib/firmware/qcom/
-        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/gen71500_* $out/lib/firmware/qcom/
-        mkdir -p $out/lib/firmware/qcom/x1p42100
-        cp -r ${pkgs.linux-firmware}/lib/firmware/qcom/x1p42100/gen71500_* $out/lib/firmware/qcom/x1p42100/
-
-        # Copy ath12k WiFi firmware
-        cp -r ${pkgs.linux-firmware}/lib/firmware/ath12k/WCN7850/hw2.0/* $out/lib/firmware/ath12k/WCN7850/hw2.0/
-
-        # Copy audio topology file to both expected paths (directly under x1e80100/x1p42100 and inside ASUSTeK/zenbook-a14)
-        for soc in x1e80100 x1p42100; do
-          mkdir -p $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14
-          if [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin ]; then
-            cp ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/
-            cp ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14/
-          elif [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst ]; then
-            ${pkgs.zstd}/bin/zstd -d ${pkgs.linux-firmware}/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst -o $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin
-            cp $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14/
-          elif [ -f ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst ]; then
-            ${pkgs.zstd}/bin/zstd -d ${pkgs.linux-firmware}/lib/firmware/qcom/x1e80100/X1E80100-ASUS-Zenbook-A14-tplg.bin.zst -o $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin
-            cp $out/lib/firmware/qcom/$soc/X1E80100-ASUS-Zenbook-A14-tplg.bin $out/lib/firmware/qcom/$soc/ASUSTeK/zenbook-a14/
-          fi
-        done
-
-        # Decompress any .zst files we copied to ensure they are raw .fw/bin files
-        find $out -name "*.zst" -exec ${pkgs.zstd}/bin/zstd -d --rm {} \;
-
-        # Make files writeable so we can remove them
-        chmod -R +w $out
-
-        # Clean up text files and symlinks to satisfy Nix's broken symlinks check
-        find $out -type l -exec rm -f {} +
-        find $out -name "*.txt" -exec rm -f {} +
-      '')
     ];
   };
 
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
   # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
 
-  services.udev.extraRules = ''
-    # TODO: Remove this frequency cap when the underlying PMIC overcurrent regulator issue is resolved
-    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
-  '';
+  # GPU frequency cap removed — SCMI powercap + LMH now manage power budgets through firmware.
+  # Previous 390 MHz cap was a workaround for PMIC overcurrent resets caused by missing
+  # power management configuration, not a hardware limitation.
+  # If instability returns, the power-safe specialisation below restores the cap.
 
   systemd = {
     # Use systemd-networkd for Ethernet management
@@ -297,6 +269,65 @@ in
     "kernel.panic" = 30;
     "kernel.panic_print" = 2047; # 0x7ff — all info
     "kernel.sysrq" = 1; # enable all sysrq functions for emergency debugging
+  };
+
+  # Specialisations
+  specialisation = {
+    # Boot the system with the GPU driver (msm) completely disabled
+    "no-gpu".configuration = {
+      boot.blacklistedKernelModules = [ "msm" ];
+    };
+
+    # Boot the system in text mode for stability diagnostics
+    "text-mode".configuration = {
+      boot.blacklistedKernelModules = [
+        "msm"
+        "thunderbolt"
+        "typec_thunderbolt"
+        "ath12k_wifi7_pci"
+        "ath12k"
+      ];
+      boot.kernelParams = [
+        "systemd.unit=multi-user.target"
+      ];
+    };
+
+    # ADSP fully blacklisted, all other power improvements kept.
+    # No audio, no battery monitoring, but no ADSP crash risk.
+    # Tests: are the power management improvements (no regulator_ignore_unused,
+    # SCMI powercap, PCIe ASPM) stable WITHOUT the ADSP?
+    "no-adsp".configuration = {
+      boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
+      boot.kernelParams = [
+        "module_blacklist=qcom_q6v5_pas"
+      ];
+    };
+
+    # Conservative power caps as a rollback safety net.
+    # Restores the old CPU (1.92 GHz) and GPU (390 MHz) caps, ADSP blacklist,
+    # and *_ignore_unused params. Use this if the default boot is unstable.
+    "power-safe".configuration = {
+      boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
+      boot.kernelParams = [
+        "module_blacklist=qcom_q6v5_pas"
+        "clk_ignore_unused"
+        "pd_ignore_unused"
+        "regulator_ignore_unused"
+      ];
+      services.udev.extraRules = ''
+        SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
+      '';
+      systemd.services.limit-cpu-freq = {
+        description = "Limit CPU max frequency (power-safe fallback)";
+        after = [ "systemd-udev-settle.service" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.bash}/bin/bash -c 'echo 1920000 | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq > /dev/null'";
+          RemainAfterExit = true;
+        };
+      };
+    };
   };
 
 }
