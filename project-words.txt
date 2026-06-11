@@ -59,6 +59,7 @@ Creality
 Custor
 DBOOST
 DBUS
+DEBUGFS
 DEVFREQ
 DEVNAME
 DEVPATH
@@ -228,12 +229,14 @@ PINCTRL
 PKTTYPE
 PLATFORMTHEME
 PMSG
+POWERCAP
 PSOC
 PYTHONPATH
 PYTHONVERSION
 Patchelf
 Pixelorama
 Pixi
+Powercap
 Prepwork
 Prusa
 Purwa
@@ -342,6 +345,7 @@ Vinarskis
 Virtualenvs
 Voron
 WANGXUN
+WDDM
 WIZNET
 Websearch
 Wingpanel
@@ -567,6 +571,7 @@ dconf
 deadnix
 dearmor
 debsig
+debugfs
 decepticon
 deepcolor
 deepseek
@@ -578,6 +583,7 @@ dejavu
 desktopeditors
 devenv
 devicetree
+devlink
 devm
 devmem
 dhcpcd
@@ -781,6 +787,7 @@ guifont
 guix
 gwdt
 halign
+hardlocked
 haxe
 hfphsp
 hfsprogs
@@ -843,6 +850,7 @@ indicator
 indicatorapp
 industrialio
 inhibitidle
+initcall
 insync
 ionice
 iosevka
@@ -1243,6 +1251,7 @@ polkit
 polyval
 popin
 posixacl
+powercap
 powersave
 powertop
 prefetchable
@@ -1732,4 +1741,3 @@ zramctl
 zstd
 zvol
 zvols
-initcall

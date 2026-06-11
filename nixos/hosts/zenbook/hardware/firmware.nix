@@ -33,8 +33,8 @@ pkgs.runCommand "zenbook-firmware"
     # Copy the device-specific OEM blobs (ADSP, CDSP, video codec, zap shader, pd-mapper descriptors)
     if [ -d $srcFirmware/qcom/x1e80100 ]; then
       for f in $srcFirmware/qcom/x1e80100/ASUSTeK/zenbook-a14/*.mbn \
-               $srcFirmware/qcom/x1e80100/ASUSTeK/zenbook-a14/*.elf \
-               $srcFirmware/qcom/x1e80100/ASUSTeK/zenbook-a14/*.jsn; do
+                $srcFirmware/qcom/x1e80100/ASUSTeK/zenbook-a14/*.elf \
+                $srcFirmware/qcom/x1e80100/ASUSTeK/zenbook-a14/*.jsn; do
         if [ -f "$f" ]; then
           basename=$(basename "$f")
           # Skip only Windows-only WDDM KMD artifacts that have NO Linux use.

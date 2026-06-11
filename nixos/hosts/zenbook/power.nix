@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 {
   # Snapdragon X Elite (ARM64) power management
   #
@@ -31,8 +31,18 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "simple";
-      # NOTE: systemd interprets %X as specifiers. Use %% to produce a literal %.
-      ExecStart = "${pkgs.bash}/bin/bash -c 'while true; do timestamp=$(date +%%T.%%3N); cpu_freqs=$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq 2>/dev/null | tr \"\\n\" \",\" | sed \"s/,$//\"); gpu_freq=$(cat /sys/class/devfreq/3d00000.gpu/cur_freq 2>/dev/null); temps=$(cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | tr \"\\n\" \",\" | sed \"s/,$//\"); echo \"[$timestamp] CPU_FREQS:$cpu_freqs GPU:$gpu_freq TEMPS:$temps\" > /dev/pmsg0; sleep 0.1; done'";
+      ExecStart = pkgs.writeShellScript "pmic-telemetry-logger" ''
+        while true; do
+          timestamp=$(${pkgs.coreutils}/bin/date +%T.%3N)
+          cpu_cur_freqs=$(${pkgs.coreutils}/bin/cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq 2>/dev/null)
+          cpu_freqs=$(echo "$cpu_cur_freqs" | ${pkgs.coreutils}/bin/tr "\n" "," | ${pkgs.gnused}/bin/sed "s/,$//")
+          gpu_freq=$(${pkgs.coreutils}/bin/cat /sys/class/devfreq/3d00000.gpu/cur_freq 2>/dev/null)
+          temp_vals=$(${pkgs.coreutils}/bin/cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null)
+          temps=$(echo "$temp_vals" | ${pkgs.coreutils}/bin/tr "\n" "," | ${pkgs.gnused}/bin/sed "s/,$//")
+          echo "[$timestamp] CPU_FREQS:$cpu_freqs GPU:$gpu_freq TEMPS:$temps" > /dev/pmsg0
+          ${pkgs.coreutils}/bin/sleep 0.1
+        done
+      '';
       Restart = "always";
       RestartSec = "1s";
     };

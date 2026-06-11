@@ -1,11 +1,8 @@
 {
   pkgs,
-  lib,
-  config,
   ...
 }:
 let
-  isInstaller = config.networking.hostName == "installer-zenbook";
   # pd-mapper: Protection Domain Mapper for Qualcomm DSPs
   # Reads .jsn subsystem descriptor files and publishes Protection Domain
   # service registrations over QRTR so DSP clients can locate their subsystems.
