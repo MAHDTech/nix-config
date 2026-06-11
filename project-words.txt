@@ -1732,3 +1732,4 @@ zramctl
 zstd
 zvol
 zvols
+initcall

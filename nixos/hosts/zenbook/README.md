@@ -312,7 +312,10 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 7: DSP subsystem (qcom_q6v5_pas) enablement
 
-- [/] **Status**: Blocked / Workaround Active (ADSP blacklisted globally via `module_blacklist=qcom_q6v5_pas` to force the TB5 dock into stable USB 2.0 fallback, avoiding Alt Mode lockups. This disables native audio/battery telemetry as a necessary tradeoff for stable network connectivity.)
+- [/] **Status**: Blocked
+  - Workaround Active = ADSP blacklisted globally via `module_blacklist=qcom_q6v5_pas`
+  - force the TB5 dock into stable USB 2.0 fallback, avoiding Alt Mode lockups.
+  - This disables native audio/battery telemetry as a necessary tradeoff for stable network connectivity.
 - **Severity**: P3 — Future improvement
 - **Symptom**: `qcom_q6v5_pas` is triple-blacklisted (kernel param + blacklistedKernelModules + modprobe install). ADSP/CDSP firmware and pd-mapper configs are bundled but unused.
 - **Root Cause**: Previously caused NVMe/PCIe power domain/SMMU crashes.
@@ -354,7 +357,10 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 ### Issue 9: Razer Thunderbolt 5 Dock Ethernet regression (USB disconnect / Alt Mode negotiation failure)
 
-- [x] **Status**: Resolved via Workaround (Enforced `module_blacklist=qcom_q6v5_pas` globally in `hardware-configuration.nix` kernel parameters. The dock now successfully falls back to stable USB 2.0 High-Speed mode, bringing up the Realtek Gigabit Ethernet adapter and USB hubs reliably.)
+- [x] **Status**: Resolved via Workaround
+  - Enforced `module_blacklist=qcom_q6v5_pas` globally in `hardware-configuration.nix` kernel parameters.
+  - The dock now successfully falls back to stable USB 2.0 High-Speed mode,
+  - bringing up the Realtek Gigabit Ethernet adapter and USB hubs reliably.
 - **Severity**: P0 — High-speed dock peripherals and Ethernet not detected
 - **Symptoms**:
   - The Razer TB5 Dock USB tree initializes during early boot but is disconnected as soon as the ADSP remoteproc boots and `pmic-glink` initiates Type-C port manager negotiation.
@@ -607,18 +613,36 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 #### Hypotheses Tested and Eliminated
 
-| # | Hypothesis | Test | Result |
-|---|-----------|------|--------|
-| 1 | ADSP un-blacklisting causes crash | Gen 28: ADSP enabled, audio blacklisted | ❌ Crash |
-| 2 | ADSP itself causes crash | Gen 28 no-adsp: ADSP fully blacklisted | ❌ Crash |
-| 3 | Freq caps needed | Gen 28 power-safe: old caps + ADSP blacklist + regulator_ignore_unused | ❌ Crash |
-| 4 | GPU driver (msm) causes crash | Gen 28 no-gpu: msm blacklisted | ❌ Crash |
-| 5 | Missing GPU zap shader | Gen 27: restored qcdxkmsuc8380.mbn | ❌ Crash (but shader IS needed) |
-| 6 | Missing boot params (efi=noruntime, regulator_ignore_unused, pcie_aspm=off) | Gen 29: all installer params restored | ❌ Crash |
-| 7 | Ramoops DTB overlay corrupts memory | Gen 30: ramoops overlay removed | ❌ Crash |
-| 8 | Kernel-compiled DTB differs from UEFI firmware DTB | Gen 30: overlay removed but deviceTree still active | ❌ Crash |
-| 9 | External DTB loading via systemd-boot | Gen 31: hardware.deviceTree disabled entirely | ❌ Instant crash (no DTB = no boot on ARM64) |
-| 10 | DTB binary differs between installer and installed | Gen 31 patched: installer's exact DTB file copied to ESP | ❌ Crash |
+- **Hypothesis 1: ADSP un-blacklisting causes crash**
+  - **Test**: Gen 28: ADSP enabled, audio blacklisted
+  - **Result**: ❌ Crash
+- **Hypothesis 2: ADSP itself causes crash**
+  - **Test**: Gen 28 no-adsp: ADSP fully blacklisted
+  - **Result**: ❌ Crash
+- **Hypothesis 3: Freq caps needed**
+  - **Test**: Gen 28 power-safe: old caps + ADSP blacklist + regulator_ignore_unused
+  - **Result**: ❌ Crash
+- **Hypothesis 4: GPU driver (msm) causes crash**
+  - **Test**: Gen 28 no-gpu: msm blacklisted
+  - **Result**: ❌ Crash
+- **Hypothesis 5: Missing GPU zap shader**
+  - **Test**: Gen 27: restored `qcdxkmsuc8380.mbn`
+  - **Result**: ❌ Crash (but shader IS needed)
+- **Hypothesis 6: Missing boot params (efi=noruntime, regulator_ignore_unused, pcie_aspm=off)**
+  - **Test**: Gen 29: all installer params restored
+  - **Result**: ❌ Crash
+- **Hypothesis 7: Ramoops DTB overlay corrupts memory**
+  - **Test**: Gen 30: ramoops overlay removed
+  - **Result**: ❌ Crash
+- **Hypothesis 8: Kernel-compiled DTB differs from UEFI firmware DTB**
+  - **Test**: Gen 30: overlay removed but deviceTree still active
+  - **Result**: ❌ Crash
+- **Hypothesis 9: External DTB loading via systemd-boot**
+  - **Test**: Gen 31: hardware.deviceTree disabled entirely
+  - **Result**: ❌ Instant crash (no DTB = no boot on ARM64)
+- **Hypothesis 10: DTB binary differs between installer and installed**
+  - **Test**: Gen 31 patched: installer's exact DTB file copied to ESP
+  - **Result**: ❌ Crash
 
 #### Key Findings
 
@@ -635,13 +659,21 @@ We are running testing on Ubuntu first to identify working configurations, then 
 
 #### Remaining Differences (Installer vs Installed)
 
-| Factor | Installer | Installed |
-|--------|-----------|-----------|
-| **Initrd** | Minimal, different modules | Full NixOS initrd with qcom_pd_mapper |
-| **Services** | SSH only | ClamAV, opnix, home-manager, polkit, etc. |
-| **Root FS** | USB squashfs/ext4 | BTRFS on NVMe with subvolumes |
-| **LSM** | `landlock,yama,bpf` | `apparmor,landlock,yama,bpf,apparmor` |
-| **Init system** | Minimal NixOS installer | Full NixOS with hundreds of units |
+- **Initrd**:
+  - **Installer**: Minimal, different modules
+  - **Installed**: Full NixOS initrd with `qcom_pd_mapper`
+- **Services**:
+  - **Installer**: SSH only
+  - **Installed**: ClamAV, opnix, home-manager, polkit, etc.
+- **Root FS**:
+  - **Installer**: USB squashfs/ext4
+  - **Installed**: BTRFS on NVMe with subvolumes
+- **LSM**:
+  - **Installer**: `landlock,yama,bpf`
+  - **Installed**: `apparmor,landlock,yama,bpf,apparmor`
+- **Init system**:
+  - **Installer**: Minimal NixOS installer
+  - **Installed**: Full NixOS with hundreds of units
 
 #### Next Steps (Resume Here)
 
