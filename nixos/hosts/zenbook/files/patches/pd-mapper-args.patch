@@ -1,0 +1,29 @@
+diff --git a/pd-mapper.c b/pd-mapper.c
+index 2bb0e9b..cf8290f 100644
+--- a/pd-mapper.c
++++ b/pd-mapper.c
+@@ -269,12 +269,21 @@ int main(int argc, char **argv)
+         char buf[4096];
+         int ret;
+         int fd;
++        int i;
+ 
+-        ret = pd_load_maps();
+-        if (ret)
+-                exit(1);
++        if (argc > 1) {
++                for (i = 1; i < argc; i++) {
++                        ret = pd_load_map(argv[i]);
++                        if (ret < 0) {
++                                fprintf(stderr, "failed to load map %s\n", argv[i]);
++                                exit(1);
++                        }
++                }
++        } else {
++                ret = pd_load_maps();
++                if (ret)
++                        exit(1);
++        }
+ 
+         if (!pd_maps) {
+                 fprintf(stderr, "no pd maps available\n");

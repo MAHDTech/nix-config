@@ -26,6 +26,8 @@ let
       sha256 = "sha256-I5/N24KONtNRSub00Mqh1GoMHO2qQKTj/ts2N6DQdPc=";
     };
 
+    patches = [ ../files/patches/pd-mapper-args.patch ];
+
     nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [
       pkgs.qrtr
@@ -76,15 +78,7 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [
       "systemd-udev-trigger.service"
-      "qcom-remoteproc-load.service"
     ];
-    requires = [
-      "qcom-remoteproc-load.service"
-    ];
-    # Wait for the remoteproc subsystem to be created by the driver.
-    unitConfig = {
-      ConditionPathIsDirectory = "/sys/class/remoteproc";
-    };
 
     preStart = ''
       # Clean up the old directory to ensure a clean slate
@@ -163,7 +157,7 @@ in
     '';
 
     serviceConfig = {
-      ExecStart = "${pd-mapper}/bin/pd-mapper";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pd-mapper}/bin/pd-mapper $$(find /var/lib/pd-mapper -name \"*.jsn\")'";
       # Restart on failure to handle asynchronous remoteproc driver registration on boot.
       Restart = "on-failure";
       RestartSec = "2s";

@@ -229,6 +229,10 @@ in
       after = [
         "local-fs.target"
         "systemd-udev-settle.service"
+        "pd-mapper.service"
+      ];
+      requires = [
+        "pd-mapper.service"
       ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
@@ -244,9 +248,11 @@ in
         "local-fs.target"
         "systemd-udev-settle.service"
         "pd-mapper.service"
+        "qcom-remoteproc-load.service"
       ];
       requires = [
         "pd-mapper.service"
+        "qcom-remoteproc-load.service"
       ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
