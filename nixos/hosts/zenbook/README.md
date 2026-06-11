@@ -8,7 +8,7 @@
 ## Active Status & Task Tracker
 
 - 🔴 **Issue 20**: [PMIC Hard Reset on Every NixOS Boot](#issue-20-pmic-hard-reset-on-every-nixos-boot-systematic-debug-2026-06-11) (P0)
-  — _Fix Deployed & Testing; verifying Stage-2 pd-mapper race fix (commit `2df9277`)._
+  — _Fix Deployed & Testing; verifying Stage-2 pd-mapper early-start patch (commit `5f7352f`)._
 - 🟡 **Issue 3**: [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) (P1) — _Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up._
 - 🟡 **Issue 5**: [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) (P0)
   — _Ramoops overlay disabled temporarily for debugging; `pstore-blk` label fixed._
@@ -146,7 +146,7 @@
 
 ### Issue 20: PMIC Hard Reset on Every NixOS Boot (Systematic Debug — 2026-06-11)
 
-- [/] **Status**: Fix Deployed & Testing — verifying Stage-2 pd-mapper race fix (commit `2df9277`)
+- [/] **Status**: Fix Deployed & Testing — verifying Stage-2 pd-mapper early-start patch (commit `5f7352f`)
 - **Severity**: P0 — System unusable, every boot crashes within <1 min.
 - **Symptom**: System hard-resets within ~24-27 seconds of boot.
 - **Crash Signature**: The last netconsole messages before crash are:
@@ -156,19 +156,17 @@
   ```
 - **Root Cause & Resolution**:
   <!-- cspell:ignore gprsvc swrm -->
-  - **pd-mapper / remoteproc Race**: When `qcom_q6v5_pas` is blacklisted (to
-    prevent early boot NVMe conflicts), systemd evaluates `pd-mapper.service`
-    prior to running the startup service. However, `pd-mapper.service` has a
-    `ConditionPathIsDirectory = "/sys/class/remoteproc"` guard. Because the
-    driver has not yet been loaded, the directory does not exist, and systemd
-    silently skips starting `pd-mapper`. The start service then loads the
-    module and boots the DSPs, but since `pd-mapper` is not running, the DSPs
-    time out waiting for Protection Domain mapping, triggering a PMIC hard
-    reset.
-  - **Resolution (commit `2df9277`)**: Split remoteproc actions into two
-    services: `qcom-remoteproc-load.service` (loads the module) and
-    `qcom-remoteproc-start.service` (boots the DSPs). Configured
-    `pd-mapper.service` to require and run `after` the load service. This
-    ensures the remoteproc directory exists before `pd-mapper`'s condition
-    check runs, allowing the daemon to start successfully before the DSPs boot.
+  - **pd-mapper / remoteproc Race Part 2**: Even when split into two services,
+    loading the module `qcom_q6v5_pas` immediately triggers auto-booting of the
+    DSPs. The DSPs boot and query `pd-mapper` over QRTR within milliseconds,
+    while systemd is still executing `pd-mapper`'s `ExecStartPre` (which stages
+    and decompresses 1559 firmware files, taking ~1s). This delay causes the
+    DSP queries to time out before the Service Registry is published, leading to
+    APM timeouts and the PMIC hard reset.
+  - **Resolution (commit `5f7352f`)**: Patched `pd-mapper.c` to accept a list of
+    `.jsn` files as command-line arguments (bypassing the need to scan
+    `/sys/class/remoteproc` at startup). This allows `pd-mapper.service` to
+    start _before_ `qcom-remoteproc-load.service` runs. `pd-mapper` is now
+    fully active and publishing the Service Registry before the remoteproc module
+    is loaded, eliminating the boot race condition.
   - **Current State**: Fix committed and ready for user validation.
