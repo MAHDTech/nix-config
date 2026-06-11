@@ -74,7 +74,13 @@ in
     description = "Qualcomm Protection Domain Mapper";
     documentation = [ "https://github.com/linux-msm/pd-mapper" ];
     wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-udev-trigger.service" ];
+    after = [
+      "systemd-udev-trigger.service"
+      "qcom-remoteproc-load.service"
+    ];
+    requires = [
+      "qcom-remoteproc-load.service"
+    ];
     # Wait for the remoteproc subsystem to be created by the driver.
     unitConfig = {
       ConditionPathIsDirectory = "/sys/class/remoteproc";

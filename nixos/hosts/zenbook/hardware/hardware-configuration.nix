@@ -224,6 +224,20 @@ in
       networkConfig.DHCP = "yes";
     };
 
+    services.qcom-remoteproc-load = {
+      description = "Load Qualcomm remoteproc kernel modules";
+      after = [
+        "local-fs.target"
+        "systemd-udev-settle.service"
+      ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.kmod}/bin/modprobe qcom_q6v5_pas";
+        RemainAfterExit = true;
+      };
+    };
+
     services.qcom-remoteproc-start = {
       description = "Start all offline Qualcomm remoteproc devices";
       after = [
@@ -237,7 +251,7 @@ in
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.kmod}/bin/modprobe qcom_q6v5_pas && for dev in /sys/class/remoteproc/remoteproc*; do if [ -f \"\$dev/state\" ] && [ \"\$(cat \"\$dev/state\")\" = \"offline\" ]; then echo start > \"\$dev/state\"; fi; done'";
+        ExecStart = "${pkgs.bash}/bin/bash -c 'for dev in /sys/class/remoteproc/remoteproc*; do if [ -f \"\$dev/state\" ] && [ \"\$(cat \"\$dev/state\")\" = \"offline\" ]; then echo start > \"\$dev/state\"; fi; done'";
         RemainAfterExit = true;
       };
     };
