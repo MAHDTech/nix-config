@@ -50,8 +50,10 @@ let
     prePatch = ''
       echo "Applying local Zenbook patches..."
       for patch in ${./files/patches}/*.patch; do
-        echo "Applying $patch"
-        patch -p1 < "$patch"
+        if [ -f "$patch" ]; then
+          echo "Applying $patch"
+          patch -p1 < "$patch"
+        fi
       done
 
       echo "Fixing DTSI camera errors (camss/cci1/csiphy missing in next-20260528)..."

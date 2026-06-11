@@ -26,7 +26,7 @@ let
       sha256 = "sha256-I5/N24KONtNRSub00Mqh1GoMHO2qQKTj/ts2N6DQdPc=";
     };
 
-    patches = [ ../files/patches/pd-mapper-args.patch ];
+    patches = [ ../files/patches/pd-mapper/pd-mapper-args.patch ];
 
     nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [
