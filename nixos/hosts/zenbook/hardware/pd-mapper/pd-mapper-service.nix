@@ -22,7 +22,7 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "MAHDTech";
       repo = "pd-mapper";
-      rev = "71f7eb50a5ce5af64b21d4594c3e43c75271f440";
+      rev = "71f7eb568d2c908b7c744c65c6b066c7804ca30c";
       hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     };
 
