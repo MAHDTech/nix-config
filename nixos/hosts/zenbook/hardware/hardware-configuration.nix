@@ -123,12 +123,15 @@ in
     ];
 
     kernelParams = [
-      # Platform workarounds for Snapdragon X Elite (X1E80100)
-      # fw_devlink=permissive: prevents deferred sync_state() from prematurely
-      # disabling regulators/power domains, which causes USB I/O errors and PMIC
-      # hard resets ~50s into boot. TODO: try fw_devlink.sync_state=timeout as
-      # a more targeted alternative once stability is confirmed.
-      "fw_devlink=permissive"
+      # Issue 21: fw_devlink — Phase 2 (strict probe ordering with timeout safety net).
+      # Research (2026-06-12) confirmed all 323 DT dependency cycles are auto-resolved
+      # by the kernel on next-20260611. Zero device link failures, zero permanent
+      # deferred probes. The sync_state timeout prevents indefinite blocking if any
+      # consumer fails to probe (e.g. GCC waiting for all clock consumers).
+      # Rollback: change fw_devlink=on → fw_devlink=permissive if boot issues occur.
+      "fw_devlink=on"
+      "fw_devlink.sync_state=timeout"
+      "deferred_probe_timeout=30"
       # clk/pd_ignore_unused: prevent late_initcall cleanup of bootloader-enabled
       # clocks and power domains. Matches Ubuntu's linux-qcom-x1e kernel.
       "clk_ignore_unused"
