@@ -158,14 +158,8 @@ in
 
     # Issue 22: Audio module configuration (currently dead code — all audio
     # modules are blacklisted above). Retained for when audio is re-enabled.
-    # NOTE: `i_accept_the_danger` was removed/renamed in next-20260611. The
-    # upstream volume-limiting patch (-3 dB cap, by Srinivas Kandagatla) may
-    # have replaced it. When re-enabling audio, check if the parameter exists:
-    #   cat /sys/module/snd_soc_x1e80100/parameters/i_accept_the_danger
-    # If not, try kernel cmdline: snd-soc-x1e80100.i_accept_the_danger=1
-    # If still missing, the driver may be safe to load without it.
     extraModprobeConfig = ''
-      options snd-soc-x1e80100 i_accept_the_danger=1
+      options snd-soc-x1e80100
       # SoundWire boot ordering: ensure ADSP remoteproc loads before speaker codec
       softdep snd-soc-wsa884x pre: qcom_q6v5_pas
       softdep snd-soc-wcd938x-sdw pre: qcom_q6v5_pas
