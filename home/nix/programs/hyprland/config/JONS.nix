@@ -19,7 +19,7 @@
 
     # MSI MP273A PB4H954500269
     # Above the HP Monitor (center)
-    "desc:Microstep MSI MP273A PB4H954500269,1920x1080@60,125x0,1.6,bitdepth,10"
+    "desc:Microstep MSI MP273A PB4H954500269,1920x1080@60,125x0,1.4,bitdepth,10"
   ];
 
   extraSettings = {
