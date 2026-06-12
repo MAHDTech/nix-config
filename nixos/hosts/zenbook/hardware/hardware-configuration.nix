@@ -309,6 +309,19 @@ in
       ];
     };
 
+    # Disable DSP remoteprocs and pd-mapper services entirely for testing fallback
+    "no-dsp".configuration = {
+      boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
+      boot.kernelParams = [
+        "module_blacklist=qcom_q6v5_pas"
+      ];
+      systemd.services = {
+        qcom-remoteproc-load.enable = false;
+        qcom-remoteproc-start.enable = false;
+        pd-mapper.enable = false;
+      };
+    };
+
     # Conservative power caps as a rollback safety net.
     # Restores the old CPU (1.92 GHz) and GPU (390 MHz) caps, ADSP blacklist,
     # and regulator_ignore_unused. Use this if the default boot is unstable.

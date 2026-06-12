@@ -27,9 +27,12 @@
     # Disable emergency mode to prevent sulogin console locking on boot timeouts
     enableEmergencyMode = false;
 
-    # Disable nix-channel-init service since the raw image closure doesn't pre-pack nixos channel sources
     services = {
+      # Disable nix-channel-init service since the raw image
+      # closure doesn't pre-pack nixos channel sources
       nix-channel-init.enable = false;
+
+      # Disable qcom-remoteproc services inside installer context
       qcom-remoteproc-load.enable = false;
       qcom-remoteproc-start.enable = false;
       pd-mapper.enable = false;
