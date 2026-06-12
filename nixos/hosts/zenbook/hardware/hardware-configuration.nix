@@ -213,59 +213,62 @@ in
       networkConfig.DHCP = "yes";
     };
 
-    services.qcom-remoteproc-load = {
-      description = "Load Qualcomm remoteproc kernel modules";
-      after = [
-        "local-fs.target"
-        "pd-mapper.service"
-      ];
-      requires = [
-        "pd-mapper.service"
-      ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.kmod}/bin/modprobe qcom_q6v5_pas";
-        RemainAfterExit = true;
+    services = {
+      qcom-remoteproc-load = {
+        description = "Load Qualcomm remoteproc kernel modules";
+        after = [
+          "local-fs.target"
+          "pd-mapper.service"
+        ];
+        requires = [
+          "pd-mapper.service"
+        ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.kmod}/bin/modprobe qcom_q6v5_pas";
+          RemainAfterExit = true;
+        };
       };
-    };
 
-    services.qcom-remoteproc-start = {
-      description = "Start all offline Qualcomm remoteproc devices";
-      after = [
-        "local-fs.target"
-        "pd-mapper.service"
-        "qcom-remoteproc-load.service"
-      ];
-      requires = [
-        "pd-mapper.service"
-        "qcom-remoteproc-load.service"
-      ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = pkgs.writeShellScript "start-remoteprocs" ''
-          set -uo pipefail
-          shopt -s nullglob
-          started=0
-          for dev in /sys/class/remoteproc/remoteproc*; do
+      qcom-remoteproc-start = {
+        description = "Start all offline Qualcomm remoteproc devices";
+        after = [
+          "local-fs.target"
+          "pd-mapper.service"
+          "qcom-remoteproc-load.service"
+        ];
+        requires = [
+          "pd-mapper.service"
+          "qcom-remoteproc-load.service"
+        ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeShellScript "start-remoteprocs" ''
+            set -uo pipefail
+            shopt -s nullglob
+            started=0
+            for dev in /sys/class/remoteproc/remoteproc*; do
             if [ -f "$dev/state" ] && [ "$(cat "$dev/state")" = "offline" ]; then
-              echo "Starting $dev" >&2
-              if echo start > "$dev/state"; then
-                started=$((started + 1))
-              else
-                echo "WARNING: Failed to start $dev" >&2
-              fi
+            echo "Starting $dev" >&2
+            if echo start > "$dev/state"; then
+            started=$((started + 1))
+            else
+            echo "WARNING: Failed to start $dev" >&2
             fi
-          done
-          echo "Started $started remoteproc device(s)" >&2
-        '';
-        RemainAfterExit = true;
+            fi
+            done
+            echo "Started $started remoteproc device(s)" >&2
+          '';
+          RemainAfterExit = true;
+        };
       };
     };
   };
 
   networking.useDHCP = lib.mkDefault false;
+
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
   # Crash capture: ensure panic settings survive into running system
@@ -278,40 +281,17 @@ in
 
   # Specialisations
   specialisation = {
-    # Boot the system with the GPU driver (msm) completely disabled
-    "no-gpu".configuration = {
-      boot.blacklistedKernelModules = [ "msm" ];
-    };
-
-    # Boot the system in text mode for stability diagnostics
-    "text-mode".configuration = {
+    # Boot the system with the GPU completely disabled
+    "disable-gpu".configuration = {
       boot.blacklistedKernelModules = [
         "msm"
-        "thunderbolt"
-        "typec_thunderbolt"
-        "ath12k_wifi7_pci"
-        "ath12k"
-      ];
-      boot.kernelParams = [
-        "systemd.unit=multi-user.target"
       ];
     };
-
-    # ADSP fully blacklisted, all other power improvements kept.
-    # No audio, no battery monitoring, but no ADSP crash risk.
-    # Uses BOTH blacklistedKernelModules (modprobe/udev blacklist) AND
-    # module_blacklist= kernel param (earliest possible block, before initrd
-    # modprobe rules). Belt-and-suspenders because premature loading crashes.
-    "no-adsp".configuration = {
-      boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
-      boot.kernelParams = [
-        "module_blacklist=qcom_q6v5_pas"
+    # Boot the system with all DSP disabled
+    "disable-dsp".configuration = {
+      boot.blacklistedKernelModules = [
+        "qcom_q6v5_pas"
       ];
-    };
-
-    # Disable DSP remoteprocs and pd-mapper services entirely for testing fallback
-    "no-dsp".configuration = {
-      boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
       boot.kernelParams = [
         "module_blacklist=qcom_q6v5_pas"
       ];
@@ -321,33 +301,5 @@ in
         pd-mapper.enable = false;
       };
     };
-
-    # Conservative power caps as a rollback safety net.
-    # Restores the old CPU (1.92 GHz) and GPU (390 MHz) caps, ADSP blacklist,
-    # and regulator_ignore_unused. Use this if the default boot is unstable.
-    # NOTE: clk_ignore_unused and pd_ignore_unused are already in the base
-    # kernelParams and inherited by specialisations — only regulator_ignore_unused
-    # is added here because the base intentionally omits it (Ubuntu doesn't use it).
-    "power-safe".configuration = {
-      boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
-      boot.kernelParams = [
-        "module_blacklist=qcom_q6v5_pas"
-        "regulator_ignore_unused"
-      ];
-      services.udev.extraRules = ''
-        SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
-      '';
-      systemd.services.limit-cpu-freq = {
-        description = "Limit CPU max frequency (power-safe fallback)";
-        after = [ "local-fs.target" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${pkgs.bash}/bin/bash -c 'echo 1920000 | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq > /dev/null'";
-          RemainAfterExit = true;
-        };
-      };
-    };
   };
-
 }
