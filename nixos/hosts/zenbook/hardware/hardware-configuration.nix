@@ -8,11 +8,6 @@ let
   isInstaller = config.networking.hostName == "installer-zenbook";
 in
 {
-  imports = [
-    # Uncomment to enable DisplayLink USB dock support (EVDI + dlm service)
-    # ../../../system/config/video/displaylink
-  ];
-
   boot = {
     supportedFilesystems = lib.mkDefault [
       "vfat"
