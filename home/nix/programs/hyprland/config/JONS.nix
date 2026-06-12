@@ -14,12 +14,26 @@
     # Let Hyprland automatically detect and configure the monitor
     #",preferred,auto,1"
 
-    # HP 40" with DP connection (positioned below the Dell)
-    "desc:HP Inc. HP Z43 CN49500228,3840x2160@59.99700,0x900,1.6,bitdepth,10"
+    # HP 40" with DP connection (positioned below the MSI)
+    # Math:
+    # - HP Z43 logical size: 3840x2160 / 1.6 = 2400x1350
+    # - MSI MP273A logical size: 1920x1080 / 1.33 = ~1444x812
+    #
+    # - Vertical Alignment:
+    #   MSI is on top starting at y = 0.
+    #   HP is below MSI, so it starts at y = MSI_logical_height = 812.
+    #
+    # - Horizontal Alignment (MSI centered above HP):
+    #   MSI x = (HP_logical_width - MSI_logical_width) / 2
+    #   MSI x = (2400 - 1444) / 2 = 956 / 2 = 478.
+    #   HP x = 0.
+    #
+    # Positions: MSI at 478x0, HP at 0x812
+    "desc:HP Inc. HP Z43 CN49500228,3840x2160@59.99700,0x812,1.6,bitdepth,10"
 
     # MSI MP273A PB4H954500269
-    # Above the HP Monitor (center)
-    "desc:Microstep MSI MP273A PB4H954500269,1920x1080@60,125x0,1.33,bitdepth,10"
+    # Above the HP Monitor (centered)
+    "desc:Microstep MSI MP273A PB4H954500269,1920x1080@60,478x0,1.33,bitdepth,10"
   ];
 
   extraSettings = {
