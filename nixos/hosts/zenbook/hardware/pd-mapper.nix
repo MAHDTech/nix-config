@@ -20,18 +20,17 @@ let
     version = "1.1";
 
     src = pkgs.fetchFromGitHub {
-      owner = "linux-msm";
+      owner = "MAHDTech";
       repo = "pd-mapper";
-      rev = "v1.1";
-      sha256 = "sha256-I5/N24KONtNRSub00Mqh1GoMHO2qQKTj/ts2N6DQdPc=";
+      rev = "c41ecdb0a5ce5af64b21d4594c3e43c75271f440";
+      hash = "sha256-rN+Dt+X/MGJ7ltxvSPj46Fd8/QWREtv2YukCUS0MBIE=";
     };
-
-    patches = [ ../files/patches/pd-mapper/pd-mapper-args.patch ];
 
     nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [
       pkgs.qrtr
       pkgs.xz
+      pkgs.zstd
     ];
 
     installPhase = ''
@@ -85,67 +84,9 @@ in
       rm -rf /var/lib/pd-mapper
       mkdir -p /var/lib/pd-mapper
 
-      # Function to convert a symlinked directory into a real directory containing individual symlinks.
-      # This handles component-by-component materialization from top to bottom.
-      materialize_dir() {
-        local path="$1"
-        local current="/var/lib/pd-mapper"
-        IFS='/' read -ra ADDR <<< "$path"
-        for i in "''${ADDR[@]}"; do
-          if [ -z "$i" ]; then continue; fi
-          current="$current/$i"
-          if [ -L "$current" ]; then
-            local target=$(readlink -f "$current")
-            rm -f "$current"
-            mkdir -p "$current"
-            if [ -d "$target" ]; then
-              for f in "$target"/*; do
-                if [ -e "$f" ]; then
-                  ln -sf "$f" "$current/$(basename "$f")"
-                fi
-              done
-            fi
-          fi
-        done
-      }
-
-      # 1. Symlink all top-level files/directories from the system firmware.
+      # Symlink all top-level files/directories from the system firmware.
       if [ -d /run/current-system/firmware ]; then
         cp -as /run/current-system/firmware/* /var/lib/pd-mapper/
-      fi
-
-      # 2. Decompress .jsn.zst files from the NixOS firmware tree into /var/lib/pd-mapper/
-      if [ -d /run/current-system/firmware/qcom ]; then
-        find -L /run/current-system/firmware/qcom -name "*.jsn.zst" | while read -r f; do
-          real=$(${pkgs.coreutils}/bin/readlink -f "$f")
-          relpath=''${f#/run/current-system/firmware/}
-          outname=''${relpath%.zst}
-          reldir=$(dirname "$relpath")
-
-          # Materialize the path inside /var/lib/pd-mapper
-          materialize_dir "$reldir"
-
-          # Remove the symlink if it was copied by cp -as to prevent writing through it
-          rm -f "/var/lib/pd-mapper/$outname"
-          rm -f "/var/lib/pd-mapper/$relpath"
-          ${pkgs.zstd}/bin/zstd -d -c "$real" > "/var/lib/pd-mapper/$outname" 2>/dev/null \
-            && echo "pd-mapper: staged $outname" \
-            || echo "pd-mapper: failed to decompress $real"
-        done
-
-        # 3. Copy any uncompressed .jsn files directly, preserving subdirectories
-        find -L /run/current-system/firmware/qcom -name "*.jsn" | while read -r f; do
-          real=$(${pkgs.coreutils}/bin/readlink -f "$f")
-          relpath=''${f#/run/current-system/firmware/}
-          reldir=$(dirname "$relpath")
-
-          # Materialize the path inside /var/lib/pd-mapper
-          materialize_dir "$reldir"
-
-          # Remove the symlink created by cp -as to prevent writing through it
-          rm -f "/var/lib/pd-mapper/$relpath"
-          ln -sf "$real" "/var/lib/pd-mapper/$relpath"
-        done
       fi
 
       # Point the kernel firmware loader at our staging directory so pd-mapper
@@ -157,7 +98,7 @@ in
     '';
 
     serviceConfig = {
-      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pd-mapper}/bin/pd-mapper $$(find /var/lib/pd-mapper -name \"*.jsn\")'";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pd-mapper}/bin/pd-mapper $$(find /var/lib/pd-mapper/qcom/x1e80100 -name \"*.jsn*\")'";
       # Restart on failure to handle asynchronous remoteproc driver registration on boot.
       Restart = "on-failure";
       RestartSec = "2s";
