@@ -22,8 +22,8 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "MAHDTech";
       repo = "pd-mapper";
-      rev = "c41ecdb0a5ce5af64b21d4594c3e43c75271f440";
-      hash = "sha256-rN+Dt+X/MGJ7ltxvSPj46Fd8/QWREtv2YukCUS0MBIE=";
+      rev = "71f7eb50a5ce5af64b21d4594c3e43c75271f440";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     };
 
     nativeBuildInputs = [ pkgs.pkg-config ];
@@ -90,7 +90,7 @@ in
     '';
 
     serviceConfig = {
-      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pd-mapper}/bin/pd-mapper $$(find -L /var/lib/pd-mapper/qcom/x1e80100 -name \"*.jsn\")'";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pd-mapper}/bin/pd-mapper $$(find -L /var/lib/pd-mapper/qcom/x1e80100 -name \"*.jsn*\")'";
       # Restart on failure to handle asynchronous remoteproc driver registration on boot.
       Restart = "on-failure";
       RestartSec = "2s";

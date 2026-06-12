@@ -10,18 +10,14 @@
 - 🔴 **Issue 20**: [PMIC Hard Reset on Every NixOS Boot](#issue-20-pmic-hard-reset-on-every-nixos-boot-systematic-debug-2026-06-11) (P0)
   — _Fix Deployed & Testing; userspace pd-mapper refactored (dual-mapper conflict resolved)._
 - 🟡 **Issue 3**: [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) (P1) — _Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up._
-- 🟢 **Issue 5**: [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) (P0)
-  — _Complete: ramoops overlay active, pstore-blk label corrected, all crash capture layers operational._
 - 🟡 **Issue 7**: [DSP subsystem (qcom_q6v5_pas) enablement](#issue-7-dsp-subsystem-qcom_q6v5_pas-enablement) (P3) — _Late-load crash analyzed; Stage 1 firmware fix deployed in Gen 32._
 - 🟡 **Issue 16**: [Thunderbolt 5 dock drops to USB 2.0 full-speed](#issue-16-thunderbolt-5-dock-drops-to-usb-2-0-full-speed) (P1) — _Blocked on upstream kernel patches for non-PCIe host routers._
-- 🟢 **Issue 18**: [pmic_glink uevent failures & battery notifier](#issue-18-pmic_glink-uevent-failures) (P3)
-  — _Fixed: `batteryNotifier.device` configured in power.nix._
 - 🟡 **Issue 21**: [fw_devlink optimization](#issue-21-fw_devlink-optimization) (P2)
   — _TODO: replace `fw_devlink=permissive` with `fw_devlink.sync_state=timeout` once stability confirmed._
 
 > [!NOTE]
-> All **fully resolved issues** (Issues 1, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14,
-> 15, and 17) have been archived in [resolved_issues.md](file:///boot/nixos/nix-config/nixos/hosts/zenbook/resolved_issues.md)
+> All **fully resolved issues** (Issues 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14,
+> 15, 17, and 18) have been archived in [resolved_issues.md](file:///boot/nixos/nix-config/nixos/hosts/zenbook/resolved_issues.md)
 > to keep this main issue tracker focused and actionable.
 
 ---
@@ -55,35 +51,6 @@
       '';
     };
     ```
-
----
-
-### Issue 5: pstore/ramoops not configured for crash debugging
-
-- [x] **Status**: Implemented & verified.
-  - ✅ **ramoops**: `pstore: Registered ramoops as persistent store backend` using `0x200000@0xb7000000, ecc: 0` (no ECC errors).
-  - ✅ **netconsole**: systemd service `active (exited)` configured with JONS destination (`10.10.1.90 → 10.10.1.93:6666`).
-  - ⚠️ **pstore-blk**: partition exists (`disk-main-pstore`, 16M) but kernel param label corrected in Gen 32 from `/dev/disk/by-partlabel/pstore` to `/dev/disk/by-partlabel/disk-main-pstore`.
-  - ❌ **pstore dir**: empty (no crashes yet — expected).
-- **Severity**: P0 — No crash dumps captured on any crash type.
-- **Codebase References**:
-  - `nixos/hosts/zenbook/disko-config.nix` (16M `pstore` partition)
-  - `nixos/hosts/zenbook/files/ramoops-overlay.dts` (Device tree reservation)
-  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (`panic` settings, sysctl, and overlay integration)
-
-* **Root Cause & Fix Strategy**:
-  - ARM64 ignores the standard `memmap=` kernel boot arguments, requiring a
-    Device Tree overlay (`ramoops-overlay.dts`) to reserve memory (`2MB` at
-    `0xb7000000` with `no-map`).
-  - **Current State**: Ramoops overlay re-enabled in `hardware-configuration.nix`
-    (`deviceTree.overlays = [{ name = "ramoops-overlay"; ... }]`). pstore-blk
-    partition label corrected. All crash capture layers are active.
-
-- **Crash capture layers** (defense in depth):
-  - **DTB ramoops (2MB reserved)**: Captures panics (✅), captures PMIC resets (❌). Status: ✅ _Verified Gen 6 (ecc: 0, no errors)._
-  - **Panic escalation settings**: Captures panics (✅, enables flush), captures PMIC resets (❌). Status: ✅ _Verified Gen 6 (kernel params confirmed)._
-  - **Netconsole → JONS:6666**: Captures panics (✅, live), captures PMIC resets (⚠️ Pre-crash only). Status: ✅ _Verified Gen 6 (systemd service active, logging started)._
-  - **pstore-blk (NVMe partition)**: Captures panics (✅), captures PMIC resets (⚠️ Maybe). Status: ⚠️ _Partition exists, label fix pending rebuild._
 
 ---
 
@@ -123,25 +90,6 @@
     during Alt Mode negotiation and drops back to USB 2.0 Billboard fallback
     mode (480 Mbps).
   - **Workaround**: We use a dedicated USB-to-Ethernet adapter (`usb-to-eth` at `10.10.1.90`) to maintain a reliable network link while testing.
-
----
-
-### Issue 18: pmic_glink uevent failures & battery notifier
-
-- [x] **Status**: Fixed — `services.batteryNotifier.device = "qcom-battmgr-bat"` applied in power.nix.
-- **Severity**: P3 — Low.
-- **Codebase References**:
-  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix`
-    (firmware bindings for `battmgr.jsn`)
-  - `nixos/system/config/hardware/laptop/battery/default.nix` (enabling `services.batteryNotifier`)
-
-* **Root Cause & Fix**:
-  - Synthetic uevent failures (`-11`) occur for `qcom-battmgr-*` during boot, but battery capacity/status is fully readable in sysfs at `/sys/class/power_supply/qcom-battmgr-bat/capacity`.
-  - **The Bug**: `services.batteryNotifier` does not define `device`, defaulting
-    to `"BAT0"`. Since the Qualcomm battery manager registers as
-    `"qcom-battmgr-bat"`, the low-battery notifier script silently exits because
-    it cannot find the sysfs path.
-  - **Fix**: Add `services.batteryNotifier.device = "qcom-battmgr-bat";` to the Zenbook host configuration to restore the battery notifier service.
 
 ---
 
