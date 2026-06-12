@@ -23,7 +23,7 @@ let
       owner = "MAHDTech";
       repo = "pd-mapper";
       rev = "71f7eb568d2c908b7c744c65c6b066c7804ca30c";
-      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+      hash = "sha256-Nr7AY3/sCvtwcDxHUDuzffI/HKPzV/P+xmWm9/5YI98=";
     };
 
     nativeBuildInputs = [ pkgs.pkg-config ];
