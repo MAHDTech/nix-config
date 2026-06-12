@@ -23,6 +23,12 @@
     emergencyAccess = true;
   };
 
+  # Prevent kernel from disabling the display panel regulator (VREG_EDP_3P3)
+  # during late boot cleanup when the MSM GPU driver is blacklisted.
+  boot.kernelParams = [
+    "regulator_ignore_unused"
+  ];
+
   systemd = {
     # Disable emergency mode to prevent sulogin console locking on boot timeouts
     enableEmergencyMode = false;
