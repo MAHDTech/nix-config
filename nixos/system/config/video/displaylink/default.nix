@@ -8,19 +8,32 @@
   # DisplayLink USB docking station support via the EVDI kernel module.
   # Provides USB-attached external displays, USB hub, and Ethernet passthrough.
   #
+  # IMPORTANT: x86_64-linux ONLY. The proprietary DisplayLink userspace daemon
+  # (DisplayLinkManager) is only available for x86_64. It does NOT support aarch64.
+  # Do NOT import this module on ARM64 hosts (Zenbook, Orion, etc.).
+  #
   # Usage: import this module in your host configuration to enable DisplayLink
   # dock support. The dock's displays will appear as additional DRM outputs
   # (e.g. card1 via platform-evdi.0).
   #
   # Requirements:
+  #   - x86_64-linux system (aarch64 is NOT supported)
   #   - The DisplayLink driver binary blob must be pre-fetched into the Nix store.
-  #     Run: nix-shell -p displaylink --arg config '{ allowUnfree = true; }'
-  #     and follow the instructions to download the driver.
+  #     Run: nix-prefetch-url --name displaylink-620.zip <URL from build error>
+  #     Or push to cachix from a host that has it and pull on others.
   #   - nixpkgs.config.allowUnfree = true (or equivalent) must be set.
   #
   # References:
   #   - https://wiki.nixos.org/wiki/Displaylink
   #   - https://www.synaptics.com/products/displaylink-graphics
+
+  # Fail fast if someone tries to import this on an aarch64 host.
+  assertions = [
+    {
+      assertion = pkgs.stdenv.hostPlatform.isx86_64;
+      message = "DisplayLink is x86_64-only. The proprietary DisplayLinkManager binary does not support aarch64.";
+    }
+  ];
 
   # Load the EVDI (Extensible Virtual Display Interface) out-of-tree kernel module.
   # EVDI is the open-source kernel driver that DisplayLink's userspace daemon
@@ -51,8 +64,7 @@
   environment.variables = {
     # Tell wlroots-based compositors which render device to use for EVDI outputs.
     # This should point to the primary GPU's render node, NOT the EVDI device.
-    # On Qualcomm (freedreno): /dev/dri/renderD128
-    # On Intel: /dev/dri/renderD128
+    # On Intel (JONS): /dev/dri/renderD128
     # On NVIDIA: may differ — check /dev/dri/by-path/
     WLR_EVDI_RENDER_DEVICE = lib.mkDefault "/dev/dri/renderD128";
   };

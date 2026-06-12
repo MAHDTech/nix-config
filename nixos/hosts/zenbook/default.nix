@@ -23,9 +23,6 @@
     # GPU specific configuration.
     ../../system/config/video/qcom
 
-    # Enable DisplayLink USB dock support (EVDI + dlm service)
-    ../../system/config/video/displaylink
-
     # Load system standard-operating-environment.
     ../../system/soe
 

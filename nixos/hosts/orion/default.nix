@@ -42,8 +42,8 @@
     # GPU specific configuration.
     ../../system/config/video/mali
 
-    # Enable DisplayLink USB dock support (EVDI + dlm service)
-    ../../system/config/video/displaylink
+    # NOTE: DisplayLink USB dock (system/config/video/displaylink) is x86_64-only.
+    # The Linux DisplayLink driver does not support aarch64.
 
     # Load system standard-operating-environment.
     ../../system/soe
