@@ -281,12 +281,6 @@ in
 
   # Specialisations
   specialisation = {
-    # Boot the system with the GPU completely disabled
-    "disable-gpu".configuration = {
-      boot.blacklistedKernelModules = [
-        "msm"
-      ];
-    };
     # Boot the system with all DSP disabled
     "disable-dsp".configuration = {
       boot.blacklistedKernelModules = [
