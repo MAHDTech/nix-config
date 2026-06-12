@@ -5,7 +5,7 @@
     otherDevices = [
       {
         name = "ZENBOOK";
-        id = "QCAO364-XNCZATQ-VMKLC24-BVW4EYA-WGDBR7L-QXCLFO7-OLOGKSX-BJ52LQW";
+        id = "I3ZWVSA-5ZI5N2M-M4UXHYX-V7EK4EQ-Y4ZQGOQ-BNN4CNN-2KJOQG4-QK6ZBAS";
         autoAcceptFolders = false;
       }
       {

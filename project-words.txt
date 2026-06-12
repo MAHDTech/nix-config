@@ -183,6 +183,7 @@ checkjobs
 checkwinsize
 chromeos
 chrono
+Chrontel
 chrt
 cifs
 CIXH
@@ -903,6 +904,7 @@ MSCF
 msiextract
 msitools
 mtools
+multiport
 musnix
 Mxgw
 MXTJ
@@ -1376,6 +1378,7 @@ smartmontools
 smccc
 smem
 SMMU
+smps
 SMSM
 sndbuf
 snmp
@@ -1523,6 +1526,8 @@ toplevel
 torchcodec
 Touchdevice
 TPACPI
+tpda
+tpdm
 tplg
 TPSMAPI
 tqftpserv
