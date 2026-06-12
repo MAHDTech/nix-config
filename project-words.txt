@@ -299,6 +299,7 @@ diskful
 diskless
 Disko
 dispcc
+displaylink
 Displayport
 distilbert
 DISTRIB
@@ -374,6 +375,7 @@ esbuild
 euao
 eusb
 evdev
+EVDI
 EVENTQEN
 evtq
 EVTQEN
