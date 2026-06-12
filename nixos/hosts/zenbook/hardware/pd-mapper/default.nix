@@ -1,8 +1,8 @@
 { ... }:
 {
   imports = [
-    # NOTE: Disabled for testing the userspace pd-mapper
-    # Use the in-kernel pd-mapper
+    # In-kernel pd-mapper (CONFIG_QCOM_PD_MAPPER) — disabled.
+    # Not yet reliable on X1E80100; using userspace pd-mapper instead.
     #./pd-mapper-kernel.nix
 
     # Use the userspace pd-mapper services

@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  inputs,
   config,
   ...
 }:
@@ -20,7 +19,7 @@ in
     # Use the specific kernel tree for Zenbook A14 support
     kernelPackages =
       let
-        kernelBuild = pkgs.callPackage ../kernel.nix { inherit inputs; };
+        kernelBuild = pkgs.callPackage ../kernel.nix { };
       in
       lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 
@@ -132,11 +131,8 @@ in
       "console=ttyMSM0,115200n8"
       "console=tty0"
       "cma=128M"
-      "video=efifb"
-      "fbcon=map:0"
-      "arm64.nopauth"
-      "systemd.tpm2_wait=0"
-      "ip=10.10.1.91::10.10.1.1:255.255.255.0:zenbook:enu2c2:none"
+      "systemd.tpm2_wait=0" # Don't wait for fTPM during early boot (OP-TEE may be slow)
+      "ip=10.10.1.91::10.10.1.1:255.255.255.0:ZENBOOK:enu2c2:none"
 
       # Crash capture: ramoops is now in DTB overlay (ARM64 ignores memmap=)
       # Escalate oops to panic so pstore gets flushed

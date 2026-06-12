@@ -31,7 +31,7 @@
   };
 
   # PMIC telemetry logger — writes CPU/GPU frequencies and thermal data to
-  # /dev/pmsg0 at 100ms intervals for post-crash forensics via pstore.
+  # /dev/pmsg0 at 1-second intervals for post-crash forensics via pstore.
   systemd.services.pmic-telemetry-logger = {
     description = "High-frequency PMIC Telemetry Logger (Ramoops pmsg0)";
     after = [ "local-fs.target" ];

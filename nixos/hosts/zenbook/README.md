@@ -1,7 +1,7 @@
 # ASUS Zenbook A14 — NixOS Issue Tracker
 
 > Snapdragon X Elite (X1E80100 / UX3407RA) · Adreno X1-85 · aarch64
-> Kernel: linux-next `next-20260528` · Mesa 26.1.1 (freedreno) · NixOS 26.05
+> Kernel: linux-next `next-20260611` · Mesa 26.1.1 (freedreno) · NixOS 26.05
 
 ---
 
@@ -11,11 +11,11 @@
   — _Fix Deployed & Testing; userspace pd-mapper refactored (dual-mapper conflict resolved)._
 - 🟡 **Issue 3**: [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) (P1) — _Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up._
 - 🟢 **Issue 5**: [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) (P0)
-  — _Ramoops overlay re-enabled; `pstore-blk` label fixed._
+  — _Complete: ramoops overlay active, pstore-blk label corrected, all crash capture layers operational._
 - 🟡 **Issue 7**: [DSP subsystem (qcom_q6v5_pas) enablement](#issue-7-dsp-subsystem-qcom_q6v5_pas-enablement) (P3) — _Late-load crash analyzed; Stage 1 firmware fix deployed in Gen 32._
 - 🟡 **Issue 16**: [Thunderbolt 5 dock drops to USB 2.0 full-speed](#issue-16-thunderbolt-5-dock-drops-to-usb-2-0-full-speed) (P1) — _Blocked on upstream kernel patches for non-PCIe host routers._
-- 🟡 **Issue 18**: [pmic_glink uevent failures & battery notifier](#issue-18-pmic_glink-uevent-failures) (P3)
-  — _Open; battery telemetry works via sysfs but battery notifier requires a device override._
+- 🟢 **Issue 18**: [pmic_glink uevent failures & battery notifier](#issue-18-pmic_glink-uevent-failures) (P3)
+  — _Fixed: `batteryNotifier.device` configured in power.nix._
 - 🟡 **Issue 21**: [fw_devlink optimization](#issue-21-fw_devlink-optimization) (P2)
   — _TODO: replace `fw_devlink=permissive` with `fw_devlink.sync_state=timeout` once stability confirmed._
 
@@ -60,7 +60,7 @@
 
 ### Issue 5: pstore/ramoops not configured for crash debugging
 
-- [/] **Status**: Partially verified on Gen 6.
+- [x] **Status**: Implemented & verified.
   - ✅ **ramoops**: `pstore: Registered ramoops as persistent store backend` using `0x200000@0xb7000000, ecc: 0` (no ECC errors).
   - ✅ **netconsole**: systemd service `active (exited)` configured with JONS destination (`10.10.1.90 → 10.10.1.93:6666`).
   - ⚠️ **pstore-blk**: partition exists (`disk-main-pstore`, 16M) but kernel param label corrected in Gen 32 from `/dev/disk/by-partlabel/pstore` to `/dev/disk/by-partlabel/disk-main-pstore`.
@@ -75,10 +75,9 @@
   - ARM64 ignores the standard `memmap=` kernel boot arguments, requiring a
     Device Tree overlay (`ramoops-overlay.dts`) to reserve memory (`2MB` at
     `0xb7000000` with `no-map`).
-  - **Current State**: The `ramoops-overlay` was temporarily disabled in
-    `hardware-configuration.nix` (`deviceTree.overlays = [ ]`) to isolate a
-    boot-loop regression. Once Stage 1 boot stability is verified, this
-    overlay must be re-enabled.
+  - **Current State**: Ramoops overlay re-enabled in `hardware-configuration.nix`
+    (`deviceTree.overlays = [{ name = "ramoops-overlay"; ... }]`). pstore-blk
+    partition label corrected. All crash capture layers are active.
 
 - **Crash capture layers** (defense in depth):
   - **DTB ramoops (2MB reserved)**: Captures panics (✅), captures PMIC resets (❌). Status: ✅ _Verified Gen 6 (ecc: 0, no errors)._
@@ -97,7 +96,7 @@
 - **Codebase References**:
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix`
     (ADSP/CDSP firmware paths and modprobe ordering)
-  - `nixos/hosts/zenbook/hardware/pd-mapper.nix` (`pd-mapper` daemon with ConditionPath guards)
+  - `nixos/hosts/zenbook/hardware/pd-mapper/` (pd-mapper daemon: switchable between userspace service and in-kernel module)
 
 * **Root Cause & Fix Strategy**:
   - Previously, starting the DSP caused NVMe/PCIe power domain/SMMU conflicts.
@@ -129,7 +128,7 @@
 
 ### Issue 18: pmic_glink uevent failures & battery notifier
 
-- [ ] **Status**: Open — battery status works, but low-battery notifier is broken.
+- [x] **Status**: Fixed — `services.batteryNotifier.device = "qcom-battmgr-bat"` applied in power.nix.
 - **Severity**: P3 — Low.
 - **Codebase References**:
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix`
@@ -148,7 +147,7 @@
 
 ### Issue 20: PMIC Hard Reset on Every NixOS Boot (Systematic Debug — 2026-06-11)
 
-- [/] **Status**: Fix Deployed & Testing — verifying Stage-2 pd-mapper early-start patch (commit `5f7352f`)
+- [/] **Status**: Fix Deployed & Testing — pd-mapper refactored, boot params cleaned, awaiting boot validation.
 - **Severity**: P0 — System unusable, every boot crashes within <1 min.
 - **Symptom**: System hard-resets within ~24-27 seconds of boot.
 - **Crash Signature**: The last netconsole messages before crash are:

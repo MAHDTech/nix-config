@@ -173,7 +173,7 @@ This archive contains detailed documentation for issues that have been successfu
 - **Files**:
   - `nixos/hosts/zenbook/kernel.nix` — Enable Alt Mode drivers
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` — Load `ps883x` and `pmic_glink_altmode` in initrd
-  - `nixos/hosts/zenbook/hardware/pd-mapper.nix` — Fix systemd condition guard
+  - `nixos/hosts/zenbook/hardware/pd-mapper/pd-mapper-service.nix` — Fix systemd condition guard
 - **Test**: After rebooting, check if `/sys/bus/thunderbolt/devices` registers the Barlow Ridge controller, and if `lsusb -t` shows the VIA Hub and Realtek NIC connected.
 
 ---

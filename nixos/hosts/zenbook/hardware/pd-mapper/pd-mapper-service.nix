@@ -67,8 +67,9 @@ in
   #    find returns 0 results (confirmed on live device: 0 without -L, 100 with).
   # 5. pd-mapper reads /sys/class/remoteproc to discover DSP instances. With
   #    qcom_q6v5_pas blacklisted, /sys/class/remoteproc is empty and pd-mapper
-  #    exits immediately with 'no pd maps available'. This is expected — guard
-  #    with ConditionPathIsDirectory so the service is a no-op when DSPs are off.
+  #    exits immediately with 'no pd maps available'. With the refactored
+  #    architecture, pd-mapper starts BEFORE qcom_q6v5_pas is loaded, so it
+  #    receives .jsn files via CLI args and doesn't need /sys/class/remoteproc.
   systemd.services.pd-mapper = {
     description = "Qualcomm Protection Domain Mapper";
     documentation = [ "https://github.com/linux-msm/pd-mapper" ];
@@ -89,7 +90,7 @@ in
     '';
 
     serviceConfig = {
-      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pd-mapper}/bin/pd-mapper $$(find /var/lib/pd-mapper/qcom/x1e80100 -name \"*.jsn*\")'";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${pd-mapper}/bin/pd-mapper $$(find -L /var/lib/pd-mapper/qcom/x1e80100 -name \"*.jsn\")'";
       # Restart on failure to handle asynchronous remoteproc driver registration on boot.
       Restart = "on-failure";
       RestartSec = "2s";
