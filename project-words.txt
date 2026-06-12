@@ -316,6 +316,7 @@ dont
 dosfstools
 dotenv
 dotglob
+downclocked
 dpkg
 DPMS
 dport

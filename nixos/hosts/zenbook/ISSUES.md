@@ -12,6 +12,8 @@
   — _TODO: replace `fw_devlink=permissive` with `fw_devlink.sync_state=timeout` once stability confirmed._
 - 🟡 **Issue 22**: [Audio playback causes PMIC hard reset](#issue-22-audio-playback-causes-pmic-hard-reset) (P2)
   — _Backlogged; all audio kernel modules blacklisted, using Bluetooth audio. Awaiting upstream fixes._
+- 🟡 **Issue 23**: [CPU stress testing (stress-ng) triggers PMIC overcurrent hard reset](#issue-23-cpu-stress-testing-stress-ng-triggers-pmic-overcurrent-hard-reset) (P1)
+  — _Active; stress-ng-cpu triggers hard resets in < 1 minute even when downclocked to 1.92 GHz. Investigating root causes (missing LMH DT nodes, SoundWire storm, GPU lock)._
 
 > [!NOTE]
 > All **fully resolved issues** (Issues 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
@@ -211,3 +213,44 @@
      incompatibility.
   4. **Monitor upstream**: Track patches to `sound/soc/qcom/x1e80100.c` and
      `drivers/soundwire/qcom.c` for X1E80100 speaker amp fixes.
+
+---
+
+### Issue 23: CPU stress testing (stress-ng) triggers PMIC overcurrent hard reset
+
+- [ ] **Status**: Active / GPU-only cap workaround implemented.
+- **Severity**: P1 — System hard-resets under heavy CPU load, making stress testing or heavy compilation impossible.
+- **Symptom**: Instantaneous hard reset (power-cut and reboot) within < 1 minute when running `sudo stress-ng --cpu 0 --cpu-method all --timeout 120s --metrics-brief`.
+- **Codebase References**:
+  - `nixos/hosts/zenbook/kernel.nix` (`CONFIG_QCOM_LMH`, `CONFIG_ARM_SCMI_POWERCAP`)
+  - `nixos/hosts/zenbook/power.nix` (CPU frequency configuration and telemetry logger)
+
+* **Key Findings & Diagnoses**:
+  - **LMH (Limits Management Hardware) is Inactive**:
+    `CONFIG_QCOM_LMH=y` is compiled in, but the X1E80100 device tree has
+    no `qcom,lmh` compatible nodes. The driver never probes, disabling all
+    hardware-managed current/thermal limit throttling.
+  - **SCMI Powercap is Inactive**: The SCMI firmware DT node only declares
+    `protocol@13` (cpufreq). It lacks `protocol@19` (SCMI Powercap),
+    leaving `/sys/class/powercap/arm-scmi` with zero power budget zones.
+  - **Transient Current/Thermal Runaway**: Under full 12-core load, even
+    capped to 1.92 GHz, thermal buildup increases silicon leakage current
+    until the PMIC's hardware OCP/UVLO trips (~60s).
+  - **CPU thermal zones have NO cooling-maps**: The DT defines 24 CPU thermal
+    zones but none are connected to cpufreq cooling devices. Only the GPU
+    has proper cooling-maps (passive at 95°C → devfreq throttling).
+  - **GPU Scaling is Functional**: Devfreq uses `simple_ondemand` and scales
+    the GPU to 300 MHz at idle. GPU thermal throttling works via DT
+    cooling-maps.
+
+* **Resolution / Mitigations (2026-06-13)**:
+  - **GPU 390 MHz Cap**: Udev rule caps GPU at 390 MHz to reduce combined
+    power envelope. See `hardware-configuration.nix`.
+  - **SoundWire IRQ storm eliminated**: Blacklisted `soundwire_qcom` and
+    all `snd_soc_lpass_*_macro` modules that generated ~6,769 interrupts
+    from boot due to WSA884x bus errors.
+  - **CPU Capping Deferred**: Not capping CPU globally to preserve
+    single-thread burst performance.
+  - **TODO**: Monitor upstream for `qcom,lmh` DT nodes in `x1e80100.dtsi`
+    and SCMI Powercap `protocol@19`. Create DT overlay with CPU
+    cooling-maps as interim safety net.

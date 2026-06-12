@@ -101,13 +101,25 @@ in
       # module parameter was removed/renamed in next-20260611 (upstream volume-
       # limiting patch may have replaced it). All audio codecs are blacklisted
       # until upstream fixes land. Bluetooth audio works via PipeWire.
-      # See: README.md Issue 22, lore.kernel.org (thomas.kuang, 2026-06-08).
+      # See: ISSUES.md Issue 22, lore.kernel.org (thomas.kuang, 2026-06-08).
       # Future: try un-blacklisting only WCD938x (headphones) separately.
       "snd_soc_x1e80100" # ASoC machine driver (X1E80100 platform)
       "snd_soc_wsa884x" # WSA884x speaker amplifier — SoundWire bus errors, PMIC crash trigger
       "snd_soc_wcd938x" # WCD938x headphone codec — may work independently (untested)
       "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport layer
       "snd_soc_wcd_common" # WCD common codec operations
+
+      # Issue 23: SoundWire controller + LPASS macro modules generate a continuous
+      # interrupt storm (~6,769+ IRQs on IRQ 258) from boot due to WSA884x bus errors.
+      # This adds constant baseline current draw and CPU overhead that contributes
+      # to PMIC OCP under sustained CPU stress. Blacklisting eliminates the storm.
+      # These modules have zero users (no audio codecs loaded) so are purely waste.
+      "soundwire_qcom" # Qualcomm SoundWire controller — source of the IRQ storm
+      "snd_soc_lpass_wsa_macro" # LPASS WSA macro (speaker amp path)
+      "snd_soc_lpass_rx_macro" # LPASS RX macro (playback path)
+      "snd_soc_lpass_tx_macro" # LPASS TX macro (capture path)
+      "snd_soc_lpass_va_macro" # LPASS VA macro (voice activation path)
+      "snd_soc_lpass_macro_common" # LPASS macro common ops (dependency of above)
 
       # Blacklist remoteproc from udev auto-load. It is loaded explicitly by
       # qcom-remoteproc-load.service AFTER pd-mapper.service is running, to
@@ -208,10 +220,12 @@ in
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
   # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
 
-  # GPU frequency cap removed — SCMI powercap + LMH now manage power budgets through firmware.
-  # Previous 390 MHz cap was a workaround for PMIC overcurrent resets caused by missing
-  # power management configuration, not a hardware limitation.
-  # If instability returns, the power-safe specialisation below restores the cap.
+  # GPU frequency cap set to 390 MHz to reduce PMIC load and prevent hard resets.
+  # TODO: Re-evaluate this cap once upstream kernel support for LMH (Limits Management Hardware)
+  # and SCMI Powercap is fully implemented and active in the Device Tree.
+  services.udev.extraRules = ''
+    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
+  '';
 
   systemd = {
     # Use systemd-networkd for Ethernet management
