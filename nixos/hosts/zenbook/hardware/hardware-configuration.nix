@@ -99,11 +99,13 @@ in
       # Blacklist audio codecs — ADSP starts for battery/USB-C PD but the audio
       # subsystem (SoundWire + WCD938x + WSA884x + APM) causes qcom-apm CMD
       # timeouts that trigger cascading USB/PMIC failures.
-      # "snd_soc_x1e80100" # machine driver
-      # "snd_soc_wsa884x" # speaker amplifier codec
-      # "snd_soc_wcd938x" # headphone codec
-      # "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport
-      # "snd_soc_wcd_common" # WCD common ops
+      # Blacklist audio codecs due to Issue 22 (Instant PMIC Hard Reset on Audio Playback).
+      # Bluetooth audio remains fully functional in userspace via PipeWire.
+      "snd_soc_x1e80100" # machine driver
+      "snd_soc_wsa884x" # speaker amplifier codec
+      "snd_soc_wcd938x" # headphone codec
+      "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport
+      "snd_soc_wcd_common" # WCD common ops
       "qcom_q6v5_pas" # Blacklist remoteproc to prevent early udev auto-boot before pd-mapper is up
     ]
     ++ lib.optionals isInstaller [
