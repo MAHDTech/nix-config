@@ -7,8 +7,6 @@
 
 ## Active Status & Task Tracker
 
-- 🔴 **Issue 20**: [PMIC Hard Reset on Every NixOS Boot](#issue-20-pmic-hard-reset-on-every-nixos-boot-systematic-debug-2026-06-11) (P0)
-  — _Fix Deployed & Testing; userspace pd-mapper refactored (dual-mapper conflict resolved)._
 - 🟡 **Issue 3**: [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) (P1) — _Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up._
 - 🟡 **Issue 7**: [DSP subsystem (qcom_q6v5_pas) enablement](#issue-7-dsp-subsystem-qcom_q6v5_pas-enablement) (P3) — _Late-load crash analyzed; Stage 1 firmware fix deployed in Gen 32._
 - 🟡 **Issue 16**: [Thunderbolt 5 dock drops to USB 2.0 full-speed](#issue-16-thunderbolt-5-dock-drops-to-usb-2-0-full-speed) (P1) — _Blocked on upstream kernel patches for non-PCIe host routers._
@@ -17,7 +15,7 @@
 
 > [!NOTE]
 > All **fully resolved issues** (Issues 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14,
-> 15, 17, and 18) have been archived in [resolved_issues.md](file:///boot/nixos/nix-config/nixos/hosts/zenbook/resolved_issues.md)
+> 15, 17, 18, and 20) have been archived in [resolved_issues.md](file:///boot/nixos/nix-config/nixos/hosts/zenbook/resolved_issues.md)
 > to keep this main issue tracker focused and actionable.
 
 ---
@@ -90,38 +88,6 @@
     during Alt Mode negotiation and drops back to USB 2.0 Billboard fallback
     mode (480 Mbps).
   - **Workaround**: We use a dedicated USB-to-Ethernet adapter (`usb-to-eth` at `10.10.1.90`) to maintain a reliable network link while testing.
-
----
-
-### Issue 20: PMIC Hard Reset on Every NixOS Boot (Systematic Debug — 2026-06-11)
-
-- [/] **Status**: Fix Deployed & Testing — pd-mapper refactored, boot params cleaned, awaiting boot validation.
-- **Severity**: P0 — System unusable, every boot crashes within <1 min.
-- **Symptom**: System hard-resets within ~24-27 seconds of boot.
-- **Crash Signature**: The last netconsole messages before crash are:
-  ```
-  [   24.292138] qcom-apm gprsvc:service:2:1: CMD timeout for [1001021] opcode
-  [   27.059856] qcom-soundwire 6ad0000.soundwire: qcom_swrm_irq_handler: SWR CMD error...
-  ```
-- **Root Cause & Resolution**:
-  <!-- cspell:ignore gprsvc swrm -->
-  - **pd-mapper / remoteproc Race Part 2**: Even when split into two services,
-    loading the module `qcom_q6v5_pas` immediately triggers auto-booting of the
-    DSPs. The DSPs boot and query `pd-mapper` over QRTR within milliseconds,
-    while systemd is still executing `pd-mapper`'s `ExecStartPre` (which stages
-    and decompresses 1559 firmware files, taking ~1s). This delay causes the
-    DSP queries to time out before the Service Registry is published, leading to
-    APM timeouts and the PMIC hard reset.
-  - **Resolution (commit `5f7352f`)**: Patched `pd-mapper.c` to accept a list of
-    `.jsn` files as command-line arguments (bypassing the need to scan
-    `/sys/class/remoteproc` at startup). This allows `pd-mapper.service` to
-    start _before_ `qcom-remoteproc-load.service` runs. `pd-mapper` is now
-    fully active and publishing the Service Registry before the remoteproc module
-    is loaded, eliminating the boot race condition.
-  - **Current State**: Userspace pd-mapper refactored into switchable module.
-    Dual pd-mapper conflict (kernel + userspace) resolved. `efi=noruntime` and
-    `pcie_aspm=off` regressions removed. `regulator_ignore_unused` moved to
-    power-safe only. Ramoops overlay re-enabled. Ready for boot validation.
 
 ---
 

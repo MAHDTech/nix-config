@@ -374,3 +374,34 @@ onepassword-secrets`. The `mahdtech` user IS in group
     `"qcom-battmgr-bat"`, the low-battery notifier script silently exits because
     it cannot find the sysfs path.
   - **Fix**: Add `services.batteryNotifier.device = "qcom-battmgr-bat";` to the Zenbook host configuration to restore the battery notifier service.
+
+---
+
+### Issue 20: PMIC Hard Reset on Every NixOS Boot (Systematic Debug)
+
+- [x] **Status**: Resolved (Verified stable boot past 1 minute and up to 25+ minutes of uptime with audio codecs enabled)
+- **Severity**: P0 — System unusable, every boot crashes within <1 min.
+- **Symptom**: System hard-resets within ~24-27 seconds of boot.
+- **Crash Signature**: The last netconsole messages before crash are:
+  <!-- cspell:ignore gprsvc swrm -->
+  ```
+  [   24.292138] qcom-apm gprsvc:service:2:1: CMD timeout for [1001021] opcode
+  [   27.059856] qcom-soundwire 6ad0000.soundwire: qcom_swrm_irq_handler: SWR CMD error...
+  ```
+- **Root Cause & Resolution**:
+  - **pd-mapper / remoteproc Race**: Even when split into two services, loading the module
+    `qcom_q6v5_pas` immediately triggers auto-booting of the DSPs. The DSPs boot and query
+    `pd-mapper` over QRTR within milliseconds, while systemd is still executing `pd-mapper`'s
+    `ExecStartPre` (which stages and decompresses 1559 firmware files, taking ~1s). This delay
+    causes the DSP queries to time out before the Service Registry is published, leading to APM
+    timeouts and the PMIC hard reset.
+  - **Resolution (commit `5f7352f` / custom fork)**: Patched `pd-mapper.c` to accept a list of
+    `.jsn` files as command-line arguments (bypassing the need to scan `/sys/class/remoteproc` at
+    startup). This allows `pd-mapper.service` to start _before_ `qcom-remoteproc-load.service` runs.
+    `pd-mapper` is now fully active and publishing the Service Registry before the remoteproc
+    module is loaded, eliminating the boot race condition.
+  - **Verification**: Re-enabling the audio codecs (`snd_soc_x1e80100`, `snd_soc_wsa884x`, etc.)
+    confirmed that the system is 100% stable past 25 minutes. Although APM and SoundWire command
+    timeouts still occur during boot because the SoundWire bus is unattached until stream playback
+    starts, they no longer panic the PMIC or trigger a reset because the protection domains are
+    correctly mapped.
