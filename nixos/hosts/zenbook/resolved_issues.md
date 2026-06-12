@@ -405,3 +405,54 @@ onepassword-secrets`. The `mahdtech` user IS in group
     timeouts still occur during boot because the SoundWire bus is unattached until stream playback
     starts, they no longer panic the PMIC or trigger a reset because the protection domains are
     correctly mapped.
+
+---
+
+### Issue 3: GPU frequency hard-capped at 390 MHz
+
+- [x] **Status**: Resolved — GPU running at full speed (1.25 GHz) with firmware-managed power throttling.
+- **Severity**: P1 (was) — GPU at ~31% max performance.
+- **Symptom**: `cat /sys/class/devfreq/3d00000.gpu/max_freq` → `390000000` (when capped).
+- **Root Cause**: On the Snapdragon X Elite, GPU voltage and frequency scaling (DVFS) are
+  managed autonomously in hardware by the **GMU (Graphics Management Unit)** firmware and
+  **RPMh (Resource Power Manager Hardened)**. System resets under uncapped GPU load were due
+  to the lack of active **limits management (Qualcomm LMH)** and **SCMI power limits** in the
+  Linux configuration. Without these limits (which are handled in Windows by the PEP/ACPI
+  framework), the hardware draws current spikes that exceed the PMIC physical envelope,
+  triggering instantaneous overcurrent shutdown.
+- **Resolution**:
+  - Enabled `CONFIG_ARM_SCMI_POWERCAP` and `CONFIG_QCOM_LMH` in `kernel.nix` to allow
+    firmware power throttling.
+  - Removed all artificial CPU and GPU frequency caps. The old `power-safe` specialisation
+    (390 MHz GPU / 1.92 GHz CPU) has been removed.
+  - CPU scales to 3.4 GHz (schedutil), GPU scales to 1.25 GHz (simple_ondemand).
+  - Power management handled by SCMI Powercap + Qualcomm LMH + `clk_ignore_unused` / `pd_ignore_unused`.
+- **Verification** (2026-06-12):
+  - `cat /sys/class/devfreq/3d00000.gpu/max_freq` → `1250000000` ✅
+  - `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq` → `3417600` ✅
+  - System stable for 24+ minutes at full frequency under normal workload.
+
+---
+
+### Issue 7: DSP subsystem (qcom_q6v5_pas) enablement
+
+- [x] **Status**: Resolved — ADSP and CDSP both running successfully.
+- **Severity**: P3 (was) — Future improvement.
+- **Symptom**: Starting the DSP caused NVMe/PCIe power domain/SMMU conflicts and SoundWire
+  timeouts leading to PMIC resets.
+- **Root Cause**: The pd-mapper boot race (Issue 20) caused DSPs to boot before protection
+  domain mappings were published, leading to APM CMD timeouts. Additionally, SoundWire bus
+  errors from uninitialized audio codecs cascaded into PMIC failures.
+- **Resolution**:
+  - pd-mapper race fixed (Issue 20) — DSPs now receive correct PD mappings at boot.
+  - `qcom_q6v5_pas` is blacklisted from udev auto-load but loaded explicitly by
+    `qcom-remoteproc-load.service` after `pd-mapper.service` is active.
+  - Both ADSP and CDSP boot successfully (confirmed via `/sys/class/remoteproc/`).
+  - Audio playback still causes PMIC resets (tracked separately as Issue 22).
+- **Verification** (2026-06-12):
+  - `cat /sys/class/remoteproc/remoteproc0/state` → `running` (adsp) ✅
+  - `cat /sys/class/remoteproc/remoteproc1/state` → `running` (cdsp) ✅
+  - System stable for 24+ minutes with DSPs running (audio blacklisted).
+- **Codebase References**:
+  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (remoteproc services, blacklist)
+  - `nixos/hosts/zenbook/hardware/pd-mapper/` (userspace pd-mapper with CLI .jsn args)

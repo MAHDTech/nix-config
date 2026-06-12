@@ -96,17 +96,25 @@ in
     };
 
     blacklistedKernelModules = [
-      # Blacklist audio codecs — ADSP starts for battery/USB-C PD but the audio
-      # subsystem (SoundWire + WCD938x + WSA884x + APM) causes qcom-apm CMD
-      # timeouts that trigger cascading USB/PMIC failures.
-      # Blacklist audio codecs due to Issue 22 (Instant PMIC Hard Reset on Audio Playback).
-      # Bluetooth audio remains fully functional in userspace via PipeWire.
-      "snd_soc_x1e80100" # machine driver
-      "snd_soc_wsa884x" # speaker amplifier codec
-      "snd_soc_wcd938x" # headphone codec
-      "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport
-      "snd_soc_wcd_common" # WCD common ops
-      "qcom_q6v5_pas" # Blacklist remoteproc to prevent early udev auto-boot before pd-mapper is up
+      # Issue 22: Audio playback causes instant PMIC hard reset.
+      # The WSA884x speaker amplifier fails on SoundWire bus 6b10000 (Slave 0,
+      # register 3452) with continuous FIFO errors from boot. Attempting audio
+      # playback triggers PMIC overcurrent shutdown. The `i_accept_the_danger`
+      # module parameter was removed/renamed in next-20260611 (upstream volume-
+      # limiting patch may have replaced it). All audio codecs are blacklisted
+      # until upstream fixes land. Bluetooth audio works via PipeWire.
+      # See: README.md Issue 22, lore.kernel.org (thomas.kuang, 2026-06-08).
+      # Future: try un-blacklisting only WCD938x (headphones) separately.
+      "snd_soc_x1e80100" # ASoC machine driver (X1E80100 platform)
+      "snd_soc_wsa884x" # WSA884x speaker amplifier — SoundWire bus errors, PMIC crash trigger
+      "snd_soc_wcd938x" # WCD938x headphone codec — may work independently (untested)
+      "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport layer
+      "snd_soc_wcd_common" # WCD common codec operations
+
+      # Blacklist remoteproc from udev auto-load. It is loaded explicitly by
+      # qcom-remoteproc-load.service AFTER pd-mapper.service is running, to
+      # prevent the DSP boot race condition (see resolved Issue 20).
+      "qcom_q6v5_pas"
     ]
     ++ lib.optionals isInstaller [
       "typec_thunderbolt"
@@ -123,8 +131,6 @@ in
       "fw_devlink=permissive"
       # clk/pd_ignore_unused: prevent late_initcall cleanup of bootloader-enabled
       # clocks and power domains. Matches Ubuntu's linux-qcom-x1e kernel.
-      # NOTE: regulator_ignore_unused is NOT in the base — it's only in the
-      # power-safe specialisation as a rollback safety net.
       "clk_ignore_unused"
       "pd_ignore_unused"
       "usbcore.quirks=0b95:1790:k"
@@ -150,7 +156,14 @@ in
       "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
     ];
 
-    # Speaker safety interlock — required by snd-soc-x1e80100 driver
+    # Issue 22: Audio module configuration (currently dead code — all audio
+    # modules are blacklisted above). Retained for when audio is re-enabled.
+    # NOTE: `i_accept_the_danger` was removed/renamed in next-20260611. The
+    # upstream volume-limiting patch (-3 dB cap, by Srinivas Kandagatla) may
+    # have replaced it. When re-enabling audio, check if the parameter exists:
+    #   cat /sys/module/snd_soc_x1e80100/parameters/i_accept_the_danger
+    # If not, try kernel cmdline: snd-soc-x1e80100.i_accept_the_danger=1
+    # If still missing, the driver may be safe to load without it.
     extraModprobeConfig = ''
       options snd-soc-x1e80100 i_accept_the_danger=1
       # SoundWire boot ordering: ensure ADSP remoteproc loads before speaker codec
