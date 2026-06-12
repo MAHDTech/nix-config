@@ -2,6 +2,9 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./pd-mapper.nix
+
+    ./pd-mapper
+
+    ./firmware
   ];
 }

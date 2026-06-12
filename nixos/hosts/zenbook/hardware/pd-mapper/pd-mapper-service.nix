@@ -47,8 +47,6 @@ let
   };
 in
 {
-  boot.kernelModules = [ "qcom_pd_mapper" ];
-
   # PD Mapper service: reads .jsn subsystem descriptors and registers protection
   # domains over QRTR so clients (WiFi, audio, Bluetooth) can locate DSP services.
   #
@@ -87,13 +85,6 @@ in
       # Symlink all top-level files/directories from the system firmware.
       if [ -d /run/current-system/firmware ]; then
         cp -as /run/current-system/firmware/* /var/lib/pd-mapper/
-      fi
-
-      # Point the kernel firmware loader at our staging directory so pd-mapper
-      # finds the .jsn files via /sys/module/firmware_class/parameters/path.
-      if [ -f /sys/module/firmware_class/parameters/path ]; then
-        echo -n "/var/lib/pd-mapper" > /sys/module/firmware_class/parameters/path \
-          || true
       fi
     '';
 

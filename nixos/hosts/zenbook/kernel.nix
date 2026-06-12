@@ -256,7 +256,7 @@ let
     '';
 
     buildPhase = ''
-      make ARCH=arm64 -j4
+      make ARCH=arm64 -j$NIX_BUILD_CORES
     '';
 
     installPhase = ''

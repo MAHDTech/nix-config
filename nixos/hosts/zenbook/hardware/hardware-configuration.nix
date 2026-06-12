@@ -114,16 +114,18 @@ in
     ];
 
     kernelParams = [
-      # Platform workarounds — these match the STABLE installer config exactly.
-      # The installer survived a full kernel compilation; every installed boot crashed.
-      # efi=noruntime: CRITICAL on ARM64 Qualcomm — EFI runtime services cause hard
-      # crashes when the kernel accesses UEFI variables/services post-boot.
-      "efi=noruntime"
+      # Platform workarounds for Snapdragon X Elite (X1E80100)
+      # fw_devlink=permissive: prevents deferred sync_state() from prematurely
+      # disabling regulators/power domains, which causes USB I/O errors and PMIC
+      # hard resets ~50s into boot. TODO: try fw_devlink.sync_state=timeout as
+      # a more targeted alternative once stability is confirmed.
       "fw_devlink=permissive"
+      # clk/pd_ignore_unused: prevent late_initcall cleanup of bootloader-enabled
+      # clocks and power domains. Matches Ubuntu's linux-qcom-x1e kernel.
+      # NOTE: regulator_ignore_unused is NOT in the base — it's only in the
+      # power-safe specialisation as a rollback safety net.
       "clk_ignore_unused"
       "pd_ignore_unused"
-      "regulator_ignore_unused"
-      "pcie_aspm=off"
       "usbcore.quirks=0b95:1790:k"
 
       # Console and display
@@ -182,28 +184,19 @@ in
     deviceTree = {
       enable = true;
       name = "qcom/x1e80100-asus-zenbook-a14.dtb";
-      overlays = [ ];
+      overlays = [
+        {
+          name = "ramoops-overlay";
+          dtsFile = ../files/ramoops-overlay.dts;
+        }
+      ];
     };
     enableRedistributableFirmware = true;
+    # Keep firmware uncompressed during platform bringup. OEM-signed blobs
+    # (ADSP, CDSP, zap shaders) may have TrustZone hash verification.
+    # The space savings (~6MB) are negligible. Revisit once stable.
     firmwareCompression = "none";
-    firmware = [
-      # OEM firmware: device-specific blobs NOT available in upstream linux-firmware.
-      # Provides:
-      #   - ADSP/CDSP (qcadsp8380.mbn, qccdsp8380.mbn)
-      #   - Video codec (qcvss8380.mbn)
-      #   - AV1 decoder (qcav1e8380.mbn)
-      #   - pd-mapper descriptors (*.jsn)
-      #   - GPU SQE microcode
-      #
-      # linux-firmware (via enableRedistributableFirmware)
-      # Provides:
-      #   - WiFi
-      #   - Bluetooth
-      #   - audio topology
-      #   - GPU GMU/ZAP shaders
-      #   - and other SoC-generic firmware.
-      (pkgs.callPackage ./firmware/asus.nix { })
-    ];
+    # NOTE: hardware.firmware is managed in ./firmware/default.nix
   };
 
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
@@ -228,7 +221,6 @@ in
       description = "Load Qualcomm remoteproc kernel modules";
       after = [
         "local-fs.target"
-        "systemd-udev-settle.service"
         "pd-mapper.service"
       ];
       requires = [
@@ -246,7 +238,6 @@ in
       description = "Start all offline Qualcomm remoteproc devices";
       after = [
         "local-fs.target"
-        "systemd-udev-settle.service"
         "pd-mapper.service"
         "qcom-remoteproc-load.service"
       ];
@@ -257,7 +248,22 @@ in
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.bash}/bin/bash -c 'for dev in /sys/class/remoteproc/remoteproc*; do if [ -f \"\$dev/state\" ] && [ \"\$(cat \"\$dev/state\")\" = \"offline\" ]; then echo start > \"\$dev/state\"; fi; done'";
+        ExecStart = pkgs.writeShellScript "start-remoteprocs" ''
+          set -uo pipefail
+          shopt -s nullglob
+          started=0
+          for dev in /sys/class/remoteproc/remoteproc*; do
+            if [ -f "$dev/state" ] && [ "$(cat "$dev/state")" = "offline" ]; then
+              echo "Starting $dev" >&2
+              if echo start > "$dev/state"; then
+                started=$((started + 1))
+              else
+                echo "WARNING: Failed to start $dev" >&2
+              fi
+            fi
+          done
+          echo "Started $started remoteproc device(s)" >&2
+        '';
         RemainAfterExit = true;
       };
     };
@@ -297,8 +303,9 @@ in
 
     # ADSP fully blacklisted, all other power improvements kept.
     # No audio, no battery monitoring, but no ADSP crash risk.
-    # Tests: are the power management improvements (no regulator_ignore_unused,
-    # SCMI powercap, PCIe ASPM) stable WITHOUT the ADSP?
+    # Uses BOTH blacklistedKernelModules (modprobe/udev blacklist) AND
+    # module_blacklist= kernel param (earliest possible block, before initrd
+    # modprobe rules). Belt-and-suspenders because premature loading crashes.
     "no-adsp".configuration = {
       boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
       boot.kernelParams = [
@@ -308,13 +315,14 @@ in
 
     # Conservative power caps as a rollback safety net.
     # Restores the old CPU (1.92 GHz) and GPU (390 MHz) caps, ADSP blacklist,
-    # and *_ignore_unused params. Use this if the default boot is unstable.
+    # and regulator_ignore_unused. Use this if the default boot is unstable.
+    # NOTE: clk_ignore_unused and pd_ignore_unused are already in the base
+    # kernelParams and inherited by specialisations — only regulator_ignore_unused
+    # is added here because the base intentionally omits it (Ubuntu doesn't use it).
     "power-safe".configuration = {
       boot.blacklistedKernelModules = [ "qcom_q6v5_pas" ];
       boot.kernelParams = [
         "module_blacklist=qcom_q6v5_pas"
-        "clk_ignore_unused"
-        "pd_ignore_unused"
         "regulator_ignore_unused"
       ];
       services.udev.extraRules = ''
@@ -322,7 +330,7 @@ in
       '';
       systemd.services.limit-cpu-freq = {
         description = "Limit CPU max frequency (power-safe fallback)";
-        after = [ "systemd-udev-settle.service" ];
+        after = [ "local-fs.target" ];
         wantedBy = [ "multi-user.target" ];
         serviceConfig = {
           Type = "oneshot";

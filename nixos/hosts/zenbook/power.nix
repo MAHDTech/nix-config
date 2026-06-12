@@ -7,8 +7,11 @@
   # Root cause analysis revealed the resets were caused by:
   #   - Missing ARM_SCMI_POWERCAP kernel config (no firmware power budget enforcement)
   #   - ADSP blacklisted (broke PMIC power cooperation loop)
-  #   - All *_ignore_unused boot params (every subsystem drawing current simultaneously)
-  #   - PCIe ASPM + USB autosuspend disabled (wasted power headroom)
+  #   - fw_devlink sync_state() prematurely disabling regulators/power domains
+  #
+  # NOTE: clk_ignore_unused and pd_ignore_unused are still required in the base
+  # kernel params (matches Ubuntu's linux-qcom-x1e). regulator_ignore_unused is
+  # only in the power-safe specialisation as a rollback safety net.
   #
   # With those root causes addressed, power management is now enabled and
   # frequency scaling is handled by firmware (SCMI + GMU + LMH).
@@ -24,6 +27,7 @@
     enable = true;
     algorithm = "zstd";
     memoryPercent = 100;
+    priority = 100; # Prefer zram over any disk swap
   };
 
   # PMIC telemetry logger — writes CPU/GPU frequencies and thermal data to
@@ -43,7 +47,7 @@
           temp_vals=$(${pkgs.coreutils}/bin/cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null)
           temps=$(echo "$temp_vals" | ${pkgs.coreutils}/bin/tr "\n" "," | ${pkgs.gnused}/bin/sed "s/,$//")
           echo "[$timestamp] CPU_FREQS:$cpu_freqs GPU:$gpu_freq TEMPS:$temps" > /dev/pmsg0
-          ${pkgs.coreutils}/bin/sleep 0.1
+          ${pkgs.coreutils}/bin/sleep 1
         done
       '';
       Restart = "always";

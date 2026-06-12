@@ -8,14 +8,16 @@
 ## Active Status & Task Tracker
 
 - 🔴 **Issue 20**: [PMIC Hard Reset on Every NixOS Boot](#issue-20-pmic-hard-reset-on-every-nixos-boot-systematic-debug-2026-06-11) (P0)
-  — _Fix Deployed & Testing; verifying Stage-2 pd-mapper early-start patch (commit `5f7352f`)._
+  — _Fix Deployed & Testing; userspace pd-mapper refactored (dual-mapper conflict resolved)._
 - 🟡 **Issue 3**: [GPU frequency hard-capped at 390 MHz](#issue-3-gpu-frequency-hard-capped-at-390-mhz) (P1) — _Regression; GPU uncapped in default boot, but `power-safe` cap fallback is set up._
-- 🟡 **Issue 5**: [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) (P0)
-  — _Ramoops overlay disabled temporarily for debugging; `pstore-blk` label fixed._
+- 🟢 **Issue 5**: [pstore/ramoops not configured for crash debugging](#issue-5-pstore-ramoops-not-configured-for-crash-debugging) (P0)
+  — _Ramoops overlay re-enabled; `pstore-blk` label fixed._
 - 🟡 **Issue 7**: [DSP subsystem (qcom_q6v5_pas) enablement](#issue-7-dsp-subsystem-qcom_q6v5_pas-enablement) (P3) — _Late-load crash analyzed; Stage 1 firmware fix deployed in Gen 32._
 - 🟡 **Issue 16**: [Thunderbolt 5 dock drops to USB 2.0 full-speed](#issue-16-thunderbolt-5-dock-drops-to-usb-2-0-full-speed) (P1) — _Blocked on upstream kernel patches for non-PCIe host routers._
 - 🟡 **Issue 18**: [pmic_glink uevent failures & battery notifier](#issue-18-pmic_glink-uevent-failures) (P3)
   — _Open; battery telemetry works via sysfs but battery notifier requires a device override._
+- 🟡 **Issue 21**: [fw_devlink optimization](#issue-21-fw_devlink-optimization) (P2)
+  — _TODO: replace `fw_devlink=permissive` with `fw_devlink.sync_state=timeout` once stability confirmed._
 
 > [!NOTE]
 > All **fully resolved issues** (Issues 1, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14,
@@ -169,4 +171,26 @@
     start _before_ `qcom-remoteproc-load.service` runs. `pd-mapper` is now
     fully active and publishing the Service Registry before the remoteproc module
     is loaded, eliminating the boot race condition.
-  - **Current State**: Fix committed and ready for user validation.
+  - **Current State**: Userspace pd-mapper refactored into switchable module.
+    Dual pd-mapper conflict (kernel + userspace) resolved. `efi=noruntime` and
+    `pcie_aspm=off` regressions removed. `regulator_ignore_unused` moved to
+    power-safe only. Ramoops overlay re-enabled. Ready for boot validation.
+
+---
+
+### Issue 21: fw_devlink optimization
+
+- [ ] **Status**: TODO — waiting for `fw_devlink=permissive` stability confirmation
+- **Severity**: P2 — Performance/correctness improvement
+- **Symptom**: `fw_devlink=permissive` disables all strict device-link probe ordering
+  system-wide, which may mask driver ordering bugs.
+- **Codebase References**:
+  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (kernelParams)
+
+* **Planned Fix**:
+  1. Replace `fw_devlink=permissive` with `fw_devlink.sync_state=timeout` — keeps
+     probe ordering but gives up on stuck consumers after timeout
+  2. Add `deferred_probe_timeout=60` — extends timeout for slow-probing remoteproc
+  3. If stable, try returning to `fw_devlink=on` (kernel default)
+  4. Long-term: upstream DT fixes from alexVinarskis to complete supplier-consumer
+     bindings, eliminating the need for any workaround
