@@ -30,6 +30,9 @@
     # Disable nix-channel-init service since the raw image closure doesn't pre-pack nixos channel sources
     services = {
       nix-channel-init.enable = false;
+      qcom-remoteproc-load.enable = false;
+      qcom-remoteproc-start.enable = false;
+      pd-mapper.enable = false;
     };
   };
 }
