@@ -207,6 +207,15 @@ in
           name = "ramoops-overlay";
           dtsFile = ../files/ramoops-overlay.dts;
         }
+        {
+          # Issue 23: Add passive thermal trip points + cooling-maps to CPU
+          # cluster thermal zones. Upstream x1e80100.dtsi has no CPU cooling-maps
+          # so the cpufreq cooling devices (cpufreq-cpu0/4/8) sit idle. This
+          # overlay binds them to 75°C passive trips so the step_wise governor
+          # throttles CPU frequency before sustained current draw trips the PMIC.
+          name = "cpu-cooling-overlay";
+          dtsFile = ../files/cpu-cooling-overlay.dts;
+        }
       ];
     };
     enableRedistributableFirmware = true;

@@ -1,0 +1,106 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/thermal/thermal.h>
+
+/*
+ * Issue 23: CPU thermal cooling-maps overlay for X1E80100 (Snapdragon X Elite).
+ *
+ * The upstream x1e80100.dtsi defines 6 per-cluster CPU thermal zones but none
+ * have cooling-maps or passive trip points. The only trip is "critical" at
+ * 115 C which triggers an emergency kernel shutdown — there is no intermediate
+ * throttling step. Combined with the absence of LMH device-tree nodes and
+ * SCMI powercap zones, the CPU can draw enough sustained current under
+ * all-core load to trip the PMIC overcurrent protection, causing an instant
+ * hard reset.
+ *
+ * This overlay adds to each CPU cluster thermal zone:
+ *   - A "passive" trip point at 75 C
+ *   - A cooling-map binding the cluster's cpufreq cooling device to that trip
+ *   - polling-delay-passive of 100 ms for responsive throttling
+ *
+ * The cpufreq cooling devices already exist because every cpu node in the base
+ * DTS carries #cooling-cells = <2>. This overlay simply wires them into the
+ * thermal framework so the step_wise governor can throttle frequency.
+ *
+ * Trip point temperatures (tunable):
+ *   75 C passive  — begin frequency throttling (step_wise governor)
+ *   115 C critical — emergency shutdown (existing, unchanged)
+ *
+ * At idle the CPU sits at ~27 C and the PMIC at ~37 C. Under all-core stress
+ * the PMIC OCP trips after ~60 s even at 1.92 GHz. A 75 C passive point
+ * catches sustained load while leaving headroom for burst workloads.
+ */
+
+/ {
+    compatible = "asus,zenbook-a14-ux3407ra", "qcom,x1e80100";
+
+    /* Cluster 0 (CPUs 0-3): cpuss0-top-thermal */
+    fragment@1 {
+        target-path = "/thermal-zones/cpuss0-top-thermal";
+        __overlay__ {
+            polling-delay-passive = <100>;
+
+            trips {
+                cluster0_passive: cluster0-passive {
+                    temperature = <75000>;
+                    hysteresis = <5000>;
+                    type = "passive";
+                };
+            };
+
+            cooling-maps {
+                cluster0-map {
+                    trip = <&cluster0_passive>;
+                    cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+                };
+            };
+        };
+    };
+
+    /* Cluster 1 (CPUs 4-7): cpuss1-top-thermal */
+    fragment@2 {
+        target-path = "/thermal-zones/cpuss1-top-thermal";
+        __overlay__ {
+            polling-delay-passive = <100>;
+
+            trips {
+                cluster1_passive: cluster1-passive {
+                    temperature = <75000>;
+                    hysteresis = <5000>;
+                    type = "passive";
+                };
+            };
+
+            cooling-maps {
+                cluster1-map {
+                    trip = <&cluster1_passive>;
+                    cooling-device = <&cpu4 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+                };
+            };
+        };
+    };
+
+    /* Cluster 2 (CPUs 8-11): cpuss2-top-thermal */
+    fragment@3 {
+        target-path = "/thermal-zones/cpuss2-top-thermal";
+        __overlay__ {
+            polling-delay-passive = <100>;
+
+            trips {
+                cluster2_passive: cluster2-passive {
+                    temperature = <75000>;
+                    hysteresis = <5000>;
+                    type = "passive";
+                };
+            };
+
+            cooling-maps {
+                cluster2-map {
+                    trip = <&cluster2_passive>;
+                    cooling-device = <&cpu8 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+                };
+            };
+        };
+    };
+};
