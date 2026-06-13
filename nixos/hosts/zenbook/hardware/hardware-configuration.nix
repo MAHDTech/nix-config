@@ -329,6 +329,25 @@ in
       };
     };
 
+    # Boot the system with the GPU driver (msm) completely disabled
+    "disable-gpu".configuration = {
+      boot.blacklistedKernelModules = [ "msm" ];
+      boot.kernelParams = [
+        "module_blacklist=msm"
+        "regulator_ignore_unused"
+      ];
+      services.greetd.enable = lib.mkForce false;
+      services.xserver.enable = lib.mkForce false;
+      programs.hyprland.enable = lib.mkForce false;
+      systemd.defaultUnit = lib.mkForce "multi-user.target";
+    };
+
+    # Boot the system in console text mode (but keep msm/GPU active)
+    "text-mode".configuration = {
+      services.greetd.enable = lib.mkForce false;
+      systemd.defaultUnit = lib.mkForce "multi-user.target";
+    };
+
     # Boot with ACPI interpreter forced on (diagnostic only).
     # Enables acpidump to extract ACPI tables (DSDT/SSDT) which
     # contain Windows PEP power limit definitions. The UEFI firmware

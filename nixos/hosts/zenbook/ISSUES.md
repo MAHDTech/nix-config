@@ -305,6 +305,13 @@
      are Windows-only stubs. ACPI tables must be extracted via `/dev/mem` instead
      (requires disabling `CONFIG_STRICT_DEVMEM`).
 
+  5. **`disable-gpu` boot specialisation** (NEW): systemd-boot entry with `module_blacklist=msm` and
+     `regulator_ignore_unused` to completely disable the GPU driver and boot into a text console.
+     Isolates GPU rail power draw from CPU stress tests.
+
+  6. **`text-mode` boot specialisation** (NEW): systemd-boot entry booting directly into `multi-user.target`
+     console but leaving `msm` active. Isolates idle GPU power draw from active desktop rendering draw.
+
 * **SMBIOS Power Data**:
 
   ```
@@ -316,14 +323,17 @@
   ```
 
 * **Next Steps**:
-  1. **Validate with direct AC charger**: Run `stress-ng --cpu 12 --timeout 300s` at
+  1. **Deploy and Test Diagnostic Specialisations**:
+     - Boot into `disable-gpu` specialization and run all-core `stress-ng` (at 3.42 GHz) to verify if the main system achieves the same stability as the live installer.
+     - Boot into `text-mode` specialization and run the same test to verify if the idle GPU power draw alone changes the PMIC OCP budget.
+  2. **Validate with direct AC charger**: Run `stress-ng --cpu 12 --timeout 300s` at
      full 3.4 GHz using the direct AC charger (not via TB5 dock). If this passes,
      Issue 23 is resolved by Issue 16.
-  2. **Investigate PD negotiation**: Check if direct AC charger shows non-zero
+  3. **Investigate PD negotiation**: Check if direct AC charger shows non-zero
      `VOLTAGE_MAX` / `CURRENT_MAX` in UCSI sysfs.
-  3. **ACPI table extraction**: Disable `CONFIG_STRICT_DEVMEM` temporarily, read
+  4. **ACPI table extraction**: Disable `CONFIG_STRICT_DEVMEM` temporarily, read
      RSDP at `0xd47d3018` via `/dev/mem`, decompile DSDT/SSDT to find PEP power limits.
-  4. **Monitor upstream**: `#cooling-cells` patch for Oryon CPUs is in review (Feb 2026).
+  5. **Monitor upstream**: `#cooling-cells` patch for Oryon CPUs is in review (Feb 2026).
      Once merged, CPU cooling-maps should follow in the base DTSI.
-  5. **Consider `dynamic-power-coefficient`**: Add to CPU nodes in a second overlay
+  6. **Consider `dynamic-power-coefficient`**: Add to CPU nodes in a second overlay
      to enable `power_allocator` governor for intelligent power allocation.
