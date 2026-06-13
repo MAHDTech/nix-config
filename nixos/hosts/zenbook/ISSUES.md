@@ -255,20 +255,52 @@
 
 * **Stress Test Results Matrix (2026-06-13)**:
 
-  All tests on AC via TB5 dock unless noted:
+  **Installed OS tests** (AC via TB5 dock unless noted):
 
-  | Frequency | Cores | Duration | Cooldown | Result     | Notes                                  |
-  | --------- | ----- | -------- | -------- | ---------- | -------------------------------------- |
-  | 3.4 GHz   | 12    | ~90s     | Cold     | ❌ Crash   | 60°C CPU — well below 75°C trip        |
-  | 2.2 GHz   | 12    | ~90s     | None     | ❌ Crash   | 41°C CPU — freq cap had no effect      |
-  | 1.44 GHz  | 12    | ~90s     | None     | ❌ Crash   | 34°C CPU — not thermal at all          |
-  | 998 MHz   | 12    | Instant  | None     | ❌ Crash   | Back-to-back accumulated stress        |
-  | 998 MHz   | 12    | 30s      | 60s      | ✅ Pass    | 31°C CPU, PMIC 37°C                    |
-  | 1.19 GHz  | 6     | 30s      | Fresh    | ✅ Pass    | First clean pass                       |
-  | 1.19 GHz  | 12    | 60s      | 30s      | ⏳ Running | Charger switched to direct AC mid-test |
+  | Frequency | Cores | Duration | Cooldown | Result   | Notes                             |
+  | --------- | ----- | -------- | -------- | -------- | --------------------------------- |
+  | 3.4 GHz   | 12    | ~90s     | Cold     | ❌ Crash | 60°C CPU — well below 75°C trip   |
+  | 2.2 GHz   | 12    | ~90s     | None     | ❌ Crash | 41°C CPU — freq cap had no effect |
+  | 1.44 GHz  | 12    | ~90s     | None     | ❌ Crash | 34°C CPU — not thermal at all     |
+  | 998 MHz   | 12    | Instant  | None     | ❌ Crash | Back-to-back accumulated stress   |
+  | 998 MHz   | 12    | 30s      | 60s      | ✅ Pass  | 31°C CPU, PMIC 37°C               |
+  | 1.19 GHz  | 6     | 30s      | Fresh    | ✅ Pass  | First clean pass                  |
 
-  **Key observation**: Temperature is NOT the trigger. Crashes occur at 34-60°C, far below
-  the 75°C passive trip point. This is a **current/power delivery** issue.
+  **Installed OS — isolation tests** (direct AC charger, installer-mimic specialisation):
+
+  | Test                   | Freq at crash | Time | Result   | Notes                                |
+  | ---------------------- | ------------- | ---- | -------- | ------------------------------------ |
+  | installer-mimic        | ~2.97 GHz     | ~30s | ❌ Crash | Cooling throttled from 3.4 but OCP'd |
+  | WiFi unbound from PCIe | ~2.7 GHz      | ~30s | ❌ Crash | WiFi NOT the cause                   |
+  | RO root (attempted)    | ~2.7 GHz      | ~30s | ❌ Crash | Couldn't fully remount RO            |
+
+  **Live installer tests** (direct AC charger, USB boot, same kernel + DT + overlays):
+
+  | Test                     | Freq        | Duration  | Result  | Notes                                     |
+  | ------------------------ | ----------- | --------- | ------- | ----------------------------------------- |
+  | sha256sum ×12 cores      | 3.4 GHz     | **5 min** | ✅ Pass | 54°C steady, throttled to 2.7 last min    |
+  | stress-ng --cpu 12 (all) | 2.1–3.2 GHz | **5 min** | ✅ Pass | 580K bogo ops, 12/12 passed, 0 failed     |
+  | stress-ng + NVMe dd 10GB | 2.1–3.2 GHz | **5 min** | ✅ Pass | 613K bogo ops + 427 MB/s NVMe write, 58°C |
+
+  > [!IMPORTANT]
+  > **All three installer tests pass — including simultaneous CPU + NVMe I/O.**
+  > The installed OS crashes in ~30 seconds with the same frequencies and temperatures.
+  > Same kernel, same device tree (with overlays), same cooling maps, same charger.
+  >
+  > **Ruled out as root cause:**
+  >
+  > - ❌ NVMe/PCIe power draw (installer survives 10GB write + stress-ng)
+  > - ❌ WiFi/PCIe power draw (unbound WiFi didn't help installed OS)
+  > - ❌ Thermal (same temps on both, crashes at 52-54°C)
+  > - ❌ stress-ng specific (sha256sum also works on installer)
+  > - ❌ Device tree (identical model, overlays, trip points, thermal zones)
+  > - ❌ Kernel (same binary: 7.1.0-rc7-next-20260611)
+  > - ❌ Power delivery (same direct AC charger)
+  > - ❌ Cooling maps (both have 55°C passive trip, same throttling behaviour)
+  >
+  > **Root cause is in the installed OS boot/service configuration** — something a
+  > systemd service or NixOS module configures changes PMIC regulator state or OCP
+  > thresholds. Modules are identical (72 on both). Next: binary search services.
 
 * **Architecture — Why Windows Works (Research Findings)**:
 
