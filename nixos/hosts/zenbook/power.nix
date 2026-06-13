@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   # Snapdragon X Elite (ARM64) power management
   #
@@ -16,7 +16,8 @@
   # With those root causes addressed, power management is now enabled and
   # frequency scaling is handled by firmware (SCMI + GMU + LMH).
 
-  powerManagement.enable = true;
+  # TODO: Test with NO power management enabled.
+  powerManagement.enable = lib.mkForce false;
 
   # Override the battery device name to point to Snapdragon native path
   services.batteryNotifier.device = "qcom-battmgr-bat";

@@ -357,6 +357,7 @@ in
       boot.kernelParams = [
         "module_blacklist=msm,qcom_q6v5_pas"
         "regulator_ignore_unused"
+        "cpufreq.off=1"
       ];
       services.greetd.enable = lib.mkForce false;
       services.xserver.enable = lib.mkForce false;
