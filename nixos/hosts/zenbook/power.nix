@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 {
   # Snapdragon X Elite (ARM64) power management
   #
@@ -16,11 +16,10 @@
   # With those root causes addressed, power management is now enabled and
   # frequency scaling is handled by firmware (SCMI + GMU + LMH).
 
-  # TODO: Test with NO power management enabled.
-  powerManagement.enable = lib.mkForce false;
+  powerManagement.enable = true;
 
   # Override the battery device name to point to Snapdragon native path
-  #services.batteryNotifier.device = "qcom-battmgr-bat";
+  services.batteryNotifier.device = "qcom-battmgr-bat";
 
   # zram swap for memory pressure relief
   # Laptop has 30 GiB RAM — zram gives ~60 GiB effective with zstd compression

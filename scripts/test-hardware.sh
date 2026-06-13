@@ -90,17 +90,30 @@ echo ""
 # Enter nix-shell with all required packages
 ###############################################################################
 
-exec nix-shell -p \
-	mesa-demos \
-	vulkan-tools \
-	vkmark \
-	glmark2 \
-	xorg.xrandr \
-	kmscube \
-	ffmpeg-full \
-	pciutils \
-	stress-ng \
-	--run bash\ /dev/stdin <<'INNER_SCRIPT'
+exec nix-shell -E '
+with import <nixpkgs> {
+  overlays = [
+    (self: super: {
+      libbsd = super.libbsd.overrideAttrs (oldAttrs: {
+        buildInputs = (oldAttrs.buildInputs or []) ++ [ self.libmd.out ];
+      });
+    })
+  ];
+};
+mkShell {
+  buildInputs = [
+    mesa-demos
+    vulkan-tools
+    vkmark
+    glmark2
+    xrandr
+    kmscube
+    ffmpeg-full
+    pciutils
+    stress-ng
+  ];
+}
+' --run "bash /dev/stdin" <<'INNER_SCRIPT'
 
 set -uo pipefail
 
