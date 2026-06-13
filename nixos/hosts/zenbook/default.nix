@@ -16,48 +16,51 @@
     # Remote crash capture via netconsole (loads after network is up)
     ./netconsole.nix
 
-    # CPU and Virtualisation
+    # CPU specific configuration.
     ../../system/config/virtualisation/cpu/qcom.nix
-    ../../system/config/virtualisation/host/qemu
+    #../../system/config/virtualisation/host/qemu
 
     # GPU specific configuration.
-    ../../system/config/video/qcom
+    #../../system/config/video/qcom
 
     # Load system standard-operating-environment.
     ../../system/soe
 
     # System configuration
-    ../../system/config/audio
-    ../../system/config/bluetooth
-    ../../system/config/fonts
-    ../../system/config/power
-    ../../system/config/printing
-    ../../system/config/services
+    # TODO: Re-enable after testing is complete
+    #../../system/config/audio
+    #../../system/config/bluetooth
+    #../../system/config/fonts
+    #../../system/config/power
+    #../../system/config/printing
+    #../../system/config/services
+    # TEST: udev only
+    ../../system/config/services/udev
 
     # Desktop Environment
-    ../../system/config/desktop-environment/hyprland.nix
+    #../../system/config/desktop-environment/hyprland.nix
 
     # Theme
-    ../../system/config/theme/stylix
+    #../../system/config/theme/stylix
 
     # Form Factor: Laptop
-    ../../system/config/hardware/laptop
+    #../../system/config/hardware/laptop
 
     # Networking (Wired and Wireless)
-    ../../system/config/network/hosts.nix
-    ../../system/config/network/wireless
+    #../../system/config/network/hosts.nix
+    #../../system/config/network/wireless
 
     # Desktop Applications and Services
-    ../../system/config/programs/1password
-    ../../system/config/services/trezor
+    #../../system/config/programs/1password
+    #../../system/config/services/trezor
 
     # Backup
-    ../../system/config/disk/backup
+    #../../system/config/disk/backup
   ];
 
-  services.tars-backup = {
-    enable = true;
-    userName = "mahdtech";
-    diskUuids = [ ];
-  };
+  #services.tars-backup = {
+  #  enable = true;
+  #  userName = "mahdtech";
+  #  diskUuids = [ ];
+  #};
 }

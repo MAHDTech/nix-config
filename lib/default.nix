@@ -42,9 +42,9 @@ in
           boot.zfs.forceImportAll = lib.mkDefault false;
         }
         inputs.opnix.nixosModules.default
-        inputs.stylix.nixosModules.stylix
-        inputs.flatpaks.nixosModules.default
-        ../nixos/system/home-manager.nix # Standard HM integration
+        #inputs.stylix.nixosModules.stylix
+        #inputs.flatpaks.nixosModules.default
+        #../nixos/system/home-manager.nix # Standard HM integration
         ../nixos/hosts/${lib.toLower name}
       ]
       ++ extraModules;

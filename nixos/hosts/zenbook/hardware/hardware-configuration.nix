@@ -455,7 +455,7 @@ in
         fwupd.enable = lib.mkForce false;
         acpid.enable = lib.mkForce false;
         dbus.apparmor = lib.mkForce "disabled";
-        batteryNotifier.enable = lib.mkForce false;
+        #batteryNotifier.enable = lib.mkForce false;
       };
 
       programs.hyprland.enable = lib.mkForce false;
