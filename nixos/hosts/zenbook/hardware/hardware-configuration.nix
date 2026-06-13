@@ -487,6 +487,12 @@ in
 
       security = {
         apparmor.enable = lib.mkForce false;
+        # Match installer LSM list exactly: landlock,yama,bpf (no apparmor)
+        lsm = lib.mkForce [
+          "landlock"
+          "yama"
+          "bpf"
+        ];
       };
     };
 
