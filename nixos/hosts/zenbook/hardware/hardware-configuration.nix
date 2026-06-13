@@ -328,5 +328,17 @@ in
         pd-mapper.enable = false;
       };
     };
+
+    # Boot with ACPI interpreter forced on (diagnostic only).
+    # Enables acpidump to extract ACPI tables (DSDT/SSDT) which
+    # contain Windows PEP power limit definitions. The UEFI firmware
+    # exposes ACPI 2.0 at 0xd47d3018 but Linux disables the
+    # interpreter on DT-booted ARM64 by default.
+    # WARNING: Qualcomm ACPI tables are designed for Windows. Some
+    # ACPI methods may cause errors or unexpected behaviour on Linux.
+    # Use for table extraction only, then reboot to normal entry.
+    "force-acpi".configuration = {
+      boot.kernelParams = [ "acpi=force" ];
+    };
   };
 }

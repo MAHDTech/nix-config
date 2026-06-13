@@ -32,10 +32,14 @@
  * Note: THERMAL_NO_LIMIT = 0xffffffff (from dt-bindings/thermal/thermal.h).
  * We use the raw value because NixOS compiles DT overlays with dtc directly
  * (no C preprocessor for #include).
+ *
+ * Compatible is restricted to the ASUS Zenbook A14 only — other hamoa boards
+ * (Lenovo IdeaCentre, IoT EVKs) may lack the __symbols__ entries needed to
+ * resolve &cpu0/&cpu4/&cpu8 phandle references at overlay apply time.
  */
 
 / {
-    compatible = "asus,zenbook-a14-ux3407ra", "qcom,x1e80100";
+    compatible = "asus,zenbook-a14-ux3407ra";
 
     /* Cluster 0 (CPUs 0-3): cpuss0-top-thermal */
     fragment@1 {

@@ -3,6 +3,7 @@ aclinherit
 aclmode
 acltype
 acpid
+acpidump
 acsccid
 activationlabel
 adbusers
@@ -326,6 +327,7 @@ drbdadm
 drbdmeta
 drbdsetup
 drun
+DSDT
 dtbs
 DTSI
 dtype
@@ -1411,6 +1413,7 @@ spmi
 SQUASHFS
 srcs
 Srinivas
+SSDT
 sse
 sshkeys
 sshuttle
