@@ -34,6 +34,9 @@
     # Load hardware specific configuration.
     ./hardware-configuration.nix
 
+    # ACPI Daemon
+    ../../system/config/services/acpid
+
     # CPU specific configuration.
     ../../system/config/virtualisation/cpu/amd.nix
 

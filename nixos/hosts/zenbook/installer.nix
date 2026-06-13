@@ -1,4 +1,5 @@
 {
+  pkgs,
   ...
 }:
 {
@@ -13,6 +14,10 @@
 
   networking.hostName = "installer-zenbook";
   networking.hostId = "def00003";
+
+  environment.systemPackages = with pkgs; [
+    stress-ng
+  ];
 
   # Enable SSH inside the installer for NixOS Anywhere
   services.openssh.enable = true;

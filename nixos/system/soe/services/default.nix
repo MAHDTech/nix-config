@@ -1,6 +1,5 @@
 {
   imports = [
-    ./acpid
     ./clamav
     ./cron
     ./envfs

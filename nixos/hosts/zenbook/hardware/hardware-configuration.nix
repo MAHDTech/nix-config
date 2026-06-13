@@ -316,12 +316,14 @@ in
   specialisation = {
     # Boot the system with all DSP disabled
     "disable-dsp".configuration = {
-      boot.blacklistedKernelModules = [
-        "qcom_q6v5_pas"
-      ];
-      boot.kernelParams = [
-        "module_blacklist=qcom_q6v5_pas"
-      ];
+      boot = {
+        blacklistedKernelModules = [
+          "qcom_q6v5_pas"
+        ];
+        kernelParams = [
+          "module_blacklist=qcom_q6v5_pas"
+        ];
+      };
       systemd.services = {
         qcom-remoteproc-load.enable = false;
         qcom-remoteproc-start.enable = false;
@@ -331,13 +333,17 @@ in
 
     # Boot the system with the GPU driver (msm) completely disabled
     "disable-gpu".configuration = {
-      boot.blacklistedKernelModules = [ "msm" ];
-      boot.kernelParams = [
-        "module_blacklist=msm"
-        "regulator_ignore_unused"
-      ];
-      services.greetd.enable = lib.mkForce false;
-      services.xserver.enable = lib.mkForce false;
+      boot = {
+        blacklistedKernelModules = [ "msm" ];
+        kernelParams = [
+          "module_blacklist=msm"
+          "regulator_ignore_unused"
+        ];
+      };
+      services = {
+        greetd.enable = lib.mkForce false;
+        xserver.enable = lib.mkForce false;
+      };
       programs.hyprland.enable = lib.mkForce false;
       systemd.defaultUnit = lib.mkForce "multi-user.target";
     };
@@ -350,23 +356,52 @@ in
 
     # Boot the system with both the GPU (msm) and DSPs (qcom_q6v5_pas) completely disabled
     "disable-all".configuration = {
-      boot.blacklistedKernelModules = [
-        "msm"
-        "qcom_q6v5_pas"
-      ];
-      boot.kernelParams = [
-        "module_blacklist=msm,qcom_q6v5_pas"
-        "regulator_ignore_unused"
-        "cpufreq.off=1"
-      ];
-      services.greetd.enable = lib.mkForce false;
-      services.xserver.enable = lib.mkForce false;
+      boot = {
+        blacklistedKernelModules = [
+          "msm"
+          "qcom_q6v5_pas"
+          "typec_thunderbolt"
+          "thunderbolt"
+        ];
+        kernelParams = [
+          "module_blacklist=msm,qcom_q6v5_pas,typec_thunderbolt,thunderbolt"
+          "regulator_ignore_unused"
+          "apparmor=0"
+        ];
+        kernelModules = lib.mkForce [ ];
+      };
+
+      services = {
+        greetd.enable = lib.mkForce false;
+        xserver.enable = lib.mkForce false;
+        power-profiles-daemon.enable = lib.mkForce false;
+        system76-scheduler.enable = lib.mkForce false;
+        smartd.enable = lib.mkForce false;
+        clamav = {
+          daemon.enable = lib.mkForce false;
+          updater.enable = lib.mkForce false;
+          scanner.enable = lib.mkForce false;
+        };
+        cron.enable = lib.mkForce false;
+        fwupd.enable = lib.mkForce false;
+        acpid.enable = lib.mkForce false;
+        dbus.apparmor = lib.mkForce "disabled";
+      };
+
       programs.hyprland.enable = lib.mkForce false;
-      systemd.defaultUnit = lib.mkForce "multi-user.target";
-      systemd.services = {
-        qcom-remoteproc-load.enable = false;
-        qcom-remoteproc-start.enable = false;
-        pd-mapper.enable = false;
+
+      systemd = {
+        defaultUnit = lib.mkForce "multi-user.target";
+        services = {
+          qcom-remoteproc-load.enable = false;
+          qcom-remoteproc-start.enable = false;
+          pd-mapper.enable = false;
+        };
+      };
+
+      security = {
+        apparmor.enable = lib.mkForce false;
+        lsm = lib.mkForce [ ];
       };
     };
 
