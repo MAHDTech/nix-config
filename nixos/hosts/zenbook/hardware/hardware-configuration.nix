@@ -405,6 +405,82 @@ in
       };
     };
 
+    # Match the live installer environment as closely as possible while
+    # booting from NVMe. This isolates NVMe I/O and background services
+    # as the variable — if stress-ng still crashes here but works on the
+    # USB installer, the difference is NVMe/PCIe power draw.
+    "installer-mimic".configuration = {
+      boot = {
+        blacklistedKernelModules = [
+          "msm"
+          "qcom_q6v5_pas"
+          "typec_thunderbolt"
+          "thunderbolt"
+          "pstore_blk" # Not present on installer
+          "netconsole" # Not present on installer
+          "drm_panel_edp" # Not loaded in installer initrd
+          "drm_panel_simple"
+          "drm_panel_samsung_atna33xc20"
+        ];
+        kernelParams = [
+          "module_blacklist=msm,qcom_q6v5_pas,typec_thunderbolt,thunderbolt,pstore_blk,netconsole"
+          "regulator_ignore_unused"
+          "apparmor=0"
+          # Minimize NVMe power: disable autonomous power state transitions
+          "nvme_core.default_ps_max_latency_us=0"
+        ];
+        kernelModules = lib.mkForce [ ];
+      };
+
+      # Volatile journald — no NVMe writes (matches installer's tmpfs root)
+      services.journald = {
+        storage = "volatile";
+        extraConfig = ''
+          RuntimeMaxUse=50M
+        '';
+      };
+
+      services = {
+        greetd.enable = lib.mkForce false;
+        xserver.enable = lib.mkForce false;
+        power-profiles-daemon.enable = lib.mkForce false;
+        system76-scheduler.enable = lib.mkForce false;
+        smartd.enable = lib.mkForce false; # Prevents NVMe SMART polling
+        clamav = {
+          daemon.enable = lib.mkForce false;
+          updater.enable = lib.mkForce false;
+          scanner.enable = lib.mkForce false;
+        };
+        cron.enable = lib.mkForce false;
+        fwupd.enable = lib.mkForce false;
+        acpid.enable = lib.mkForce false;
+        dbus.apparmor = lib.mkForce "disabled";
+        batteryNotifier.enable = lib.mkForce false;
+      };
+
+      programs.hyprland.enable = lib.mkForce false;
+
+      # Disable zram swap (not present on installer)
+      zramSwap.enable = lib.mkForce false;
+
+      systemd = {
+        defaultUnit = lib.mkForce "multi-user.target";
+        services = {
+          qcom-remoteproc-load.enable = false;
+          qcom-remoteproc-start.enable = false;
+          pd-mapper.enable = false;
+          # Disable telemetry and netconsole (not present on installer)
+          pmic-telemetry-logger.enable = lib.mkForce false;
+          netconsole.enable = lib.mkForce false;
+        };
+      };
+
+      security = {
+        apparmor.enable = lib.mkForce false;
+        lsm = lib.mkForce [ ];
+      };
+    };
+
     # Boot with ACPI interpreter forced on (diagnostic only).
     # Enables acpidump to extract ACPI tables (DSDT/SSDT) which
     # contain Windows PEP power limit definitions. The UEFI firmware
