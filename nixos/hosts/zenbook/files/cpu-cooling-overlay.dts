@@ -22,7 +22,7 @@
  * thermal framework so the step_wise governor can throttle frequency.
  *
  * Trip point temperatures (tunable):
- *   75 C passive  — begin frequency throttling (step_wise governor)
+ *   55 C passive  — begin frequency throttling (step_wise governor)
  *   115 C critical — emergency shutdown (existing, unchanged)
  *
  * At idle the CPU sits at ~27 C and the PMIC at ~37 C. Under all-core stress
@@ -49,7 +49,7 @@
 
             trips {
                 cluster0_passive: cluster0-passive {
-                    temperature = <75000>;
+                    temperature = <55000>;
                     hysteresis = <5000>;
                     type = "passive";
                 };
@@ -72,7 +72,7 @@
 
             trips {
                 cluster1_passive: cluster1-passive {
-                    temperature = <75000>;
+                    temperature = <55000>;
                     hysteresis = <5000>;
                     type = "passive";
                 };
@@ -95,7 +95,7 @@
 
             trips {
                 cluster2_passive: cluster2-passive {
-                    temperature = <75000>;
+                    temperature = <55000>;
                     hysteresis = <5000>;
                     type = "passive";
                 };

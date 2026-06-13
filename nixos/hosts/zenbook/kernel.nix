@@ -221,6 +221,10 @@ let
     ./scripts/config --enable FW_LOADER_COMPRESS
     ./scripts/config --enable FW_LOADER_COMPRESS_ZSTD
 
+    # Issue 23: Disable STRICT_DEVMEM to allow ACPI table extraction via /dev/mem
+    ./scripts/config --disable STRICT_DEVMEM
+    ./scripts/config --disable IO_STRICT_DEVMEM
+
     # Re-sync configuration against the active kernel tree
     make ARCH=arm64 olddefconfig
   '';
