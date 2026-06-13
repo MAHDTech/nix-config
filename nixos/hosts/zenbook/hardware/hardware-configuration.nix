@@ -167,6 +167,8 @@ in
       # pstore-blk: persistent crash store on dedicated 16M partition (survives reboot + power loss)
       # disko labels partitions as disk-{name}-{part}
       "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
+      # Suppress all platform watchdogs at boot (works on built-in drivers too)
+      "nowatchdog"
     ];
 
     # Issue 22: Audio module configuration (currently dead code — all audio
@@ -228,13 +230,6 @@ in
 
   # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
   # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
-
-  # GPU frequency cap set to 390 MHz to reduce PMIC load and prevent hard resets.
-  # TODO: Re-evaluate this cap once upstream kernel support for LMH (Limits Management Hardware)
-  # and SCMI Powercap is fully implemented and active in the Device Tree.
-  services.udev.extraRules = ''
-    SUBSYSTEM=="devfreq", KERNEL=="3d00000.gpu", ACTION=="add", ATTR{max_freq}="390000000"
-  '';
 
   systemd = {
     # Use systemd-networkd for Ethernet management
@@ -423,10 +418,11 @@ in
           "drm_panel_samsung_atna33xc20"
         ];
         kernelParams = [
-          "module_blacklist=msm,qcom_q6v5_pas,typec_thunderbolt,thunderbolt,pstore_blk,netconsole"
+          "module_blacklist=msm,qcom_q6v5_pas,typec_thunderbolt,thunderbolt,pstore_blk"
           "regulator_ignore_unused"
           # Minimize NVMe power: disable autonomous power state transitions
           "nvme_core.default_ps_max_latency_us=0"
+          "iommu.default_domain_type=passthrough"
         ];
         kernelModules = lib.mkForce [ ];
 
@@ -439,9 +435,9 @@ in
         };
       };
 
-      # Volatile journald — no NVMe writes (matches installer's tmpfs root)
+      # Persistent journald to capture oops logs on NVMe
       services.journald = {
-        storage = "volatile";
+        storage = "persistent";
         extraConfig = ''
           RuntimeMaxUse=50M
         '';
@@ -479,9 +475,8 @@ in
           qcom-remoteproc-load.enable = false;
           qcom-remoteproc-start.enable = false;
           pd-mapper.enable = false;
-          # Disable telemetry and netconsole (not present on installer)
+          # Disable telemetry (not present on installer) but KEEP netconsole enabled
           pmic-telemetry-logger.enable = lib.mkForce false;
-          netconsole.enable = lib.mkForce false;
         };
       };
 
@@ -508,4 +503,9 @@ in
       boot.kernelParams = [ "acpi=force" ];
     };
   };
+
+  # Force-disable Plymouth and AppArmor at the parent configuration level
+  # to completely exclude them from the shared boot initrd.
+  boot.plymouth.enable = lib.mkForce false;
+  security.apparmor.enable = lib.mkForce false;
 }

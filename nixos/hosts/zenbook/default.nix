@@ -1,5 +1,11 @@
-{ ... }:
+{ lib, ... }:
 {
+  # Disable hardware watchdog to prevent system starvation resets under load
+  systemd.settings.Manager = {
+    RuntimeWatchdogSec = lib.mkForce "0";
+    RebootWatchdogSec = lib.mkForce "0";
+    KExecWatchdogSec = lib.mkForce "0";
+  };
 
   networking = {
     hostName = "ZENBOOK";
