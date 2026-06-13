@@ -348,6 +348,27 @@ in
       systemd.defaultUnit = lib.mkForce "multi-user.target";
     };
 
+    # Boot the system with both the GPU (msm) and DSPs (qcom_q6v5_pas) completely disabled
+    "disable-all".configuration = {
+      boot.blacklistedKernelModules = [
+        "msm"
+        "qcom_q6v5_pas"
+      ];
+      boot.kernelParams = [
+        "module_blacklist=msm,qcom_q6v5_pas"
+        "regulator_ignore_unused"
+      ];
+      services.greetd.enable = lib.mkForce false;
+      services.xserver.enable = lib.mkForce false;
+      programs.hyprland.enable = lib.mkForce false;
+      systemd.defaultUnit = lib.mkForce "multi-user.target";
+      systemd.services = {
+        qcom-remoteproc-load.enable = false;
+        qcom-remoteproc-start.enable = false;
+        pd-mapper.enable = false;
+      };
+    };
+
     # Boot with ACPI interpreter forced on (diagnostic only).
     # Enables acpidump to extract ACPI tables (DSDT/SSDT) which
     # contain Windows PEP power limit definitions. The UEFI firmware
