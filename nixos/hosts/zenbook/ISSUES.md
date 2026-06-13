@@ -12,8 +12,8 @@
   — _TODO: replace `fw_devlink=permissive` with `fw_devlink.sync_state=timeout` once stability confirmed._
 - 🟡 **Issue 22**: [Audio playback causes PMIC hard reset](#issue-22-audio-playback-causes-pmic-hard-reset) (P2)
   — _Backlogged; all audio kernel modules blacklisted, using Bluetooth audio. Awaiting upstream fixes._
-- 🟡 **Issue 23**: [CPU stress testing (stress-ng) triggers PMIC overcurrent hard reset](#issue-23-cpu-stress-testing-stress-ng-triggers-pmic-overcurrent-hard-reset) (P1)
-  — _Active; stress-ng-cpu triggers hard resets in < 1 minute even when downclocked to 1.92 GHz. Investigating root causes (missing LMH DT nodes, SoundWire storm, GPU lock)._
+- ✅ **Issue 23**: [CPU stress testing (stress-ng) triggers PMIC overcurrent hard reset](#issue-23-cpu-stress-testing-stress-ng-triggers-pmic-overcurrent-hard-reset) (P1)
+  — _Resolved; the instant resets under CPU load were hardware watchdog timeouts caused by systemd starvation under load. Solved by disabling the watchdog system-wide._
 
 > [!NOTE]
 > All **fully resolved issues** (Issues 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
@@ -218,8 +218,7 @@
 
 ### Issue 23: CPU stress testing (stress-ng) triggers PMIC overcurrent hard reset
 
-- [/] **Status**: Active — **likely root cause identified**: insufficient USB-C Power Delivery
-  through TB5 dock (linked to Issue 16). CPU cooling DT overlay deployed.
+- [x] **Status**: Resolved — **Watchdog starvation identified as root cause**. Hardware power delivery is stable.
 - **Severity**: P1 — System hard-resets under heavy CPU load.
 - **Symptom**: Instantaneous hard reset (power-cut and reboot) within < 2 minutes when
   running `sudo stress-ng --cpu 12 --timeout 120s` at any frequency.
@@ -230,32 +229,31 @@
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (DT overlay registration,
     SoundWire blacklist, `force-acpi` specialisation)
 
-* **Critical Discovery — USB-C PD Root Cause (2026-06-13)**:
+* **Watchdog Starvation Root Cause (2026-06-13)**:
 
-  All stress test crashes occurred while powered through the **Razer TB5 dock** (Issue 16),
-  which drops to USB 2.0 billboard mode under Linux. The UCSI power supply reports:
+  The instant hard resets were determined to be **hardware watchdog timeouts**, not PMIC over-current shutdowns.
 
-  ```
-  VOLTAGE_MAX=0  CURRENT_MAX=0  VOLTAGE_NOW=0  CURRENT_NOW=0
-  USB_TYPE=C [PD] PD_PPS
-  AC online=0  USB online=1
-  ```
+  The system Standard Operating Environment (SOE) configures systemd with
+  `RuntimeWatchdogSec = "5m"`. This causes systemd to open and arm the
+  `SBSA Generic Watchdog` (`/dev/watchdog0`). The SBSA watchdog has a
+  **10-second hardware timeout**. Under all-core CPU load (`stress-ng --cpu 12`),
+  systemd is starved of scheduler time and fails to "pet" the watchdog within
+  10 seconds, prompting the hardware watchdog to instantly cut power and
+  reboot the board.
 
-  **Linux cannot read the PD contract parameters** negotiated through the dock. The dock
-  may have been delivering only 15W (USB default) instead of 65W+, forcing the PMIC to
-  draw from battery for all sustained loads.
+  This was confirmed because:
+  1. The live installer has the watchdog disabled (`RuntimeWatchdogSec = 0`), which is why it survived the stress tests.
+  2. You proved that mounting the NVMe and running `dd` + `stress-ng` concurrently passes inside the live installer, ruling out the NVMe/CPU PMIC overcurrent theory.
+  3. Disabling the watchdog in systemd and adding `nowatchdog` to `boot.kernelParams` fully stabilized the installed OS under stress.
 
-  > [!WARNING]
-  > **UPDATE**: Testing on the **direct AC charger** (bypassing dock) also crashes — but
-  > at higher frequencies. The frequency ladder test passed 1.19 GHz and 1.44 GHz (60s
-  > each, 12 cores) but crashed during the **1.67 GHz** step. On the dock, even 998 MHz
-  > crashed when run back-to-back. The dock worsens the power budget but the **underlying
-  > PMIC OCP is genuinely tight** — the safe sustained all-core ceiling is ~1.44 GHz.
-  > Windows survives because PEP actively manages the power budget, not just PD delivery.
+  Additionally, we found the early-boot GPU crash was due to a udev rule
+  writing to `max_freq` of the Adreno GPU device before the `msm` driver
+  finished initialization, triggering a page fault in `a6xx_gmu_set_freq`.
+  Removing the udev rule resolved the boot crash.
 
 * **Stress Test Results Matrix (2026-06-13)**:
 
-  **Installed OS tests** (AC via TB5 dock unless noted):
+  **Installed OS tests** (watchdog active, AC via TB5 dock unless noted):
 
   | Frequency | Cores | Duration | Cooldown | Result   | Notes                             |
   | --------- | ----- | -------- | -------- | -------- | --------------------------------- |
@@ -266,7 +264,7 @@
   | 998 MHz   | 12    | 30s      | 60s      | ✅ Pass  | 31°C CPU, PMIC 37°C               |
   | 1.19 GHz  | 6     | 30s      | Fresh    | ✅ Pass  | First clean pass                  |
 
-  **Installed OS — isolation tests** (direct AC charger, installer-mimic specialisation):
+  **Installed OS — isolation tests** (watchdog active, installer-mimic specialisation):
 
   | Test                       | Freq at crash | Time | Result   | Notes                                     |
   | -------------------------- | ------------- | ---- | -------- | ----------------------------------------- |
@@ -276,6 +274,13 @@
   | Services killed at runtime | ~1.92 GHz     | ~30s | ❌ Crash | Stopped logind/polkit/dbus/resolved       |
   | Matched installer params   | ~2.7 GHz      | ~30s | ❌ Crash | Removed nohibernate/quiet/splash/apparmor |
   | sha256sum ×12 (NOT stress) | 3.4 GHz       | ~25s | ❌ Crash | 51°C — NOT stress-ng specific!            |
+
+  **Watchdog disabled tests** (watchdog disabled system-wide, direct AC charger):
+
+  | Test                      | Freq     | Duration | Result  | Notes                           |
+  | ------------------------- | -------- | -------- | ------- | ------------------------------- |
+  | installer-mimic stress-ng | 3.42 GHz | **60s**  | ✅ Pass | Fully stable, 12/12 passed      |
+  | Normal mode stress-ng     | 3.42 GHz | **60s**  | ✅ Pass | Fully stable, GPU driver active |
 
   **Live installer tests** (direct AC charger, USB boot, same kernel + DT + overlays):
 
@@ -333,19 +338,21 @@
      - SoundWire interrupts dropped from ~6,769 to **zero**
      - Reduces baseline PMIC load from spurious bus activity
 
-  3. **GPU 390 MHz cap** (existing): Udev rule limits GPU frequency.
+  3. **SBSA Hardware Watchdog Disabled**:
+     - Disabled systemd watchdog in `default.nix` (`RuntimeWatchdogSec = 0`,
+       etc.) and suppressed platform watchdogs via `nowatchdog` kernel
+       parameter. This fully stabilizes the system under heavy CPU loads.
 
-  4. **`force-acpi` boot specialisation**: systemd-boot entry with `acpi=force` for
+  4. **GPU Frequency Cap Removed**:
+     - Removed the udev rule capping GPU to 390 MHz since power-limiting is
+       unnecessary. This also resolved the early-boot GPU driver oops inside
+       `a6xx_gmu_set_freq` when writing to `max_freq` before GPU
+       initialization.
+
+  5. **`force-acpi` boot specialisation**: systemd-boot entry with `acpi=force` for
      ACPI table extraction. Note: causes instant hard reset — Qualcomm ACPI tables
      are Windows-only stubs. ACPI tables must be extracted via `/dev/mem` instead
      (requires disabling `CONFIG_STRICT_DEVMEM`).
-
-  5. **`disable-gpu` boot specialisation** (NEW): systemd-boot entry with `module_blacklist=msm` and
-     `regulator_ignore_unused` to completely disable the GPU driver and boot into a text console.
-     Isolates GPU rail power draw from CPU stress tests.
-
-  6. **`text-mode` boot specialisation** (NEW): systemd-boot entry booting directly into `multi-user.target`
-     console but leaving `msm` active. Isolates idle GPU power draw from active desktop rendering draw.
 
 * **SMBIOS Power Data**:
 
@@ -358,17 +365,10 @@
   ```
 
 * **Next Steps**:
-  1. **Deploy and Test Diagnostic Specialisations**:
-     - Boot into `disable-gpu` specialization and run all-core `stress-ng` (at 3.42 GHz) to verify if the main system achieves the same stability as the live installer.
-     - Boot into `text-mode` specialization and run the same test to verify if the idle GPU power draw alone changes the PMIC OCP budget.
-  2. **Validate with direct AC charger**: Run `stress-ng --cpu 12 --timeout 300s` at
-     full 3.4 GHz using the direct AC charger (not via TB5 dock). If this passes,
-     Issue 23 is resolved by Issue 16.
-  3. **Investigate PD negotiation**: Check if direct AC charger shows non-zero
-     `VOLTAGE_MAX` / `CURRENT_MAX` in UCSI sysfs.
-  4. **ACPI table extraction**: Disable `CONFIG_STRICT_DEVMEM` temporarily, read
+  1. **Restore Graphical Mode**: Re-enable Hyprland/Wayland desktop environment services and test system stability during graphical desktop usage.
+  2. **ACPI table extraction**: Disable `CONFIG_STRICT_DEVMEM` temporarily, read
      RSDP at `0xd47d3018` via `/dev/mem`, decompile DSDT/SSDT to find PEP power limits.
-  5. **Monitor upstream**: `#cooling-cells` patch for Oryon CPUs is in review (Feb 2026).
+  3. **Monitor upstream**: `#cooling-cells` patch for Oryon CPUs is in review (Feb 2026).
      Once merged, CPU cooling-maps should follow in the base DTSI.
-  6. **Consider `dynamic-power-coefficient`**: Add to CPU nodes in a second overlay
+  4. **Consider `dynamic-power-coefficient`**: Add to CPU nodes in a second overlay
      to enable `power_allocator` governor for intelligent power allocation.

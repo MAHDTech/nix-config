@@ -1,6 +1,6 @@
 {
   imports = [
-    #./apparmor # TODO: Re-enable once tested on Zenbook.
+    ./apparmor
     ./lsm
     ./pki
     ./polkit
