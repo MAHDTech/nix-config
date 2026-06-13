@@ -243,16 +243,15 @@
 
   **Linux cannot read the PD contract parameters** negotiated through the dock. The dock
   may have been delivering only 15W (USB default) instead of 65W+, forcing the PMIC to
-  draw from battery for all sustained loads. This directly explains:
-  - Why **all 12-core tests crash** regardless of frequency (total power exceeds delivery)
-  - Why **6-core tests pass** (stays under crippled power budget)
-  - Why **back-to-back tests crash faster** (battery depleting)
-  - Why **Windows never crashes** (proper TB5 PD negotiation = full power delivery)
+  draw from battery for all sustained loads.
 
-  > [!IMPORTANT]
-  > Issues 16 and 23 may be the **same root cause**. Testing with the direct AC charger
-  > (bypassing the dock) is required to confirm. Preliminary results with the proper
-  > charger show improved stability — full validation pending.
+  > [!WARNING]
+  > **UPDATE**: Testing on the **direct AC charger** (bypassing dock) also crashes — but
+  > at higher frequencies. The frequency ladder test passed 1.19 GHz and 1.44 GHz (60s
+  > each, 12 cores) but crashed during the **1.67 GHz** step. On the dock, even 998 MHz
+  > crashed when run back-to-back. The dock worsens the power budget but the **underlying
+  > PMIC OCP is genuinely tight** — the safe sustained all-core ceiling is ~1.44 GHz.
+  > Windows survives because PEP actively manages the power budget, not just PD delivery.
 
 * **Stress Test Results Matrix (2026-06-13)**:
 
