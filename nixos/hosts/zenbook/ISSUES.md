@@ -268,11 +268,14 @@
 
   **Installed OS — isolation tests** (direct AC charger, installer-mimic specialisation):
 
-  | Test                   | Freq at crash | Time | Result   | Notes                                |
-  | ---------------------- | ------------- | ---- | -------- | ------------------------------------ |
-  | installer-mimic        | ~2.97 GHz     | ~30s | ❌ Crash | Cooling throttled from 3.4 but OCP'd |
-  | WiFi unbound from PCIe | ~2.7 GHz      | ~30s | ❌ Crash | WiFi NOT the cause                   |
-  | RO root (attempted)    | ~2.7 GHz      | ~30s | ❌ Crash | Couldn't fully remount RO            |
+  | Test                       | Freq at crash | Time | Result   | Notes                                     |
+  | -------------------------- | ------------- | ---- | -------- | ----------------------------------------- |
+  | installer-mimic            | ~2.97 GHz     | ~30s | ❌ Crash | Cooling throttled from 3.4 but OCP'd      |
+  | WiFi unbound from PCIe     | ~2.7 GHz      | ~30s | ❌ Crash | WiFi NOT the cause                        |
+  | RO root (attempted)        | ~2.7 GHz      | ~30s | ❌ Crash | Couldn't fully remount RO                 |
+  | Services killed at runtime | ~1.92 GHz     | ~30s | ❌ Crash | Stopped logind/polkit/dbus/resolved       |
+  | Matched installer params   | ~2.7 GHz      | ~30s | ❌ Crash | Removed nohibernate/quiet/splash/apparmor |
+  | sha256sum ×12 (NOT stress) | 3.4 GHz       | ~25s | ❌ Crash | 51°C — NOT stress-ng specific!            |
 
   **Live installer tests** (direct AC charger, USB boot, same kernel + DT + overlays):
 
