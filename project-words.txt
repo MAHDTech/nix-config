@@ -224,6 +224,7 @@ containerd
 CONTIG
 conv
 convco
+Cooldown
 copyindent
 Coqui
 coredump
@@ -236,6 +237,7 @@ cpucp
 cpufreq
 cpuidle
 cpuset
+cpuss
 Creality
 criticalthink
 cros
@@ -846,6 +848,7 @@ mbim
 mcopy
 MDIO
 Mediatek
+memlat
 memlock
 memmap
 memset
@@ -1042,6 +1045,7 @@ optee
 optimus
 orama
 orangepi
+Oryon
 Osasco
 ostage
 overcurrent
@@ -1281,6 +1285,7 @@ rpmsg
 rpool
 rprint
 rptint
+RSDP
 RSYNC
 rtcqs
 rtkit

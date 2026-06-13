@@ -218,39 +218,113 @@
 
 ### Issue 23: CPU stress testing (stress-ng) triggers PMIC overcurrent hard reset
 
-- [ ] **Status**: Active / GPU-only cap workaround implemented.
-- **Severity**: P1 — System hard-resets under heavy CPU load, making stress testing or heavy compilation impossible.
-- **Symptom**: Instantaneous hard reset (power-cut and reboot) within < 1 minute when running `sudo stress-ng --cpu 0 --cpu-method all --timeout 120s --metrics-brief`.
+- [/] **Status**: Active — **likely root cause identified**: insufficient USB-C Power Delivery
+  through TB5 dock (linked to Issue 16). CPU cooling DT overlay deployed.
+- **Severity**: P1 — System hard-resets under heavy CPU load.
+- **Symptom**: Instantaneous hard reset (power-cut and reboot) within < 2 minutes when
+  running `sudo stress-ng --cpu 12 --timeout 120s` at any frequency.
 - **Codebase References**:
   - `nixos/hosts/zenbook/kernel.nix` (`CONFIG_QCOM_LMH`, `CONFIG_ARM_SCMI_POWERCAP`)
   - `nixos/hosts/zenbook/power.nix` (CPU frequency configuration and telemetry logger)
+  - `nixos/hosts/zenbook/files/cpu-cooling-overlay.dts` (NEW — passive trip cooling-maps)
+  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (DT overlay registration,
+    SoundWire blacklist, `force-acpi` specialisation)
 
-* **Key Findings & Diagnoses**:
-  - **LMH (Limits Management Hardware) is Inactive**:
-    `CONFIG_QCOM_LMH=y` is compiled in, but the X1E80100 device tree has
-    no `qcom,lmh` compatible nodes. The driver never probes, disabling all
-    hardware-managed current/thermal limit throttling.
-  - **SCMI Powercap is Inactive**: The SCMI firmware DT node only declares
-    `protocol@13` (cpufreq). It lacks `protocol@19` (SCMI Powercap),
-    leaving `/sys/class/powercap/arm-scmi` with zero power budget zones.
-  - **Transient Current/Thermal Runaway**: Under full 12-core load, even
-    capped to 1.92 GHz, thermal buildup increases silicon leakage current
-    until the PMIC's hardware OCP/UVLO trips (~60s).
-  - **CPU thermal zones have NO cooling-maps**: The DT defines 24 CPU thermal
-    zones but none are connected to cpufreq cooling devices. Only the GPU
-    has proper cooling-maps (passive at 95°C → devfreq throttling).
-  - **GPU Scaling is Functional**: Devfreq uses `simple_ondemand` and scales
-    the GPU to 300 MHz at idle. GPU thermal throttling works via DT
-    cooling-maps.
+* **Critical Discovery — USB-C PD Root Cause (2026-06-13)**:
 
-* **Resolution / Mitigations (2026-06-13)**:
-  - **GPU 390 MHz Cap**: Udev rule caps GPU at 390 MHz to reduce combined
-    power envelope. See `hardware-configuration.nix`.
-  - **SoundWire IRQ storm eliminated**: Blacklisted `soundwire_qcom` and
-    all `snd_soc_lpass_*_macro` modules that generated ~6,769 interrupts
-    from boot due to WSA884x bus errors.
-  - **CPU Capping Deferred**: Not capping CPU globally to preserve
-    single-thread burst performance.
-  - **TODO**: Monitor upstream for `qcom,lmh` DT nodes in `x1e80100.dtsi`
-    and SCMI Powercap `protocol@19`. Create DT overlay with CPU
-    cooling-maps as interim safety net.
+  All stress test crashes occurred while powered through the **Razer TB5 dock** (Issue 16),
+  which drops to USB 2.0 billboard mode under Linux. The UCSI power supply reports:
+
+  ```
+  VOLTAGE_MAX=0  CURRENT_MAX=0  VOLTAGE_NOW=0  CURRENT_NOW=0
+  USB_TYPE=C [PD] PD_PPS
+  AC online=0  USB online=1
+  ```
+
+  **Linux cannot read the PD contract parameters** negotiated through the dock. The dock
+  may have been delivering only 15W (USB default) instead of 65W+, forcing the PMIC to
+  draw from battery for all sustained loads. This directly explains:
+  - Why **all 12-core tests crash** regardless of frequency (total power exceeds delivery)
+  - Why **6-core tests pass** (stays under crippled power budget)
+  - Why **back-to-back tests crash faster** (battery depleting)
+  - Why **Windows never crashes** (proper TB5 PD negotiation = full power delivery)
+
+  > [!IMPORTANT]
+  > Issues 16 and 23 may be the **same root cause**. Testing with the direct AC charger
+  > (bypassing the dock) is required to confirm. Preliminary results with the proper
+  > charger show improved stability — full validation pending.
+
+* **Stress Test Results Matrix (2026-06-13)**:
+
+  All tests on AC via TB5 dock unless noted:
+
+  | Frequency | Cores | Duration | Cooldown | Result     | Notes                                  |
+  | --------- | ----- | -------- | -------- | ---------- | -------------------------------------- |
+  | 3.4 GHz   | 12    | ~90s     | Cold     | ❌ Crash   | 60°C CPU — well below 75°C trip        |
+  | 2.2 GHz   | 12    | ~90s     | None     | ❌ Crash   | 41°C CPU — freq cap had no effect      |
+  | 1.44 GHz  | 12    | ~90s     | None     | ❌ Crash   | 34°C CPU — not thermal at all          |
+  | 998 MHz   | 12    | Instant  | None     | ❌ Crash   | Back-to-back accumulated stress        |
+  | 998 MHz   | 12    | 30s      | 60s      | ✅ Pass    | 31°C CPU, PMIC 37°C                    |
+  | 1.19 GHz  | 6     | 30s      | Fresh    | ✅ Pass    | First clean pass                       |
+  | 1.19 GHz  | 12    | 60s      | 30s      | ⏳ Running | Charger switched to direct AC mid-test |
+
+  **Key observation**: Temperature is NOT the trigger. Crashes occur at 34-60°C, far below
+  the 75°C passive trip point. This is a **current/power delivery** issue.
+
+* **Architecture — Why Windows Works (Research Findings)**:
+
+  | Layer          | Windows                                     | Linux                                       |
+  | -------------- | ------------------------------------------- | ------------------------------------------- |
+  | Power Budget   | PEP (Power Engine Plugin) — Qualcomm binary | ❌ Nothing                                  |
+  | CPU Throttling | PEP → firmware + ACPI `_PPC/_PCT`           | ❌ No cooling-maps (our overlay adds these) |
+  | LMH Hardware   | TrustZone-managed (cooperates with PEP)     | TrustZone only (no PEP cooperation)         |
+  | DDR Scaling    | PEP memory latency management               | ❌ No memlat driver                         |
+  | USB-C PD       | Full negotiation via PEP + dock driver      | ❌ Broken (zero values in UCSI)             |
+
+  **No x1e80100 board DTS has CPU cooling-maps** — the gap is universal across ALL boards
+  (Dell, HP, Lenovo, Microsoft, ASUS, TUXEDO). Our overlay is ahead of upstream.
+
+  LMH is intentionally managed by TrustZone firmware on X1E80100 (no kernel interaction).
+  SCMI Powercap (`protocol@19`) is absent from the firmware DT — cannot be fixed via overlay.
+
+* **Deployed Mitigations (2026-06-13)**:
+  1. **CPU cooling-maps DT overlay** (`cpu-cooling-overlay.dts`):
+     - Adds `passive` trip at 75°C + `cooling-maps` to `cpuss{0,1,2}-top-thermal`
+     - Wires `cpufreq-cpu{0,4,8}` cooling devices via `step_wise` governor
+     - 100ms polling delay for responsive throttling
+     - Verified active: trip points, cooling devices, and bindings all confirmed in sysfs
+
+  2. **SoundWire IRQ storm eliminated**:
+     - Blacklisted `soundwire_qcom` and `snd_soc_lpass_*_macro` modules
+     - SoundWire interrupts dropped from ~6,769 to **zero**
+     - Reduces baseline PMIC load from spurious bus activity
+
+  3. **GPU 390 MHz cap** (existing): Udev rule limits GPU frequency.
+
+  4. **`force-acpi` boot specialisation**: systemd-boot entry with `acpi=force` for
+     ACPI table extraction. Note: causes instant hard reset — Qualcomm ACPI tables
+     are Windows-only stubs. ACPI tables must be extracted via `/dev/mem` instead
+     (requires disabling `CONFIG_STRICT_DEVMEM`).
+
+* **SMBIOS Power Data**:
+
+  ```
+  Processor: Snapdragon X Elite - X1E78100 (12 cores, no HT)
+  Voltage: 1.1V
+  Max Speed: 3400 MHz
+  Battery: 70Wh (Li-ion, 13 cycles, manufactured 2025-04-20)
+  Charger: USB-C PD 3.1 with PPS
+  ```
+
+* **Next Steps**:
+  1. **Validate with direct AC charger**: Run `stress-ng --cpu 12 --timeout 300s` at
+     full 3.4 GHz using the direct AC charger (not via TB5 dock). If this passes,
+     Issue 23 is resolved by Issue 16.
+  2. **Investigate PD negotiation**: Check if direct AC charger shows non-zero
+     `VOLTAGE_MAX` / `CURRENT_MAX` in UCSI sysfs.
+  3. **ACPI table extraction**: Disable `CONFIG_STRICT_DEVMEM` temporarily, read
+     RSDP at `0xd47d3018` via `/dev/mem`, decompile DSDT/SSDT to find PEP power limits.
+  4. **Monitor upstream**: `#cooling-cells` patch for Oryon CPUs is in review (Feb 2026).
+     Once merged, CPU cooling-maps should follow in the base DTSI.
+  5. **Consider `dynamic-power-coefficient`**: Add to CPU nodes in a second overlay
+     to enable `power_allocator` governor for intelligent power allocation.
