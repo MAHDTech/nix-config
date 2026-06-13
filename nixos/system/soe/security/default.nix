@@ -1,6 +1,7 @@
 {
   imports = [
     ./apparmor
+    ./lsm
     ./pki
     ./polkit
   ];

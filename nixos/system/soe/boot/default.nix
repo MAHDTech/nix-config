@@ -67,8 +67,9 @@ in
         latestCompatibleKernelPackage;
 
     kernelParams = [
-      "nohibernate"
-      "quiet"
+      # TODO: Re-enable once zenbook PMIC OCP issue is resolved (Issue 23)
+      # "nohibernate"
+      # "quiet"
     ];
 
     # Increase file watcher limit for all users

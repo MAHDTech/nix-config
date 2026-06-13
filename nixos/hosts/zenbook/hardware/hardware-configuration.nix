@@ -425,11 +425,18 @@ in
         kernelParams = [
           "module_blacklist=msm,qcom_q6v5_pas,typec_thunderbolt,thunderbolt,pstore_blk,netconsole"
           "regulator_ignore_unused"
-          "apparmor=0"
           # Minimize NVMe power: disable autonomous power state transitions
           "nvme_core.default_ps_max_latency_us=0"
         ];
         kernelModules = lib.mkForce [ ];
+
+        # Override SOE sysctl to match installer defaults
+        kernel.sysctl = {
+          # Installer uses kernel defaults (not 1)
+          "vm.compact_unevictable_allowed" = lib.mkForce 0;
+          # Installer uses kernel default (60)
+          "vm.swappiness" = lib.mkForce 60;
+        };
       };
 
       # Volatile journald — no NVMe writes (matches installer's tmpfs root)
@@ -463,6 +470,9 @@ in
       # Disable zram swap (not present on installer)
       zramSwap.enable = lib.mkForce false;
 
+      # Disable plymouth (not present on installer, adds 'splash' kernel param)
+      boot.plymouth.enable = lib.mkForce false;
+
       systemd = {
         defaultUnit = lib.mkForce "multi-user.target";
         services = {
@@ -477,7 +487,6 @@ in
 
       security = {
         apparmor.enable = lib.mkForce false;
-        lsm = lib.mkForce [ ];
       };
     };
 
