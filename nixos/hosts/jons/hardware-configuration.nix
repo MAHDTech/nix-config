@@ -168,8 +168,8 @@
   networking = {
     useDHCP = lib.mkDefault false;
     interfaces = {
-      enp10s0 = {
-        name = "enp10s0";
+      enp13s0 = {
+        name = "enp13s0";
         useDHCP = false;
         mtu = lib.mkForce 1500;
       };
@@ -181,7 +181,7 @@
     };
     bridges = {
       br0 = {
-        interfaces = [ "enp10s0" ];
+        interfaces = [ "enp13s0" ];
       };
     };
   };

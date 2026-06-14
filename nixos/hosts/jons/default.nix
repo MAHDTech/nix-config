@@ -10,6 +10,11 @@
   # Override docker storage driver for ZFS (this host still uses ZFS)
   virtualisation.docker.storageDriver = "zfs";
 
+  environment.variables = {
+    # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1
+    LIBVA_DRIVER_NAME = "amdgpu";
+  };
+
   imports = [
     # Load hardware specific configuration.
     ./hardware-configuration.nix
@@ -21,6 +26,7 @@
     ../../system/config/virtualisation/cpu/amd.nix
 
     # GPU specific configuration.
+    ../../system/config/video/amd
     ../../system/config/video/intel
 
     # Enable DisplayLink USB dock support (EVDI + dlm service)

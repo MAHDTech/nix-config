@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   imports = [ ];
 
@@ -94,29 +94,29 @@
 
   environment.variables = {
     # Sets the default driver for VA-API, "amdgpu" is used for AMD GPUs
-    LIBVA_DRIVER_NAME = "amdgpu";
+    LIBVA_DRIVER_NAME = lib.mkDefault "amdgpu";
 
     # Ensures legacy VDPAU applications can use VA-API for acceleration
-    VDPAU_DRIVER = "va_gl";
+    VDPAU_DRIVER = lib.mkDefault "va_gl";
 
     # Ensures X11 applications use Mesa's OpenGL implementation
-    __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "mesa";
 
     # General performance enhancement for Vulkan applications by caching pipelines
-    ANV_ENABLE_PIPELINE_CACHE = "1";
+    ANV_ENABLE_PIPELINE_CACHE = lib.mkDefault "1";
 
     # Allows Mesa's threaded optimizations for better performance, especially in CPU-bound games
-    __GL_THREADED_OPTIMIZATIONS = "1";
+    __GL_THREADED_OPTIMIZATIONS = lib.mkDefault "1";
 
     # Force RADV over AMDVLK for better performance in games
-    AMD_VULKAN_ICD = "RADV";
+    AMD_VULKAN_ICD = lib.mkDefault "RADV";
 
     # Enable ROCm for pre-Vega APUs if needed
     # ROC_ENABLE_PRE_VEGA = "1";
 
     # Additional performance optimizations
-    MESA_GL_VERSION_OVERRIDE = "4.5";
-    MESA_GLSL_VERSION_OVERRIDE = "450";
+    MESA_GL_VERSION_OVERRIDE = lib.mkDefault "4.5";
+    MESA_GLSL_VERSION_OVERRIDE = lib.mkDefault "450";
   };
 
 }

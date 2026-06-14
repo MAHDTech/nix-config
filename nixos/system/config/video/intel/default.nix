@@ -1,6 +1,7 @@
 {
   inputs,
   pkgs,
+  lib,
   ...
 }:
 let
@@ -26,7 +27,6 @@ in
     ];
 
     blacklistedKernelModules = [
-      "amdgpu"
       "nouveau"
       "nvidia"
       "nvidia_drm"
@@ -101,14 +101,14 @@ in
 
   environment.variables = {
     # Sets the default driver for VA-API, "iHD" is used for Intel ARC GPUs
-    LIBVA_DRIVER_NAME = "iHD";
+    LIBVA_DRIVER_NAME = lib.mkDefault "iHD";
 
     # Ensures X11 applications use Mesa's OpenGL implementation
-    __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "mesa";
 
     # Workaround for Intel Arc B580 (BMG G21) ANV Vulkan swapchain bug in Mesa 25.x.
     # "immediate" was the least-corrupt present mode in testing; mailbox/fifo both
     # trigger the swapchain acquisition failure. Remove once ANV BMG support matures.
-    MESA_VK_WSI_PRESENT_MODE = "immediate";
+    MESA_VK_WSI_PRESENT_MODE = lib.mkDefault "immediate";
   };
 }
