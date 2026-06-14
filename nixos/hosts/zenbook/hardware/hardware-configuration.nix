@@ -125,6 +125,12 @@ in
       # qcom-remoteproc-load.service AFTER pd-mapper.service is running, to
       # prevent the DSP boot race condition (see resolved Issue 20).
       "qcom_q6v5_pas"
+
+      # Force Thunderbolt/Type-C dock into USB 2.0 fallback mode by blacklisting
+      # the UCSI and Alt Mode negotiation drivers. This allows the dock's USB hubs
+      # and Ethernet to function stably at 480 Mbps.
+      "ucsi_glink"
+      "pmic_glink_altmode"
     ]
     ++ lib.optionals isInstaller [
       "typec_thunderbolt"
