@@ -206,6 +206,16 @@ function warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 function fail() { echo -e "${RED}[FAIL]${NC} $1"; }
 function has_cmd() { command -v "$1" &>/dev/null; }
 
+function run_user() {
+	sudo -u "$REAL_USER" env \
+		DISPLAY="${DISPLAY:-}" \
+		WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" \
+		XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" \
+		XAUTHORITY="${XAUTHORITY:-}" \
+		HYPRLAND_INSTANCE_SIGNATURE="${HYPRLAND_INSTANCE_SIGNATURE:-}" \
+		"$@"
+}
+
 function run_test() {
 	local name="$1"
 	shift
@@ -219,6 +229,12 @@ function run_test() {
 	else
 		warn "$name exited with code $rc"
 	fi
+}
+
+function run_test_user() {
+	local name="$1"
+	shift
+	run_test "$name" run_user "$@"
 }
 
 # Resolution detection (inside nix-shell where xrandr is available)
@@ -278,14 +294,14 @@ if [ "$SKIP_INFO" != "1" ]; then
 
 	section "1.4 OpenGL Info (glxinfo)"
 	if has_cmd glxinfo; then
-		glxinfo 2>/dev/null | grep -iE 'renderer|vendor|version|direct rendering' || warn "glxinfo failed"
+		run_user glxinfo 2>/dev/null | grep -iE 'renderer|vendor|version|direct rendering' || warn "glxinfo failed"
 	else
 		warn "glxinfo not available"
 	fi
 
 	section "1.5 Vulkan Info"
 	if has_cmd vulkaninfo; then
-		vulkaninfo --summary 2>/dev/null || vulkaninfo 2>/dev/null | head -40 || warn "vulkaninfo failed"
+		run_user vulkaninfo --summary 2>/dev/null || run_user vulkaninfo 2>/dev/null | head -40 || warn "vulkaninfo failed"
 	else
 		warn "vulkaninfo not available"
 	fi
@@ -333,12 +349,12 @@ fi
 banner "Phase 4: GPU Visual Rendering Benchmarks (${DURATION}s each)"
 
 # 4.1 glxgears - Classic OpenGL spinning gears
-run_test "4.1 OpenGL - glxgears (fullscreen, vsync off)" \
+run_test_user "4.1 OpenGL - glxgears (fullscreen, vsync off)" \
 	env vblank_mode=0 timeout "${DURATION}s" glxgears -fullscreen -geometry "$RESOLUTION"
 
 # 4.2 vkcube - Vulkan spinning cube
 if has_cmd vkcube; then
-	run_test "4.2 Vulkan - vkcube (spinning cube)" \
+	run_test_user "4.2 Vulkan - vkcube (spinning cube)" \
 		timeout "${DURATION}s" vkcube --width "$WIDTH" --height "$HEIGHT"
 else
 	warn "vkcube not available, skipping"
@@ -346,14 +362,14 @@ fi
 
 # 4.3 vkmark - Vulkan benchmark suite (run forever and let timeout terminate it)
 if has_cmd vkmark; then
-	run_test "4.3 Vulkan - vkmark (fullscreen, immediate present)" \
+	run_test_user "4.3 Vulkan - vkmark (fullscreen, immediate present)" \
 		env MESA_VK_WSI_PRESENT_MODE=immediate timeout "${DURATION}s" vkmark --fullscreen --size "$RESOLUTION" --run-forever
 else
 	warn "vkmark not available, skipping"
 fi
 
 # 4.4 glmark2 - OpenGL benchmark (full suite, run forever and let timeout terminate it)
-run_test "4.4 OpenGL - glmark2 (full benchmark, vsync off)" \
+run_test_user "4.4 OpenGL - glmark2 (full benchmark, vsync off)" \
 	env vblank_mode=0 timeout "${DURATION}s" glmark2 --fullscreen --size "$RESOLUTION" --run-forever
 
 ###############################################################################
@@ -375,7 +391,7 @@ SCENES=(
 )
 
 for scene_spec in "${SCENES[@]}"; do
-	run_test "5.x glmark2 scene: $scene_spec" \
+	run_test_user "5.x glmark2 scene: $scene_spec" \
 		env vblank_mode=0 timeout "${DURATION}s" glmark2 --fullscreen --size "$RESOLUTION" \
 		--benchmark "${scene_spec}:duration=${DURATION}"
 done
@@ -410,7 +426,7 @@ echo "Generating a synthetic test video and decoding with hardware acceleration.
 TMPVID="/tmp/hardware-test-video.mp4"
 
 # Generate a short 5-second test pattern video using ffmpeg
-ffmpeg -nostdin -y -f lavfi -i "testsrc=duration=5:size=${RESOLUTION}:rate=60" \
+run_user ffmpeg -nostdin -y -f lavfi -i "testsrc=duration=5:size=${RESOLUTION}:rate=60" \
 	-c:v libx264 -preset ultrafast -pix_fmt yuv420p \
 	"$TMPVID" 2>/dev/null
 
@@ -418,7 +434,7 @@ if [ -f "$TMPVID" ]; then
 	echo ""
 	echo "Attempting VA-API hardware decode in a loop for ${DURATION}s @ ${RESOLUTION} 60fps..."
 	set +e
-	timeout "${DURATION}s" ffmpeg -nostdin -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 \
+	run_user timeout "${DURATION}s" ffmpeg -nostdin -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 \
 		-stream_loop -1 -i "$TMPVID" -benchmark -f null - 2>&1 | tail -5
 	VAAPI_RC=$?
 	set -e
@@ -431,7 +447,7 @@ if [ -f "$TMPVID" ]; then
 	echo ""
 	echo "Software decode in a loop (baseline comparison) for ${DURATION}s..."
 	set +e
-	timeout "${DURATION}s" ffmpeg -nostdin -stream_loop -1 -i "$TMPVID" -benchmark -f null - 2>&1 | tail -5
+	run_user timeout "${DURATION}s" ffmpeg -nostdin -stream_loop -1 -i "$TMPVID" -benchmark -f null - 2>&1 | tail -5
 	SW_RC=$?
 	set -e
 	if [ $SW_RC -eq 0 ] || [ $SW_RC -eq 124 ]; then
@@ -476,7 +492,7 @@ if [ "$BURN_IN" = "1" ]; then
 		if [ "$REMAINING" -lt "$ITER_TIME" ]; then
 			ITER_TIME=$REMAINING
 		fi
-		env vblank_mode=0 timeout "${ITER_TIME}s" glmark2 --fullscreen --size "$RESOLUTION" --run-forever >/dev/null 2>&1 || true
+		run_user env vblank_mode=0 timeout "${ITER_TIME}s" glmark2 --fullscreen --size "$RESOLUTION" --run-forever >/dev/null 2>&1 || true
 	done
 
 	if [ -n "$STRESS_PID" ]; then
@@ -525,7 +541,7 @@ sw_speed=$(echo "$sw_block" | grep -o -E 'speed=\s*[0-9.]*x' | tail -n1 | tr -d 
 sw_frames=$(echo "$sw_block" | grep -o -E 'frame=\s*[0-9]+' | tail -n1 | awk '{print $2}' || true)
 
 # Generate the results summary log file
-SUMMARY_FILE="/tmp/test-hardware-${REAL_USER}.log"
+SUMMARY_FILE="/home/${REAL_USER}/test-hardware.log"
 {
 	echo "=========================================="
 	echo "  Hardware Stress Test Summary"
