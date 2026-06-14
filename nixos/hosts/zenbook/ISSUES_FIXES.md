@@ -456,3 +456,101 @@ onepassword-secrets`. The `mahdtech` user IS in group
 - **Codebase References**:
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (remoteproc services, blacklist)
   - `nixos/hosts/zenbook/hardware/pd-mapper/` (userspace pd-mapper with CLI .jsn args)
+
+---
+
+### Issue 23: CPU stress testing (stress-ng) triggers PMIC overcurrent hard reset
+
+- [x] **Status**: Resolved — **Watchdog starvation identified as root cause**. Hardware power delivery is stable.
+- **Severity**: P1 — System hard-resets under heavy CPU load.
+- **Symptom**: Instantaneous hard reset (power-cut and reboot) within < 2 minutes when running `sudo stress-ng --cpu 12 --timeout 120s` at any frequency.
+- **Codebase References**:
+  - `nixos/hosts/zenbook/kernel.nix` (`CONFIG_QCOM_LMH`, `CONFIG_ARM_SCMI_POWERCAP`)
+  - `nixos/hosts/zenbook/power.nix` (CPU frequency configuration and telemetry logger)
+  - `nixos/hosts/zenbook/files/cpu-cooling-overlay.dts` (NEW — passive trip cooling-maps)
+  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (DT overlay registration, SoundWire blacklist, `force-acpi` specialisation)
+
+* **Watchdog Starvation Root Cause (2026-06-13)**:
+  The system Standard Operating Environment (SOE) configures systemd with
+  `RuntimeWatchdogSec = "5m"`. This causes systemd to open and arm the `SBSA
+Generic Watchdog` (`/dev/watchdog0`). The SBSA watchdog has a **10-second
+  hardware timeout**. Under all-core CPU load (`stress-ng --cpu 12`), systemd
+  is starved of scheduler time and fails to "pet" the watchdog within 10
+  seconds, prompting the hardware watchdog to instantly cut power and reboot
+  the board.
+
+  This was confirmed because:
+  1. The live installer has the watchdog disabled (`RuntimeWatchdogSec = 0`), which is why it survived the stress tests.
+  2. Mounting the NVMe and running `dd` + `stress-ng` concurrently passes inside the live installer, ruling out the NVMe/CPU PMIC overcurrent theory.
+  3. Disabling the watchdog in systemd and adding `nowatchdog` to `boot.kernelParams` fully stabilized the installed OS under stress.
+
+  Additionally, we found the early-boot GPU crash was due to a udev rule
+  writing to `max_freq` of the Adreno GPU device before the `msm` driver
+  finished initialization, triggering a page fault in `a6xx_gmu_set_freq`.
+  Removing the udev rule resolved the boot crash.
+
+* **Deployed Mitigations (2026-06-13)**:
+  1. **CPU cooling-maps DT overlay** (`cpu-cooling-overlay.dts`):
+     - Adds `passive` trip at 75°C + `cooling-maps` to `cpuss{0,1,2}-top-thermal`
+     - Wires `cpufreq-cpu{0,4,8}` cooling devices via `step_wise` governor
+     - 100ms polling delay for responsive throttling
+  2. **SoundWire IRQ storm eliminated**:
+     - Blacklisted `soundwire_qcom` and `snd_soc_lpass_*_macro` modules
+     - SoundWire interrupts dropped from ~6,769 to **zero**
+  3. **SBSA Hardware Watchdog Disabled**:
+     - Disabled systemd watchdog in `default.nix` (`RuntimeWatchdogSec = 0`, etc.) and suppressed platform watchdogs via `nowatchdog` kernel parameter.
+  4. **GPU Frequency Cap Removed**:
+     - Removed the udev rule capping GPU to 390 MHz since power-limiting is unnecessary.
+
+---
+
+### Issue 24: `scripts/test-hardware.sh` fails to compile / build LLVM from source
+
+- [x] **Status**: Resolved — Nix shell environment optimized to use cached system and binary packages.
+- **Severity**: P1 — Hardware testing script fails to compile on Snapdragon X Elite/aarch64 due to missing binary cache and build timeouts.
+- **Symptom**:
+  - `bzip2: Compressed file ends unexpectedly` when extracting source files.
+  - Compiling `libbfd-plugin-api-header` or `llvm-21.1.8` fails with exit code 2.
+  - Massive compilation of LLVM, Clang, GStreamer, and Mesa from source.
+- **Root Cause**:
+  1. The `nix-shell` `buildInputs` included `ffmpeg-full`, `vkmark`, and
+     `kmscube`. On `aarch64-linux` unstable, these are not fully cached,
+     forcing Nix to compile the entire LLVM/Clang compiler toolchain from
+     source.
+  2. The custom overlays in the script overrode core packages like `libbsd`
+     and `libmysofa` globally. This changed the package derivation hashes for
+     all reverse dependencies, forcing X11, Mesa, and other graphics
+     libraries to rebuild from source instead of using precompiled cache
+     packages.
+- **Resolution**:
+  - Removed `ffmpeg-full`, `vkmark`, and `kmscube` from the `nix-shell` package list.
+  - Removed all custom overlays from the `nix-shell` definition, restoring clean dependencies.
+  - Updated the script to use the system-installed precompiled `ffmpeg` path (`/run/current-system/sw/bin/ffmpeg`) for generating and decoding synthetic video.
+  - Wrapped `vkmark` inside a `has_cmd vkmark` check to bypass execution cleanly if not installed.
+- **Verification**:
+  - Running `test-hardware.sh` starts instantly (<1s) with zero compilation required, successfully executing CPU, memory, and GPU (glmark2) stress tests on the physical display under Hyprland.
+
+---
+
+### Issue 21: fw_devlink optimization
+
+- [x] **Status**: Resolved — Strict probe ordering (`fw_devlink=on`) verified fully operational with timeout safety net.
+- **Severity**: P2 — Performance/correctness improvement.
+- **Symptom**: `fw_devlink=permissive` disables all strict device-link probe ordering system-wide, which may mask driver ordering bugs.
+- **Codebase References**:
+  - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (kernelParams)
+- **Root Cause & Solution**:
+  - Research confirmed that the kernel's cycle detection on `7.1.0-rc7-next-20260611` successfully resolves all 323 DT dependency cycles automatically.
+  - Enabled Phase 2 by setting `"fw_devlink=on"`, `"fw_devlink.sync_state=timeout"`, and `"deferred_probe_timeout=30"` in `boot.kernelParams`.
+  - The `sync_state` timeout safety net ensures clock providers like
+    `gcc-x1e80100` and `gpucc-x1e80100` force their sync state and clean up
+    unused resources 30 seconds after bootloader initialization, preventing
+    indefinite waits when optional consumers are disabled/not compiled.
+- **Verification**:
+  - System boots stably with no hangs.
+  - `/sys/kernel/debug/devices_deferred` is completely empty (zero deferred probes).
+  - Boot logs verify the safety net triggers exactly as expected:
+    ```
+    [   54.243780] gcc-x1e80100 100000.clock-controller: Timed out. Forcing sync_state()
+    [   54.243809] gpucc-x1e80100 3d90000.clock-controller: Timed out. Forcing sync_state()
+    ```

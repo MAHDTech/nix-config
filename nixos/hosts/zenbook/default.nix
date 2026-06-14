@@ -19,9 +19,6 @@
     # Power management and optimizations
     ./power.nix
 
-    # Remote crash capture via netconsole (loads after network is up)
-    ./netconsole.nix
-
     # CPU specific configuration.
     ../../system/config/virtualisation/cpu/qcom.nix
     ../../system/config/virtualisation/host/qemu

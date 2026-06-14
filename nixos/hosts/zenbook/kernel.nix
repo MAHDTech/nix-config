@@ -24,12 +24,6 @@ let
       fi
     done
 
-    echo "Fixing DTSI camera errors (camss/cci1/csiphy incomplete upstream)..."
-    sed -i '/&camss {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
-    sed -i '/&cci1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
-    sed -i '/&cci1_i2c1 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
-    sed -i '/&csiphy4 {/,/^};/s/^/\/\//' arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
-
     echo "Patching DRM_MSM Kconfig to select DRM_SYNCOBJ..."
     sed -i '/^config DRM_MSM$/a \\tselect DRM_SYNCOBJ\n\tselect DRM_SYNCOBJ_TIMELINE_EXPORT' drivers/gpu/drm/msm/Kconfig
   '';
@@ -206,24 +200,9 @@ let
     ./scripts/config --enable NF_NAT
     ./scripts/config --enable NF_CONNTRACK
 
-    # Enable netconsole for remote crash capture over UDP
-    ./scripts/config --module NETCONSOLE
-    ./scripts/config --enable NETCONSOLE_DYNAMIC
-
-    # Enable pstore-blk for NVMe-backed crash storage (future use)
-    ./scripts/config --module PSTORE_BLK
-    ./scripts/config --set-val PSTORE_BLK_KMSG_SIZE 64
-    ./scripts/config --set-val PSTORE_BLK_CONSOLE_SIZE 64
-    ./scripts/config --set-val PSTORE_BLK_PMSG_SIZE 64
-    ./scripts/config --set-val PSTORE_BLK_MAX_REASON 2
-
     # Enable firmware loader compression support for compressed firmware files on NixOS
     ./scripts/config --enable FW_LOADER_COMPRESS
     ./scripts/config --enable FW_LOADER_COMPRESS_ZSTD
-
-    # Issue 23: Disable STRICT_DEVMEM to allow ACPI table extraction via /dev/mem
-    ./scripts/config --disable STRICT_DEVMEM
-    ./scripts/config --disable IO_STRICT_DEVMEM
 
     # Re-sync configuration against the active kernel tree
     make ARCH=arm64 olddefconfig
