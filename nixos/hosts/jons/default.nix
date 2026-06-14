@@ -1,4 +1,5 @@
 {
+  lib,
   ...
 }:
 {
@@ -13,6 +14,12 @@
   environment.variables = {
     # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1
     LIBVA_DRIVER_NAME = "amdgpu";
+  };
+
+  environment.sessionVariables = {
+    # Force Hyprland to use AMD APU as primary display renderer, offloading to Intel Arc B580
+    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/pci-0000:0f:00.0-card:/dev/dri/by-path/pci-0000:03:00.0-card";
+    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/pci-0000:0f:00.0-card:/dev/dri/by-path/pci-0000:03:00.0-card";
   };
 
   imports = [
