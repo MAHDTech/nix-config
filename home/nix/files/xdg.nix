@@ -74,6 +74,26 @@
             '';
           };
         }
+      else if (lib.hasInfix "JONS" hostname || lib.hasInfix "ARC" hostname) then
+        {
+          "uwsm/env" = {
+            target = "uwsm/env";
+            text = ''
+              export AQ_DRM_DEVICES="/dev/dri/amd-gpu:/dev/dri/intel-gpu"
+              export WLR_DRM_DEVICES="/dev/dri/amd-gpu:/dev/dri/intel-gpu"
+            '';
+          };
+        }
+      else if lib.hasInfix "ZENBOOK" hostname then
+        {
+          "uwsm/env" = {
+            target = "uwsm/env";
+            text = ''
+              export AQ_DRM_DEVICES="/dev/dri/adreno-gpu"
+              export WLR_DRM_DEVICES="/dev/dri/adreno-gpu"
+            '';
+          };
+        }
       else
         { }
     );

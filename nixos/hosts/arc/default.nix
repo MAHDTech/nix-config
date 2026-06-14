@@ -22,6 +22,7 @@
     ../../system/config/virtualisation/cpu/amd.nix
 
     # GPU specific configuration.
+    ../../system/config/video/amd
     ../../system/config/video/intel
 
     # Load system standard-operating-environment.
@@ -93,4 +94,21 @@
   };
 
   swapDevices = [ ];
+
+  environment.variables = {
+    # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1
+    LIBVA_DRIVER_NAME = "amdgpu";
+  };
+
+  environment.sessionVariables = {
+    # Force Hyprland to use AMD APU as primary display renderer, offloading to Intel Arc B580.
+    # We use udev symlinks because the PCI IDs in by-path contain colons, which breaks Aquamarine/wlroots parsing.
+    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/amd-gpu:/dev/dri/intel-gpu";
+    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/amd-gpu:/dev/dri/intel-gpu";
+  };
+
+  services.udev.extraRules = ''
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0f:00.0", SYMLINK+="dri/amd-gpu"
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", SYMLINK+="dri/intel-gpu"
+  '';
 }

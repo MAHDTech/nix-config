@@ -17,10 +17,16 @@
   };
 
   environment.sessionVariables = {
-    # Force Hyprland to use AMD APU as primary display renderer, offloading to Intel Arc B580
-    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/pci-0000:0f:00.0-card:/dev/dri/by-path/pci-0000:03:00.0-card";
-    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/by-path/pci-0000:0f:00.0-card:/dev/dri/by-path/pci-0000:03:00.0-card";
+    # Force Hyprland to use AMD APU as primary display renderer, offloading to Intel Arc B580.
+    # We use udev symlinks because the PCI IDs in by-path contain colons, which breaks Aquamarine/wlroots parsing.
+    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/amd-gpu:/dev/dri/intel-gpu";
+    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/amd-gpu:/dev/dri/intel-gpu";
   };
+
+  services.udev.extraRules = ''
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0f:00.0", SYMLINK+="dri/amd-gpu"
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", SYMLINK+="dri/intel-gpu"
+  '';
 
   imports = [
     # Load hardware specific configuration.

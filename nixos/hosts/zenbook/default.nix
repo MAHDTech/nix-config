@@ -63,4 +63,14 @@
     userName = "mahdtech";
     diskUuids = [ ];
   };
+
+  environment.sessionVariables = {
+    # Force Hyprland to use our stable udev symlink for rendering
+    AQ_DRM_DEVICES = "/dev/dri/adreno-gpu";
+    WLR_DRM_DEVICES = "/dev/dri/adreno-gpu";
+  };
+
+  services.udev.extraRules = ''
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="ae01000.display-controller", SYMLINK+="dri/adreno-gpu"
+  '';
 }

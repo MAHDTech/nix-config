@@ -32,10 +32,6 @@
 
       # Fix 1Password desktop integration for authentication dialogue boxes.
       GTK_USE_PORTAL = "1";
-
-      # Force Hyprland to use Panthor (card1) for hardware rendering, displaying on card0
-      AQ_DRM_DEVICES = "/dev/dri/card1:/dev/dri/card0";
-      WLR_DRM_DEVICES = "/dev/dri/card1:/dev/dri/card0";
     };
 
     variables = {
