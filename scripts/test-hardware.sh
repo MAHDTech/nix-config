@@ -13,7 +13,109 @@
 
 set -euo pipefail
 
-# Automatically re-execute under systemd-inhibit to prevent system suspend/sleep during test
+# Configuration defaults for logging
+export HW_TEST_LOG_FILE=${LOG_FILE:-${HW_TEST_LOG_FILE:-/tmp/hardware-test-$(date +%Y%m%d-%H%M%S).log}}
+
+# 1. Identify the real user, UID, and home directory
+if [ "$(id -u)" -eq 0 ]; then
+	REAL_UID="${SUDO_UID:-}"
+	REAL_USER="${SUDO_USER:-}"
+	if [ -z "$REAL_UID" ] || [ -z "$REAL_USER" ]; then
+		# Find the active GUI session user
+		active_session=$(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}' | head -n1 || true)
+		if [ -n "$active_session" ]; then
+			REAL_USER=$(loginctl show-session "$active_session" -p Name --value 2>/dev/null || true)
+			REAL_UID=$(loginctl show-session "$active_session" -p User --value 2>/dev/null || true)
+		fi
+		if [ -z "$REAL_USER" ]; then
+			REAL_USER=$(w -hs 2>/dev/null | awk '{print $1}' | grep -v 'root' | head -n1 || true)
+			if [ -n "$REAL_USER" ]; then
+				REAL_UID=$(id -u "$REAL_USER" 2>/dev/null || true)
+			fi
+		fi
+	fi
+else
+	REAL_UID="$(id -u)"
+	REAL_USER="$(id -un)"
+fi
+
+export REAL_UID="${REAL_UID:-1000}"
+export REAL_USER="${REAL_USER:-mahdtech}"
+export XDG_RUNTIME_DIR="/run/user/$REAL_UID"
+
+# 2. Detect Wayland Display and Hyprland Signature
+if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+	wl_socket=$(find "$XDG_RUNTIME_DIR"/wayland-* -maxdepth 0 -name 'wayland-[0-9]*' 2>/dev/null | head -n1 || true)
+	if [ -n "$wl_socket" ]; then
+		WAYLAND_DISPLAY=$(basename "$wl_socket")
+		export WAYLAND_DISPLAY
+		echo "Auto-detected WAYLAND_DISPLAY=$WAYLAND_DISPLAY"
+	fi
+fi
+
+if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+	sig_dir=$(find "$XDG_RUNTIME_DIR/hypr/" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -n1 || true)
+	if [ -n "$sig_dir" ]; then
+		HYPRLAND_INSTANCE_SIGNATURE=$(basename "$sig_dir")
+		export HYPRLAND_INSTANCE_SIGNATURE
+		echo "Auto-detected HYPRLAND_INSTANCE_SIGNATURE=$HYPRLAND_INSTANCE_SIGNATURE"
+	fi
+fi
+
+# 3. Detect X11 Display & Xauthority
+if [ -z "${DISPLAY:-}" ]; then
+	# Try loginctl
+	session_id=$(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}' | head -n1 || true)
+	if [ -n "$session_id" ]; then
+		seat_display=$(loginctl show-session "$session_id" -p Display --value 2>/dev/null || true)
+		if [ -n "$seat_display" ]; then
+			export DISPLAY="$seat_display"
+			echo "Auto-detected DISPLAY=$DISPLAY from loginctl"
+		fi
+	fi
+	# Try w
+	if [ -z "${DISPLAY:-}" ]; then
+		display=$(w -hs 2>/dev/null | awk '{print $3}' | grep -E '^:[0-9]' | head -n1 || true)
+		if [ -n "$display" ]; then
+			export DISPLAY="$display"
+			echo "Auto-detected DISPLAY=$DISPLAY from active session"
+		fi
+	fi
+	# Fallback if Wayland is active but DISPLAY is not set
+	if [ -z "${DISPLAY:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ]; then
+		export DISPLAY=":0"
+		echo "Wayland active; falling back to default DISPLAY=$DISPLAY"
+	fi
+fi
+
+if [ -z "${XAUTHORITY:-}" ]; then
+	USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6 || echo "/home/$REAL_USER")
+	if [ -f "$USER_HOME/.Xauthority" ]; then
+		export XAUTHORITY="$USER_HOME/.Xauthority"
+	elif [ -f "$XDG_RUNTIME_DIR/gdm/Xauthority" ]; then
+		export XAUTHORITY="$XDG_RUNTIME_DIR/gdm/Xauthority"
+	fi
+fi
+
+# 4. Privilege Elevation & Suspend Inhibition
+if [ "$(id -u)" -ne 0 ]; then
+	echo "Elevating privileges to root via sudo and inhibiting suspend..."
+	exec sudo env \
+		DISPLAY="${DISPLAY:-}" \
+		WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" \
+		XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" \
+		XAUTHORITY="${XAUTHORITY:-}" \
+		HYPRLAND_INSTANCE_SIGNATURE="${HYPRLAND_INSTANCE_SIGNATURE:-}" \
+		REAL_UID="$REAL_UID" \
+		REAL_USER="$REAL_USER" \
+		SYSTEMD_INHIBIT_ACTIVE=1 \
+		systemd-inhibit \
+		--what="idle:sleep" \
+		--who="test-hardware.sh" \
+		--why="Running hardware stability and stress tests" \
+		"$0" "$@"
+fi
+
 if [ -z "${SYSTEMD_INHIBIT_ACTIVE:-}" ] && command -v systemd-inhibit >/dev/null 2>&1; then
 	export SYSTEMD_INHIBIT_ACTIVE=1
 	echo "Re-executing script under systemd-inhibit to prevent system suspend/sleep..."
@@ -24,76 +126,12 @@ if [ -z "${SYSTEMD_INHIBIT_ACTIVE:-}" ] && command -v systemd-inhibit >/dev/null
 		"$0" "$@"
 fi
 
-# Detect and configure display/authorization for sudo/root runs
-if [ "$(id -u)" -eq 0 ]; then
-	REAL_UID="${SUDO_UID:-}"
-	REAL_USER="${SUDO_USER:-}"
-
-	if [ -z "$REAL_UID" ] || [ -z "$REAL_USER" ]; then
-		# Find the real user of the active session
-		REAL_USER=$(w -hs 2>/dev/null | awk '{print $1}' | grep -v 'root' | head -n1 || true)
-		if [ -n "$REAL_USER" ]; then
-			REAL_UID=$(id -u "$REAL_USER" 2>/dev/null || true)
-		fi
-	fi
-
-	if [ -n "$REAL_UID" ] && [ -n "$REAL_USER" ]; then
-		# Set XDG_RUNTIME_DIR if not set or pointing to root's directory
-		if [ -z "${XDG_RUNTIME_DIR:-}" ] || [ "$XDG_RUNTIME_DIR" = "/run/user/0" ]; then
-			export XDG_RUNTIME_DIR="/run/user/$REAL_UID"
-		fi
-
-		# Set XAUTHORITY if not set
-		if [ -z "${XAUTHORITY:-}" ]; then
-			USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6 || echo "/home/$REAL_USER")
-			if [ -f "$USER_HOME/.Xauthority" ]; then
-				export XAUTHORITY="$USER_HOME/.Xauthority"
-			elif [ -f "/run/user/$REAL_UID/gdm/Xauthority" ]; then
-				export XAUTHORITY="/run/user/$REAL_UID/gdm/Xauthority"
-			fi
-		fi
-	fi
-fi
-
 # Configuration
 export HW_TEST_DURATION=${1:-60}
 export HW_TEST_USER_RES=${2:-}
 export HW_TEST_BURN_IN=${BURN_IN:-0}
 export HW_TEST_BURN_DURATION=${BURN_DURATION:-300}
 export HW_TEST_SKIP_INFO=${SKIP_INFO:-0}
-export HW_TEST_LOG_FILE=${LOG_FILE:-/tmp/hardware-test-$(date +%Y%m%d-%H%M%S).log}
-
-# Display detection (before entering nix-shell)
-if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-	# Try to find an active X session
-	display=$(w -hs 2>/dev/null | awk '{print $3}' | grep -E '^:[0-9]' | head -n1 || true)
-	if [ -n "$display" ]; then
-		export DISPLAY="$display"
-		echo "Auto-detected DISPLAY=$DISPLAY from active session"
-	else
-		# Try systemd loginctl
-		session_id=$(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}' | head -n1 || true)
-		if [ -n "$session_id" ]; then
-			seat_display=$(loginctl show-session "$session_id" -p Display --value 2>/dev/null || true)
-			if [ -n "$seat_display" ]; then
-				export DISPLAY="$seat_display"
-				echo "Auto-detected DISPLAY=$DISPLAY from loginctl"
-			fi
-		fi
-	fi
-
-	# Try Wayland
-	if [ -z "${DISPLAY:-}" ]; then
-		wl_display=$(find /run/user/*/wayland-* -maxdepth 0 -name 'wayland-[0-9]*' 2>/dev/null | head -n1 || true)
-		if [ -n "$wl_display" ]; then
-			export WAYLAND_DISPLAY
-			WAYLAND_DISPLAY=$(basename "$wl_display")
-			export XDG_RUNTIME_DIR
-			XDG_RUNTIME_DIR=$(dirname "$wl_display")
-			echo "Auto-detected WAYLAND_DISPLAY=$WAYLAND_DISPLAY"
-		fi
-	fi
-fi
 
 if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
 	echo "ERROR: Neither DISPLAY nor WAYLAND_DISPLAY is set or auto-detected."
@@ -207,15 +245,10 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 # Screensaver & Idle Inhibition
 ###############################################################################
 HYPRIDLE_WAS_ACTIVE=0
-if systemctl --user is-active --quiet hypridle.service 2>/dev/null; then
+if sudo -u "$REAL_USER" DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus" systemctl --user is-active --quiet hypridle.service 2>/dev/null; then
 	echo "Temporarily stopping hypridle to prevent screensaver/lockscreen from activating..."
-	systemctl --user stop hypridle.service 2>/dev/null || true
+	sudo -u "$REAL_USER" DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus" systemctl --user stop hypridle.service 2>/dev/null || true
 	HYPRIDLE_WAS_ACTIVE=1
-fi
-
-if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && has_cmd hyprctl; then
-	echo "Inhibiting Hyprland idle..."
-	hyprctl dispatch inhibitidle true 2>/dev/null || true
 fi
 
 cleanup() {
@@ -223,11 +256,7 @@ cleanup() {
 	banner "Restoring System State"
 	if [ "$HYPRIDLE_WAS_ACTIVE" -eq 1 ]; then
 		echo "Restarting hypridle service..."
-		systemctl --user start hypridle.service 2>/dev/null || true
-	fi
-	if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && has_cmd hyprctl; then
-		echo "Releasing Hyprland idle inhibition..."
-		hyprctl dispatch inhibitidle false 2>/dev/null || true
+		sudo -u "$REAL_USER" DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus" systemctl --user start hypridle.service 2>/dev/null || true
 	fi
 }
 trap cleanup EXIT
@@ -496,7 +525,7 @@ sw_speed=$(echo "$sw_block" | grep -o -E 'speed=\s*[0-9.]*x' | tail -n1 | tr -d 
 sw_frames=$(echo "$sw_block" | grep -o -E 'frame=\s*[0-9]+' | tail -n1 | awk '{print $2}' || true)
 
 # Generate the results summary log file
-SUMMARY_FILE="/tmp/test-hardware.log"
+SUMMARY_FILE="/tmp/test-hardware-${REAL_USER}.log"
 {
 	echo "=========================================="
 	echo "  Hardware Stress Test Summary"
@@ -543,6 +572,11 @@ SUMMARY_FILE="/tmp/test-hardware.log"
 	fi
 	echo ""
 } >"$SUMMARY_FILE"
+
+# Ensure the log and summary files are owned by the real user
+if [ "$(id -u)" -eq 0 ] && [ -n "${REAL_USER:-}" ]; then
+	chown "${REAL_USER}:${REAL_USER}" "$SUMMARY_FILE" "$HW_TEST_LOG_FILE" 2>/dev/null || true
+fi
 
 # Print summary to terminal
 echo "=========================================="
