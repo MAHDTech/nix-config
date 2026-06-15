@@ -294,4 +294,23 @@ in
   # to completely exclude them from the shared boot initrd.
   boot.plymouth.enable = lib.mkForce false;
   security.apparmor.enable = lib.mkForce false;
+
+  # Specialisation to test built-in audio without blacklisted kernel modules.
+  # Selecting this boot entry un-blacklists all SoundWire and WSA/WCD codecs.
+  specialisation.enable-audio.configuration = {
+    system.nixos.tags = [ "enable-audio" ];
+    boot.blacklistedKernelModules = lib.mkForce (
+      [
+        # Keep non-audio modules blacklisted:
+        "qcom_q6v5_pas"
+        "ucsi_glink"
+        "pmic_glink_altmode"
+      ]
+      ++ lib.optionals isInstaller [
+        "typec_thunderbolt"
+        "thunderbolt"
+        "msm"
+      ]
+    );
+  };
 }
