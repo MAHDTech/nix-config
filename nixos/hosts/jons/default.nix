@@ -93,5 +93,14 @@
 
     # Virtual Desktop
     ../../system/config/services/wayvnc
+
+    # Netconsole Receiver for remote BootyCall boot logs
+    ../../system/config/debug/netconsole/server.nix
   ];
+
+  debug.netconsole.server = {
+    enable = true;
+    port = 6666;
+    logFile = "/var/log/netconsole-bootycall.log";
+  };
 }

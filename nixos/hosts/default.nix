@@ -21,6 +21,10 @@ in
       name = "ORION";
       system = "aarch64-linux";
     }
+    {
+      name = "BOOTYCALL";
+      system = "aarch64-linux";
+    }
   ];
 
   # Actual configurations
@@ -67,6 +71,16 @@ in
       extraModules = [
         inputs.disko.nixosModules.disko
         ./orion/disko-config.nix
+      ];
+    };
+
+    BOOTYCALL = mkHost {
+      name = "BOOTYCALL";
+      system = "aarch64-linux";
+      enableHomeManager = false;
+      extraModules = [
+        # Disko is not strictly required if using manual Android partitioning partitions,
+        # but we mount it natively in default.nix / hardware-configuration.nix.
       ];
     };
   };

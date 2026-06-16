@@ -1,0 +1,8 @@
+{ ... }:
+{
+  imports = [
+    ./base
+    ./caddy
+    ./tftpd
+  ];
+}

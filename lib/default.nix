@@ -22,6 +22,7 @@ in
       system,
       extraModules ? [ ],
       overlays ? [ ],
+      enableHomeManager ? true,
     }:
     lib.nixosSystem {
       pkgs = import inputs.nixpkgs {
@@ -44,9 +45,9 @@ in
         inputs.opnix.nixosModules.default
         inputs.stylix.nixosModules.stylix
         inputs.flatpaks.nixosModules.default
-        ../nixos/system/home-manager.nix # Standard HM integration
         ../nixos/hosts/${lib.toLower name}
       ]
+      ++ lib.optional enableHomeManager ../nixos/system/home-manager.nix
       ++ extraModules;
     };
 

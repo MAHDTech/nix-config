@@ -461,6 +461,7 @@ blueman
 bluetoothctl
 bnep
 bogo
+bootimg
 bootstrapper
 bootycall
 borderangle
@@ -534,6 +535,7 @@ clipperhouse
 clippy
 cloudflared
 cloudforge
+cloudkey
 cman
 cmdhist
 cmdk
@@ -679,6 +681,7 @@ extquote
 fTPM
 failglob
 fakeroot
+fastboot
 fastfetch
 fastrpc
 fbcon
@@ -847,6 +850,7 @@ ibus
 iface
 iflag
 ifname
+ifnames
 ignorealpha
 ignoreboth
 ignorecase
@@ -911,6 +915,7 @@ kmod
 kmscube
 koehler
 kpack
+kpxe
 krita
 ksqs
 ksshaskpass
@@ -1038,6 +1043,7 @@ maziyarpanahi
 mbhc
 mbim
 mcopy
+memdisk
 memlat
 memlock
 memmap
@@ -1053,6 +1059,7 @@ minimaxai
 misconfigurations
 misconfigures
 mistralrs
+mkbootimg
 mkhl
 mkiso
 mkisofs
@@ -1060,6 +1067,7 @@ mkpasswd
 mkstandalone
 mktemp
 mmap
+mmcblk
 mmhub
 mmin
 mmproj
@@ -1136,6 +1144,7 @@ noblur
 noborder
 nocaseglob
 nocasematch
+nodiratime
 nodisp
 nofail
 nofocus
@@ -1566,6 +1575,7 @@ tars
 taskset
 tcgetattr
 tchx
+tcpdump
 tcsetattr
 tcsrcc
 tekumura
@@ -1578,6 +1588,7 @@ tessen
 testsrc
 tflint
 tftpboot
+tftpd
 thermald
 thewh1teagle
 thinpool
