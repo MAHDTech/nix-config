@@ -4,7 +4,7 @@
 {
   imports = [
     # Get hardware configuration from the main host
-    ./hardware-configuration.nix
+    ./hardware
 
     # Generic installer base
     ../../system/installer/base.nix

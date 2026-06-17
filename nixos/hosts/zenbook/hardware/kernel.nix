@@ -17,7 +17,7 @@ let
   # full kernel build to ensure the .config is generated against the same source.
   patchScript = ''
     echo "Applying local Zenbook patches..."
-    for patch in ${./files/patches}/*.patch; do
+    for patch in ${../files/patches}/*.patch; do
       if [ -f "$patch" ]; then
         echo "Applying $patch"
         patch -p1 < "$patch"
@@ -34,7 +34,7 @@ let
     patchShebangs scripts/config
 
     # Use the Automated Hardware Profile
-    cp ${./files/config/zenbook.defconfig} .config
+    cp ${../files/config/zenbook.defconfig} .config
     chmod +w .config
 
     # Disable irrelevant architectures to drastically reduce compile time

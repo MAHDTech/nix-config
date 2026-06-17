@@ -28,7 +28,7 @@ in
     # Custom patched mainline v7.0 kernel is configured dynamically
     kernelPackages =
       let
-        kernelBuild = pkgs.callPackage ../kernel { };
+        kernelBuild = pkgs.callPackage ./kernel { };
       in
       lib.mkForce (pkgs.linuxPackagesFor kernelBuild);
 

@@ -8,7 +8,7 @@
 
   imports = [
     # Hardware Configuration
-    ./hardware-configuration.nix
+    ./hardware
 
     # OS Services Configuration
     ./services

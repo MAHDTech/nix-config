@@ -39,7 +39,7 @@ let
 
     prePatch = ''
       echo "Copying custom device tree cloudkey-mainline.dts into kernel source tree..."
-      cp ${./cloudkey-mainline.dts} arch/arm64/boot/dts/qcom/apq8053-ubnt-cloudkey.dts
+      cp ${../files/cloudkey-mainline.dts} arch/arm64/boot/dts/qcom/apq8053-ubnt-cloudkey.dts
 
       echo "Registering device tree in Makefile..."
       echo "dtb-\$(CONFIG_ARCH_QCOM) += apq8053-ubnt-cloudkey.dtb" >> arch/arm64/boot/dts/qcom/Makefile
@@ -82,7 +82,10 @@ let
       ./scripts/config --disable DRM
       ./scripts/config --disable PCI
       ./scripts/config --disable VIRTUALIZATION
+
+      # Disable debug symbols to shrink kernel size under 15MB
       ./scripts/config --disable DEBUG_INFO
+      ./scripts/config --enable DEBUG_INFO_NONE
 
       # 6. Re-sync configuration against Kconfig
       make ARCH=arm64 olddefconfig

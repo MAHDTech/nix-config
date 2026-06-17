@@ -338,7 +338,7 @@ onepassword-secrets`. The `mahdtech` user IS in group
   - ❌ **pstore dir**: empty (no crashes yet — expected).
 - **Severity**: P0 — No crash dumps captured on any crash type.
 - **Codebase References**:
-  - `nixos/hosts/zenbook/disko-config.nix` (16M `pstore` partition)
+  - `nixos/hosts/zenbook/hardware/disko-config.nix` (16M `pstore` partition)
   - `nixos/hosts/zenbook/files/ramoops-overlay.dts` (Device tree reservation)
   - `nixos/hosts/zenbook/hardware/hardware-configuration.nix` (`panic` settings, sysctl, and overlay integration)
 

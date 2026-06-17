@@ -30,7 +30,7 @@
 
   imports = [
     # Load hardware specific configuration.
-    ./hardware-configuration.nix
+    ./hardware
 
     # ACPI Daemon
     ../../system/config/services/acpid
@@ -98,9 +98,10 @@
     ../../system/config/debug/netconsole/server.nix
   ];
 
+  # Netconsole Receiver for remote kernel boot logs
   debug.netconsole.server = {
     enable = true;
     port = 6666;
-    logFile = "/var/log/netconsole-bootycall.log";
+    logFile = "/var/log/netconsole.log";
   };
 }

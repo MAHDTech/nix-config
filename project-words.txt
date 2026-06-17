@@ -1121,7 +1121,6 @@ netboot
 netbootxyz
 netcat
 netconcole
-netconsole
 netdev
 netdevs
 netlink
@@ -1793,3 +1792,4 @@ zvols
 swraid
 hsusb
 dpdm
+netconsole

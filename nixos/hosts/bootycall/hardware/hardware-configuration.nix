@@ -32,19 +32,23 @@
       ];
 
       # Failsafe: if stage-1 initrd fails, write dmesg to persistent /data before dropping to shell
-      preFailCommands = ''
-        echo "=== NixOS Stage-1 Initrd Boot Failure ==="
-        echo "Attempting to mount /dev/mmcblk0p47 (/data) to dump crash logs..."
-        mkdir -p /panic_mnt
-        if mount -t ext4 -o rw /dev/mmcblk0p47 /panic_mnt; then
-          echo "Successfully mounted /data partition. Saving logs..."
-          dmesg > /panic_mnt/boot_panic.log
-          echo "dmesg saved to /data/boot_panic.log"
-          umount /panic_mnt
-        else
-          echo "Failed to mount /data partition."
-        fi
-      '';
+      systemd.services.panic-dumper = {
+        description = "Dump kernel dmesg on boot failure";
+        wantedBy = [ "emergency.target" ];
+        before = [ "emergency.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeScript "panic-dumper" ''
+            #!/bin/sh
+            echo "=== NixOS Stage-1 Initrd Boot Failure ==="
+            mkdir -p /panic_mnt
+            if mount -t ext4 -o rw /dev/mmcblk0p47 /panic_mnt; then
+              dmesg > /panic_mnt/boot_panic.log
+              umount /panic_mnt
+            fi
+          '';
+        };
+      };
     };
 
     kernelParams = [

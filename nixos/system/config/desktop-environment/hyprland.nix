@@ -134,7 +134,7 @@
           --asterisks \
           --cmd "uwsm start hyprland-uwsm.desktop" \
           --greet-align center \
-          --greeting "Welcome to NixOS" \
+          --greeting "Welcome to TARS Cloud" \
           --power-reboot 'shutdown -r now' \
           --power-shutdown 'shutdown -h now' \
           --remember \

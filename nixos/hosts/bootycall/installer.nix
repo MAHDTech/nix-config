@@ -1,7 +1,7 @@
 { pkgs, config, ... }:
 {
   imports = [
-    ./hardware-configuration.nix
+    ./hardware
     ../../system/installer/base.nix
   ];
 
@@ -25,14 +25,14 @@
 
     buildCommand = ''
       mkdir -p $out
+      cat ${config.system.build.kernel}/Image.gz ${config.system.build.kernel}/dtbs/qcom/apq8053-ubnt-cloudkey.dtb > Image.gz-dtb
       mkbootimg \
-        --kernel ${config.system.build.kernel}/Image.gz \
+        --kernel Image.gz-dtb \
         --ramdisk ${config.system.build.initialRamdisk}/initrd \
-        --dtb ${config.system.build.kernel}/dtbs/qcom/apq8053-ubnt-cloudkey.dtb \
         --cmdline "console=ttyMSM0,115200n8 net.ifnames=0 quiet netconsole=6666@10.10.200.200/eth0,6666@10.10.1.93/74:ac:b9:3f:15:a6" \
         --base 0x80000000 \
         --kernel_offset 0x00008000 \
-        --ramdisk_offset 0x03000000 \
+        --ramdisk_offset 0x01000000 \
         --tags_offset 0x00000100 \
         --pagesize 4096 \
         --output $out/boot.img

@@ -61,7 +61,7 @@ in
       system = "aarch64-linux";
       extraModules = [
         inputs.disko.nixosModules.disko
-        ./zenbook/disko-config.nix
+        ./zenbook/hardware/disko-config.nix
       ];
     };
 
@@ -70,7 +70,7 @@ in
       system = "aarch64-linux";
       extraModules = [
         inputs.disko.nixosModules.disko
-        ./orion/disko-config.nix
+        ./orion/hardware/disko-config.nix
       ];
     };
 
