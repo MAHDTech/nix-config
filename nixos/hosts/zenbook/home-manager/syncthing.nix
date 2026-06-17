@@ -1,7 +1,7 @@
 {
   syncthingConfig = {
     deviceName = "ZENBOOK";
-    deviceId = "I3ZWVSA-5ZI5N2M-M4UXHYX-V7EK4EQ-Y4ZQGOQ-BNN4CNN-2KJOQG4-QK6ZBAS";
+    deviceId = "5OMWOIZ-FCGYWTH-TH44NAN-E7E5ZZY-IH46JFI-WW7NFNQ-277EVN4-JWATRAX";
     otherDevices = [
       {
         name = "JONS";

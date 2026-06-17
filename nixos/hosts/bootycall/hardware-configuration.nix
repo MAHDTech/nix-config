@@ -27,7 +27,24 @@
         "uas" # USB Attached SCSI (for SATA HDD bridge)
         "usb_storage" # Fallback USB storage
         "ax88179_178a" # ASIX AX88179 USB Ethernet adapter (eth0)
+        "ext4" # Filesystem for root / data partitions
+        "crc32c" # Required checksum module for ext4
       ];
+
+      # Failsafe: if stage-1 initrd fails, write dmesg to persistent /data before dropping to shell
+      preFailCommands = ''
+        echo "=== NixOS Stage-1 Initrd Boot Failure ==="
+        echo "Attempting to mount /dev/mmcblk0p47 (/data) to dump crash logs..."
+        mkdir -p /panic_mnt
+        if mount -t ext4 -o rw /dev/mmcblk0p47 /panic_mnt; then
+          echo "Successfully mounted /data partition. Saving logs..."
+          dmesg > /panic_mnt/boot_panic.log
+          echo "dmesg saved to /data/boot_panic.log"
+          umount /panic_mnt
+        else
+          echo "Failed to mount /data partition."
+        fi
+      '';
     };
 
     kernelParams = [
