@@ -125,12 +125,6 @@ in
       # qcom-remoteproc-load.service AFTER pd-mapper.service is running, to
       # prevent the DSP boot race condition (see resolved Issue 20).
       "qcom_q6v5_pas"
-
-      # Force Thunderbolt/Type-C dock into USB 2.0 fallback mode by blacklisting
-      # the UCSI and Alt Mode negotiation drivers. This allows the dock's USB hubs
-      # and Ethernet to function stably at 480 Mbps.
-      "ucsi_glink"
-      "pmic_glink_altmode"
     ]
     ++ lib.optionals isInstaller [
       "typec_thunderbolt"
@@ -303,8 +297,6 @@ in
       [
         # Keep non-audio modules blacklisted:
         "qcom_q6v5_pas"
-        "ucsi_glink"
-        "pmic_glink_altmode"
       ]
       ++ lib.optionals isInstaller [
         "typec_thunderbolt"
@@ -312,5 +304,16 @@ in
         "msm"
       ]
     );
+  };
+
+  # Specialisation to force Thunderbolt/Type-C dock into USB 2.0 fallback mode.
+  # Blacklists UCSI and Alt Mode negotiation drivers to bypass the failed
+  # Alt Mode negotiation cycle, making the dock's USB ports and Ethernet functional.
+  specialisation.dock-fallback.configuration = {
+    system.nixos.tags = [ "dock-fallback" ];
+    boot.blacklistedKernelModules = [
+      "ucsi_glink"
+      "pmic_glink_altmode"
+    ];
   };
 }

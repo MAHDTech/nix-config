@@ -67,6 +67,7 @@ DEVNAME
 DEVPATH
 DEVSHELLS
 DEVTMPFS
+DGRAM
 DISTRIB
 DKMS
 DMABUF
@@ -97,6 +98,7 @@ Eemshaven
 Emph
 Emscripten
 Exynos
+FBTFT
 FCFANS
 FCTEMPS
 FEMTO
@@ -337,6 +339,7 @@ USBC
 USBSSP
 UVLO
 UWSM
+Ubiquiti
 Ultrawide
 Ungated
 Uwyv
@@ -737,6 +740,7 @@ genirq
 genkit
 genkl
 getcap
+getdata
 getgrnam
 getopt
 getpos
@@ -785,6 +789,7 @@ gotools
 govet
 gparted
 gpgconf
+gpios
 gptcommit
 gptfdisk
 gpucc
@@ -1283,6 +1288,7 @@ polkit
 polyval
 popin
 posixacl
+poweroff
 powersave
 powertop
 prefetchable
@@ -1437,6 +1443,7 @@ scriptnames
 scrolljump
 scrolloff
 sdam
+sdhc
 sdhci
 sdnotify
 secretspec
@@ -1477,6 +1484,7 @@ sideload
 signalcaptcha
 signon
 simpledrm
+sitronix
 skcipher
 sleepbuds
 sleepnow
@@ -1597,6 +1605,7 @@ tiktoken
 timeoutlen
 timepoint
 timonwong
+tlmm
 tlshd
 tlsv
 tmpfiles
@@ -1630,6 +1639,7 @@ turbovisionxl
 tuxtina
 uaccess
 uapsd
+ubiquiti
 ubnt
 ubwc
 uckp
@@ -1701,10 +1711,12 @@ virtualenv
 vkcube
 vkmark
 vlang
+vmmc
 vnoremap
 volblocksize
 volsize
 vorta
+vqmmc
 vram
 vscodevim
 vsctl
@@ -1778,3 +1790,6 @@ zramctl
 zstd
 zvol
 zvols
+swraid
+hsusb
+dpdm
