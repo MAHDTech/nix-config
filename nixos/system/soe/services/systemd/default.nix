@@ -1,5 +1,6 @@
 {
   lib,
+  hostType ? "desktop",
   ...
 }:
 {
@@ -94,22 +95,22 @@
 
     targets = {
       sleep = {
-        enable = false;
+        enable = hostType != "server";
         unitConfig.DefaultDependencies = "no";
       };
 
       suspend = {
-        enable = false;
+        enable = hostType != "server";
         unitConfig.DefaultDependencies = "no";
       };
 
       hibernate = {
-        enable = false;
+        enable = hostType != "server";
         unitConfig.DefaultDependencies = "no";
       };
 
       "hybrid-sleep" = {
-        enable = false;
+        enable = hostType != "server";
         unitConfig.DefaultDependencies = "no";
       };
     };

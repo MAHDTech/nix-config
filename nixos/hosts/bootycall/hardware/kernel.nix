@@ -59,6 +59,12 @@ let
       ./scripts/config --enable USB_STORAGE
       ./scripts/config --enable MMC_SDHCI_MSM
 
+      # Enable PSTORE and ramoops crash debugging
+      ./scripts/config --enable PSTORE
+      ./scripts/config --enable PSTORE_RAM
+      ./scripts/config --enable PSTORE_CONSOLE
+      ./scripts/config --enable PSTORE_PMSG
+
       # 3. Enable framebuffer and FBTFT ST7735R display drivers
       ./scripts/config --enable FB
       ./scripts/config --enable STAGING
@@ -83,8 +89,30 @@ let
       ./scripts/config --disable PCI
       ./scripts/config --disable VIRTUALIZATION
 
-      # Disable debug symbols to shrink kernel size under 15MB
+      # Disable unused SoC architectures to shrink kernel size
+      for plat in ACTIONS SUNXI ALPINE APPLE BCM BCM2835 BCM_IPROC BRCMSTB EXYNOS LAYERSCAPE HISI KEEMBAY MEDIATEK MICROCHIP MVEBU NXP MXC PENSANDO REALTEK RENESAS ROCKCHIP S32 SEATTLE INTEL_SOCFPGA SPRD STM32 SYNAPTICS TEGRA TESLA_FSD THUNDER THUNDER2 UNIPHIER VEXPRESS VISCONTI XGENE ZYNQMP; do
+        ./scripts/config --disable ARCH_$plat
+      done
+
+      # Disable massive unused network and storage subsystems
+      ./scripts/config --disable ETHERNET
+      ./scripts/config --disable INFINIBAND
+      ./scripts/config --disable CAN
+      ./scripts/config --disable FDDI
+      ./scripts/config --disable HIPPI
+      ./scripts/config --disable SCSI_UFSHCD
+      ./scripts/config --disable SCSI_UFSHCD_PCI
+      ./scripts/config --disable SCSI_UFSHCD_PLATFORM
+      ./scripts/config --disable SCSI_UFS_QCOM
+      ./scripts/config --disable SCSI_MPT3SAS
+      ./scripts/config --disable SCSI_HISI_SAS
+
+      # Disable debug symbols to shrink kernel size
+      ./scripts/config --disable DEBUG_KERNEL
       ./scripts/config --disable DEBUG_INFO
+      ./scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
+      ./scripts/config --disable DEBUG_INFO_DWARF4
+      ./scripts/config --disable DEBUG_INFO_DWARF5
       ./scripts/config --enable DEBUG_INFO_NONE
 
       # 6. Re-sync configuration against Kconfig

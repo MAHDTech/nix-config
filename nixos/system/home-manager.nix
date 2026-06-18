@@ -6,6 +6,7 @@
   globalStateVersion,
   name,
   lib,
+  hostType ? "desktop",
   ...
 }:
 {
@@ -24,6 +25,7 @@
         globalStateVersion
         username
         system
+        hostType
         ;
       inCI = false;
       isNixosHM = true;

@@ -20,6 +20,7 @@ in
     {
       name,
       system,
+      hostType ? "desktop",
       extraModules ? [ ],
       overlays ? [ ],
       enableHomeManager ? true,
@@ -32,7 +33,12 @@ in
         };
       };
       specialArgs = {
-        inherit inputs system name;
+        inherit
+          inputs
+          system
+          name
+          hostType
+          ;
         username = globalUsername;
         inherit globalUsername globalStateVersion;
       };

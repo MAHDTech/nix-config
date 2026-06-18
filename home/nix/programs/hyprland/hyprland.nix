@@ -6,6 +6,7 @@
     monitorConfig = [ ];
     extraSettings = { };
   },
+  hostType ? "desktop",
   ...
 }:
 let
@@ -173,25 +174,47 @@ in
         # Hypridle Listeners
         #########################
 
-        listener = [
-          {
-            # Lock the screen after 5 mins.
-            timeout = 300;
-
-            # Lock screen after timeout.
-            on-timeout = "loginctl lock-session";
-          }
-          {
-            # Turn off the monitors after 15 mins.
-            timeout = 900;
-
-            # Power off monitors.
-            on-timeout = "${pkgs.libnotify}/bin/notify-send 'Sleeping...' ; hyprctl dispatch dpms off, all";
-
-            # Power on monitors.
-            on-resume = "${pkgs.libnotify}/bin/notify-send 'Resuming...' ; hyprctl dispatch dpms on, all";
-          }
-        ];
+        listener =
+          if hostType == "laptop" then
+            [
+              {
+                # Lock the screen after 5 mins.
+                timeout = 300;
+                on-timeout = "loginctl lock-session";
+              }
+              {
+                # On battery: turn off display after 5 mins (300s)
+                timeout = 300;
+                on-timeout = "if ${pkgs.coreutils}/bin/cat /sys/class/power_supply/AC/online | grep -q 0; then hyprctl dispatch dpms off, all; fi";
+                on-resume = "hyprctl dispatch dpms on, all";
+              }
+              {
+                # Turn off display after 15 mins (900s) (on AC/regardless)
+                timeout = 900;
+                on-timeout = "hyprctl dispatch dpms off, all";
+                on-resume = "hyprctl dispatch dpms on, all";
+              }
+              {
+                # On battery: sleep (suspend-then-hibernate) after 15 mins (900s)
+                timeout = 900;
+                on-timeout = "if ${pkgs.coreutils}/bin/cat /sys/class/power_supply/AC/online | grep -q 0; then systemctl suspend-then-hibernate; fi";
+              }
+              {
+                # On AC: sleep (suspend) after 30 mins (1800s)
+                timeout = 1800;
+                on-timeout = "systemctl suspend";
+              }
+            ]
+          else
+            [
+              # Server / Desktop / others: turn off monitors after 15 mins (900s), sleep never, hibernate never
+              {
+                # Turn off monitors.
+                timeout = 900;
+                on-timeout = "${pkgs.libnotify}/bin/notify-send 'Display sleeping...' ; hyprctl dispatch dpms off, all";
+                on-resume = "${pkgs.libnotify}/bin/notify-send 'Display resuming...' ; hyprctl dispatch dpms on, all";
+              }
+            ];
       };
     };
 

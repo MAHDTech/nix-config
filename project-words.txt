@@ -1,3 +1,4 @@
+
 ABRT
 AIPULIB
 ALRM
@@ -20,6 +21,7 @@ Ashburn
 BADYXG
 BOHICA
 BOOTAA
+BRCMSTB
 BTENVAR
 BUILDKIT
 Bambu
@@ -101,6 +103,7 @@ Exynos
 FBTFT
 FCFANS
 FCTEMPS
+FDDI
 FEMTO
 FIGNORE
 FOWNER
@@ -132,6 +135,8 @@ HCIBTUSB
 HCIUART
 HIDP
 HIDPHCIBTUSBHCIUART
+HIPPI
+HISI
 HMAC
 HRDVBNF
 HYPRCURSOR
@@ -147,6 +152,7 @@ IPBLOQ
 IPCC
 IPEX
 IPRANGE
+IPROC
 ISATTY
 Identiv
 Illumos
@@ -161,6 +167,7 @@ Jonsplus
 Jurong
 KAMN
 KASMWEB
+KEEMBAY
 KIPP
 KMSG
 KOMEDA
@@ -174,6 +181,7 @@ Kconfig
 Keymaps
 Kimi
 Kvantum
+LAYERSCAPE
 LDFLAGS
 LIBGL
 LIBNOISE
@@ -201,6 +209,7 @@ MKNOD
 MMIO
 MOTORCOMM
 MSCF
+MVEBU
 MXTJ
 Mediatek
 Mioi
@@ -289,8 +298,10 @@ SIGABRT
 SLIC
 SMMU
 SMSM
+SOCFPGA
 SOCIONEXT
 SOLARFLARE
+SPRD
 SQUASHFS
 SSDT
 STATICR
@@ -299,6 +310,8 @@ STMMAC
 STORCLI
 STREAMID
 SUBDEV
+SUNXI
+SYNAPTICS
 SYNCOBJ
 SYSV
 Sanoid
@@ -332,9 +345,11 @@ UDPHY
 UEFISECAPP
 UEFISECAPPQSEECOM
 UESP
+UFSHCD
 UGREEN
 UHCI
 UNIFI
+UNIPHIER
 USBC
 USBSSP
 UVLO
@@ -345,6 +360,7 @@ Ungated
 Uwyv
 VDEC
 VDPAU
+VEXPRESS
 VIDEOBUF
 VIDEODRIVER
 VMALLOC
@@ -364,6 +380,7 @@ Wingpanel
 XAIJW
 XAUTHORITY
 XCURSOR
+XGENE
 XKSODQK
 XPHTLXN
 Xcomposite
@@ -378,6 +395,7 @@ Yubi
 Yubico
 ZENBOOK
 ZHOUYI
+ZYNQMP
 Zafiro
 Zfscreate
 Zram
@@ -627,6 +645,7 @@ dosfstools
 dotenv
 dotglob
 downclocked
+dpdm
 dpkg
 dport
 dpsub
@@ -831,6 +850,7 @@ hpet
 hplip
 hrtimer
 hsphfpd
+hsusb
 htbuf
 htop
 httping
@@ -1121,6 +1141,7 @@ netboot
 netbootxyz
 netcat
 netconcole
+netconsole
 netdev
 netdevs
 netlink
@@ -1557,6 +1578,7 @@ swappy
 swaync
 swaynotificationcenter
 swcrypto
+swraid
 swww
 sxlzii
 symkey
@@ -1789,7 +1811,3 @@ zramctl
 zstd
 zvol
 zvols
-swraid
-hsusb
-dpdm
-netconsole
