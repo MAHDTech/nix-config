@@ -3,14 +3,36 @@ let
   globalUsername = "mahdtech";
   globalStateVersion = "26.05";
 
-  pkgsImportSystem =
-    system:
-    import inputs.nixpkgs {
-      inherit system;
-      config = {
-        allowUnfree = true;
+  # Import nixpkgs for a given system, with optional cross-compilation.
+  # When buildSystem != system, configures localSystem/crossSystem for
+  # native cross-compilation (no QEMU emulation).
+  pkgsImport =
+    {
+      system,
+      buildSystem ? system,
+      overlays ? [ ],
+    }:
+    if buildSystem == system then
+      # Native build — standard import
+      import inputs.nixpkgs {
+        inherit system overlays;
+        config = {
+          allowUnfree = true;
+        };
+      }
+    else
+      # Cross-compilation — build natively on buildSystem, target system
+      import inputs.nixpkgs {
+        localSystem = buildSystem;
+        crossSystem = system;
+        inherit overlays;
+        config = {
+          allowUnfree = true;
+        };
       };
-    };
+
+  # Backwards-compatible simple import (used by mkHome)
+  pkgsImportSystem = system: pkgsImport { inherit system; };
 in
 {
   inherit globalUsername globalStateVersion pkgsImportSystem;
@@ -20,22 +42,21 @@ in
     {
       name,
       system,
+      buildSystem ? system, # defaults to native; set to differ for cross-compilation
       hostType ? "desktop",
       extraModules ? [ ],
       overlays ? [ ],
       enableHomeManager ? true,
     }:
     lib.nixosSystem {
-      pkgs = import inputs.nixpkgs {
-        inherit system overlays;
-        config = {
-          allowUnfree = true;
-        };
+      pkgs = pkgsImport {
+        inherit system buildSystem overlays;
       };
       specialArgs = {
         inherit
           inputs
           system
+          buildSystem
           name
           hostType
           ;
@@ -61,12 +82,13 @@ in
   mkInstaller =
     {
       system,
+      buildSystem ? system, # defaults to native; set to differ for cross-compilation
       module,
       ...
     }:
     lib.nixosSystem {
-      pkgs = pkgsImportSystem system;
-      specialArgs = { inherit inputs; };
+      pkgs = pkgsImport { inherit system buildSystem; };
+      specialArgs = { inherit inputs buildSystem; };
       modules = [
         { system.stateVersion = globalStateVersion; }
         {

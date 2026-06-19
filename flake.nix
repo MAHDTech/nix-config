@@ -65,7 +65,7 @@
         map (host: {
           name = "installer-${lib.toLower host.name}";
           value = mylib.mkInstaller {
-            inherit (host) system;
+            inherit (host) system buildSystem;
             module = ./nixos/hosts/${lib.toLower host.name}/installer.nix;
           };
         }) hosts.list

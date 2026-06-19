@@ -4,26 +4,33 @@ let
 in
 {
   # Metadata for other flake outputs
+  # buildSystem: the machine that compiles. When it differs from system,
+  #              nixpkgs is configured for cross-compilation automatically.
   list = [
     {
       name = "JONS";
       system = "x86_64-linux";
+      buildSystem = "x86_64-linux"; # native
     }
     {
       name = "ARC";
       system = "x86_64-linux";
+      buildSystem = "x86_64-linux"; # native
     }
     {
       name = "ZENBOOK";
       system = "aarch64-linux";
+      buildSystem = "aarch64-linux"; # native (real ARM64 hardware)
     }
     {
       name = "ORION";
       system = "aarch64-linux";
+      buildSystem = "aarch64-linux"; # native (real ARM64 hardware)
     }
     {
       name = "BOOTYCALL";
       system = "aarch64-linux";
+      buildSystem = "x86_64-linux"; # cross-compile (no native hardware)
     }
   ];
 
@@ -32,6 +39,7 @@ in
     JONS = mkHost {
       name = "JONS";
       system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
       hostType = "desktop";
       extraModules = [
         inputs.nixos-hardware.nixosModules.common-cpu-amd
@@ -46,6 +54,7 @@ in
     ARC = mkHost {
       name = "ARC";
       system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
       hostType = "desktop";
       extraModules = [
         inputs.disko.nixosModules.disko
@@ -61,6 +70,7 @@ in
     ZENBOOK = mkHost {
       name = "ZENBOOK";
       system = "aarch64-linux";
+      buildSystem = "aarch64-linux";
       hostType = "laptop";
       extraModules = [
         inputs.disko.nixosModules.disko
@@ -71,6 +81,7 @@ in
     ORION = mkHost {
       name = "ORION";
       system = "aarch64-linux";
+      buildSystem = "aarch64-linux";
       hostType = "server";
       extraModules = [
         inputs.disko.nixosModules.disko
@@ -81,6 +92,7 @@ in
     BOOTYCALL = mkHost {
       name = "BOOTYCALL";
       system = "aarch64-linux";
+      buildSystem = "x86_64-linux"; # cross-compile (no native hardware)
       hostType = "server";
       enableHomeManager = false;
       extraModules = [

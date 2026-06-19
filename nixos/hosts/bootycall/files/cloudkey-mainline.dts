@@ -51,6 +51,46 @@
 		#size-cells = <2>;
 		ranges;
 
+		other_ext_region@0 {
+			compatible = "removed-dma-pool";
+			no-map;
+			reg = <0x00 0x85b00000 0x00 0xd00000>;
+		};
+
+		wcnss_fw_region@0 {
+			compatible = "removed-dma-pool";
+			no-map;
+			reg = <0x00 0x8e700000 0x00 0x700000>;
+		};
+
+		venus_region@0 {
+			compatible = "shared-dma-pool";
+			reusable;
+			alloc-ranges = <0x00 0x80000000 0x00 0x10000000>;
+			alignment = <0x00 0x400000>;
+			size = <0x00 0x800000>;
+		};
+
+		secure_region@0 {
+			compatible = "shared-dma-pool";
+			reusable;
+			alignment = <0x00 0x400000>;
+			size = <0x00 0x9800000>;
+			status = "disabled";
+		};
+
+		qseecom_region@0 {
+			compatible = "shared-dma-pool";
+			reusable;
+			alignment = <0x00 0x400000>;
+			size = <0x00 0x1000000>;
+		};
+
+		dfps_data_mem@90000000 {
+			reg = <0x00 0x90000000 0x00 0x1000>;
+			label = "dfps_data_mem";
+		};
+
 		ramoops@92000000 {
 			compatible = "ramoops";
 			reg = <0x00 0x92000000 0x00 0x200000>;
