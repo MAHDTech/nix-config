@@ -19,6 +19,10 @@
     loader.grub.enable = false;
 
     initrd = {
+      # Android aboot/LK only understands gzip ramdisks; NixOS defaults to zstd
+      compressor = "gzip";
+      compressorArgs = [ "-9" ];
+
       includeDefaultModules = false;
       availableKernelModules = lib.mkForce [
         "sdhci_msm" # eMMC controller
@@ -54,8 +58,12 @@
     kernelParams = [
       "console=ttyMSM0,115200n8" # Mainline serial console
       "console=tty0"
+      "earlycon" # Earliest possible console output
+      "loglevel=8" # Maximum kernel verbosity for debugging
       # Stream early kernel log to JONS (via gateway router MAC on different subnet)
       "netconsole=6666@10.10.200.200/eth0,6666@10.10.1.93/74:ac:b9:3f:15:a6"
+      "pstore.backend=ramoops"
+      "ramoops.ecc=1"
     ];
   };
 

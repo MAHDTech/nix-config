@@ -1,8 +1,15 @@
 { pkgs, lib, ... }:
 let
-  # Use standard Linux 6.12 source from nixpkgs (pre-cached, no downloads)
-  kernelSrc = pkgs.linux_6_12.src;
-  kernelVersion = pkgs.linux_6_12.version;
+  # MSM8953-mainline community kernel — the only tree with complete
+  # APQ8053/MSM8953 device tree and driver support.
+  # https://github.com/msm8953-mainline/linux
+  kernelVersion = "7.0.9";
+  kernelSrc = pkgs.fetchFromGitHub {
+    owner = "msm8953-mainline";
+    repo = "linux";
+    rev = "v7.0.9-r0";
+    hash = "sha256-JixrsjTjRjuwj6J/aWFIiS0qXr+7NBeR/KtTg8cXPiE=";
+  };
 
   kernelBuild = pkgs.stdenv.mkDerivation {
     pname = "linux-bootycall";
@@ -34,9 +41,6 @@ let
       elfutils
     ];
 
-    # Enable Armv8 Cryptography Extensions if needed
-    NIX_CFLAGS_COMPILE = "-march=armv8-a+crypto";
-
     prePatch = ''
       echo "Copying custom device tree cloudkey-mainline.dts into kernel source tree..."
       cp ${../files/cloudkey-mainline.dts} arch/arm64/boot/dts/qcom/apq8053-ubnt-cloudkey.dts
@@ -48,37 +52,50 @@ let
     configurePhase = ''
       patchShebangs scripts
 
-      # 1. Load the default generic arm64 multi_v8_defconfig
+      # 1. Start from the community defconfig (already Qualcomm-focused with all QCOM subsystem drivers)
       make ARCH=arm64 defconfig
 
-      # 2. Enable critical built-in drivers for network, storage, and eMMC
-      ./scripts/config --enable USB_DWC3
-      ./scripts/config --enable USB_DWC3_QCOM
+      # 2. Merge the msm8953 community config fragment on top
+      ./scripts/kconfig/merge_config.sh -m .config arch/arm64/configs/msm8953.config
+
+      # 3. CloudKey-specific: USB Ethernet (our ONLY network interface)
       ./scripts/config --enable USB_NET_AX88179_178A
+      ./scripts/config --enable USB_NET_DRIVERS
+      ./scripts/config --enable USB_USBNET
+
+      # 4. CloudKey-specific: USB storage for SATA HDD bridge (ASM1153E)
       ./scripts/config --enable USB_UAS
       ./scripts/config --enable USB_STORAGE
-      ./scripts/config --enable MMC_SDHCI_MSM
 
-      # Enable PSTORE and ramoops crash debugging
-      ./scripts/config --enable PSTORE
-      ./scripts/config --enable PSTORE_RAM
-      ./scripts/config --enable PSTORE_CONSOLE
-      ./scripts/config --enable PSTORE_PMSG
-
-      # 3. Enable framebuffer and FBTFT ST7735R display drivers
+      # 5. CloudKey-specific: OLED display (ST7735R via SPI) — optional nice-to-have
       ./scripts/config --enable FB
       ./scripts/config --enable STAGING
       ./scripts/config --enable FB_TFT
       ./scripts/config --enable FB_TFT_ST7735R
 
-      # 4. Enable required NixOS cgroups and namespace settings
+      # 6. NixOS requirements: cgroups, namespaces, devtmpfs
       ./scripts/config --enable CGROUPS
       ./scripts/config --enable NAMESPACES
       ./scripts/config --enable DEVTMPFS
       ./scripts/config --enable DEVTMPFS_MOUNT
       ./scripts/config --enable SECCOMP
 
-      # 5. Disable massive unused subsystems to speed up compilation by 90%+
+      # 7. Filesystem support for root and data partitions
+      ./scripts/config --enable EXT4_FS
+      ./scripts/config --enable BTRFS_FS
+
+      # 8. Enable size optimization to keep kernel small for boot.img
+      ./scripts/config --disable CC_OPTIMIZE_FOR_PERFORMANCE
+      ./scripts/config --enable CC_OPTIMIZE_FOR_SIZE
+
+      # 9. Disable debug symbols to shrink kernel size
+      ./scripts/config --disable DEBUG_INFO
+      ./scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
+      ./scripts/config --disable DEBUG_INFO_DWARF4
+      ./scripts/config --disable DEBUG_INFO_DWARF5
+      ./scripts/config --enable DEBUG_INFO_NONE
+
+      # 10. Disable massive unused subsystems to speed compilation and shrink size
       ./scripts/config --disable SOUND
       ./scripts/config --disable SND
       ./scripts/config --disable WIRELESS
@@ -86,36 +103,9 @@ let
       ./scripts/config --disable BT
       ./scripts/config --disable MEDIA_SUPPORT
       ./scripts/config --disable DRM
-      ./scripts/config --disable PCI
       ./scripts/config --disable VIRTUALIZATION
 
-      # Disable unused SoC architectures to shrink kernel size
-      for plat in ACTIONS SUNXI ALPINE APPLE BCM BCM2835 BCM_IPROC BRCMSTB EXYNOS LAYERSCAPE HISI KEEMBAY MEDIATEK MICROCHIP MVEBU NXP MXC PENSANDO REALTEK RENESAS ROCKCHIP S32 SEATTLE INTEL_SOCFPGA SPRD STM32 SYNAPTICS TEGRA TESLA_FSD THUNDER THUNDER2 UNIPHIER VEXPRESS VISCONTI XGENE ZYNQMP; do
-        ./scripts/config --disable ARCH_$plat
-      done
-
-      # Disable massive unused network and storage subsystems
-      ./scripts/config --disable ETHERNET
-      ./scripts/config --disable INFINIBAND
-      ./scripts/config --disable CAN
-      ./scripts/config --disable FDDI
-      ./scripts/config --disable HIPPI
-      ./scripts/config --disable SCSI_UFSHCD
-      ./scripts/config --disable SCSI_UFSHCD_PCI
-      ./scripts/config --disable SCSI_UFSHCD_PLATFORM
-      ./scripts/config --disable SCSI_UFS_QCOM
-      ./scripts/config --disable SCSI_MPT3SAS
-      ./scripts/config --disable SCSI_HISI_SAS
-
-      # Disable debug symbols to shrink kernel size
-      ./scripts/config --disable DEBUG_KERNEL
-      ./scripts/config --disable DEBUG_INFO
-      ./scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
-      ./scripts/config --disable DEBUG_INFO_DWARF4
-      ./scripts/config --disable DEBUG_INFO_DWARF5
-      ./scripts/config --enable DEBUG_INFO_NONE
-
-      # 6. Re-sync configuration against Kconfig
+      # 11. Re-sync configuration against Kconfig
       make ARCH=arm64 olddefconfig
     '';
 

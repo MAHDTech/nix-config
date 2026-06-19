@@ -24,6 +24,12 @@
               };
             };
 
+            pstore = {
+              priority = 2;
+              name = "pstore";
+              size = "16M";
+            };
+
             root = {
               size = "100%";
               content = {

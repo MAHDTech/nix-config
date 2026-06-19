@@ -155,6 +155,12 @@ in
       "systemd.tpm2_wait=0" # Don't wait for fTPM during early boot (OP-TEE may be slow)
       # Suppress all platform watchdogs at boot (works on built-in drivers too)
       "nowatchdog"
+      # Raw NVMe partition for persistent crash logging via pstore-blk
+      "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
+      # Panic escalation parameters for crash dump flushing
+      "panic_on_oops=1"
+      "panic=30"
+      "panic_print=0x7ff"
     ];
 
     # Issue 22: Audio module configuration (currently dead code — all audio
