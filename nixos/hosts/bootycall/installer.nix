@@ -41,6 +41,15 @@
     options = [ "mode=0755" ];
   };
 
+  # WORKAROUND: The systemd fstab-generator reads /etc/fstab at early boot to
+  # generate mount units. NixOS only provides the fstab via SYSTEMD_SYSROOT_FSTAB
+  # (used by initrd-parse-etc AFTER /sysroot is mounted). But the ISO/squashfs/overlay
+  # mounts must exist at generator time. Symlink /etc/fstab to the initrd-fstab so
+  # the fstab-generator creates all mount units from the start. When running in
+  # initrd mode, the generator automatically prefixes mount points with /sysroot.
+  boot.initrd.systemd.contents."/etc/fstab".source =
+    config.boot.initrd.systemd.services.initrd-parse-etc.environment.SYSTEMD_SYSROOT_FSTAB;
+
   # Enable SSH inside the installer for NixOS Anywhere (if needed)
   services.openssh.enable = true;
 
