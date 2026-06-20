@@ -25,31 +25,35 @@
 
       includeDefaultModules = false;
       availableKernelModules = lib.mkForce [
+        # Hardware drivers
         "sdhci_msm" # eMMC controller
         "dwc3_qcom" # USB controller
         "xhci_hcd" # xHCI controller
         "uas" # USB Attached SCSI (for SATA HDD bridge)
         "usb_storage" # Fallback USB storage
         "ax88179_178a" # ASIX AX88179 USB Ethernet adapter (eth0)
+        # Filesystems
         "ext4" # Filesystem for root / data partitions
         "crc32c" # Required checksum module for ext4
+        # NixOS Live CD boot chain (iso-image.nix requires these)
+        "iso9660" # Read the ISO filesystem on mmcblk0p46
+        "squashfs" # Mount the squashfs nix store inside the ISO
+        "loop" # Loop-mount the ISO and squashfs images
+        "overlay" # Overlay filesystem for writable layer on top of squashfs
+        "nls_iso8859-1" # Character set support for ISO9660
       ];
 
-      # Failsafe: if stage-1 initrd fails, write dmesg to persistent /data before dropping to shell
+      # Failsafe: if stage-1 initrd fails, force a kernel panic to write ramoops
       systemd.services.panic-dumper = {
-        description = "Dump kernel dmesg on boot failure";
+        description = "Force panic on boot failure";
         wantedBy = [ "emergency.target" ];
         before = [ "emergency.service" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = pkgs.writeScript "panic-dumper" ''
             #!/bin/sh
-            echo "=== NixOS Stage-1 Initrd Boot Failure ==="
-            mkdir -p /panic_mnt
-            if mount -t ext4 -o rw /dev/mmcblk0p47 /panic_mnt; then
-              dmesg > /panic_mnt/boot_panic.log
-              umount /panic_mnt
-            fi
+            echo "EMERGENCY TARGET REACHED! FORCING PANIC!" > /dev/kmsg
+            echo c > /proc/sysrq-trigger
           '';
         };
       };
@@ -64,6 +68,8 @@
       "netconsole=6666@10.10.200.200/eth0,6666@10.10.1.93/74:ac:b9:3f:15:a6"
       "pstore.backend=ramoops"
       "ramoops.ecc=1"
+      # Forward journal messages to kmsg so ramoops captures them after journald starts
+      "systemd.journald.forward_to_kmsg=1"
     ];
   };
 

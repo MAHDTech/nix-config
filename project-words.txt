@@ -63,6 +63,7 @@ Creality
 Custor
 DBOOST
 DBUS
+DCVS
 DEBUGFS
 DEVFREQ
 DEVNAME
@@ -326,6 +327,7 @@ Stylesheet
 SwiGLU
 Syncthing
 TCSADRAIN
+TLBI
 TMPFS
 TMPVID
 TPACPI
@@ -339,6 +341,7 @@ Tegra
 Tensilica
 Tesslate
 Thinkfan
+Timebomb
 Tkachenko
 Touchdevice
 UDPHY
@@ -357,6 +360,7 @@ UWSM
 Ubiquiti
 Ultrawide
 Ungated
+Upstreamed
 Uwyv
 VDEC
 VDPAU
@@ -399,6 +403,7 @@ ZYNQMP
 Zafiro
 Zfscreate
 Zram
+aboot
 aclinherit
 aclmode
 acltype
@@ -414,6 +419,7 @@ adsps
 adspua
 aipu
 algif
+allnoconfig
 alsa
 altroot
 amdgpu
@@ -470,6 +476,7 @@ barentry
 bartowski
 battmgr
 bcache
+bcachefs
 binbash
 bindm
 binfmt
@@ -722,6 +729,7 @@ fifo
 figlet
 filemore
 filereadable
+finditer
 findutils
 finegrained
 finetune
@@ -742,6 +750,7 @@ fsprogs
 ftplugin
 fullquote
 fwupd
+fwupdate
 fwupdmgr
 gamemode
 gamemoderun
@@ -1364,6 +1373,7 @@ qupv
 racc
 rakr
 raku
+ramdump
 ramfs
 ramoops
 rando
@@ -1623,6 +1633,7 @@ thewh1teagle
 thinpool
 threadirqs
 tiktoken
+timebomb
 timeoutlen
 timepoint
 timonwong
@@ -1685,6 +1696,7 @@ unsqueeze
 upmix
 upmixing
 upower
+upstreamed
 upstreaming
 urlencode
 usbcore
@@ -1811,5 +1823,3 @@ zramctl
 zstd
 zvol
 zvols
-aboot
-allnoconfig

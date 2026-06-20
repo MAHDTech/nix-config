@@ -4,6 +4,7 @@
 #include <dt-bindings/arm/qcom,ids.h>
 #include "msm8953.dtsi"
 #include "pm8953.dtsi"
+#include <dt-bindings/gpio/gpio.h>
 
 / {
 	model = "Ubiquiti UniFi CloudKey Gen2 Plus";
@@ -27,6 +28,33 @@
 		regulator-min-microvolt = <2950000>;
 		regulator-max-microvolt = <2950000>;
 		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	txs0108e_oe: regulator-txs0108e-oe {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&txs0108e_pins>;
+		regulator-name = "txs0108e_oe";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		startup-delay-us = <200>;
+		gpio = <&tlmm 125 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+	};
+
+	usb_vbus: regulator-usb-vbus {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb_vbus_pins>;
+		regulator-name = "usb_vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&tlmm 102 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+		vin-supply = <&txs0108e_oe>;
 	};
 
 	vcc_io_sdhc1: regulator-vcc-io-sdhc1 {
@@ -91,14 +119,13 @@
 			label = "dfps_data_mem";
 		};
 
-		ramoops@92000000 {
+		my_crash_log@92000000 {
 			compatible = "ramoops";
-			reg = <0x00 0x92000000 0x00 0x200000>;
-			record-size = <0x100000>;
-			console-size = <0x10000>;
-			ftrace-size = <0x10000>;
-			pmsg-size = <0x80000>;
-			ecc-size = <16>;
+			no-map;
+			reg = <0x0 0x92000000 0x0 0x200000>;
+			record-size = <0x20000>;
+			console-size = <0x20000>;
+			pmsg-size = <0x20000>;
 		};
 	};
 };
@@ -262,5 +289,35 @@
 		reset-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
 		dc-gpios = <&tlmm 87 GPIO_ACTIVE_HIGH>;
 		rotation = <270>;
+	};
+};
+
+&tlmm {
+	gpio-reserved-ranges = <0 4>, <16 4>, <135 4>;
+
+	txs0108e_pins: txs0108e-pins {
+		mux {
+			pins = "gpio125";
+			function = "gpio";
+		};
+		config {
+			pins = "gpio125";
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
+	};
+
+	usb_vbus_pins: usb-vbus-pins {
+		mux {
+			pins = "gpio102";
+			function = "gpio";
+		};
+		config {
+			pins = "gpio102";
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
 	};
 };

@@ -7,10 +7,15 @@
 {
   imports = [
     (modulesPath + "/profiles/minimal.nix")
-    (modulesPath + "/profiles/installation-device.nix")
+    (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
   ];
 
   # Basic Installer configuration for nixos-anywhere
+  boot.supportedFilesystems = lib.mkForce [
+    "ext4"
+    "vfat"
+    "btrfs"
+  ];
   services.openssh = {
     enable = true;
     settings = {

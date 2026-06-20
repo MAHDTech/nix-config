@@ -90,6 +90,11 @@ let
 
       echo "Registering device tree in Makefile..."
       echo "dtb-\$(CONFIG_ARCH_QCOM) += apq8053-ubnt-cloudkey.dtb" >> arch/arm64/boot/dts/qcom/Makefile
+
+      echo "Sledgehammer patching msm_gpio_get_direction to instantly return IN..."
+      sed -i '/static int msm_gpio_get_direction(/,/^{/ { /^{/a\
+      \treturn GPIO_LINE_DIRECTION_IN;
+      }' drivers/pinctrl/qcom/pinctrl-msm.c
     '';
 
     configurePhase = ''

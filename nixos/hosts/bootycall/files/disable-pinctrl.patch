@@ -1,0 +1,11 @@
+--- a/drivers/pinctrl/qcom/pinctrl-msm.c
++++ b/drivers/pinctrl/qcom/pinctrl-msm.c
+@@ -1945,6 +1945,8 @@ int msm_pinctrl_probe(struct platform_device *pdev,
+ 	struct resource *res;
+ 	int ret;
+ 
++	return 0; // DISABLE PINCTRL ENTIRELY TO BYPASS TRUSTZONE LOCKUP
++
+ 	pctrl = devm_kzalloc(&pdev->dev, sizeof(*pctrl), GFP_KERNEL);
+ 	if (!pctrl)
+ 		return -ENOMEM;
