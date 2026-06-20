@@ -56,7 +56,7 @@
       mkbootimg \
         --kernel Image.gz-dtb \
         --ramdisk ${config.system.build.initialRamdisk}/initrd \
-        --cmdline "console=ttyMSM0,115200n8 earlycon loglevel=8 net.ifnames=0 netconsole=6666@10.10.200.200/eth0,6666@10.10.1.93/74:ac:b9:3f:15:a6 pstore.backend=ramoops ramoops.ecc=1 systemd.journald.forward_to_kmsg=1" \
+        --cmdline "console=ttyMSM0,115200n8 earlycon loglevel=8 net.ifnames=0 netconsole=6666@10.10.200.200/eth0,6666@10.10.1.93/74:ac:b9:3f:15:a6 pstore.backend=ramoops ramoops.ecc=1 systemd.journald.forward_to_kmsg=1 init=${config.system.build.toplevel}/init" \
         --base 0x80000000 \
         --kernel_offset 0x00008000 \
         --ramdisk_offset 0x01000000 \
