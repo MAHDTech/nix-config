@@ -77,6 +77,7 @@
 		regulator-name = "hdd_vbus";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
+		startup-delay-us = <8000000>;
 		gpio = <&tlmm 101 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
@@ -187,6 +188,7 @@
 	vdd-supply = <&pm8953_l3>;
 	vdda-pll-supply = <&pm8953_l7>;
 	vdda-phy-dpdm-supply = <&pm8953_l13>;
+	qcom,qusb-phy-init-seq = [f8 80 b3 84 83 88 c0 8c 14 9c 30 08 79 0c 21 10 00 90 9f 1c 00 18];
 	status = "okay";
 };
 
@@ -258,6 +260,7 @@
 			regulator-min-microvolt = <925000>;
 			regulator-max-microvolt = <925000>;
 			regulator-allow-set-load;
+			regulator-always-on;
 		};
 
 		pm8953_l5: l5 {
@@ -274,6 +277,7 @@
 		pm8953_l7: l7 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1900000>;
+			regulator-always-on;
 		};
 
 		pm8953_l8: l8 {
@@ -305,6 +309,7 @@
 		pm8953_l13: l13 {
 			regulator-min-microvolt = <3125000>;
 			regulator-max-microvolt = <3125000>;
+			regulator-always-on;
 		};
 
 		pm8953_l16: l16 {

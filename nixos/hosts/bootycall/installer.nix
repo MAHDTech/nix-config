@@ -95,7 +95,7 @@
       mkbootimg \
         --kernel Image.gz-dtb \
         --ramdisk ${config.system.build.initialRamdisk}/initrd \
-        --cmdline "console=ttyMSM0,115200n8 earlycon pstore.backend=ramoops ramoops.ecc=1 root=LABEL=${config.isoImage.volumeID} init=${config.system.build.toplevel}/init clk_ignore_unused pd_ignore_unused regulator_ignore_unused module_blacklist=uas usb_storage.quirks=174c:1153:u" \
+        --cmdline "console=ttyMSM0,115200n8 earlycon pstore.backend=ramoops ramoops.ecc=1 root=LABEL=${config.isoImage.volumeID} init=${config.system.build.toplevel}/init clk_ignore_unused pd_ignore_unused regulator_ignore_unused module_blacklist=uas usb_storage.quirks=174c:1153:u usbcore.autosuspend=-1 printk.time=1" \
         --base 0x80000000 \
         --kernel_offset 0x00008000 \
         --ramdisk_offset 0x01000000 \

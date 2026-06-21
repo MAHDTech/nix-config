@@ -29,8 +29,6 @@
         "sdhci_msm" # eMMC controller
         "dwc3_qcom" # USB controller
         "xhci_hcd" # xHCI controller
-        "uas" # USB Attached SCSI (for SATA HDD bridge)
-        "usb_storage" # Fallback USB storage
         "ax88179_178a" # ASIX AX88179 USB Ethernet adapter (eth0)
         # Filesystems
         "ext4" # Filesystem for root / data partitions
@@ -70,6 +68,8 @@
       "ramoops.ecc=1"
       # Forward journal messages to kmsg so ramoops captures them after journald starts
       "systemd.journald.forward_to_kmsg=1"
+      "usbcore.autosuspend=-1"
+      "printk.time=1"
     ];
   };
 
