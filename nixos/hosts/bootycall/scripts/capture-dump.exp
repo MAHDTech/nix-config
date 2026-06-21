@@ -1,0 +1,94 @@
+#!/usr/bin/env expect
+#
+# capture-dump.exp — Capture a ramoops dump from the CloudKey recovery shell
+#
+# Usage:
+#   nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/capture-dump.exp <cloudkey-ip> <server-ip> [port]"
+#
+# Example:
+#   nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/capture-dump.exp 10.10.200.200 10.10.1.93 16000"
+#
+# Prerequisites:
+#   Start a netcat listener on the server from the root of the repo:
+#     nc -l -p 16000 > dumpNN.bin
+#
+
+set timeout 30
+set cloudkey_ip [lindex $argv 0]
+set server_ip   [lindex $argv 1]
+set port        [lindex $argv 2]
+
+if {$cloudkey_ip == "" || $server_ip == ""} {
+    puts stderr "Usage: ./capture-dump.exp <cloudkey-ip> <server-ip> \[port\]"
+    puts stderr ""
+    puts stderr "  cloudkey-ip  IP of the CloudKey in recovery mode"
+    puts stderr "  server-ip    IP of this machine (where netcat is listening)"
+    puts stderr "  port         Netcat listener port (default: 16000)"
+    exit 1
+}
+
+if {$port == ""} {
+    set port 16000
+}
+
+# Suppress ANSI cursor position reports (DSR/CPR responses like \e[22;19R)
+# by disabling the log output during noisy sections
+log_user 0
+
+puts "==> Connecting to CloudKey at $cloudkey_ip ..."
+spawn telnet $cloudkey_ip
+
+expect {
+    "login:" {}
+    timeout {
+        puts stderr "ERROR: Timed out waiting for login prompt"
+        exit 1
+    }
+    eof {
+        puts stderr "ERROR: Connection closed"
+        exit 1
+    }
+}
+send "root\r"
+
+expect "Password:"
+send "ubnt\r"
+
+# Wait for prompt — absorb any ANSI escape sequences
+expect {
+    -re {# $} {}
+    -re {\x1b\[.+R} { exp_continue }
+    "#" {}
+}
+
+# Brief pause to let any remaining escape sequences flush
+sleep 1
+
+log_user 1
+puts "\n==> Connected! Sending ramoops dump to $server_ip:$port ..."
+log_user 0
+
+# The ramoops region is at physical address 0x92000000, size 0x200000 (2 MiB)
+# 0x92000000 / 512 = 4784128 (skip value)
+# 0x200000 / 512 = 4096 (count value)
+send "dd if=/dev/mem bs=512 skip=4784128 count=4096 2>/dev/null | nc $server_ip $port\r"
+
+# Wait for the dd/nc to complete — look for the prompt
+expect {
+    -re {# $} {}
+    -re {\x1b\[.+R} { exp_continue }
+    "#" {}
+    timeout {
+        puts stderr "\nWARN: Timed out waiting for dump to complete"
+    }
+}
+
+log_user 1
+puts "\n==> Dump complete! Check your netcat listener output."
+log_user 0
+
+send "exit\r"
+expect eof
+
+log_user 1
+puts "==> Done."

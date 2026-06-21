@@ -666,6 +666,7 @@ dunst
 dunstctl
 dunstify
 dynatrace
+eabi
 earlycon
 earlyprintk
 echoerr
@@ -985,6 +986,7 @@ libcap
 libclang
 libdrm
 libexec
+libfdt
 libfido
 libfile
 libfuse
@@ -1032,6 +1034,7 @@ liga
 lilyinstarlight
 linadmin
 linbit
+lindex
 linespace
 linlon
 linlondp
@@ -1353,6 +1356,8 @@ pwrctrl
 pwrkey
 pwrseq
 pxelinux
+pyasn
+pycryptodome
 pyprland
 pyproject
 pyyaml

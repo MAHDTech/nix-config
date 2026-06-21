@@ -13,13 +13,11 @@ let
   #   - Expected build time: ~3 minutes (cross or native)
   # ===========================================================================
 
-  kernelVersion = "7.0.9";
+  kernelVersion = "7.1.1";
 
-  kernelSrc = pkgs.fetchFromGitHub {
-    owner = "msm8953-mainline";
-    repo = "linux";
-    rev = "v7.0.9-r0";
-    hash = "sha256-JixrsjTjRjuwj6J/aWFIiS0qXr+7NBeR/KtTg8cXPiE=";
+  kernelSrc = pkgs.fetchurl {
+    url = "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.1.1.tar.xz";
+    hash = "sha256-UhX6NUHcfn9bzVG/flfxac7G/OUIylTj3IX97hQ3HX0=";
   };
 
   # -------------------------------------------------------------------------
@@ -90,11 +88,6 @@ let
 
       echo "Registering device tree in Makefile..."
       echo "dtb-\$(CONFIG_ARCH_QCOM) += apq8053-ubnt-cloudkey.dtb" >> arch/arm64/boot/dts/qcom/Makefile
-
-      echo "Sledgehammer patching msm_gpio_get_direction to instantly return IN..."
-      sed -i '/static int msm_gpio_get_direction(/,/^{/ { /^{/a\
-      \treturn GPIO_LINE_DIRECTION_IN;
-      }' drivers/pinctrl/qcom/pinctrl-msm.c
     '';
 
     configurePhase = ''

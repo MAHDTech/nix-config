@@ -1,95 +1,159 @@
-# CloudKey Gen2 Plus Recovery & Flashing
+# CloudKey Gen2 Plus — Recovery & Flashing Guide
 
-This document outlines a massive breakthrough found during development: the UniFi CloudKey Gen2 Web
-Recovery environment runs an unauthenticated `telnetd` instance as `root`, which can be used to
-bypass all RSA signature checks and capture early kernel panics.
+This document covers the recovery, flashing, and debugging workflow for running
+NixOS on the Ubiquiti CloudKey Gen2 Plus (APQ8053).
 
-## Bypassing WebUI RSA Signatures
+## Prerequisites
 
-The WebUI firmware updater (`/api/fwupdate`) uses `ubnt-tools` to validate the RSA-2048 signature of uploaded `.bin` firmware against Ubiquiti's embedded CloudKey CA.
+| Item                   | Details                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| CloudKey IP (recovery) | `10.10.200.200` (DHCP reservation for MAC `74:83:c2:7b:82:9f`) |
+| Server IP              | `10.10.1.93` (JONS — the build machine)                        |
+| HTTP port              | `16000` (Python HTTP server)                                   |
+| Netcat port            | `16000` (ramoops dump receiver)                                |
+| Recovery credentials   | `root` / `ubnt`                                                |
 
-However, since `telnetd` gives us root access, we can push an unsigned raw `boot.img` over the
-network and write it directly to the eMMC block device (`/dev/mmcblk0p42`), completely bypassing
-the WebUI and signature checks.
+## Quick Start
 
-### Flashing Procedure
+### 1. Build the installer
 
-1. **Boot into Recovery Mode:** Power off the CloudKey, hold the reset button with a paperclip, and power it on. Hold until the LED flashes white/blue.
-2. **Start a Python Web Server on JONS:** To ensure the 30.5MB image doesn't get corrupted or truncated during transfer, we serve it over HTTP.
-   In a terminal on JONS, run:
-   ```bash
-   cd /boot/nixos/nix-config
-   python3 -m http.server 16000
-   ```
-   _(Ensure port 16000 is open in your JONS firewall!)_
-3. **Pull the `boot.img` via Telnet:**
-   Telnet into the CloudKey as root and download the image directly to `/tmp`:
-   ```bash
-   telnet <CLOUDKEY_IP>
-   # Once logged in as root:
-   cd /tmp
-   wget http://<JONS_IP>:16000/result/boot.img
-   dd if=boot.img of=/dev/mmcblk0p42 bs=4096
-   ```
-4. **Reboot:**
-   Once the transfer completes, return to the Telnet shell and reboot:
-   ```bash
-   sync
-   reboot -f
-   ```
+```bash
+cd /boot/nixos/nix-config
+nix build .#installer-bootycall
+# Output: ./result/boot.img and ./result/rootfs.iso
+```
 
-## Capturing RAMOOPS (Kernel Panics)
+### 2. Start the HTTP server
 
-The Web Recovery Kernel is stripped down and does **not** have the `pstore` driver enabled. This means you cannot mount `/sys/fs/pstore` to read crash logs from a previous failed mainline boot.
+```bash
+cd /boot/nixos/nix-config
+python3 -m http.server 16000
+```
 
-However, the RAMOOPS data is preserved across warm reboots in a hardcoded physical memory block
-(`0x92000000` to `0x92200000`). We can read this physical memory directly using `/dev/mem` in the
-telnet shell, and send it back to JONS for decompression!
+### 3. Boot CloudKey into recovery mode
 
-### Extraction Procedure
+1. Power off the CloudKey
+2. Hold the reset button with a paperclip
+3. Power it on while holding reset
+4. Hold until the LED flashes white/blue (~10 seconds)
+5. Release — the CloudKey boots into recovery at `10.10.200.200`
 
-1. **Dump RAMOOPS to a file on the CloudKey:**
+### 4. Flash with the automated script
 
-   ```bash
-   dd if=/dev/mem of=/tmp/ramdump.bin bs=4096 count=512 skip=598016
-   ```
+```bash
+nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/flash-recovery.exp 10.10.200.200 10.10.1.93 16000"
+```
 
-   _(598016 blocks _ 4096 bytes = 0x92000000 offset).\*
+The script will:
 
-2. **Start a Netcat listener on JONS:**
+- Telnet into recovery as `root`
+- Flash `rootfs.iso` → `/dev/mmcblk0p46` (userdata partition)
+- Flash `boot.img` → `/dev/mmcblk0p42` (boot partition)
+- Sync and reboot
 
-   ```bash
-   nc -l 16000 > /tmp/ramdump.bin
-   ```
+### 5. Wait for NixOS to boot
 
-3. **Send the dump from the CloudKey:**
+After reboot, wait 3–4 minutes for the full boot sequence:
 
-   ```bash
-   nc <JONS_IP> 16000 < /tmp/ramdump.bin
-   ```
+- Stage-1 (scripted initrd): mounts ISO, squashfs, overlay
+- Stage-2 (systemd): starts services, DHCP, SSH
 
-4. **Decompress the log on JONS:**
-   The `pstore` logs are zlib/deflate compressed (indicated by the `====<timestamp>-C` header). Use a python script to extract and decompress them:
+Check your router's DHCP lease table for MAC `74:83:c2:7b:82:9f`.
 
-   ```python
-   import zlib
-   import re
+---
 
-   with open("/tmp/ramdump.bin", "rb") as f:
-       data = f.read()
+## Capturing Ramoops Dumps
 
-   pattern = re.compile(br'====(\d+\.\d+)-([A-Z])\n')
-   matches = list(pattern.finditer(data))
+If the system fails to boot (no DHCP after 5 minutes), capture a ramoops dump
+for debugging.
 
-   for i, match in enumerate(matches):
-       start = match.end()
-       end = matches[i+1].start() if i + 1 < len(matches) else len(data)
-       record_data = data[start:end]
+### Automated capture
 
-       if match.group(2).decode() == 'C':
-           try:
-               uncompressed = zlib.decompress(record_data, -15) # Raw deflate
-               print(uncompressed.decode('utf-8', errors='replace'))
-           except Exception:
-               pass
-   ```
+Start a netcat listener first, then run the capture script:
+
+```bash
+# Terminal 1: Start listener
+nc -l -p 16000 > /tmp/dumpNN.bin
+
+# Terminal 2: Capture dump
+nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/capture-dump.exp 10.10.200.200 10.10.1.93 16000"
+```
+
+### Analyzing the dump
+
+```bash
+# Quick scan for key events
+strings /tmp/dumpNN.bin | grep -iE "usb|mount|fail|error|panic|eth0|dhcp|stage-1"
+```
+
+### What the ramoops dump contains
+
+The ramoops region lives at physical address `0x92000000` (2 MiB). The recovery
+kernel doesn't have `pstore` so we read `/dev/mem` directly:
+
+```
+dd if=/dev/mem bs=512 skip=4784128 count=4096
+                              │          │
+                              │          └─ 4096 × 512 = 2 MiB
+                              └─ 4784128 × 512 = 0x92000000
+```
+
+The dump contains the kernel ring buffer (`dmesg`) from the **previous** boot,
+including any panic traces. Records may be zlib-compressed with
+`====<timestamp>-C` headers.
+
+---
+
+## Manual Flashing (without expect)
+
+If the expect scripts don't work, flash manually via telnet:
+
+```bash
+telnet 10.10.200.200
+# Login: root / ubnt
+
+# Flash rootfs.iso
+umount /dev/mmcblk0p46 2>/dev/null || true
+wget -qO- http://10.10.1.93:16000/result/rootfs.iso | dd of=/dev/mmcblk0p46 bs=4M
+sync
+
+# Flash boot.img
+cd /tmp && rm -f boot.img
+wget http://10.10.1.93:16000/result/boot.img
+dd if=boot.img of=/dev/mmcblk0p42 bs=4096
+sync
+
+# Reboot
+reboot -f
+```
+
+---
+
+## Architecture Notes
+
+### Recovery Mode
+
+The CloudKey recovery mode runs an unauthenticated `telnetd` as `root`. This
+bypasses the WebUI's RSA-2048 signature validation (`ubnt-tools`), allowing us
+to write unsigned `boot.img` files directly to the eMMC.
+
+### eMMC Partition Layout
+
+| Partition | Device            | Purpose                          |
+| --------- | ----------------- | -------------------------------- |
+| `p42`     | `/dev/mmcblk0p42` | boot.img (kernel + initrd + DTB) |
+| `p44`     | `/dev/mmcblk0p44` | /boot (future: btrfs)            |
+| `p46`     | `/dev/mmcblk0p46` | rootfs.iso (NixOS installer ISO) |
+
+### Boot Chain
+
+```
+aboot (stock) → boot.img (p42) → kernel + initrd
+  → stage-1 (scripted initrd, ash)
+    → mount ISO from p46
+    → mount squashfs
+    → overlay on /nix/store
+  → switch_root
+  → stage-2 (systemd)
+    → DHCP, SSH, NixOS services
+```

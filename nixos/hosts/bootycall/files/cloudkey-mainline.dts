@@ -44,6 +44,18 @@
 		regulator-always-on;
 	};
 
+	usbc_ext_vbus: regulator-usbc-ext-vbus {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&usbc_ext_vbus_pins>;
+		regulator-name = "usbc_ext_vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&tlmm 118 GPIO_ACTIVE_LOW>;
+		enable-active-low;
+		regulator-always-on;
+	};
+
 	usb_vbus: regulator-usb-vbus {
 		compatible = "regulator-fixed";
 		pinctrl-names = "default";
@@ -54,6 +66,21 @@
 		gpio = <&tlmm 102 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
+		disable-on-shutdown;
+		vin-supply = <&txs0108e_oe>;
+	};
+
+	hdd_vbus: regulator-hdd-vbus {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&hdd_vbus_pins>;
+		regulator-name = "hdd_vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&tlmm 101 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+		disable-on-shutdown;
 		vin-supply = <&txs0108e_oe>;
 	};
 
@@ -144,8 +171,16 @@
 
 /* USB3 controller — CloudKey uses host-only mode (no gadget/OTG) */
 &usb3 {
-	dr_mode = "host";
 	status = "okay";
+	dwc3@7000000 {
+		dr_mode = "host";
+		snps,usb3-u1u2-disable;
+		snps,nominal-elastic-buffer;
+		snps,is-utmi-l1-suspend;
+		snps,hird-threshold = [00];
+		phys = <&hsusb_phy>, <&ssphy>;
+		phy-names = "usb2-phy", "usb3-phy";
+	};
 };
 
 &hsusb_phy {
@@ -153,6 +188,27 @@
 	vdda-pll-supply = <&pm8953_l7>;
 	vdda-phy-dpdm-supply = <&pm8953_l13>;
 	status = "okay";
+};
+
+&soc {
+	ssphy: phy@78000 {
+		compatible = "qcom,msm8996-qmp-usb3-phy";
+		reg = <0x00078000 0x1000>;
+		clocks = <&gcc GCC_USB3_AUX_CLK>,
+			 <&gcc GCC_USB_SS_REF_CLK>,
+			 <&gcc GCC_USB_PHY_CFG_AHB_CLK>,
+			 <&gcc GCC_USB3_PIPE_CLK>;
+		clock-names = "aux", "ref", "cfg_ahb", "pipe";
+		clock-output-names = "usb3_phy_pipe_clk_src";
+		#clock-cells = <0>;
+		#phy-cells = <0>;
+		resets = <&gcc GCC_USB3_PHY_BCR>,
+			 <&gcc GCC_USB3PHY_PHY_BCR>;
+		reset-names = "phy", "phy_phy";
+		vdda-phy-supply = <&pm8953_l3>;
+		vdda-pll-supply = <&pm8953_l7>;
+		status = "okay";
+	};
 };
 
 &rpm_requests {
@@ -318,6 +374,32 @@
 			drive-strength = <8>;
 			bias-disable;
 			output-high;
+		};
+	};
+
+	hdd_vbus_pins: hdd-vbus-pins {
+		mux {
+			pins = "gpio101";
+			function = "gpio";
+		};
+		config {
+			pins = "gpio101";
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
+	};
+
+	usbc_ext_vbus_pins: usbc-ext-vbus-pins {
+		mux {
+			pins = "gpio118";
+			function = "gpio";
+		};
+		config {
+			pins = "gpio118";
+			drive-strength = <8>;
+			bias-disable;
+			output-low;
 		};
 	};
 };

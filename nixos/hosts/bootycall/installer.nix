@@ -13,26 +13,60 @@
   # Map standard image build to bootImg for flake package builds
   system.build.image = lib.mkForce config.system.build.bootImg;
 
-  networking.hostName = "installer-bootycall";
-  networking.hostId = "def00005";
+  networking = {
+    hostName = "installer-bootycall";
+    hostId = "def00005";
 
-  # NOTE: Timebomb panic timer removed — was used for blind debugging with ramoops.
-  # To re-enable for debugging, uncomment the service below:
-  # boot.initrd.systemd.services.timebomb = {
-  #   description = "Timebomb Panic";
-  #   wantedBy = [ "sysinit.target" ];
-  #   serviceConfig = {
-  #     Type = "simple";
-  #     ExecStart = pkgs.writeShellScript "timebomb" ''
-  #       sleep 120
-  #       echo "120 SECONDS PASSED! PANICKING!" > /dev/kmsg || true
-  #       echo 1 > /proc/sys/kernel/sysrq || true
-  #       echo c > /proc/sysrq-trigger || true
-  #     '';
-  #     StandardOutput = "kmsg";
-  #     StandardError = "kmsg";
-  #   };
-  # };
+    # Force DHCP on — the SOE network module sets useDHCP = false,
+    # which overrides the installer base's mkDefault true.
+    useDHCP = lib.mkForce true;
+  };
+
+  # ============================================================
+  # SCRIPTED INITRD
+  # ============================================================
+  # Switch to the scripted (bash) initrd to bypass all the systemd
+  # fstab-generator, ordering cycles, and duplicate mount unit
+  # issues that plague the systemd initrd with our Android bootloader.
+  #
+  # The scripted initrd mounts filesystems sequentially via shell
+  # commands — no generators, no targets, no daemon-reload.
+  #
+  # NOTE: The scripted initrd is deprecated in NixOS 26.05 but
+  # this is only used for the ONE-TIME installer boot.
+  # The final installed system will use systemd initrd with a
+  # simple root= mount (no ISO chain complexity).
+  boot.initrd = {
+    systemd.enable = lib.mkForce false;
+
+    # Prevent udev from trying to change the MAC address of the ASIX adapter,
+    # which causes the USB endpoint to reset and the hub to drop!
+    # The systemd.network.links option only works if systemd initrd is enabled,
+    # so we must manually write the .link file in the scripted initrd!
+    preDeviceCommands = ''
+            mkdir -p /etc/systemd/network
+            cat <<EOF > /etc/systemd/network/99-default.link
+      [Match]
+      OriginalName=*
+
+      [Link]
+      MACAddressPolicy=none
+      EOF
+    '';
+
+    # Debugging: dump state to kmsg on failure so ramoops captures it
+    preFailCommands = ''
+      echo "=== INITRD FAILED ===" > /dev/kmsg 2>/dev/null || true
+      echo "=== mount state ===" > /dev/kmsg 2>/dev/null || true
+      mount > /dev/kmsg 2>/dev/null || true
+      echo "=== block devices ===" > /dev/kmsg 2>/dev/null || true
+      ls -la /dev/disk/by-label/ > /dev/kmsg 2>/dev/null || true
+      echo "=== triggering panic for ramoops ===" > /dev/kmsg 2>/dev/null || true
+      sleep 5
+      echo 1 > /proc/sys/kernel/sysrq 2>/dev/null || true
+      echo c > /proc/sysrq-trigger 2>/dev/null || true
+    '';
+  };
 
   # Remove the hardcoded ext4 root from hardware-configuration.nix
   # so the initrd can use the live-CD logic to find the squashfs/iso
@@ -41,14 +75,10 @@
     options = [ "mode=0755" ];
   };
 
-  # WORKAROUND: The systemd fstab-generator reads /etc/fstab at early boot to
-  # generate mount units. NixOS only provides the fstab via SYSTEMD_SYSROOT_FSTAB
-  # (used by initrd-parse-etc AFTER /sysroot is mounted). But the ISO/squashfs/overlay
-  # mounts must exist at generator time. Symlink /etc/fstab to the initrd-fstab so
-  # the fstab-generator creates all mount units from the start. When running in
-  # initrd mode, the generator automatically prefixes mount points with /sysroot.
-  boot.initrd.systemd.contents."/etc/fstab".source =
-    config.boot.initrd.systemd.services.initrd-parse-etc.environment.SYSTEMD_SYSROOT_FSTAB;
+  systemd.network.links."00-mac-override" = {
+    matchConfig.OriginalName = "*";
+    linkConfig.MACAddressPolicy = "none";
+  };
 
   # Enable SSH inside the installer for NixOS Anywhere (if needed)
   services.openssh.enable = true;
@@ -65,7 +95,7 @@
       mkbootimg \
         --kernel Image.gz-dtb \
         --ramdisk ${config.system.build.initialRamdisk}/initrd \
-        --cmdline "console=ttyMSM0,115200n8 earlycon loglevel=8 net.ifnames=0 netconsole=6666@10.10.200.200/eth0,6666@10.10.1.93/74:ac:b9:3f:15:a6 pstore.backend=ramoops ramoops.ecc=1 systemd.journald.forward_to_kmsg=1 init=${config.system.build.toplevel}/init" \
+        --cmdline "console=ttyMSM0,115200n8 earlycon pstore.backend=ramoops ramoops.ecc=1 root=LABEL=${config.isoImage.volumeID} init=${config.system.build.toplevel}/init clk_ignore_unused pd_ignore_unused regulator_ignore_unused module_blacklist=uas usb_storage.quirks=174c:1153:u" \
         --base 0x80000000 \
         --kernel_offset 0x00008000 \
         --ramdisk_offset 0x01000000 \

@@ -145,7 +145,7 @@ let
   };
 in
 {
-  system.build.image = rawEfiImage;
+  system.build.image = lib.mkForce rawEfiImage;
 
   # Filesystem mount for the running installer system
   fileSystems."/" = lib.mkForce {

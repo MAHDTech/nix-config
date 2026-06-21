@@ -1,0 +1,138 @@
+#!/usr/bin/env expect
+#
+# flash-recovery.exp — Flash boot.img and rootfs.iso to CloudKey via recovery
+#
+# Usage:
+#   nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/flash-recovery.exp <cloudkey-ip> <server-ip> [port]"
+#
+# Example:
+#   nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/flash-recovery.exp 10.10.200.200 10.10.1.93 16000"
+#
+# Prerequisites:
+#   Start a HTTP server from the root of the repo:
+#     python3 -m http.server 16000
+#
+#   The build output must be at ./result/boot.img and ./result/rootfs.iso
+#
+
+set timeout 600
+set cloudkey_ip [lindex $argv 0]
+set server_ip   [lindex $argv 1]
+set port        [lindex $argv 2]
+
+if {$cloudkey_ip == "" || $server_ip == ""} {
+    puts stderr "Usage: ./flash-recovery.exp <cloudkey-ip> <server-ip> \[port\]"
+    puts stderr ""
+    puts stderr "  cloudkey-ip  IP of the CloudKey in recovery mode"
+    puts stderr "  server-ip    IP of this machine (where HTTP server is running)"
+    puts stderr "  port         HTTP server port (default: 16000)"
+    exit 1
+}
+
+if {$port == ""} {
+    set port 16000
+}
+
+# Suppress ANSI cursor position reports
+log_user 0
+
+puts "==> Connecting to CloudKey at $cloudkey_ip ..."
+spawn telnet $cloudkey_ip
+
+expect {
+    "login:" {}
+    timeout {
+        puts stderr "ERROR: Timed out waiting for login prompt"
+        exit 1
+    }
+    eof {
+        puts stderr "ERROR: Connection closed"
+        exit 1
+    }
+}
+send "root\r"
+
+expect "Password:"
+send "ubnt\r"
+
+# Wait for prompt — absorb ANSI escape sequences
+expect {
+    -re {# $} {}
+    -re {\x1b\[.+R} { exp_continue }
+    "#" {}
+}
+sleep 1
+
+# -------------------------------------------------------
+# Step 1: Flash rootfs.iso to mmcblk0p46 (userdata)
+# -------------------------------------------------------
+log_user 1
+puts "\n==> Step 1/4: Unmounting p46 ..."
+log_user 0
+
+send "umount /dev/mmcblk0p46 2>/dev/null\r"
+expect {
+    -re {# $} {}
+    -re {\x1b\[.+R} { exp_continue }
+    "#" {}
+    timeout { puts stderr "WARN: Timeout on unmount" }
+}
+
+log_user 1
+puts "==> Step 2/4: Flashing rootfs.iso to /dev/mmcblk0p46 (this takes ~60s) ..."
+log_user 0
+
+send "wget -qO- http://$server_ip:$port/result/rootfs.iso | dd of=/dev/mmcblk0p46 bs=4M 2>&1\r"
+expect {
+    -re {# $} {}
+    -re {\x1b\[.+R} { exp_continue }
+    "#" {}
+    timeout {
+        puts stderr "ERROR: Timed out flashing rootfs.iso (>600s)"
+        exit 1
+    }
+}
+
+# -------------------------------------------------------
+# Step 2: Flash boot.img to mmcblk0p42 (boot)
+# -------------------------------------------------------
+log_user 1
+puts "==> Step 3/4: Flashing boot.img to /dev/mmcblk0p42 ..."
+log_user 0
+
+send "cd /tmp && rm -f boot.img && wget -q http://$server_ip:$port/result/boot.img && dd if=boot.img of=/dev/mmcblk0p42 bs=4096 2>&1\r"
+expect {
+    -re {# $} {}
+    -re {\x1b\[.+R} { exp_continue }
+    "#" {}
+    timeout {
+        puts stderr "ERROR: Timed out flashing boot.img"
+        exit 1
+    }
+}
+
+# -------------------------------------------------------
+# Step 3: Sync and reboot
+# -------------------------------------------------------
+log_user 1
+puts "==> Step 4/4: Syncing and rebooting ..."
+log_user 0
+
+send "sync && reboot -f\r"
+
+# Short timeout — the connection drops almost immediately on reboot
+set timeout 5
+expect {
+    eof {}
+    "Connection closed" {}
+    timeout {}
+}
+
+# Kill the spawned telnet process so expect doesn't hang
+catch {close}
+catch {wait}
+
+log_user 1
+puts "\n==> Flashing complete! CloudKey is rebooting."
+puts "    Wait 3-4 minutes for NixOS to boot, then check DHCP/SSH."
+exit 0
