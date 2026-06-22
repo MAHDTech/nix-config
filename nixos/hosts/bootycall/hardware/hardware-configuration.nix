@@ -73,28 +73,5 @@
     ];
   };
 
-  # Filesystems partition mappings
-  fileSystems = {
-    "/" = {
-      device = "/dev/mmcblk0p46";
-      fsType = "ext4";
-      options = [
-        "noatime"
-        "nodiratime"
-        "commit=60"
-      ];
-    };
-    "/mnt/hdd" = {
-      device = "/dev/sda5";
-      fsType = "btrfs";
-      options = [
-        "compress=zstd"
-        "noatime"
-      ];
-    };
-  };
-
-  swapDevices = [ ];
-
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 }

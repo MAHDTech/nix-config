@@ -96,8 +96,7 @@ in
       hostType = "server";
       enableHomeManager = false;
       extraModules = [
-        # Disko is not strictly required if using manual Android partitioning partitions,
-        # but we mount it natively in default.nix / hardware-configuration.nix.
+        inputs.disko.nixosModules.disko
       ];
     };
   };
