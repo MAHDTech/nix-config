@@ -49,6 +49,10 @@ let
 
     src = kernelSrc;
 
+    patches = [
+      ../patches/0001-phy-qcom-qmp-usb-Add-msm8953-support.patch
+    ];
+
     enableParallelBuilding = true;
 
     # Native build tools (run on the build host)

@@ -43,3 +43,7 @@ WIP/
 
 # PIDs
 *.pid
+
+# Ignore the flash recovery log
+flash-recovery.log
+

@@ -3,10 +3,12 @@
 # flash-recovery.exp — Flash boot.img and rootfs.iso to CloudKey via recovery
 #
 # Usage:
-#   nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/flash-recovery.exp <cloudkey-ip> <server-ip> [port]"
+#   nix-shell -p expect inetutils --run \
+#     "./nixos/hosts/bootycall/scripts/flash-recovery.exp <cloudkey-ip> <server-ip> [port]"
 #
 # Example:
-#   nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/flash-recovery.exp 10.10.200.200 10.10.1.93 16000"
+#   nix-shell -p expect inetutils --run \
+#     "./nixos/hosts/bootycall/scripts/flash-recovery.exp 10.10.200.200 10.10.1.93 16000"
 #
 # Prerequisites:
 #   Start a HTTP server from the root of the repo:
@@ -15,7 +17,7 @@
 #   The build output must be at ./result/boot.img and ./result/rootfs.iso
 #
 
-set timeout 600
+set timeout 30
 set cloudkey_ip [lindex $argv 0]
 set server_ip   [lindex $argv 1]
 set port        [lindex $argv 2]
@@ -33,94 +35,177 @@ if {$port == ""} {
     set port 16000
 }
 
-# Suppress ANSI cursor position reports
+# Check local build artifacts exist
+foreach f {result/rootfs.iso result/boot.img} {
+    if {![file exists $f]} {
+        puts stderr "ERROR: $f not found!"
+        puts stderr "Build the installer first: nix build .#installer-bootycall"
+        exit 1
+    }
+}
+
+set rootfs_local_size [file size "result/rootfs.iso"]
+set boot_local_size   [file size "result/boot.img"]
+
+# Human-readable sizes
+proc human_size {bytes} {
+    if {$bytes >= 1073741824} {
+        return [format "%.1f GiB" [expr {$bytes / 1073741824.0}]]
+    } elseif {$bytes >= 1048576} {
+        return [format "%.1f MiB" [expr {$bytes / 1048576.0}]]
+    } else {
+        return [format "%.1f KiB" [expr {$bytes / 1024.0}]]
+    }
+}
+
+# Log to file (-a logs even with log_user 0) and suppress screen output
+log_file -noappend -a "flash-recovery.log"
 log_user 0
 
-puts "==> Connecting to CloudKey at $cloudkey_ip ..."
+proc log_info {msg} {
+    set ts [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
+    puts "\[$ts\] $msg"
+}
+
+proc handle_error {msg} {
+    set ts [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
+    puts stderr "\n\[$ts\] ERROR: $msg"
+    puts stderr "Check flash-recovery.log for the full telnet session."
+    exit 1
+}
+
+# Wait for the BusyBox shell prompt.
+# The prompt is "cloudkey-apq8053# " — match the "# " at end of line.
+# Bare "#" inside command output (dd stats, etc.) won't have trailing space.
+proc wait_for_prompt {timeout_val error_msg} {
+    set old_timeout $::timeout
+    set ::timeout $timeout_val
+    expect {
+        -re {\x1b\[\d+;\d+R} { exp_continue }
+        "# "                  { set ::timeout $old_timeout; return }
+        timeout {
+            set ::timeout $old_timeout
+            handle_error "$error_msg"
+        }
+    }
+}
+
+# -------------------------------------------------------
+# Connect
+# -------------------------------------------------------
+log_info "Connecting to CloudKey at $cloudkey_ip ..."
+set conn_start [clock seconds]
 spawn telnet $cloudkey_ip
 
 expect {
     "login:" {}
-    timeout {
-        puts stderr "ERROR: Timed out waiting for login prompt"
-        exit 1
-    }
-    eof {
-        puts stderr "ERROR: Connection closed"
-        exit 1
-    }
+    timeout  { handle_error "Timed out waiting for login prompt" }
+    eof      { handle_error "Connection refused or closed" }
 }
 send "root\r"
 
-expect "Password:"
+expect {
+    "Password:" {}
+    timeout { handle_error "Timed out waiting for password prompt" }
+}
 send "ubnt\r"
 
-# Wait for prompt — absorb ANSI escape sequences
+# The MOTD banner + ANSI junk takes a moment to arrive after login
+sleep 2
+
+# Consume everything until we see the shell prompt.
+# ANSI cursor reports (^[[24;19R) arrive ON THE SAME LINE as the prompt,
+# so we must consume them FIRST, then match "# " without end-of-buffer anchor.
+set timeout 15
 expect {
-    -re {# $} {}
-    -re {\x1b\[.+R} { exp_continue }
-    "#" {}
+    -re {\x1b\[\d+;\d+R} { exp_continue }
+    -re {\r\n}            { exp_continue }
+    "# "                  {}
+    timeout { handle_error "Timed out waiting for shell prompt after login" }
 }
 sleep 1
 
-# -------------------------------------------------------
-# Step 1: Flash rootfs.iso to mmcblk0p46 (userdata)
-# -------------------------------------------------------
-log_user 1
-puts "\n==> Step 1/4: Unmounting p46 ..."
-log_user 0
+set conn_elapsed [expr {[clock seconds] - $conn_start}]
+log_info "Connected and logged in (elapsed: ${conn_elapsed}s)"
 
-send "umount /dev/mmcblk0p46 2>/dev/null\r"
+# -------------------------------------------------------
+# Set up variables on the target to keep commands short
+# (the recovery terminal is ~80 cols, long lines wrap and corrupt)
+# -------------------------------------------------------
+send "U=http://$server_ip:$port/result\r"
+wait_for_prompt 5 "Timeout setting URL var"
+
+# -------------------------------------------------------
+# Step 1/4: Unmount p46
+# -------------------------------------------------------
+log_info "Step 1/4: Unmounting p46 ..."
+set step_start [clock seconds]
+
+send "umount /dev/mmcblk0p46 2>/dev/null; true\r"
+wait_for_prompt 10 "Timeout unmounting p46"
+
+log_info "Step 1/4 complete ([expr {[clock seconds] - $step_start}]s)"
+
+# -------------------------------------------------------
+# Step 2/4: Flash rootfs.iso → mmcblk0p46
+# -------------------------------------------------------
+log_info "Step 2/4: Flashing rootfs.iso → /dev/mmcblk0p46 ([human_size $rootfs_local_size]) ..."
+set step_start [clock seconds]
+
+send "rm -f /tmp/wget.err\r"
+wait_for_prompt 5 "Timeout cleanup"
+
+# Short command: wget pipes to dd, error flag for wget failure
+send "wget -qO- \$U/rootfs.iso | dd of=/dev/mmcblk0p46 bs=4M\r"
+
+set timeout 900
 expect {
-    -re {# $} {}
-    -re {\x1b\[.+R} { exp_continue }
-    "#" {}
-    timeout { puts stderr "WARN: Timeout on unmount" }
+    -re {\x1b\[\d+;\d+R} { exp_continue }
+    "# "  {}
+    timeout { handle_error "Timed out flashing rootfs.iso (>15min)" }
 }
 
-log_user 1
-puts "==> Step 2/4: Flashing rootfs.iso to /dev/mmcblk0p46 (this takes ~60s) ..."
-log_user 0
+set step2_elapsed [expr {[clock seconds] - $step_start}]
 
-send "wget -qO- http://$server_ip:$port/result/rootfs.iso | dd of=/dev/mmcblk0p46 bs=4M 2>&1\r"
-expect {
-    -re {# $} {}
-    -re {\x1b\[.+R} { exp_continue }
-    "#" {}
-    timeout {
-        puts stderr "ERROR: Timed out flashing rootfs.iso (>600s)"
-        exit 1
-    }
+if {$step2_elapsed < 5} {
+    handle_error "rootfs.iso flash completed too fast (${step2_elapsed}s) — download likely failed"
 }
 
-# -------------------------------------------------------
-# Step 2: Flash boot.img to mmcblk0p42 (boot)
-# -------------------------------------------------------
-log_user 1
-puts "==> Step 3/4: Flashing boot.img to /dev/mmcblk0p42 ..."
-log_user 0
+log_info "Step 2/4 complete (${step2_elapsed}s)"
 
-send "cd /tmp && rm -f boot.img && wget -q http://$server_ip:$port/result/boot.img && dd if=boot.img of=/dev/mmcblk0p42 bs=4096 2>&1\r"
+# -------------------------------------------------------
+# Step 3/4: Flash boot.img → mmcblk0p42
+# -------------------------------------------------------
+log_info "Step 3/4: Flashing boot.img → /dev/mmcblk0p42 ([human_size $boot_local_size]) ..."
+set step_start [clock seconds]
+
+send "wget -q -O /tmp/b.img \$U/boot.img\r"
+
+set timeout 120
 expect {
-    -re {# $} {}
-    -re {\x1b\[.+R} { exp_continue }
-    "#" {}
-    timeout {
-        puts stderr "ERROR: Timed out flashing boot.img"
-        exit 1
-    }
+    -re {\x1b\[\d+;\d+R} { exp_continue }
+    "# "  {}
+    timeout { handle_error "Timed out downloading boot.img (>2min)" }
 }
 
-# -------------------------------------------------------
-# Step 3: Sync and reboot
-# -------------------------------------------------------
-log_user 1
-puts "==> Step 4/4: Syncing and rebooting ..."
-log_user 0
+send "dd if=/tmp/b.img of=/dev/mmcblk0p42 bs=4096\r"
 
-send "sync && reboot -f\r"
+set timeout 30
+expect {
+    -re {\x1b\[\d+;\d+R} { exp_continue }
+    "# "  {}
+    timeout { handle_error "Timed out writing boot.img" }
+}
 
-# Short timeout — the connection drops almost immediately on reboot
+log_info "Step 3/4 complete ([expr {[clock seconds] - $step_start}]s)"
+
+# -------------------------------------------------------
+# Step 4/4: Sync and reboot
+# -------------------------------------------------------
+log_info "Step 4/4: Syncing and rebooting ..."
+
+send "rm -f /tmp/b.img && sync && reboot -f\r"
+
 set timeout 5
 expect {
     eof {}
@@ -128,11 +213,10 @@ expect {
     timeout {}
 }
 
-# Kill the spawned telnet process so expect doesn't hang
 catch {close}
 catch {wait}
 
-log_user 1
-puts "\n==> Flashing complete! CloudKey is rebooting."
-puts "    Wait 3-4 minutes for NixOS to boot, then check DHCP/SSH."
+set total_elapsed [expr {[clock seconds] - $conn_start}]
+log_info "Flashing complete! CloudKey is rebooting. (Total: ${total_elapsed}s)"
+puts "    Wait 5-7 minutes for NixOS to boot, then check DHCP/SSH."
 exit 0

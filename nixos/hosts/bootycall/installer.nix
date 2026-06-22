@@ -44,14 +44,40 @@
     # The systemd.network.links option only works if systemd initrd is enabled,
     # so we must manually write the .link file in the scripted initrd!
     preDeviceCommands = ''
-            mkdir -p /etc/systemd/network
-            cat <<EOF > /etc/systemd/network/99-default.link
+      mkdir -p /etc/systemd/network
+      cat <<EOF > /etc/systemd/network/99-default.link
       [Match]
       OriginalName=*
 
       [Link]
       MACAddressPolicy=none
       EOF
+
+      # Start background panic timer to gather regulators/clocks debug info
+      (
+        sleep 45
+        echo "=== REGULATORS STATE ===" > /dev/kmsg || true
+        for r in /sys/class/regulator/regulator.*; do
+          if [ -f "$r/name" ]; then
+            echo "$(cat "$r/name"): $(cat "$r/microvolt" 2>/dev/null || echo unknown) uV, state: $(cat "$r/state" 2>/dev/null || echo unknown)" > /dev/kmsg || true
+          fi
+        done
+        echo "=== CLOCK SUMMARY ===" > /dev/kmsg || true
+        mkdir -p /sys/kernel/debug
+        mount -t debugfs none /sys/kernel/debug || true
+        if [ -f /sys/kernel/debug/clk/clk_summary ]; then
+          while read -r line; do
+            echo "CLK: $line" > /dev/kmsg || true
+          done < /sys/kernel/debug/clk/clk_summary
+        else
+          echo "debugfs/clk_summary not found" > /dev/kmsg || true
+        fi
+        echo "=== USB DEVICES ===" > /dev/kmsg || true
+        lsusb -t > /dev/kmsg 2>&1 || true
+        echo "=== PANICKING NOW ===" > /dev/kmsg || true
+        echo 1 > /proc/sys/kernel/sysrq || true
+        echo c > /proc/sysrq-trigger || true
+      ) &
     '';
 
     # Debugging: dump state to kmsg on failure so ramoops captures it
@@ -83,6 +109,38 @@
   # Enable SSH inside the installer for NixOS Anywhere (if needed)
   services.openssh.enable = true;
 
+  systemd.services.panic-timer = {
+    description = "Panic timer to dump clocks and regulators";
+    wantedBy = [ "sysinit.target" ];
+    before = [ "sysinit.target" ];
+    unitConfig.DefaultDependencies = false;
+    serviceConfig.Type = "simple";
+    script = ''
+      sleep 10
+      echo "=== REGULATORS STATE ===" > /dev/kmsg || true
+      for r in /sys/class/regulator/regulator.*; do
+        if [ -f "$r/name" ]; then
+          echo "$(cat "$r/name"): $(cat "$r/microvolt" 2>/dev/null || echo unknown) uV, state: $(cat "$r/state" 2>/dev/null || echo unknown)" > /dev/kmsg || true
+        fi
+      done
+      echo "=== CLOCK SUMMARY ===" > /dev/kmsg || true
+      mkdir -p /sys/kernel/debug
+      mount -t debugfs none /sys/kernel/debug || true
+      if [ -f /sys/kernel/debug/clk/clk_summary ]; then
+        while read -r line; do
+          echo "CLK: $line" > /dev/kmsg || true
+        done < /sys/kernel/debug/clk/clk_summary
+      else
+        echo "debugfs/clk_summary not found" > /dev/kmsg || true
+      fi
+      echo "=== USB DEVICES ===" > /dev/kmsg || true
+      ${pkgs.usbutils}/bin/lsusb -t > /dev/kmsg 2>&1 || true
+      echo "=== PANICKING NOW ===" > /dev/kmsg || true
+      echo 1 > /proc/sys/kernel/sysrq || true
+      echo c > /proc/sysrq-trigger || true
+    '';
+  };
+
   system.build.bootImg = pkgs.stdenv.mkDerivation {
     pname = "bootycall-installer-bundle";
     version = "1.0.0";
@@ -95,7 +153,7 @@
       mkbootimg \
         --kernel Image.gz-dtb \
         --ramdisk ${config.system.build.initialRamdisk}/initrd \
-        --cmdline "console=ttyMSM0,115200n8 earlycon pstore.backend=ramoops ramoops.ecc=1 root=LABEL=${config.isoImage.volumeID} init=${config.system.build.toplevel}/init clk_ignore_unused pd_ignore_unused regulator_ignore_unused module_blacklist=uas usb_storage.quirks=174c:1153:u usbcore.autosuspend=-1 printk.time=1" \
+        --cmdline "console=ttyMSM0,115200n8 earlycon pstore.backend=ramoops ramoops.ecc=1 root=LABEL=${config.isoImage.volumeID} init=${config.system.build.toplevel}/init clk_ignore_unused pd_ignore_unused regulator_ignore_unused module_blacklist=uas,usb_storage usbcore.autosuspend=-1 printk.time=1 systemd.journald.forward_to_kmsg=1 loglevel=8" \
         --base 0x80000000 \
         --kernel_offset 0x00008000 \
         --ramdisk_offset 0x01000000 \

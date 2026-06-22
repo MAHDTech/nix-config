@@ -188,13 +188,13 @@
 	vdd-supply = <&pm8953_l3>;
 	vdda-pll-supply = <&pm8953_l7>;
 	vdda-phy-dpdm-supply = <&pm8953_l13>;
-	qcom,qusb-phy-init-seq = [f8 80 b3 84 83 88 c0 8c 14 9c 30 08 79 0c 21 10 00 90 9f 1c 00 18];
+	qcom,qusb-phy-init-seq = <0xf8 0x80 0xb3 0x84 0x83 0x88 0xc0 0x8c 0x14 0x9c 0x30 0x08 0x79 0x0c 0x21 0x10 0x00 0x90 0x9f 0x1c 0x00 0x18>;
 	status = "okay";
 };
 
 &soc {
 	ssphy: phy@78000 {
-		compatible = "qcom,msm8996-qmp-usb3-phy";
+		compatible = "qcom,msm8953-qmp-usb3-phy";
 		reg = <0x00078000 0x1000>;
 		clocks = <&gcc GCC_USB3_AUX_CLK>,
 			 <&gcc GCC_USB_SS_REF_CLK>,
@@ -257,7 +257,7 @@
 		};
 
 		pm8953_l3: l3 {
-			regulator-min-microvolt = <925000>;
+			regulator-min-microvolt = <863000>;
 			regulator-max-microvolt = <925000>;
 			regulator-allow-set-load;
 			regulator-always-on;
@@ -277,6 +277,7 @@
 		pm8953_l7: l7 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1900000>;
+			regulator-allow-set-load;
 			regulator-always-on;
 		};
 

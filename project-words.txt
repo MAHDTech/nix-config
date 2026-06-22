@@ -61,6 +61,7 @@ Cooldown
 Coqui
 Creality
 Custor
+DBGC
 DBOOST
 DBUS
 DCVS
@@ -377,6 +378,7 @@ Vinarskis
 Virtualenvs
 Voron
 WANGXUN
+WBITS
 WDDM
 WIZNET
 Websearch
@@ -902,6 +904,7 @@ indicatif
 indicator
 indicatorapp
 industrialio
+inetutils
 inhibitidle
 initcall
 insync
@@ -1175,6 +1178,7 @@ nixpkgs
 nmap
 nmtui
 nnoremap
+noappend
 noatime
 nobackup
 noblur
@@ -1330,6 +1334,8 @@ prereq
 prerm
 preseed
 pretrained
+printables
+printk
 probs
 procfile
 procps
@@ -1828,4 +1834,3 @@ zramctl
 zstd
 zvol
 zvols
-printk

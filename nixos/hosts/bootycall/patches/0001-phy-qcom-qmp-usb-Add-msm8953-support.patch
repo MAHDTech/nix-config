@@ -1,0 +1,149 @@
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-usb.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-usb.c
+@@ -479,6 +479,93 @@
+ 	QMP_PHY_INIT_CFG(QPHY_V2_PCS_POWER_STATE_CONFIG2, 0x08),
+ };
+
++static const struct qmp_phy_init_tbl msm8953_usb3_serdes_tbl[] = {
++	QMP_PHY_INIT_CFG(0xac, 0x14),
++	QMP_PHY_INIT_CFG(0x34, 0x08),
++	QMP_PHY_INIT_CFG(0x174, 0x30),
++	QMP_PHY_INIT_CFG(0x3c, 0x06),
++	QMP_PHY_INIT_CFG(0xb4, 0x00),
++	QMP_PHY_INIT_CFG(0xb8, 0x08),
++	QMP_PHY_INIT_CFG(0x194, 0x06),
++	QMP_PHY_INIT_CFG(0x19c, 0x01),
++	QMP_PHY_INIT_CFG(0x178, 0x00),
++	QMP_PHY_INIT_CFG(0xd0, 0x82),
++	QMP_PHY_INIT_CFG(0xdc, 0x55),
++	QMP_PHY_INIT_CFG(0xe0, 0x55),
++	QMP_PHY_INIT_CFG(0xe4, 0x03),
++	QMP_PHY_INIT_CFG(0x78, 0x0b),
++	QMP_PHY_INIT_CFG(0x84, 0x16),
++	QMP_PHY_INIT_CFG(0x90, 0x28),
++	QMP_PHY_INIT_CFG(0x108, 0x80),
++	QMP_PHY_INIT_CFG(0x10c, 0x00),
++	QMP_PHY_INIT_CFG(0x184, 0x0a),
++	QMP_PHY_INIT_CFG(0x4c, 0x15),
++	QMP_PHY_INIT_CFG(0x50, 0x34),
++	QMP_PHY_INIT_CFG(0x54, 0x00),
++	QMP_PHY_INIT_CFG(0xc8, 0x00),
++	QMP_PHY_INIT_CFG(0x18c, 0x00),
++	QMP_PHY_INIT_CFG(0xcc, 0x00),
++	QMP_PHY_INIT_CFG(0x128, 0x00),
++	QMP_PHY_INIT_CFG(0x0c, 0x0a),
++	QMP_PHY_INIT_CFG(0x10, 0x01),
++	QMP_PHY_INIT_CFG(0x1c, 0x31),
++	QMP_PHY_INIT_CFG(0x20, 0x01),
++	QMP_PHY_INIT_CFG(0x14, 0x00),
++	QMP_PHY_INIT_CFG(0x18, 0x00),
++	QMP_PHY_INIT_CFG(0x24, 0xde),
++	QMP_PHY_INIT_CFG(0x28, 0x07),
++	QMP_PHY_INIT_CFG(0x48, 0x0f),
++	QMP_PHY_INIT_CFG(0x70, 0x0f),
++	QMP_PHY_INIT_CFG(0x100, 0x80),
++};
++
++static const struct qmp_phy_init_tbl msm8953_usb3_tx_tbl[] = {
++	QMP_PHY_INIT_CFG(0x40, 0x0b),
++	QMP_PHY_INIT_CFG(0xd8, 0x02),
++	QMP_PHY_INIT_CFG(0xdc, 0x6c),
++	QMP_PHY_INIT_CFG(0xe0, 0xbb),
++	QMP_PHY_INIT_CFG(0x108, 0x77),
++	QMP_PHY_INIT_CFG(0x10c, 0x80),
++	QMP_PHY_INIT_CFG(0x114, 0x03),
++	QMP_PHY_INIT_CFG(0x11c, 0x16),
++	QMP_PHY_INIT_CFG(0x48, 0x75),
++	QMP_PHY_INIT_CFG(0x54, 0x00),
++	QMP_PHY_INIT_CFG(0x0c, 0x0a),
++	QMP_PHY_INIT_CFG(0x1c, 0x06),
++	QMP_PHY_INIT_CFG(0x110, 0x00),
++};
++
++static const struct qmp_phy_init_tbl msm8953_usb3_rx_tbl[] = {
++	QMP_PHY_INIT_CFG(0x68, 0x45),
++	QMP_PHY_INIT_CFG(0xac, 0x12),
++	QMP_PHY_INIT_CFG(0x94, 0x06),
++	QMP_PHY_INIT_CFG(0x54, 0x00),
++};
++
++static const struct qmp_phy_init_tbl msm8953_usb3_pcs_tbl[] = {
++	QMP_PHY_INIT_CFG(0xc8, 0x83),
++	QMP_PHY_INIT_CFG(0xc4, 0x02),
++	QMP_PHY_INIT_CFG(0xcc, 0x09),
++	QMP_PHY_INIT_CFG(0xd0, 0xa2),
++	QMP_PHY_INIT_CFG(0xd4, 0x85),
++	QMP_PHY_INIT_CFG(0x80, 0xd1),
++	QMP_PHY_INIT_CFG(0x84, 0x1f),
++	QMP_PHY_INIT_CFG(0x88, 0x47),
++	QMP_PHY_INIT_CFG(0x0c, 0x9f),
++	QMP_PHY_INIT_CFG(0x24, 0x17),
++	QMP_PHY_INIT_CFG(0x28, 0x0f),
++	QMP_PHY_INIT_CFG(0xb8, 0x75),
++	QMP_PHY_INIT_CFG(0xbc, 0x13),
++	QMP_PHY_INIT_CFG(0xb0, 0x86),
++	QMP_PHY_INIT_CFG(0xa0, 0x04),
++	QMP_PHY_INIT_CFG(0x8c, 0x44),
++	QMP_PHY_INIT_CFG(0x70, 0xe7),
++	QMP_PHY_INIT_CFG(0x74, 0x03),
++	QMP_PHY_INIT_CFG(0x78, 0x40),
++	QMP_PHY_INIT_CFG(0x7c, 0x00),
++	QMP_PHY_INIT_CFG(0x1d8, 0x88),
++};
++
+ static const struct qmp_phy_init_tbl qdu1000_usb3_uniphy_pcs_tbl[] = {
+ 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG1, 0xc4),
+ 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG2, 0x89),
+@@ -1513,6 +1583,13 @@
+ 	.tx		= 0x200,
+ 	.rx		= 0x400,
+ };
++
++static const struct qmp_usb_offsets qmp_usb_offsets_v2_msm8953 = {
++	.serdes		= 0,
++	.pcs		= 0x800,
++	.tx		= 0x400,
++	.rx		= 0x200,
++};
+
+ static const struct qmp_usb_offsets qmp_usb_offsets_v4 = {
+ 	.serdes		= 0,
+@@ -1617,6 +1711,28 @@
+ 	.num_vregs		= ARRAY_SIZE(qmp_phy_vreg_l),
+ 	.regs			= qmp_v2_usb3phy_regs_layout,
+ };
++
++static const unsigned int qmp_msm8953_usb3phy_regs_layout[] = {
++	[QPHY_SW_RESET]			= 0x174,
++	[QPHY_START_CTRL]		= 0xd8,
++	[QPHY_PCS_STATUS]		= 0x188,
++};
++
++static const struct qmp_phy_cfg msm8953_usb3phy_cfg = {
++	.offsets		= &qmp_usb_offsets_v2_msm8953,
++
++	.serdes_tbl		= msm8953_usb3_serdes_tbl,
++	.serdes_tbl_num		= ARRAY_SIZE(msm8953_usb3_serdes_tbl),
++	.tx_tbl			= msm8953_usb3_tx_tbl,
++	.tx_tbl_num		= ARRAY_SIZE(msm8953_usb3_tx_tbl),
++	.rx_tbl			= msm8953_usb3_rx_tbl,
++	.rx_tbl_num		= ARRAY_SIZE(msm8953_usb3_rx_tbl),
++	.pcs_tbl		= msm8953_usb3_pcs_tbl,
++	.pcs_tbl_num		= ARRAY_SIZE(msm8953_usb3_pcs_tbl),
++	.vreg_list		= qmp_phy_vreg_l,
++	.num_vregs		= ARRAY_SIZE(qmp_phy_vreg_l),
++	.regs			= qmp_msm8953_usb3phy_regs_layout,
++};
+
+ static const struct qmp_phy_cfg qdu1000_usb3_uniphy_cfg = {
+ 	.offsets		= &qmp_usb_offsets_v5,
+@@ -2472,6 +2564,9 @@
+ 	}, {
+ 		.compatible = "qcom,msm8996-qmp-usb3-phy",
+ 		.data = &msm8996_usb3phy_cfg,
++	}, {
++		.compatible = "qcom,msm8953-qmp-usb3-phy",
++		.data = &msm8953_usb3phy_cfg,
+ 	}, {
+ 		.compatible = "qcom,qcs8300-qmp-usb3-uni-phy",
+ 		.data = &qcs8300_usb3_uniphy_cfg,
