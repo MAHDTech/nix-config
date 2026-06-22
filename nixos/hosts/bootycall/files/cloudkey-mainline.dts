@@ -170,18 +170,18 @@
 	vqmmc-supply = <&vcc_io_sdhc1>;
 };
 
-/* USB3 controller — CloudKey uses host-only mode (no gadget/OTG) */
 &usb3 {
 	status = "okay";
-	dwc3@7000000 {
-		dr_mode = "host";
-		snps,usb3-u1u2-disable;
-		snps,nominal-elastic-buffer;
-		snps,is-utmi-l1-suspend;
-		snps,hird-threshold = [00];
-		phys = <&hsusb_phy>, <&ssphy>;
-		phy-names = "usb2-phy", "usb3-phy";
-	};
+};
+
+&usb3_dwc3 {
+	dr_mode = "host";
+	snps,usb3-u1u2-disable;
+	snps,nominal-elastic-buffer;
+	snps,is-utmi-l1-suspend;
+	snps,hird-threshold = [00];
+	phys = <&hsusb_phy>, <&ssphy>;
+	phy-names = "usb2-phy", "usb3-phy";
 };
 
 &hsusb_phy {
@@ -194,7 +194,7 @@
 
 &soc {
 	ssphy: phy@78000 {
-		compatible = "qcom,msm8953-qmp-usb3-phy";
+		compatible = "qcom,msm8996-qmp-usb3-phy";
 		reg = <0x00078000 0x1000>;
 		clocks = <&gcc GCC_USB3_AUX_CLK>,
 			 <&gcc GCC_USB_SS_REF_CLK>,
@@ -348,6 +348,7 @@
 		compatible = "sitronix,st7735r";
 		reg = <0>;
 		spi-max-frequency = <10000000>;
+		buswidth = <8>;
 		reset-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
 		dc-gpios = <&tlmm 87 GPIO_ACTIVE_HIGH>;
 		rotation = <270>;

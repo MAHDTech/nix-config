@@ -70,7 +70,6 @@
       "systemd.journald.forward_to_kmsg=1"
       "usbcore.autosuspend=-1"
       "printk.time=1"
-      "module_blacklist=uas,usb_storage"
     ];
   };
 
