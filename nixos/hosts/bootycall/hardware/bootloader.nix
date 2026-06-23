@@ -26,8 +26,10 @@
     echo "Initrd: $INITRD"
     echo "DTB: $DTB"
 
-    # Combine Kernel and DTB
-    cat "$KERNEL" "$DTB" > /tmp/Image.gz-dtb
+    # Compress kernel and combine with DTB
+    echo "Compressing kernel to gzip..."
+    gzip -9c "$KERNEL" > /tmp/kernel.gz
+    cat /tmp/kernel.gz "$DTB" > /tmp/Image.gz-dtb
 
     # Generate boot.img
     mkbootimg \

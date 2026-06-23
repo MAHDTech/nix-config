@@ -1836,3 +1836,4 @@ zvol
 zvols
 netkit
 subvol
+buswidth

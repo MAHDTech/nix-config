@@ -62,6 +62,13 @@
       };
     };
 
+    # Blacklist the front LCD screen driver. It fails to probe (error -22: buswidth is not set)
+    # and hangs a udev worker for 120 seconds, blocking the USB SSD from enumerating in time!
+    blacklistedKernelModules = [
+      "fb_st7735r"
+      "fbtft"
+    ];
+
     kernelParams = [
       "console=ttyMSM0,115200n8" # Mainline serial console
       "console=tty0"
