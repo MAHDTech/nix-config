@@ -1835,3 +1835,4 @@ zstd
 zvol
 zvols
 netkit
+subvol

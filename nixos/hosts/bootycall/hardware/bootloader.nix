@@ -19,7 +19,7 @@
     KERNEL="$PROFILE_DIR/kernel"
     INITRD="$PROFILE_DIR/initrd"
     DTB="$PROFILE_DIR/dtbs/qcom/apq8053-ubnt-cloudkey.dtb"
-    PARAMS="$(cat $PROFILE_DIR/kernel-params)"
+    PARAMS="$(cat $PROFILE_DIR/kernel-params | sed 's/root=fstab//g')"
 
     echo "Building Android boot.img for CloudKey..."
     echo "Kernel: $KERNEL"

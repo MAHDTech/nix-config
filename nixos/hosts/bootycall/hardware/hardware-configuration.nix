@@ -30,8 +30,13 @@
         "dwc3_qcom" # USB controller
         "xhci_hcd" # xHCI controller
         "ax88179_178a" # ASIX AX88179 USB Ethernet adapter (eth0)
+        "uas" # USB Attached SCSI (for internal SSD)
+        "usb_storage" # USB Mass Storage (for internal SSD)
+        "sd_mod" # SCSI Disk support (REQUIRED for usb_storage/uas block devices)
         # Filesystems
         "ext4" # Filesystem for root / data partitions
+        "btrfs" # Filesystem for NixOS root
+
         "crc32c" # Required checksum module for ext4
         # NixOS Live CD boot chain (iso-image.nix requires these)
         "iso9660" # Read the ISO filesystem on mmcblk0p46
@@ -62,15 +67,23 @@
       "console=tty0"
       "earlycon" # Earliest possible console output
       "loglevel=8" # Maximum kernel verbosity for debugging
-      # Stream early kernel log to JONS (via gateway router MAC on different subnet)
-      "netconsole=6666@10.10.200.200/eth0,6666@10.10.1.93/74:ac:b9:3f:15:a6"
       "pstore.backend=ramoops"
       "ramoops.ecc=1"
       # Forward journal messages to kmsg so ramoops captures them after journald starts
       "systemd.journald.forward_to_kmsg=1"
       "usbcore.autosuspend=-1"
       "printk.time=1"
+      "clk_ignore_unused"
+      "pd_ignore_unused"
+      "regulator_ignore_unused"
     ];
+  };
+
+  # Prevent udev from trying to change the MAC address of the ASIX adapter,
+  # which causes the USB endpoint to reset and the entire USB hub (including the SSD) to drop!
+  systemd.network.links."00-mac-override" = {
+    matchConfig.OriginalName = "*";
+    linkConfig.MACAddressPolicy = "none";
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";

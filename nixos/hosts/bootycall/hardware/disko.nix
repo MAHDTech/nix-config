@@ -11,7 +11,11 @@
               size = "100%";
               content = {
                 type = "btrfs";
-                extraArgs = [ "-f" ]; # Force override
+                extraArgs = [
+                  "-f"
+                  "-L"
+                  "NIXOS_ROOT"
+                ]; # Force override, set label
                 subvolumes = {
                   "/root" = {
                     mountpoint = "/";

@@ -162,3 +162,36 @@ aboot (stock) → boot.img (p42) → kernel + initrd
   → stage-2 (systemd)
     → DHCP, SSH, NixOS services
 ```
+
+---
+
+## Recovering a Broken NixOS Bootloader
+
+If the NixOS bootloader;
+
+- gets overwritten (e.g., `mmcblk0p42` is accidentally wiped or overwritten with the installer),
+- or if you need to manually fix a missing partition label causing an initrd timeout,
+
+follow these instructions:
+
+1. Boot into the UBNT Recovery UI via the physical reset button.
+2. Upload the `BOOTYCALL-INSTALLER.bin` file to temporarily boot the device into the installer environment.
+   - NOTE: _This is safe and only overwrites the 40MB eMMC boot partition._
+3. SSH into the installer: `ssh nixos@<cloud-key-ip>`
+4. Manually label the SSD BTRFS partition if it is missing:
+
+```bash
+sudo btrfs filesystem label /dev/sda1 NIXOS_ROOT
+```
+
+5. Mount the SSD subvolumes and use `nixos-enter` to chroot into your NixOS installation.
+
+Then, trigger the custom bootloader script, which bundles your NixOS kernel/initrd and writes the `boot.img` back to the eMMC:
+
+```bash
+sudo mount -o subvol=root /dev/sda1 /mnt
+sudo mkdir -p /mnt/nix
+sudo mount -o subvol=nix /dev/sda1 /mnt/nix
+sudo nixos-enter -c "/nix/var/nix/profiles/system/bin/switch-to-configuration boot"
+sudo reboot
+```
