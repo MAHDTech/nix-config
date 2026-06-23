@@ -18,6 +18,7 @@
   imports = [
     # Hardware Configuration
     ./hardware
+    ./hardware/disko.nix
 
     # OS Services Configuration
     ./services

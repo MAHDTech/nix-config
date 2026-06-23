@@ -3,7 +3,8 @@
   ...
 }:
 {
-  system.build.installBootloader = pkgs.writeScript "install-cloudkey-bootloader.sh" ''
+  system.boot.loader.id = "cloudkey-bootimg";
+  system.build.installBootLoader = pkgs.writeScript "install-cloudkey-bootloader.sh" ''
     #!${pkgs.bash}/bin/bash
     set -euo pipefail
 
