@@ -19,9 +19,15 @@
     loader.grub.enable = false;
 
     initrd = {
+      # Disable systemd initrd to reduce initrd size (avoids 32MB LK boot limit)
+      systemd.enable = false;
+
       # Android aboot/LK only understands gzip ramdisks; NixOS defaults to zstd
-      compressor = "gzip";
-      compressorArgs = [ "-9" ];
+      compressor = "xz";
+      compressorArgs = [
+        "-9"
+        "-e"
+      ];
 
       includeDefaultModules = false;
       availableKernelModules = lib.mkForce [
@@ -61,13 +67,6 @@
         };
       };
     };
-
-    # Blacklist the front LCD screen driver. It fails to probe (error -22: buswidth is not set)
-    # and hangs a udev worker for 120 seconds, blocking the USB SSD from enumerating in time!
-    blacklistedKernelModules = [
-      "fb_st7735r"
-      "fbtft"
-    ];
 
     kernelParams = [
       "console=ttyMSM0,115200n8" # Mainline serial console

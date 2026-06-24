@@ -515,6 +515,7 @@ buildx
 bunx
 burn
 burnpack
+buswidth
 bwmon
 cachix
 caddyfile
@@ -1118,6 +1119,7 @@ modeline
 modelines
 modeset
 modesetting
+modprobing
 modtime
 modutil
 monitord
@@ -1159,6 +1161,7 @@ netconcole
 netconsole
 netdev
 netdevs
+netkit
 netlink
 netrwhist
 nettools
@@ -1586,6 +1589,7 @@ submatch
 substituters
 subuid
 subuids
+subvol
 subvols
 subvolumes
 sulogin
@@ -1834,6 +1838,3 @@ zramctl
 zstd
 zvol
 zvols
-netkit
-subvol
-buswidth

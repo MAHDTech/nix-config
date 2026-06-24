@@ -20,6 +20,9 @@
     INITRD="$PROFILE_DIR/initrd"
     DTB="$PROFILE_DIR/dtbs/qcom/apq8053-ubnt-cloudkey.dtb"
     PARAMS="$(cat $PROFILE_DIR/kernel-params | sed 's/root=fstab//g')"
+    # NixOS normally relies on the bootloader (e.g. systemd-boot) to pass root= and init=
+    # Since we are bypassing it and hardcoding the cmdline into the boot.img, we MUST append them manually!
+    PARAMS="$PARAMS root=LABEL=NIXOS_ROOT init=$PROFILE_DIR/init"
 
     echo "Building Android boot.img for CloudKey..."
     echo "Kernel: $KERNEL"

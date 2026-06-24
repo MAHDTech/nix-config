@@ -2,50 +2,39 @@
 
 ## 1. Current Kernel Configuration & Tracking
 
-The host is **not** tracking the default Nix stable kernel (`pkgs.linuxPackages`). It is using a completely custom cross-compiled kernel defined in `hardware/kernel.nix`.
+The host is **not** tracking the default Nix stable kernel (`pkgs.linuxPackages`). It is using
+a completely custom cross-compiled kernel defined in
+[kernel.nix](file:///boot/nixos/nix-config/nixos/hosts/bootycall/hardware/kernel.nix).
 
 ## 2. Custom Kernel Details
 
 ### a. Current kernel version and patches:
 
-- **Version:** `7.0.9`
-- **Source:** Custom branch `v7.0.9-r0` from the `msm8953-mainline/linux` community GitHub repository.
-- **Configurations applied:** Starts from `allnoconfig` merged with a custom `cloudkey.config` fragment.
+- **Version:** `7.1.1`
+- **Source:** Mainline Linux stable tree (`https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.1.1.tar.xz`).
+- **Configurations applied:** Compiled from `allnoconfig` merged with a minimal custom [cloudkey.config](file:///boot/nixos/nix-config/nixos/hosts/bootycall/files/cloudkey.config) fragment.
 - **Patches applied in `kernel.nix`:**
-  - Copies a custom device tree file (`cloudkey-mainline.dts`) into the kernel source at `arch/arm64/boot/dts/qcom/apq8053-ubnt-cloudkey.dts`.
+  - Copies [cloudkey-mainline.dts](file:///boot/nixos/nix-config/nixos/hosts/bootycall/files/cloudkey-mainline.dts) into the kernel source at `arch/arm64/boot/dts/qcom/apq8053-ubnt-cloudkey.dts`.
   - Modifies `arch/arm64/boot/dts/qcom/Makefile` to register this custom device tree.
-  - Applies a "sledgehammer patch" to `drivers/pinctrl/qcom/pinctrl-msm.c`
-    forcing the `msm_gpio_get_direction` function to instantly return
-    `GPIO_LINE_DIRECTION_IN`.
+  - Applies [0001-phy-qcom-qmp-usb-Add-msm8953-support.patch](file:///boot/nixos/nix-config/nixos/hosts/bootycall/patches/0001-phy-qcom-qmp-usb-Add-msm8953-support.patch)
+    to `drivers/phy/qualcomm/phy-qcom-qmp-usb.c` to add USB 3.0 PHY support for `msm8953`.
+- **Removed Patches:**
+  - The legacy "sledgehammer patch" for `msm_gpio_get_direction` (which hardcoded pin directions) was dropped during the upgrade to 7.1.1. Native GPIO direction querying is now fully functional.
 
-### b. Key Hardware:
+### b. Key Hardware & Subsystem Status:
 
-- Architecture: **aarch64** (Arm64).
-- SoC: **Qualcomm APQ8053 / MSM8953** (Snapdragon 625 series).
-- Device: **Ubiquiti CloudKey Gen2 Plus**.
-
-## 3. Linux Kernel 7.1.1 Impact & Changes
-
-### Improvements to Expect:
-
-- **Hardware Security:** Since `bootycall` is an arm64 host, the 7.1.1 fix for
-  the arm64 TLBI ordering defect (CVE-2025-10263) is highly relevant and
-  improves the system's hardware security and stability.
-
-### What Might Break / Compatibility:
-
-- Linux 7.1 introduces standardized interfaces for Arm platforms, including
-  SCMI GPIO. Because we currently have a very hacky "sledgehammer patch"
-  injected into `pinctrl-msm.c` to manipulate GPIO directions, the 7.1
-  infrastructure changes are highly likely to break this patch (either causing
-  merge conflicts or changing the `msm_gpio_get_direction` implementation
-  entirely).
-
-### Required Nix Config Changes for 7.1.1 Upgrade:
-
-- **Wait for Branch:** We will need to wait for the `msm8953-mainline` project to release a `v7.1.1` branch, as the mainline kernel still doesn't natively fully support this legacy SoC.
-- **Update Sources:** Update `kernelVersion`, `rev`, and the source `hash` in `kernel.nix`.
-- **Rewrite GPIO Patch:** Crucially, we will likely need to drop or rewrite the
-  `sed` patch for `msm_gpio_get_direction`, as the 7.1 GPIO (SCMI)
-  upstreaming may have either upstreamed the necessary fix natively or
-  restructured the code such that our current `sed` command fails.
+- **Architecture:** `aarch64` (Arm64).
+- **SoC:** Qualcomm APQ8053 / MSM8953 (8x Cortex-A53).
+- **UART console:** Working (`ttyMSM0` console at `115200n8`).
+- **eMMC:** Working via `sdhci_msm`.
+- **USB Host & SATA SSD:** Working via `xhci-hcd` USB controller and `uas` driver for the ASMedia ASM1153 SATA bridge.
+- **OLED Screen:** Working. Configured as module `fb_st7735r` using `ST7735R` display driver over SPI.
+  Modprobing creates `/dev/fb0`. (We removed the blacklist since the udev hang was resolved by
+  adding `buswidth = <8>` to the device tree).
+- **RTC:** Working via SPMI `rtc-pm8xxx` driver.
+- **Thermal:** Working via `qcom_tsens` driver.
+- **Firewall/Netfilter:** Working. Required `CONFIG_NETFILTER` and `CONFIG_NF_TABLES` options are now built into the kernel config fragment to support NixOS `firewall.service`.
+- **Battery/Power Supply Monitor:** Mainline lacks PMIC charging/battery driver support for the
+  UCK-G2-Plus battery. `/sys/class/power_supply` is empty, and the graceful shutdown battery
+  protection system is not monitored (acceptable as the battery is prone to swelling and is
+  frequently removed).

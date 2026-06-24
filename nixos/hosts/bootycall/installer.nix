@@ -20,6 +20,7 @@
     # Force DHCP on — the SOE network module sets useDHCP = false,
     # which overrides the installer base's mkDefault true.
     useDHCP = lib.mkForce true;
+    wireless.enable = lib.mkForce false;
   };
 
   # ============================================================
