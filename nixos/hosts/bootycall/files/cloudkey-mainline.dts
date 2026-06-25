@@ -266,6 +266,7 @@
 		pm8953_l5: l5 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1800000>;
+			regulator-always-on;
 		};
 
 		pm8953_l6: l6 {

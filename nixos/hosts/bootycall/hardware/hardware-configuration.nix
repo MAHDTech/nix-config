@@ -18,11 +18,6 @@
     # Disable GRUB as we build a custom boot.img
     loader.grub.enable = false;
 
-    blacklistedKernelModules = [
-      "fb_st7735r"
-      "fbtft"
-    ];
-
     initrd = {
       # Disable systemd initrd to reduce initrd size (avoids 32MB LK boot limit)
       systemd.enable = false;
