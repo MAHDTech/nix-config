@@ -30,7 +30,7 @@ in
     {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "x86_64-linux"; # cross-compile (no native hardware)
+      buildSystem = "aarch64-linux"; # remote build / emulation
     }
   ];
 
@@ -92,7 +92,7 @@ in
     BOOTYCALL = mkHost {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "x86_64-linux"; # cross-compile (no native hardware)
+      buildSystem = "aarch64-linux"; # remote build / emulation
       hostType = "server";
       enableHomeManager = false;
       extraModules = [

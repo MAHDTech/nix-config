@@ -2,8 +2,7 @@
 {
   imports = [
     ./base
-    ./caddy
-    ./battery-monitor
     ./oled-manager
+    ./upgrade.nix
   ];
 }

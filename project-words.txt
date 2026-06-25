@@ -1838,3 +1838,4 @@ zramctl
 zstd
 zvol
 zvols
+gethostname

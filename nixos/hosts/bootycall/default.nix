@@ -13,7 +13,10 @@
     hostName = "BOOTYCALL";
     hostId = "def00005";
     useDHCP = lib.mkDefault true;
+    firewall.checkReversePath = false;
   };
+
+  services.oled-manager.enable = true;
 
   imports = [
     # Hardware Configuration

@@ -8,7 +8,7 @@
     #!${pkgs.bash}/bin/bash
     set -euo pipefail
 
-    export PATH="${pkgs.android-tools}/bin:${pkgs.coreutils}/bin:$PATH"
+    export PATH="${pkgs.android-tools}/bin:${pkgs.coreutils}/bin:${pkgs.gnused}/bin:${pkgs.gzip}/bin:$PATH"
 
     if [ $# -lt 1 ]; then
       echo "Usage: $0 <default-toplevel-path>"

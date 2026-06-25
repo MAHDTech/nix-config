@@ -1,16 +1,16 @@
 import os
 import time
 import socket
+import json
+import argparse
 from PIL import Image, ImageDraw, ImageFont
 
-# Path to framebuffer
 FB_PATH = "/dev/fb0"
 WIDTH = 160
 HEIGHT = 60
 
 def get_ip_address():
     try:
-        # Create a dummy socket to find local IP address
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("1.1.1.1", 80))
         ip = s.getsockname()[0]
@@ -50,36 +50,51 @@ def get_uptime():
     except Exception:
         return "Up: N/A"
 
-def draw_screen():
+def draw_screen(config):
     # Create a new image in RGB mode
     img = Image.new("RGB", (WIDTH, HEIGHT), "black")
     draw = ImageDraw.Draw(img)
 
-    # Use default font or fallback font
     try:
         font = ImageFont.load_default()
     except Exception:
         font = None
 
-    # Gather system info
-    ip = get_ip_address()
-    temp = get_cpu_temp()
-    load = get_load()
-    uptime = get_uptime()
+    enabled = config.get("enabled_metrics", ["hostname", "ip", "cpu_temp", "load", "uptime"])
 
-    # Draw layout
-    draw.text((5, 2), "NixOS BootyCall", fill="white", font=font)
+    # Draw Title/Hostname
+    if "hostname" in enabled:
+        title = socket.gethostname().upper()
+    else:
+        title = "NIXOS"
+    draw.text((5, 2), title, fill="white", font=font)
     draw.line((5, 15, 155, 15), fill="white")
-    draw.text((5, 18), f"IP: {ip}", fill="white", font=font)
-    draw.text((5, 32), f"Temp: {temp}", fill="white", font=font)
-    draw.text((95, 32), load, fill="white", font=font)
-    draw.text((5, 46), uptime, fill="white", font=font)
+
+    # Draw IP Address
+    if "ip" in enabled:
+        ip = get_ip_address()
+        draw.text((5, 18), f"IP: {ip}", fill="white", font=font)
+
+    # Draw Temp & Load
+    temp_str = ""
+    if "cpu_temp" in enabled:
+        temp_str = f"Temp: {get_cpu_temp()}"
+    draw.text((5, 32), temp_str, fill="white", font=font)
+
+    load_str = ""
+    if "load" in enabled:
+        load_str = get_load()
+    draw.text((95, 32), load_str, fill="white", font=font)
+
+    # Draw Uptime
+    if "uptime" in enabled:
+        uptime = get_uptime()
+        draw.text((5, 46), uptime, fill="white", font=font)
 
     # Convert to RGB565 (Little Endian)
     pixels = img.getdata()
     out_bytes = bytearray()
     for r, g, b in pixels:
-        # Pack to 16-bit: r (5 bits), g (6 bits), b (5 bits)
         val = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
         out_bytes.append(val & 0xFF)
         out_bytes.append((val >> 8) & 0xFF)
@@ -92,10 +107,25 @@ def draw_screen():
         print(f"Failed to write to framebuffer: {e}")
 
 def main():
-    print("OLED Manager started.")
+    parser = argparse.ArgumentParser(description="CloudKey OLED Screen Manager")
+    parser.add_argument("--config", type=str, help="Path to config JSON file")
+    args = parser.parse_args()
+
+    config = {}
+    if args.config and os.path.exists(args.config):
+        try:
+            with open(args.config, "r") as f:
+                config = json.load(f)
+            print(f"Loaded configuration from {args.config}")
+        except Exception as e:
+            print(f"Failed to load configuration: {e}")
+
+    poll_interval = config.get("poll_interval", 60) # default to 60s as requested
+    print(f"OLED Manager started. Interval: {poll_interval}s")
+
     while True:
-        draw_screen()
-        time.sleep(3)
+        draw_screen(config)
+        time.sleep(poll_interval)
 
 if __name__ == "__main__":
     main()
