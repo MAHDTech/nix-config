@@ -348,7 +348,7 @@
 	display@0 {
 		compatible = "sitronix,st7735r";
 		reg = <0>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <19200000>;
 		buswidth = <8>;
 		reset-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
 		dc-gpios = <&tlmm 87 GPIO_ACTIVE_HIGH>;
