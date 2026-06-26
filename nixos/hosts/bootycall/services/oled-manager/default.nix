@@ -42,6 +42,20 @@ in
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "simple";
+        ExecStartPre = pkgs.writeShellScript "oled-manager-pre" ''
+          if [ -e /dev/fb0 ] && [ ! -c /dev/fb0 ]; then
+            rm -f /dev/fb0
+          fi
+          for i in {1..15}; do
+            if [ -d /sys/class/graphics/fb0 ]; then
+              break
+            fi
+            sleep 1
+          done
+          if [ ! -c /dev/fb0 ]; then
+            mknod /dev/fb0 c 29 0
+          fi
+        '';
         ExecStart = "${pythonEnv}/bin/python3 ${./oled-manager.py} --config ${configFile}";
         Restart = "always";
         RestartSec = 5;

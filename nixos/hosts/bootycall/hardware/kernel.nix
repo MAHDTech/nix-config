@@ -92,6 +92,15 @@ let
 
       echo "Registering device tree in Makefile..."
       echo "dtb-\$(CONFIG_ARCH_QCOM) += apq8053-ubnt-cloudkey.dtb" >> arch/arm64/boot/dts/qcom/Makefile
+
+      echo "Exporting fbtft_init_display_from_property function from core..."
+      sed -i 's/static int fbtft_init_display_from_property/int fbtft_init_display_from_property/' drivers/staging/fbtft/fbtft-core.c
+      echo 'EXPORT_SYMBOL(fbtft_init_display_from_property);' >> drivers/staging/fbtft/fbtft-core.c
+      sed -i '/int fbtft_probe_common/i int fbtft_init_display_from_property(struct fbtft_par *par);' drivers/staging/fbtft/fbtft.h
+
+      echo "Patching fb_ssd1306 staging driver to support custom DT init sequence..."
+      sed -i '1s/^/#include <linux\/property.h>\n/' drivers/staging/fbtft/fb_ssd1306.c
+      sed -i '/static int init_display(struct fbtft_par \*par)/!b;n;a\	if (device_property_present(par->info->device, "init")) {\n\t\tpar->fbtftops.reset(par);\n\t\treturn fbtft_init_display_from_property(par);\n\t}' drivers/staging/fbtft/fb_ssd1306.c
     '';
 
     configurePhase = ''

@@ -1839,3 +1839,4 @@ zstd
 zvol
 zvols
 gethostname
+fbtftops
