@@ -161,7 +161,8 @@ in
       prek
 
       # 3D Printing
-      orca-slicer # OSS version of Bambu Studio
+      #bambu-studio
+      #orca-slicer # OSS version of Bambu Studio
     ]
     ++ unstablePkgs
     ++ systemArchPackages;

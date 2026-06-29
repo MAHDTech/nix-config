@@ -11,18 +11,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCES_JSON="$SCRIPT_DIR/sources.json"
 
-echo "Fetching latest version from Google Cloud Storage..."
-# Find the latest release folder path (excluding test versions starting with 100)
-LATEST_FOLDER=$(curl -fsSL "https://storage.googleapis.com/storage/v1/b/antigravity-public/o?prefix=antigravity-cli/" |
-	jq -r '.items[].name' |
-	grep -E 'antigravity-cli/[0-9]+\.[0-9]+\.[0-9]+-[0-9]+/linux-x64/cli_linux_x64.tar.gz' |
-	grep -v '100.0.0' |
-	cut -d/ -f2 |
+echo "Fetching latest version from Cloud Run updater API..."
+# Find the latest release version and execution ID
+LATEST_RELEASE=$(curl -fsSL "https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/releases" |
+	jq -r '.[] | "\(.version)-\(.execution_id)"' |
+	grep -v '^100\.' |
 	sort -V |
 	tail -n 1)
 
-VERSION=$(echo "$LATEST_FOLDER" | cut -d- -f1)
-EXEC_ID=$(echo "$LATEST_FOLDER" | cut -d- -f2)
+VERSION=$(echo "$LATEST_RELEASE" | cut -d- -f1)
+EXEC_ID=$(echo "$LATEST_RELEASE" | cut -d- -f2)
 
 echo "✓ Latest version detected: $VERSION-$EXEC_ID"
 

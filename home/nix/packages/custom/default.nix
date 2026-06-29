@@ -7,7 +7,7 @@ let
 in
 {
   home.packages = [
-    #(pkgs.callPackage ./BambuStudio.nix { })
+    (pkgs.callPackage ./BambuStudio.nix { })
     #(pkgs.callPackage ./OrcaSlicer.nix { })
 
     #(pkgs.callPackage ./cursor.nix {})

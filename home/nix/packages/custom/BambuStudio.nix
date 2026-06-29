@@ -2,15 +2,17 @@
   lib,
   fetchurl,
   appimageTools,
+  pkgs,
   ...
 }:
 let
   pname = "BambuStudio";
-  version = "2.0.2";
+  version = "02.07.01.62";
+  calver = "20260616195227";
 
   src = fetchurl {
-    url = "https://github.com/bambulab/BambuStudio/releases/download/v02.00.02.57/Bambu_Studio_linux_v02.00.02.57_ubuntu_24.04.AppImage";
-    hash = "sha256-SMo3Olmu9X6GpHQSFVgbSXz+06q+jpDG8HJXBKDMaTc=";
+    url = "https://github.com/bambulab/BambuStudio/releases/download/v${version}/BambuStudio_ubuntu24.04-v${version}-${calver}.AppImage";
+    hash = "sha256-+pi2CFMt+7uysJMUg6rEHlf7GcF1osx719Uo1eD7soc=";
   };
 
   # AppImages are type 1 (ISO) or type 2 (ELF)
@@ -41,13 +43,15 @@ appimageTools.wrapType2 {
 
   extraPkgs =
     pkgs: with pkgs; [
-      #xdg-desktop-portal-cosmic
-      #xdg-desktop-portal-gtk
-      #xdg-desktop-portal-hyprland
-      #xdg-desktop-portal-wlr
-      #xdg-launch
-      #xdg-utils
+      openssl
+      webkitgtk_4_1
+      glib-networking
+      xdg-utils
     ];
+
+  profile = ''
+    export GIO_EXTRA_MODULES="${pkgs.glib-networking}/lib/gio/modules"
+  '';
 
   meta = {
     description = "PC Software for BambuLab and other 3D printers";

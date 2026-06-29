@@ -8,18 +8,16 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 SOURCE_JSON="$DIR/sources.json"
 
-echo "Fetching latest version from Google Cloud Storage..."
-# 1. Get the latest release folder path (ignoring test version 100.x)
-LATEST_FOLDER=$(curl -fsSL "https://storage.googleapis.com/storage/v1/b/antigravity-public/o?prefix=antigravity-hub/" |
-	jq -r '.items[].name' |
-	grep -E 'antigravity-hub/[0-9]+\.[0-9]+\.[0-9]+-[0-9]+/linux-x64/Antigravity.tar.gz' |
-	grep -v '100.0.0' |
-	cut -d/ -f2 |
+echo "Fetching latest version from Cloud Run updater API..."
+# 1. Get the latest release version and execution ID (ignoring test version 100.x)
+LATEST_RELEASE=$(curl -fsSL "https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/releases" |
+	jq -r '.[] | "\(.version)-\(.execution_id)"' |
+	grep -v '^100\.' |
 	sort -V |
 	tail -n 1)
 
-VERSION=$(echo "$LATEST_FOLDER" | cut -d- -f1)
-EXEC_ID=$(echo "$LATEST_FOLDER" | cut -d- -f2)
+VERSION=$(echo "$LATEST_RELEASE" | cut -d- -f1)
+EXEC_ID=$(echo "$LATEST_RELEASE" | cut -d- -f2)
 
 # Check if we actually need to update
 if [[ -f $SOURCE_JSON ]]; then
