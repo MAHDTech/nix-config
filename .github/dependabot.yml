@@ -23,8 +23,6 @@ updates:
       timezone: "Australia/Sydney"
     assignees:
       - "MAHDTech"
-    reviewers:
-      - "MAHDTech"
     labels:
       - "dependencies"
       - "dependabot"
@@ -47,8 +45,6 @@ updates:
       time: "00:00"
       timezone: "Australia/Sydney"
     assignees:
-      - "MAHDTech"
-    reviewers:
       - "MAHDTech"
     labels:
       - "dependencies"
@@ -73,8 +69,6 @@ updates:
       timezone: "Australia/Sydney"
     assignees:
       - "MAHDTech"
-    reviewers:
-      - "MAHDTech"
     labels:
       - "dependencies"
       - "dependabot"
@@ -97,8 +91,6 @@ updates:
       time: "00:00"
       timezone: "Australia/Sydney"
     assignees:
-      - "MAHDTech"
-    reviewers:
       - "MAHDTech"
     labels:
       - "dependencies"
@@ -123,8 +115,6 @@ updates:
       timezone: "Australia/Sydney"
     assignees:
       - "MAHDTech"
-    reviewers:
-      - "MAHDTech"
     labels:
       - "dependencies"
       - "dependabot"
@@ -132,5 +122,28 @@ updates:
     target-branch: "trunk"
     commit-message:
       prefix: "cargo"
+    rebase-strategy: "auto"
+    open-pull-requests-limit: 5
+
+  #########################
+  # Nix Flakes
+  #########################
+
+  - package-ecosystem: "nix"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "00:00"
+      timezone: "Australia/Sydney"
+    assignees:
+      - "MAHDTech"
+    labels:
+      - "dependencies"
+      - "dependabot"
+      - "nix"
+    target-branch: "trunk"
+    commit-message:
+      prefix: "nix"
     rebase-strategy: "auto"
     open-pull-requests-limit: 5
