@@ -45,7 +45,7 @@
       ];
       experimental-features = [
         "auto-allocate-uids"
-        "ca-derivations"
+        #"ca-derivations" # NOTE: This breaks devenv when enabled.
         "cgroups"
         "flakes"
         "nix-command"
