@@ -89,7 +89,7 @@
         "172.17.0.0/16" # Docker
         "172.18.0.0/16" # KinD
       ];
-      externalInterface = "br0"; # The external interface with a host network IP.
+      #externalInterface = "br0"; # The external interface with a host network IP.
     };
 
     nftables = {

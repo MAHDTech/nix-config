@@ -6,6 +6,7 @@
   networking = {
     hostName = "JONS";
     hostId = "def10002";
+    nat.externalInterface = lib.mkForce "enp12s0";
   };
 
   # Override docker storage driver for ZFS (this host still uses ZFS)
@@ -24,7 +25,7 @@
   };
 
   services.udev.extraRules = ''
-    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0f:00.0", SYMLINK+="dri/amd-gpu"
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0e:00.0", SYMLINK+="dri/amd-gpu"
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", SYMLINK+="dri/intel-gpu"
   '';
 
