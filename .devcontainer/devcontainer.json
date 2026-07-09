@@ -1,0 +1,27 @@
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "arrterian.nix-env-selector",
+        "esbenp.prettier-vscode",
+        "github.vscode-github-actions",
+        "jnoortheen.nix-ide",
+        "johnpapa.vscode-peacock",
+        "kamadorueda.alejandra",
+        "nhoizey.gremlins",
+        "pinage404.nix-extension-pack",
+        "redhat.vscode-yaml",
+        "streetsidesoftware.code-spell-checker",
+        "tekumura.typos-vscode",
+        "timonwong.shellcheck",
+        "tuxtina.json2yaml",
+        "vscodevim.vim",
+        "wakatime.vscode-wakatime",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  },
+  "image": "ghcr.io/cachix/devenv/devcontainer:latest",
+  "overrideCommand": false,
+  "updateContentCommand": "devenv test"
+}
