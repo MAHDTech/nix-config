@@ -58,12 +58,6 @@
         };
         pipewire-pulse = {
           "92-low-latency" = {
-            "context.properties" = [
-              {
-                name = "libpipewire-module-protocol-pulse";
-                args = { };
-              }
-            ];
             "pulse.properties" = {
               "pulse.min.req" = "256/96000";
               "pulse.default.req" = "256/96000";
