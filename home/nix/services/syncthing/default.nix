@@ -81,13 +81,15 @@
             ;
           label = folderName;
           copyOwnershipFromParent = false;
-          rescanIntervalS = folderConfig.rescanIntervalS or 86400;
+          watch = false;
+          order = "smallestFirst";
+          rescanIntervalS = folderConfig.rescanIntervalS or 14400; # Default to 4 hours
           versioning =
             folderConfig.versioning or {
               type = "staggered";
               params = {
-                cleanInterval = "3600"; # Clean hourly
-                maxAge = "31536000"; # Keep versions for up to 365 days
+                cleanInterval = "86400"; # Clean daily
+                maxAge = "2592000"; # Keep versions for up to 30 days
               };
             };
         }) (syncthingConfig.syncFolders or { });
@@ -100,7 +102,8 @@
 
           # Bandwidth and performance
           limitBandwidthInLan = false;
-          maxFolderConcurrency = 0;
+          maxFolderConcurrency = 2;
+          weakHashThresholdPct = 101; # Disable weak hashing to save CPU
 
           # Disable usage reporting.
           urAccepted = -1;
