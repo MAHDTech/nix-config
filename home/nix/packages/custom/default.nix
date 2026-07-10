@@ -4,10 +4,15 @@
 }:
 let
   litert-lm = pkgs.callPackage ./litert-lm.nix { };
+
+  bambuStudio =
+    if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
+      [ (pkgs.callPackage ./BambuStudio.nix { }) ]
+    else
+      [ ];
 in
 {
   home.packages = [
-    (pkgs.callPackage ./BambuStudio.nix { })
     #(pkgs.callPackage ./OrcaSlicer.nix { })
 
     #(pkgs.callPackage ./cursor.nix {})
@@ -26,5 +31,6 @@ in
 
     #(pkgs.callPackage ./ls-colors.nix { })
 
-  ];
+  ]
+  ++ bambuStudio;
 }
