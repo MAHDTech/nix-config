@@ -4,7 +4,9 @@
   ...
 }:
 {
-  imports = [ ];
+  imports = [
+    ../graphics
+  ];
 
   # NOTES:
   #   - NVIDIA QUADRO T400
@@ -38,21 +40,7 @@
   };
 
   hardware = {
-    graphics = {
-      enable = true;
-
-      extraPackages = with pkgs; [
-        vaapiVdpau
-        libvdpau-va-gl
-        nvidia-vaapi-driver
-      ];
-
-      extraPackages32 = with pkgs; [
-        vaapiVdpau
-        libvdpau-va-gl
-        nvidia-vaapi-driver
-      ];
-    };
+    graphics.nvidia.enable = true;
 
     nvidia = {
       modesetting.enable = true;

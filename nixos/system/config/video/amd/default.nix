@@ -1,6 +1,8 @@
 { pkgs, lib, ... }:
 {
-  imports = [ ];
+  imports = [
+    ../graphics
+  ];
 
   environment.systemPackages = with pkgs; [
     # OpenCL info tool for verification
@@ -34,9 +36,9 @@
   };
 
   hardware = {
+    graphics.amd.enable = true;
 
     amdgpu = {
-
       initrd = {
         enable = true;
       };
@@ -48,41 +50,6 @@
       opencl = {
         enable = true;
       };
-    };
-
-    graphics = {
-      enable = true;
-      extraPackages = with pkgs; [
-        # Linux firmware collection
-        linux-firmware
-
-        # Mesa 3D graphics library
-        mesa
-
-        # AMD Video Processing Library GPU runtime for hardware video processing
-        vpl-gpu-rt
-
-        # Vulkan loader for graphics APIs
-        vulkan-loader
-
-        # OpenCL support for AMD GPUs
-        rocmPackages.clr.icd
-
-        # Additional Mesa packages for better compatibility
-        mesa.llvmPackages.libclang
-      ];
-
-      enable32Bit = true;
-      extraPackages32 = with pkgs; [
-        # Linux firmware collection (32-bit)
-        linux-firmware
-
-        # AMD Video Processing Library GPU runtime (32-bit)
-        vpl-gpu-rt
-
-        # Vulkan loader for graphics APIs (32-bit)
-        vulkan-loader
-      ];
     };
   };
 
@@ -111,12 +78,8 @@
     # Force RADV over AMDVLK for better performance in games
     AMD_VULKAN_ICD = lib.mkDefault "RADV";
 
-    # Enable ROCm for pre-Vega APUs if needed
-    # ROC_ENABLE_PRE_VEGA = "1";
-
     # Additional performance optimizations
     MESA_GL_VERSION_OVERRIDE = lib.mkDefault "4.5";
     MESA_GLSL_VERSION_OVERRIDE = lib.mkDefault "450";
   };
-
 }

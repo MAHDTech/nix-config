@@ -1,14 +1,11 @@
 { pkgs, ... }:
 {
+  imports = [
+    ../graphics
+  ];
+
   # Mesa and hardware acceleration for Adreno (Snapdragon X Elite)
-  hardware.graphics = {
-    enable = true;
-    extraPackages = with pkgs; [
-      libva-utils
-      vulkan-loader
-      vulkan-validation-layers
-    ];
-  };
+  hardware.graphics.qcom.enable = true;
 
   environment.systemPackages = with pkgs; [
     # Monitoring tool specifically compiled with Qualcomm MSM support
