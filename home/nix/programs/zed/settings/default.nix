@@ -401,10 +401,16 @@ in
         #########################
 
         agent_servers = {
-          "opencode" = {
+          "antigravity" = {
             type = "registry";
           };
-          "antigravity" = {
+          "claude-acp" = {
+            type = "registry";
+          };
+          "goose" = {
+            type = "registry";
+          };
+          "opencode" = {
             type = "registry";
           };
         };

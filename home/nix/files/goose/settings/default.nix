@@ -1,0 +1,148 @@
+{
+  inputs,
+  config,
+  pkgs,
+  lib,
+  ...
+}:
+let
+  pkgsUnstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs.stdenv.hostPlatform) system;
+  };
+
+  unstablePkgs = with pkgsUnstable; [
+    goose-cli
+  ];
+in
+{
+  # ---------------------------------------------------------------------------
+  # Goose Configuration
+  # ---------------------------------------------------------------------------
+  home = {
+    file = {
+      # Goose Settings Template
+      "goose-settings-template" = {
+        target = "${config.home.homeDirectory}/.config/goose/config.tmpl.yaml";
+        executable = false;
+        text = ''
+          extensions:
+            developer:
+              enabled: true
+              type: platform
+              name: developer
+              description: Write and edit files, and execute shell commands
+              display_name: Developer
+              bundled: true
+              available_tools: []
+            apps:
+              enabled: true
+              type: platform
+              name: apps
+              description: Create and manage custom Goose apps through chat. Apps are HTML/CSS/JavaScript and run in sandboxed windows.
+              display_name: Apps
+              bundled: true
+              available_tools: []
+            summon:
+              enabled: true
+              type: platform
+              name: summon
+              description: Load knowledge and delegate tasks to subagents
+              display_name: Summon
+              bundled: true
+              available_tools: []
+            chatrecall:
+              enabled: false
+              type: platform
+              name: chatrecall
+              description: Search past conversations and load session summaries for contextual memory
+              display_name: Chat Recall
+              bundled: true
+              available_tools: []
+            analyze:
+              enabled: true
+              type: platform
+              name: analyze
+              description: 'Analyze code structure with tree-sitter: directory overviews, file details, symbol call graphs'
+              display_name: Analyze
+              bundled: true
+              available_tools: []
+            tom:
+              enabled: true
+              type: platform
+              name: tom
+              description: Inject custom context into every turn via GOOSE_MOIM_MESSAGE_TEXT and GOOSE_MOIM_MESSAGE_FILE environment variables
+              display_name: Top Of Mind
+              bundled: true
+              available_tools: []
+            extensionmanager:
+              enabled: true
+              type: platform
+              name: Extension Manager
+              description: Enable extension management tools for discovering, enabling, and disabling extensions
+              display_name: Extension Manager
+              bundled: true
+              available_tools: []
+            summarize:
+              enabled: false
+              type: platform
+              name: summarize
+              description: Load files/directories and get an LLM summary in a single call
+              display_name: Summarize
+              bundled: true
+              available_tools: []
+            code_execution:
+              enabled: false
+              type: platform
+              name: code_execution
+              description: Goose will make extension calls through code execution, saving tokens
+              display_name: Code Mode
+              bundled: true
+              available_tools: []
+            todo:
+              enabled: true
+              type: platform
+              name: todo
+              description: Enable a todo list for goose so it can keep track of what it is doing
+              display_name: Todo
+              bundled: true
+              available_tools: []
+          XAI_HOST: https://api.x.ai/v1
+          GOOSE_PROVIDER: xai
+          GOOSE_MODEL: grok-4.5
+          # Theme Configuration
+          GOOSE_CLI_THEME: dark
+          GOOSE_CLI_LIGHT_THEME: GitHub
+          GOOSE_CLI_DARK_THEME: zenburn
+        '';
+      };
+    };
+
+    # ---------------------------------------------------------------------------
+    # Activation script: Deep Merge (Template takes precedence)
+    # ---------------------------------------------------------------------------
+    activation.mergeGooseSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      TEMPLATE="$HOME/.config/goose/config.tmpl.yaml"
+      TARGET="$HOME/.config/goose/config.yaml"
+      TMP_TARGET="$(mktemp)"
+
+      mkdir -p "$HOME/.config/goose"
+
+      if [ -f "$TARGET" ]; then
+        ${pkgs.yq-go}/bin/yq eval-all '. as $item ireduce ({}; . * $item)' "$TARGET" "$TEMPLATE" > "$TMP_TARGET"
+        mv --force "$TMP_TARGET" "$TARGET"
+      else
+        cp --force "$TEMPLATE" "$TARGET"
+      fi
+
+      chmod 600 "$TARGET"
+    '';
+
+    packages =
+      unstablePkgs
+      ++ (with pkgs; [
+        jq
+        yq-go
+        github-mcp-server
+      ]);
+  };
+}

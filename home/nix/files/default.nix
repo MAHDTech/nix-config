@@ -7,6 +7,7 @@
     ./general.nix
     ./ghostty
     ./github.nix
+    ./goose
     ./gptcommit.nix
     ./opencode
     ./scripts

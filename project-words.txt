@@ -1840,3 +1840,9 @@ zvol
 zvols
 gethostname
 fbtftops
+chatrecall
+extensionmanager
+zenburn
+ireduce
+chatrecall
+MOIM
