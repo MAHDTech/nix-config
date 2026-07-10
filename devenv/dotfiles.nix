@@ -109,6 +109,10 @@ in
       };
       cspell = {
         enable = true;
+        args = [
+          "lint"
+          "--no-must-find-files"
+        ];
         package = pkgs.cspell;
       };
       dialyzer.enable = true;
