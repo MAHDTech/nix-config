@@ -431,6 +431,7 @@
 
       shlvl = {
         disabled = false;
+        symbol = "↕️ ";
       };
 
       singularity = {

@@ -1854,3 +1854,4 @@ zstd
 zvol
 zvols
 
+wcwidth
