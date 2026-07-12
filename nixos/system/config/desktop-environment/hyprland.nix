@@ -15,9 +15,6 @@
       hypridle
       hyprpaper
 
-      # Terminal
-      kitty
-
       # Greeter
       tuigreet
 
