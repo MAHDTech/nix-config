@@ -1,5 +1,6 @@
 {
   imports = [
+    ./cosmic-desktop
     ./gnome-keyring.nix
     #./kwallet.nix
     #./pass-secret-service.nix

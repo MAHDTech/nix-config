@@ -1,11 +1,11 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
 
   environment.systemPackages = with pkgs; [ ];
 
   networking = {
     wireless = {
-      enable = false; # Disable wpa_supplicant
+      enable = lib.mkForce false; # Disable wpa_supplicant
 
       iwd = {
         # Whether to enable iwd

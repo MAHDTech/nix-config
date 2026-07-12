@@ -1,4 +1,9 @@
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 {
   nix.settings = {
     substituters = [ "https://hyprland.cachix.org" ];
@@ -129,12 +134,13 @@
         command = ''
           ${pkgs.tuigreet}/bin/tuigreet \
           --asterisks \
-          --cmd "uwsm start hyprland-uwsm.desktop" \
+          --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions \
           --greet-align center \
           --greeting "Welcome to Salt Labs Cloud" \
           --power-reboot 'shutdown -r now' \
           --power-shutdown 'shutdown -h now' \
           --remember \
+          --remember-session \
           --time \
           --time-format '%I:%M %p | %a • %h | %F' \
           --width 100 \

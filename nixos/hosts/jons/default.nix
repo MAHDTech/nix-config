@@ -74,6 +74,7 @@
 
     # Desktop Environment
     ../../system/config/desktop-environment/hyprland.nix
+    ../../system/config/desktop-environment/cosmic.nix
 
     # Tailscale
     ../../system/config/services/tailscale

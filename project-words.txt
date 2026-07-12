@@ -1855,3 +1855,5 @@ zvol
 zvols
 
 wcwidth
+minimon
+applibrary

@@ -1,41 +1,61 @@
 {
-  config,
   pkgs,
   ...
 }:
 {
   imports = [ ];
 
-  # NOTE: cosmic packages now pulled from nixos-cosmic flake.
+  # Enable the System76 scheduler for performance optimization
+  services.system76-scheduler.enable = true;
 
   environment.systemPackages = with pkgs; [
-    #system76-firmware
-
-    # Cosmic apps
-    cosmic-applets
+    # Core Desktop & Daemons
+    cosmic-comp
     cosmic-bg
-    cosmic-edit
-    cosmic-ext-calculator
-    cosmic-ext-ctl
-    cosmic-files
-    cosmic-icons
-    cosmic-idle
-    cosmic-launcher
-    cosmic-osd
-    cosmic-panel
-    cosmic-player
-    cosmic-randr
-    cosmic-screenshot
     cosmic-session
     cosmic-settings
     cosmic-settings-daemon
-    cosmic-store
+    cosmic-osd
+    cosmic-notifications
+    cosmic-idle
+    cosmic-greeter
+    cosmic-workspaces-epoch
+    xdg-desktop-portal-cosmic
+
+    # Desktop Shell Components
+    cosmic-panel
+    cosmic-launcher
+    cosmic-applibrary
+    cosmic-applets
+    cosmic-icons
+    cosmic-wallpapers
+
+    # Core Applications
     cosmic-term
+    cosmic-files
+    cosmic-edit
+    cosmic-store
+    cosmic-player
+    cosmic-screenshot
+    cosmic-reader
+    tasks
+    cosmic-monitor
+
+    # Extensions & Utilities
+    cosmic-ext-calculator
+    cosmic-ext-ctl
+    cosmic-ext-tweaks
+    cosmic-ext-applet-caffeine
+    cosmic-ext-applet-external-monitor-brightness
+    cosmic-ext-applet-minimon
+    cosmic-ext-applet-privacy-indicator
+    cosmic-ext-applet-sysinfo
+    cosmic-ext-applet-weather
   ];
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
-    COSMIC_DATA_CONTROL_ENABLED = "1";
+    COSMIC_DATA_CONTROL_ENABLED = "1"; # Bypasses Wayland clipboard restriction for managers/macros
   };
 
   hardware.system76 = {
@@ -46,7 +66,6 @@
   };
 
   services = {
-
     # COSMIC Desktop
     desktopManager.cosmic = {
       enable = true;
@@ -55,27 +74,7 @@
       };
     };
 
-    displayManager.cosmic-greeter.enable = true;
+    displayManager.cosmic-greeter.enable = false;
   };
 
-  boot.extraModulePackages = with config.boot.kernelPackages; [
-    # If using the System76 scheduler
-    #system76-scheduler
-
-    # Disable when using power-profiles daemon or TLP
-    #system76-power
-  ];
-
-  systemd = {
-    packages = with pkgs; [
-      observatory
-    ];
-    services = {
-      monitord = {
-        wantedBy = [
-          "multi-user.target"
-        ];
-      };
-    };
-  };
 }
