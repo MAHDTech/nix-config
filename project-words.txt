@@ -144,6 +144,7 @@ HYPRCURSOR
 Hamina
 Hamoa
 Hediet
+Heitor
 Hyperviros
 IIFSMQG
 INOTIFY
@@ -195,6 +196,7 @@ LNXSYSTM
 LOGNAME
 LPASS
 LUKS
+Lanczos
 Larumbe
 Larumbe's
 Lavapipe
@@ -436,6 +438,7 @@ appctl
 appeditor
 appimage
 appindicator
+applibrary
 aptx
 arange
 argmax
@@ -463,11 +466,13 @@ autofetch
 autofs
 autohide
 autohint
+autohover
 autoindent
 automount
 autoprune
 autoreload
 autosnap
+autotile
 autotrim
 autowrite
 avahi
@@ -486,6 +491,7 @@ binfmt
 binsh
 binutils
 bitdepth
+bksp
 blkdev
 blkid
 blueman
@@ -546,7 +552,6 @@ charasay
 charmbracelet
 chatcmpl
 chatml
-chatrecall
 chatrecall
 chattr
 checkbutton
@@ -1108,6 +1113,7 @@ mglru
 microstep
 milli
 minimaxai
+minimon
 misconfigurations
 misconfigures
 mistralrs
@@ -1797,6 +1803,7 @@ wavelen
 waybar
 wayshot
 wayvnc
+wcwidth
 webkitgtk
 webp
 webui
@@ -1837,6 +1844,7 @@ xtype
 xunlong
 xwayland
 xxhash
+xxxs
 yaru
 yfidmzr
 ykman
@@ -1853,7 +1861,3 @@ zramctl
 zstd
 zvol
 zvols
-
-wcwidth
-minimon
-applibrary

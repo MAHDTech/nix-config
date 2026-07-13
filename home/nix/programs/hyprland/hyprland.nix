@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  config,
   deviceConfig ? {
     monitorConfig = [ ];
     extraSettings = { };
@@ -1136,32 +1135,44 @@ in
   # Ensure services start on graphical session login
   systemd = {
     user = {
-      # Override the hypridle service to ensure it starts after graphical-session.target
+      # Override the hypridle service to ensure it starts after graphical-session.target and hyprland-session.target
       services = {
 
         hypridle = {
-          Install.WantedBy = [ "graphical-session.target" ];
+          Install.WantedBy = lib.mkForce [ "hyprland-session.target" ];
           Unit = {
-            BindsTo = [ "graphical-session.target" ];
+            BindsTo = lib.mkForce [
+              "graphical-session.target"
+              "hyprland-session.target"
+            ];
             After = [
               "graphical-session.target"
-              config.wayland.systemd.target
+              "hyprland-session.target"
             ];
-            Requires = [ "graphical-session.target" ];
+            Requires = lib.mkForce [
+              "graphical-session.target"
+              "hyprland-session.target"
+            ];
             ConditionEnvironment = lib.mkForce "PATH";
           };
         };
 
-        # Override the hyprpaper service to ensure it starts after graphical-session.target
+        # Override the hyprpaper service to ensure it starts after graphical-session.target and hyprland-session.target
         hyprpaper = {
-          Install.WantedBy = [ "graphical-session.target" ];
+          Install.WantedBy = lib.mkForce [ "hyprland-session.target" ];
           Unit = {
-            BindsTo = [ "graphical-session.target" ];
+            BindsTo = lib.mkForce [
+              "graphical-session.target"
+              "hyprland-session.target"
+            ];
             After = [
               "graphical-session.target"
-              config.wayland.systemd.target
+              "hyprland-session.target"
             ];
-            Requires = [ "graphical-session.target" ];
+            Requires = lib.mkForce [
+              "graphical-session.target"
+              "hyprland-session.target"
+            ];
           };
         };
       };

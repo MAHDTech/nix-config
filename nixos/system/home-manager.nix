@@ -42,6 +42,7 @@
       imports = [
         ../../home
         inputs.opnix.homeManagerModules.default
+        inputs.cosmic-manager.homeManagerModules.default
       ];
     };
   };
