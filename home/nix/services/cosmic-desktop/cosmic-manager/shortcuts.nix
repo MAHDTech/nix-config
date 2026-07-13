@@ -360,14 +360,14 @@
       };
     }
     {
-      key = "Ctrl+Return";
+      key = "Alt+Shift+Return"; # pragma: allowlist secret
       action = {
         __type = "enum";
         variant = "Fullscreen";
       };
     }
     {
-      key = "Ctrl+w";
+      key = "Super+w";
       action = {
         __type = "enum";
         variant = "Close";
