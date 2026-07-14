@@ -49,6 +49,13 @@ in
                   "stdio"
                 ],
                 "environment": { }
+              },
+              "terraform": {
+                "type": "local",
+                "command": [
+                  "${config.home.homeDirectory}/.local/bin/terraform-mcp-server-start"
+                ],
+                "environment": { }
               }
             },
             "disabled_providers": [

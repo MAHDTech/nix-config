@@ -15,6 +15,9 @@
     # GitHub
     ./github.nix
 
+    # Terraform
+    ./terraform.nix
+
     # DaisyUI
     ./daisyui.nix
   ];

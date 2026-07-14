@@ -645,6 +645,13 @@ in
             env = { };
           };
 
+          terraform = {
+            # Use a wrapper that creates credentials and runs registry-only mode
+            command = "${config.home.homeDirectory}/.local/bin/terraform-mcp-server-start";
+            args = [ ];
+            env = { };
+          };
+
         };
 
         #########################

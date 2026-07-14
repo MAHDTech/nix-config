@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -63,6 +64,35 @@
         }
       '';
     };
+
+    #########################
+    # Antigravity MCP Servers
+    #########################
+
+    "antigravity-mcp-config-tmpl" = {
+      target = ".gemini/config/mcp_config.tmpl.json";
+      executable = false;
+
+      text = ''
+        {
+          "mcpServers": {
+            "devenv": {
+              "serverUrl": "https://mcp.devenv.sh"
+            },
+            "github-mcp-server": {
+              "command": "${config.home.homeDirectory}/.local/bin/github-mcp-server-start",
+              "args": [],
+              "env": {}
+            },
+            "terraform-mcp-server": {
+              "command": "${config.home.homeDirectory}/.local/bin/terraform-mcp-server-start",
+              "args": [],
+              "env": {}
+            }
+          }
+        }
+      '';
+    };
   };
 
   #########################
@@ -102,6 +132,20 @@
         cp --force "$HUB_TMPL" "$HUB_TARGET"
       fi
       chmod 600 "$HUB_TARGET"
+
+      # Merge MCP config
+      MCP_TMPL="$HOME/.gemini/config/mcp_config.tmpl.json"
+      MCP_TARGET="$HOME/.gemini/config/mcp_config.json"
+      MCP_TMP_TARGET="$(mktemp)"
+
+      if [ -f "$MCP_TARGET" ];
+      then
+        ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$MCP_TARGET" "$MCP_TMPL" > "$MCP_TMP_TARGET"
+        mv --force "$MCP_TMP_TARGET" "$MCP_TARGET"
+      else
+        cp --force "$MCP_TMPL" "$MCP_TARGET"
+      fi
+      chmod 600 "$MCP_TARGET"
     '';
   };
 }

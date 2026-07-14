@@ -1861,3 +1861,5 @@ zramctl
 zstd
 zvol
 zvols
+tfrc
+CREDS
