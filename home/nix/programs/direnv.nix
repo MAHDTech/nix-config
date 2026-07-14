@@ -1,6 +1,6 @@
 {
   programs.direnv = {
-    enable = false;
+    enable = true;
     silent = false;
     enableBashIntegration = true;
 
