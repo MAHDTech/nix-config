@@ -36,6 +36,7 @@
     stylix.url = "github:nix-community/stylix?ref=release-26.05";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
     devenv.url = "github:cachix/devenv/main";
+    devenv-nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
     impermanence.url = "github:nix-community/impermanence/master";
     crane.url = "github:ipetkov/crane";
     disko = {

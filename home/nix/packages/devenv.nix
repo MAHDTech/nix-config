@@ -6,6 +6,7 @@
 }:
 let
   targetSystem = pkgs.stdenv.hostPlatform.system;
+  devenv-nixpkgs = inputs.devenv-nixpkgs.legacyPackages.${targetSystem};
 
   # Disable devenv packages inside NixOS Home Manager on aarch64 to prevent
   # cross-compilation IFD bootstrap failures on AMD64. It remains fully enabled
@@ -15,9 +16,9 @@ let
   devenvPkgs =
     if devenvEnabled then
       [
-        pkgs.cachix
-        inputs.devenv.packages.${targetSystem}.devenv
-        inputs.nixpkgs-unstable.legacyPackages.${targetSystem}.secretspec
+        devenv-nixpkgs.cachix
+        devenv-nixpkgs.devenv
+        devenv-nixpkgs.secretspec
       ]
     else
       [ ];
