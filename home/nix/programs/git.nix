@@ -203,17 +203,17 @@
 
         # [url]
         url = {
-          "ssh://git@github.com" = {
-            insteadOf = "https://github.com";
-          };
+          #"ssh://git@github.com" = {
+          #  insteadOf = "https://github.com";
+          #};
 
-          "ssh://git@gitlab.com" = {
-            insteadOf = "https://gitlab.com";
-          };
+          #"ssh://git@gitlab.com" = {
+          #  insteadOf = "https://gitlab.com";
+          #};
 
-          "ssh://git@bitbucket.org" = {
-            insteadOf = "https://bitbucket.org";
-          };
+          #"ssh://git@bitbucket.org" = {
+          #  insteadOf = "https://bitbucket.org";
+          #};
         };
       };
 
