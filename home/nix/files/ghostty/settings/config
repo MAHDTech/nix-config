@@ -27,7 +27,7 @@ theme = dark:TARS Dark,light:TARS Light
 background-opacity = 0.95
 
 # Blur the background behind the transparency (KDE Plasma / macOS).
-background-blur = true
+background-blur = false
 
 # Ensure readable contrast even with dim palette colours.
 minimum-contrast = 1.1

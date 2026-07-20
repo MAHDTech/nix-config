@@ -88,6 +88,11 @@
               "command": "${config.home.homeDirectory}/.local/bin/terraform-mcp-server-start",
               "args": [],
               "env": {}
+            },
+            "opentofu-mcp-server": {
+              "command": "${config.home.homeDirectory}/.local/bin/opentofu-mcp-server-start",
+              "args": [],
+              "env": {}
             }
           }
         }

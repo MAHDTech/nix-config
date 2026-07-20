@@ -652,6 +652,13 @@ in
             env = { };
           };
 
+          opentofu = {
+            # Use a wrapper that runs registry-only mode
+            command = "${config.home.homeDirectory}/.local/bin/opentofu-mcp-server-start";
+            args = [ ];
+            env = { };
+          };
+
         };
 
         #########################

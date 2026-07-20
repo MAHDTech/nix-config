@@ -18,6 +18,9 @@
     # Terraform
     ./terraform.nix
 
+    # OpenTofu
+    ./opentofu.nix
+
     # DaisyUI
     ./daisyui.nix
   ];

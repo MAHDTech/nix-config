@@ -56,6 +56,13 @@ in
                   "${config.home.homeDirectory}/.local/bin/terraform-mcp-server-start"
                 ],
                 "environment": { }
+              },
+              "opentofu": {
+                "type": "local",
+                "command": [
+                  "${config.home.homeDirectory}/.local/bin/opentofu-mcp-server-start"
+                ],
+                "environment": { }
               }
             },
             "disabled_providers": [
