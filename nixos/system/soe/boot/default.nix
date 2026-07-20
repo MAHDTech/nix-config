@@ -26,6 +26,7 @@ in
     # Enable QEMU emulation for the right systems.
     binfmt = {
       emulatedSystems = qemuEmulatedSystems;
+      preferStaticEmulators = true;
     };
 
     initrd = {

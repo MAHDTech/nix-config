@@ -20,12 +20,10 @@ in
     {
       name = "ZENBOOK";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native (real ARM64 hardware)
     }
     {
       name = "ORION";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native (real ARM64 hardware)
     }
     {
       name = "BOOTYCALL";
@@ -70,7 +68,6 @@ in
     ZENBOOK = mkHost {
       name = "ZENBOOK";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux";
       hostType = "laptop";
       extraModules = [
         inputs.disko.nixosModules.disko
@@ -81,7 +78,6 @@ in
     ORION = mkHost {
       name = "ORION";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux";
       hostType = "server";
       extraModules = [
         inputs.disko.nixosModules.disko

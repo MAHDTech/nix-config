@@ -6,18 +6,18 @@
         accent = {
           __type = "optional";
           value = {
-            red = 0.39702976;
-            green = 0.006839812;
-            blue = 0.5166881;
+            red = 0.39703;
+            green = 0.00684;
+            blue = 0.516688;
           };
         };
         active_hint = 3;
         bg_color = {
           __type = "optional";
           value = {
-            red = 0.16862746;
-            green = 0.18039216;
-            blue = 0.20392157;
+            red = 0.168627;
+            green = 0.180392;
+            blue = 0.203922;
             alpha = 1.0;
           };
         };
@@ -80,8 +80,8 @@
         destructive = {
           __type = "optional";
           value = {
-            red = 0.99215686;
-            green = 0.6313726;
+            red = 0.992157;
+            green = 0.631373;
             blue = 0.627451;
           };
         };
@@ -96,9 +96,9 @@
         neutral_tint = {
           __type = "optional";
           value = {
-            red = 0.46666667;
-            green = 0.46666667;
-            blue = 0.46666667;
+            red = 0.466667;
+            green = 0.466667;
+            blue = 0.466667;
           };
         };
         palette = {
@@ -110,31 +110,31 @@
               bright_red = {
                 red = 1.0;
                 green = 0.627451;
-                blue = 0.5647059;
+                blue = 0.564706;
                 alpha = 1.0;
               };
               bright_green = {
-                red = 0.36862746;
-                green = 0.85882354;
-                blue = 0.54901963;
+                red = 0.368627;
+                green = 0.858824;
+                blue = 0.54902;
                 alpha = 1.0;
               };
               bright_orange = {
                 red = 1.0;
-                green = 0.6392157;
-                blue = 0.49019608;
+                green = 0.639216;
+                blue = 0.490196;
                 alpha = 1.0;
               };
               gray_1 = {
-                red = 0.105882354;
-                green = 0.105882354;
-                blue = 0.105882354;
+                red = 0.105882;
+                green = 0.105882;
+                blue = 0.105882;
                 alpha = 1.0;
               };
               gray_2 = {
-                red = 0.14901961;
-                green = 0.14901961;
-                blue = 0.14901961;
+                red = 0.14902;
+                green = 0.14902;
+                blue = 0.14902;
                 alpha = 1.0;
               };
               neutral_0 = {
@@ -144,57 +144,57 @@
                 alpha = 1.0;
               };
               neutral_1 = {
-                red = 0.105882354;
-                green = 0.105882354;
-                blue = 0.105882354;
+                red = 0.105882;
+                green = 0.105882;
+                blue = 0.105882;
                 alpha = 1.0;
               };
               neutral_2 = {
-                red = 0.1882353;
-                green = 0.1882353;
-                blue = 0.1882353;
+                red = 0.188235;
+                green = 0.188235;
+                blue = 0.188235;
                 alpha = 1.0;
               };
               neutral_3 = {
-                red = 0.2784314;
-                green = 0.2784314;
-                blue = 0.2784314;
+                red = 0.278431;
+                green = 0.278431;
+                blue = 0.278431;
                 alpha = 1.0;
               };
               neutral_4 = {
-                red = 0.36862746;
-                green = 0.36862746;
-                blue = 0.36862746;
+                red = 0.368627;
+                green = 0.368627;
+                blue = 0.368627;
                 alpha = 1.0;
               };
               neutral_5 = {
-                red = 0.46666667;
-                green = 0.46666667;
-                blue = 0.46666667;
+                red = 0.466667;
+                green = 0.466667;
+                blue = 0.466667;
                 alpha = 1.0;
               };
               neutral_6 = {
-                red = 0.5686275;
-                green = 0.5686275;
-                blue = 0.5686275;
+                red = 0.568627;
+                green = 0.568627;
+                blue = 0.568627;
                 alpha = 1.0;
               };
               neutral_7 = {
-                red = 0.67058825;
-                green = 0.67058825;
-                blue = 0.67058825;
+                red = 0.670588;
+                green = 0.670588;
+                blue = 0.670588;
                 alpha = 1.0;
               };
               neutral_8 = {
-                red = 0.7764706;
-                green = 0.7764706;
-                blue = 0.7764706;
+                red = 0.776471;
+                green = 0.776471;
+                blue = 0.776471;
                 alpha = 1.0;
               };
               neutral_9 = {
-                red = 0.8862745;
-                green = 0.8862745;
-                blue = 0.8862745;
+                red = 0.886274;
+                green = 0.886274;
+                blue = 0.886274;
                 alpha = 1.0;
               };
               neutral_10 = {
@@ -204,98 +204,98 @@
                 alpha = 1.0;
               };
               accent_blue = {
-                red = 0.3882353;
-                green = 0.8156863;
-                blue = 0.8745098;
+                red = 0.388235;
+                green = 0.815686;
+                blue = 0.87451;
                 alpha = 1.0;
               };
               accent_indigo = {
-                red = 0.6313726;
-                green = 0.7529412;
-                blue = 0.92156863;
+                red = 0.631373;
+                green = 0.752941;
+                blue = 0.921569;
                 alpha = 1.0;
               };
               accent_purple = {
-                red = 0.90588236;
-                green = 0.6117647;
-                blue = 0.99607843;
+                red = 0.905882;
+                green = 0.611765;
+                blue = 0.996078;
                 alpha = 1.0;
               };
               accent_pink = {
                 red = 1.0;
-                green = 0.6117647;
-                blue = 0.69411767;
+                green = 0.611765;
+                blue = 0.694118;
                 alpha = 1.0;
               };
               accent_red = {
-                red = 0.99215686;
-                green = 0.6313726;
+                red = 0.992157;
+                green = 0.631373;
                 blue = 0.627451;
                 alpha = 1.0;
               };
               accent_orange = {
                 red = 1.0;
-                green = 0.6784314;
+                green = 0.678431;
                 blue = 0.0;
                 alpha = 1.0;
               };
               accent_yellow = {
-                red = 0.96862745;
-                green = 0.8784314;
-                blue = 0.38431373;
+                red = 0.968627;
+                green = 0.878431;
+                blue = 0.384314;
                 alpha = 1.0;
               };
               accent_green = {
-                red = 0.57254905;
-                green = 0.8117647;
-                blue = 0.6117647;
+                red = 0.572549;
+                green = 0.811765;
+                blue = 0.611765;
                 alpha = 1.0;
               };
               accent_warm_grey = {
-                red = 0.7921569;
-                green = 0.7294118;
-                blue = 0.7058824;
+                red = 0.792157;
+                green = 0.729412;
+                blue = 0.705882;
                 alpha = 1.0;
               };
               ext_warm_grey = {
-                red = 0.60784316;
-                green = 0.5568628;
-                blue = 0.5411765;
+                red = 0.607843;
+                green = 0.556863;
+                blue = 0.541176;
                 alpha = 1.0;
               };
               ext_orange = {
                 red = 1.0;
-                green = 0.6784314;
+                green = 0.678431;
                 blue = 0.0;
                 alpha = 1.0;
               };
               ext_yellow = {
-                red = 0.99607843;
-                green = 0.85882354;
-                blue = 0.2509804;
+                red = 0.996078;
+                green = 0.858824;
+                blue = 0.25098;
                 alpha = 1.0;
               };
               ext_blue = {
-                red = 0.28235295;
-                green = 0.7254902;
-                blue = 0.78039217;
+                red = 0.282353;
+                green = 0.72549;
+                blue = 0.780392;
                 alpha = 1.0;
               };
               ext_purple = {
-                red = 0.8117647;
-                green = 0.49019608;
+                red = 0.811765;
+                green = 0.490196;
                 blue = 1.0;
                 alpha = 1.0;
               };
               ext_pink = {
-                red = 0.9764706;
-                green = 0.22745098;
-                blue = 0.5137255;
+                red = 0.976471;
+                green = 0.227451;
+                blue = 0.513725;
                 alpha = 1.0;
               };
               ext_indigo = {
-                red = 0.24313726;
-                green = 0.53333336;
+                red = 0.243137;
+                green = 0.533333;
                 blue = 1.0;
                 alpha = 1.0;
               };
@@ -325,25 +325,25 @@
         success = {
           __type = "optional";
           value = {
-            red = 0.57254905;
-            green = 0.8117647;
-            blue = 0.6117647;
+            red = 0.572549;
+            green = 0.811765;
+            blue = 0.611765;
           };
         };
         text_tint = {
           __type = "optional";
           value = {
-            red = 0.7607843;
-            green = 0.8117647;
-            blue = 0.8862745;
+            red = 0.760784;
+            green = 0.811765;
+            blue = 0.886274;
           };
         };
         warning = {
           __type = "optional";
           value = {
-            red = 0.96862745;
-            green = 0.8784314;
-            blue = 0.38431373;
+            red = 0.968627;
+            green = 0.878431;
+            blue = 0.384314;
           };
         };
         window_hint = {

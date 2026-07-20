@@ -42,7 +42,7 @@ in
     {
       name,
       system,
-      buildSystem ? system, # defaults to native; set to differ for cross-compilation
+      buildSystem ? builtins.currentSystem or system,
       hostType ? "desktop",
       extraModules ? [ ],
       overlays ? [ ],
@@ -82,7 +82,7 @@ in
   mkInstaller =
     {
       system,
-      buildSystem ? system, # defaults to native; set to differ for cross-compilation
+      buildSystem ? builtins.currentSystem or system,
       module,
       ...
     }:

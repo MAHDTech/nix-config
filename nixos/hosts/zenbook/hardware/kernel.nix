@@ -211,6 +211,7 @@ let
   # Minimal nativeBuildInputs needed for config generation (Kconfig parsing).
   # The full build needs more (elfutils, openssl, etc.) but config-only is cheap.
   configBuildInputs = with pkgs; [
+    buildPackages.stdenv.cc
     bc
     bison
     flex
