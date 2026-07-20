@@ -19,6 +19,9 @@
         "wakatime.vscode-wakatime",
         "yzhang.markdown-all-in-one"
       ]
+    },
+    "zed": {
+      "extensions": []
     }
   },
   "image": "ghcr.io/cachix/devenv/devcontainer:latest",
