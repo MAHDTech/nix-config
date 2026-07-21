@@ -411,6 +411,9 @@ in
           "goose" = {
             type = "registry";
           };
+          "grok-build" = {
+            type = "registry";
+          };
           "opencode" = {
             type = "registry";
           };

@@ -9,6 +9,7 @@
     ./github.nix
     ./goose
     ./gptcommit.nix
+    ./grok
     ./opencode
     ./scripts
     ./xdg.nix
