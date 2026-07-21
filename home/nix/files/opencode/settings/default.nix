@@ -63,6 +63,20 @@ in
                   "${config.home.homeDirectory}/.local/bin/opentofu-mcp-server-start"
                 ],
                 "environment": { }
+              },
+              "nixos": {
+                "type": "local",
+                "command": [
+                  "${config.home.homeDirectory}/.local/bin/mcp-nixos-start"
+                ],
+                "environment": { }
+              },
+              "daisyui": {
+                "type": "local",
+                "command": [
+                  "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start"
+                ],
+                "environment": { }
               }
             },
             "disabled_providers": [
@@ -109,20 +123,24 @@ in
     # Activation script: Deep Merge
     # ---------------------------------------------------------------------------
     activation.mergeOpenCodeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      TEMPLATE="$HOME/.config/opencode/opencode.tmpl.json"
-      TARGET="$HOME/.config/opencode/opencode.json"
-      TMP_TARGET="$(mktemp)"
+      merge_json() {
+        local target="$1"
+        local tmpl="$2"
+        local tmp_target="$(mktemp)"
 
-      mkdir -p "$HOME/.config/opencode"
+        mkdir -p "$(dirname "$target")"
 
-      if [ -f "$TARGET" ]; then
-        ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$TARGET" "$TEMPLATE" > "$TMP_TARGET"
-        mv --force "$TMP_TARGET" "$TARGET"
-      else
-        cp --force "$TEMPLATE" "$TARGET"
-      fi
+        if [ -f "$target" ] && [ -s "$target" ] && ${pkgs.jq}/bin/jq -e 'if type == "object" then true else false end' "$target" >/dev/null 2>&1; then
+          ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$target" "$tmpl" > "$tmp_target"
+          mv --force "$tmp_target" "$target"
+        else
+          cp --force "$tmpl" "$target"
+          rm -f "$tmp_target"
+        fi
+        chmod 600 "$target"
+      }
 
-      chmod 600 "$TARGET"
+      merge_json "$HOME/.config/opencode/opencode.json" "$HOME/.config/opencode/opencode.tmpl.json"
     '';
 
     packages =

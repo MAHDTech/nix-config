@@ -121,20 +121,24 @@ in
     # Activation script: Deep Merge (Template takes precedence)
     # ---------------------------------------------------------------------------
     activation.mergeGooseSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      TEMPLATE="$HOME/.config/goose/config.tmpl.yaml"
-      TARGET="$HOME/.config/goose/config.yaml"
-      TMP_TARGET="$(mktemp)"
+      merge_yaml() {
+        local target="$1"
+        local tmpl="$2"
+        local tmp_target="$(mktemp)"
 
-      mkdir -p "$HOME/.config/goose"
+        mkdir -p "$(dirname "$target")"
 
-      if [ -f "$TARGET" ]; then
-        ${pkgs.yq-go}/bin/yq eval-all '. as $item ireduce ({}; . * $item)' "$TARGET" "$TEMPLATE" > "$TMP_TARGET"
-        mv --force "$TMP_TARGET" "$TARGET"
-      else
-        cp --force "$TEMPLATE" "$TARGET"
-      fi
+        if [ -f "$target" ] && [ -s "$target" ] && ${pkgs.yq-go}/bin/yq eval 'if type == "!!map" then true else false end' "$target" >/dev/null 2>&1; then
+          ${pkgs.yq-go}/bin/yq eval-all '. as $item ireduce ({}; . * $item)' "$target" "$tmpl" > "$tmp_target"
+          mv --force "$tmp_target" "$target"
+        else
+          cp --force "$tmpl" "$target"
+          rm -f "$tmp_target"
+        fi
+        chmod 600 "$target"
+      }
 
-      chmod 600 "$TARGET"
+      merge_yaml "$HOME/.config/goose/config.yaml" "$HOME/.config/goose/config.tmpl.yaml"
     '';
 
     packages =

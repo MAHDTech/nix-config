@@ -186,6 +186,7 @@ in
           typescript
 
           # Infrastructure Tools
+          devenv
           opentofu
           pulumi
           pulumiPackages.pulumi-go
@@ -615,9 +616,9 @@ in
             url = "https://build.avax.network/api/mcp";
           };
 
-          daisyui-blueprint = {
+          daisyui = {
             # Use a wrapper that injects the DaisyUI license.
-            command = "/home/mahdtech/.local/bin/daisyui-mcp-server-start";
+            command = "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start";
             args = [ ];
             env = { };
           };
@@ -629,12 +630,8 @@ in
           };
 
           nixos = {
-            command = "nix";
-            args = [
-              "run"
-              "github:utensils/mcp-nixos"
-              "--"
-            ];
+            command = "${config.home.homeDirectory}/.local/bin/mcp-nixos-start";
+            args = [ ];
             env = { };
           };
 
@@ -666,6 +663,14 @@ in
         #########################
 
         lsp = {
+          devenv-lsp = {
+            binary = {
+              path = lib.getExe pkgs.devenv;
+              args = [
+                "lsp"
+              ];
+            };
+          };
           gitlab-ci = {
             binary = {
               path = lib.getExe pkgs.gitlab-ci-ls;
@@ -834,6 +839,7 @@ in
             };
             enable_language_server = true;
             language_servers = [
+              "devenv-lsp"
               "nixd"
               "nil"
             ];

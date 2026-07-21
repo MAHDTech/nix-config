@@ -79,18 +79,28 @@
             "devenv": {
               "serverUrl": "https://mcp.devenv.sh"
             },
-            "github-mcp-server": {
+            "github": {
               "command": "${config.home.homeDirectory}/.local/bin/github-mcp-server-start",
               "args": [],
               "env": {}
             },
-            "terraform-mcp-server": {
+            "terraform": {
               "command": "${config.home.homeDirectory}/.local/bin/terraform-mcp-server-start",
               "args": [],
               "env": {}
             },
-            "opentofu-mcp-server": {
+            "opentofu": {
               "command": "${config.home.homeDirectory}/.local/bin/opentofu-mcp-server-start",
+              "args": [],
+              "env": {}
+            },
+            "nixos": {
+              "command": "${config.home.homeDirectory}/.local/bin/mcp-nixos-start",
+              "args": [],
+              "env": {}
+            },
+            "daisyui": {
+              "command": "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start",
               "args": [],
               "env": {}
             }
@@ -106,51 +116,26 @@
 
   home.activation = {
     mergeAntigravitySettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      # Merge CLI settings
-      CLI_TMPL="$HOME/.gemini/antigravity-cli/settings.tmpl.json"
-      CLI_TARGET="$HOME/.gemini/antigravity-cli/settings.json"
-      CLI_TMP_TARGET="$(mktemp)"
+      merge_json() {
+        local target="$1"
+        local tmpl="$2"
+        local tmp_target="$(mktemp)"
 
-      mkdir -p "$HOME/.gemini/antigravity-cli"
+        mkdir -p "$(dirname "$target")"
 
-      if [ -f "$CLI_TARGET" ];
-      then
-        ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$CLI_TARGET" "$CLI_TMPL" > "$CLI_TMP_TARGET"
-        mv --force "$CLI_TMP_TARGET" "$CLI_TARGET"
-      else
-        cp --force "$CLI_TMPL" "$CLI_TARGET"
-      fi
-      chmod 600 "$CLI_TARGET"
+        if [ -f "$target" ] && [ -s "$target" ] && ${pkgs.jq}/bin/jq -e 'if type == "object" then true else false end' "$target" >/dev/null 2>&1; then
+          ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$target" "$tmpl" > "$tmp_target"
+          mv --force "$tmp_target" "$target"
+        else
+          cp --force "$tmpl" "$target"
+          rm -f "$tmp_target"
+        fi
+        chmod 600 "$target"
+      }
 
-      # Merge Hub config
-      HUB_TMPL="$HOME/.gemini/config/config.tmpl.json"
-      HUB_TARGET="$HOME/.gemini/config/config.json"
-      HUB_TMP_TARGET="$(mktemp)"
-
-      mkdir -p "$HOME/.gemini/config"
-
-      if [ -f "$HUB_TARGET" ];
-      then
-        ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$HUB_TARGET" "$HUB_TMPL" > "$HUB_TMP_TARGET"
-        mv --force "$HUB_TMP_TARGET" "$HUB_TARGET"
-      else
-        cp --force "$HUB_TMPL" "$HUB_TARGET"
-      fi
-      chmod 600 "$HUB_TARGET"
-
-      # Merge MCP config
-      MCP_TMPL="$HOME/.gemini/config/mcp_config.tmpl.json"
-      MCP_TARGET="$HOME/.gemini/config/mcp_config.json"
-      MCP_TMP_TARGET="$(mktemp)"
-
-      if [ -f "$MCP_TARGET" ];
-      then
-        ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$MCP_TARGET" "$MCP_TMPL" > "$MCP_TMP_TARGET"
-        mv --force "$MCP_TMP_TARGET" "$MCP_TARGET"
-      else
-        cp --force "$MCP_TMPL" "$MCP_TARGET"
-      fi
-      chmod 600 "$MCP_TARGET"
+      merge_json "$HOME/.gemini/antigravity-cli/settings.json" "$HOME/.gemini/antigravity-cli/settings.tmpl.json"
+      merge_json "$HOME/.gemini/config/config.json" "$HOME/.gemini/config/config.tmpl.json"
+      merge_json "$HOME/.gemini/config/mcp_config.json" "$HOME/.gemini/config/mcp_config.tmpl.json"
     '';
   };
 }

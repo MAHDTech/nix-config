@@ -23,5 +23,8 @@
 
     # DaisyUI
     ./daisyui.nix
+
+    # NixOS MCP
+    ./mcp-nixos.nix
   ];
 }
