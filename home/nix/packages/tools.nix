@@ -11,7 +11,7 @@ let
 
   unstablePkgs = with pkgsUnstable; [
     claude-agent-acp
-    claude-code
+    #claude-code # Opus 5 released, using custom pkg
     claude-monitor
   ];
 

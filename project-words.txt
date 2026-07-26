@@ -1863,3 +1863,10 @@ zvol
 zvols
 tfrc
 CREDS
+bubblewrap
+AUTOUPDATER
+adeci
+mirkolenz
+omarjatoi
+oskarwires
+malo

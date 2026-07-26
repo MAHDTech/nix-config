@@ -3,7 +3,6 @@
   ...
 }:
 let
-  litert-lm = pkgs.callPackage ./litert-lm.nix { };
 
   bambuStudio =
     if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
@@ -25,9 +24,12 @@ in
 
     #(pkgs.callPackage ./pivnet.nix {})
 
-    litert-lm
+    #(pkgs.callPackage ./litert-lm.nix {})
+
     (pkgs.callPackage ./antigravity-cli { })
     (pkgs.callPackage ./antigravity-hub { })
+
+    (pkgs.callPackage ./claude-code { })
 
     #(pkgs.callPackage ./ls-colors.nix { })
 
