@@ -143,6 +143,11 @@ in
         ../home
         inputs.stylix.homeModules.stylix
         inputs.opnix.homeManagerModules.default
+        # home/nix/services/cosmic-desktop sets wayland.desktopManager.cosmic.*,
+        # so this module must be present here exactly as it is in
+        # nixos/system/home-manager.nix — otherwise the standalone
+        # homeConfigurations output fails to evaluate.
+        inputs.cosmic-manager.homeManagerModules.default
       ];
       extraSpecialArgs = {
         inherit
