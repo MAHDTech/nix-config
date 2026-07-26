@@ -6,7 +6,6 @@
       https://cache.nixos.org
       https://cosmic.cachix.org/
       https://devenv.cachix.org
-      https://hyprland.cachix.org/
       https://mahdtech.cachix.org
       https://salt-labs.cachix.org
     '';
@@ -14,7 +13,6 @@
       cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
       cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=
       devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
-      hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=
       mahdtech.cachix.org-1:LtqGFUwyvUqRrl+LijURnBwkwQLwRO52dbDfrYkjWTg=
       salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
     ";

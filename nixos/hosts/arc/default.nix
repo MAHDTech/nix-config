@@ -49,7 +49,10 @@
     ../../system/config/network/hosts.nix
 
     # Desktop Environment
-    ../../system/config/desktop-environment/hyprland.nix
+    ../../system/config/desktop-environment/cosmic.nix
+
+    # Login Manager
+    ../../system/config/desktop-environment/greetd.nix
 
     # Tailscale
     ../../system/config/services/tailscale
@@ -101,10 +104,11 @@
   };
 
   environment.sessionVariables = {
-    # Force Hyprland to use AMD APU as primary display renderer, offloading to Intel Arc B580.
-    # We use udev symlinks because the PCI IDs in by-path contain colons, which breaks Aquamarine/wlroots parsing.
-    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/amd-gpu:/dev/dri/intel-gpu";
-    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/amd-gpu:/dev/dri/intel-gpu";
+    # Use the AMD APU as the primary display renderer, offloading to Intel Arc B580.
+    # cosmic-comp resolves a bare value against /dev/dri (see determine_primary_gpu
+    # / try_parse_dev_from_str in cosmic-comp), so this must NOT be an absolute
+    # path. The udev symlink below gives us a stable name to point at.
+    COSMIC_RENDER_DEVICE = "amd-gpu";
   };
 
   services.udev.extraRules = ''

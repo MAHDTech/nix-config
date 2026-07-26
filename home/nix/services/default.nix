@@ -8,6 +8,5 @@
     ./syncthing
     ./systemd.nix
     #./upower.nix
-    ./wallpaper-manager
   ];
 }

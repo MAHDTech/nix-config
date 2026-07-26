@@ -14,15 +14,20 @@
       KExecWatchdogSec = lib.mkForce "0";
     };
 
-    # Mitigate panvk Vulkan driver crashes on startup for Wayland services.
-    # Force them to use OpenGL/GLES fallback by unsetting VK_ICD_FILENAMES.
-    # TODO: Remove these overrides once the kernel repeated mapping support (e.g. Adrián Larumbe's
+    # NOTE: this host previously unset VK_ICD_FILENAMES on the hypridle and
+    # swaync user services to dodge panvk Vulkan driver crashes on startup.
+    # Both services are gone with Hyprland, so those overrides were dead and
+    # have been removed rather than blindly re-pointed.
+    #
+    # If panvk crashes reappear under COSMIC, re-apply the same mitigation to
+    # whichever COSMIC unit actually crashes (check `systemctl --user --failed`;
+    # cosmic-osd.service and cosmic-settings-daemon.service are real units,
+    # whereas cosmic-idle and cosmic-notifications are spawned by cosmic-session
+    # and would need the variable set session-wide instead).
+    #
+    # TODO: Revisit once the kernel repeated mapping support (e.g. Adrián Larumbe's
     # "Support repeated mappings in GPUVM and Panthor" patch series, introducing OP_MAP_REPEAT)
     # is merged upstream and our kernel/Mesa is updated.
-    user.services = {
-      hypridle.serviceConfig.Environment = [ "VK_ICD_FILENAMES=" ];
-      swaync.serviceConfig.Environment = [ "VK_ICD_FILENAMES=" ];
-    };
   };
 
   imports = [
@@ -57,7 +62,10 @@
     ../../system/config/services
 
     # Desktop Environment
-    ../../system/config/desktop-environment/hyprland.nix
+    ../../system/config/desktop-environment/cosmic.nix
+
+    # Login Manager
+    ../../system/config/desktop-environment/greetd.nix
 
     # Theme
     ../../system/config/theme/stylix
@@ -84,10 +92,17 @@
   };
 
   environment.sessionVariables = {
-    AQ_DRM_DEVICES = lib.mkForce "/dev/dri/cix-gpu:/dev/dri/cix-display";
-    WLR_DRM_DEVICES = lib.mkForce "/dev/dri/cix-gpu:/dev/dri/cix-display";
-    AQ_NO_MODIFIERS = "1";
-    WLR_DRM_NO_MODIFIERS = "1";
+    # Render on the panthor GPU; cosmic-comp still scans out on the separate
+    # display controller. The value is resolved against /dev/dri, so it must be
+    # a bare name rather than an absolute path.
+    COSMIC_RENDER_DEVICE = "cix-gpu";
+
+    # NOTE: the previous AQ_NO_MODIFIERS / WLR_DRM_NO_MODIFIERS settings have no
+    # cosmic-comp equivalent and have been dropped rather than guessed at. If
+    # this board shows scanout corruption or blank outputs under COSMIC, the
+    # analogous escape hatches are COSMIC_DISABLE_DIRECT_SCANOUT=1 and
+    # COSMIC_DISABLE_OVERLAY_SCANOUT=1 — both cost performance, so only set them
+    # if a real problem shows up.
   };
 
   services.udev.extraRules = ''

@@ -53,6 +53,11 @@
             ]
             [
               "com.system76.CosmicAppletStatusArea"
+              # Clipboard history. Custom package — see overlays/default.nix and
+              # nixos/system/config/desktop-environment/cosmic.nix. The applet is
+              # x86_64-only for now, and cosmic-panel silently skips plugin IDs it
+              # cannot resolve, so leaving this listed on aarch64 is harmless.
+              "io.github.cosmic_utils.cosmic-ext-applet-clipboard-manager"
               "com.system76.CosmicAppletA11y"
               "com.system76.CosmicAppletTiling"
               "com.system76.CosmicAppletAudio"

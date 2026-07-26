@@ -3,6 +3,10 @@ let
   globalUsername = "mahdtech";
   globalStateVersion = "26.05";
 
+  # Repository-wide overlays, applied ahead of any caller-supplied ones.
+  # See ../overlays/default.nix.
+  globalOverlays = [ (import ../overlays) ];
+
   # Import nixpkgs for a given system, with optional cross-compilation.
   # When buildSystem != system, configures localSystem/crossSystem for
   # native cross-compilation (no QEMU emulation).
@@ -15,7 +19,8 @@ let
     if buildSystem == system then
       # Native build — standard import
       import inputs.nixpkgs {
-        inherit system overlays;
+        inherit system;
+        overlays = globalOverlays ++ overlays;
         config = {
           allowUnfree = true;
         };
@@ -25,7 +30,7 @@ let
       import inputs.nixpkgs {
         localSystem = buildSystem;
         crossSystem = system;
-        inherit overlays;
+        overlays = globalOverlays ++ overlays;
         config = {
           allowUnfree = true;
         };

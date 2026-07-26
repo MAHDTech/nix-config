@@ -26,9 +26,6 @@
     #./vscode.nix
     ./zed
 
-    # Hyprland
-    ./hyprland
-
     # Work Tools
     ./work.nix
   ];

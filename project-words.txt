@@ -945,6 +945,7 @@ journalctl
 joydev
 joypixels
 jsonnet
+justfile
 jumpbox
 junegunn
 kamadorueda
@@ -1004,6 +1005,7 @@ libbfd
 libbsd
 libcap
 libclang
+libcosmic
 libdrm
 libexec
 libfdt
