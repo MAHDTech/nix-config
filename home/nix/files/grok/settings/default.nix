@@ -1,15 +1,11 @@
 {
-  inputs,
   config,
   pkgs,
+  pkgsUnstable,
   lib,
   ...
 }:
 let
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
-
   grokPkg =
     if pkgsUnstable ? grok-build then
       [ pkgsUnstable.grok-build ]

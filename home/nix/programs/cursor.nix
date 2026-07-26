@@ -1,14 +1,9 @@
 {
-  inputs,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-    config.allowUnfree = true;
-  };
 
   env_cursor =
     if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then

@@ -1,12 +1,11 @@
 {
-  inputs,
-  pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-  targetSystem = pkgs.stdenv.hostPlatform.system;
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${targetSystem};
-  #devenv-nixpkgs = inputs.devenv-nixpkgs.legacyPackages.${targetSystem};
+  # To use the devenv-nixpkgs input instead, add `inputs,` and `pkgs,` back to
+  # the arguments above:
+  #devenv-nixpkgs = inputs.devenv-nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
   devenvPkgsUnstable = with pkgsUnstable; [
     cachix

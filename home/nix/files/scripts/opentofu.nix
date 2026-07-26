@@ -1,13 +1,10 @@
 {
-  inputs,
   config,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
   scriptName = "opentofu-mcp-server-start";
   scriptPath = "${config.home.homeDirectory}/.local/bin/${scriptName}";
 in

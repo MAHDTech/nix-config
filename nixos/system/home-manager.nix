@@ -6,6 +6,7 @@
   globalStateVersion,
   name,
   lib,
+  pkgsUnstable,
   hostType ? "desktop",
   ...
 }:
@@ -26,6 +27,10 @@
         username
         system
         hostType
+        # Forwarded from mkHost's specialArgs (lib/default.nix) so home-manager
+        # modules take `pkgsUnstable` as an argument instead of re-importing
+        # nixpkgs-unstable themselves.
+        pkgsUnstable
         ;
       inCI = false;
       isNixosHM = true;

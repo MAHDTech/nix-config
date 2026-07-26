@@ -7,40 +7,63 @@ let
   # See ../overlays/default.nix.
   globalOverlays = [ (import ../overlays) ];
 
-  # Import nixpkgs for a given system, with optional cross-compilation.
+  # Import a nixpkgs source for a given system, with optional cross-compilation.
   # When buildSystem != system, configures localSystem/crossSystem for
   # native cross-compilation (no QEMU emulation).
-  pkgsImport =
+  importNixpkgs =
+    source:
     {
       system,
       buildSystem ? system,
       overlays ? [ ],
     }:
-    if buildSystem == system then
-      # Native build — standard import
-      import inputs.nixpkgs {
-        inherit system;
-        overlays = globalOverlays ++ overlays;
-        config = {
-          allowUnfree = true;
-        };
-      }
-    else
-      # Cross-compilation — build natively on buildSystem, target system
-      import inputs.nixpkgs {
-        localSystem = buildSystem;
-        crossSystem = system;
-        overlays = globalOverlays ++ overlays;
+    let
+      common = {
+        inherit overlays;
         config = {
           allowUnfree = true;
         };
       };
+    in
+    if buildSystem == system then
+      # Native build — standard import
+      import source (common // { inherit system; })
+    else
+      # Cross-compilation — build natively on buildSystem, target system
+      import source (
+        common
+        // {
+          localSystem = buildSystem;
+          crossSystem = system;
+        }
+      );
+
+  pkgsImport =
+    args:
+    importNixpkgs inputs.nixpkgs (args // { overlays = globalOverlays ++ (args.overlays or [ ]); });
+
+  # The unstable channel, handed to every module as `pkgsUnstable` via
+  # specialArgs / extraSpecialArgs. Declare it here and nowhere else — modules
+  # should take it as an argument rather than re-importing nixpkgs-unstable,
+  # which historically drifted on both allowUnfree and cross-compilation.
+  #
+  # Deliberately without globalOverlays: those packages target the stable set,
+  # and duplicating them here would build them twice.
+  pkgsUnstableImport = importNixpkgs inputs.nixpkgs-unstable;
 
   # Backwards-compatible simple import (used by mkHome)
   pkgsImportSystem = system: pkgsImport { inherit system; };
 in
 {
-  inherit globalUsername globalStateVersion pkgsImportSystem;
+  inherit
+    globalUsername
+    globalStateVersion
+    pkgsImportSystem
+    # Exported for consumers that cannot receive specialArgs — currently only
+    # the devenv devShell (devenv/dotfiles.nix). NixOS and home-manager modules
+    # should take `pkgsUnstable` as an argument instead.
+    pkgsUnstableImport
+    ;
 
   # Helper for standard NixOS hosts
   mkHost =
@@ -67,6 +90,10 @@ in
           ;
         username = globalUsername;
         inherit globalUsername globalStateVersion;
+
+        # Available to every NixOS module as `pkgsUnstable`. Lazy, so hosts
+        # that never reference it pay no evaluation cost.
+        pkgsUnstable = pkgsUnstableImport { inherit system buildSystem; };
       };
       modules = [
         { system.stateVersion = globalStateVersion; }
@@ -128,6 +155,7 @@ in
         inCI = false;
         isNixosHM = false;
         syncthingConfig = null;
+        pkgsUnstable = pkgsUnstableImport { inherit system; };
       };
     };
 }

@@ -1,15 +1,11 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
 
   extraPackagesUnstable = with pkgsUnstable; [
     # Tools

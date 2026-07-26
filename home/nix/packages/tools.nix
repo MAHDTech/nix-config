@@ -1,14 +1,9 @@
 {
-  inputs,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-    config.allowUnfree = true;
-  };
-
   unstablePkgs = with pkgsUnstable; [
     claude-agent-acp
     #claude-code # Opus 5 released, using custom pkg
