@@ -1,6 +1,6 @@
 #!/usr/bin/env nix
-# shellcheck disable=SC1008
 #!nix shell --ignore-environment .#cacert .#coreutils .#curl .#bash --command bash
+# shellcheck disable=SC1008
 
 set -euo pipefail
 
