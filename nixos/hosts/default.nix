@@ -30,10 +30,23 @@ in
       system = "aarch64-linux";
       buildSystem = "x86_64-linux"; # cross-compilation
     }
+    {
+      name = "test-nixos";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+    }
   ];
 
   # Actual configurations
-  configs = {
+  configs = rec {
+    test-nixos = mkHost {
+      name = "test-nixos";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+      hostType = "server";
+      enableHomeManager = false;
+    };
+    TEST-NIXOS = test-nixos;
     JONS = mkHost {
       name = "JONS";
       system = "x86_64-linux";
