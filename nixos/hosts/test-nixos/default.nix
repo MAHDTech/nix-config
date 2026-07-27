@@ -1,7 +1,8 @@
-{ lib, modulesPath, ... }:
+{ lib, ... }:
 {
   networking = {
     hostName = "test-nixos";
+    hostId = "def00006";
     useDHCP = lib.mkDefault true;
   };
 
@@ -14,7 +15,7 @@
   };
 
   imports = [
-    "${modulesPath}/profiles/qemu-guest.nix"
+    ./hardware
     ../../system/soe
   ];
 }
