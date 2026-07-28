@@ -8,7 +8,51 @@ Each machine gets configured with:
 
 - Its own device name and ID
 - A list of other devices it should connect to
-- A list of folders to sync
+- A list of folders to sync, each with its own `.stignore` profile
+
+## .stignore Profiles
+
+Each folder can specify a `stignoreProfile` to control what gets synced:
+
+### `default` (default)
+
+Full file sync with common build artifacts and ephemeral state excluded. Use for general-purpose directories (documents, configs, media).
+
+Ignores:
+
+- Lock files
+- `.direnv/`, `.devenv/`, `node_modules/`, `target/`, `.venv/`, `dist/`, `build/`, `.cache/`
+- IDE files
+- Syncthing conflicts
+- Subdirectories managed by their own Syncthing folder (e.g. `Projects/`)
+
+### `git-only`
+
+Only syncs immutable git internals — the object store and ref pointers.
+Ignores the worktree, index, HEAD, config, hooks, logs, and all in-progress operation state.
+Each machine does its own `git checkout` after Syncthing delivers the `.git/` directory.
+
+**What syncs:**
+
+- `.git/objects/` — immutable content-addressed blobs, trees, commits
+- `.git/refs/` — branch and tag pointers
+- `.git/packed-refs` — packed reference file
+- `.git/info/` — exclude patterns, attributes
+- `.git/description` — repository description
+
+**What is ignored:**
+
+- All worktree files (source code outside `.git/`)
+- `.git/index` — staging area (syncing this corrupts repos)
+- `.git/HEAD` — current branch pointer (machine-specific)
+- `.git/config` — remotes, branch tracking (machine-specific)
+- `.git/hooks/` — executable scripts (machine-specific paths)
+- `.git/logs/` — reflogs (machine-specific)
+- `.git/worktrees/` — worktree metadata (machine-specific paths)
+- All operation state: `MERGE_*`, `REBASE_*`, `CHERRY_PICK_HEAD`, etc.
+- Lock files, Syncthing conflicts
+
+**Use case:** Sync git history across machines without churn from AI agent branch checkouts, dirty worktrees, or uncommitted changes. Each machine works independently and checks out branches locally.
 
 ## Usage Example
 
@@ -23,29 +67,27 @@ Each machine gets configured with:
       id = "DEF456...";  # MachineB's device ID
       autoAcceptFolders = false;
     }
-    {
-      name = "MachineC";
-      id = "GHI789...";  # MachineC's device ID
-      autoAcceptFolders = false;
-    }
   ];
   syncFolders = {
-    "Documents" = {
-      id = "docs-shared";
-      path = "/home/user/Documents";
+    # General sync — full file replication
+    "Sync" = {
+      id = "syncthing-shared";
+      path = "/home/user/Sync";
       type = "sendreceive";
-      devices = [ "MachineB" "MachineC" ];
-      versioning = {
-        type = "simple";
-        params = {
-          keep = "20";
-        };
-      };
+      stignoreProfile = "default";
+      devices = [ "MachineB" ];
     };
-    "Photos" = {
-      id = "photos-shared";
-      path = "/home/user/Photos";
+
+    # Git-only sync — only .git/ internals, no worktree
+    "Projects" = {
+      id = "syncthing-projects";
+      path = "/home/user/Sync/Projects";
       type = "sendreceive";
+      stignoreProfile = "git-only";
+
+      # Disable versioning — git IS the version control system
+      versioning = { };
+
       devices = [ "MachineB" ];
     };
   };
@@ -67,10 +109,17 @@ Each machine gets configured with:
   - `path`: Folder path
   - `type`: Sync type (default: "sendreceive")
   - `devices`: List of device names to sync with
-  - `versioning`: Optional folder versioning configuration
-  - `rescanIntervalS`: Full rescan interval in seconds (default: `86400` / 24 hours)
+  - `stignoreProfile`: Which `.stignore` profile to use — `"default"` or `"git-only"` (default: `"default"`)
+  - `versioning`: Optional folder versioning configuration (set to `{ }` to disable)
+  - `rescanIntervalS`: Full rescan interval in seconds (default: `14400` / 4 hours)
 - `username`: Username for path construction (default: "mahdtech")
 - `guiAddress`: Address for web GUI (default: "127.0.0.1:8384")
+
+## Nested Folders
+
+When using nested Syncthing folders (e.g. `~/Sync/` containing `~/Sync/Projects/`),
+the parent folder's `.stignore` must exclude the child directory.
+The `default` profile already ignores `Projects/` for this reason.
 
 ## Getting Device IDs
 
@@ -91,10 +140,11 @@ Or start Syncthing and check the web interface at [http://127.0.0.1:8384](http:/
 
 ## Versioning Types
 
+- `staggered`: Keep versions based on age (default)
 - `simple`: Keep N versions
-- `staggered`: Keep versions based on age
 - `trashcan`: Move deleted files to trash
 - `external`: Custom external command
+- `{ }`: Disabled — no versioning (recommended for `git-only` folders)
 
 ## Adding More Machines
 
