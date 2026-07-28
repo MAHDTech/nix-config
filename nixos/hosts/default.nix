@@ -6,6 +6,14 @@ in
   # Metadata for other flake outputs
   # buildSystem: the machine that compiles. When it differs from system,
   #              nixpkgs is configured for cross-compilation automatically.
+  #
+  # Every host is currently native (buildSystem == system). Cross-compiling an
+  # aarch64-linux host from x86_64 produces derivation hashes that do not exist
+  # on cache.nixos.org, so it rebuilds the whole closure from source. A native
+  # aarch64 build substitutes nearly all of it. Build aarch64 hosts on aarch64
+  # hardware, or on x86_64 under binfmt emulation — both hash identically and
+  # hit the cache. The cross path in lib/default.nix is kept as an escape hatch
+  # for targets with no aarch64 builder available.
   list = [
     {
       name = "JONS";
@@ -30,7 +38,7 @@ in
     {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "x86_64-linux"; # cross-compilation
+      buildSystem = "aarch64-linux"; # native ARM64 — build on ORION, or on x86_64 under binfmt
     }
     {
       name = "test-nixos";
@@ -109,7 +117,7 @@ in
     BOOTYCALL = mkHost {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "x86_64-linux"; # cross-compilation
+      buildSystem = "aarch64-linux"; # native ARM64
       hostType = "server";
       enableHomeManager = false;
       extraModules = [

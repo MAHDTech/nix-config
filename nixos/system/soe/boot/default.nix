@@ -26,7 +26,18 @@ in
     # Enable QEMU emulation for the right systems.
     binfmt = {
       emulatedSystems = qemuEmulatedSystems;
-      preferStaticEmulators = true;
+
+      # Static emulators get preloaded by the kernel (fixBinary), so they work
+      # inside any chroot without further setup. But pkgsStatic.qemu-user does
+      # not link on aarch64: nettle is compiled -fpic, and once all of qemu-user
+      # is statically linked the GOT overflows the 32 KiB reach of
+      # R_AARCH64_LD64_GOTPAGE_LO15.
+      #
+      # On aarch64 fall back to the dynamic emulator. The binfmt module then
+      # adds /run/binfmt and the interpreter's store path to nix's
+      # extra-sandbox-paths, so emulated builds in the nix sandbox still work —
+      # only the works-in-any-chroot property is lost.
+      preferStaticEmulators = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
     };
 
     initrd = {

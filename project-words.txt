@@ -1875,3 +1875,5 @@ malo
 virtio
 worktree
 reflogs
+GOTPAGE
+fpic
