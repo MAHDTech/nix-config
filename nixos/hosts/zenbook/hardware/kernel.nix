@@ -5,12 +5,12 @@
 }:
 
 let
-  kernelVersion = "7.1.0-rc7-next-20260611";
+  kernelVersion = "7.1.5";
 
   kernelSrc = pkgs.fetchgit {
-    url = "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-    rev = "next-20260611";
-    sha256 = "sha256-5XdLZS57n673MraUZxepFltbeSbtz8YO0YQjtKN671w=";
+    url = "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git";
+    rev = "v7.1.5";
+    sha256 = "sha256-pPS5d2AyKF+ommPUXb5NW1p5dkjnnQtx5a5JqhgpcsM=";
   };
 
   # Shared patch script — applied to both the config-only derivation and the
@@ -114,8 +114,8 @@ let
     # DRM syncobj: required by Turnip (freedreno Vulkan driver) for GPU command
     # synchronization. Without this, Vulkan renders one frame then hangs because
     # the driver cannot signal/wait on submission fences between frames.
-    ./scripts/config --enable DRM_SYNCOBJ
-    ./scripts/config --enable DRM_SYNCOBJ_TIMELINE_EXPORT
+    ./scripts/config --set-val DRM_SYNCOBJ y
+    ./scripts/config --set-val DRM_SYNCOBJ_TIMELINE_EXPORT y
 
     # Qualcomm Limits Management Hardware (LMH): provides hardware-level
     # overcurrent and thermal throttling for CPU/GPU. Without this, sustained
@@ -329,8 +329,8 @@ let
   # Stage 2: The actual kernel build
   # ---------------------------------------------------------------------------
   kernelBuild = pkgs.stdenv.mkDerivation {
-    pname = "latest-zenbook";
-    # Set version to match what linux-next reports to avoid mismatch
+    pname = "stable-zenbook";
+    # Set version to match the stable release tag
     version = kernelVersion;
 
     enableParallelBuilding = true;

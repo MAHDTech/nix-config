@@ -134,10 +134,8 @@ in
 
     kernelParams = [
       # Issue 21: fw_devlink — Phase 2 (strict probe ordering with timeout safety net).
-      # Research (2026-06-12) confirmed all 323 DT dependency cycles are auto-resolved
-      # by the kernel on next-20260611. Zero device link failures, zero permanent
-      # deferred probes. The sync_state timeout prevents indefinite blocking if any
-      # consumer fails to probe (e.g. GCC waiting for all clock consumers).
+      # Research (2026-06-12) confirmed all DT dependency cycles are auto-resolved.
+      # Verified on next-20260611, carried forward to stable 7.1.5.
       # Rollback: change fw_devlink=on → fw_devlink=permissive if boot issues occur.
       "fw_devlink=on"
       "fw_devlink.sync_state=timeout"
@@ -155,8 +153,6 @@ in
       "systemd.tpm2_wait=0" # Don't wait for fTPM during early boot (OP-TEE may be slow)
       # Suppress all platform watchdogs at boot (works on built-in drivers too)
       "nowatchdog"
-      # Raw NVMe partition for persistent crash logging via pstore-blk
-      "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
       # Panic escalation parameters for crash dump flushing
       "panic_on_oops=1"
       "panic=30"
