@@ -43,6 +43,14 @@ let
     ./scripts/config --disable ARCH_MEDIATEK
     ./scripts/config --disable ARCH_ROCKCHIP
 
+    # Qualcomm TLMM pin controller — CRITICAL for boot.
+    # The defconfig lacks PINCTRL_MSM which is the parent Kconfig for all QCOM
+    # TLMM drivers. Without PINCTRL_X1E80100 no GPIOs are configured and the
+    # system gets a black screen. On linux-next this was auto-selected by
+    # ARCH_QCOM + olddefconfig, but stable 7.1.5 requires it explicitly.
+    ./scripts/config --enable PINCTRL_MSM
+    ./scripts/config --enable PINCTRL_X1E80100
+
     # Restore critical Qualcomm inter-processor communication & mailbox drivers
     # which are required for boot but got disabled due to cascading defconfig dependencies
     ./scripts/config --enable MAILBOX
