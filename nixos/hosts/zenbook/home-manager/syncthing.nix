@@ -41,7 +41,7 @@
         stignoreProfile = "git-only";
 
         # Disable versioning — git IS the version control system
-        versioning = { };
+        versioning = null;
 
         devices = [
           "JONS"

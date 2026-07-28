@@ -176,6 +176,11 @@ in
           watch = false;
           order = "smallestFirst";
           rescanIntervalS = folderConfig.rescanIntervalS or 14400; # Default to 4 hours
+
+          # Set `versioning = null` on a folder to disable versioning entirely.
+          # An empty attrset is NOT the way to do it — home-manager types this as
+          # `nullOr (submodule { type = <required enum>; })`, so `{ }` defines the
+          # submodule without its mandatory `type` and evaluation fails.
           versioning =
             folderConfig.versioning or {
               type = "staggered";
