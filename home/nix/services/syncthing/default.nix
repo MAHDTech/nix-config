@@ -12,7 +12,9 @@ let
   stignoreDefault = ''
     // Subdirectories managed by their own Syncthing folder
     // Projects/ uses the git-only profile and must not be double-synced
-    Projects
+    // Leading slash anchors this at the folder root — an unanchored "Projects"
+    // would also exclude any nested directory named Projects further down
+    /Projects
 
     // Ephemeral Git state/locks
     // Sync working directory and git history, but ignore locks

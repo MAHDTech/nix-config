@@ -86,7 +86,7 @@ Each machine does its own `git checkout` after Syncthing delivers the `.git/` di
       stignoreProfile = "git-only";
 
       # Disable versioning — git IS the version control system
-      versioning = { };
+      versioning = null;
 
       devices = [ "MachineB" ];
     };
@@ -110,7 +110,7 @@ Each machine does its own `git checkout` after Syncthing delivers the `.git/` di
   - `type`: Sync type (default: "sendreceive")
   - `devices`: List of device names to sync with
   - `stignoreProfile`: Which `.stignore` profile to use — `"default"` or `"git-only"` (default: `"default"`)
-  - `versioning`: Optional folder versioning configuration (set to `{ }` to disable)
+  - `versioning`: Optional folder versioning configuration (set to `null` to disable)
   - `rescanIntervalS`: Full rescan interval in seconds (default: `14400` / 4 hours)
 - `username`: Username for path construction (default: "mahdtech")
 - `guiAddress`: Address for web GUI (default: "127.0.0.1:8384")
@@ -144,7 +144,12 @@ Or start Syncthing and check the web interface at [http://127.0.0.1:8384](http:/
 - `simple`: Keep N versions
 - `trashcan`: Move deleted files to trash
 - `external`: Custom external command
-- `{ }`: Disabled — no versioning (recommended for `git-only` folders)
+- `null`: Disabled — no versioning (recommended for `git-only` folders)
+
+Note: `{ }` does **not** disable versioning. home-manager types this option as
+`nullOr (submodule { type = <required>; })`, so an empty attrset defines the
+submodule without its mandatory `type` and evaluation fails with
+`option ... versioning.type was accessed but has no value defined`.
 
 ## Adding More Machines
 
