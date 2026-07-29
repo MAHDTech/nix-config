@@ -22,8 +22,9 @@ ignorePaths:
   - node_modules
   - public/config-client.json
   - public/workers
-  - "*.svg"
-  - "*.patch"
+  - "**/*.svg"
+  - "**/*.patch"
+  - "**/patches/**"
   - "secrets/**"
   - vendor
 ignoreRegExpList:
@@ -33,3 +34,4 @@ ignoreRegExpList:
   - /\b[0-9a-z]{52}\b/
   - /sha256-[a-zA-Z0-9+/=]{44}/
   - /\b[A-Z0-9]{7}(-[A-Z0-9]{7}){7}\b/
+  - /\b[\w.-]+\.patch\b/gi
