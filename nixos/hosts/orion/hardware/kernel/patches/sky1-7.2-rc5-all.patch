@@ -1,746 +1,9 @@
-From 4d30476e6a932d8ee81e957c99a5dd6c079f1f52 Mon Sep 17 00:00:00 2001
-From: MAHDTech <MAHDTech@saltlabs.tech>
-Date: Wed, 29 Jul 2026 13:11:04 +1000
-Subject: [PATCH 1/3] Fix Kconfig inclusions and remove temp script artifacts
-
----
- README.md                                     |    91 +
- arch/arm64/boot/dts/cix/Makefile              |     2 +
- .../boot/dts/cix/sky1-orangepi-6-plus.dts     |  2321 ++
- arch/arm64/boot/dts/cix/sky1-orion-o6.dts     |  2481 +-
- arch/arm64/boot/dts/cix/sky1-orion-o6n.dts    |  2536 ++
- arch/arm64/boot/dts/cix/sky1.dtsi             |  4922 +++-
- drivers/acpi/pci_mcfg.c                       |     1 +
- drivers/acpi/property.c                       |    16 +
- drivers/base/arch_topology.c                  |    20 +
- drivers/bluetooth/btrtl.c                     |     5 +-
- drivers/clk/Kconfig                           |     2 +-
- drivers/clk/Makefile                          |     1 +
- drivers/clk/cix/Kconfig                       |    22 +
- drivers/clk/cix/Makefile                      |     4 +
- drivers/clk/cix/clk-sky1-acpi.c               |   196 +
- drivers/clk/cix/clk-sky1-audss.c              |   926 +
- drivers/clk/clk-scmi.c                        |    23 +-
- drivers/clk/clkdev.c                          |     2 +-
- drivers/clocksource/Kconfig                   |     9 +
- drivers/clocksource/Makefile                  |     1 +
- drivers/clocksource/timer-sky1-gpt.c          |   299 +
- drivers/cpufreq/cppc_cpufreq.c                |    19 +-
- drivers/cpufreq/cpufreq.c                     |     1 +
- drivers/cpufreq/cpufreq.c.oda3pGi             |     0
- drivers/dma-buf/heaps/Kconfig                 |    19 +
- drivers/dma-buf/heaps/Makefile                |     1 +
- drivers/dma-buf/heaps/dsp_heap.c              |   174 +
- drivers/dma/arm-dma350.c                      |  1040 +-
- drivers/firmware/Kconfig                      |     1 +
- drivers/firmware/Makefile                     |     1 +
- drivers/firmware/arm_scmi/bus.c               |     3 +
- drivers/firmware/arm_scmi/common.h            |    10 +-
- drivers/firmware/arm_scmi/driver.c            |    52 +-
- drivers/firmware/arm_scmi/shmem.c             |    98 +-
- .../firmware/arm_scmi/transports/mailbox.c    |    58 +-
- drivers/firmware/arm_scmi/transports/optee.c  |     2 +-
- drivers/firmware/arm_scmi/transports/smc.c    |    16 +-
- drivers/firmware/arm_scmi/transports/virtio.c |     2 +-
- drivers/firmware/cix/Kconfig                  |    12 +
- drivers/firmware/cix/Makefile                 |     3 +
- drivers/firmware/cix/cix-dsp.c                |   175 +
- drivers/gpio/gpio-cadence.c                   |   342 +-
- drivers/gpu/drm/Kconfig                       |     6 +-
- drivers/gpu/drm/Makefile                      |     2 +
- drivers/gpu/drm/cix/Kconfig                   |    55 +
- drivers/gpu/drm/cix/Makefile                  |     5 +
- drivers/gpu/drm/cix/cix_display.c             |   204 +
- drivers/gpu/drm/cix/cix_virtual.c             |   312 +
- drivers/gpu/drm/cix/dptx/Kconfig              |    28 +
- drivers/gpu/drm/cix/dptx/Makefile             |    11 +
- drivers/gpu/drm/cix/dptx/cix_edp_panel.c      |   880 +
- drivers/gpu/drm/cix/dptx/cix_edp_panel.h      |    26 +
- drivers/gpu/drm/cix/dptx/dptx_infoframe.c     |   359 +
- drivers/gpu/drm/cix/dptx/dptx_infoframe.h     |    46 +
- drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp.c      |   396 +
- drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp.h      |   141 +
- .../gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl.c    |   184 +
- .../gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl.h    |    22 +
- .../drm/cix/dptx/hdcp/cix_hdcp_ioctl_cmd.h    |   116 +
- drivers/gpu/drm/cix/dptx/hdcp/dptx_aux_reg.h  |   126 +
- drivers/gpu/drm/cix/dptx/hdcp/dptx_reg.h      |   483 +
- drivers/gpu/drm/cix/dptx/hdcp/hdcp2_hw_tx.c   |   920 +
- drivers/gpu/drm/cix/dptx/hdcp/hdcp2_hw_tx.h   |    62 +
- .../gpu/drm/cix/dptx/hdcp/hdcp2_key_drvn_tx.c |   246 +
- .../gpu/drm/cix/dptx/hdcp/hdcp2_key_drvn_tx.h |    46 +
- .../gpu/drm/cix/dptx/hdcp/hdcp2_tx_state.c    |   126 +
- .../gpu/drm/cix/dptx/hdcp/hdcp2_tx_state.h    |    31 +
- drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_tmr.c  |   190 +
- drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_tmr.h  |    19 +
- drivers/gpu/drm/cix/dptx/trilin_dptx.c        |  3512 +++
- drivers/gpu/drm/cix/dptx/trilin_dptx.h        |   584 +
- drivers/gpu/drm/cix/dptx/trilin_dptx_audio.c  |   250 +
- drivers/gpu/drm/cix/dptx/trilin_dptx_audio.h  |    59 +
- drivers/gpu/drm/cix/dptx/trilin_dptx_cix.c    |   440 +
- drivers/gpu/drm/cix/dptx/trilin_dptx_reg.h    |   452 +
- drivers/gpu/drm/cix/dptx/trilin_drm.c         |  1261 +
- drivers/gpu/drm/cix/dptx/trilin_drm.h         |    27 +
- drivers/gpu/drm/cix/dptx/trilin_drm_mst.c     |   935 +
- drivers/gpu/drm/cix/dptx/trilin_drm_mst.h     |    29 +
- drivers/gpu/drm/cix/dptx/trilin_edp_phy.c     |  1185 +
- drivers/gpu/drm/cix/dptx/trilin_edp_phy.h     |   746 +
- drivers/gpu/drm/cix/dptx/trilin_host_tmr.c    |   254 +
- drivers/gpu/drm/cix/dptx/trilin_host_tmr.h    |    62 +
- drivers/gpu/drm/cix/dptx/trilin_phy.h         |   126 +
- drivers/gpu/drm/cix/dptx/trilin_usbdp_phy.c   |   595 +
- drivers/gpu/drm/cix/dptx/trilin_usbdp_phy.h   |    66 +
- drivers/gpu/drm/cix/linlon-dp/Makefile        |    24 +
- drivers/gpu/drm/cix/linlon-dp/hw/dp_axi.c     |   261 +
- .../gpu/drm/cix/linlon-dp/hw/dp_component.c   |  1696 ++
- drivers/gpu/drm/cix/linlon-dp/hw/dp_dev.c     |   703 +
- drivers/gpu/drm/cix/linlon-dp/hw/dp_dev.h     |    63 +
- drivers/gpu/drm/cix/linlon-dp/hw/dp_regs.h    |   562 +
- .../gpu/drm/cix/linlon-dp/linlondp_coeffs.c   |   120 +
- .../gpu/drm/cix/linlon-dp/linlondp_coeffs.h   |    75 +
- .../drm/cix/linlon-dp/linlondp_color_mgmt.c   |   270 +
- .../drm/cix/linlon-dp/linlondp_color_mgmt.h   |    48 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_crtc.c |  1028 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_dev.c  |   845 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_dev.h  |   310 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_drm.h  |    26 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_drv.c  |   362 +
- .../gpu/drm/cix/linlon-dp/linlondp_event.c    |   159 +
- .../drm/cix/linlon-dp/linlondp_format_caps.c  |   149 +
- .../drm/cix/linlon-dp/linlondp_format_caps.h  |   101 +
- .../drm/cix/linlon-dp/linlondp_framebuffer.c  |   290 +
- .../drm/cix/linlon-dp/linlondp_framebuffer.h  |    49 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_io.h   |    46 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_kms.c  |   413 +
- drivers/gpu/drm/cix/linlon-dp/linlondp_kms.h  |   339 +
- .../gpu/drm/cix/linlon-dp/linlondp_pipeline.c |   464 +
- .../gpu/drm/cix/linlon-dp/linlondp_pipeline.h |   597 +
- .../cix/linlon-dp/linlondp_pipeline_state.c   |  1733 ++
- .../gpu/drm/cix/linlon-dp/linlondp_plane.c    |   726 +
- .../drm/cix/linlon-dp/linlondp_private_obj.c  |   433 +
- .../gpu/drm/cix/linlon-dp/linlondp_product.h  |    37 +
- .../gpu/drm/cix/linlon-dp/linlondp_utils.h    |    43 +
- .../drm/cix/linlon-dp/linlondp_wb_connector.c |   391 +
- drivers/gpu/drm/panthor/panthor_devfreq.c     |   324 +-
- .../gpu/drm/panthor/panthor_devfreq.c.obqpABq |   636 +
- drivers/gpu/drm/panthor/panthor_device.c      |   301 +-
- .../gpu/drm/panthor/panthor_device.c.ouPg6kj  |   798 +
- drivers/gpu/drm/panthor/panthor_device.h      |    41 +-
- .../gpu/drm/panthor/panthor_device.h.osv1xew  |   743 +
- drivers/gpu/drm/panthor/panthor_drv.c         |    10 +
- drivers/gpu/drm/panthor/panthor_drv.c.o3U7qkG |  1957 ++
- drivers/gpu/drm/panthor/panthor_fw.c          |    10 +-
- drivers/gpu/drm/panthor/panthor_fw.c.ohZ7ili  |  1537 ++
- drivers/gpu/drm/panthor/panthor_gem.c         |     8 +-
- drivers/gpu/drm/panthor/panthor_gem.c.oGTHflG |  1749 ++
- drivers/gpu/drm/panthor/panthor_gpu.c         |   611 +-
- drivers/gpu/drm/panthor/panthor_gpu.c.o83olWk |   512 +
- drivers/gpu/drm/panthor/panthor_hw.c          |    19 +-
- drivers/gpu/drm/panthor/panthor_hw.c.oyyhdMl  |   335 +
- drivers/gpu/drm/panthor/panthor_mmu.c         |    44 +-
- drivers/gpu/drm/panthor/panthor_mmu.c.osYBpw4 |  3379 +++
- drivers/gpu/drm/sky1/Kconfig                  |    14 +
- drivers/gpu/drm/sky1/Makefile                 |     2 +
- drivers/gpu/drm/sky1/sky1-drm.c               |   119 +
- drivers/hwmon/Kconfig                         |    13 +
- drivers/hwmon/Makefile                        |     1 +
- drivers/hwmon/cix-fan.c                       |   171 +
- drivers/hwspinlock/Kconfig                    |    10 +
- drivers/hwspinlock/Makefile                   |     1 +
- drivers/hwspinlock/sky1_hwspinlock.c          |   169 +
- drivers/i2c/busses/i2c-cadence.c              |    10 +
- drivers/i3c/master/i3c-master-cdns.c          |    10 +
- drivers/input/keyboard/gpio_keys.c            |    16 +-
- drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c   |   162 +-
- drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h   |    11 +
- drivers/irqchip/Kconfig                       |     8 +
- drivers/irqchip/Makefile                      |     3 +-
- drivers/irqchip/irq-gic-v3.c                  |     5 +
- drivers/irqchip/irq-sky1-pdc.c                |   274 +
- drivers/mailbox/Kconfig                       |     4 +-
- drivers/mailbox/Kconfig.oPHIY8Q               |     0
- drivers/mailbox/cix-mailbox.c                 |   380 +-
- drivers/mailbox/mailbox.c                     |    17 +-
- drivers/media/platform/Kconfig                |     1 +
- drivers/media/platform/Makefile               |     1 +
- drivers/media/platform/cix/Kbuild             |    57 +
- drivers/media/platform/cix/Kconfig            |    23 +
- drivers/media/platform/cix/dev/mvx_dev.c      |  1335 +
- drivers/media/platform/cix/dev/mvx_dev.h      |    49 +
- drivers/media/platform/cix/dev/mvx_hwreg.c    |   594 +
- drivers/media/platform/cix/dev/mvx_hwreg.h    |   383 +
- .../media/platform/cix/dev/mvx_hwreg_v500.c   |    65 +
- .../media/platform/cix/dev/mvx_hwreg_v500.h   |    48 +
- .../platform/cix/dev/mvx_hwreg_v52_v76.c      |   120 +
- .../platform/cix/dev/mvx_hwreg_v52_v76.h      |    49 +
- .../media/platform/cix/dev/mvx_hwreg_v550.c   |    82 +
- .../media/platform/cix/dev/mvx_hwreg_v550.h   |    48 +
- .../media/platform/cix/dev/mvx_hwreg_v61.c    |    95 +
- .../media/platform/cix/dev/mvx_hwreg_v61.h    |    49 +
- drivers/media/platform/cix/dev/mvx_lsid.c     |   359 +
- drivers/media/platform/cix/dev/mvx_lsid.h     |   175 +
- .../media/platform/cix/dev/mvx_scheduler.c    |  1158 +
- .../media/platform/cix/dev/mvx_scheduler.h    |   290 +
- .../cix/external/fw_v2/mve_protocol_def.h     |  2049 ++
- .../cix/external/fw_v3/mve_protocol_def.h     |  2019 ++
- drivers/media/platform/cix/if/mvx_bitops.h    |    91 +
- drivers/media/platform/cix/if/mvx_buffer.c    |   649 +
- drivers/media/platform/cix/if/mvx_buffer.h    |   439 +
- drivers/media/platform/cix/if/mvx_firmware.c  |   625 +
- drivers/media/platform/cix/if/mvx_firmware.h  |  1163 +
- .../platform/cix/if/mvx_firmware_cache.c      |   783 +
- .../platform/cix/if/mvx_firmware_cache.h      |   247 +
- .../media/platform/cix/if/mvx_firmware_priv.h |   165 +
- .../media/platform/cix/if/mvx_firmware_v2.c   |  3914 +++
- .../media/platform/cix/if/mvx_firmware_v3.c   |   173 +
- drivers/media/platform/cix/if/mvx_if.c        |   246 +
- drivers/media/platform/cix/if/mvx_if.h        |   590 +
- drivers/media/platform/cix/if/mvx_mmu.c       |  1347 +
- drivers/media/platform/cix/if/mvx_mmu.h       |   481 +
- drivers/media/platform/cix/if/mvx_secure.c    |   412 +
- drivers/media/platform/cix/if/mvx_secure.h    |   139 +
- drivers/media/platform/cix/if/mvx_session.c   |  6895 +++++
- drivers/media/platform/cix/if/mvx_session.h   |  1496 ++
- .../media/platform/cix/if/v4l2/mvx_ext_if.h   |    93 +
- .../media/platform/cix/if/v4l2/mvx_ext_v4l2.c |   237 +
- .../platform/cix/if/v4l2/mvx_v4l2_buffer.c    |   563 +
- .../platform/cix/if/v4l2/mvx_v4l2_buffer.h    |   167 +
- .../platform/cix/if/v4l2/mvx_v4l2_ctrls.c     |  2185 ++
- .../platform/cix/if/v4l2/mvx_v4l2_ctrls.h     |    75 +
- .../platform/cix/if/v4l2/mvx_v4l2_fops.c      |   247 +
- .../platform/cix/if/v4l2/mvx_v4l2_fops.h      |    64 +
- .../platform/cix/if/v4l2/mvx_v4l2_session.c   |  1019 +
- .../platform/cix/if/v4l2/mvx_v4l2_session.h   |   264 +
- .../platform/cix/if/v4l2/mvx_v4l2_vidioc.c    |  2062 ++
- .../platform/cix/if/v4l2/mvx_v4l2_vidioc.h    |   157 +
- .../platform/cix/linux/mvx-v4l2-controls.h    |   661 +
- drivers/media/platform/cix/mvx_driver.c       |    72 +
- drivers/media/platform/cix/mvx_log.c          |  1187 +
- drivers/media/platform/cix/mvx_log.h          |   427 +
- drivers/media/platform/cix/mvx_log_group.c    |   383 +
- drivers/media/platform/cix/mvx_log_group.h    |    69 +
- drivers/media/platform/cix/mvx_log_ram.h      |   212 +
- drivers/media/platform/cix/mvx_pm_runtime.c   |    65 +
- drivers/media/platform/cix/mvx_pm_runtime.h   |    67 +
- drivers/media/platform/cix/mvx_seq.c          |    95 +
- drivers/media/platform/cix/mvx_seq.h          |    94 +
- drivers/mfd/syscon.c                          |    66 +
- drivers/misc/Kconfig                          |     1 +
- drivers/misc/Makefile                         |     1 +
- drivers/misc/armchina-npu/Kconfig             |    69 +
- drivers/misc/armchina-npu/Makefile            |    18 +
- drivers/misc/armchina-npu/aipu.c              |   465 +
- drivers/misc/armchina-npu/aipu_common.c       |   315 +
- drivers/misc/armchina-npu/aipu_common.h       |    41 +
- drivers/misc/armchina-npu/aipu_dma_buf.c      |   332 +
- drivers/misc/armchina-npu/aipu_dma_buf.h      |    34 +
- drivers/misc/armchina-npu/aipu_io.c           |    82 +
- drivers/misc/armchina-npu/aipu_io.h           |    27 +
- drivers/misc/armchina-npu/aipu_irq.c          |   126 +
- drivers/misc/armchina-npu/aipu_irq.h          |    43 +
- drivers/misc/armchina-npu/aipu_job_manager.c  |  1747 ++
- drivers/misc/armchina-npu/aipu_job_manager.h  |   238 +
- drivers/misc/armchina-npu/aipu_mm.c           |  2218 ++
- drivers/misc/armchina-npu/aipu_mm.h           |   267 +
- drivers/misc/armchina-npu/aipu_partition.h    |   151 +
- drivers/misc/armchina-npu/aipu_priv.c         |   309 +
- drivers/misc/armchina-npu/aipu_priv.h         |    89 +
- drivers/misc/armchina-npu/aipu_tcb.c          |    63 +
- drivers/misc/armchina-npu/aipu_tcb.h          |   139 +
- drivers/misc/armchina-npu/config.h            |    18 +
- drivers/misc/armchina-npu/default/Makefile    |     5 +
- drivers/misc/armchina-npu/default/default.c   |    88 +
- .../misc/armchina-npu/include/armchina_aipu.h |   699 +
- .../armchina-npu/include/armchina_aipu_soc.h  |    54 +
- .../misc/armchina-npu/include/cix_sky1_soc.h  |    25 +
- drivers/misc/armchina-npu/r329/Makefile       |     5 +
- drivers/misc/armchina-npu/r329/r329.c         |   160 +
- drivers/misc/armchina-npu/sky1/Makefile       |     5 +
- drivers/misc/armchina-npu/sky1/sky1.c         |   568 +
- drivers/misc/armchina-npu/zhouyi/Makefile     |    12 +
- drivers/misc/armchina-npu/zhouyi/v1.c         |   271 +
- drivers/misc/armchina-npu/zhouyi/v1.h         |    34 +
- drivers/misc/armchina-npu/zhouyi/v1v2_priv.c  |   232 +
- drivers/misc/armchina-npu/zhouyi/v2.c         |   407 +
- drivers/misc/armchina-npu/zhouyi/v2.h         |    54 +
- drivers/misc/armchina-npu/zhouyi/v3.c         |   523 +
- drivers/misc/armchina-npu/zhouyi/v3.h         |   427 +
- drivers/misc/armchina-npu/zhouyi/v3_1.c       |   374 +
- drivers/misc/armchina-npu/zhouyi/v3_1.h       |   456 +
- drivers/misc/armchina-npu/zhouyi/v3_1_priv.c  |   159 +
- drivers/misc/armchina-npu/zhouyi/v3_priv.c    |   229 +
- drivers/misc/armchina-npu/zhouyi/zhouyi.c     |   181 +
- drivers/misc/armchina-npu/zhouyi/zhouyi.h     |   104 +
- drivers/net/ethernet/cadence/macb_main.c      |    11 +
- drivers/net/ethernet/realtek/Kconfig          |     3 +
- drivers/net/ethernet/realtek/Makefile         |     2 +
- drivers/net/ethernet/realtek/r8125/Kconfig    |    10 +
- drivers/net/ethernet/realtek/r8125/Makefile   |    14 +
- drivers/net/ethernet/realtek/r8125/r8125.h    |  3052 +++
- .../net/ethernet/realtek/r8125/r8125_dash.c   |   573 +
- .../net/ethernet/realtek/r8125/r8125_dash.h   |   196 +
- .../net/ethernet/realtek/r8125/r8125_fiber.c  |   464 +
- .../net/ethernet/realtek/r8125/r8125_fiber.h  |    63 +
- .../ethernet/realtek/r8125/r8125_firmware.c   |   264 +
- .../ethernet/realtek/r8125/r8125_firmware.h   |    68 +
- drivers/net/ethernet/realtek/r8125/r8125_n.c  | 21349 ++++++++++++++++
- .../net/ethernet/realtek/r8125/r8125_ptp.c    |  1472 ++
- .../net/ethernet/realtek/r8125/r8125_ptp.h    |   159 +
- .../ethernet/realtek/r8125/r8125_realwow.h    |   118 +
- .../net/ethernet/realtek/r8125/r8125_rss.c    |   583 +
- .../net/ethernet/realtek/r8125/r8125_rss.h    |    76 +
- .../net/ethernet/realtek/r8125/rtl_eeprom.c   |   284 +
- .../net/ethernet/realtek/r8125/rtl_eeprom.h   |    53 +
- drivers/net/ethernet/realtek/r8125/rtltool.c  |   312 +
- drivers/net/ethernet/realtek/r8125/rtltool.h  |    89 +
- drivers/net/ethernet/realtek/r8126/Kconfig    |    10 +
- drivers/net/ethernet/realtek/r8126/Makefile   |    14 +
- drivers/net/ethernet/realtek/r8126/r8126.h    |  2976 +++
- .../net/ethernet/realtek/r8126/r8126_dash.h   |   261 +
- .../net/ethernet/realtek/r8126/r8126_fiber.c  |   466 +
- .../net/ethernet/realtek/r8126/r8126_fiber.h  |    63 +
- .../ethernet/realtek/r8126/r8126_firmware.c   |   264 +
- .../ethernet/realtek/r8126/r8126_firmware.h   |    68 +
- drivers/net/ethernet/realtek/r8126/r8126_n.c  | 17294 +++++++++++++
- .../net/ethernet/realtek/r8126/r8126_ptp.c    |   954 +
- .../net/ethernet/realtek/r8126/r8126_ptp.h    |   207 +
- .../ethernet/realtek/r8126/r8126_realwow.h    |   118 +
- .../net/ethernet/realtek/r8126/r8126_rss.c    |   583 +
- .../net/ethernet/realtek/r8126/r8126_rss.h    |    76 +
- .../net/ethernet/realtek/r8126/rtl_eeprom.c   |   285 +
- .../net/ethernet/realtek/r8126/rtl_eeprom.h   |    58 +
- drivers/net/ethernet/realtek/r8126/rtltool.c  |   293 +
- drivers/net/ethernet/realtek/r8126/rtltool.h  |    89 +
- drivers/net/wireless/realtek/rtw89/fw.c       |    29 +
- drivers/net/wireless/realtek/rtw89/ps.c       |    32 +-
- drivers/nvmem/Kconfig                         |    11 +
- drivers/nvmem/Makefile                        |     2 +
- drivers/nvmem/sky1-nvmem.c                    |    93 +
- drivers/pci/controller/cadence/Kconfig        |    43 +-
- drivers/pci/controller/cadence/Makefile       |    14 +-
- .../pci/controller/cadence/pci-sky1-acpi.c    |   197 +
- .../pci/controller/cadence/pci-sky1-acpi.h    |    18 +
- .../pci/controller/cadence/pci-sky1-debugfs.c |  1340 +
- .../pci/controller/cadence/pci-sky1-debugfs.h |    17 +
- drivers/pci/controller/cadence/pci-sky1.c     |  2970 ++-
- drivers/pci/controller/cadence/pci-sky1.h     |   197 +
- .../controller/cadence/pcie-cadence-host.c    |   769 +-
- drivers/pci/controller/cadence/pcie-cadence.c |    76 +-
- drivers/pci/controller/cadence/pcie-cadence.h |   387 +-
- drivers/pci/pci-acpi.c                        |     3 +
- drivers/pci/quirks.c                          |    84 +
- drivers/pci/setup-res.c                       |    82 +-
- drivers/perf/arm_spe_pmu.c                    |    17 +
- drivers/phy/Kconfig                           |     2 +
- drivers/phy/Makefile                          |     1 +
- drivers/phy/cix/Kconfig                       |    36 +
- drivers/phy/cix/Makefile                      |     5 +
- drivers/phy/cix/phy-cix-pcie.c                |   637 +
- drivers/phy/cix/phy-cix-usb2.c                |    58 +
- drivers/phy/cix/phy-cix-usb3.c                |   477 +
- drivers/phy/cix/phy-cix-usbdp.c               |  1650 ++
- drivers/phy/cix/phy-cix-usbdp.h               |   347 +
- drivers/pinctrl/Kconfig                       |     2 +-
- drivers/pinctrl/Makefile                      |     1 +
- drivers/pinctrl/cix/Kconfig                   |     6 +-
- drivers/pinctrl/cix/pinctrl-sky1-base.c       |   835 +-
- drivers/pinctrl/cix/pinctrl-sky1.c            |   957 +-
- drivers/pinctrl/cix/pinctrl-sky1.h            |    54 +-
- drivers/pinctrl/pinctrl-acpi.h                |   101 +
- drivers/pmdomain/arm/scmi_perf_domain.c       |   151 +-
- drivers/pmdomain/arm/scmi_pm_domain.c         |    67 +-
- drivers/pmdomain/core.c                       |   272 +-
- drivers/pwm/Kconfig                           |    11 +-
- drivers/pwm/Makefile                          |     1 +
- drivers/pwm/pwm-sky1.c                        |   250 +
- drivers/regulator/fixed.c                     |    59 +-
- drivers/remoteproc/Kconfig                    |    11 +
- drivers/remoteproc/Makefile                   |     3 +-
- drivers/remoteproc/cix_dsp_rproc.c            |  1166 +
- drivers/remoteproc/remoteproc_internal.h      |     1 +
- drivers/remoteproc/remoteproc_virtio.c        |    37 +-
- drivers/reset/Kconfig                         |    17 +
- drivers/reset/Makefile                        |     2 +
- drivers/reset/core.c                          |    97 +-
- drivers/reset/reset-sky1-audss.c              |   200 +
- drivers/rpmsg/rpmsg_char.c                    |     2 +
- drivers/rpmsg/virtio_rpmsg_bus.c              |   353 +-
- drivers/rtc/rtc-hym8563.c                     |   139 +-
- drivers/soc/Kconfig                           |     1 +
- drivers/soc/Makefile                          |     1 +
- drivers/soc/cix/Kconfig                       |    88 +
- drivers/soc/cix/Makefile                      |     7 +
- drivers/soc/cix/cix-acpi-gpu-scan.c           |    78 +
- drivers/soc/cix/cix-acpi-resource-lookup.c    |   394 +
- drivers/soc/cix/cix-acpi-usb-scan.c           |    68 +
- drivers/soc/cix/cix-bus-perf.c                |   202 +
- drivers/soc/cix/cix-ddr-lp.c                  |   171 +
- drivers/soc/cix/sky1-socinfo.c                |   478 +
- drivers/spi/spi-cadence-quadspi.c             |    10 +
- drivers/spi/spi-cadence.c                     |    10 +
- drivers/thermal/Kconfig                       |    14 +
- drivers/thermal/Makefile                      |     1 +
- drivers/thermal/cix/Makefile                  |     2 +
- drivers/thermal/cix/cix_cpu_ipa.c             |   171 +
- drivers/thermal/cpufreq_cooling.c             |    29 +-
- drivers/usb/cdns3/Kconfig                     |    27 +
- drivers/usb/cdns3/Makefile                    |     8 +
- drivers/usb/cdns3/cdnsp-plat.c                |   432 +
- drivers/usb/cdns3/cdnsp-sky1.c                |   913 +
- drivers/usb/cdns3/cdnsp-sky1.h                |   123 +
- drivers/usb/host/xhci-plat.c                  |    21 +-
- drivers/usb/typec/Kconfig                     |    13 +
- drivers/usb/typec/Makefile                    |     1 +
- drivers/usb/typec/rts5453.c                   |   621 +
- drivers/video/backlight/pwm_bl.c              |    48 +-
- drivers/watchdog/Kconfig                      |    10 +
- drivers/watchdog/Makefile                     |     1 +
- drivers/watchdog/sky1_wdt.c                   |   431 +
- fs/pstore/ram.c                               |    58 +-
- include/dt-bindings/clock/sky1-audss.h        |    71 +
- include/dt-bindings/phy/phy-cadence-torrent.h |    62 +
- include/dt-bindings/pinctrl/pads-sky1.h       |   587 +
- include/dt-bindings/power/sky1-power.h        |    48 +
- include/dt-bindings/reset/sky1-reset-audss.h  |    23 +
- include/dt-bindings/reset/sky1-reset-fch.h    |    44 +
- include/dt-bindings/reset/sky1-reset.h        |   166 +
- include/dt-bindings/thermal/sky1-thermal.h    |    29 +
- include/linux/arch_topology.h                 |    10 +-
- include/linux/cix/cix_cpu_ipa.h               |    32 +
- include/linux/firmware/cix/dsp.h              |    86 +
- include/linux/page-flags.h                    |     4 +-
- include/linux/pm_domain.h                     |    17 +
- include/linux/reset-controller.h              |    25 +
- include/linux/scmi_perf_domain.h              |    34 +
- kernel/dma/coherent.c                         |    10 +-
- mm/migrate.c                                  |     8 +
- sound/hda/codecs/realtek/alc269.c             |    22 +
- sound/hda/controllers/Kconfig                 |    30 +-
- sound/hda/controllers/cix-ipbloq.c            |   849 +-
- sound/soc/Kconfig                             |     1 +
- sound/soc/Makefile                            |     1 +
- sound/soc/cix/Kconfig                         |    37 +
- sound/soc/cix/Makefile                        |    10 +
- sound/soc/cix/card-utils.c                    |   749 +
- sound/soc/cix/card-utils.h                    |    73 +
- sound/soc/cix/cdns_i2s_mc.c                   |  1166 +
- sound/soc/cix/cdns_i2s_sc.c                   |  1204 +
- sound/soc/cix/sky1-card.c                     |    73 +
- sound/soc/codecs/hdmi-codec.c                 |    23 +-
- sound/soc/sof/Kconfig                         |     1 +
- sound/soc/sof/Makefile                        |     1 +
- sound/soc/sof/cix/Kconfig                     |    34 +
- sound/soc/sof/cix/Makefile                    |     7 +
- sound/soc/sof/cix/cix-common.c                |   109 +
- sound/soc/sof/cix/cix-common.h                |    34 +
- sound/soc/sof/cix/cix-sky1.c                  |   579 +
- 430 files changed, 185442 insertions(+), 2543 deletions(-)
- create mode 100644 README.md
- create mode 100644 arch/arm64/boot/dts/cix/sky1-orangepi-6-plus.dts
- create mode 100644 arch/arm64/boot/dts/cix/sky1-orion-o6n.dts
- create mode 100644 drivers/clk/cix/Kconfig
- create mode 100644 drivers/clk/cix/Makefile
- create mode 100644 drivers/clk/cix/clk-sky1-acpi.c
- create mode 100644 drivers/clk/cix/clk-sky1-audss.c
- create mode 100644 drivers/clocksource/timer-sky1-gpt.c
- create mode 100644 drivers/cpufreq/cpufreq.c.oda3pGi
- create mode 100644 drivers/dma-buf/heaps/dsp_heap.c
- create mode 100644 drivers/firmware/cix/Kconfig
- create mode 100644 drivers/firmware/cix/Makefile
- create mode 100644 drivers/firmware/cix/cix-dsp.c
- create mode 100644 drivers/gpu/drm/cix/Kconfig
- create mode 100644 drivers/gpu/drm/cix/Makefile
- create mode 100644 drivers/gpu/drm/cix/cix_display.c
- create mode 100644 drivers/gpu/drm/cix/cix_virtual.c
- create mode 100644 drivers/gpu/drm/cix/dptx/Kconfig
- create mode 100644 drivers/gpu/drm/cix/dptx/Makefile
- create mode 100644 drivers/gpu/drm/cix/dptx/cix_edp_panel.c
- create mode 100755 drivers/gpu/drm/cix/dptx/cix_edp_panel.h
- create mode 100644 drivers/gpu/drm/cix/dptx/dptx_infoframe.c
- create mode 100644 drivers/gpu/drm/cix/dptx/dptx_infoframe.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp.c
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl.c
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl_cmd.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/dptx_aux_reg.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/dptx_reg.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_hw_tx.c
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_hw_tx.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_key_drvn_tx.c
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_key_drvn_tx.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_state.c
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_state.h
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_tmr.c
- create mode 100644 drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_tmr.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_dptx.c
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_dptx.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_dptx_audio.c
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_dptx_audio.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_dptx_cix.c
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_dptx_reg.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_drm.c
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_drm.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_drm_mst.c
- create mode 100755 drivers/gpu/drm/cix/dptx/trilin_drm_mst.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_edp_phy.c
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_edp_phy.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_host_tmr.c
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_host_tmr.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_phy.h
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_usbdp_phy.c
- create mode 100644 drivers/gpu/drm/cix/dptx/trilin_usbdp_phy.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/Makefile
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/hw/dp_axi.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/hw/dp_component.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/hw/dp_dev.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/hw/dp_dev.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/hw/dp_regs.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_coeffs.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_coeffs.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_color_mgmt.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_color_mgmt.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_crtc.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_dev.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_dev.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_drm.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_drv.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_event.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_format_caps.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_format_caps.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_framebuffer.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_framebuffer.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_io.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_kms.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_kms.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_pipeline.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_pipeline.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_pipeline_state.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_plane.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_private_obj.c
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_product.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_utils.h
- create mode 100644 drivers/gpu/drm/cix/linlon-dp/linlondp_wb_connector.c
- create mode 100644 drivers/gpu/drm/panthor/panthor_devfreq.c.obqpABq
- create mode 100644 drivers/gpu/drm/panthor/panthor_device.c.ouPg6kj
- create mode 100644 drivers/gpu/drm/panthor/panthor_device.h.osv1xew
- create mode 100644 drivers/gpu/drm/panthor/panthor_drv.c.o3U7qkG
- create mode 100644 drivers/gpu/drm/panthor/panthor_fw.c.ohZ7ili
- create mode 100644 drivers/gpu/drm/panthor/panthor_gem.c.oGTHflG
- create mode 100644 drivers/gpu/drm/panthor/panthor_gpu.c.o83olWk
- create mode 100644 drivers/gpu/drm/panthor/panthor_hw.c.oyyhdMl
- create mode 100644 drivers/gpu/drm/panthor/panthor_mmu.c.osYBpw4
- create mode 100644 drivers/gpu/drm/sky1/Kconfig
- create mode 100644 drivers/gpu/drm/sky1/Makefile
- create mode 100644 drivers/gpu/drm/sky1/sky1-drm.c
- create mode 100644 drivers/hwmon/cix-fan.c
- create mode 100644 drivers/hwspinlock/sky1_hwspinlock.c
- create mode 100644 drivers/irqchip/irq-sky1-pdc.c
- create mode 100644 drivers/mailbox/Kconfig.oPHIY8Q
- create mode 100755 drivers/media/platform/cix/Kbuild
- create mode 100755 drivers/media/platform/cix/Kconfig
- create mode 100755 drivers/media/platform/cix/dev/mvx_dev.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_dev.h
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg.h
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v500.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v500.h
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v52_v76.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v52_v76.h
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v550.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v550.h
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v61.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_hwreg_v61.h
- create mode 100755 drivers/media/platform/cix/dev/mvx_lsid.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_lsid.h
- create mode 100755 drivers/media/platform/cix/dev/mvx_scheduler.c
- create mode 100755 drivers/media/platform/cix/dev/mvx_scheduler.h
- create mode 100755 drivers/media/platform/cix/external/fw_v2/mve_protocol_def.h
- create mode 100755 drivers/media/platform/cix/external/fw_v3/mve_protocol_def.h
- create mode 100755 drivers/media/platform/cix/if/mvx_bitops.h
- create mode 100755 drivers/media/platform/cix/if/mvx_buffer.c
- create mode 100755 drivers/media/platform/cix/if/mvx_buffer.h
- create mode 100755 drivers/media/platform/cix/if/mvx_firmware.c
- create mode 100755 drivers/media/platform/cix/if/mvx_firmware.h
- create mode 100755 drivers/media/platform/cix/if/mvx_firmware_cache.c
- create mode 100755 drivers/media/platform/cix/if/mvx_firmware_cache.h
- create mode 100755 drivers/media/platform/cix/if/mvx_firmware_priv.h
- create mode 100755 drivers/media/platform/cix/if/mvx_firmware_v2.c
- create mode 100755 drivers/media/platform/cix/if/mvx_firmware_v3.c
- create mode 100755 drivers/media/platform/cix/if/mvx_if.c
- create mode 100755 drivers/media/platform/cix/if/mvx_if.h
- create mode 100755 drivers/media/platform/cix/if/mvx_mmu.c
- create mode 100755 drivers/media/platform/cix/if/mvx_mmu.h
- create mode 100755 drivers/media/platform/cix/if/mvx_secure.c
- create mode 100755 drivers/media/platform/cix/if/mvx_secure.h
- create mode 100755 drivers/media/platform/cix/if/mvx_session.c
- create mode 100755 drivers/media/platform/cix/if/mvx_session.h
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_ext_if.h
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_ext_v4l2.c
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_buffer.c
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_buffer.h
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_ctrls.c
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_ctrls.h
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_fops.c
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_fops.h
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_session.c
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_session.h
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_vidioc.c
- create mode 100755 drivers/media/platform/cix/if/v4l2/mvx_v4l2_vidioc.h
- create mode 100755 drivers/media/platform/cix/linux/mvx-v4l2-controls.h
- create mode 100755 drivers/media/platform/cix/mvx_driver.c
- create mode 100755 drivers/media/platform/cix/mvx_log.c
- create mode 100755 drivers/media/platform/cix/mvx_log.h
- create mode 100755 drivers/media/platform/cix/mvx_log_group.c
- create mode 100755 drivers/media/platform/cix/mvx_log_group.h
- create mode 100755 drivers/media/platform/cix/mvx_log_ram.h
- create mode 100755 drivers/media/platform/cix/mvx_pm_runtime.c
- create mode 100755 drivers/media/platform/cix/mvx_pm_runtime.h
- create mode 100755 drivers/media/platform/cix/mvx_seq.c
- create mode 100755 drivers/media/platform/cix/mvx_seq.h
- create mode 100644 drivers/misc/armchina-npu/Kconfig
- create mode 100755 drivers/misc/armchina-npu/Makefile
- create mode 100644 drivers/misc/armchina-npu/aipu.c
- create mode 100755 drivers/misc/armchina-npu/aipu_common.c
- create mode 100755 drivers/misc/armchina-npu/aipu_common.h
- create mode 100755 drivers/misc/armchina-npu/aipu_dma_buf.c
- create mode 100755 drivers/misc/armchina-npu/aipu_dma_buf.h
- create mode 100755 drivers/misc/armchina-npu/aipu_io.c
- create mode 100755 drivers/misc/armchina-npu/aipu_io.h
- create mode 100755 drivers/misc/armchina-npu/aipu_irq.c
- create mode 100755 drivers/misc/armchina-npu/aipu_irq.h
- create mode 100755 drivers/misc/armchina-npu/aipu_job_manager.c
- create mode 100755 drivers/misc/armchina-npu/aipu_job_manager.h
- create mode 100755 drivers/misc/armchina-npu/aipu_mm.c
- create mode 100755 drivers/misc/armchina-npu/aipu_mm.h
- create mode 100755 drivers/misc/armchina-npu/aipu_partition.h
- create mode 100755 drivers/misc/armchina-npu/aipu_priv.c
- create mode 100755 drivers/misc/armchina-npu/aipu_priv.h
- create mode 100755 drivers/misc/armchina-npu/aipu_tcb.c
- create mode 100755 drivers/misc/armchina-npu/aipu_tcb.h
- create mode 100755 drivers/misc/armchina-npu/config.h
- create mode 100755 drivers/misc/armchina-npu/default/Makefile
- create mode 100755 drivers/misc/armchina-npu/default/default.c
- create mode 100755 drivers/misc/armchina-npu/include/armchina_aipu.h
- create mode 100755 drivers/misc/armchina-npu/include/armchina_aipu_soc.h
- create mode 100644 drivers/misc/armchina-npu/include/cix_sky1_soc.h
- create mode 100755 drivers/misc/armchina-npu/r329/Makefile
- create mode 100755 drivers/misc/armchina-npu/r329/r329.c
- create mode 100755 drivers/misc/armchina-npu/sky1/Makefile
- create mode 100644 drivers/misc/armchina-npu/sky1/sky1.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/Makefile
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v1.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v1.h
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v1v2_priv.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v2.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v2.h
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v3.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v3.h
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v3_1.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v3_1.h
- create mode 100755 drivers/misc/armchina-npu/zhouyi/v3_1_priv.c
- create mode 100644 drivers/misc/armchina-npu/zhouyi/v3_priv.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/zhouyi.c
- create mode 100755 drivers/misc/armchina-npu/zhouyi/zhouyi.h
- create mode 100644 drivers/net/ethernet/realtek/r8125/Kconfig
- create mode 100644 drivers/net/ethernet/realtek/r8125/Makefile
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_dash.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_dash.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_fiber.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_fiber.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_firmware.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_firmware.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_n.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_ptp.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_ptp.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_realwow.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_rss.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/r8125_rss.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/rtl_eeprom.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/rtl_eeprom.h
- create mode 100755 drivers/net/ethernet/realtek/r8125/rtltool.c
- create mode 100755 drivers/net/ethernet/realtek/r8125/rtltool.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/Kconfig
- create mode 100644 drivers/net/ethernet/realtek/r8126/Makefile
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_dash.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_fiber.c
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_fiber.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_firmware.c
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_firmware.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_n.c
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_ptp.c
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_ptp.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_realwow.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_rss.c
- create mode 100644 drivers/net/ethernet/realtek/r8126/r8126_rss.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/rtl_eeprom.c
- create mode 100644 drivers/net/ethernet/realtek/r8126/rtl_eeprom.h
- create mode 100644 drivers/net/ethernet/realtek/r8126/rtltool.c
- create mode 100644 drivers/net/ethernet/realtek/r8126/rtltool.h
- create mode 100644 drivers/nvmem/sky1-nvmem.c
- create mode 100644 drivers/pci/controller/cadence/pci-sky1-acpi.c
- create mode 100644 drivers/pci/controller/cadence/pci-sky1-acpi.h
- create mode 100644 drivers/pci/controller/cadence/pci-sky1-debugfs.c
- create mode 100644 drivers/pci/controller/cadence/pci-sky1-debugfs.h
- create mode 100644 drivers/pci/controller/cadence/pci-sky1.h
- create mode 100644 drivers/phy/cix/Kconfig
- create mode 100644 drivers/phy/cix/Makefile
- create mode 100644 drivers/phy/cix/phy-cix-pcie.c
- create mode 100644 drivers/phy/cix/phy-cix-usb2.c
- create mode 100644 drivers/phy/cix/phy-cix-usb3.c
- create mode 100644 drivers/phy/cix/phy-cix-usbdp.c
- create mode 100644 drivers/phy/cix/phy-cix-usbdp.h
- create mode 100644 drivers/pinctrl/pinctrl-acpi.h
- create mode 100644 drivers/pwm/pwm-sky1.c
- create mode 100644 drivers/remoteproc/cix_dsp_rproc.c
- create mode 100644 drivers/reset/reset-sky1-audss.c
- create mode 100644 drivers/soc/cix/Kconfig
- create mode 100644 drivers/soc/cix/Makefile
- create mode 100644 drivers/soc/cix/cix-acpi-gpu-scan.c
- create mode 100644 drivers/soc/cix/cix-acpi-resource-lookup.c
- create mode 100644 drivers/soc/cix/cix-acpi-usb-scan.c
- create mode 100644 drivers/soc/cix/cix-bus-perf.c
- create mode 100644 drivers/soc/cix/cix-ddr-lp.c
- create mode 100644 drivers/soc/cix/sky1-socinfo.c
- create mode 100644 drivers/thermal/cix/Makefile
- create mode 100644 drivers/thermal/cix/cix_cpu_ipa.c
- create mode 100644 drivers/usb/cdns3/cdnsp-plat.c
- create mode 100644 drivers/usb/cdns3/cdnsp-sky1.c
- create mode 100644 drivers/usb/cdns3/cdnsp-sky1.h
- create mode 100644 drivers/usb/typec/rts5453.c
- create mode 100644 drivers/watchdog/sky1_wdt.c
- create mode 100644 include/dt-bindings/clock/sky1-audss.h
- create mode 100644 include/dt-bindings/phy/phy-cadence-torrent.h
- create mode 100644 include/dt-bindings/pinctrl/pads-sky1.h
- create mode 100644 include/dt-bindings/power/sky1-power.h
- create mode 100644 include/dt-bindings/reset/sky1-reset-audss.h
- create mode 100644 include/dt-bindings/reset/sky1-reset-fch.h
- create mode 100644 include/dt-bindings/reset/sky1-reset.h
- create mode 100644 include/dt-bindings/thermal/sky1-thermal.h
- create mode 100644 include/linux/cix/cix_cpu_ipa.h
- create mode 100644 include/linux/firmware/cix/dsp.h
- create mode 100644 include/linux/scmi_perf_domain.h
- create mode 100644 sound/soc/cix/Kconfig
- create mode 100644 sound/soc/cix/Makefile
- create mode 100644 sound/soc/cix/card-utils.c
- create mode 100644 sound/soc/cix/card-utils.h
- create mode 100644 sound/soc/cix/cdns_i2s_mc.c
- create mode 100644 sound/soc/cix/cdns_i2s_sc.c
- create mode 100644 sound/soc/cix/sky1-card.c
- create mode 100644 sound/soc/sof/cix/Kconfig
- create mode 100644 sound/soc/sof/cix/Makefile
- create mode 100644 sound/soc/sof/cix/cix-common.c
- create mode 100644 sound/soc/sof/cix/cix-common.h
- create mode 100644 sound/soc/sof/cix/cix-sky1.c
-
 diff --git a/README.md b/README.md
 new file mode 100644
 index 000000000..5ee76dce5
 --- /dev/null
 +++ b/README.md
-@@ -0,0 +0,91 @@
+@@ -0,0 +1,91 @@
 +# Sky1-Linux/linux
 +
 +Full Linux kernel source with Sky1 SoC patches applied as commits on top of upstream tags.
@@ -847,7 +110,7 @@ new file mode 100644
 index 000000000..e52e49600
 --- /dev/null
 +++ b/arch/arm64/boot/dts/cix/sky1-orangepi-6-plus.dts
-@@ -0,0 +0,2321 @@
+@@ -0,0 +1,2321 @@
 +/*
 + * Copyright 2024 Cix Technology Group Co., Ltd.
 + *
@@ -5725,7 +4988,7 @@ new file mode 100644
 index 000000000..e67b0f2f7
 --- /dev/null
 +++ b/arch/arm64/boot/dts/cix/sky1-orion-o6n.dts
-@@ -0,0 +0,2536 @@
+@@ -0,0 +1,2536 @@
 +/*
 + * Copyright (c) 2024, Cix Technology Group Co., Ltd. All rights reserved.
 + * Copyright (c) 2024, Radxa Computer (Shenzhen) Co., Ltd. All rights reserved.
@@ -13605,7 +12868,7 @@ new file mode 100644
 index 000000000..76934ca43
 --- /dev/null
 +++ b/drivers/clk/cix/Kconfig
-@@ -0,0 +0,22 @@
+@@ -0,0 +1,22 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +config CLK_SKY1_ACPI
@@ -13633,7 +12896,7 @@ new file mode 100644
 index 000000000..32375c335
 --- /dev/null
 +++ b/drivers/clk/cix/Makefile
-@@ -0,0 +0,4 @@
+@@ -0,0 +1,4 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +obj-$(CONFIG_CLK_SKY1_ACPI) += clk-sky1-acpi.o
@@ -13643,7 +12906,7 @@ new file mode 100644
 index 000000000..4c5ca954d
 --- /dev/null
 +++ b/drivers/clk/cix/clk-sky1-acpi.c
-@@ -0,0 +0,196 @@
+@@ -0,0 +1,196 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * CIX Sky1 ACPI clock lookup table (CLKT) driver
@@ -13845,7 +13108,7 @@ new file mode 100644
 index 000000000..174058167
 --- /dev/null
 +++ b/drivers/clk/cix/clk-sky1-audss.c
-@@ -0,0 +0,926 @@
+@@ -0,0 +1,926 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * CIX Sky1 Audio Subsystem Clock Controller
@@ -14863,7 +14126,7 @@ new file mode 100644
 index 000000000..df9db89ff
 --- /dev/null
 +++ b/drivers/clocksource/timer-sky1-gpt.c
-@@ -0,0 +0,299 @@
+@@ -0,0 +1,299 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * CIX Sky1 General Purpose Timer
@@ -15274,7 +14537,7 @@ new file mode 100644
 index 000000000..e3bb0bc4c
 --- /dev/null
 +++ b/drivers/dma-buf/heaps/dsp_heap.c
-@@ -0,0 +0,174 @@
+@@ -0,0 +1,174 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * DMABUF DSP heap exporter
@@ -17196,7 +16459,7 @@ new file mode 100644
 index 000000000..9c8304a49
 --- /dev/null
 +++ b/drivers/firmware/cix/Kconfig
-@@ -0,0 +0,12 @@
+@@ -0,0 +1,12 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +config CIX_DSP
@@ -17214,7 +16477,7 @@ new file mode 100644
 index 000000000..c1dc5bcdd
 --- /dev/null
 +++ b/drivers/firmware/cix/Makefile
-@@ -0,0 +0,3 @@
+@@ -0,0 +1,3 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +obj-$(CONFIG_CIX_DSP)		+= cix-dsp.o
@@ -17223,7 +16486,7 @@ new file mode 100644
 index 000000000..bc474d398
 --- /dev/null
 +++ b/drivers/firmware/cix/cix-dsp.c
-@@ -0,0 +0,175 @@
+@@ -0,0 +1,175 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * CIX DSP IPC interface driver (host side)
@@ -17936,7 +17199,7 @@ new file mode 100644
 index 000000000..c826b9dec
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/Kconfig
-@@ -0,0 +0,55 @@
+@@ -0,0 +1,55 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +config DRM_CIX
 +	tristate "DRM Support for CiX Socs"
@@ -17997,7 +17260,7 @@ new file mode 100644
 index 000000000..10ff04825
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/Makefile
-@@ -0,0 +0,5 @@
+@@ -0,0 +1,5 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
 +obj-$(CONFIG_DRM_CIX_VIRTUAL) += cix_virtual.o
@@ -18008,7 +17271,7 @@ new file mode 100644
 index 000000000..2f9bd7cee
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/cix_display.c
-@@ -0,0 +0,204 @@
+@@ -0,0 +1,204 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright 2024 Cix Technology Group Co., Ltd.
@@ -18218,7 +17481,7 @@ new file mode 100644
 index 000000000..c3877c4cf
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/cix_virtual.c
-@@ -0,0 +0,312 @@
+@@ -0,0 +1,312 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright 2024 Cix Technology Group Co., Ltd.
@@ -18536,7 +17799,7 @@ new file mode 100644
 index 000000000..38eaefd2c
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/Kconfig
-@@ -0,0 +0,28 @@
+@@ -0,0 +1,28 @@
 +#SPDX - License - Identifier : GPL - 2.0 - only
 +config DRM_TRILIN_DPSUB
 +	tristate "Trilinear Technologies DisplayPort Controller Driver"
@@ -18570,7 +17833,7 @@ new file mode 100644
 index 000000000..1d3c95b31
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/Makefile
-@@ -0,0 +0,11 @@
+@@ -0,0 +1,12 @@
 +trilin-dpsub-y := trilin_dptx_cix.o trilin_dptx.o trilin_host_tmr.o dptx_infoframe.o trilin_dptx_audio.o trilin_drm.o trilin_drm_mst.o
 +trilin-dpsub-y += trilin_edp_phy.o trilin_usbdp_phy.o
 +trilin-dpsub-$(CONFIG_TRILIN_DP_HDCP_VALIDATION) += hdcp/hdcp2_hw_tx.o
@@ -18582,13 +17845,13 @@ index 000000000..1d3c95b31
 +trilin-dpsub-y += cix_edp_panel.o
 +
 +obj-$(CONFIG_DRM_TRILIN_DPSUB) += trilin-dpsub.o
-\ No newline at end of file
++\ No newline at end of file
 diff --git a/drivers/gpu/drm/cix/dptx/cix_edp_panel.c b/drivers/gpu/drm/cix/dptx/cix_edp_panel.c
 new file mode 100644
 index 000000000..6081aa19c
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/cix_edp_panel.c
-@@ -0,0 +0,880 @@
+@@ -0,0 +1,880 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2013, NVIDIA Corporation.  All rights reserved.
@@ -19474,7 +18737,7 @@ new file mode 100755
 index 000000000..7fae7f6c4
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/cix_edp_panel.h
-@@ -0,0 +0,26 @@
+@@ -0,0 +1,26 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +/*
 + * Copyright (C) 2013, NVIDIA Corporation.  All rights reserved.
@@ -19506,7 +18769,7 @@ new file mode 100644
 index 000000000..eacfdd4ec
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/dptx_infoframe.c
-@@ -0,0 +0,359 @@
+@@ -0,0 +1,359 @@
 +// SPDX-License-Identifier: GPL-2.0
 +#include <drm/drm_atomic_helper.h>
 +#include <drm/drm_connector.h>
@@ -19871,7 +19134,7 @@ new file mode 100644
 index 000000000..227e0304b
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/dptx_infoframe.h
-@@ -0,0 +0,46 @@
+@@ -0,0 +1,46 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright (c) 2023, The Linux Foundation. All rights reserved.
@@ -19923,7 +19186,7 @@ new file mode 100644
 index 000000000..354a19b6e
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp.c
-@@ -0,0 +0,396 @@
+@@ -0,0 +1,396 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * display port hdcp driver for the cix ec
@@ -20325,7 +19588,7 @@ new file mode 100644
 index 000000000..5a2264857
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp.h
-@@ -0,0 +0,141 @@
+@@ -0,0 +1,141 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +/*
 + * display port hdcp driver for the cix ec
@@ -20472,7 +19735,7 @@ new file mode 100644
 index 000000000..fa7d76374
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl.c
-@@ -0,0 +0,184 @@
+@@ -0,0 +1,184 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * display port hdcp driver for the cix ec
@@ -20662,7 +19925,7 @@ new file mode 100644
 index 000000000..bd8916def
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl.h
-@@ -0,0 +0,22 @@
+@@ -0,0 +1,22 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +/*
 + * display port hdcp driver for the cix ec
@@ -20690,7 +19953,7 @@ new file mode 100644
 index 000000000..9528795d9
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/cix_hdcp_ioctl_cmd.h
-@@ -0,0 +0,116 @@
+@@ -0,0 +1,116 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +/*
 + * display port hdcp driver for the cix ec
@@ -20812,7 +20075,7 @@ new file mode 100644
 index 000000000..f30351505
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/dptx_aux_reg.h
-@@ -0,0 +0,126 @@
+@@ -0,0 +1,126 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -20944,7 +20207,7 @@ new file mode 100644
 index 000000000..4db663564
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/dptx_reg.h
-@@ -0,0 +0,483 @@
+@@ -0,0 +1,483 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -21433,7 +20696,7 @@ new file mode 100644
 index 000000000..5d531cdaf
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_hw_tx.c
-@@ -0,0 +0,920 @@
+@@ -0,0 +1,920 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -22359,7 +21622,7 @@ new file mode 100644
 index 000000000..2b7d6b880
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_hw_tx.h
-@@ -0,0 +0,62 @@
+@@ -0,0 +1,62 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -22427,7 +21690,7 @@ new file mode 100644
 index 000000000..33a995a51
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_key_drvn_tx.c
-@@ -0,0 +0,246 @@
+@@ -0,0 +1,246 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -22679,7 +21942,7 @@ new file mode 100644
 index 000000000..c8b118eee
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_key_drvn_tx.h
-@@ -0,0 +0,46 @@
+@@ -0,0 +1,46 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -22731,7 +21994,7 @@ new file mode 100644
 index 000000000..598f67295
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_state.c
-@@ -0,0 +0,126 @@
+@@ -0,0 +1,126 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -22863,7 +22126,7 @@ new file mode 100644
 index 000000000..250ed6a1f
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_state.h
-@@ -0,0 +0,31 @@
+@@ -0,0 +1,31 @@
 +//------------------------------------------------------------------------------
 +//  COPYRIGHT (c) 2018-2022 TRILINEAR TECHNOLOGIES, INC.
 +//  CONFIDENTIAL AND PROPRIETARY
@@ -22900,7 +22163,7 @@ new file mode 100644
 index 000000000..2a5d6c3f9
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_tmr.c
-@@ -0,0 +0,190 @@
+@@ -0,0 +1,190 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * display port hdcp driver for the cix ec
@@ -23096,7 +22359,7 @@ new file mode 100644
 index 000000000..f3c7927ea
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/hdcp/hdcp2_tx_tmr.h
-@@ -0,0 +0,19 @@
+@@ -0,0 +1,19 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +/*
 + * display port hdcp driver for the cix ec
@@ -23121,7 +22384,7 @@ new file mode 100644
 index 000000000..f8ff7823d
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_dptx.c
-@@ -0,0 +0,3512 @@
+@@ -0,0 +1,3512 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -26639,7 +25902,7 @@ new file mode 100644
 index 000000000..398b6d8bd
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_dptx.h
-@@ -0,0 +0,584 @@
+@@ -0,0 +1,584 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -27229,7 +26492,7 @@ new file mode 100644
 index 000000000..0119509f0
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_dptx_audio.c
-@@ -0,0 +0,250 @@
+@@ -0,0 +1,250 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright 2024 Cix Technology Group Co., Ltd. */
 +#include <linux/kernel.h>
@@ -27485,7 +26748,7 @@ new file mode 100644
 index 000000000..80e7410b9
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_dptx_audio.h
-@@ -0,0 +0,59 @@
+@@ -0,0 +1,59 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +/* Copyright 2024 Cix Technology Group Co., Ltd. */
 +
@@ -27550,7 +26813,7 @@ new file mode 100644
 index 000000000..57b9c3024
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_dptx_cix.c
-@@ -0,0 +0,440 @@
+@@ -0,0 +1,440 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -27996,7 +27259,7 @@ new file mode 100644
 index 000000000..93d5ca599
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_dptx_reg.h
-@@ -0,0 +0,452 @@
+@@ -0,0 +1,452 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -28454,7 +27717,7 @@ new file mode 100644
 index 000000000..934148548
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_drm.c
-@@ -0,0 +0,1261 @@
+@@ -0,0 +1,1261 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -29721,7 +28984,7 @@ new file mode 100644
 index 000000000..b7c6ea098
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_drm.h
-@@ -0,0 +0,27 @@
+@@ -0,0 +1,28 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +#ifndef __TRILIN_DP_DRM_H__
 +#define __TRILIN_DP_DRM_H__
@@ -29749,13 +29012,13 @@ index 000000000..b7c6ea098
 +int trilin_dp_fill_modes(struct drm_connector *connector, uint32_t maxX,
 +			 uint32_t maxY);
 +#endif
-\ No newline at end of file
++\ No newline at end of file
 diff --git a/drivers/gpu/drm/cix/dptx/trilin_drm_mst.c b/drivers/gpu/drm/cix/dptx/trilin_drm_mst.c
 new file mode 100644
 index 000000000..472da257d
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_drm_mst.c
-@@ -0,0 +0,935 @@
+@@ -0,0 +1,935 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -30696,7 +29959,7 @@ new file mode 100755
 index 000000000..b4834e5aa
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_drm_mst.h
-@@ -0,0 +0,29 @@
+@@ -0,0 +1,29 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -30731,7 +29994,7 @@ new file mode 100644
 index 000000000..84319eee3
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_edp_phy.c
-@@ -0,0 +0,1185 @@
+@@ -0,0 +1,1185 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -31922,7 +31185,7 @@ new file mode 100644
 index 000000000..718cdf885
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_edp_phy.h
-@@ -0,0 +0,746 @@
+@@ -0,0 +1,746 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +//------------------------------------------------------------------------------
 +//    Trilinear Technologies DisplayPort DRM Driver
@@ -32674,7 +31937,7 @@ new file mode 100644
 index 000000000..b8f984647
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_host_tmr.c
-@@ -0,0 +0,254 @@
+@@ -0,0 +1,254 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -32934,7 +32197,7 @@ new file mode 100644
 index 000000000..4f00c5e8b
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_host_tmr.h
-@@ -0,0 +0,62 @@
+@@ -0,0 +1,62 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -33002,7 +32265,7 @@ new file mode 100644
 index 000000000..998de0a66
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_phy.h
-@@ -0,0 +0,126 @@
+@@ -0,0 +1,126 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -33134,7 +32397,7 @@ new file mode 100644
 index 000000000..585589923
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_usbdp_phy.c
-@@ -0,0 +0,595 @@
+@@ -0,0 +1,595 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -33735,7 +32998,7 @@ new file mode 100644
 index 000000000..64797255a
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_usbdp_phy.h
-@@ -0,0 +0,66 @@
+@@ -0,0 +1,66 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -33807,7 +33070,7 @@ new file mode 100644
 index 000000000..f1e10e44e
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/Makefile
-@@ -0,0 +0,24 @@
+@@ -0,0 +1,24 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
 +linlon-dp-y := \
@@ -33837,7 +33100,7 @@ new file mode 100644
 index 000000000..4bc5c850e
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/hw/dp_axi.c
-@@ -0,0 +0,261 @@
+@@ -0,0 +1,261 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -34104,7 +33367,7 @@ new file mode 100644
 index 000000000..a12c45449
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/hw/dp_component.c
-@@ -0,0 +0,1696 @@
+@@ -0,0 +1,1696 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -35806,7 +35069,7 @@ new file mode 100644
 index 000000000..2de8eeea3
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/hw/dp_dev.c
-@@ -0,0 +0,703 @@
+@@ -0,0 +1,703 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -36515,7 +35778,7 @@ new file mode 100644
 index 000000000..738088907
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/hw/dp_dev.h
-@@ -0,0 +0,63 @@
+@@ -0,0 +1,63 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -36584,7 +35847,7 @@ new file mode 100644
 index 000000000..1adbfb5ab
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/hw/dp_regs.h
-@@ -0,0 +0,562 @@
+@@ -0,0 +1,562 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -37152,7 +36415,7 @@ new file mode 100644
 index 000000000..a1c6b45db
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_coeffs.c
-@@ -0,0 +0,120 @@
+@@ -0,0 +1,120 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -37278,7 +36541,7 @@ new file mode 100644
 index 000000000..1077c56f1
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_coeffs.h
-@@ -0,0 +0,75 @@
+@@ -0,0 +1,75 @@
 +/* SPDX-License-Identifier: GPL-2.0
 + *
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -37359,7 +36622,7 @@ new file mode 100644
 index 000000000..15c85567a
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_color_mgmt.c
-@@ -0,0 +0,270 @@
+@@ -0,0 +1,270 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -37635,7 +36898,7 @@ new file mode 100644
 index 000000000..61e871554
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_color_mgmt.h
-@@ -0,0 +0,48 @@
+@@ -0,0 +1,48 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -37689,7 +36952,7 @@ new file mode 100644
 index 000000000..0080c2704
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_crtc.c
-@@ -0,0 +0,1028 @@
+@@ -0,0 +1,1028 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -38723,7 +37986,7 @@ new file mode 100644
 index 000000000..d6c0f148b
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_dev.c
-@@ -0,0 +0,845 @@
+@@ -0,0 +1,845 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -39574,7 +38837,7 @@ new file mode 100644
 index 000000000..5cccc208f
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_dev.h
-@@ -0,0 +0,310 @@
+@@ -0,0 +1,310 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -39890,7 +39153,7 @@ new file mode 100644
 index 000000000..f7f3800dd
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_drm.h
-@@ -0,0 +0,26 @@
+@@ -0,0 +1,26 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + *
@@ -39922,7 +39185,7 @@ new file mode 100644
 index 000000000..af334b56f
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_drv.c
-@@ -0,0 +0,362 @@
+@@ -0,0 +1,362 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -40290,7 +39553,7 @@ new file mode 100644
 index 000000000..84573de48
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_event.c
-@@ -0,0 +0,159 @@
+@@ -0,0 +1,159 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -40455,7 +39718,7 @@ new file mode 100644
 index 000000000..d8e0be550
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_format_caps.c
-@@ -0,0 +0,149 @@
+@@ -0,0 +1,149 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -40610,7 +39873,7 @@ new file mode 100644
 index 000000000..9851264f0
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_format_caps.h
-@@ -0,0 +0,101 @@
+@@ -0,0 +1,101 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -40717,7 +39980,7 @@ new file mode 100644
 index 000000000..48316301e
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_framebuffer.c
-@@ -0,0 +0,290 @@
+@@ -0,0 +1,290 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -41013,7 +40276,7 @@ new file mode 100644
 index 000000000..4a0d4cca7
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_framebuffer.h
-@@ -0,0 +0,49 @@
+@@ -0,0 +1,49 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -41068,7 +40331,7 @@ new file mode 100644
 index 000000000..602c57312
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_io.h
-@@ -0,0 +0,46 @@
+@@ -0,0 +1,46 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -41120,7 +40383,7 @@ new file mode 100644
 index 000000000..0f1e17fa4
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_kms.c
-@@ -0,0 +0,413 @@
+@@ -0,0 +1,413 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -41539,7 +40802,7 @@ new file mode 100644
 index 000000000..6405ab68e
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_kms.h
-@@ -0,0 +0,339 @@
+@@ -0,0 +1,339 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -41884,7 +41147,7 @@ new file mode 100644
 index 000000000..fc4eca5f6
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_pipeline.c
-@@ -0,0 +0,464 @@
+@@ -0,0 +1,464 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -42354,7 +41617,7 @@ new file mode 100644
 index 000000000..ba58188c0
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_pipeline.h
-@@ -0,0 +0,597 @@
+@@ -0,0 +1,597 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -42957,7 +42220,7 @@ new file mode 100644
 index 000000000..e0e354711
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_pipeline_state.c
-@@ -0,0 +0,1733 @@
+@@ -0,0 +1,1733 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -44696,7 +43959,7 @@ new file mode 100644
 index 000000000..3294adfd8
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_plane.c
-@@ -0,0 +0,726 @@
+@@ -0,0 +1,726 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -45428,7 +44691,7 @@ new file mode 100644
 index 000000000..04625f362
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_private_obj.c
-@@ -0,0 +0,433 @@
+@@ -0,0 +1,433 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -45867,7 +45130,7 @@ new file mode 100644
 index 000000000..a4a9d62ff
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_product.h
-@@ -0,0 +0,37 @@
+@@ -0,0 +1,37 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -45910,7 +45173,7 @@ new file mode 100644
 index 000000000..a3b04f660
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_utils.h
-@@ -0,0 +0,43 @@
+@@ -0,0 +1,43 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -45959,7 +45222,7 @@ new file mode 100644
 index 000000000..82b9efdcd
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_wb_connector.c
-@@ -0,0 +0,391 @@
+@@ -0,0 +1,391 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -46783,7 +46046,7 @@ new file mode 100644
 index 000000000..494d608a9
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_devfreq.c.obqpABq
-@@ -0,0 +0,636 @@
+@@ -0,0 +1,636 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2019 Collabora ltd. */
 +
@@ -47808,7 +47071,7 @@ new file mode 100644
 index 000000000..b399a8418
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_device.c.ouPg6kj
-@@ -0,0 +0,798 @@
+@@ -0,0 +1,798 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2018 Marty E. Plummer <hanetzer@startmail.com> */
 +/* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
@@ -48687,7 +47950,7 @@ new file mode 100644
 index 000000000..f3bf6aa04
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_device.h.osv1xew
-@@ -0,0 +0,743 @@
+@@ -0,0 +1,743 @@
 +/* SPDX-License-Identifier: GPL-2.0 or MIT */
 +/* Copyright 2018 Marty E. Plummer <hanetzer@startmail.com> */
 +/* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
@@ -49469,7 +48732,7 @@ new file mode 100644
 index 000000000..a65450087
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_drv.c.o3U7qkG
-@@ -0,0 +0,1957 @@
+@@ -0,0 +1,1957 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2018 Marty E. Plummer <hanetzer@startmail.com> */
 +/* Copyright 2019 Linaro, Ltd., Rob Herring <robh@kernel.org> */
@@ -51453,7 +50716,7 @@ new file mode 100644
 index 000000000..00f7d85fc
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_fw.c.ohZ7ili
-@@ -0,0 +0,1537 @@
+@@ -0,0 +1,1537 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2023 Collabora ltd. */
 +
@@ -53015,7 +52278,7 @@ new file mode 100644
 index 000000000..95f334fe6
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_gem.c.oGTHflG
-@@ -0,0 +0,1749 @@
+@@ -0,0 +1,1749 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 +/* Copyright 2023 Collabora ltd. */
@@ -55421,7 +54684,7 @@ new file mode 100644
 index 000000000..32eb5cdb1
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_gpu.c.o83olWk
-@@ -0,0 +0,512 @@
+@@ -0,0 +1,512 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2018 Marty E. Plummer <hanetzer@startmail.com> */
 +/* Copyright 2019 Linaro, Ltd., Rob Herring <robh@kernel.org> */
@@ -55969,7 +55232,7 @@ new file mode 100644
 index 000000000..2074afc11
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_hw.c.oyyhdMl
-@@ -0,0 +0,335 @@
+@@ -0,0 +1,335 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2025 ARM Limited. All rights reserved. */
 +
@@ -56405,7 +55668,7 @@ new file mode 100644
 index 000000000..7ff8dba8d
 --- /dev/null
 +++ b/drivers/gpu/drm/panthor/panthor_mmu.c.osYBpw4
-@@ -0,0 +0,3379 @@
+@@ -0,0 +1,3379 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 +/* Copyright 2023 Collabora ltd. */
@@ -59790,7 +59053,7 @@ new file mode 100644
 index 000000000..8a4bfcaa1
 --- /dev/null
 +++ b/drivers/gpu/drm/sky1/Kconfig
-@@ -0,0 +0,14 @@
+@@ -0,0 +1,14 @@
 +config DRM_SKY1
 +	tristate "Sky1 GPU render node bridge"
 +	depends on DRM && MMU
@@ -59810,7 +59073,7 @@ new file mode 100644
 index 000000000..dbdc99f8f
 --- /dev/null
 +++ b/drivers/gpu/drm/sky1/Makefile
-@@ -0,0 +0,2 @@
+@@ -0,0 +1,2 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +obj-$(CONFIG_DRM_SKY1) += sky1-drm.o
 diff --git a/drivers/gpu/drm/sky1/sky1-drm.c b/drivers/gpu/drm/sky1/sky1-drm.c
@@ -59818,7 +59081,7 @@ new file mode 100644
 index 000000000..6f96cebc7
 --- /dev/null
 +++ b/drivers/gpu/drm/sky1/sky1-drm.c
-@@ -0,0 +0,119 @@
+@@ -0,0 +1,119 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * sky1-drm - DRM render node bridge for CIX Sky1 SoC
@@ -59979,7 +59242,7 @@ new file mode 100644
 index 000000000..3b6766f89
 --- /dev/null
 +++ b/drivers/hwmon/cix-fan.c
-@@ -0,0 +0,171 @@
+@@ -0,0 +1,171 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * CIX Sky1 fan control driver
@@ -60185,7 +59448,7 @@ new file mode 100644
 index 000000000..c73ca035d
 --- /dev/null
 +++ b/drivers/hwspinlock/sky1_hwspinlock.c
-@@ -0,0 +0,169 @@
+@@ -0,0 +1,169 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Sky1 Hardware Spinlock driver
@@ -60789,7 +60052,7 @@ new file mode 100644
 index 000000000..ed14b3309
 --- /dev/null
 +++ b/drivers/irqchip/irq-sky1-pdc.c
-@@ -0,0 +0,274 @@
+@@ -0,0 +1,274 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +
 +#include <linux/of_address.h>
@@ -61818,7 +61081,7 @@ new file mode 100755
 index 000000000..48cb6a1f9
 --- /dev/null
 +++ b/drivers/media/platform/cix/Kbuild
-@@ -0,0 +0,57 @@
+@@ -0,0 +1,57 @@
 +###########################################################
 +# Set the include-path according to the defined interface.
 +###########################################################
@@ -61881,7 +61144,7 @@ new file mode 100755
 index 000000000..dd3a6c2cd
 --- /dev/null
 +++ b/drivers/media/platform/cix/Kconfig
-@@ -0,0 +0,23 @@
+@@ -0,0 +1,23 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +config VIDEO_LINLON
 +	tristate "Linlon VPU support"
@@ -61910,7 +61173,7 @@ new file mode 100755
 index 000000000..16b794b23
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_dev.c
-@@ -0,0 +0,1335 @@
+@@ -0,0 +1,1335 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -63251,7 +62514,7 @@ new file mode 100755
 index 000000000..70ddc959e
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_dev.h
-@@ -0,0 +0,49 @@
+@@ -0,0 +1,49 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -63306,7 +62569,7 @@ new file mode 100755
 index 000000000..a78958b22
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg.c
-@@ -0,0 +0,594 @@
+@@ -0,0 +1,594 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -63906,7 +63169,7 @@ new file mode 100755
 index 000000000..728103af7
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg.h
-@@ -0,0 +0,383 @@
+@@ -0,0 +1,383 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64295,7 +63558,7 @@ new file mode 100755
 index 000000000..195f8adc0
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v500.c
-@@ -0,0 +0,65 @@
+@@ -0,0 +1,65 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64366,7 +63629,7 @@ new file mode 100755
 index 000000000..8b442aff3
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v500.h
-@@ -0,0 +0,48 @@
+@@ -0,0 +1,48 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64420,7 +63683,7 @@ new file mode 100755
 index 000000000..50999544c
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v52_v76.c
-@@ -0,0 +0,120 @@
+@@ -0,0 +1,120 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64546,7 +63809,7 @@ new file mode 100755
 index 000000000..5bf066fcb
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v52_v76.h
-@@ -0,0 +0,49 @@
+@@ -0,0 +1,49 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64601,7 +63864,7 @@ new file mode 100755
 index 000000000..46eda4410
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v550.c
-@@ -0,0 +0,82 @@
+@@ -0,0 +1,82 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64689,7 +63952,7 @@ new file mode 100755
 index 000000000..1133b8c34
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v550.h
-@@ -0,0 +0,48 @@
+@@ -0,0 +1,48 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64743,7 +64006,7 @@ new file mode 100755
 index 000000000..408f68609
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v61.c
-@@ -0,0 +0,95 @@
+@@ -0,0 +1,95 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64844,7 +64107,7 @@ new file mode 100755
 index 000000000..7ef544534
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_hwreg_v61.h
-@@ -0,0 +0,49 @@
+@@ -0,0 +1,49 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -64899,7 +64162,7 @@ new file mode 100755
 index 000000000..9b8289fb6
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_lsid.c
-@@ -0,0 +0,359 @@
+@@ -0,0 +1,359 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -65264,7 +64527,7 @@ new file mode 100755
 index 000000000..bd1d1a956
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_lsid.h
-@@ -0,0 +0,175 @@
+@@ -0,0 +1,175 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -65445,7 +64708,7 @@ new file mode 100755
 index 000000000..3b4d67182
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_scheduler.c
-@@ -0,0 +0,1158 @@
+@@ -0,0 +1,1158 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -66609,7 +65872,7 @@ new file mode 100755
 index 000000000..c1d48fc59
 --- /dev/null
 +++ b/drivers/media/platform/cix/dev/mvx_scheduler.h
-@@ -0,0 +0,290 @@
+@@ -0,0 +1,290 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -66905,7 +66168,7 @@ new file mode 100755
 index 000000000..f5c7eddeb
 --- /dev/null
 +++ b/drivers/media/platform/cix/external/fw_v2/mve_protocol_def.h
-@@ -0,0 +0,2049 @@
+@@ -0,0 +1,2049 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -68960,7 +68223,7 @@ new file mode 100755
 index 000000000..97f9af186
 --- /dev/null
 +++ b/drivers/media/platform/cix/external/fw_v3/mve_protocol_def.h
-@@ -0,0 +0,2019 @@
+@@ -0,0 +1,2019 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -70985,7 +70248,7 @@ new file mode 100755
 index 000000000..20ea99e03
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_bitops.h
-@@ -0,0 +0,91 @@
+@@ -0,0 +1,91 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -71082,7 +70345,7 @@ new file mode 100755
 index 000000000..2b5147c37
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_buffer.c
-@@ -0,0 +0,649 @@
+@@ -0,0 +1,649 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -71737,7 +71000,7 @@ new file mode 100755
 index 000000000..c14e6b21c
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_buffer.h
-@@ -0,0 +0,439 @@
+@@ -0,0 +1,439 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -72182,7 +71445,7 @@ new file mode 100755
 index 000000000..8fd392eca
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_firmware.c
-@@ -0,0 +0,625 @@
+@@ -0,0 +1,625 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -72813,7 +72076,7 @@ new file mode 100755
 index 000000000..1bec45de3
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_firmware.h
-@@ -0,0 +0,1163 @@
+@@ -0,0 +1,1163 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -73982,7 +73245,7 @@ new file mode 100755
 index 000000000..f9a15dd8e
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_firmware_cache.c
-@@ -0,0 +0,783 @@
+@@ -0,0 +1,783 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -74771,7 +74034,7 @@ new file mode 100755
 index 000000000..ac8b847e0
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_firmware_cache.h
-@@ -0,0 +0,247 @@
+@@ -0,0 +1,247 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -75024,7 +74287,7 @@ new file mode 100755
 index 000000000..5190e8210
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_firmware_priv.h
-@@ -0,0 +0,165 @@
+@@ -0,0 +1,165 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -75195,7 +74458,7 @@ new file mode 100755
 index 000000000..c9cf4acb5
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_firmware_v2.c
-@@ -0,0 +0,3914 @@
+@@ -0,0 +1,3914 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -79115,7 +78378,7 @@ new file mode 100755
 index 000000000..2854e731a
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_firmware_v3.c
-@@ -0,0 +0,173 @@
+@@ -0,0 +1,173 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -79294,7 +78557,7 @@ new file mode 100755
 index 000000000..8a9ce6aa2
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_if.c
-@@ -0,0 +0,246 @@
+@@ -0,0 +1,246 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -79546,7 +78809,7 @@ new file mode 100755
 index 000000000..6df4f53ea
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_if.h
-@@ -0,0 +0,590 @@
+@@ -0,0 +1,590 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -80142,7 +79405,7 @@ new file mode 100755
 index 000000000..585f0b0fb
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_mmu.c
-@@ -0,0 +0,1347 @@
+@@ -0,0 +1,1347 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -81495,7 +80758,7 @@ new file mode 100755
 index 000000000..5aab846f5
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_mmu.h
-@@ -0,0 +0,481 @@
+@@ -0,0 +1,481 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -81982,7 +81245,7 @@ new file mode 100755
 index 000000000..16939c5b9
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_secure.c
-@@ -0,0 +0,412 @@
+@@ -0,0 +1,412 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -82400,7 +81663,7 @@ new file mode 100755
 index 000000000..f85eb539d
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_secure.h
-@@ -0,0 +0,139 @@
+@@ -0,0 +1,139 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -82545,7 +81808,7 @@ new file mode 100755
 index 000000000..b0754b803
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_session.c
-@@ -0,0 +0,6895 @@
+@@ -0,0 +1,6895 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -89446,7 +88709,7 @@ new file mode 100755
 index 000000000..ad02369a1
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/mvx_session.h
-@@ -0,0 +0,1496 @@
+@@ -0,0 +1,1496 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -90948,7 +90211,7 @@ new file mode 100755
 index 000000000..7966a17d1
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_ext_if.h
-@@ -0,0 +0,93 @@
+@@ -0,0 +1,93 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -91047,7 +90310,7 @@ new file mode 100755
 index 000000000..26ece1126
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_ext_v4l2.c
-@@ -0,0 +0,237 @@
+@@ -0,0 +1,237 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -91290,7 +90553,7 @@ new file mode 100755
 index 000000000..6ede824a3
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_buffer.c
-@@ -0,0 +0,563 @@
+@@ -0,0 +1,563 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -91859,7 +91122,7 @@ new file mode 100755
 index 000000000..d150da515
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_buffer.h
-@@ -0,0 +0,167 @@
+@@ -0,0 +1,167 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -92032,7 +91295,7 @@ new file mode 100755
 index 000000000..7e7a8b7a3
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_ctrls.c
-@@ -0,0 +0,2185 @@
+@@ -0,0 +1,2185 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -94223,7 +93486,7 @@ new file mode 100755
 index 000000000..5ecbfbbc8
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_ctrls.h
-@@ -0,0 +0,75 @@
+@@ -0,0 +1,75 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -94304,7 +93567,7 @@ new file mode 100755
 index 000000000..85c9654bd
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_fops.c
-@@ -0,0 +0,247 @@
+@@ -0,0 +1,247 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -94557,7 +93820,7 @@ new file mode 100755
 index 000000000..b9306c3f4
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_fops.h
-@@ -0,0 +0,64 @@
+@@ -0,0 +1,64 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -94627,7 +93890,7 @@ new file mode 100755
 index 000000000..6f10b3378
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_session.c
-@@ -0,0 +0,1019 @@
+@@ -0,0 +1,1019 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -95652,7 +94915,7 @@ new file mode 100755
 index 000000000..ab7201a08
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_session.h
-@@ -0,0 +0,264 @@
+@@ -0,0 +1,264 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -95922,7 +95185,7 @@ new file mode 100755
 index 000000000..f51997a42
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_vidioc.c
-@@ -0,0 +0,2062 @@
+@@ -0,0 +1,2062 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -97990,7 +97253,7 @@ new file mode 100755
 index 000000000..8580e32a1
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_v4l2_vidioc.h
-@@ -0,0 +0,157 @@
+@@ -0,0 +1,157 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -98153,7 +97416,7 @@ new file mode 100755
 index 000000000..00701b964
 --- /dev/null
 +++ b/drivers/media/platform/cix/linux/mvx-v4l2-controls.h
-@@ -0,0 +0,661 @@
+@@ -0,0 +1,661 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -98820,7 +98083,7 @@ new file mode 100755
 index 000000000..b47e6ab06
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_driver.c
-@@ -0,0 +0,72 @@
+@@ -0,0 +1,72 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -98898,7 +98161,7 @@ new file mode 100755
 index 000000000..79c2644d7
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_log.c
-@@ -0,0 +0,1187 @@
+@@ -0,0 +1,1187 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -100091,7 +99354,7 @@ new file mode 100755
 index 000000000..1ede55847
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_log.h
-@@ -0,0 +0,427 @@
+@@ -0,0 +1,427 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -100524,7 +99787,7 @@ new file mode 100755
 index 000000000..5040bf54f
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_log_group.c
-@@ -0,0 +0,383 @@
+@@ -0,0 +1,383 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -100913,7 +100176,7 @@ new file mode 100755
 index 000000000..37f5e8e59
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_log_group.h
-@@ -0,0 +0,69 @@
+@@ -0,0 +1,69 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -100988,7 +100251,7 @@ new file mode 100755
 index 000000000..1f0d95d39
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_log_ram.h
-@@ -0,0 +0,212 @@
+@@ -0,0 +1,212 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -101206,7 +100469,7 @@ new file mode 100755
 index 000000000..16045950c
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_pm_runtime.c
-@@ -0,0 +0,65 @@
+@@ -0,0 +1,65 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -101277,7 +100540,7 @@ new file mode 100755
 index 000000000..17da61a12
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_pm_runtime.h
-@@ -0,0 +0,67 @@
+@@ -0,0 +1,67 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -101350,7 +100613,7 @@ new file mode 100755
 index 000000000..f7074e7d0
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_seq.c
-@@ -0,0 +0,95 @@
+@@ -0,0 +1,95 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -101451,7 +100714,7 @@ new file mode 100755
 index 000000000..3713621b6
 --- /dev/null
 +++ b/drivers/media/platform/cix/mvx_seq.h
-@@ -0,0 +0,94 @@
+@@ -0,0 +1,94 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
@@ -101658,7 +100921,7 @@ new file mode 100644
 index 000000000..6433b2826
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/Kconfig
-@@ -0,0 +0,69 @@
+@@ -0,0 +1,69 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +#
 +# ArmChina Zhouyi NPU driver
@@ -101733,7 +100996,7 @@ new file mode 100755
 index 000000000..f276bed41
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/Makefile
-@@ -0,0 +0,18 @@
+@@ -0,0 +1,19 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
 +subdir-ccflags-y += -I$(src)
@@ -101752,13 +101015,13 @@ index 000000000..f276bed41
 +include $(src)/sky1/Makefile
 +include $(src)/default/Makefile
 +include $(src)/r329/Makefile
-\ No newline at end of file
++\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/aipu.c b/drivers/misc/armchina-npu/aipu.c
 new file mode 100644
 index 000000000..bc1ce2ff5
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu.c
-@@ -0,0 +0,465 @@
+@@ -0,0 +1,465 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -102229,7 +101492,7 @@ new file mode 100755
 index 000000000..2bb8c6cd6
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_common.c
-@@ -0,0 +0,315 @@
+@@ -0,0 +1,315 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -102550,7 +101813,7 @@ new file mode 100755
 index 000000000..423fd95df
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_common.h
-@@ -0,0 +0,41 @@
+@@ -0,0 +1,41 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -102597,7 +101860,7 @@ new file mode 100755
 index 000000000..c7cae6938
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_dma_buf.c
-@@ -0,0 +0,332 @@
+@@ -0,0 +1,332 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -102935,7 +102198,7 @@ new file mode 100755
 index 000000000..cbc81bb7b
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_dma_buf.h
-@@ -0,0 +0,34 @@
+@@ -0,0 +1,34 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -102975,7 +102238,7 @@ new file mode 100755
 index 000000000..89fe2f52a
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_io.c
-@@ -0,0 +0,82 @@
+@@ -0,0 +1,82 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -103063,7 +102326,7 @@ new file mode 100755
 index 000000000..a9995e1cf
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_io.h
-@@ -0,0 +0,27 @@
+@@ -0,0 +1,27 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -103096,7 +102359,7 @@ new file mode 100755
 index 000000000..a4bad6e2f
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_irq.c
-@@ -0,0 +0,126 @@
+@@ -0,0 +1,126 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -103228,7 +102491,7 @@ new file mode 100755
 index 000000000..a9b99b72b
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_irq.h
-@@ -0,0 +0,43 @@
+@@ -0,0 +1,43 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -103277,7 +102540,7 @@ new file mode 100755
 index 000000000..da4622ccf
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_job_manager.c
-@@ -0,0 +0,1747 @@
+@@ -0,0 +1,1747 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -105030,7 +104293,7 @@ new file mode 100755
 index 000000000..b3d45af1e
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_job_manager.h
-@@ -0,0 +0,238 @@
+@@ -0,0 +1,238 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -105274,7 +104537,7 @@ new file mode 100755
 index 000000000..03d34a500
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_mm.c
-@@ -0,0 +0,2218 @@
+@@ -0,0 +1,2218 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -107498,7 +106761,7 @@ new file mode 100755
 index 000000000..597659efb
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_mm.h
-@@ -0,0 +0,267 @@
+@@ -0,0 +1,267 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -107771,7 +107034,7 @@ new file mode 100755
 index 000000000..95b91c132
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_partition.h
-@@ -0,0 +0,151 @@
+@@ -0,0 +1,151 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -107928,7 +107191,7 @@ new file mode 100755
 index 000000000..7b26b7109
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_priv.c
-@@ -0,0 +0,309 @@
+@@ -0,0 +1,309 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -108243,7 +107506,7 @@ new file mode 100755
 index 000000000..ee06bcab4
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_priv.h
-@@ -0,0 +0,89 @@
+@@ -0,0 +1,89 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -108338,7 +107601,7 @@ new file mode 100755
 index 000000000..631be1dc5
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_tcb.c
-@@ -0,0 +0,63 @@
+@@ -0,0 +1,63 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -108407,7 +107670,7 @@ new file mode 100755
 index 000000000..9adc1a9ce
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/aipu_tcb.h
-@@ -0,0 +0,139 @@
+@@ -0,0 +1,139 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -108552,7 +107815,7 @@ new file mode 100755
 index 000000000..01aad7340
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/config.h
-@@ -0,0 +0,18 @@
+@@ -0,0 +1,18 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -108576,19 +107839,19 @@ new file mode 100755
 index 000000000..e3bb9ef03
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/default/Makefile
-@@ -0,0 +0,5 @@
+@@ -0,0 +1,6 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +
 +DEFAULT_SOC_FILES := default/default.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_SOC_DEFAULT) += $(DEFAULT_SOC_FILES)
-\ No newline at end of file
++\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/default/default.c b/drivers/misc/armchina-npu/default/default.c
 new file mode 100755
 index 000000000..a39f0c972
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/default/default.c
-@@ -0,0 +0,88 @@
+@@ -0,0 +1,88 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -108682,7 +107945,7 @@ new file mode 100755
 index 000000000..4c456bee2
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/include/armchina_aipu.h
-@@ -0,0 +0,699 @@
+@@ -0,0 +1,699 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -109387,7 +108650,7 @@ new file mode 100755
 index 000000000..c235f4071
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/include/armchina_aipu_soc.h
-@@ -0,0 +0,54 @@
+@@ -0,0 +1,54 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -109447,7 +108710,7 @@ new file mode 100644
 index 000000000..c60b5b906
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/include/cix_sky1_soc.h
-@@ -0,0 +0,25 @@
+@@ -0,0 +1,25 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright 2024 Cix Technology Group Co., Ltd. All Rights Reserved.
 +#ifndef __CIX_SKY1_SOC_H__
@@ -109478,19 +108741,19 @@ new file mode 100755
 index 000000000..ee65f24f5
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/r329/Makefile
-@@ -0,0 +0,5 @@
+@@ -0,0 +1,6 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +
 +R329_SOC_FILES := r329/r329.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_SOC_R329) += $(R329_SOC_FILES)
-\ No newline at end of file
++\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/r329/r329.c b/drivers/misc/armchina-npu/r329/r329.c
 new file mode 100755
 index 000000000..c21fe74c5
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/r329/r329.c
-@@ -0,0 +0,160 @@
+@@ -0,0 +1,160 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -109656,19 +108919,19 @@ new file mode 100755
 index 000000000..d6538426f
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/sky1/Makefile
-@@ -0,0 +0,5 @@
+@@ -0,0 +1,6 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +
 +SKY1_SOC_FILES := sky1/sky1.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_SOC_SKY1) += $(SKY1_SOC_FILES)
-\ No newline at end of file
++\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/sky1/sky1.c b/drivers/misc/armchina-npu/sky1/sky1.c
 new file mode 100644
 index 000000000..80daab087
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/sky1/sky1.c
-@@ -0,0 +0,568 @@
+@@ -0,0 +1,568 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright 2024 Cix Technology Group Co., Ltd. All Rights Reserved.*/
 +/**
@@ -110242,7 +109505,7 @@ new file mode 100755
 index 000000000..59ce04746
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/Makefile
-@@ -0,0 +0,12 @@
+@@ -0,0 +1,13 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +
@@ -110255,13 +109518,13 @@ index 000000000..59ce04746
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_ARCH_V2) += $(ZHOUYI_V1V2_FILES) zhouyi/v2.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_ARCH_V3) += $(ZHOUYI_V3_FILES)
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_ARCH_V3_1) += $(ZHOUYI_V3_1_FILES)
-\ No newline at end of file
++\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/zhouyi/v1.c b/drivers/misc/armchina-npu/zhouyi/v1.c
 new file mode 100755
 index 000000000..92bbc630e
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v1.c
-@@ -0,0 +0,271 @@
+@@ -0,0 +1,271 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -110538,7 +109801,7 @@ new file mode 100755
 index 000000000..ca85aac46
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v1.h
-@@ -0,0 +0,34 @@
+@@ -0,0 +1,34 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -110578,7 +109841,7 @@ new file mode 100755
 index 000000000..54ff8d79b
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v1v2_priv.c
-@@ -0,0 +0,232 @@
+@@ -0,0 +1,232 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -110816,7 +110079,7 @@ new file mode 100755
 index 000000000..25eb6d876
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v2.c
-@@ -0,0 +0,407 @@
+@@ -0,0 +1,407 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -111229,7 +110492,7 @@ new file mode 100755
 index 000000000..17e3e4133
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v2.h
-@@ -0,0 +0,54 @@
+@@ -0,0 +1,54 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -111289,7 +110552,7 @@ new file mode 100755
 index 000000000..eec6aa05a
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v3.c
-@@ -0,0 +0,523 @@
+@@ -0,0 +1,523 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -111818,7 +111081,7 @@ new file mode 100755
 index 000000000..2202a1ff3
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v3.h
-@@ -0,0 +0,427 @@
+@@ -0,0 +1,427 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -112251,7 +111514,7 @@ new file mode 100755
 index 000000000..ff7fd5ec7
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v3_1.c
-@@ -0,0 +0,374 @@
+@@ -0,0 +1,374 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -112631,7 +111894,7 @@ new file mode 100755
 index 000000000..128a6ab63
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v3_1.h
-@@ -0,0 +0,456 @@
+@@ -0,0 +1,456 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -113093,7 +112356,7 @@ new file mode 100755
 index 000000000..eab534a87
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v3_1_priv.c
-@@ -0,0 +0,159 @@
+@@ -0,0 +1,159 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -113258,7 +112521,7 @@ new file mode 100644
 index 000000000..5d1e20079
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/v3_priv.c
-@@ -0,0 +0,229 @@
+@@ -0,0 +1,229 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -113493,7 +112756,7 @@ new file mode 100755
 index 000000000..95cf92edd
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/zhouyi.c
-@@ -0,0 +0,181 @@
+@@ -0,0 +1,181 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -113680,7 +112943,7 @@ new file mode 100755
 index 000000000..83ac0102f
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/zhouyi.h
-@@ -0,0 +0,104 @@
+@@ -0,0 +1,104 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2023-2024 Arm Technology (China) Co. Ltd. */
 +
@@ -113856,7 +113119,7 @@ new file mode 100644
 index 000000000..b05070114
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/Kconfig
-@@ -0,0 +0,10 @@
+@@ -0,0 +1,10 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +config R8125
 +	tristate "Realtek RTL8125 PCI 2.5GbE Ethernet support"
@@ -113872,7 +113135,7 @@ new file mode 100644
 index 000000000..74eecbdd6
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/Makefile
-@@ -0,0 +0,14 @@
+@@ -0,0 +1,14 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +obj-$(CONFIG_R8125) += r8125.o
 +r8125-objs := r8125_n.o rtl_eeprom.o rtltool.o r8125_rss.o
@@ -113892,7 +113155,7 @@ new file mode 100755
 index 000000000..e6948108d
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125.h
-@@ -0,0 +0,3052 @@
+@@ -0,0 +1,3052 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -116950,7 +116213,7 @@ new file mode 100755
 index 000000000..a71c19aea
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_dash.c
-@@ -0,0 +0,573 @@
+@@ -0,0 +1,573 @@
 +/*
 +################################################################################
 +#
@@ -117529,7 +116792,7 @@ new file mode 100755
 index 000000000..1a4b7dae6
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_dash.h
-@@ -0,0 +0,196 @@
+@@ -0,0 +1,196 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -117731,7 +116994,7 @@ new file mode 100755
 index 000000000..76527719b
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_fiber.c
-@@ -0,0 +0,464 @@
+@@ -0,0 +1,464 @@
 +/*
 +################################################################################
 +#
@@ -118201,7 +117464,7 @@ new file mode 100755
 index 000000000..3a328574f
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_fiber.h
-@@ -0,0 +0,63 @@
+@@ -0,0 +1,63 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -118270,7 +117533,7 @@ new file mode 100755
 index 000000000..313c7d91b
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_firmware.c
-@@ -0,0 +0,264 @@
+@@ -0,0 +1,264 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -118540,7 +117803,7 @@ new file mode 100755
 index 000000000..540c1d22f
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_firmware.h
-@@ -0,0 +0,68 @@
+@@ -0,0 +1,68 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -118614,7 +117877,7 @@ new file mode 100755
 index 000000000..73a1cbf1c
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_n.c
-@@ -0,0 +0,21349 @@
+@@ -0,0 +1,21349 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -139969,7 +139232,7 @@ new file mode 100755
 index 000000000..457fa6d39
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_ptp.c
-@@ -0,0 +0,1472 @@
+@@ -0,0 +1,1472 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -141447,7 +140710,7 @@ new file mode 100755
 index 000000000..3cd8b677f
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_ptp.h
-@@ -0,0 +0,159 @@
+@@ -0,0 +1,159 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -141612,7 +140875,7 @@ new file mode 100755
 index 000000000..4b2315ebb
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_realwow.h
-@@ -0,0 +0,118 @@
+@@ -0,0 +1,118 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -141736,7 +140999,7 @@ new file mode 100755
 index 000000000..bcdcab01a
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_rss.c
-@@ -0,0 +0,583 @@
+@@ -0,0 +1,583 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -142325,7 +141588,7 @@ new file mode 100755
 index 000000000..d2ec5f06c
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/r8125_rss.h
-@@ -0,0 +0,76 @@
+@@ -0,0 +1,76 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -142407,7 +141670,7 @@ new file mode 100755
 index 000000000..f1c2a1d12
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/rtl_eeprom.c
-@@ -0,0 +0,284 @@
+@@ -0,0 +1,284 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -142697,7 +141960,7 @@ new file mode 100755
 index 000000000..7c154f2f4
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/rtl_eeprom.h
-@@ -0,0 +0,53 @@
+@@ -0,0 +1,53 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -142756,7 +142019,7 @@ new file mode 100755
 index 000000000..8dd79e180
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/rtltool.c
-@@ -0,0 +0,312 @@
+@@ -0,0 +1,312 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -143074,7 +142337,7 @@ new file mode 100755
 index 000000000..940be4fe7
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8125/rtltool.h
-@@ -0,0 +0,89 @@
+@@ -0,0 +1,89 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -143169,7 +142432,7 @@ new file mode 100644
 index 000000000..1ef611daa
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/Kconfig
-@@ -0,0 +0,10 @@
+@@ -0,0 +1,10 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +config R8126
 +	tristate "Realtek RTL8126 PCI 5GbE Ethernet support"
@@ -143185,7 +142448,7 @@ new file mode 100644
 index 000000000..03009d3b0
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/Makefile
-@@ -0,0 +0,14 @@
+@@ -0,0 +1,14 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +obj-$(CONFIG_R8126) += r8126.o
 +r8126-objs := r8126_n.o rtl_eeprom.o rtltool.o r8126_rss.o
@@ -143205,7 +142468,7 @@ new file mode 100644
 index 000000000..be839a9c5
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126.h
-@@ -0,0 +0,2976 @@
+@@ -0,0 +1,2976 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -146187,7 +145450,7 @@ new file mode 100644
 index 000000000..40937ebcc
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_dash.h
-@@ -0,0 +0,261 @@
+@@ -0,0 +1,261 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -146454,7 +145717,7 @@ new file mode 100644
 index 000000000..eceab2ac3
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_fiber.c
-@@ -0,0 +0,466 @@
+@@ -0,0 +1,466 @@
 +/*
 +################################################################################
 +#
@@ -146926,7 +146189,7 @@ new file mode 100644
 index 000000000..182532da0
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_fiber.h
-@@ -0,0 +0,63 @@
+@@ -0,0 +1,63 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -146995,7 +146258,7 @@ new file mode 100644
 index 000000000..84e52afe2
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_firmware.c
-@@ -0,0 +0,264 @@
+@@ -0,0 +1,264 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -147265,7 +146528,7 @@ new file mode 100644
 index 000000000..7c2a344e3
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_firmware.h
-@@ -0,0 +0,68 @@
+@@ -0,0 +1,68 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -147339,7 +146602,7 @@ new file mode 100644
 index 000000000..55b989eb8
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_n.c
-@@ -0,0 +0,17294 @@
+@@ -0,0 +1,17294 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -164639,7 +163902,7 @@ new file mode 100644
 index 000000000..b453c88ec
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_ptp.c
-@@ -0,0 +0,954 @@
+@@ -0,0 +1,954 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -165599,7 +164862,7 @@ new file mode 100644
 index 000000000..62366dd6e
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_ptp.h
-@@ -0,0 +0,207 @@
+@@ -0,0 +1,207 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -165812,7 +165075,7 @@ new file mode 100644
 index 000000000..b6d6f5710
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_realwow.h
-@@ -0,0 +0,118 @@
+@@ -0,0 +1,118 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -165936,7 +165199,7 @@ new file mode 100644
 index 000000000..27996aa40
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_rss.c
-@@ -0,0 +0,583 @@
+@@ -0,0 +1,583 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -166525,7 +165788,7 @@ new file mode 100644
 index 000000000..ee875fe4c
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/r8126_rss.h
-@@ -0,0 +0,76 @@
+@@ -0,0 +1,76 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -166607,7 +165870,7 @@ new file mode 100644
 index 000000000..7c4713207
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/rtl_eeprom.c
-@@ -0,0 +0,285 @@
+@@ -0,0 +1,285 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -166898,7 +166161,7 @@ new file mode 100644
 index 000000000..ca7475a8d
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/rtl_eeprom.h
-@@ -0,0 +0,58 @@
+@@ -0,0 +1,58 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -166962,7 +166225,7 @@ new file mode 100644
 index 000000000..e5e1934df
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/rtltool.c
-@@ -0,0 +0,293 @@
+@@ -0,0 +1,293 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 +################################################################################
@@ -167261,7 +166524,7 @@ new file mode 100644
 index 000000000..2ef257d99
 --- /dev/null
 +++ b/drivers/net/ethernet/realtek/r8126/rtltool.h
-@@ -0,0 +0,89 @@
+@@ -0,0 +1,89 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 +################################################################################
@@ -167496,7 +166759,7 @@ new file mode 100644
 index 000000000..aaf55aa4d
 --- /dev/null
 +++ b/drivers/nvmem/sky1-nvmem.c
-@@ -0,0 +0,93 @@
+@@ -0,0 +1,93 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Sky1 NVMEM (eFuse) driver
@@ -167693,7 +166956,7 @@ new file mode 100644
 index 000000000..1032a73cc
 --- /dev/null
 +++ b/drivers/pci/controller/cadence/pci-sky1-acpi.c
-@@ -0,0 +0,197 @@
+@@ -0,0 +1,197 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * ACPI scan handlers for CIX Sky1 PCIe controllers.
@@ -167896,7 +167159,7 @@ new file mode 100644
 index 000000000..43b20a339
 --- /dev/null
 +++ b/drivers/pci/controller/cadence/pci-sky1-acpi.h
-@@ -0,0 +0,18 @@
+@@ -0,0 +1,18 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +#ifndef _PCIE_SKY1_ACPI_H
 +#define _PCIE_SKY1_ACPI_H
@@ -167920,7 +167183,7 @@ new file mode 100644
 index 000000000..38d62dad6
 --- /dev/null
 +++ b/drivers/pci/controller/cadence/pci-sky1-debugfs.c
-@@ -0,0 +0,1340 @@
+@@ -0,0 +1,1340 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * pci-sky1 - PCIe debug for CIX's sky1 SoCs
@@ -169266,7 +168529,7 @@ new file mode 100644
 index 000000000..f8b530561
 --- /dev/null
 +++ b/drivers/pci/controller/cadence/pci-sky1-debugfs.h
-@@ -0,0 +0,17 @@
+@@ -0,0 +1,17 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * pci-sky1 - PCIe debug for CIX's sky1 SoCs
@@ -172375,7 +171638,7 @@ new file mode 100644
 index 000000000..368d359db
 --- /dev/null
 +++ b/drivers/pci/controller/cadence/pci-sky1.h
-@@ -0,0 +0,197 @@
+@@ -0,0 +1,197 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * pci-sky1 - PCIe controller driver for CIX's sky1 SoCs
@@ -173735,7 +172998,7 @@ new file mode 100644
 index 000000000..dcf77de2f
 --- /dev/null
 +++ b/drivers/phy/cix/Kconfig
-@@ -0,0 +0,36 @@
+@@ -0,0 +1,36 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +config PHY_CIX_PCIE
@@ -173777,7 +173040,7 @@ new file mode 100644
 index 000000000..8ab9af6e0
 --- /dev/null
 +++ b/drivers/phy/cix/Makefile
-@@ -0,0 +0,5 @@
+@@ -0,0 +1,5 @@
 +# SPDX-License-Identifier: GPL-2.0
 +obj-$(CONFIG_PHY_CIX_PCIE)	+= phy-cix-pcie.o
 +obj-$(CONFIG_PHY_CIX_USB2)	+= phy-cix-usb2.o
@@ -173788,7 +173051,7 @@ new file mode 100644
 index 000000000..f0f5eba47
 --- /dev/null
 +++ b/drivers/phy/cix/phy-cix-pcie.c
-@@ -0,0 +0,637 @@
+@@ -0,0 +1,637 @@
 +// SPDX-License-Identifier: GPL-2.0
 +
 +#include <linux/clk.h>
@@ -174431,7 +173694,7 @@ new file mode 100644
 index 000000000..5757d543f
 --- /dev/null
 +++ b/drivers/phy/cix/phy-cix-usb2.c
-@@ -0,0 +0,58 @@
+@@ -0,0 +1,58 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * phy driver for cdn_usb2_p_sd10000
@@ -174495,7 +173758,7 @@ new file mode 100644
 index 000000000..adec9bb44
 --- /dev/null
 +++ b/drivers/phy/cix/phy-cix-usb3.c
-@@ -0,0 +0,477 @@
+@@ -0,0 +1,477 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * phy driver for cdn_sd0803_t7g_typea
@@ -174978,7 +174241,7 @@ new file mode 100644
 index 000000000..a9b192265
 --- /dev/null
 +++ b/drivers/phy/cix/phy-cix-usbdp.c
-@@ -0,0 +0,1650 @@
+@@ -0,0 +1,1650 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * phy driver for cdn_sd0804_t7g_typec
@@ -176634,7 +175897,7 @@ new file mode 100644
 index 000000000..18a11f920
 --- /dev/null
 +++ b/drivers/phy/cix/phy-cix-usbdp.h
-@@ -0,0 +0,347 @@
+@@ -0,0 +1,347 @@
 +// SPDX-License-Identifier: GPL-2.0
 +
 +#ifndef _PHY_CIX_USBDP_H_
@@ -179154,7 +178417,7 @@ new file mode 100644
 index 000000000..53d0eb919
 --- /dev/null
 +++ b/drivers/pinctrl/pinctrl-acpi.h
-@@ -0,0 +0,101 @@
+@@ -0,0 +1,101 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * ACPI helpers for PinCtrl API
@@ -179956,7 +179219,7 @@ new file mode 100644
 index 000000000..df878748d
 --- /dev/null
 +++ b/drivers/pwm/pwm-sky1.c
-@@ -0,0 +0,250 @@
+@@ -0,0 +1,250 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * simple driver for PWM (Pulse Width Modulator) controller
@@ -180335,7 +179598,7 @@ new file mode 100644
 index 000000000..62337c390
 --- /dev/null
 +++ b/drivers/remoteproc/cix_dsp_rproc.c
-@@ -0,0 +0,1166 @@
+@@ -0,0 +1,1166 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright 2024 Cix Technology Group Co., Ltd.
 +
@@ -181738,7 +181001,7 @@ new file mode 100644
 index 000000000..7d08c7111
 --- /dev/null
 +++ b/drivers/reset/reset-sky1-audss.c
-@@ -0,0 +0,200 @@
+@@ -0,0 +1,200 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * CIX Sky1 Audio Subsystem Reset Controller
@@ -182710,7 +181973,7 @@ new file mode 100644
 index 000000000..abb48cc3b
 --- /dev/null
 +++ b/drivers/soc/cix/Kconfig
-@@ -0,0 +0,88 @@
+@@ -0,0 +1,88 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +config CIX_SKY1_SOCINFO
@@ -182804,7 +182067,7 @@ new file mode 100644
 index 000000000..c7e56f72c
 --- /dev/null
 +++ b/drivers/soc/cix/Makefile
-@@ -0,0 +0,7 @@
+@@ -0,0 +1,7 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +obj-$(CONFIG_CIX_SKY1_SOCINFO)	+= sky1-socinfo.o
 +obj-$(CONFIG_CIX_DDR_LP)	+= cix-ddr-lp.o
@@ -182817,7 +182080,7 @@ new file mode 100644
 index 000000000..b971828d1
 --- /dev/null
 +++ b/drivers/soc/cix/cix-acpi-gpu-scan.c
-@@ -0,0 +0,78 @@
+@@ -0,0 +1,78 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * ACPI scan handler to override GPU _CCA on CIX Sky1.
@@ -182901,7 +182164,7 @@ new file mode 100644
 index 000000000..0abe62feb
 --- /dev/null
 +++ b/drivers/soc/cix/cix-acpi-resource-lookup.c
-@@ -0,0 +0,394 @@
+@@ -0,0 +1,394 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * CIX ACPI Resource Lookup driver
@@ -183301,7 +182564,7 @@ new file mode 100644
 index 000000000..36767c4fe
 --- /dev/null
 +++ b/drivers/soc/cix/cix-acpi-usb-scan.c
-@@ -0,0 +0,68 @@
+@@ -0,0 +1,68 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * ACPI scan handler to block PNP0D10 (generic xHCI) on CIX Sky1.
@@ -183375,7 +182638,7 @@ new file mode 100644
 index 000000000..ec82a485d
 --- /dev/null
 +++ b/drivers/soc/cix/cix-bus-perf.c
-@@ -0,0 +0,202 @@
+@@ -0,0 +1,202 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * CIX Bus Performance State Control driver
@@ -183583,7 +182846,7 @@ new file mode 100644
 index 000000000..a309d0028
 --- /dev/null
 +++ b/drivers/soc/cix/cix-ddr-lp.c
-@@ -0,0 +0,171 @@
+@@ -0,0 +1,171 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * CIX DDR Low Power driver
@@ -183760,7 +183023,7 @@ new file mode 100644
 index 000000000..6e7dd9a7f
 --- /dev/null
 +++ b/drivers/soc/cix/sky1-socinfo.c
-@@ -0,0 +0,478 @@
+@@ -0,0 +1,478 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * CIX Sky1 SoC information driver
@@ -184347,7 +183610,7 @@ new file mode 100644
 index 000000000..4f6d776b4
 --- /dev/null
 +++ b/drivers/thermal/cix/Makefile
-@@ -0,0 +0,2 @@
+@@ -0,0 +1,2 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +obj-$(CONFIG_CIX_CPU_IPA)	+= cix_cpu_ipa.o
 diff --git a/drivers/thermal/cix/cix_cpu_ipa.c b/drivers/thermal/cix/cix_cpu_ipa.c
@@ -184355,7 +183618,7 @@ new file mode 100644
 index 000000000..10979593d
 --- /dev/null
 +++ b/drivers/thermal/cix/cix_cpu_ipa.c
-@@ -0,0 +0,171 @@
+@@ -0,0 +1,171 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * CIX CPU IPA (Intelligent Power Allocation) driver
@@ -184655,7 +183918,7 @@ new file mode 100644
 index 000000000..b58cc37cf
 --- /dev/null
 +++ b/drivers/usb/cdns3/cdnsp-plat.c
-@@ -0,0 +0,432 @@
+@@ -0,0 +1,432 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Cadence USBSSP DRD Driver - Platform Device Support
@@ -185093,7 +184356,7 @@ new file mode 100644
 index 000000000..ed61e2a92
 --- /dev/null
 +++ b/drivers/usb/cdns3/cdnsp-sky1.c
-@@ -0,0 +0,913 @@
+@@ -0,0 +1,913 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * cdnsp-sky1 - USB controller driver for CIX's sky1 SoCs
@@ -186012,7 +185275,7 @@ new file mode 100644
 index 000000000..82563bd10
 --- /dev/null
 +++ b/drivers/usb/cdns3/cdnsp-sky1.h
-@@ -0,0 +0,123 @@
+@@ -0,0 +1,123 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +
 +#ifndef __LINUX_CDNSP_SKY1_H
@@ -186214,7 +185477,7 @@ new file mode 100644
 index 000000000..5521a00d4
 --- /dev/null
 +++ b/drivers/usb/typec/rts5453.c
-@@ -0,0 +0,621 @@
+@@ -0,0 +1,621 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Realtek RTS5453 USB Type-C PD Controller Driver
@@ -186991,7 +186254,7 @@ new file mode 100644
 index 000000000..0c40e2b5c
 --- /dev/null
 +++ b/drivers/watchdog/sky1_wdt.c
-@@ -0,0 +0,431 @@
+@@ -0,0 +1,431 @@
 +// SPDX-License-Identifier: GPL-2.0
 +
 +#include <linux/clk.h>
@@ -187563,7 +186826,7 @@ new file mode 100644
 index 000000000..8d9a18558
 --- /dev/null
 +++ b/include/dt-bindings/clock/sky1-audss.h
-@@ -0,0 +0,71 @@
+@@ -0,0 +1,71 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2024 Cix Technology Group Co., Ltd.
@@ -187640,7 +186903,7 @@ new file mode 100644
 index 000000000..987e8b7d7
 --- /dev/null
 +++ b/include/dt-bindings/phy/phy-cadence-torrent.h
-@@ -0,0 +0,62 @@
+@@ -0,0 +1,62 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * This header provides constants for Cadence Torrent SERDES.
@@ -187708,7 +186971,7 @@ new file mode 100644
 index 000000000..e659db9b3
 --- /dev/null
 +++ b/include/dt-bindings/pinctrl/pads-sky1.h
-@@ -0,0 +0,587 @@
+@@ -0,0 +1,587 @@
 +#ifndef __SKY1_PADS_H
 +#define __SKY1_PADS_H
 +
@@ -188301,7 +187564,7 @@ new file mode 100644
 index 000000000..c989bfbec
 --- /dev/null
 +++ b/include/dt-bindings/power/sky1-power.h
-@@ -0,0 +0,48 @@
+@@ -0,0 +1,48 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2024-2025 Cix Technology Group Co., Ltd.
@@ -188355,7 +187618,7 @@ new file mode 100644
 index 000000000..d5d1465a8
 --- /dev/null
 +++ b/include/dt-bindings/reset/sky1-reset-audss.h
-@@ -0,0 +0,23 @@
+@@ -0,0 +1,23 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */ /* * Author: Joakim Zhang <joakim.zhang@cixtech.com> */
 +#ifndef DT_BINDING_RESET_AUDSS_SKY1_H
 +#define DT_BINDING_RESET_AUDSS_SKY1_H
@@ -188384,7 +187647,7 @@ new file mode 100644
 index 000000000..d7e478fac
 --- /dev/null
 +++ b/include/dt-bindings/reset/sky1-reset-fch.h
-@@ -0,0 +0,44 @@
+@@ -0,0 +1,44 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */ /* * Author: Jerry Zhu <jerry.zhu@cixtech.com> */
 +#ifndef DT_BINDING_RESET_FCH_SKY1_H
 +#define DT_BINDING_RESET_FCH_SKY1_H
@@ -188434,7 +187697,7 @@ new file mode 100644
 index 000000000..b43dbf39f
 --- /dev/null
 +++ b/include/dt-bindings/reset/sky1-reset.h
-@@ -0,0 +0,166 @@
+@@ -0,0 +1,166 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */ /* * Author: Jerry Zhu <jerry.zhu@cixtech.com> */
 +#ifndef DT_BINDING_RESET_SKY1_H
 +#define DT_BINDING_RESET_SKY1_H
@@ -188606,7 +187869,7 @@ new file mode 100644
 index 000000000..a13e68c3d
 --- /dev/null
 +++ b/include/dt-bindings/thermal/sky1-thermal.h
-@@ -0,0 +0,29 @@
+@@ -0,0 +1,29 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2024-2025 Cix Technology Group Co., Ltd.
@@ -188665,7 +187928,7 @@ new file mode 100644
 index 000000000..7b7850ba0
 --- /dev/null
 +++ b/include/linux/cix/cix_cpu_ipa.h
-@@ -0,0 +0,32 @@
+@@ -0,0 +1,32 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * CIX CPU IPA power monitoring interface
@@ -188703,7 +187966,7 @@ new file mode 100644
 index 000000000..a4f8d5d4a
 --- /dev/null
 +++ b/include/linux/firmware/cix/dsp.h
-@@ -0,0 +0,86 @@
+@@ -0,0 +1,86 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Header file for the CIX DSP IPC implementation
@@ -188923,7 +188186,7 @@ new file mode 100644
 index 000000000..4e3aadddb
 --- /dev/null
 +++ b/include/linux/scmi_perf_domain.h
-@@ -0,0 +0,34 @@
+@@ -0,0 +1,34 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * Helpers for querying SCMI perf domain firmware power estimates.
@@ -190261,7 +189524,7 @@ new file mode 100644
 index 000000000..8789e016e
 --- /dev/null
 +++ b/sound/soc/cix/Kconfig
-@@ -0,0 +0,37 @@
+@@ -0,0 +1,37 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +config SND_SOC_CIX
@@ -190304,7 +189567,7 @@ new file mode 100644
 index 000000000..93b2055df
 --- /dev/null
 +++ b/sound/soc/cix/Makefile
-@@ -0,0 +0,10 @@
+@@ -0,0 +1,10 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +obj-$(CONFIG_SND_SOC_CDNS_I2S_MC) += snd-soc-cdns-i2s-mc.o
@@ -190320,7 +189583,7 @@ new file mode 100644
 index 000000000..6cf278eb2
 --- /dev/null
 +++ b/sound/soc/cix/card-utils.c
-@@ -0,0 +0,749 @@
+@@ -0,0 +1,749 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright 2024 Cix Technology Group Co., Ltd.
 +
@@ -191075,7 +190338,7 @@ new file mode 100644
 index 000000000..2b0bf8065
 --- /dev/null
 +++ b/sound/soc/cix/card-utils.h
-@@ -0,0 +0,73 @@
+@@ -0,0 +1,73 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright 2024 Cix Technology Group Co., Ltd. */
 +
@@ -191154,7 +190417,7 @@ new file mode 100644
 index 000000000..29b2aa3df
 --- /dev/null
 +++ b/sound/soc/cix/cdns_i2s_mc.c
-@@ -0,0 +0,1166 @@
+@@ -0,0 +1,1166 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright 2024 Cix Technology Group Co., Ltd.
 +
@@ -192326,7 +191589,7 @@ new file mode 100644
 index 000000000..59e9b98ca
 --- /dev/null
 +++ b/sound/soc/cix/cdns_i2s_sc.c
-@@ -0,0 +0,1204 @@
+@@ -0,0 +1,1204 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright 2024 Cix Technology Group Co., Ltd.
 +
@@ -193536,7 +192799,7 @@ new file mode 100644
 index 000000000..a119dae36
 --- /dev/null
 +++ b/sound/soc/cix/sky1-card.c
-@@ -0,0 +0,73 @@
+@@ -0,0 +1,73 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright 2024 Cix Technology Group Co., Ltd.
 +
@@ -193675,7 +192938,7 @@ new file mode 100644
 index 000000000..c9269df48
 --- /dev/null
 +++ b/sound/soc/sof/cix/Kconfig
-@@ -0,0 +0,34 @@
+@@ -0,0 +1,34 @@
 +# SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 +
 +config SND_SOC_SOF_CIX_TOPLEVEL
@@ -193715,7 +192978,7 @@ new file mode 100644
 index 000000000..269f780f7
 --- /dev/null
 +++ b/sound/soc/sof/cix/Makefile
-@@ -0,0 +0,7 @@
+@@ -0,0 +1,7 @@
 +# SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 +
 +snd-sof-cix-common-objs := cix-common.o
@@ -193728,7 +192991,7 @@ new file mode 100644
 index 000000000..31df10c63
 --- /dev/null
 +++ b/sound/soc/sof/cix/cix-common.c
-@@ -0,0 +0,109 @@
+@@ -0,0 +1,109 @@
 +// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 +/*
 + * Common helpers for the audio DSP on CIX SoCs
@@ -193843,7 +193106,7 @@ new file mode 100644
 index 000000000..ea81cf3ed
 --- /dev/null
 +++ b/sound/soc/sof/cix/cix-common.h
-@@ -0,0 +0,34 @@
+@@ -0,0 +1,34 @@
 +/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 +/*
 + * Copyright 2024 Cix Technology Group Co., Ltd.
@@ -193883,7 +193146,7 @@ new file mode 100644
 index 000000000..fcd1ec131
 --- /dev/null
 +++ b/sound/soc/sof/cix/cix-sky1.c
-@@ -0,9 +0,586 @@
+@@ -0,0 +1,581 @@
 +// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 +/*
 + * Sound Open Firmware platform driver for CIX Sky1 SoC
@@ -194463,25 +193726,13 @@ index 000000000..fcd1ec131
 +MODULE_AUTHOR("Joakim Zhang <joakim.zhang@cixtech.com>");
 +MODULE_DESCRIPTION("SOF support for CIX Sky1");
 +MODULE_LICENSE("Dual BSD/GPL");
---
-2.54.0
-
-
-From 98c7d16bcedf8d88c6aaba6d1d0994034234f8ee Mon Sep 17 00:00:00 2001
-From: MAHDTech <MAHDTech@saltlabs.tech>
-Date: Wed, 29 Jul 2026 14:55:58 +1000
-Subject: [PATCH 2/3] Remove duplicate pci_io_failure_expected function in
- setup-res.c
-
----
- drivers/pci/setup-res.c | 32 --------------------------------
- 1 file changed, 32 deletions(-)
-
++
++
 diff --git a/drivers/pci/setup-res.c b/drivers/pci/setup-res.c
 index e52407ca4..71562f80c 100644
 --- a/drivers/pci/setup-res.c
 +++ b/drivers/pci/setup-res.c
-@@ -409,49 +409,15 @@ static bool pci_io_failure_expected(struct pci_dev *dev, int resno,
+@@ -409,41 +409,9 @@ static bool pci_io_failure_expected(struct pci_dev *dev, int resno,
  	return true;
  }
 
@@ -194521,20 +193772,7 @@ index e52407ca4..71562f80c 100644
 
  int pci_assign_resource(struct pci_dev *dev, int resno)
  {
---
-2.54.0
 
-
-From acc0e19405416bb179b3700860c2d744e9713ac1 Mon Sep 17 00:00:00 2001
-From: MAHDTech <MAHDTech@saltlabs.tech>
-Date: Wed, 29 Jul 2026 16:38:17 +1000
-Subject: [PATCH 3/3] Fix duplicate quirk in quirks.c and update
- clk-sky1-audss.c for 7.2 determine_rate API
-
----
- drivers/clk/cix/clk-sky1-audss.c | 10 +++++-----
- drivers/pci/quirks.c             | 21 +--------------------
- 2 files changed, 6 insertions(+), 25 deletions(-)
 
 diff --git a/drivers/clk/cix/clk-sky1-audss.c b/drivers/clk/cix/clk-sky1-audss.c
 index 174058167..e03a250a5 100644
