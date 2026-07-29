@@ -172577,7 +172577,7 @@ diff --git a/drivers/pci/controller/cadence/pcie-cadence-host.c b/drivers/pci/co
 index c12cedf05..ba604cc5d 100644
 --- a/drivers/pci/controller/cadence/pcie-cadence-host.c
 +++ b/drivers/pci/controller/cadence/pcie-cadence-host.c
-@@ -12,9 +12,16 @@
+@@ -12,7 +12,14 @@
  #include <linux/platform_device.h>
 
  #include "pcie-cadence.h"
@@ -172595,7 +172595,7 @@ index c12cedf05..ba604cc5d 100644
  static u8 bar_aperture_mask[] = {
  	[RP_BAR0] = 0x1F,
  	[RP_BAR1] = 0xF,
-@@ -27,7 +34,7 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
+@@ -27,6 +34,6 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
  	struct cdns_pcie_rc *rc = pci_host_bridge_priv(bridge);
  	struct cdns_pcie *pcie = &rc->pcie;
  	unsigned int busn = bus->number;
@@ -172604,7 +172604,7 @@ index c12cedf05..ba604cc5d 100644
 
  	if (pci_is_root_bus(bus)) {
  		/*
-@@ -43,8 +50,10 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
+@@ -43,7 +50,9 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
  	/* Check that the link is up */
  	if (!(cdns_pcie_readl(pcie, CDNS_PCIE_LM_BASE) & 0x1))
  		return NULL;
@@ -172616,7 +172616,7 @@ index c12cedf05..ba604cc5d 100644
 
  	/* Update Output registers for AXI region 0. */
  	addr0 = CDNS_PCIE_AT_OB_REGION_PCI_ADDR0_NBITS(12) |
-@@ -53,17 +62,24 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
+@@ -53,15 +62,22 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR0(0), addr0);
 
  	/* Configuration Type 0 or Type 1 access. */
@@ -172643,7 +172643,7 @@ index c12cedf05..ba604cc5d 100644
 
  	return rc->cfg_base + (where & 0xfff);
  }
-@@ -75,6 +91,148 @@ static struct pci_ops cdns_pcie_host_ops = {
+@@ -75,5 +91,79 @@ static struct pci_ops cdns_pcie_host_ops = {
  	.write		= pci_generic_config_write,
  };
 
@@ -172724,7 +172724,7 @@ index c12cedf05..ba604cc5d 100644
  static void cdns_pcie_host_disable_ptm_response(struct cdns_pcie *pcie)
  {
  	u32 val;
-@@ -91,6 +249,40 @@ static void cdns_pcie_host_enable_ptm_response(struct cdns_pcie *pcie)
+@@ -91,5 +249,23 @@ static void cdns_pcie_host_enable_ptm_response(struct cdns_pcie *pcie)
  	cdns_pcie_writel(pcie, CDNS_PCIE_LM_PTM_CTRL, val | CDNS_PCIE_LM_TPM_CTRL_PTMRSEN);
  }
 
@@ -172749,7 +172749,7 @@ index c12cedf05..ba604cc5d 100644
  static void cdns_pcie_host_deinit_root_port(struct cdns_pcie_rc *rc)
  {
  	struct cdns_pcie *pcie = &rc->pcie;
-@@ -158,11 +350,10 @@ static int cdns_pcie_host_init_root_port(struct cdns_pcie_rc *rc)
+@@ -158,10 +350,9 @@ static int cdns_pcie_host_init_root_port(struct cdns_pcie_rc *rc)
  	return 0;
  }
 
@@ -172765,7 +172765,7 @@ index c12cedf05..ba604cc5d 100644
  {
  	struct cdns_pcie *pcie = &rc->pcie;
  	u32 addr0, addr1, aperture, value;
-@@ -204,6 +395,268 @@ int cdns_pcie_host_bar_ib_config(struct cdns_pcie_rc *rc,
+@@ -204,5 +395,141 @@ int cdns_pcie_host_bar_ib_config(struct cdns_pcie_rc *rc,
  	return 0;
  }
 
@@ -172908,7 +172908,7 @@ index c12cedf05..ba604cc5d 100644
  static void cdns_pcie_host_unmap_dma_ranges(struct cdns_pcie_rc *rc)
  {
  	struct cdns_pcie *pcie = &rc->pcie;
-@@ -230,6 +683,80 @@ static void cdns_pcie_host_unmap_dma_ranges(struct cdns_pcie_rc *rc)
+@@ -230,5 +683,79 @@ static void cdns_pcie_host_unmap_dma_ranges(struct cdns_pcie_rc *rc)
  	}
  }
 
@@ -172989,7 +172989,7 @@ index c12cedf05..ba604cc5d 100644
  static void cdns_pcie_host_deinit_address_translation(struct cdns_pcie_rc *rc)
  {
  	struct cdns_pcie *pcie = &rc->pcie;
-@@ -253,7 +780,83 @@ static void cdns_pcie_host_deinit_address_translation(struct cdns_pcie_rc *rc)
+@@ -253,6 +780,82 @@ static void cdns_pcie_host_deinit_address_translation(struct cdns_pcie_rc *rc)
  	}
  }
 
@@ -173074,7 +173074,7 @@ index c12cedf05..ba604cc5d 100644
  {
  	struct cdns_pcie *pcie = &rc->pcie;
  	struct pci_host_bridge *bridge = pci_host_bridge_from_priv(rc);
-@@ -261,7 +864,7 @@ static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
+@@ -261,6 +864,6 @@ static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
  	struct resource_entry *entry;
  	u64 cpu_addr = cfg_res->start;
  	u32 addr0, addr1, desc1;
@@ -173083,7 +173083,7 @@ index c12cedf05..ba604cc5d 100644
 
  	entry = resource_list_first_type(&bridge->windows, IORESOURCE_BUS);
  	if (entry)
-@@ -286,7 +889,115 @@ static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
+@@ -286,6 +889,114 @@ static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR0(0), addr0);
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR1(0), addr1);
 
@@ -173208,7 +173208,7 @@ index c12cedf05..ba604cc5d 100644
  			cdns_pcie_set_outbound_region(pcie, busnr, 0, r,
  						      false,
  						      res->start,
-@@ -307,7 +1018,11 @@ static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
+@@ -307,5 +1018,9 @@ static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
  		r++;
  	}
 
@@ -173221,7 +173221,7 @@ index c12cedf05..ba604cc5d 100644
  }
 
  static void cdns_pcie_host_deinit(struct cdns_pcie_rc *rc)
-@@ -353,7 +1068,7 @@ int cdns_pcie_host_link_setup(struct cdns_pcie_rc *rc)
+@@ -353,5 +1068,5 @@ int cdns_pcie_host_link_setup(struct cdns_pcie_rc *rc)
  		return ret;
  	}
 
@@ -173230,7 +173230,7 @@ index c12cedf05..ba604cc5d 100644
  	if (ret)
  		dev_dbg(dev, "PCIe link never came up\n");
 
-@@ -394,19 +1109,27 @@ int cdns_pcie_host_setup(struct cdns_pcie_rc *rc)
+@@ -394,14 +1109,22 @@ int cdns_pcie_host_setup(struct cdns_pcie_rc *rc)
  	pcie = &rc->pcie;
  	pcie->is_rc = true;
 
