@@ -18,7 +18,7 @@ final: _prev: {
       { };
 
   # Disable checkPhase for pulumi to bypass flaky Go 1.23 context cancellation unit test failure
-  pulumi = _prev.pulumi.overrideAttrs (_: {
+  pulumi = _prev.pulumi.overrideAttrs (_old: {
     doCheck = false;
   });
 }
