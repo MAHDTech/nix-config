@@ -5,27 +5,17 @@
 }:
 
 let
-  kernelVersion = "7.1.5";
+  kernelVersion = "7.2.0-rc5";
 
-  kernelSrc = pkgs.fetchgit {
-    url = "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git";
-    rev = "v7.1.5";
-    sha256 = "sha256-pPS5d2AyKF+ommPUXb5NW1p5dkjnnQtx5a5JqhgpcsM=";
+  kernelSrc = pkgs.fetchurl {
+    url = "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-7.2-rc5.tar.gz";
+    sha256 = "07nm1mdpx9nqxh8bin0isnl2b7460if5g7ssy4krkj2vbhjbzrcb";
   };
 
-  # Shared patch script — applied to both the config-only derivation and the
-  # full kernel build to ensure the .config is generated against the same source.
+  # Shared patch script — no out-of-tree patches are required for 7.2-rc5
+  # since all ASUS Zenbook A14 DTS and audio binding patches are merged upstream.
   patchScript = ''
-    echo "Applying local Zenbook patches..."
-    for patch in ${../files/patches}/*.patch; do
-      if [ -f "$patch" ]; then
-        echo "Applying $patch"
-        patch -p1 < "$patch"
-      fi
-    done
-
-    echo "Patching DRM_MSM Kconfig to select DRM_SYNCOBJ..."
-    sed -i '/^config DRM_MSM$/a \\tselect DRM_SYNCOBJ\n\tselect DRM_SYNCOBJ_TIMELINE_EXPORT' drivers/gpu/drm/msm/Kconfig
+    echo "No out-of-tree patches required for 7.2.0-rc5 (ASUS Zenbook A14 DTS merged upstream)."
   '';
 
   # Shared config generation script — runs scripts/config + make olddefconfig.
@@ -46,8 +36,7 @@ let
     # Qualcomm TLMM pin controller — CRITICAL for boot.
     # The defconfig lacks PINCTRL_MSM which is the parent Kconfig for all QCOM
     # TLMM drivers. Without PINCTRL_X1E80100 no GPIOs are configured and the
-    # system gets a black screen. On linux-next this was auto-selected by
-    # ARCH_QCOM + olddefconfig, but stable 7.1.5 requires it explicitly.
+    # system gets a black screen.
     ./scripts/config --enable PINCTRL_MSM
     ./scripts/config --enable PINCTRL_X1E80100
 
@@ -122,8 +111,8 @@ let
     # DRM syncobj: required by Turnip (freedreno Vulkan driver) for GPU command
     # synchronization. Without this, Vulkan renders one frame then hangs because
     # the driver cannot signal/wait on submission fences between frames.
-    ./scripts/config --set-val DRM_SYNCOBJ y
-    ./scripts/config --set-val DRM_SYNCOBJ_TIMELINE_EXPORT y
+    ./scripts/config --enable DRM_SYNCOBJ
+    ./scripts/config --enable DRM_SYNCOBJ_TIMELINE_EXPORT
 
     # Qualcomm Limits Management Hardware (LMH): provides hardware-level
     # overcurrent and thermal throttling for CPU/GPU. Without this, sustained
@@ -132,16 +121,8 @@ let
     # kernel driver is needed to properly configure thresholds and interrupts.
     ./scripts/config --enable QCOM_LMH
 
-    # WiFi: alexVinarskis patch set reorganises ath12k into a wifi7/ subdirectory.
-    # The kernel config symbol is still CONFIG_ATH12K (covers both PCI and AHB) — no
-    # separate ATH12K_WIFI7_PCI kernel config symbol exists. The on-disk module name
-    # is ath12k_wifi7_pci. CONFIG_ATH12K=m in the defconfig is sufficient.
-    # (No scripts/config call needed here — defconfig already has ATH12K=m)
-
-    # USB-C: UCSI over Qualcomm PMIC glink — required for PD negotiation and
-    # DisplayPort alt-mode on the USB-C ports.
-    # Note: kernel config symbol is UCSI_PMIC_GLINK (not UCSI_GLINK); module name is ucsi_glink.
-    # Already =m in the defconfig; this ensures it survives any future defconfig regeneration.
+    # WiFi: defconfig already has ATH12K=m
+    # USB-C: UCSI over Qualcomm PMIC glink — required for PD negotiation and DisplayPort alt-mode
     ./scripts/config --module UCSI_PMIC_GLINK
 
     # SPI via GENI SE — needed for some on-board SPI peripherals
@@ -153,21 +134,22 @@ let
     ./scripts/config --module TYPEC_DP_ALTMODE
     ./scripts/config --module TYPEC_TBT_ALTMODE
 
-    # Audio amplifier codecs for Zenbook speakers
+    # Audio amplifier codecs for Zenbook speakers and SoundWire
     ./scripts/config --module SND_SOC_WSA884X
+    ./scripts/config --module SND_SOC_WCD938X
+    ./scripts/config --module SND_SOC_WCD938X_SDW
+    ./scripts/config --module SOUNDWIRE_QCOM
 
     # Enable MGLRU (Multi-Gen LRU) for memory optimization
     ./scripts/config --enable LRU_GEN
     ./scripts/config --enable LRU_GEN_ENABLED
 
     # zram: compressed RAM swap — required by NixOS zramSwap module
-    # Without this, zramSwap.enable = true silently does nothing
     ./scripts/config --module ZRAM
     ./scripts/config --enable ZRAM_BACKEND_ZSTD
     ./scripts/config --enable ZRAM_DEF_COMP_ZSTD
 
     # AppArmor: mandatory access control — required by security.apparmor.enable = true
-    # Without this, NixOS enables AppArmor userspace but the kernel has no LSM support
     ./scripts/config --enable SECURITY_APPARMOR
     ./scripts/config --enable DEFAULT_SECURITY_APPARMOR
 
@@ -217,7 +199,6 @@ let
   '';
 
   # Minimal nativeBuildInputs needed for config generation (Kconfig parsing).
-  # The full build needs more (elfutils, openssl, etc.) but config-only is cheap.
   configBuildInputs = with pkgs; [
     buildPackages.stdenv.cc
     bc
@@ -249,14 +230,7 @@ let
     zstd
   ];
 
-  # ---------------------------------------------------------------------------
-  # Stage 1: Config-only derivation (cheap — no compilation, just Kconfig)
-  #
-  # Generates the final .config by applying patches, running scripts/config
-  # modifications, and executing `make olddefconfig`. Output is a single file.
-  # This enables Nix to read the config at evaluation time (IFD) to provide
-  # accurate passthru.config answers to the NixOS module system.
-  # ---------------------------------------------------------------------------
+  # Stage 1: Config-only derivation
   generatedConfig = pkgs.stdenv.mkDerivation {
     name = "zenbook-kernel-config-${kernelVersion}";
     src = kernelSrc;
@@ -274,20 +248,6 @@ let
     '';
   };
 
-  # ---------------------------------------------------------------------------
-  # Parse the generated .config into a Nix attrset for accurate passthru
-  #
-  # Reads lines like "CONFIG_FOO=y", "CONFIG_BAR=m", "CONFIG_BAZ=123" and
-  # builds a map { FOO = "y"; BAR = "m"; BAZ = "123"; }. Lines starting with
-  # '#' (unset options) and blank lines are ignored.
-  #
-  # This uses Import From Derivation (IFD) — Nix must build generatedConfig
-  # before evaluating dependent NixOS modules. The config-only derivation is
-  # extremely fast (seconds, not hours) so this is acceptable.
-  # REQUIREMENT: allowImportFromDerivation must be true (default). CI must
-  # use --impure or equivalent. Will break under --pure-eval or Hydra
-  # with restricted evaluation.
-  # ---------------------------------------------------------------------------
   configText = builtins.readFile generatedConfig;
   configLines = builtins.filter (l: l != "") (lib.splitString "\n" configText);
   configParsed =
@@ -308,8 +268,6 @@ let
     in
     builtins.listToAttrs parsed;
 
-  # Build the passthru config interface that NixOS modules query.
-  # This replaces the old mock that returned true for everything.
   kernelConfig = {
     isEnabled =
       option:
@@ -333,12 +291,9 @@ let
     isSet = option: builtins.hasAttr option configParsed;
   };
 
-  # ---------------------------------------------------------------------------
   # Stage 2: The actual kernel build
-  # ---------------------------------------------------------------------------
   kernelBuild = pkgs.stdenv.mkDerivation {
-    pname = "stable-zenbook";
-    # Set version to match the stable release tag
+    pname = "mainline-zenbook";
     version = kernelVersion;
 
     enableParallelBuilding = true;
@@ -352,7 +307,6 @@ let
       elfutils
     ];
 
-    # Apply the patches from the input.
     prePatch = patchScript;
 
     configurePhase = configScript;
@@ -374,9 +328,6 @@ let
       rm -rf $out/lib/modules/*/source
     '';
 
-    # Passthru interface consumed by pkgs.linuxPackagesFor and NixOS modules.
-    # The config attrset is now parsed from the actual .config file (via IFD)
-    # instead of a mock that returned true for everything.
     passthru = rec {
       modDirVersion = kernelVersion;
       version = modDirVersion;
