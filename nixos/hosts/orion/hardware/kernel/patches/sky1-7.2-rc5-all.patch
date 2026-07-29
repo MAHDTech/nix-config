@@ -1,7 +1,7 @@
 From 4d30476e6a932d8ee81e957c99a5dd6c079f1f52 Mon Sep 17 00:00:00 2001
 From: MAHDTech <MAHDTech@saltlabs.tech>
 Date: Wed, 29 Jul 2026 13:11:04 +1000
-Subject: [PATCH 1/2] Fix Kconfig inclusions and remove temp script artifacts
+Subject: [PATCH 1/3] Fix Kconfig inclusions and remove temp script artifacts
 
 ---
  README.md                                     |    91 +
@@ -195151,7 +195151,7 @@ index 000000000..fcd1ec131
 From 98c7d16bcedf8d88c6aaba6d1d0994034234f8ee Mon Sep 17 00:00:00 2001
 From: MAHDTech <MAHDTech@saltlabs.tech>
 Date: Wed, 29 Jul 2026 14:55:58 +1000
-Subject: [PATCH 2/2] Remove duplicate pci_io_failure_expected function in
+Subject: [PATCH 2/3] Remove duplicate pci_io_failure_expected function in
  setup-res.c
 
 ---
@@ -195202,6 +195202,84 @@ index e52407ca4..71562f80c 100644
 
  int pci_assign_resource(struct pci_dev *dev, int resno)
  {
+--
+2.54.0
+
+
+From acc0e19405416bb179b3700860c2d744e9713ac1 Mon Sep 17 00:00:00 2001
+From: MAHDTech <MAHDTech@saltlabs.tech>
+Date: Wed, 29 Jul 2026 16:38:17 +1000
+Subject: [PATCH 3/3] Fix duplicate quirk in quirks.c and update
+ clk-sky1-audss.c for 7.2 determine_rate API
+
+---
+ drivers/clk/cix/clk-sky1-audss.c | 10 +++++-----
+ drivers/pci/quirks.c             | 21 +--------------------
+ 2 files changed, 6 insertions(+), 25 deletions(-)
+
+diff --git a/drivers/clk/cix/clk-sky1-audss.c b/drivers/clk/cix/clk-sky1-audss.c
+index 174058167..e03a250a5 100644
+--- a/drivers/clk/cix/clk-sky1-audss.c
++++ b/drivers/clk/cix/clk-sky1-audss.c
+@@ -303,13 +303,13 @@ static unsigned long sky1_audss_div_recalc_rate(struct clk_hw *hw,
+ 				   div->flags, div->width);
+ }
+
+-static long sky1_audss_div_round_rate(struct clk_hw *hw, unsigned long rate,
+-				      unsigned long *prate)
++static int sky1_audss_div_determine_rate(struct clk_hw *hw,
++					  struct clk_rate_request *req)
+ {
+ 	struct clk_divider *div = to_clk_divider(hw);
+
+-	return divider_round_rate(hw, rate, prate, div->table,
+-				  div->width, div->flags);
++	return divider_determine_rate(hw, req, div->table,
++				       div->width, div->flags);
+ }
+
+ static int sky1_audss_div_set_rate(struct clk_hw *hw, unsigned long rate,
+@@ -340,7 +340,7 @@ static int sky1_audss_div_set_rate(struct clk_hw *hw, unsigned long rate,
+
+ static const struct clk_ops sky1_audss_div_ops = {
+ 	.recalc_rate = sky1_audss_div_recalc_rate,
+-	.round_rate = sky1_audss_div_round_rate,
++	.determine_rate = sky1_audss_div_determine_rate,
+ 	.set_rate = sky1_audss_div_set_rate,
+ };
+
+diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
+index db01702cd..656aa9930 100644
+--- a/drivers/pci/quirks.c
++++ b/drivers/pci/quirks.c
+@@ -2927,26 +2927,7 @@ DECLARE_PCI_FIXUP_CLASS_EARLY(0x1f6c, 0x0001,
+ 			      PCI_CLASS_BRIDGE_PCI, 8,
+ 			      pci_quirk_cix_disable_rp_msi);
+
+-/*
+- * CIX CD8180 PCIe root ports (used in Sky1/Orion SoCs) advertise MSI-X
+- * capability but the MSI-X table is located in BAR0 which doesn't exist.
+- * Accessing the non-existent BAR causes an SError. Disable MSI/MSI-X for
+- * these root ports; downstream devices can still use MSI.
+- *
+- * These root ports appear with two different vendor IDs:
+- * - 0x17cd (Cadence) with device 0x0000 - raw hardware ID
+- * - 0x1f6c (CIX Technology) with device 0x0001 - vendor-programmed ID
+- */
+-static void pci_quirk_cix_disable_rp_msi(struct pci_dev *dev)
+-{
+-	dev->no_msi = 1;
+-}
+-DECLARE_PCI_FIXUP_CLASS_EARLY(0x17cd, 0x0000,
+-			      PCI_CLASS_BRIDGE_PCI, 8,
+-			      pci_quirk_cix_disable_rp_msi);
+-DECLARE_PCI_FIXUP_CLASS_EARLY(0x1f6c, 0x0001,
+-			      PCI_CLASS_BRIDGE_PCI, 8,
+-			      pci_quirk_cix_disable_rp_msi);
++
+
+ /*
+  * Some versions of the MCP55 bridge from Nvidia have a legacy IRQ routing
 --
 2.54.0
 
