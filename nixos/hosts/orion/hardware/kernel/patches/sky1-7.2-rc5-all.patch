@@ -172623,10 +172623,10 @@ index c12cedf05..ba604cc5d 100644
 -	desc0 = CDNS_PCIE_AT_OB_REGION_DESC0_HARDCODED_RID |
 -		CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(0);
 +	desc1 = cdns_pcie_readl(pcie, CDNS_PCIE_AT_OB_REGION_DESC1(0));
-+	desc1 &= ~CDNS_PCIE_AT_OB_REGION_DESC1_DEVFN_MASK;
-+	desc1 |= CDNS_PCIE_AT_OB_REGION_DESC1_DEVFN(0);
-+	ctrl0 = CDNS_PCIE_AT_OB_REGION_CTRL0_SUPPLY_BUS |
-+		CDNS_PCIE_AT_OB_REGION_CTRL0_SUPPLY_DEV_FN;
++	desc1 &= ~CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN_MASK;
++	desc1 |= CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(0);
++	ctrl0 = CDNS_PCIE_HPA_AT_OB_REGION_CTRL0_SUPPLY_BUS |
++		CDNS_PCIE_HPA_AT_OB_REGION_CTRL0_SUPPLY_DEV_FN;
 +
  	/*
  	 * The bus number was already set once for all in desc1 by
@@ -172639,7 +172639,7 @@ index c12cedf05..ba604cc5d 100644
  		desc0 |= CDNS_PCIE_AT_OB_REGION_DESC0_TYPE_CONF_TYPE1;
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_DESC0(0), desc0);
 +	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_DESC1(0), desc1);
-+	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CTRL0(0), ctrl0);
++	cdns_pcie_writel(pcie, CDNS_PCIE_HPA_AT_OB_REGION_CTRL0(0), ctrl0);
 
  	return rc->cfg_base + (where & 0xfff);
  }
@@ -173275,7 +173275,7 @@ index c12cedf05..ba604cc5d 100644
 +	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR0(0), 0x1b);
 +	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR1(0), 0);
 +
-+	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CTRL0(0), 0x06000000);
++	cdns_pcie_writel(pcie, CDNS_PCIE_HPA_AT_OB_REGION_CTRL0(0), 0x06000000);
 +
 +	return 0;
 +}
@@ -173371,7 +173371,7 @@ index c12cedf05..ba604cc5d 100644
 +	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR0(0), 0x1b);
 +	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR1(0), 0);
 +
-+	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CTRL0(0), 0x06000000);
++	cdns_pcie_writel(pcie, CDNS_PCIE_HPA_AT_OB_REGION_CTRL0(0), 0x06000000);
 +
 +	return 0;
 +}
@@ -173569,16 +173569,16 @@ index a1eada56e..6fd3c89f1 100644
 -			 CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(0);
 -		desc1 |= CDNS_PCIE_AT_OB_REGION_DESC1_BUS(busnr);
 +		desc1 = CDNS_PCIE_AT_OB_REGION_DESC1_BUS(busnr) |
-+			CDNS_PCIE_AT_OB_REGION_DESC1_DEVFN(0);
-+		ctrl0 = CDNS_PCIE_AT_OB_REGION_CTRL0_SUPPLY_BUS |
-+			CDNS_PCIE_AT_OB_REGION_CTRL0_SUPPLY_DEV_FN;
++			CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(0);
++		ctrl0 = CDNS_PCIE_HPA_AT_OB_REGION_CTRL0_SUPPLY_BUS |
++			CDNS_PCIE_HPA_AT_OB_REGION_CTRL0_SUPPLY_DEV_FN;
  	} else {
  		/*
  		 * Use captured values for bus and device numbers but still
  		 * need to set the function number.
  		 */
 -		desc0 |= CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(fn);
-+		desc1 |= CDNS_PCIE_AT_OB_REGION_DESC1_DEVFN(fn);
++		desc1 |= CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(fn);
  	}
 
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_DESC0(r), desc0);
@@ -173586,7 +173586,7 @@ index a1eada56e..6fd3c89f1 100644
 
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR0(r), addr0);
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR1(r), addr1);
-+	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CTRL0(r), ctrl0);
++	cdns_pcie_writel(pcie, CDNS_PCIE_HPA_AT_OB_REGION_CTRL0(r), ctrl0);
  }
  EXPORT_SYMBOL_GPL(cdns_pcie_set_outbound_region);
 
@@ -173606,12 +173606,12 @@ index a1eada56e..6fd3c89f1 100644
 -			 CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(0);
 -		desc1 |= CDNS_PCIE_AT_OB_REGION_DESC1_BUS(busnr);
 +		desc1 = CDNS_PCIE_AT_OB_REGION_DESC1_BUS(busnr) |
-+			CDNS_PCIE_AT_OB_REGION_DESC1_DEVFN(0);
-+		ctrl0 = CDNS_PCIE_AT_OB_REGION_CTRL0_SUPPLY_BUS |
-+			CDNS_PCIE_AT_OB_REGION_CTRL0_SUPPLY_DEV_FN;
++			CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(0);
++		ctrl0 = CDNS_PCIE_HPA_AT_OB_REGION_CTRL0_SUPPLY_BUS |
++			CDNS_PCIE_HPA_AT_OB_REGION_CTRL0_SUPPLY_DEV_FN;
  	} else {
 -		desc0 |= CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(fn);
-+		desc1 |= CDNS_PCIE_AT_OB_REGION_DESC1_DEVFN(fn);
++		desc1 |= CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(fn);
  	}
 
  	/* Set the CPU address */
@@ -173619,7 +173619,7 @@ index a1eada56e..6fd3c89f1 100644
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_DESC1(r), desc1);
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR0(r), addr0);
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR1(r), addr1);
-+	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CTRL0(r), ctrl0);
++	cdns_pcie_writel(pcie, CDNS_PCIE_HPA_AT_OB_REGION_CTRL0(r), ctrl0);
  }
  EXPORT_SYMBOL_GPL(cdns_pcie_set_outbound_region_for_normal_msg);
 
@@ -173627,7 +173627,7 @@ index a1eada56e..6fd3c89f1 100644
 
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR0(r), 0);
  	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR1(r), 0);
-+	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CTRL0(r), 0);
++	cdns_pcie_writel(pcie, CDNS_PCIE_HPA_AT_OB_REGION_CTRL0(r), 0);
  }
  EXPORT_SYMBOL_GPL(cdns_pcie_reset_outbound_region);
 
