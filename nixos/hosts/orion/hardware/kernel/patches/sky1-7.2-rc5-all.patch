@@ -173907,20 +173907,20 @@ index 042a4c49b..3089ea875 100644
 +#define CDNS_PCIE_MSG_DATA			BIT(16)
 +
  struct cdns_pcie;
--struct cdns_pcie_rc;
+ struct cdns_pcie_rc;
 -
--enum cdns_pcie_reg_bank {
--	REG_BANK_RP,
--	REG_BANK_IP_REG,
--	REG_BANK_IP_CFG_CTRL_REG,
--	REG_BANK_AXI_MASTER_COMMON,
--	REG_BANK_AXI_MASTER,
--	REG_BANK_AXI_SLAVE,
--	REG_BANK_AXI_HLS,
--	REG_BANK_AXI_RAS,
--	REG_BANK_AXI_DTI,
--	REG_BANKS_MAX,
--};
+ enum cdns_pcie_reg_bank {
+ 	REG_BANK_RP,
+ 	REG_BANK_IP_REG,
+ 	REG_BANK_IP_CFG_CTRL_REG,
+ 	REG_BANK_AXI_MASTER_COMMON,
+ 	REG_BANK_AXI_MASTER,
+ 	REG_BANK_AXI_SLAVE,
+ 	REG_BANK_AXI_HLS,
+ 	REG_BANK_AXI_RAS,
+ 	REG_BANK_AXI_DTI,
+ 	REG_BANKS_MAX,
+ };
 
  struct cdns_pcie_ops {
 -	int     (*start_link)(struct cdns_pcie *pcie);
@@ -173944,17 +173944,17 @@ index 042a4c49b..3089ea875 100644
 - * @axi_ras_offset: AXI RAS offset
 - * @axi_dti_offset: AXI DTI offset
 - */
--struct cdns_plat_pcie_of_data {
--	u32 is_rc:1;
--	u32 ip_reg_bank_offset;
--	u32 ip_cfg_ctrl_reg_offset;
--	u32 axi_mstr_common_offset;
--	u32 axi_slave_offset;
--	u32 axi_master_offset;
--	u32 axi_hls_offset;
--	u32 axi_ras_offset;
--	u32 axi_dti_offset;
--};
+ struct cdns_plat_pcie_of_data {
+ 	u32 is_rc:1;
+ 	u32 ip_reg_bank_offset;
+ 	u32 ip_cfg_ctrl_reg_offset;
+ 	u32 axi_mstr_common_offset;
+ 	u32 axi_slave_offset;
+ 	u32 axi_master_offset;
+ 	u32 axi_hls_offset;
+ 	u32 axi_ras_offset;
+ 	u32 axi_dti_offset;
+ };
 -
  /**
   * struct cdns_pcie - private data for Cadence PCIe controller drivers
@@ -173969,43 +173969,43 @@ index 042a4c49b..3089ea875 100644
  	unsigned int		quirk_disable_flr:1;
  };
 
--static inline u32 cdns_reg_bank_to_off(struct cdns_pcie *pcie, enum cdns_pcie_reg_bank bank)
--{
--	u32 offset = 0x0;
+ static inline u32 cdns_reg_bank_to_off(struct cdns_pcie *pcie, enum cdns_pcie_reg_bank bank)
+ {
+ 	u32 offset = 0x0;
 -
--	switch (bank) {
--	case REG_BANK_RP:
--		offset = 0;
--		break;
--	case REG_BANK_IP_REG:
--		offset = pcie->cdns_pcie_reg_offsets->ip_reg_bank_offset;
--		break;
--	case REG_BANK_IP_CFG_CTRL_REG:
--		offset = pcie->cdns_pcie_reg_offsets->ip_cfg_ctrl_reg_offset;
--		break;
--	case REG_BANK_AXI_MASTER_COMMON:
--		offset = pcie->cdns_pcie_reg_offsets->axi_mstr_common_offset;
--		break;
--	case REG_BANK_AXI_MASTER:
--		offset = pcie->cdns_pcie_reg_offsets->axi_master_offset;
--		break;
--	case REG_BANK_AXI_SLAVE:
--		offset = pcie->cdns_pcie_reg_offsets->axi_slave_offset;
--		break;
--	case REG_BANK_AXI_HLS:
--		offset = pcie->cdns_pcie_reg_offsets->axi_hls_offset;
--		break;
--	case REG_BANK_AXI_RAS:
--		offset = pcie->cdns_pcie_reg_offsets->axi_ras_offset;
--		break;
--	case REG_BANK_AXI_DTI:
--		offset = pcie->cdns_pcie_reg_offsets->axi_dti_offset;
--		break;
--	default:
--		break;
+ 	switch (bank) {
+ 	case REG_BANK_RP:
+ 		offset = 0;
+ 		break;
+ 	case REG_BANK_IP_REG:
+ 		offset = pcie->cdns_pcie_reg_offsets->ip_reg_bank_offset;
+ 		break;
+ 	case REG_BANK_IP_CFG_CTRL_REG:
+ 		offset = pcie->cdns_pcie_reg_offsets->ip_cfg_ctrl_reg_offset;
+ 		break;
+ 	case REG_BANK_AXI_MASTER_COMMON:
+ 		offset = pcie->cdns_pcie_reg_offsets->axi_mstr_common_offset;
+ 		break;
+ 	case REG_BANK_AXI_MASTER:
+ 		offset = pcie->cdns_pcie_reg_offsets->axi_master_offset;
+ 		break;
+ 	case REG_BANK_AXI_SLAVE:
+ 		offset = pcie->cdns_pcie_reg_offsets->axi_slave_offset;
+ 		break;
+ 	case REG_BANK_AXI_HLS:
+ 		offset = pcie->cdns_pcie_reg_offsets->axi_hls_offset;
+ 		break;
+ 	case REG_BANK_AXI_RAS:
+ 		offset = pcie->cdns_pcie_reg_offsets->axi_ras_offset;
+ 		break;
+ 	case REG_BANK_AXI_DTI:
+ 		offset = pcie->cdns_pcie_reg_offsets->axi_dti_offset;
+ 		break;
+ 	default:
+ 		break;
 -	}
--	return offset;
--}
+ 	return offset;
+ }
 
  /* Register access */
  static inline void cdns_pcie_writel(struct cdns_pcie *pcie, u32 reg, u32 value)
@@ -174015,26 +174015,26 @@ index 042a4c49b..3089ea875 100644
 
 -static inline void cdns_pcie_hpa_rp_writeb(struct cdns_pcie *pcie,
 -					   u32 reg, u8 value)
--{
+ {
 -	void __iomem *addr = pcie->reg_base + CDNS_PCIE_HPA_RP_BASE + reg;
 -
 -	cdns_pcie_write_sz(addr, 0x1, value);
--}
+ }
 -
 -static inline void cdns_pcie_hpa_rp_writew(struct cdns_pcie *pcie,
 -					   u32 reg, u16 value)
--{
+ {
 -	void __iomem *addr = pcie->reg_base + CDNS_PCIE_HPA_RP_BASE + reg;
 -
 -	cdns_pcie_write_sz(addr, 0x2, value);
--}
+ }
 -
 -static inline u16 cdns_pcie_hpa_rp_readw(struct cdns_pcie *pcie, u32 reg)
--{
+ {
 -	void __iomem *addr = pcie->reg_base + CDNS_PCIE_HPA_RP_BASE + reg;
 -
 -	return cdns_pcie_read_sz(addr, 0x2);
--}
+ }
 -
  /* Endpoint Function register access */
  static inline void cdns_pcie_ep_fn_writeb(struct cdns_pcie *pcie, u8 fn,
@@ -174052,9 +174052,9 @@ index 042a4c49b..3089ea875 100644
  }
 
 -static inline int cdns_pcie_hpa_host_setup(struct cdns_pcie_rc *rc)
--{
+ {
 -	return 0;
--}
+ }
 -
  static inline void cdns_pcie_host_disable(struct cdns_pcie_rc *rc)
  {
@@ -174073,9 +174073,9 @@ index 042a4c49b..3089ea875 100644
  }
 -
 -static inline int cdns_pcie_hpa_ep_setup(struct cdns_pcie_ep *ep)
--{
+ {
 -	return 0;
--}
+ }
 -
  #endif
 

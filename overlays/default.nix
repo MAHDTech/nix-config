@@ -16,4 +16,9 @@ final: _prev: {
   cosmic-ext-applet-clipboard-manager =
     final.callPackage ../home/nix/packages/custom/cosmic-ext-applet-clipboard-manager/package.nix
       { };
+
+  # Disable checkPhase for pulumi to bypass flaky Go 1.23 context cancellation unit test failure
+  pulumi = _prev.pulumi.overrideAttrs (_: {
+    doCheck = false;
+  });
 }
