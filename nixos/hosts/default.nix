@@ -6,44 +6,50 @@ in
   # Metadata for other flake outputs
   # buildSystem: the machine that compiles. When it differs from system,
   #              nixpkgs is configured for cross-compilation automatically.
-  #
-  # Every host is currently native (buildSystem == system). Cross-compiling an
-  # aarch64-linux host from x86_64 produces derivation hashes that do not exist
-  # on cache.nixos.org, so it rebuilds the whole closure from source. A native
-  # aarch64 build substitutes nearly all of it. Build aarch64 hosts on aarch64
-  # hardware, or on x86_64 under binfmt emulation — both hash identically and
-  # hit the cache. The cross path in lib/default.nix is kept as an escape hatch
-  # for targets with no aarch64 builder available.
+  # nixConfig: host-specific Nix settings (e.g. maxJobs) forwarded into
+  #            nix.settings and system.autoUpgrade.flags.
   list = [
     {
       name = "JONS";
       system = "x86_64-linux";
-      buildSystem = "x86_64-linux"; # native
+      buildSystem = "x86_64-linux";
+      nixConfig = { };
     }
     {
       name = "ARC";
       system = "x86_64-linux";
-      buildSystem = "x86_64-linux"; # native
+      buildSystem = "x86_64-linux";
+      nixConfig = { };
     }
     {
       name = "ZENBOOK";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native ARM64
+      buildSystem = "aarch64-linux";
+      nixConfig = {
+        maxJobs = 2;
+      };
     }
     {
       name = "ORION";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native ARM64
+      buildSystem = "aarch64-linux";
+      nixConfig = {
+        maxJobs = 2;
+      };
     }
     {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native ARM64 — build on ORION, or on x86_64 under binfmt
+      buildSystem = "aarch64-linux";
+      nixConfig = {
+        maxJobs = 2;
+      };
     }
     {
       name = "test-nixos";
       system = "x86_64-linux";
       buildSystem = "x86_64-linux";
+      nixConfig = { };
     }
   ];
 
@@ -97,6 +103,9 @@ in
       system = "aarch64-linux";
       buildSystem = "aarch64-linux";
       hostType = "laptop";
+      nixConfig = {
+        maxJobs = 2;
+      };
       extraModules = [
         inputs.disko.nixosModules.disko
         ./zenbook/hardware/disko-config.nix
@@ -108,6 +117,9 @@ in
       system = "aarch64-linux";
       buildSystem = "aarch64-linux";
       hostType = "server";
+      nixConfig = {
+        maxJobs = 2;
+      };
       extraModules = [
         inputs.disko.nixosModules.disko
         ./orion/hardware/disko-config.nix
@@ -117,8 +129,11 @@ in
     BOOTYCALL = mkHost {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native ARM64
+      buildSystem = "aarch64-linux";
       hostType = "server";
+      nixConfig = {
+        maxJobs = 2;
+      };
       enableHomeManager = false;
       extraModules = [
         inputs.disko.nixosModules.disko

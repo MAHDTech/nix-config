@@ -72,6 +72,7 @@ in
       system,
       buildSystem ? builtins.currentSystem or system,
       hostType ? "desktop",
+      nixConfig ? { },
       extraModules ? [ ],
       overlays ? [ ],
       enableHomeManager ? true,
@@ -87,6 +88,7 @@ in
           buildSystem
           name
           hostType
+          nixConfig
           ;
         username = globalUsername;
         inherit globalUsername globalStateVersion;
@@ -97,6 +99,9 @@ in
       };
       modules = [
         { system.stateVersion = globalStateVersion; }
+        (lib.optionalAttrs (nixConfig ? maxJobs) {
+          nix.settings.max-jobs = nixConfig.maxJobs;
+        })
         {
           boot.zfs.forceImportRoot = lib.mkDefault false;
           boot.zfs.forceImportAll = lib.mkDefault false;
@@ -143,10 +148,6 @@ in
         ../home
         inputs.stylix.homeModules.stylix
         inputs.opnix.homeManagerModules.default
-        # home/nix/services/cosmic-desktop sets wayland.desktopManager.cosmic.*,
-        # so this module must be present here exactly as it is in
-        # nixos/system/home-manager.nix — otherwise the standalone
-        # homeConfigurations output fails to evaluate.
         inputs.cosmic-manager.homeManagerModules.default
       ];
       extraSpecialArgs = {

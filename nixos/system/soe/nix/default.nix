@@ -1,6 +1,8 @@
 {
-  inputs,
+  lib,
   pkgs,
+  inputs,
+  nixConfig ? { },
   ...
 }:
 {
@@ -24,7 +26,7 @@
 
     settings = {
       cores = 0;
-      max-jobs = "auto";
+      max-jobs = nixConfig.maxJobs or "auto";
       require-sigs = true;
       sandbox = true;
       sandbox-fallback = false;
@@ -87,7 +89,11 @@
         "--show-trace"
         # Removed: --impure (legacy, breaks reproducibility)
         # Removed: --refresh (forces full NAR info re-download, causes timeouts)
-      ];
+      ]
+      ++ (lib.optionals (nixConfig ? maxJobs) [
+        "--max-jobs"
+        (toString nixConfig.maxJobs)
+      ]);
 
       dates = "03:00";
 
