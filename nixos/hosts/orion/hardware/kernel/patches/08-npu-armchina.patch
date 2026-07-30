@@ -8009,7 +8009,7 @@ new file mode 100644
 index 000000000..80daab087
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/sky1/sky1.c
-@@ -0,0 +1,491 @@
+@@ -0,0 +1,569 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright 2024 Cix Technology Group Co., Ltd. All Rights Reserved.*/
 +/**
