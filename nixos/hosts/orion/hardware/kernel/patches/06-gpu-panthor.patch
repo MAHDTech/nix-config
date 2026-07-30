@@ -960,11 +960,13 @@ diff --git a/drivers/gpu/drm/panthor/panthor_gpu.c b/drivers/gpu/drm/panthor/pan
 index c013d6bf9..fb732b002 100644
 --- a/drivers/gpu/drm/panthor/panthor_gpu.c
 +++ b/drivers/gpu/drm/panthor/panthor_gpu.c
-@@ -6,6 +6,7 @@
+@@ -6,6 +6,9 @@
  #include <linux/bitfield.h>
  #include <linux/bitmap.h>
  #include <linux/delay.h>
 +#include <linux/of.h>
++#define GPU_SYSC_PBHA_OVERRIDE(n) (0x320 + ((n) * 4))
++#define GPU_SYSC_ALLOC(n) (0x340 + ((n) * 4))
  #include <linux/dma-mapping.h>
  #include <linux/interrupt.h>
  #include <linux/io.h>

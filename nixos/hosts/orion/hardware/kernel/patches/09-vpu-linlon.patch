@@ -29140,7 +29140,7 @@ new file mode 100755
 index 000000000..26ece1126
 --- /dev/null
 +++ b/drivers/media/platform/cix/if/v4l2/mvx_ext_v4l2.c
-@@ -0,0 +1,237 @@
+@@ -0,0 +1,238 @@
 +/*
 + * The confidential and proprietary information contained in this file may
 + * only be used by a person authorised under and to the extent permitted
