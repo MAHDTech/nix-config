@@ -50,8 +50,7 @@ in
         "usbnet" # USB network core
         # Cadence cdns3 USB controller (PCIe-attached on CIX P1)
         # Live device shows cdns3_pci_wrap / cdnsp_udc_pci loading, not generic dwc3
-        "cdns3"
-        "cdns3_pci_wrap"
+        "cdns3-pci-wrap"
       ];
       kernelModules = [ ];
     };
