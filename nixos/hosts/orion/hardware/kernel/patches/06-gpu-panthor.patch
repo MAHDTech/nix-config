@@ -1039,7 +1039,7 @@ index c013d6bf9..fb732b002 100644
 -	if (!ptdev->coherent)
 +	if (ptdev->coherency_mode == PANTHOR_COHERENCY_NONE)
  		return 0;
- 
+
 -	/* Check if the ACE-Lite coherency protocol is actually supported by the GPU.
 -	 * ACE protocol has never been supported for command stream frontend GPUs.
 -	 */
@@ -1050,39 +1050,43 @@ index c013d6bf9..fb732b002 100644
 +	    GPU_COHERENCY_PROT_BIT(ACE_LITE))
  		return 0;
 -	}
- 
+
 -	drm_err(&ptdev->base, "Coherency not supported by the device");
 -	return -ENOTSUPP;
 +	drm_err(&ptdev->base, "ACE-Lite not supported by hardware");
 +	return -ENOTSUPP;
  }
- 
-@@ -233,7 +233,24 @@ static int panthor_gpu_info_init(struct panthor_device *ptdev)
+
+diff --git a/drivers/gpu/drm/panthor/panthor_hw.c b/drivers/gpu/drm/panthor/panthor_hw.c
+--- a/drivers/gpu/drm/panthor/panthor_hw.c
++++ b/drivers/gpu/drm/panthor/panthor_hw.c
+@@ -234,8 +234,25 @@ static int panthor_gpu_info_init(struct panthor_device *ptdev)
  		ptdev->gpu_info.l2_present = gpu_read64(gpu_iomem, GPU_L2_PRESENT);
  	}
-
+ 
 -	return overload_shader_present(ptdev);
 +	ret = overload_shader_present(ptdev);
 +	if (ret)
 +		return ret;
-+
+ 
 +	/* On CIX Sky1 SoC some shader cores can be disabled via RCSU */
 +	if (of_device_is_compatible(ptdev->base.dev->of_node, "arm,mali-valhall") &&
 +	    ptdev->sky1_rcsu_reg) {
 +		u32 sky1_harvesting_reg_val = readl(ptdev->sky1_rcsu_reg + 0x304);
 +		u64 sky1_harvesting_core_mask = ~((sky1_harvesting_reg_val & 0xFFFFFF0) >> 4) & 0x550555;
-+
+ 
 +		ptdev->gpu_info.shader_present &= sky1_harvesting_core_mask;
-+
+ 
 +		drm_info(&ptdev->base,
 +			 "sky1 harvesting: reg=0x%x core_mask=0x%llx",
 +			 sky1_harvesting_reg_val, sky1_harvesting_core_mask);
 +	}
-+
+ 
 +	return 0;
  }
-
+ 
  static int panthor_hw_info_init(struct panthor_device *ptdev)
+ {
 diff --git a/drivers/gpu/drm/panthor/panthor_mmu.c b/drivers/gpu/drm/panthor/panthor_mmu.c
 index e592a8ebb..7ff8dba8d 100644
 --- a/drivers/gpu/drm/panthor/panthor_mmu.c
