@@ -3163,7 +3163,6 @@ index 369342345..0391d4afc 100644
 
  MODULE_AUTHOR("Ulf Hansson <ulf.hansson@linaro.org>");
 diff --git a/drivers/pmdomain/arm/scmi_pm_domain.c b/drivers/pmdomain/arm/scmi_pm_domain.c
-index 3d73aef21..7c8d6da84 100644
 --- a/drivers/pmdomain/arm/scmi_pm_domain.c
 +++ b/drivers/pmdomain/arm/scmi_pm_domain.c
 @@ -24,9 +24,35 @@ struct scmi_pm_domain {
@@ -3203,7 +3202,7 @@ index 3d73aef21..7c8d6da84 100644
  }
 
  static int scmi_pd_power_on(struct generic_pm_domain *domain)
-@@ -108,9 +134,20 @@ static int scmi_pm_domain_probe(struct scmi_device *sdev)
+@@ -108,9 +134,15 @@ static int scmi_pm_domain_probe(struct scmi_device *sdev)
  	scmi_pd_data->domains = domains;
  	scmi_pd_data->num_domains = num_domains;
 
@@ -3215,11 +3214,6 @@ index 3d73aef21..7c8d6da84 100644
 +	 * pm_genpd_init() and consumers attach by name.
 +	 */
 +	if (np) {
-+		/* Register DT provider if a device tree node is available.
-+	 * Under ACPI, domains are still globally registered by
-+	 * pm_genpd_init() and consumers attach by name.
-+	 */
-+	if (np) {
 +		ret = of_genpd_add_provider_onecell(np, scmi_pd_data);
 +		if (ret)
 +			goto err_rm_genpds;
@@ -3227,7 +3221,7 @@ index 3d73aef21..7c8d6da84 100644
 
  	dev_set_drvdata(dev, scmi_pd_data);
 
-@@ -126,8 +163,10 @@ static int scmi_pm_domain_probe(struct scmi_device *sdev)
+@@ -126,8 +158,10 @@ static int scmi_pm_domain_probe(struct scmi_device *sdev)
 
  	return 0;
  err_rm_genpds:
@@ -3240,7 +3234,7 @@ index 3d73aef21..7c8d6da84 100644
 
  	return ret;
  }
-@@ -144,7 +183,8 @@ static void scmi_pm_domain_remove(struct scmi_device *sdev)
+@@ -144,7 +178,8 @@ static void scmi_pm_domain_remove(struct scmi_device *sdev)
  	/* Remove any parent-child relationships established at probe time */
  	of_genpd_remove_child_ids(np, scmi_pd_data);
 
@@ -3250,11 +3244,10 @@ index 3d73aef21..7c8d6da84 100644
 
  	for (i = 0; i < scmi_pd_data->num_domains; i++) {
  		if (!scmi_pd_data->domains[i])
-@@ -165,7 +205,20 @@ static struct scmi_driver scmi_power_domain_driver = {
+@@ -165,7 +200,19 @@ static struct scmi_driver scmi_power_domain_driver = {
  	.remove = scmi_pm_domain_remove,
  	.id_table = scmi_id_table,
  };
-+
 +/* CIX Sky1 needs early SCMI power domain init so GPU access permissions
 + * are configured before other drivers probe. Vendor kernel uses
 + * subsys_initcall_sync for this purpose.
