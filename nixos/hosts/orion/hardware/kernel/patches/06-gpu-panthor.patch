@@ -1072,7 +1072,7 @@ diff --git a/drivers/gpu/drm/panthor/panthor_hw.c b/drivers/gpu/drm/panthor/pant
  	}
  
 -	return overload_shader_present(ptdev);
-+	ret = overload_shader_present(ptdev);
++	int ret = overload_shader_present(ptdev);
 +	if (ret)
 +		return ret;
 +	

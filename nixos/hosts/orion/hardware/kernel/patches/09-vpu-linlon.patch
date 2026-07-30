@@ -29264,7 +29264,7 @@ index 000000000..26ece1126
 +                V4L2_CAP_VIDEO_M2M_MPLANE |
 +                V4L2_CAP_EXT_PIX_FORMAT |
 +                V4L2_CAP_STREAMING;
-+    strncpy(ext->vdev.name, name, sizeof(ext->vdev.name));
++    strscpy(ext->vdev.name, name, sizeof(ext->vdev.name));
 +
 +    video_set_drvdata(&ext->vdev, ext);
 +
