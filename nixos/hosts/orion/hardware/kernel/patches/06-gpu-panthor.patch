@@ -1060,7 +1060,7 @@ index c013d6bf9..fb732b002 100644
 diff --git a/drivers/gpu/drm/panthor/panthor_hw.c b/drivers/gpu/drm/panthor/panthor_hw.c
 --- a/drivers/gpu/drm/panthor/panthor_hw.c
 +++ b/drivers/gpu/drm/panthor/panthor_hw.c
-@@ -234,8 +234,25 @@ static int panthor_gpu_info_init(struct panthor_device *ptdev)
+@@ -234,8 +234,25 @@
  		ptdev->gpu_info.l2_present = gpu_read64(gpu_iomem, GPU_L2_PRESENT);
  	}
  
@@ -1068,20 +1068,20 @@ diff --git a/drivers/gpu/drm/panthor/panthor_hw.c b/drivers/gpu/drm/panthor/pant
 +	ret = overload_shader_present(ptdev);
 +	if (ret)
 +		return ret;
- 
++	
 +	/* On CIX Sky1 SoC some shader cores can be disabled via RCSU */
 +	if (of_device_is_compatible(ptdev->base.dev->of_node, "arm,mali-valhall") &&
 +	    ptdev->sky1_rcsu_reg) {
 +		u32 sky1_harvesting_reg_val = readl(ptdev->sky1_rcsu_reg + 0x304);
 +		u64 sky1_harvesting_core_mask = ~((sky1_harvesting_reg_val & 0xFFFFFF0) >> 4) & 0x550555;
- 
++	
 +		ptdev->gpu_info.shader_present &= sky1_harvesting_core_mask;
- 
++	
 +		drm_info(&ptdev->base,
 +			 "sky1 harvesting: reg=0x%x core_mask=0x%llx",
 +			 sky1_harvesting_reg_val, sky1_harvesting_core_mask);
 +	}
- 
++	
 +	return 0;
  }
  
