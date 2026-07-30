@@ -5168,9 +5168,8 @@ index 4d0f2cb6c..5b4674c59 100644
  	return status;
  }
 
-diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
---- a/drivers/pci/quirks.c
-+++ b/drivers/pci/quirks.c
+--- a/drivers/pci/quirks.c	2026-07-30 09:56:08.584766661 +1000
++++ b/drivers/pci/quirks.c	2026-07-30 09:57:25.999990187 +1000
 @@ -2522,6 +2522,10 @@
  DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_FREESCALE, 0x0451, quirk_disable_aspm_l0s_l1);
  DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_PASEMI, 0xa002, quirk_disable_aspm_l0s_l1);
@@ -5205,6 +5204,7 @@ diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
 +DECLARE_PCI_FIXUP_CLASS_EARLY(0x1f6c, 0x0001,
 +			      PCI_CLASS_BRIDGE_PCI, 8,
 +			      pci_quirk_cix_disable_rp_msi);
++
 +
 +/*
   * Some versions of the MCP55 bridge from Nvidia have a legacy IRQ routing
@@ -5252,9 +5252,8 @@ diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
 +}
 +DECLARE_PCI_FIXUP_FINAL(PCI_ANY_ID, PCI_ANY_ID,
 +			quirk_cadence_endpoint_no_d3);
-diff --git a/drivers/pci/setup-res.c b/drivers/pci/setup-res.c
---- a/drivers/pci/setup-res.c
-+++ b/drivers/pci/setup-res.c
+--- a/drivers/pci/setup-res.c	2026-07-30 09:56:09.008774883 +1000
++++ b/drivers/pci/setup-res.c	2026-07-30 12:37:51.207004412 +1000
 @@ -375,6 +375,40 @@
  	return ret;
  }
@@ -5320,3 +5319,158 @@ diff --git a/drivers/pci/setup-res.c b/drivers/pci/setup-res.c
 +				 res_name, res);
  		return ret;
  	}
+
+diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
+--- a/drivers/pci/quirks.c	2026-07-30 09:56:08.584766661 +1000
++++ b/drivers/pci/quirks.c	2026-07-30 09:57:25.999990187 +1000
+@@ -2522,6 +2522,10 @@
+ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_FREESCALE, 0x0451, quirk_disable_aspm_l0s_l1);
+ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_PASEMI, 0xa002, quirk_disable_aspm_l0s_l1);
+ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_HUAWEI, 0x1105, quirk_disable_aspm_l0s_l1);
++/* Phison E13T NVMe - ASPM causes link instability */
++DECLARE_PCI_FIXUP_HEADER(0x1987, 0x5013, quirk_disable_aspm_l0s_l1);
++/* Kingston NVMe - ASPM causes link instability */
++DECLARE_PCI_FIXUP_HEADER(0x2646, 0x501d, quirk_disable_aspm_l0s_l1);
+
+ /*
+  * Some Pericom PCIe-to-PCI bridges in reverse mode need the PCIe Retrain
+@@ -2903,6 +2907,28 @@
+ 			      pci_quirk_nvidia_tegra_disable_rp_msi);
+
+ /*
++ * CIX CD8180 PCIe root ports (used in Sky1/Orion SoCs) advertise MSI-X
++ * capability but the MSI-X table is located in BAR0 which doesn't exist.
++ * Accessing the non-existent BAR causes an SError. Disable MSI/MSI-X for
++ * these root ports; downstream devices can still use MSI.
++ *
++ * These root ports appear with two different vendor IDs:
++ * - 0x17cd (Cadence) with device 0x0000 - raw hardware ID
++ * - 0x1f6c (CIX Technology) with device 0x0001 - vendor-programmed ID
++ */
++static void pci_quirk_cix_disable_rp_msi(struct pci_dev *dev)
++{
++	dev->no_msi = 1;
++}
++DECLARE_PCI_FIXUP_CLASS_EARLY(0x17cd, 0x0000,
++			      PCI_CLASS_BRIDGE_PCI, 8,
++			      pci_quirk_cix_disable_rp_msi);
++DECLARE_PCI_FIXUP_CLASS_EARLY(0x1f6c, 0x0001,
++			      PCI_CLASS_BRIDGE_PCI, 8,
++			      pci_quirk_cix_disable_rp_msi);
++
++
++/*
+  * Some versions of the MCP55 bridge from Nvidia have a legacy IRQ routing
+  * config register.  This register controls the routing of legacy
+  * interrupts from devices that route through the MCP55.  If this register
+@@ -6415,3 +6441,41 @@
+ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_GLI, 0x9750, pci_mask_replay_timer_timeout);
+ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_GLI, 0x9755, pci_mask_replay_timer_timeout);
+ #endif
++
++/*
++ * CIX Sky1 Cadence PCIe root ports can't handle D3hot/D3cold power state
++ * transitions or ASPM link state changes.  Under DT boot, pci-sky1
++ * disables power state changes in hardware.  Under ACPI boot, prevent
++ * runtime PM from suspending both the bridges and their downstream
++ * devices, since the Cadence IP link drops on any D-state transition.
++ */
++static void quirk_cadence_bridge_no_d3(struct pci_dev *dev)
++{
++	if (acpi_disabled)
++		return;
++
++	pm_runtime_forbid(&dev->dev);
++	pci_d3cold_disable(dev);
++	pci_disable_link_state(dev, PCIE_LINK_STATE_ALL);
++	pci_info(dev, "disabled D3 and ASPM for Cadence bridge\n");
++}
++DECLARE_PCI_FIXUP_CLASS_FINAL(0x17cd, PCI_ANY_ID,
++			      PCI_CLASS_BRIDGE_PCI, 8,
++			      quirk_cadence_bridge_no_d3);
++
++static void quirk_cadence_endpoint_no_d3(struct pci_dev *dev)
++{
++	struct pci_dev *bridge;
++
++	if (acpi_disabled)
++		return;
++
++	bridge = pci_upstream_bridge(dev);
++	if (!bridge || bridge->vendor != 0x17cd)
++		return;
++
++	pm_runtime_forbid(&dev->dev);
++	pci_info(dev, "disabled runtime PM (behind Cadence bridge)\n");
++}
++DECLARE_PCI_FIXUP_FINAL(PCI_ANY_ID, PCI_ANY_ID,
++			quirk_cadence_endpoint_no_d3);
+diff --git a/drivers/pci/setup-res.c b/drivers/pci/setup-res.c
+--- a/drivers/pci/setup-res.c	2026-07-30 09:56:09.008774883 +1000
++++ b/drivers/pci/setup-res.c	2026-07-30 12:37:51.207004412 +1000
+@@ -375,6 +375,40 @@
+ 	return ret;
+ }
+
++/*
++ * Check whether I/O port assignment failures are expected because the
++ * host bridge has no I/O windows at all (common on ARM64/RISC-V where
++ * PCI I/O is optional and many bridges don't support I/O forwarding).
++ *
++ * Also matches bridge I/O window resources that were sized for child I/O
++ * BARs but never initialized with IORESOURCE_IO (bridge hardware doesn't
++ * support I/O forwarding), which show up with no type bits set.
++ */
++static bool pci_io_failure_expected(struct pci_dev *dev, int resno,
++				    struct resource *res)
++{
++	struct pci_host_bridge *bridge;
++	struct resource_entry *entry;
++
++	if (res->flags & IORESOURCE_IO)
++		goto check_windows;
++
++	/* Bridge I/O window sized without type bits (hardware can't forward I/O) */
++	if (resno == PCI_BRIDGE_IO_WINDOW &&
++	    !(res->flags & IORESOURCE_TYPE_BITS))
++		goto check_windows;
++
++	return false;
++
++check_windows:
++	bridge = pci_find_host_bridge(dev->bus);
++	resource_list_for_each_entry(entry, &bridge->windows)
++		if (entry->res->flags & IORESOURCE_IO)
++			return false;
++	return true;
++}
++
++
+ int pci_assign_resource(struct pci_dev *dev, int resno)
+ {
+ 	struct resource *res = pci_resource_n(dev, resno);
+@@ -402,12 +436,22 @@
+ 	 * working, which is better than just leaving it disabled.
+ 	 */
+ 	if (ret < 0) {
+-		pci_info(dev, "%s %pR: can't assign; no space\n", res_name, res);
++		if (pci_io_failure_expected(dev, resno, res))
++			pci_dbg(dev, "%s %pR: can't assign; no space\n",
++				res_name, res);
++		else
++			pci_info(dev, "%s %pR: can't assign; no space\n",
++				 res_name, res);
+ 		ret = pci_revert_fw_address(res, dev, resno, size);
+ 	}
+
+ 	if (ret < 0) {
+-		pci_info(dev, "%s %pR: failed to assign\n", res_name, res);
++		if (pci_io_failure_expected(dev, resno, res))
++			pci_dbg(dev, "%s %pR: failed to assign\n",
++				res_name, res);
++		else
++			pci_info(dev, "%s %pR: failed to assign\n",
++				 res_name, res);
+ 		return ret;
+ 	}
+
