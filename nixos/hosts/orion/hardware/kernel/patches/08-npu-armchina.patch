@@ -6921,7 +6921,6 @@ index 000000000..e3bb9ef03
 +
 +DEFAULT_SOC_FILES := default/default.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_SOC_DEFAULT) += $(DEFAULT_SOC_FILES)
-+\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/include/armchina_aipu.h b/drivers/misc/armchina-npu/include/armchina_aipu.h
 new file mode 100755
 index 000000000..4c456bee2
@@ -7817,7 +7816,6 @@ index 000000000..f276bed41
 +include $(src)/sky1/Makefile
 +include $(src)/default/Makefile
 +include $(src)/r329/Makefile
-+\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/r329/Makefile b/drivers/misc/armchina-npu/r329/Makefile
 new file mode 100755
 index 000000000..ee65f24f5
@@ -7829,7 +7827,6 @@ index 000000000..ee65f24f5
 +
 +R329_SOC_FILES := r329/r329.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_SOC_R329) += $(R329_SOC_FILES)
-+\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/r329/r329.c b/drivers/misc/armchina-npu/r329/r329.c
 new file mode 100755
 index 000000000..c21fe74c5
@@ -8007,7 +8004,6 @@ index 000000000..d6538426f
 +
 +SKY1_SOC_FILES := sky1/sky1.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_SOC_SKY1) += $(SKY1_SOC_FILES)
-+\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/sky1/sky1.c b/drivers/misc/armchina-npu/sky1/sky1.c
 new file mode 100644
 index 000000000..80daab087
@@ -8600,7 +8596,6 @@ index 000000000..59ce04746
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_ARCH_V2) += $(ZHOUYI_V1V2_FILES) zhouyi/v2.o
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_ARCH_V3) += $(ZHOUYI_V3_FILES)
 +armchina_npu-$(CONFIG_ARMCHINA_NPU_ARCH_V3_1) += $(ZHOUYI_V3_1_FILES)
-+\ No newline at end of file
 diff --git a/drivers/misc/armchina-npu/zhouyi/v1.c b/drivers/misc/armchina-npu/zhouyi/v1.c
 new file mode 100755
 index 000000000..92bbc630e

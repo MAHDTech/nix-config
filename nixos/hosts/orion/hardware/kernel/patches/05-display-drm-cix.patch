@@ -5110,7 +5110,6 @@ index 000000000..1d3c95b31
 +trilin-dpsub-y += cix_edp_panel.o
 +
 +obj-$(CONFIG_DRM_TRILIN_DPSUB) += trilin-dpsub.o
-+\ No newline at end of file
 diff --git a/drivers/gpu/drm/cix/dptx/trilin_dptx_audio.c b/drivers/gpu/drm/cix/dptx/trilin_dptx_audio.c
 new file mode 100644
 index 000000000..0119509f0
@@ -11744,7 +11743,6 @@ index 000000000..b7c6ea098
 +int trilin_dp_fill_modes(struct drm_connector *connector, uint32_t maxX,
 +			 uint32_t maxY);
 +#endif
-+\ No newline at end of file
 diff --git a/drivers/gpu/drm/cix/dptx/trilin_drm_mst.c b/drivers/gpu/drm/cix/dptx/trilin_drm_mst.c
 new file mode 100644
 index 000000000..472da257d
