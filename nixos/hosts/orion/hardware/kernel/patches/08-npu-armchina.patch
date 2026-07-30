@@ -6915,7 +6915,7 @@ new file mode 100755
 index 000000000..e3bb9ef03
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/default/Makefile
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,5 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +
@@ -7797,7 +7797,7 @@ new file mode 100755
 index 000000000..f276bed41
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/Makefile
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,18 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
 +subdir-ccflags-y += -I$(src)
@@ -7821,7 +7821,7 @@ new file mode 100755
 index 000000000..ee65f24f5
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/r329/Makefile
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,5 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +
@@ -7998,7 +7998,7 @@ new file mode 100755
 index 000000000..d6538426f
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/sky1/Makefile
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,5 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +
@@ -8583,7 +8583,7 @@ new file mode 100755
 index 000000000..59ce04746
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/zhouyi/Makefile
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,12 @@
 +# SPDX-License-Identifier: GPL-2.0
 +subdir-ccflags-y += -I$(src)
 +

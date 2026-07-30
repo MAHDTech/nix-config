@@ -5098,7 +5098,7 @@ new file mode 100644
 index 000000000..1d3c95b31
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/Makefile
-@@ -0,0 +1,12 @@
+@@ -0,0 +1,11 @@
 +trilin-dpsub-y := trilin_dptx_cix.o trilin_dptx.o trilin_host_tmr.o dptx_infoframe.o trilin_dptx_audio.o trilin_drm.o trilin_drm_mst.o
 +trilin-dpsub-y += trilin_edp_phy.o trilin_usbdp_phy.o
 +trilin-dpsub-$(CONFIG_TRILIN_DP_HDCP_VALIDATION) += hdcp/hdcp2_hw_tx.o
@@ -11715,7 +11715,7 @@ new file mode 100644
 index 000000000..b7c6ea098
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_drm.h
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,27 @@
 +/* SPDX-License-Identifier: GPL-2.0*/
 +#ifndef __TRILIN_DP_DRM_H__
 +#define __TRILIN_DP_DRM_H__
