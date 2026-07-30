@@ -9656,7 +9656,7 @@ index 000000000..398b6d8bd
 +	struct trilin_dp *dp;
 +	struct trilin_dp_panel *dp_panel;
 +	enum trilin_output_type type;
-+	struct drm_atomic_state *state;
++	struct drm_atomic_commit *state;
 +
 +	struct trilin_dp_config config;
 +	struct hdmi_drm_infoframe drm_infoframe;
@@ -10545,7 +10545,7 @@ index 000000000..934148548
 +}
 +
 +static int trilin_dp_connector_atomic_check(struct drm_connector *conn,
-+					    struct drm_atomic_state *state)
++					    struct drm_atomic_commit *state)
 +{
 +	struct drm_connector_state *new_con_state =
 +		drm_atomic_get_new_connector_state(state, conn);
@@ -10939,7 +10939,7 @@ index 000000000..934148548
 + */
 +static
 +struct drm_crtc *get_crtc_from_encoder(struct drm_encoder *encoder,
-+					  struct drm_atomic_state *state)
++					  struct drm_atomic_commit *state)
 +{
 +	struct drm_connector *connector;
 +	struct drm_connector_state *conn_state;
@@ -10956,7 +10956,7 @@ index 000000000..934148548
 +}
 +
 +static bool trilin_dp_handle_psr_disable(struct drm_encoder *encoder,
-+				struct drm_atomic_state *state)
++				struct drm_atomic_commit *state)
 +{
 +	struct drm_crtc *crtc;
 +	struct drm_crtc_state *old_crtc_state;
@@ -11027,7 +11027,7 @@ index 000000000..934148548
 +}
 +
 +static void trilin_dp_encoder_enable(struct drm_encoder *encoder,
-+				struct drm_atomic_state *state)
++				struct drm_atomic_commit *state)
 +{
 +	struct trilin_dp *dp = encoder_to_dp(encoder);
 +	struct trilin_dp_panel *dp_panel = &dp->dp_panel;
@@ -11076,7 +11076,7 @@ index 000000000..934148548
 +}
 +
 +static void trilin_dp_encoder_disable(struct drm_encoder *encoder,
-+				struct drm_atomic_state *state)
++				struct drm_atomic_commit *state)
 +{
 +	int rc;
 +	struct trilin_dp *dp = encoder_to_dp(encoder);
@@ -12148,7 +12148,7 @@ index 000000000..472da257d
 +
 +static struct drm_encoder *
 +trilin_mst_atomic_best_encoder(struct drm_connector *connector,
-+			       struct drm_atomic_state *state)
++			       struct drm_atomic_commit *state)
 +{
 +	struct drm_connector_state *connector_state =
 +		drm_atomic_get_new_connector_state(state, connector);
@@ -12202,7 +12202,7 @@ index 000000000..472da257d
 +}
 +
 +static int trilin_dp_mst_conn_atomic_check(struct drm_connector *connector,
-+					   struct drm_atomic_state *state)
++					   struct drm_atomic_commit *state)
 +{
 +	struct trilin_connector *conn = connector_to_trilin(connector);
 +	struct trilin_dp *dp = conn->dp;
@@ -12353,7 +12353,7 @@ index 000000000..472da257d
 +	struct drm_dp_mst_topology_mgr *mgr = dp->mst_mgr;
 +	struct trilin_connector *conn = mst_encoder->connector;
 +	struct drm_dp_mst_port *port = conn->port;
-+	struct drm_atomic_state *state = conn->state;
++	struct drm_atomic_commit *state = conn->state;
 +
 +	DP_MST_DEBUG("enter %p\n", state);
 +
@@ -12373,7 +12373,7 @@ index 000000000..472da257d
 +	struct trilin_connector *conn = mst_encoder->connector;
 +	struct trilin_dp_mst_private *mst = &dp->mst.private_info;
 +	struct drm_dp_mst_topology_mgr *mgr = dp->mst_mgr;
-+	struct drm_atomic_state *state = conn->state;
++	struct drm_atomic_commit *state = conn->state;
 +	struct drm_dp_mst_topology_state *old_mst_state, *new_mst_state,
 +		*mst_state;
 +	struct drm_dp_mst_atomic_payload *old_payload, *new_payload;
@@ -12504,7 +12504,7 @@ index 000000000..472da257d
 +{
 +	struct trilin_encoder *mst_encoder = encoder_to_trilin(encoder);
 +	struct trilin_dp *dp = mst_encoder->dp;
-+	struct drm_atomic_state *state = conn_state->state;
++	struct drm_atomic_commit *state = conn_state->state;
 +	struct drm_connector *connector = conn_state->connector;
 +	struct trilin_connector *conn = connector_to_trilin(connector);
 +	struct drm_display_mode *adjusted_mode = &crtc_state->adjusted_mode;
@@ -19752,7 +19752,7 @@ index 000000000..0080c2704
 + * Zero for success or -errno
 + */
 +static int linlondp_crtc_atomic_check(struct drm_crtc *crtc,
-+				      struct drm_atomic_state *state)
++				      struct drm_atomic_commit *state)
 +{
 +	struct drm_crtc_state *crtc_state =
 +		drm_atomic_get_new_crtc_state(state, crtc);
@@ -20026,7 +20026,7 @@ index 000000000..0080c2704
 +}
 +
 +static void linlondp_crtc_atomic_enable(struct drm_crtc *crtc,
-+					struct drm_atomic_state *state)
++					struct drm_atomic_commit *state)
 +{
 +	int err, repeat = 0;
 +	struct drm_crtc_state *old = drm_atomic_get_old_crtc_state(state, crtc);
@@ -20162,7 +20162,7 @@ index 000000000..0080c2704
 +}
 +
 +static void linlondp_crtc_atomic_disable(struct drm_crtc *crtc,
-+					 struct drm_atomic_state *state)
++					 struct drm_atomic_commit *state)
 +{
 +	struct drm_crtc_state *old = drm_atomic_get_old_crtc_state(state, crtc);
 +	struct drm_crtc_state *new_state = drm_atomic_get_new_crtc_state(state, crtc);
@@ -20243,7 +20243,7 @@ index 000000000..0080c2704
 +}
 +
 +static void linlondp_crtc_atomic_flush(struct drm_crtc *crtc,
-+				       struct drm_atomic_state *state)
++				       struct drm_atomic_commit *state)
 +{
 +	struct drm_crtc_state *crtc_state =
 +		drm_atomic_get_new_crtc_state(state, crtc);
@@ -23174,7 +23174,7 @@ index 000000000..0f1e17fa4
 +	.minor = 0,
 +};
 +
-+static void linlondp_kms_atomic_commit_hw_done(struct drm_atomic_state *state)
++static void linlondp_kms_atomic_commit_hw_done(struct drm_atomic_commit *state)
 +{
 +	struct drm_device *dev = state->dev;
 +	struct linlondp_kms_dev *kms = to_kdev(dev);
@@ -23201,7 +23201,7 @@ index 000000000..0f1e17fa4
 +	drm_atomic_helper_commit_hw_done(state);
 +}
 +
-+static void linlondp_kms_commit_tail(struct drm_atomic_state *old_state)
++static void linlondp_kms_commit_tail(struct drm_atomic_commit *old_state)
 +{
 +	struct drm_device *dev = old_state->dev;
 +	bool fence_cookie = dma_fence_begin_signalling();
@@ -23270,7 +23270,7 @@ index 000000000..0f1e17fa4
 +static int linlondp_crtc_normalize_zpos(struct drm_crtc *crtc,
 +					struct drm_crtc_state *crtc_st)
 +{
-+	struct drm_atomic_state *state = crtc_st->state;
++	struct drm_atomic_commit *state = crtc_st->state;
 +	struct linlondp_crtc *kcrtc = to_kcrtc(crtc);
 +	struct linlondp_crtc_state *kcrtc_st = to_kcrtc_st(crtc_st);
 +	struct linlondp_plane_state *kplane_st;
@@ -23357,7 +23357,7 @@ index 000000000..0f1e17fa4
 +}
 +
 +static int linlondp_kms_check(struct drm_device *dev,
-+			      struct drm_atomic_state *state)
++			      struct drm_atomic_commit *state)
 +{
 +	struct drm_crtc *crtc;
 +	struct drm_crtc_state *old_crtc_st, *new_crtc_st;
@@ -24916,11 +24916,11 @@ index 000000000..ba58188c0
 +
 +struct linlondp_pipeline_state *
 +linlondp_pipeline_get_old_state(struct linlondp_pipeline *pipe,
-+				struct drm_atomic_state *state);
++				struct drm_atomic_commit *state);
 +bool linlondp_pipeline_disable(struct linlondp_pipeline *pipe,
-+			       struct drm_atomic_state *old_state);
++			       struct drm_atomic_commit *old_state);
 +void linlondp_pipeline_update(struct linlondp_pipeline *pipe,
-+			      struct drm_atomic_state *old_state);
++			      struct drm_atomic_commit *old_state);
 +
 +void linlondp_complete_data_flow_cfg(struct linlondp_layer *layer,
 +				     struct linlondp_data_flow_cfg *dflow,
@@ -24958,7 +24958,7 @@ index 000000000..e0e354711
 +
 +static struct linlondp_pipeline_state *
 +linlondp_pipeline_get_state(struct linlondp_pipeline *pipe,
-+			    struct drm_atomic_state *state)
++			    struct drm_atomic_commit *state)
 +{
 +	struct drm_private_state *priv_st;
 +
@@ -24971,7 +24971,7 @@ index 000000000..e0e354711
 +
 +struct linlondp_pipeline_state *
 +linlondp_pipeline_get_old_state(struct linlondp_pipeline *pipe,
-+				struct drm_atomic_state *state)
++				struct drm_atomic_commit *state)
 +{
 +	struct drm_private_state *priv_st;
 +
@@ -24983,7 +24983,7 @@ index 000000000..e0e354711
 +
 +static struct linlondp_pipeline_state *
 +linlondp_pipeline_get_new_state(struct linlondp_pipeline *pipe,
-+				struct drm_atomic_state *state)
++				struct drm_atomic_commit *state)
 +{
 +	struct drm_private_state *priv_st;
 +
@@ -24996,7 +24996,7 @@ index 000000000..e0e354711
 +/* Assign pipeline for crtc */
 +static struct linlondp_pipeline_state *
 +linlondp_pipeline_get_state_and_set_crtc(struct linlondp_pipeline *pipe,
-+					 struct drm_atomic_state *state,
++					 struct drm_atomic_commit *state,
 +					 struct drm_crtc *crtc)
 +{
 +	struct linlondp_pipeline_state *st;
@@ -25033,7 +25033,7 @@ index 000000000..e0e354711
 +
 +static struct linlondp_component_state *
 +linlondp_component_get_state(struct linlondp_component *c,
-+			     struct drm_atomic_state *state)
++			     struct drm_atomic_commit *state)
 +{
 +	struct drm_private_state *priv_st;
 +
@@ -25048,7 +25048,7 @@ index 000000000..e0e354711
 +
 +static struct linlondp_component_state *
 +linlondp_component_get_old_state(struct linlondp_component *c,
-+				 struct drm_atomic_state *state)
++				 struct drm_atomic_commit *state)
 +{
 +	struct drm_private_state *priv_st;
 +
@@ -25085,7 +25085,7 @@ index 000000000..e0e354711
 + */
 +static struct linlondp_component_state *
 +linlondp_component_get_state_and_set_user(struct linlondp_component *c,
-+					  struct drm_atomic_state *state,
++					  struct drm_atomic_commit *state,
 +					  void *user, struct drm_crtc *crtc)
 +{
 +	struct linlondp_pipeline_state *pipe_st;
@@ -25186,7 +25186,7 @@ index 000000000..e0e354711
 +/* Get current available scaler from the component->supported_outputs */
 +static struct linlondp_scaler *
 +linlondp_component_get_avail_scaler(struct linlondp_component *c,
-+				    struct drm_atomic_state *state)
++				    struct drm_atomic_commit *state)
 +{
 +	struct linlondp_pipeline_state *pipe_st;
 +	u32 avail_scalers;
@@ -25467,7 +25467,7 @@ index 000000000..e0e354711
 +				    struct linlondp_crtc_state *kcrtc_st,
 +				    struct linlondp_data_flow_cfg *dflow)
 +{
-+	struct drm_atomic_state *drm_st = kcrtc_st->base.state;
++	struct drm_atomic_commit *drm_st = kcrtc_st->base.state;
 +	struct linlondp_component_state *c_st;
 +	struct linlondp_scaler_state *st;
 +	struct linlondp_scaler *scaler;
@@ -25637,7 +25637,7 @@ index 000000000..e0e354711
 +				     struct linlondp_crtc_state *kcrtc_st,
 +				     struct linlondp_data_flow_cfg *dflow)
 +{
-+	struct drm_atomic_state *drm_st = kcrtc_st->base.state;
++	struct drm_atomic_commit *drm_st = kcrtc_st->base.state;
 +	struct drm_crtc *crtc = kcrtc_st->base.crtc;
 +	struct linlondp_component_state *c_st, *old_st;
 +	struct linlondp_compiz_input_cfg *cin;
@@ -26541,7 +26541,7 @@ index 000000000..e0e354711
 +linlondp_pipeline_unbound_components(struct linlondp_pipeline *pipe,
 +				     struct linlondp_pipeline_state *new)
 +{
-+	struct drm_atomic_state *drm_st = new->obj.state;
++	struct drm_atomic_commit *drm_st = new->obj.state;
 +	struct linlondp_pipeline_state *old = priv_to_pipe_st(pipe->obj.state);
 +	struct linlondp_component_state *c_st;
 +	struct linlondp_component *c;
@@ -26565,7 +26565,7 @@ index 000000000..e0e354711
 +int linlondp_release_unclaimed_resources(struct linlondp_pipeline *pipe,
 +					 struct linlondp_crtc_state *kcrtc_st)
 +{
-+	struct drm_atomic_state *drm_st = kcrtc_st->base.state;
++	struct drm_atomic_commit *drm_st = kcrtc_st->base.state;
 +	struct linlondp_pipeline_state *st;
 +
 +	/* ignore the pipeline which is not affected */
@@ -26597,7 +26597,7 @@ index 000000000..e0e354711
 + * false: disable is complete.
 + */
 +bool linlondp_pipeline_disable(struct linlondp_pipeline *pipe,
-+			       struct drm_atomic_state *old_state)
++			       struct drm_atomic_commit *old_state)
 +{
 +	struct linlondp_pipeline_state *old;
 +	struct linlondp_component *c;
@@ -26643,7 +26643,7 @@ index 000000000..e0e354711
 +}
 +
 +void linlondp_pipeline_update(struct linlondp_pipeline *pipe,
-+			      struct drm_atomic_state *old_state)
++			      struct drm_atomic_commit *old_state)
 +{
 +	struct linlondp_pipeline_state *new = priv_to_pipe_st(pipe->obj.state);
 +	struct linlondp_pipeline_state *old;
@@ -26820,7 +26820,7 @@ index 000000000..3294adfd8
 + * Zero for success or -errno
 + */
 +static int linlondp_plane_atomic_check(struct drm_plane *plane,
-+				       struct drm_atomic_state *state)
++				       struct drm_atomic_commit *state)
 +{
 +	struct drm_plane_state *new_plane_state =
 +		drm_atomic_get_new_plane_state(state, plane);
@@ -26870,7 +26870,7 @@ index 000000000..3294adfd8
 + * linlondp handles all the HW update in crtc->atomic_flush
 + */
 +static void linlondp_plane_atomic_update(struct drm_plane *plane,
-+					 struct drm_atomic_state *state)
++					 struct drm_atomic_commit *state)
 +{
 +}
 +
