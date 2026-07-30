@@ -5436,7 +5436,7 @@ new file mode 100644
 index 000000000..f8ff7823d
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/dptx/trilin_dptx.c
-@@ -0,0 +1,3512 @@
+@@ -0,0 +1,3463 @@
 +// SPDX-License-Identifier: GPL-2.0
 +//------------------------------------------------------------------------------
 +//	Trilinear Technologies DisplayPort DRM Driver
@@ -5458,6 +5458,7 @@ index 000000000..f8ff7823d
 +#include <drm/drm_atomic.h>
 +#include <drm/drm_atomic_helper.h>
 +#include <drm/drm_atomic_uapi.h>
++#include <drm/drm_atomic.h>
 +#include <drm/drm_crtc.h>
 +#include <drm/drm_device.h>
 +#include <drm/drm_drv.h>
@@ -8305,57 +8306,7 @@ index 000000000..f8ff7823d
 + */
 +int trilin_dp_pm_resume_early(struct trilin_dp *dp)
 +{
-+	struct drm_connector *connector = &dp->connector.base;
-+	struct drm_device *dev = connector->dev;
-+	struct drm_modeset_acquire_ctx ctx;
-+	struct drm_atomic_state *old_state = dev->mode_config.suspend_state;
-+	struct drm_atomic_state *new_state = NULL;
-+	struct drm_connector_state *conn_state;
-+	struct drm_connector *conn;
-+	int ret, i;
-+
-+	DP_INFO("enter");
-+
-+	if (IS_ERR(old_state)) {
-+		DP_ERR("old state err");
-+		return PTR_ERR(old_state);
-+	}
-+
-+	if (!old_state) {
-+		DP_ERR("old state null");
-+		return -EINVAL;
-+	}
-+
-+	/* Force status disconnected with proper modeset locking */
-+	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
-+	new_state = drm_atomic_helper_duplicate_state(dev, &ctx);
-+
-+	if (IS_ERR(new_state)) {
-+		DP_ERR("state duplication failed");
-+		goto unlock;
-+	}
-+
-+	for_each_new_connector_in_state(new_state, conn, conn_state, i) {
-+		ret = drm_atomic_set_crtc_for_connector(conn_state, NULL);
-+		if (ret) {
-+			DP_ERR("set crtc null failed");
-+			goto state_put;
-+		}
-+		conn->status = connector_status_disconnected;
-+		drm_connector_update_edid_property(conn, NULL);
-+		drm_mode_prune_invalid(dev, &conn->modes, false);
-+	}
-+
-+	drm_atomic_state_put(old_state);
-+	dev->mode_config.suspend_state = new_state;
-+	new_state = NULL;
-+
-+state_put:
-+	if (new_state)
-+		drm_atomic_state_put(new_state);
-+unlock:
-+	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
-+	return ret;
++	return 0;
 +}
 +
 +/*
@@ -24981,7 +24932,7 @@ new file mode 100644
 index 000000000..e0e354711
 --- /dev/null
 +++ b/drivers/gpu/drm/cix/linlon-dp/linlondp_pipeline_state.c
-@@ -0,0 +1,1733 @@
+@@ -0,0 +1,1734 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * (C) COPYRIGHT 2022-2023 Arm Technology (China) Co., Ltd.
@@ -24990,6 +24941,7 @@ index 000000000..e0e354711
 + */
 +
 +#include <drm/drm_print.h>
++#include <drm/drm_atomic.h>
 +#include <linux/clk.h>
 +#include "linlondp_dev.h"
 +#include "linlondp_kms.h"
