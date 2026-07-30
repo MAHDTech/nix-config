@@ -1655,24 +1655,6 @@ index f6cea0c54..f8cf4b3d0 100644
  	cppc_cpufreq_update_perf_limits(cpu_data, policy);
 
  	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
-@@ -705,7 +718,7 @@ static int cppc_cpufreq_cpu_init(struct cpufreq_policy *policy)
-
- 	/* Set policy->cur to max now. The governors will adjust later. */
- 	policy->cur = cppc_perf_to_khz(caps, caps->highest_perf);
--	cpu_data->perf_ctrls.desired_perf =  caps->highest_perf;
-+	desired_perf =  caps->highest_perf;
-
- 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
- 	if (ret) {
-@@ -731,7 +744,7 @@ static void cppc_cpufreq_cpu_exit(struct cpufreq_policy *policy)
-
- 	cppc_cpufreq_cpu_fie_exit(policy);
-
--	cpu_data->perf_ctrls.desired_perf = caps->lowest_perf;
-+	desired_perf = caps->lowest_perf;
-
- 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
- 	if (ret)
 diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
 index b898b6544..b57517c2e 100644
 --- a/drivers/cpufreq/cpufreq.c
