@@ -1012,7 +1012,7 @@ index c013d6bf9..fb732b002 100644
  	return panthor_gpu_power_on(ptdev, L2, 1, 20000);
  }
 
-@@ -458,26 +485,27 @@ u64 panthor_gpu_get_cycle_count(struct panthor_device *ptdev)
+@@ -465,26 +485,27 @@ u64 panthor_gpu_get_cycle_count(struct panthor_device *ptdev)
  	return gpu_read64_counter(ptdev->gpu->iomem, GPU_CYCLE_COUNT);
  }
 
