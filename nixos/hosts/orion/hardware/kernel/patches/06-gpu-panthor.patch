@@ -1039,7 +1039,7 @@ index c013d6bf9..fb732b002 100644
 -	if (!ptdev->coherent)
 +	if (ptdev->coherency_mode == PANTHOR_COHERENCY_NONE)
  		return 0;
-
+ 
 -	/* Check if the ACE-Lite coherency protocol is actually supported by the GPU.
 -	 * ACE protocol has never been supported for command stream frontend GPUs.
 -	 */
@@ -1050,13 +1050,13 @@ index c013d6bf9..fb732b002 100644
 +	    GPU_COHERENCY_PROT_BIT(ACE_LITE))
  		return 0;
 -	}
-
+ 
 -	drm_err(&ptdev->base, "Coherency not supported by the device");
 -	return -ENOTSUPP;
 +	drm_err(&ptdev->base, "ACE-Lite not supported by hardware");
 +	return -ENOTSUPP;
  }
-
+ 
 @@ -233,7 +233,24 @@ static int panthor_gpu_info_init(struct panthor_device *ptdev)
  		ptdev->gpu_info.l2_present = gpu_read64(gpu_iomem, GPU_L2_PRESENT);
  	}
