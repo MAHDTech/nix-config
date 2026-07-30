@@ -8501,7 +8501,7 @@ index 000000000..80daab087
 +	if (has_acpi_companion(dev)) {
 +		for (int i = 0; i < CIX_NPU_PD_NUM; i++) {
 +			pm_runtime_put(cix_aipu_priv->pd_core[i]);
-					ret = 0;
++			ret = 0;
 +			if (ret < 0) {
 +				dev_err(cix_aipu_priv->pd_core[i], "NPU core PM runtime put failed! ret=%d", ret);
 +				return ret;
