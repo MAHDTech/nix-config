@@ -527,7 +527,7 @@ index 9687c59de..dc769bf7c 100644
 +	return 0;
 +}
 +
-+static bool panthor_force_noncoherent;
++bool panthor_force_noncoherent;
 +module_param_named(force_noncoherent, panthor_force_noncoherent, bool, 0444);
 +MODULE_PARM_DESC(force_noncoherent,
 +	"Force GPU to non-coherent mode even when firmware reports coherent");
