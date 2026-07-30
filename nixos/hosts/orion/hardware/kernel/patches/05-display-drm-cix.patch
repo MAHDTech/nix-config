@@ -451,9 +451,9 @@ index 000000000..c3877c4cf
 +	}
 +
 +	/*  Set supported color formats */
-+	connector->display_info.color_formats = DRM_COLOR_FORMAT_RGB444   |
-+						DRM_COLOR_FORMAT_YCBCR422 |
-+						DRM_COLOR_FORMAT_YCBCR420;
++	connector->display_info.color_formats = DRM_OUTPUT_COLOR_FORMAT_RGB444   |
++						DRM_OUTPUT_COLOR_FORMAT_YCBCR422 |
++						DRM_OUTPUT_COLOR_FORMAT_YCBCR420;
 +
 +	return 0;
 +}
@@ -11201,14 +11201,14 @@ index 000000000..934148548
 +	u8 bpp = bpc * 3;
 +
 +	switch (format) {
-+	case DRM_COLOR_FORMAT_RGB444:
++	case DRM_OUTPUT_COLOR_FORMAT_RGB444:
 +	case DRM_COLOR_FORMAT_YCBCR444:
 +		bpp = bpc * 3;
 +		break;
-+	case DRM_COLOR_FORMAT_YCBCR422:
++	case DRM_OUTPUT_COLOR_FORMAT_YCBCR422:
 +		bpp = bpc * 2;
 +		break;
-+	case DRM_COLOR_FORMAT_YCBCR420:
++	case DRM_OUTPUT_COLOR_FORMAT_YCBCR420:
 +		bpp = bpc * 3 / 2;
 +		break;
 +	default:
@@ -11318,7 +11318,7 @@ index 000000000..934148548
 +		struct drm_connector_state *connector_state, u8 suggest_bpc,
 +		int clock, int color_format, int *rt_bpc, int *rt_bpp)
 +{
-+	int min_bpc = (color_format == DRM_COLOR_FORMAT_RGB444) ? 6 : 8;
++	int min_bpc = (color_format == DRM_OUTPUT_COLOR_FORMAT_RGB444) ? 6 : 8;
 +	int bpc = max(suggest_bpc, min_bpc);
 +	int bpp;
 +	u8 max_lanes = dp->link_config.max_lanes;
@@ -11389,13 +11389,13 @@ index 000000000..934148548
 +	u8 max_lanes = dp->link_config.max_lanes;
 +	int link_rate = dp->link_config.max_rate;
 +
-+	if (!(info_formats & DRM_COLOR_FORMAT_RGB444)) {
-+		info_formats |= DRM_COLOR_FORMAT_RGB444;
++	if (!(info_formats & DRM_OUTPUT_COLOR_FORMAT_RGB444)) {
++		info_formats |= DRM_OUTPUT_COLOR_FORMAT_RGB444;
 +		DP_WARN("info_format=%0x, force support RGB444", info->color_formats);
 +	}
 +
 +	const int COMMON_COLORS_FORMATS[] = {
-+		DRM_COLOR_FORMAT_RGB444, DRM_COLOR_FORMAT_YCBCR422, DRM_COLOR_FORMAT_YCBCR420};
++		DRM_OUTPUT_COLOR_FORMAT_RGB444, DRM_OUTPUT_COLOR_FORMAT_YCBCR422, DRM_OUTPUT_COLOR_FORMAT_YCBCR420};
 +
 +	for (i = 0; i < ARRAY_SIZE(COMMON_COLORS_FORMATS); i++) {
 +		color_format = COMMON_COLORS_FORMATS[i];
@@ -11404,7 +11404,7 @@ index 000000000..934148548
 +			success = compute_available_clock_rate(dp, connector_state, suggest_bpc,
 +				adjusted_mode->clock, color_format, &bpc, &bpp);
 +			if (success) {
-+				if (color_format != DRM_COLOR_FORMAT_RGB444)
++				if (color_format != DRM_OUTPUT_COLOR_FORMAT_RGB444)
 +					DP_INFO("Use YUV Format=0x%0x", color_format);
 +				break;
 +			}
@@ -11421,10 +11421,10 @@ index 000000000..934148548
 +	case DRM_COLOR_FORMAT_YCBCR444:
 +		format = TRILIN_DPSUB_FORMAT_YCBCR444;
 +		break;
-+	case DRM_COLOR_FORMAT_YCBCR422:
++	case DRM_OUTPUT_COLOR_FORMAT_YCBCR422:
 +		format = TRILIN_DPSUB_FORMAT_YCBCR422;
 +		break;
-+	case DRM_COLOR_FORMAT_YCBCR420:
++	case DRM_OUTPUT_COLOR_FORMAT_YCBCR420:
 +		format = TRILIN_DPSUB_FORMAT_YCBCR420;
 +		break;
 +	default:
@@ -17310,9 +17310,9 @@ index 000000000..a12c45449
 +		IPS_CTRL_CHD420 | IPS_CTRL_DITH;
 +
 +	/* config color format */
-+	if (st->color_format == DRM_COLOR_FORMAT_YCBCR420)
++	if (st->color_format == DRM_OUTPUT_COLOR_FORMAT_YCBCR420)
 +		ctrl |= IPS_CTRL_YUV | IPS_CTRL_CHD422 | IPS_CTRL_CHD420;
-+	else if (st->color_format == DRM_COLOR_FORMAT_YCBCR422)
++	else if (st->color_format == DRM_OUTPUT_COLOR_FORMAT_YCBCR422)
 +		ctrl |= IPS_CTRL_YUV | IPS_CTRL_CHD422;
 +	else if (st->color_format == DRM_COLOR_FORMAT_YCBCR444)
 +		ctrl |= IPS_CTRL_YUV;
@@ -17396,12 +17396,12 @@ index 000000000..a12c45449
 +
 +	improc = to_improc(c);
 +	improc->supported_color_depths = BIT(8) | BIT(10);
-+	improc->supported_color_formats = DRM_COLOR_FORMAT_RGB444 |
++	improc->supported_color_formats = DRM_OUTPUT_COLOR_FORMAT_RGB444 |
 +					  DRM_COLOR_FORMAT_YCBCR444 |
-+					  DRM_COLOR_FORMAT_YCBCR422;
++					  DRM_OUTPUT_COLOR_FORMAT_YCBCR422;
 +	value = linlondp_read32(reg, BLK_INFO);
 +	if (value & IPS_INFO_CHD420)
-+		improc->supported_color_formats |= DRM_COLOR_FORMAT_YCBCR420;
++		improc->supported_color_formats |= DRM_OUTPUT_COLOR_FORMAT_YCBCR420;
 +
 +	improc->supports_csc = true;
 +	improc->supports_gamma = true;
@@ -19763,7 +19763,7 @@ index 000000000..0080c2704
 +
 +	/* connector doesn't config any color_format, use RGB444 as default */
 +	if (!conn_color_formats)
-+		conn_color_formats = DRM_COLOR_FORMAT_RGB444;
++		conn_color_formats = DRM_OUTPUT_COLOR_FORMAT_RGB444;
 +
 +	*color_depths = GENMASK(min_bpc, 0);
 +	*color_formats = conn_color_formats;
@@ -25837,7 +25837,7 @@ index 000000000..e0e354711
 +			st->color_format = kcrtc_st->output_format;
 +		}
 +
-+		if ((st->color_format == DRM_COLOR_FORMAT_YCBCR420) &&
++		if ((st->color_format == DRM_OUTPUT_COLOR_FORMAT_YCBCR420) &&
 +		    (improc->base.pipeline->pixel_per_cycle != 1)) {
 +			drm_dbg_atomic(crtc->dev,
 +				"420 with non-1ppc out is not supported\n");

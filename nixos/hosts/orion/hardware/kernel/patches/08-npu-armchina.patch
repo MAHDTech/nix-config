@@ -8009,7 +8009,7 @@ new file mode 100644
 index 000000000..80daab087
 --- /dev/null
 +++ b/drivers/misc/armchina-npu/sky1/sky1.c
-@@ -0,0 +1,568 @@
+@@ -0,0 +1,285 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Copyright 2024 Cix Technology Group Co., Ltd. All Rights Reserved.*/
 +/**
@@ -8294,7 +8294,8 @@ index 000000000..80daab087
 +#ifdef CONFIG_PM
 +	int ret = 0;
 +
-+	ret = pm_runtime_put(dev);
++	pm_runtime_put(dev);
+	ret = 0;
 +	if (ret < 0)
 +		dev_err(dev, "PM runtime put failed! ret=%d", ret);
 +
@@ -8499,7 +8500,8 @@ index 000000000..80daab087
 +
 +	if (has_acpi_companion(dev)) {
 +		for (int i = 0; i < CIX_NPU_PD_NUM; i++) {
-+			ret = pm_runtime_put(cix_aipu_priv->pd_core[i]);
++			pm_runtime_put(cix_aipu_priv->pd_core[i]);
+					ret = 0;
 +			if (ret < 0) {
 +				dev_err(cix_aipu_priv->pd_core[i], "NPU core PM runtime put failed! ret=%d", ret);
 +				return ret;
