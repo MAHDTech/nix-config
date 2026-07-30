@@ -11153,7 +11153,7 @@ index 000000000..934148548
 +
 +	switch (format) {
 +	case DRM_OUTPUT_COLOR_FORMAT_RGB444:
-+	case DRM_COLOR_FORMAT_YCBCR444:
++	case DRM_OUTPUT_COLOR_FORMAT_YCBCR444:
 +		bpp = bpc * 3;
 +		break;
 +	case DRM_OUTPUT_COLOR_FORMAT_YCBCR422:
@@ -11369,7 +11369,7 @@ index 000000000..934148548
 +	}
 +
 +	switch (color_format) {
-+	case DRM_COLOR_FORMAT_YCBCR444:
++	case DRM_OUTPUT_COLOR_FORMAT_YCBCR444:
 +		format = TRILIN_DPSUB_FORMAT_YCBCR444;
 +		break;
 +	case DRM_OUTPUT_COLOR_FORMAT_YCBCR422:
@@ -17265,7 +17265,7 @@ index 000000000..a12c45449
 +		ctrl |= IPS_CTRL_YUV | IPS_CTRL_CHD422 | IPS_CTRL_CHD420;
 +	else if (st->color_format == DRM_OUTPUT_COLOR_FORMAT_YCBCR422)
 +		ctrl |= IPS_CTRL_YUV | IPS_CTRL_CHD422;
-+	else if (st->color_format == DRM_COLOR_FORMAT_YCBCR444)
++	else if (st->color_format == DRM_OUTPUT_COLOR_FORMAT_YCBCR444)
 +		ctrl |= IPS_CTRL_YUV;
 +
 +	/* config dither */
@@ -17348,7 +17348,7 @@ index 000000000..a12c45449
 +	improc = to_improc(c);
 +	improc->supported_color_depths = BIT(8) | BIT(10);
 +	improc->supported_color_formats = DRM_OUTPUT_COLOR_FORMAT_RGB444 |
-+					  DRM_COLOR_FORMAT_YCBCR444 |
++					  DRM_OUTPUT_COLOR_FORMAT_YCBCR444 |
 +					  DRM_OUTPUT_COLOR_FORMAT_YCBCR422;
 +	value = linlondp_read32(reg, BLK_INFO);
 +	if (value & IPS_INFO_CHD420)
