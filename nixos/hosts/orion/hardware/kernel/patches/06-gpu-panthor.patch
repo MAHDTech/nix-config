@@ -1056,8 +1056,8 @@ index c013d6bf9..fb732b002 100644
 +	drm_err(&ptdev->base, "ACE-Lite not supported by hardware");
 +	return -ENOTSUPP;
  }
--
-+@@ -233,7 +233,24 @@ static int panthor_gpu_info_init(struct panthor_device *ptdev)
+
+@@ -233,7 +233,24 @@ static int panthor_gpu_info_init(struct panthor_device *ptdev)
  		ptdev->gpu_info.l2_present = gpu_read64(gpu_iomem, GPU_L2_PRESENT);
  	}
 
