@@ -1877,3 +1877,4 @@ worktree
 reflogs
 GOTPAGE
 fpic
+ecam

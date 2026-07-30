@@ -42,8 +42,7 @@ in
         "xhci_hcd"
         "xhci_plat_hcd"
         "uas"
-        "r8126" # Realtek RTL8126 5GbE (in-tree sky1 driver)
-        "r8125" # Realtek RTL8125 2.5GbE (in-tree sky1 driver)
+        "r8169" # Realtek RTL8126 5GbE (in-kernel driver, added RTL8126 support in 7.x)
         "r8152" # Realtek USB Ethernet (fallback for USB dongles)
         "ax88179_178a" # ASIX AX88179 USB Ethernet
         "cdc_ncm" # CDC NCM USB Ethernet

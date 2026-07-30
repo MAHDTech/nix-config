@@ -1,0 +1,3992 @@
+diff --git a/drivers/clk/cix/clk-sky1-acpi.c b/drivers/clk/cix/clk-sky1-acpi.c
+new file mode 100644
+index 000000000..4c5ca954d
+--- /dev/null
++++ b/drivers/clk/cix/clk-sky1-acpi.c
+@@ -0,0 +1,196 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * CIX Sky1 ACPI clock lookup table (CLKT) driver
++ *
++ * Parses vendor CLKT tables in the ACPI namespace to bridge
++ * SCMI-provided clocks to consumer devices via clkdev lookups.
++ *
++ * The vendor DSDT defines per-device CLKT Name objects:
++ *   Name (CLKT, Package (N) {
++ *       Package (3) { clock_id, con_name, consumer_ref },
++ *       ...
++ *   })
++ *
++ * This driver walks the ACPI namespace, evaluates each CLKT,
++ * looks up the corresponding SCMI clock (registered by clk-scmi
++ * as "scmi-clk-<id>"), and creates clkdev entries so consumer
++ * drivers find clocks via standard clk_get().
++ */
++
++#include <linux/acpi.h>
++#include <linux/clk.h>
++#include <linux/clkdev.h>
++#include <linux/module.h>
++#include <linux/platform_device.h>
++
++struct sky1_acpi_clk {
++	struct device *dev;
++	int mapped;
++};
++
++static void sky1_clkdev_drop(void *data)
++{
++	clkdev_drop(data);
++}
++
++static int sky1_parse_clkt_entry(struct sky1_acpi_clk *priv,
++				 const char *consumer_name,
++				 union acpi_object *entry)
++{
++	union acpi_object *elems;
++	u64 clock_id;
++	const char *con_id;
++	char scmi_id[20];
++	struct clk *clk;
++	struct clk_lookup *cl;
++	int ret;
++
++	if (entry->type != ACPI_TYPE_PACKAGE || entry->package.count < 2)
++		return -EINVAL;
++
++	elems = entry->package.elements;
++
++	/* Element 0: SCMI clock ID (integer) */
++	if (elems[0].type != ACPI_TYPE_INTEGER)
++		return -EINVAL;
++	clock_id = elems[0].integer.value;
++
++	/* Element 1: connection name (string, empty = unnamed) */
++	if (elems[1].type != ACPI_TYPE_STRING)
++		return -EINVAL;
++	con_id = elems[1].string.pointer;
++	if (con_id[0] == '\0')
++		con_id = NULL;
++
++	/* Look up the SCMI clock by its clkdev registration name */
++	snprintf(scmi_id, sizeof(scmi_id), "scmi-clk-%llu", clock_id);
++	clk = clk_get(NULL, scmi_id);
++	if (IS_ERR(clk)) {
++		dev_dbg(priv->dev, "SCMI clock %llu not available for %s\n",
++			clock_id, consumer_name);
++		return PTR_ERR(clk);
++	}
++
++	/* Register consumer lookup */
++	cl = clkdev_create(clk, con_id, "%s", consumer_name);
++	clk_put(clk);
++	if (!cl) {
++		dev_warn(priv->dev,
++			 "Failed to create clkdev for %s clock %llu\n",
++			 consumer_name, clock_id);
++		return -ENOMEM;
++	}
++
++	/* Auto-cleanup on device removal */
++	ret = devm_add_action_or_reset(priv->dev, sky1_clkdev_drop, cl);
++	if (ret)
++		return ret;
++
++	dev_dbg(priv->dev, "Mapped SCMI clock %llu -> %s:%s\n",
++		clock_id, consumer_name, con_id ?: "(unnamed)");
++	priv->mapped++;
++
++	return 0;
++}
++
++static acpi_status sky1_clkt_walk_cb(acpi_handle handle, u32 level,
++				     void *context, void **ret_val)
++{
++	struct sky1_acpi_clk *priv = context;
++	struct acpi_device *adev;
++	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL };
++	union acpi_object *obj;
++	const char *consumer_name;
++	acpi_status status;
++	int i;
++
++	status = acpi_evaluate_object(handle, "CLKT", NULL, &buf);
++	if (ACPI_FAILURE(status))
++		return AE_OK;
++
++	obj = buf.pointer;
++	if (!obj || obj->type != ACPI_TYPE_PACKAGE || obj->package.count == 0)
++		goto out;
++
++	adev = acpi_fetch_acpi_dev(handle);
++	if (!adev)
++		goto out;
++
++	for (i = 0; i < obj->package.count; i++) {
++		union acpi_object *e = &obj->package.elements[i];
++		union acpi_object *ref;
++
++		/*
++		 * Element 2 (if present) is the actual consumer device
++		 * reference.  Use it instead of the CLKT-owning device.
++		 * Most entries are self-references (consumer == owner),
++		 * but some cross-reference a different device (e.g.,
++		 * DMA1's CLKT registers a clock for DMA0).
++		 */
++		if (e->type == ACPI_TYPE_PACKAGE &&
++		    e->package.count >= 3) {
++			struct acpi_device *cdev;
++
++			ref = &e->package.elements[2];
++			if (ref->type == ACPI_TYPE_LOCAL_REFERENCE) {
++				cdev = acpi_fetch_acpi_dev(ref->reference.handle);
++				if (cdev) {
++					consumer_name = acpi_dev_name(cdev);
++					goto parse;
++				}
++			}
++		}
++		consumer_name = acpi_dev_name(adev);
++parse:
++		sky1_parse_clkt_entry(priv, consumer_name, e);
++	}
++
++out:
++	kfree(buf.pointer);
++	return AE_OK;
++}
++
++static int sky1_acpi_clk_probe(struct platform_device *pdev)
++{
++	struct sky1_acpi_clk *priv;
++	acpi_status status;
++
++	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
++
++	priv->dev = &pdev->dev;
++
++	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
++				     ACPI_UINT32_MAX, sky1_clkt_walk_cb,
++				     NULL, priv, NULL);
++	if (ACPI_FAILURE(status))
++		return dev_err_probe(&pdev->dev, -ENODEV,
++				     "ACPI namespace walk failed\n");
++
++	if (priv->mapped == 0)
++		return dev_err_probe(&pdev->dev, -EPROBE_DEFER,
++				     "No SCMI clocks mapped yet\n");
++
++	dev_info(&pdev->dev, "Mapped %d ACPI clock lookup entries\n",
++		 priv->mapped);
++	return 0;
++}
++
++static const struct acpi_device_id sky1_acpi_clk_ids[] = {
++	{ "CIXHA010", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(acpi, sky1_acpi_clk_ids);
++
++static struct platform_driver sky1_acpi_clk_driver = {
++	.driver = {
++		.name = "clk-sky1-acpi",
++		.acpi_match_table = sky1_acpi_clk_ids,
++	},
++	.probe = sky1_acpi_clk_probe,
++};
++module_platform_driver(sky1_acpi_clk_driver);
++
++MODULE_DESCRIPTION("CIX Sky1 ACPI clock lookup table driver");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/clk/cix/clk-sky1-audss.c b/drivers/clk/cix/clk-sky1-audss.c
+new file mode 100644
+index 000000000..174058167
+--- /dev/null
++++ b/drivers/clk/cix/clk-sky1-audss.c
+@@ -0,0 +1,926 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * CIX Sky1 Audio Subsystem Clock Controller
++ *
++ * Copyright 2024 Cix Technology Group Co., Ltd.
++ */
++
++#include <linux/acpi.h>
++#include <linux/clk.h>
++#include <linux/clk-provider.h>
++#include <linux/clkdev.h>
++#include <linux/device/bus.h>
++#include <linux/io.h>
++#include <linux/mfd/syscon.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/pm_runtime.h>
++#include <linux/property.h>
++#include <linux/regmap.h>
++#include <linux/reset.h>
++
++#include <dt-bindings/clock/sky1-audss.h>
++
++/* Register offsets within AUDSS CRU */
++#define INFO_HIFI0		0x00
++#define INFO_CLK_GATE		0x10
++#define INFO_CLK_DIV		0x14
++#define INFO_CLK_MUX		0x18
++#define INFO_MCLK		0x70
++
++/* RCSU registers for DSP initialization */
++#define SKY1_AUDSS_RCSU_ADDR		0x07000000
++#define SKY1_AUDSS_RCSU_LEN		0x10000
++#define SKY1_AUDSS_RCSU_REMAP		0x34
++#define SKY1_AUDSS_RCSU_REMAP_VAL	0x20000000
++#define SKY1_AUDSS_RCSU_TIMEOUT		0x1000
++#define SKY1_AUDSS_RCSU_TIMEOUT_EN	BIT(31)
++#define SKY1_AUDSS_RCSU_TIMEOUT_VAL	0x78
++
++#define SKY1_AUDSS_CLKS_NUM		6
++
++static DEFINE_SPINLOCK(sky1_audss_lock);
++
++static const char * const sky1_audss_clk_names[SKY1_AUDSS_CLKS_NUM] = {
++	"audio_clk0", "audio_clk1", "audio_clk2",
++	"audio_clk3", "audio_clk4", "audio_clk5",
++};
++
++static const u32 sky1_audss_clk_rates[SKY1_AUDSS_CLKS_NUM] = {
++	SKY1_AUDSS_AUDIO_CLK0_RATE,
++	SKY1_AUDSS_AUDIO_CLK1_RATE,
++	SKY1_AUDSS_AUDIO_CLK2_RATE,
++	SKY1_AUDSS_AUDIO_CLK3_RATE,
++	SKY1_AUDSS_AUDIO_CLK4_RATE,
++	SKY1_AUDSS_AUDIO_CLK5_RATE,
++};
++
++struct sky1_audss_priv {
++	struct device *dev;
++	struct regmap *regmap;
++	void __iomem *rcsu_base;
++	struct clk *parent_clks[SKY1_AUDSS_CLKS_NUM];
++	struct reset_control *rst_noc;
++	struct clk_hw_onecell_data *clk_data;
++};
++
++/* Clock configuration structures */
++struct muxdiv_cfg {
++	int offset;
++	u8 shift;
++	u8 width;
++	u8 flags;
++};
++
++struct gate_cfg {
++	int offset;
++	u8 shift;
++	u8 flags;
++};
++
++struct composite_clk_cfg {
++	u32 id;
++	const char *name;
++	const char * const *parent_names;
++	int num_parents;
++	struct muxdiv_cfg *mux_cfg;
++	struct muxdiv_cfg *div_cfg;
++	struct gate_cfg *gate_cfg;
++	unsigned long flags;
++};
++
++/* Custom clock structures with regmap support */
++struct sky1_clk_mux {
++	struct clk_mux mux;
++	struct regmap *regmap;
++	int offset;
++};
++
++struct sky1_clk_divider {
++	struct clk_divider div;
++	struct regmap *regmap;
++	int offset;
++};
++
++struct sky1_clk_gate {
++	struct clk_gate gate;
++	struct regmap *regmap;
++	struct device *dev;
++	int offset;
++};
++
++/* Registers to save/restore during suspend/resume */
++static u32 sky1_audss_reg_save[][2] = {
++	{ INFO_HIFI0, 0 },
++	{ INFO_CLK_GATE, 0 },
++	{ INFO_CLK_DIV, 0 },
++	{ INFO_CLK_MUX, 0 },
++	{ INFO_MCLK, 0 },
++};
++
++/* Parent clock arrays */
++static const char * const dsp_clk_parent[] = { "audio_clk4" };
++static const char * const dsp_bclk_parent[] = { "audio_clk4_div2" };
++static const char * const dsp_pbclk_parent[] = { "audio_clk4_div4" };
++static const char * const sram_axi_parent[] = { "audio_clk4_div2" };
++static const char * const hda_sys_parent[] = { "audio_clk4_div2" };
++static const char * const hda_hda_parent[] = { "audio_clk5" };
++static const char * const dmac_axi_parent[] = { "audio_clk4_div2" };
++static const char * const wdg_parent[] = { "audio_clk5_div2" };
++static const char * const timer_apb_parent[] = { "audio_clk4_div4" };
++static const char * const timer_timer_parent[] = { "audio_clk5_div2" };
++static const char * const mailbox_apb_parent[] = { "audio_clk4_div4" };
++static const char * const i2s_apb_parent[] = { "audio_clk4_div4" };
++static const char * const i2s_sc_parents[] = { "audio_clk0", "audio_clk2" };
++static const char * const i2s_mc_parents[] = { "audio_clk0", "audio_clk1", "audio_clk2", "audio_clk3" };
++static const char * const mclk_parents[] = { "audio_clk0", "audio_clk2" };
++
++/* Configuration macro */
++#define CFG(_id, _name, _parents, \
++	    _mux_off, _mux_sh, _mux_w, _mux_fl, \
++	    _div_off, _div_sh, _div_w, _div_fl, \
++	    _gate_off, _gate_sh, _gate_fl, \
++	    _flags) \
++{ \
++	.id = _id, \
++	.name = _name, \
++	.parent_names = _parents, \
++	.num_parents = ARRAY_SIZE(_parents), \
++	.mux_cfg = &(struct muxdiv_cfg){ _mux_off, _mux_sh, _mux_w, _mux_fl }, \
++	.div_cfg = &(struct muxdiv_cfg){ _div_off, _div_sh, _div_w, _div_fl }, \
++	.gate_cfg = &(struct gate_cfg){ _gate_off, _gate_sh, _gate_fl }, \
++	.flags = _flags, \
++}
++
++static const struct composite_clk_cfg audss_clks[] = {
++	/* DSP clocks */
++	CFG(CLK_DSP_CLK, "audss_dsp_clk", dsp_clk_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_HIFI0, 0, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_DSP_BCLK, "audss_dsp_bclk", dsp_bclk_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, -1, 0, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_DSP_PBCLK, "audss_dsp_pbclk", dsp_pbclk_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, -1, 0, 0, CLK_GET_RATE_NOCACHE),
++	/* SRAM */
++	CFG(CLK_SRAM_AXI, "audss_sram_axi", sram_axi_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 16, 0, CLK_GET_RATE_NOCACHE),
++	/* HDA */
++	CFG(CLK_HDA_SYS, "audss_hda_sys", hda_sys_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 14, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_HDA_HDA, "audss_hda_hda", hda_hda_parent,
++	    -1, 0, 0, 0, -1, 0, 0, 0, INFO_CLK_GATE, 14, 0, CLK_GET_RATE_NOCACHE),
++	/* DMAC */
++	CFG(CLK_DMAC_AXI, "audss_dmac_axi", dmac_axi_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 15, 0, CLK_GET_RATE_NOCACHE),
++	/* Watchdog */
++	CFG(CLK_WDG_APB, "audss_wdg_apb", wdg_parent,
++	    -1, 0, 0, 0, -1, 0, 0, 0, INFO_CLK_GATE, 10, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_WDG_WDG, "audss_wdg_wdg", wdg_parent,
++	    -1, 0, 0, 0, -1, 0, 0, 0, INFO_CLK_GATE, 10, 0, CLK_GET_RATE_NOCACHE),
++	/* Timer */
++	CFG(CLK_TIMER_APB, "audss_timer_apb", timer_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 11, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_TIMER_TIMER, "audss_timer_timer", timer_timer_parent,
++	    -1, 0, 0, 0, -1, 0, 0, 0, INFO_CLK_GATE, 11, 0, CLK_GET_RATE_NOCACHE),
++	/* Mailbox */
++	CFG(CLK_MB_0_APB, "audss_mb_0_apb", mailbox_apb_parent,
++	    -1, 0, 0, 0, -1, 0, 0, 0, INFO_CLK_GATE, 12, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_MB_1_APB, "audss_mb_1_apb", mailbox_apb_parent,
++	    -1, 0, 0, 0, -1, 0, 0, 0, INFO_CLK_GATE, 13, 0, CLK_GET_RATE_NOCACHE),
++	/* I2S APB clocks */
++	CFG(CLK_I2S0_APB, "audss_i2s0_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 0, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S1_APB, "audss_i2s1_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 1, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S2_APB, "audss_i2s2_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 2, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S3_APB, "audss_i2s3_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 3, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S4_APB, "audss_i2s4_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 4, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S5_APB, "audss_i2s5_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 5, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S6_APB, "audss_i2s6_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 6, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S7_APB, "audss_i2s7_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 7, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S8_APB, "audss_i2s8_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 8, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S9_APB, "audss_i2s9_apb", i2s_apb_parent,
++	    -1, 0, 0, 0, INFO_CLK_DIV, 0, 2, 0, INFO_CLK_GATE, 9, 0, CLK_GET_RATE_NOCACHE),
++	/* I2S core clocks (SC: 2 parents, MC: 4 parents) */
++	CFG(CLK_I2S0, "audss_i2s0", i2s_sc_parents,
++	    INFO_CLK_MUX, 0, 2, 0, INFO_CLK_DIV, 2, 2, 0, INFO_CLK_GATE, 0, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S1, "audss_i2s1", i2s_sc_parents,
++	    INFO_CLK_MUX, 2, 2, 0, INFO_CLK_DIV, 4, 2, 0, INFO_CLK_GATE, 1, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S2, "audss_i2s2", i2s_sc_parents,
++	    INFO_CLK_MUX, 4, 2, 0, INFO_CLK_DIV, 6, 2, 0, INFO_CLK_GATE, 2, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S3, "audss_i2s3", i2s_mc_parents,
++	    INFO_CLK_MUX, 6, 2, 0, INFO_CLK_DIV, 8, 2, 0, INFO_CLK_GATE, 3, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S4, "audss_i2s4", i2s_mc_parents,
++	    INFO_CLK_MUX, 8, 2, 0, INFO_CLK_DIV, 10, 2, 0, INFO_CLK_GATE, 4, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S5, "audss_i2s5", i2s_sc_parents,
++	    INFO_CLK_MUX, 10, 2, 0, INFO_CLK_DIV, 12, 2, 0, INFO_CLK_GATE, 5, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S6, "audss_i2s6", i2s_sc_parents,
++	    INFO_CLK_MUX, 12, 2, 0, INFO_CLK_DIV, 14, 2, 0, INFO_CLK_GATE, 6, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S7, "audss_i2s7", i2s_sc_parents,
++	    INFO_CLK_MUX, 14, 2, 0, INFO_CLK_DIV, 16, 2, 0, INFO_CLK_GATE, 7, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S8, "audss_i2s8", i2s_sc_parents,
++	    INFO_CLK_MUX, 16, 2, 0, INFO_CLK_DIV, 18, 2, 0, INFO_CLK_GATE, 8, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_I2S9, "audss_i2s9", i2s_sc_parents,
++	    INFO_CLK_MUX, 18, 2, 0, INFO_CLK_DIV, 20, 2, 0, INFO_CLK_GATE, 9, 0, CLK_GET_RATE_NOCACHE),
++	/* MCLK outputs */
++	CFG(CLK_MCLK0, "audss_mclk0", mclk_parents,
++	    INFO_MCLK, 5, 1, 0, -1, 0, 0, 0, INFO_MCLK, 0, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_MCLK1, "audss_mclk1", mclk_parents,
++	    INFO_MCLK, 6, 1, 0, -1, 0, 0, 0, INFO_MCLK, 1, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_MCLK2, "audss_mclk2", mclk_parents,
++	    INFO_MCLK, 7, 1, 0, -1, 0, 0, 0, INFO_MCLK, 2, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_MCLK3, "audss_mclk3", mclk_parents,
++	    INFO_MCLK, 8, 1, 0, -1, 0, 0, 0, INFO_MCLK, 3, 0, CLK_GET_RATE_NOCACHE),
++	CFG(CLK_MCLK4, "audss_mclk4", mclk_parents,
++	    INFO_MCLK, 9, 1, 0, -1, 0, 0, 0, INFO_MCLK, 4, 0, CLK_GET_RATE_NOCACHE),
++};
++
++/* Regmap-based mux operations */
++static u8 sky1_audss_mux_get_parent(struct clk_hw *hw)
++{
++	struct clk_mux *mux = to_clk_mux(hw);
++	struct sky1_clk_mux *sky1_mux = container_of(mux, struct sky1_clk_mux, mux);
++	u32 val;
++
++	regmap_read(sky1_mux->regmap, sky1_mux->offset, &val);
++	val = (val >> mux->shift) & mux->mask;
++
++	return clk_mux_val_to_index(hw, mux->table, mux->flags, val);
++}
++
++static int sky1_audss_mux_set_parent(struct clk_hw *hw, u8 index)
++{
++	struct clk_mux *mux = to_clk_mux(hw);
++	struct sky1_clk_mux *sky1_mux = container_of(mux, struct sky1_clk_mux, mux);
++	u32 val = clk_mux_index_to_val(mux->table, mux->flags, index);
++	unsigned long flags = 0;
++
++	if (mux->lock)
++		spin_lock_irqsave(mux->lock, flags);
++
++	regmap_update_bits(sky1_mux->regmap, sky1_mux->offset,
++			   mux->mask << mux->shift, val << mux->shift);
++
++	if (mux->lock)
++		spin_unlock_irqrestore(mux->lock, flags);
++
++	return 0;
++}
++
++static int sky1_audss_mux_determine_rate(struct clk_hw *hw,
++					 struct clk_rate_request *req)
++{
++	struct clk_mux *mux = to_clk_mux(hw);
++
++	return clk_mux_determine_rate_flags(hw, req, mux->flags);
++}
++
++static const struct clk_ops sky1_audss_mux_ops = {
++	.get_parent = sky1_audss_mux_get_parent,
++	.set_parent = sky1_audss_mux_set_parent,
++	.determine_rate = sky1_audss_mux_determine_rate,
++};
++
++/* Regmap-based divider operations */
++static unsigned long sky1_audss_div_recalc_rate(struct clk_hw *hw,
++						unsigned long parent_rate)
++{
++	struct clk_divider *div = to_clk_divider(hw);
++	struct sky1_clk_divider *sky1_div = container_of(div, struct sky1_clk_divider, div);
++	u32 val;
++
++	regmap_read(sky1_div->regmap, sky1_div->offset, &val);
++	val = (val >> div->shift) & clk_div_mask(div->width);
++
++	return divider_recalc_rate(hw, parent_rate, val, div->table,
++				   div->flags, div->width);
++}
++
++static long sky1_audss_div_round_rate(struct clk_hw *hw, unsigned long rate,
++				      unsigned long *prate)
++{
++	struct clk_divider *div = to_clk_divider(hw);
++
++	return divider_round_rate(hw, rate, prate, div->table,
++				  div->width, div->flags);
++}
++
++static int sky1_audss_div_set_rate(struct clk_hw *hw, unsigned long rate,
++				   unsigned long parent_rate)
++{
++	struct clk_divider *div = to_clk_divider(hw);
++	struct sky1_clk_divider *sky1_div = container_of(div, struct sky1_clk_divider, div);
++	unsigned long flags = 0;
++	int value;
++
++	value = divider_get_val(rate, parent_rate, div->table,
++				div->width, div->flags);
++	if (value < 0)
++		return value;
++
++	if (div->lock)
++		spin_lock_irqsave(div->lock, flags);
++
++	regmap_update_bits(sky1_div->regmap, sky1_div->offset,
++			   clk_div_mask(div->width) << div->shift,
++			   (u32)value << div->shift);
++
++	if (div->lock)
++		spin_unlock_irqrestore(div->lock, flags);
++
++	return 0;
++}
++
++static const struct clk_ops sky1_audss_div_ops = {
++	.recalc_rate = sky1_audss_div_recalc_rate,
++	.round_rate = sky1_audss_div_round_rate,
++	.set_rate = sky1_audss_div_set_rate,
++};
++
++/* Regmap-based gate operations with pm_runtime for power domain management */
++static void sky1_audss_gate_endisable(struct clk_hw *hw, int enable)
++{
++	struct clk_gate *gate = to_clk_gate(hw);
++	struct sky1_clk_gate *sky1_gate = container_of(gate, struct sky1_clk_gate, gate);
++	int set = gate->flags & CLK_GATE_SET_TO_DISABLE ? 1 : 0;
++	unsigned long flags;
++	u32 reg;
++
++	set ^= enable;
++
++	if (gate->lock)
++		spin_lock_irqsave(gate->lock, flags);
++
++	regmap_read(sky1_gate->regmap, sky1_gate->offset, &reg);
++
++	if (set)
++		reg |= BIT(gate->bit_idx);
++	else
++		reg &= ~BIT(gate->bit_idx);
++
++	regmap_write(sky1_gate->regmap, sky1_gate->offset, reg);
++
++	if (gate->lock)
++		spin_unlock_irqrestore(gate->lock, flags);
++}
++
++/*
++ * Gate prepare: Resume AUDSS clock controller if suspended.
++ * Called from process context, so pm_runtime_get_sync() is safe.
++ */
++static int sky1_audss_gate_prepare(struct clk_hw *hw)
++{
++	struct clk_gate *gate = to_clk_gate(hw);
++	struct sky1_clk_gate *sky1_gate = container_of(gate, struct sky1_clk_gate, gate);
++	int ret;
++
++	ret = pm_runtime_get_sync(sky1_gate->dev);
++	if (ret < 0) {
++		pm_runtime_put_noidle(sky1_gate->dev);
++		dev_err(sky1_gate->dev, "failed to resume for clock prepare: %d\n", ret);
++		return ret;
++	}
++	return 0;
++}
++
++/*
++ * Gate unprepare: Allow AUDSS clock controller to suspend.
++ * Called from process context, so pm_runtime_put() is safe.
++ */
++static void sky1_audss_gate_unprepare(struct clk_hw *hw)
++{
++	struct clk_gate *gate = to_clk_gate(hw);
++	struct sky1_clk_gate *sky1_gate = container_of(gate, struct sky1_clk_gate, gate);
++
++	pm_runtime_put(sky1_gate->dev);
++}
++
++/*
++ * Gate enable: Toggle the clock gate. Device is already active from prepare().
++ * Called from atomic context, no sleeping allowed.
++ */
++static int sky1_audss_gate_enable(struct clk_hw *hw)
++{
++	struct clk_gate *gate = to_clk_gate(hw);
++	struct sky1_clk_gate *sky1_gate = container_of(gate, struct sky1_clk_gate, gate);
++
++	dev_dbg(sky1_gate->dev, "gate_enable: bit %d\n", gate->bit_idx);
++	sky1_audss_gate_endisable(hw, 1);
++	return 0;
++}
++
++/*
++ * Gate disable: Toggle the clock gate. Device stays active until unprepare().
++ * Called from atomic context, no sleeping allowed.
++ */
++static void sky1_audss_gate_disable(struct clk_hw *hw)
++{
++	sky1_audss_gate_endisable(hw, 0);
++}
++
++static int sky1_audss_gate_is_enabled(struct clk_hw *hw)
++{
++	struct clk_gate *gate = to_clk_gate(hw);
++	struct sky1_clk_gate *sky1_gate = container_of(gate, struct sky1_clk_gate, gate);
++	u32 val;
++
++	regmap_read(sky1_gate->regmap, sky1_gate->offset, &val);
++
++	if (gate->flags & CLK_GATE_SET_TO_DISABLE)
++		val ^= BIT(gate->bit_idx);
++
++	return !!(val & BIT(gate->bit_idx));
++}
++
++static const struct clk_ops sky1_audss_gate_ops = {
++	.prepare = sky1_audss_gate_prepare,
++	.unprepare = sky1_audss_gate_unprepare,
++	.enable = sky1_audss_gate_enable,
++	.disable = sky1_audss_gate_disable,
++	.is_enabled = sky1_audss_gate_is_enabled,
++};
++
++static struct clk_hw *sky1_audss_clk_register(struct device *dev,
++					      const char *name,
++					      const char * const *parent_names,
++					      int num_parents,
++					      struct regmap *regmap,
++					      struct muxdiv_cfg *mux_cfg,
++					      struct muxdiv_cfg *div_cfg,
++					      struct gate_cfg *gate_cfg,
++					      unsigned long flags)
++{
++	struct sky1_clk_mux *sky1_mux = NULL;
++	struct sky1_clk_divider *sky1_div = NULL;
++	struct sky1_clk_gate *sky1_gate = NULL;
++	const struct clk_ops *mux_ops = NULL;
++	const struct clk_ops *div_ops = NULL;
++	const struct clk_ops *gate_ops = NULL;
++	struct clk_parent_data *pdata;
++	struct clk_hw *hw;
++	int i;
++
++	pdata = devm_kcalloc(dev, num_parents, sizeof(*pdata), GFP_KERNEL);
++	if (!pdata)
++		return ERR_PTR(-ENOMEM);
++
++	for (i = 0; i < num_parents; i++)
++		pdata[i].fw_name = parent_names[i];
++
++	if (mux_cfg->offset >= 0) {
++		sky1_mux = devm_kzalloc(dev, sizeof(*sky1_mux), GFP_KERNEL);
++		if (!sky1_mux)
++			return ERR_PTR(-ENOMEM);
++
++		sky1_mux->mux.shift = mux_cfg->shift;
++		sky1_mux->mux.mask = BIT(mux_cfg->width) - 1;
++		sky1_mux->mux.flags = mux_cfg->flags;
++		sky1_mux->mux.lock = &sky1_audss_lock;
++		sky1_mux->regmap = regmap;
++		sky1_mux->offset = mux_cfg->offset;
++		mux_ops = &sky1_audss_mux_ops;
++	}
++
++	if (div_cfg->offset >= 0) {
++		sky1_div = devm_kzalloc(dev, sizeof(*sky1_div), GFP_KERNEL);
++		if (!sky1_div)
++			return ERR_PTR(-ENOMEM);
++
++		sky1_div->div.shift = div_cfg->shift;
++		sky1_div->div.width = div_cfg->width;
++		sky1_div->div.flags = div_cfg->flags | CLK_DIVIDER_POWER_OF_TWO;
++		sky1_div->div.lock = &sky1_audss_lock;
++		sky1_div->regmap = regmap;
++		sky1_div->offset = div_cfg->offset;
++		div_ops = &sky1_audss_div_ops;
++	}
++
++	if (gate_cfg->offset >= 0) {
++		sky1_gate = devm_kzalloc(dev, sizeof(*sky1_gate), GFP_KERNEL);
++		if (!sky1_gate)
++			return ERR_PTR(-ENOMEM);
++
++		sky1_gate->gate.bit_idx = gate_cfg->shift;
++		sky1_gate->gate.flags = gate_cfg->flags;
++		sky1_gate->gate.lock = &sky1_audss_lock;
++		sky1_gate->regmap = regmap;
++		sky1_gate->offset = gate_cfg->offset;
++		sky1_gate->dev = dev;
++		gate_ops = &sky1_audss_gate_ops;
++	}
++
++	hw = devm_clk_hw_register_composite_pdata(dev, name,
++			pdata, num_parents,
++			sky1_mux ? &sky1_mux->mux.hw : NULL, mux_ops,
++			sky1_div ? &sky1_div->div.hw : NULL, div_ops,
++			sky1_gate ? &sky1_gate->gate.hw : NULL, gate_ops,
++			flags);
++	if (IS_ERR(hw))
++		dev_err(dev, "failed to register %s: %ld\n", name, PTR_ERR(hw));
++
++	return hw;
++}
++
++/* Helper functions for parent clock management */
++static int sky1_audss_clks_enable(struct sky1_audss_priv *priv)
++{
++	int i, ret;
++
++	for (i = 0; i < SKY1_AUDSS_CLKS_NUM; i++) {
++		ret = clk_prepare_enable(priv->parent_clks[i]);
++		if (ret) {
++			dev_err(priv->dev, "failed to enable %s\n",
++				sky1_audss_clk_names[i]);
++			goto err_clks;
++		}
++	}
++	return 0;
++
++err_clks:
++	while (--i >= 0)
++		clk_disable_unprepare(priv->parent_clks[i]);
++	return ret;
++}
++
++static void sky1_audss_clks_disable(struct sky1_audss_priv *priv)
++{
++	int i;
++
++	for (i = 0; i < SKY1_AUDSS_CLKS_NUM; i++)
++		clk_disable_unprepare(priv->parent_clks[i]);
++}
++
++/* Runtime PM callbacks */
++static int __maybe_unused sky1_audss_clk_runtime_suspend(struct device *dev)
++{
++	struct sky1_audss_priv *priv = dev_get_drvdata(dev);
++	int i;
++
++	/* Save register state before power down */
++	for (i = 0; i < ARRAY_SIZE(sky1_audss_reg_save); i++)
++		regmap_read(priv->regmap, sky1_audss_reg_save[i][0],
++			    &sky1_audss_reg_save[i][1]);
++
++	sky1_audss_clks_disable(priv);
++
++	return 0;
++}
++
++static int __maybe_unused sky1_audss_clk_runtime_resume(struct device *dev)
++{
++	struct sky1_audss_priv *priv = dev_get_drvdata(dev);
++	int i, ret;
++
++	ret = sky1_audss_clks_enable(priv);
++	if (ret) {
++		dev_err(dev, "failed to enable clocks\n");
++		return ret;
++	}
++
++	/* Release NOC reset */
++	reset_control_deassert(priv->rst_noc);
++
++	/* Restore RCSU remap */
++	writel(SKY1_AUDSS_RCSU_REMAP_VAL, priv->rcsu_base + SKY1_AUDSS_RCSU_REMAP);
++
++	/* Restore register state */
++	for (i = 0; i < ARRAY_SIZE(sky1_audss_reg_save); i++)
++		regmap_write(priv->regmap, sky1_audss_reg_save[i][0],
++			     sky1_audss_reg_save[i][1]);
++
++	return 0;
++}
++
++static const struct dev_pm_ops sky1_audss_clk_pm_ops = {
++	SET_RUNTIME_PM_OPS(sky1_audss_clk_runtime_suspend,
++			   sky1_audss_clk_runtime_resume, NULL)
++	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
++				     pm_runtime_force_resume)
++};
++
++/*
++ * Parse the CLKA ACPI table to create clkdev entries mapping audss internal
++ * clocks to their consumer devices. Under ACPI, DT phandle-based clock lookup
++ * isn't available, so consumers (HDA, I2S, DMA, etc.) find their clocks via
++ * clkdev entries instead. The CLKA table is a package of {clk_id, con_id,
++ * consumer_device_ref} entries defined in the DSDT on this device's ACPI node.
++ */
++#ifdef CONFIG_ACPI
++static int sky1_audss_parse_clka(struct device *dev,
++				 struct clk_hw_onecell_data *clk_data)
++{
++	acpi_handle handle = ACPI_HANDLE(dev);
++	struct acpi_buffer output = {ACPI_ALLOCATE_BUFFER, NULL};
++	union acpi_object *out_obj, *entry, *el;
++	acpi_status status;
++	int i, count, registered = 0;
++
++	status = acpi_evaluate_object_typed(handle, "CLKA", NULL, &output,
++					    ACPI_TYPE_PACKAGE);
++	if (ACPI_FAILURE(status))
++		return -ENODEV;
++
++	out_obj = output.pointer;
++	count = out_obj->package.count;
++
++	for (i = 0; i < count; i++) {
++		struct acpi_device *adev;
++		struct clk_hw *hw;
++		unsigned int clk_id;
++		const char *con_id;
++		int ret;
++
++		entry = &out_obj->package.elements[i];
++		if (entry->type != ACPI_TYPE_PACKAGE || entry->package.count < 3)
++			continue;
++
++		el = &entry->package.elements[0];
++		if (el->type != ACPI_TYPE_INTEGER)
++			continue;
++		clk_id = el->integer.value;
++
++		el = &entry->package.elements[1];
++		if (el->type != ACPI_TYPE_STRING)
++			continue;
++		con_id = el->string.pointer;
++		if (!con_id || !con_id[0])
++			con_id = NULL;
++
++		el = &entry->package.elements[2];
++		if (el->type == ACPI_TYPE_LOCAL_REFERENCE)
++			adev = acpi_fetch_acpi_dev(el->reference.handle);
++		else
++			adev = NULL;
++		if (!adev)
++			continue;
++
++		if (clk_id >= clk_data->num)
++			continue;
++		hw = clk_data->hws[clk_id];
++		if (!hw || IS_ERR(hw))
++			continue;
++
++		ret = devm_clk_hw_register_clkdev(dev, hw, con_id,
++						  dev_name(&adev->dev));
++		if (ret) {
++			dev_warn(dev, "CLKA: failed to register %s:%s (clk %u): %d\n",
++				 dev_name(&adev->dev), con_id ?: "", clk_id, ret);
++			continue;
++		}
++
++		dev_dbg(dev, "CLKA: clk %u -> %s:%s\n",
++			clk_id, dev_name(&adev->dev), con_id ?: "");
++		registered++;
++	}
++
++	kfree(output.pointer);
++	dev_info(dev, "CLKA: registered %d clkdev entries\n", registered);
++	return 0;
++}
++#endif
++
++static int sky1_audss_clk_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct device_node *parent_np;
++	struct sky1_audss_priv *priv;
++	struct clk_hw **clk_table;
++	int i, ret;
++
++	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
++
++	priv->dev = dev;
++
++	/* Get regmap from parent syscon */
++	parent_np = of_get_parent(dev->of_node);
++	priv->regmap = syscon_node_to_regmap(parent_np);
++	of_node_put(parent_np);
++
++	if (IS_ERR(priv->regmap) && has_acpi_companion(dev)) {
++		struct fwnode_handle *fw;
++		struct device *syscon_dev;
++
++		fw = fwnode_find_reference(dev_fwnode(dev), "audss_cru", 0);
++		if (!IS_ERR(fw)) {
++			syscon_dev = bus_find_device_by_fwnode(
++					&platform_bus_type, fw);
++			fwnode_handle_put(fw);
++			if (syscon_dev) {
++				priv->regmap = dev_get_regmap(syscon_dev, NULL);
++				put_device(syscon_dev);
++				if (!priv->regmap)
++					priv->regmap = ERR_PTR(-EPROBE_DEFER);
++			}
++		}
++	}
++
++	if (IS_ERR(priv->regmap))
++		return dev_err_probe(dev, PTR_ERR(priv->regmap),
++				     "failed to get parent regmap\n");
++
++	/* Get parent clocks from SCMI */
++	for (i = 0; i < SKY1_AUDSS_CLKS_NUM; i++) {
++		priv->parent_clks[i] = devm_clk_get(dev, sky1_audss_clk_names[i]);
++		if (IS_ERR(priv->parent_clks[i]))
++			return dev_err_probe(dev, PTR_ERR(priv->parent_clks[i]),
++					     "failed to get %s\n", sky1_audss_clk_names[i]);
++	}
++
++	/* Allocate clock data */
++	priv->clk_data = devm_kzalloc(dev, struct_size(priv->clk_data, hws, AUDSS_MAX_CLKS),
++				      GFP_KERNEL);
++	if (!priv->clk_data)
++		return -ENOMEM;
++
++	priv->clk_data->num = AUDSS_MAX_CLKS;
++	clk_table = priv->clk_data->hws;
++
++	platform_set_drvdata(pdev, priv);
++
++	/*
++	 * Enable runtime PM to allow the clock core to use runtime PM
++	 * for the registered clocks. Mark device as active before
++	 * enabling clocks.
++	 */
++	pm_runtime_get_noresume(dev);
++	pm_runtime_set_active(dev);
++	pm_runtime_enable(dev);
++
++	/*
++	 * Under ACPI, explicitly transition to D0 to invoke the PPRS
++	 * power resource _ON method.  PPRS enables the audio subsystem
++	 * power gates (RCSU PD_CTRL) and triggers memory repair via
++	 * DMRP.  This must happen before any audio subsystem register
++	 * access (CRU, reset controller, DMA, I2S, etc).
++	 */
++	if (has_acpi_companion(dev)) {
++		ret = acpi_device_set_power(ACPI_COMPANION(dev),
++					    ACPI_STATE_D0);
++		if (ret)
++			dev_warn(dev, "ACPI D0 transition failed: %d\n", ret);
++	}
++
++	/* Enable parent clocks and set default rates */
++	ret = sky1_audss_clks_enable(priv);
++	if (ret) {
++		dev_err(dev, "failed to enable clocks\n");
++		goto err_pm;
++	}
++
++	for (i = 0; i < SKY1_AUDSS_CLKS_NUM; i++) {
++		ret = clk_set_rate(priv->parent_clks[i], sky1_audss_clk_rates[i]);
++		if (ret)
++			dev_warn(dev, "failed to set rate for %s\n", sky1_audss_clk_names[i]);
++	}
++
++	/* Get and deassert NOC reset */
++	priv->rst_noc = devm_reset_control_get(dev, "noc");
++	if (IS_ERR(priv->rst_noc)) {
++		ret = dev_err_probe(dev, PTR_ERR(priv->rst_noc),
++				    "failed to get noc reset\n");
++		goto err_clks;
++	}
++
++	reset_control_assert(priv->rst_noc);
++	usleep_range(1, 2);
++	reset_control_deassert(priv->rst_noc);
++
++	/* Map RCSU for DSP initialization */
++	priv->rcsu_base = ioremap(SKY1_AUDSS_RCSU_ADDR, SKY1_AUDSS_RCSU_LEN);
++	if (!priv->rcsu_base) {
++		ret = -ENOMEM;
++		goto err_clks;
++	}
++
++	/* Configure RCSU address remap and timeout */
++	writel(SKY1_AUDSS_RCSU_REMAP_VAL, priv->rcsu_base + SKY1_AUDSS_RCSU_REMAP);
++	writel(SKY1_AUDSS_RCSU_TIMEOUT_EN |
++	       FIELD_PREP(GENMASK(15, 0), SKY1_AUDSS_RCSU_TIMEOUT_VAL),
++	       priv->rcsu_base + SKY1_AUDSS_RCSU_TIMEOUT);
++
++	/* Register fixed divider clocks */
++	clk_table[CLK_AUD_CLK4_DIV2] =
++		devm_clk_hw_register_fixed_factor(dev, "audio_clk4_div2",
++						  "audio_clk4", CLK_GET_RATE_NOCACHE, 1, 2);
++	clk_table[CLK_AUD_CLK4_DIV4] =
++		devm_clk_hw_register_fixed_factor(dev, "audio_clk4_div4",
++						  "audio_clk4", CLK_GET_RATE_NOCACHE, 1, 4);
++	clk_table[CLK_AUD_CLK5_DIV2] =
++		devm_clk_hw_register_fixed_factor(dev, "audio_clk5_div2",
++						  "audio_clk5", CLK_GET_RATE_NOCACHE, 1, 2);
++
++	/* Register composite clocks */
++	for (i = 0; i < ARRAY_SIZE(audss_clks); i++) {
++		clk_table[audss_clks[i].id] = sky1_audss_clk_register(dev,
++			audss_clks[i].name,
++			audss_clks[i].parent_names,
++			audss_clks[i].num_parents,
++			priv->regmap,
++			audss_clks[i].mux_cfg,
++			audss_clks[i].div_cfg,
++			audss_clks[i].gate_cfg,
++			audss_clks[i].flags);
++	}
++
++	/* Check all clocks registered successfully */
++	for (i = 0; i < AUDSS_MAX_CLKS; i++) {
++		if (IS_ERR(clk_table[i])) {
++			ret = PTR_ERR(clk_table[i]);
++			dev_err(dev, "failed to register clock %d: %d\n", i, ret);
++			goto err_rcsu;
++		}
++	}
++
++	if (has_acpi_companion(dev)) {
++#ifdef CONFIG_ACPI
++		ret = sky1_audss_parse_clka(dev, priv->clk_data);
++#else
++		ret = 0;
++#endif
++	} else {
++		ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
++						  priv->clk_data);
++	}
++	if (ret) {
++		dev_err(dev, "failed to add clock provider: %d\n", ret);
++		goto err_rcsu;
++	}
++
++	/*
++	 * Keep AUDSS active after probe. Consumers like DMA-350 need the
++	 * clock controller to be powered when they enable clocks during
++	 * their probe. We rely on the gate prepare/unprepare callbacks
++	 * to manage runtime PM reference counting during normal operation.
++	 *
++	 * The initial pm_runtime_get_noresume() reference is kept - we
++	 * don't call pm_runtime_put_sync() here.
++	 */
++	/* Allow DLKL consumers (DMA, I2S, etc.) to enumerate now */
++	if (has_acpi_companion(dev))
++		acpi_dev_clear_dependencies(ACPI_COMPANION(dev));
++
++	dev_info(dev, "registered %d clocks\n", AUDSS_MAX_CLKS);
++	return 0;
++
++err_rcsu:
++	iounmap(priv->rcsu_base);
++err_clks:
++	sky1_audss_clks_disable(priv);
++err_pm:
++	pm_runtime_put_sync(dev);
++	pm_runtime_disable(dev);
++	return ret;
++}
++
++static void sky1_audss_clk_remove(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct sky1_audss_priv *priv = platform_get_drvdata(pdev);
++
++	iounmap(priv->rcsu_base);
++
++	/* Force suspend if not already suspended */
++	if (!pm_runtime_status_suspended(dev))
++		pm_runtime_force_suspend(dev);
++
++	pm_runtime_disable(dev);
++}
++
++static const struct of_device_id sky1_audss_clk_of_match[] = {
++	{ .compatible = "cix,sky1-audss-clock" },
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(of, sky1_audss_clk_of_match);
++
++#ifdef CONFIG_ACPI
++static const struct acpi_device_id sky1_audss_clk_acpi_match[] = {
++	{ "CIXH6061", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(acpi, sky1_audss_clk_acpi_match);
++#endif
++
++static struct platform_driver sky1_audss_clk_driver = {
++	.probe = sky1_audss_clk_probe,
++	.remove = sky1_audss_clk_remove,
++	.driver = {
++		.name = "sky1-audss-clk",
++		.of_match_table = sky1_audss_clk_of_match,
++		.acpi_match_table = ACPI_PTR(sky1_audss_clk_acpi_match),
++		.pm = &sky1_audss_clk_pm_ops,
++	},
++};
++module_platform_driver(sky1_audss_clk_driver);
++
++MODULE_AUTHOR("Joakim Zhang <joakim.zhang@cixtech.com>");
++MODULE_DESCRIPTION("CIX Sky1 Audio Subsystem Clock Controller");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/clk/cix/clk-sky1-audss.c b/drivers/clk/cix/clk-sky1-audss.c
+index 174058167..e03a250a5 100644
+--- a/drivers/clk/cix/clk-sky1-audss.c
++++ b/drivers/clk/cix/clk-sky1-audss.c
+@@ -303,13 +303,13 @@ static unsigned long sky1_audss_div_recalc_rate(struct clk_hw *hw,
+ 				   div->flags, div->width);
+ }
+
+-static long sky1_audss_div_round_rate(struct clk_hw *hw, unsigned long rate,
+-				      unsigned long *prate)
++static int sky1_audss_div_determine_rate(struct clk_hw *hw,
++					  struct clk_rate_request *req)
+ {
+ 	struct clk_divider *div = to_clk_divider(hw);
+
+-	return divider_round_rate(hw, rate, prate, div->table,
+-				  div->width, div->flags);
++	return divider_determine_rate(hw, req, div->table,
++				       div->width, div->flags);
+ }
+
+ static int sky1_audss_div_set_rate(struct clk_hw *hw, unsigned long rate,
+@@ -340,7 +340,7 @@ static int sky1_audss_div_set_rate(struct clk_hw *hw, unsigned long rate,
+
+ static const struct clk_ops sky1_audss_div_ops = {
+ 	.recalc_rate = sky1_audss_div_recalc_rate,
+-	.round_rate = sky1_audss_div_round_rate,
++	.determine_rate = sky1_audss_div_determine_rate,
+ 	.set_rate = sky1_audss_div_set_rate,
+ };
+
+diff --git a/drivers/clk/cix/Kconfig b/drivers/clk/cix/Kconfig
+new file mode 100644
+index 000000000..76934ca43
+--- /dev/null
++++ b/drivers/clk/cix/Kconfig
+@@ -0,0 +1,22 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++config CLK_SKY1_ACPI
++	tristate "CIX Sky1 ACPI clock lookup table support"
++	depends on ACPI && COMMON_CLK_SCMI
++	depends on ARM64
++	default ARCH_CIX
++	help
++	  Parses CLKT tables in the CIX Sky1 DSDT to connect ACPI
++	  consumer devices with SCMI-provided clocks. Required for
++	  ACPI boot on Sky1 SoCs.
++
++config CLK_SKY1_AUDSS
++	bool "CIX Sky1 Audio Subsystem Clock Controller"
++	depends on ARCH_CIX || COMPILE_TEST
++	depends on MFD_SYSCON
++	depends on COMMON_CLK
++	default ARCH_CIX
++	help
++	  This enables the audio subsystem clock controller for CIX Sky1
++	  SoCs. This is required for the audio subsystem including I2S
++	  controllers and DSP.
+diff --git a/drivers/clk/cix/Makefile b/drivers/clk/cix/Makefile
+new file mode 100644
+index 000000000..32375c335
+--- /dev/null
++++ b/drivers/clk/cix/Makefile
+@@ -0,0 +1,4 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++obj-$(CONFIG_CLK_SKY1_ACPI) += clk-sky1-acpi.o
++obj-$(CONFIG_CLK_SKY1_AUDSS) += clk-sky1-audss.o
+diff --git a/drivers/clk/clkdev.c b/drivers/clk/clkdev.c
+index abaa0f9e0..6fbcdbc84 100644
+--- a/drivers/clk/clkdev.c
++++ b/drivers/clk/clkdev.c
+@@ -145,7 +145,7 @@ void clkdev_add_table(struct clk_lookup *cl, size_t num)
+ }
+
+ #define MAX_DEV_ID	24
+-#define MAX_CON_ID	16
++#define MAX_CON_ID	32
+
+ struct clk_lookup_alloc {
+ 	struct clk_lookup cl;
+diff --git a/drivers/clk/clk-scmi.c b/drivers/clk/clk-scmi.c
+index 7c562559a..5a6da0c54 100644
+--- a/drivers/clk/clk-scmi.c
++++ b/drivers/clk/clk-scmi.c
+@@ -7,6 +7,7 @@
+
+ #include <linux/bits.h>
+ #include <linux/clk-provider.h>
++#include <linux/clkdev.h>
+ #include <linux/device.h>
+ #include <linux/err.h>
+ #include <linux/of.h>
+@@ -463,8 +464,26 @@ static int scmi_clocks_probe(struct scmi_device *sdev)
+ 		}
+ 	}
+
+-	return devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
+-					   clk_data);
++	if (np)
++		return devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
++						   clk_data);
++
++	/* ACPI: register each clock via clkdev for global lookup */
++	for (idx = 0; idx < count; idx++) {
++		char con_id[20];
++
++		if (!hws[idx])
++			continue;
++
++		snprintf(con_id, sizeof(con_id), "scmi-clk-%d", idx);
++		err = devm_clk_hw_register_clkdev(dev, hws[idx], con_id, NULL);
++		if (err)
++			dev_warn(dev,
++				 "Failed to register clkdev for clock %d\n",
++				 idx);
++	}
++
++	return 0;
+ }
+
+ static const struct scmi_device_id scmi_id_table[] = {
+diff --git a/drivers/clk/Kconfig b/drivers/clk/Kconfig
+index 1717ce75a..1c1658a39 100644
+--- a/drivers/clk/Kconfig
++++ b/drivers/clk/Kconfig
+@@ -504,8 +504,8 @@ config COMMON_CLK_RPMI
+ 	help
+ 	  Support for clocks based on the clock service group defined by
+ 	  the RISC-V platform management interface (RPMI) specification.
+-
+ source "drivers/clk/actions/Kconfig"
++source "drivers/clk/cix/Kconfig"
+ source "drivers/clk/analogbits/Kconfig"
+ source "drivers/clk/aspeed/Kconfig"
+ source "drivers/clk/bcm/Kconfig"
+diff --git a/drivers/clk/Makefile b/drivers/clk/Makefile
+index cc108a75a..1106ec2d1 100644
+--- a/drivers/clk/Makefile
++++ b/drivers/clk/Makefile
+@@ -118,6 +118,7 @@ obj-$(CONFIG_COMMON_CLK_AT91)		+= at91/
+ obj-$(CONFIG_ARCH_ARTPEC)		+= axis/
+ obj-$(CONFIG_ARC_PLAT_AXS10X)		+= axs10x/
+ obj-y					+= bcm/
++obj-$(CONFIG_ARCH_CIX)			+= cix/
+ obj-$(CONFIG_ARCH_BERLIN)		+= berlin/
+ obj-$(CONFIG_ARCH_DAVINCI)		+= davinci/
+ obj-$(CONFIG_COMMON_CLK_ESWIN)		+= eswin/
+diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
+index d9c76dd44..154772f14 100644
+--- a/drivers/clocksource/Kconfig
++++ b/drivers/clocksource/Kconfig
+@@ -513,6 +513,15 @@ config SPRD_TIMER
+ 	help
+ 	  Enables support for the Spreadtrum timer driver.
+
++config SKY1_GPT_TIMER
++	tristate "CIX Sky1 GPT timer driver"
++	depends on HAS_IOMEM
++	depends on (ARCH_CIX || COMPILE_TEST)
++	select CLKSRC_MMIO
++	help
++	  Enables support for the CIX Sky1 General Purpose Timer,
++	  providing clocksource and clock event functionality.
++
+ config SYS_SUPPORTS_SH_MTU2
+ 	bool
+
+diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
+index b46376af6..c1f541576 100644
+--- a/drivers/clocksource/Makefile
++++ b/drivers/clocksource/Makefile
+@@ -58,6 +58,7 @@ obj-$(CONFIG_CLKSRC_TI_32K)	+= timer-ti-32k.o
+ obj-$(CONFIG_OWL_TIMER)		+= timer-owl.o
+ obj-$(CONFIG_MILBEAUT_TIMER)	+= timer-milbeaut.o
+ obj-$(CONFIG_SPRD_TIMER)	+= timer-sprd.o
++obj-$(CONFIG_SKY1_GPT_TIMER)	+= timer-sky1-gpt.o
+ obj-$(CONFIG_NPCM7XX_TIMER)	+= timer-npcm7xx.o
+ obj-$(CONFIG_RDA_TIMER)		+= timer-rda.o
+ obj-$(CONFIG_REALTEK_OTTO_TIMER)	+= timer-rtl-otto.o
+diff --git a/drivers/clocksource/timer-sky1-gpt.c b/drivers/clocksource/timer-sky1-gpt.c
+new file mode 100644
+index 000000000..df9db89ff
+--- /dev/null
++++ b/drivers/clocksource/timer-sky1-gpt.c
+@@ -0,0 +1,299 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * CIX Sky1 General Purpose Timer
++ *
++ * Copyright 2024 Cix Technology Group Co., Ltd.
++ */
++
++#include <linux/acpi.h>
++#include <linux/clk.h>
++#include <linux/clockchips.h>
++#include <linux/interrupt.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/reset.h>
++#include <linux/sched_clock.h>
++
++#define TIMER_NAME "sky1_timer"
++
++/* Timer registers */
++#define LDINIT_RW	0x0000	/* Initial value to load */
++#define FREE_CNT	0x001C	/* Free-running counter (low 32-bit) */
++#define COMP		0x0020	/* Compare value */
++#define TCTL		0x0024	/* Control register */
++#define INTSTAT		0x0030	/* Interrupt status */
++#define INTCLR		0x0034	/* Interrupt clear */
++
++/* Timer modes */
++#define FREERUN_MODE	0x2
++
++/* TCTL register bits */
++#define TCTL_ENABLE		BIT(17)
++#define TCTL_FREEENABLE		BIT(15)
++#define TCTL_TWID_64BIT		BIT(12)
++#define TCTL_INTENABLE		BIT(6)
++
++/* Interrupt bits */
++#define FREE_INTCLEAR		BIT(5)
++
++/* Offset between odd/even timer pair for 64-bit mode */
++#define TIMER_OFFSET		0x1000
++
++struct sky1_timer {
++	void __iomem *base;
++	int irq;
++	struct clock_event_device ced;
++	struct clk *pclk;
++	struct clk *tclk;
++};
++
++static void __iomem *sched_clock_reg;
++
++static inline struct sky1_timer *to_sky1_timer(struct clock_event_device *ced)
++{
++	return container_of(ced, struct sky1_timer, ced);
++}
++
++/*
++ * Read 64-bit counter using two 32-bit registers.
++ * Upper register may change during read, so re-read if necessary.
++ */
++static u64 notrace sky1_counter_read(void)
++{
++	u32 lower, upper, old_upper;
++	u64 counter;
++
++	upper = readl_relaxed(sched_clock_reg + TIMER_OFFSET);
++	do {
++		old_upper = upper;
++		lower = readl_relaxed(sched_clock_reg);
++		upper = readl_relaxed(sched_clock_reg + TIMER_OFFSET);
++	} while (upper != old_upper);
++
++	counter = (u64)upper << 32 | lower;
++	return counter;
++}
++
++static u64 notrace sky1_read_sched_clock(void)
++{
++	return sched_clock_reg ? sky1_counter_read() : 0;
++}
++
++static u64 sky1_clocksource_read(struct clocksource *cs)
++{
++	return sky1_counter_read();
++}
++
++static struct clocksource sky1_clocksource = {
++	.name	= "sky1_counter",
++	.rating	= 200,
++	.read	= sky1_clocksource_read,
++	.mask	= CLOCKSOURCE_MASK(64),
++	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
++};
++
++static void sky1_gpt_irq_enable(struct sky1_timer *sky1tm)
++{
++	u32 val = readl_relaxed(sky1tm->base + TIMER_OFFSET + TCTL);
++
++	writel_relaxed(val | TCTL_INTENABLE, sky1tm->base + TIMER_OFFSET + TCTL);
++}
++
++static void sky1_gpt_irq_disable(struct sky1_timer *sky1tm)
++{
++	u32 val = readl_relaxed(sky1tm->base + TIMER_OFFSET + TCTL);
++
++	writel_relaxed(val & ~TCTL_INTENABLE, sky1tm->base + TIMER_OFFSET + TCTL);
++}
++
++static void sky1_gpt_irq_ack(struct sky1_timer *sky1tm)
++{
++	writel_relaxed(FREE_INTCLEAR, sky1tm->base + TIMER_OFFSET + INTCLR);
++}
++
++static void sky1_gpt_setup(struct sky1_timer *sky1tm)
++{
++	u32 val;
++
++	/* Configure even timer (low 32-bit) */
++	val = TCTL_FREEENABLE | FREERUN_MODE | TCTL_INTENABLE;
++	writel_relaxed(val, sky1tm->base + TCTL);
++
++	/* Configure odd timer (high 32-bit) with 64-bit mode */
++	val = TCTL_FREEENABLE | TCTL_TWID_64BIT | FREERUN_MODE | TCTL_INTENABLE;
++	writel_relaxed(val, sky1tm->base + TIMER_OFFSET + TCTL);
++
++	/* Enable both timers (enable bit must be set last) */
++	val = TCTL_ENABLE | TCTL_FREEENABLE | FREERUN_MODE | TCTL_INTENABLE;
++	writel_relaxed(val, sky1tm->base + TCTL);
++
++	val = TCTL_ENABLE | TCTL_FREEENABLE | TCTL_TWID_64BIT | FREERUN_MODE | TCTL_INTENABLE;
++	writel_relaxed(val, sky1tm->base + TIMER_OFFSET + TCTL);
++}
++
++static int sky1_set_next_event(unsigned long evt, struct clock_event_device *ced)
++{
++	struct sky1_timer *sky1tm = to_sky1_timer(ced);
++	u64 tcn = sky1_counter_read() + evt;
++
++	/* Write compare value (high word first) */
++	writel_relaxed(tcn >> 32, sky1tm->base + COMP + TIMER_OFFSET);
++	writel_relaxed((u32)tcn, sky1tm->base + COMP);
++
++	return tcn < sky1_counter_read() ? -ETIME : 0;
++}
++
++static int sky1_shutdown(struct clock_event_device *ced)
++{
++	struct sky1_timer *sky1tm = to_sky1_timer(ced);
++	u64 tcn = sky1_counter_read();
++
++	sky1_gpt_irq_disable(sky1tm);
++
++	/* Set compare to past value to prevent spurious interrupts */
++	writel_relaxed((tcn - 3) >> 32, sky1tm->base + COMP + TIMER_OFFSET);
++	writel_relaxed((u32)(tcn - 3), sky1tm->base + COMP);
++
++	sky1_gpt_irq_ack(sky1tm);
++
++	return 0;
++}
++
++static int sky1_set_oneshot(struct clock_event_device *ced)
++{
++	struct sky1_timer *sky1tm = to_sky1_timer(ced);
++
++	sky1_gpt_irq_disable(sky1tm);
++
++	if (!clockevent_state_oneshot(ced)) {
++		u64 tcn = sky1_counter_read();
++
++		writel_relaxed((tcn - 3) >> 32, sky1tm->base + COMP + TIMER_OFFSET);
++		writel_relaxed((u32)(tcn - 3), sky1tm->base + COMP);
++		sky1_gpt_irq_ack(sky1tm);
++	}
++
++	sky1_gpt_irq_enable(sky1tm);
++	return 0;
++}
++
++static int sky1_tick_resume(struct clock_event_device *ced)
++{
++	struct sky1_timer *sky1tm = to_sky1_timer(ced);
++
++	sky1_gpt_setup(sky1tm);
++	return sky1_shutdown(ced);
++}
++
++static irqreturn_t sky1_timer_interrupt(int irq, void *dev_id)
++{
++	struct clock_event_device *ced = dev_id;
++	struct sky1_timer *sky1tm = to_sky1_timer(ced);
++
++	sky1_gpt_irq_ack(sky1tm);
++	ced->event_handler(ced);
++
++	return IRQ_HANDLED;
++}
++
++static int sky1_timer_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct sky1_timer *sky1tm;
++	unsigned long rate;
++	int ret;
++
++	sky1tm = devm_kzalloc(dev, sizeof(*sky1tm), GFP_KERNEL);
++	if (!sky1tm)
++		return -ENOMEM;
++
++	sky1tm->base = devm_platform_ioremap_resource(pdev, 0);
++	if (IS_ERR(sky1tm->base))
++		return PTR_ERR(sky1tm->base);
++
++	sky1tm->irq = platform_get_irq(pdev, 0);
++	if (sky1tm->irq < 0)
++		return sky1tm->irq;
++
++	sky1tm->pclk = devm_clk_get_optional_enabled(dev, "apb");
++	if (IS_ERR(sky1tm->pclk) && has_acpi_companion(dev))
++		sky1tm->pclk = devm_clk_get_optional_enabled(dev,
++							"fch_timer_apb_clk");
++	if (IS_ERR(sky1tm->pclk))
++		return dev_err_probe(dev, PTR_ERR(sky1tm->pclk),
++				     "failed to get apb clock\n");
++
++	sky1tm->tclk = devm_clk_get_enabled(dev, "func");
++	if (IS_ERR(sky1tm->tclk) && has_acpi_companion(dev))
++		sky1tm->tclk = devm_clk_get_enabled(dev,
++						     "fch_timer_func_clk");
++	if (IS_ERR(sky1tm->tclk))
++		return dev_err_probe(dev, PTR_ERR(sky1tm->tclk),
++				     "failed to get func clock\n");
++
++	rate = clk_get_rate(sky1tm->tclk);
++	if (!rate)
++		return dev_err_probe(dev, -EINVAL, "invalid clock rate\n");
++
++	sky1_gpt_setup(sky1tm);
++	platform_set_drvdata(pdev, sky1tm);
++
++	/* Register clocksource */
++	sched_clock_reg = sky1tm->base + FREE_CNT;
++	sched_clock_register(sky1_read_sched_clock, 64, rate);
++	ret = clocksource_register_hz(&sky1_clocksource, rate);
++	if (ret)
++		return ret;
++
++	/* Register clock event device */
++	sky1tm->ced.name = TIMER_NAME;
++	sky1tm->ced.features = CLOCK_EVT_FEAT_ONESHOT | CLOCK_EVT_FEAT_DYNIRQ;
++	sky1tm->ced.set_next_event = sky1_set_next_event;
++	sky1tm->ced.set_state_shutdown = sky1_shutdown;
++	sky1tm->ced.set_state_oneshot = sky1_set_oneshot;
++	sky1tm->ced.set_state_oneshot_stopped = sky1_shutdown;
++	sky1tm->ced.tick_resume = sky1_tick_resume;
++	sky1tm->ced.rating = 200;
++	sky1tm->ced.cpumask = cpu_possible_mask;
++	sky1tm->ced.irq = sky1tm->irq;
++
++	clockevents_config_and_register(&sky1tm->ced, rate, 1, UINT_MAX);
++
++	ret = request_irq(sky1tm->irq, sky1_timer_interrupt,
++			  IRQF_TIMER, TIMER_NAME, &sky1tm->ced);
++	if (ret)
++		return ret;
++
++	dev_info(dev, "Sky1 GPT timer initialized at %lu Hz\n", rate);
++
++	return 0;
++}
++
++static const struct of_device_id sky1_timer_of_match[] = {
++	{ .compatible = "cix,sky1-gpt" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, sky1_timer_of_match);
++
++#ifdef CONFIG_ACPI
++static const struct acpi_device_id sky1_timer_acpi_match[] = {
++	{ "CIXH1007", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(acpi, sky1_timer_acpi_match);
++#endif
++
++static struct platform_driver sky1_timer_driver = {
++	.probe = sky1_timer_probe,
++	.driver = {
++		.name = TIMER_NAME,
++		.of_match_table = sky1_timer_of_match,
++		.acpi_match_table = ACPI_PTR(sky1_timer_acpi_match),
++	},
++};
++module_platform_driver(sky1_timer_driver);
++
++MODULE_AUTHOR("Cix Technology Group Co., Ltd.");
++MODULE_DESCRIPTION("CIX Sky1 General Purpose Timer");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/cpufreq/cppc_cpufreq.c b/drivers/cpufreq/cppc_cpufreq.c
+index f6cea0c54..f8cf4b3d0 100644
+--- a/drivers/cpufreq/cppc_cpufreq.c
++++ b/drivers/cpufreq/cppc_cpufreq.c
+@@ -312,10 +312,17 @@ static int cppc_cpufreq_set_target(struct cpufreq_policy *policy,
+ 	struct cppc_cpudata *cpu_data = policy->driver_data;
+ 	unsigned int cpu = policy->cpu;
+ 	struct cpufreq_freqs freqs;
++	u32 desired_perf;
+ 	int ret = 0;
+
+-	cpu_data->perf_ctrls.desired_perf =
++	desired_perf =
+ 			cppc_khz_to_perf(&cpu_data->perf_caps, target_freq);
++
++	/* Return early if already at the requested performance level */
++	if (desired_perf == cpu_data->perf_ctrls.desired_perf)
++		return 0;
++
++	cpu_data->perf_ctrls.desired_perf = desired_perf;
+ 	cppc_cpufreq_update_perf_limits(cpu_data, policy);
+
+ 	freqs.old = policy->cur;
+@@ -341,7 +348,13 @@ static unsigned int cppc_cpufreq_fast_switch(struct cpufreq_policy *policy,
+ 	int ret;
+
+ 	desired_perf = cppc_khz_to_perf(&cpu_data->perf_caps, target_freq);
++
++	/* Return early if already at the requested performance level */
++	if (desired_perf == cpu_data->perf_ctrls.desired_perf)
++		return 0;
++
+ 	cpu_data->perf_ctrls.desired_perf = desired_perf;
++	desired_perf = desired_perf;
+ 	cppc_cpufreq_update_perf_limits(cpu_data, policy);
+
+ 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
+@@ -705,7 +718,7 @@ static int cppc_cpufreq_cpu_init(struct cpufreq_policy *policy)
+
+ 	/* Set policy->cur to max now. The governors will adjust later. */
+ 	policy->cur = cppc_perf_to_khz(caps, caps->highest_perf);
+-	cpu_data->perf_ctrls.desired_perf =  caps->highest_perf;
++	desired_perf =  caps->highest_perf;
+
+ 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
+ 	if (ret) {
+@@ -731,7 +744,7 @@ static void cppc_cpufreq_cpu_exit(struct cpufreq_policy *policy)
+
+ 	cppc_cpufreq_cpu_fie_exit(policy);
+
+-	cpu_data->perf_ctrls.desired_perf = caps->lowest_perf;
++	desired_perf = caps->lowest_perf;
+
+ 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
+ 	if (ret)
+diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
+index b898b6544..b57517c2e 100644
+--- a/drivers/cpufreq/cpufreq.c
++++ b/drivers/cpufreq/cpufreq.c
+@@ -14,6 +14,7 @@
+
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
++#include <linux/arch_topology.h>
+ #include <linux/cpu.h>
+ #include <linux/cpufreq.h>
+ #include <linux/cpu_cooling.h>
+diff --git a/drivers/firmware/arm_scmi/bus.c b/drivers/firmware/arm_scmi/bus.c
+index 793be9eab..90248eabd 100644
+--- a/drivers/firmware/arm_scmi/bus.c
++++ b/drivers/firmware/arm_scmi/bus.c
+@@ -466,6 +466,9 @@ __scmi_device_create(struct device_node *np, struct device *parent,
+ 	scmi_dev->protocol_id = protocol;
+ 	scmi_dev->dev.parent = parent;
+ 	device_set_node(&scmi_dev->dev, of_fwnode_handle(np));
++	/* ACPI: inherit parent fwnode when no DT node */
++	if (!np && parent)
++		scmi_dev->dev.fwnode = dev_fwnode(parent);
+ 	scmi_dev->dev.bus = &scmi_bus_type;
+ 	scmi_dev->dev.release = scmi_device_release;
+ 	dev_set_name(&scmi_dev->dev, "scmi_dev.%d", id);
+diff --git a/drivers/firmware/arm_scmi/common.h b/drivers/firmware/arm_scmi/common.h
+index b9723c105..6ea79fae5 100644
+--- a/drivers/firmware/arm_scmi/common.h
++++ b/drivers/firmware/arm_scmi/common.h
+@@ -9,6 +9,7 @@
+ #ifndef _SCMI_COMMON_H
+ #define _SCMI_COMMON_H
+
++#include <linux/acpi.h>
+ #include <linux/bitfield.h>
+ #include <linux/completion.h>
+ #include <linux/device.h>
+@@ -613,7 +614,8 @@ struct scmi_transport_supplier __supplier = {			\
+ 	.th.supplier_put = scmi_transport_supplier_put,		\
+ }
+
+-#define DEFINE_SCMI_TRANSPORT_DRIVER(__tag, __drv, __desc, __match, __core_ops)\
++#define DEFINE_SCMI_TRANSPORT_DRIVER(__tag, __drv, __desc, __of_match,	       \
++				     __acpi_match, __core_ops)		       \
+ static void __tag##_dev_free(void *data)				       \
+ {									       \
+ 	struct platform_device *spdev = data;				       \
+@@ -648,6 +650,9 @@ static int __tag##_probe(struct platform_device *pdev)			       \
+ 	}								       \
+ 									       \
+ 	device_set_of_node_from_dev(&spdev->dev, dev);			       \
++	/* ACPI: propagate fwnode when no DT node is present */		       \
++	if (!spdev->dev.fwnode)						       \
++		spdev->dev.fwnode = dev_fwnode(dev);			       \
+ 									       \
+ 	strans.supplier = supplier;					       \
+ 	memcpy(&strans.desc, &(__desc), sizeof(strans.desc));		       \
+@@ -676,7 +681,8 @@ err_mem:								       \
+ static struct platform_driver __drv = {					       \
+ 	.driver = {							       \
+ 		   .name = #__tag "_transport",				       \
+-		   .of_match_table = __match,				       \
++		   .of_match_table = __of_match,			       \
++		   .acpi_match_table = ACPI_PTR(__acpi_match),		       \
+ 		   },							       \
+ 	.probe = __tag##_probe,						       \
+ }
+diff --git a/drivers/firmware/arm_scmi/driver.c b/drivers/firmware/arm_scmi/driver.c
+index 3e0d975ec..3c725380e 100644
+--- a/drivers/firmware/arm_scmi/driver.c
++++ b/drivers/firmware/arm_scmi/driver.c
+@@ -175,6 +175,9 @@ struct scmi_info {
+ };
+
+ #define handle_to_scmi_info(h)	container_of(h, struct scmi_info, handle)
++
++/* Sentinel stored in active_protocols IDR for ACPI-enumerated protocols */
++#define SCMI_NO_DT_NODE		((struct device_node *)0x1)
+ #define tx_minfo_to_scmi_info(h) container_of(h, struct scmi_info, tx_minfo)
+ #define bus_nb_to_scmi_info(nb)	container_of(nb, struct scmi_info, bus_nb)
+ #define req_nb_to_scmi_info(nb)	container_of(nb, struct scmi_info, dev_req_nb)
+@@ -2751,6 +2754,18 @@ static int scmi_chan_setup(struct scmi_info *info, struct device_node *of_node,
+ 	idx = tx ? 0 : 1;
+ 	idr = tx ? &info->tx_idr : &info->rx_idr;
+
++	/*
++	 * ACPI: no DT children describe per-protocol channels.
++	 * All non-base protocols share the base transport channel,
++	 * mirroring the DT fallback when children lack own mboxes.
++	 */
++	if (!of_node && prot_id != SCMI_PROTOCOL_BASE) {
++		cinfo = idr_find(idr, SCMI_PROTOCOL_BASE);
++		if (unlikely(!cinfo))
++			return -EINVAL;
++		goto idr_alloc;
++	}
++
+ 	if (!info->desc->ops->chan_available(of_node, idx)) {
+ 		cinfo = idr_find(idr, SCMI_PROTOCOL_BASE);
+ 		if (unlikely(!cinfo)) /* Possible only if platform has no Rx */
+@@ -2960,6 +2975,8 @@ static int scmi_device_request_notifier(struct notifier_block *nb,
+ 	np = idr_find(&info->active_protocols, id_table->protocol_id);
+ 	if (!np)
+ 		return NOTIFY_DONE;
++	if (np == SCMI_NO_DT_NODE)
++		np = NULL;
+
+ 	dev_dbg(info->dev, "%sRequested device (%s) for protocol 0x%x\n",
+ 		action == SCMI_BUS_NOTIFY_DEVICE_REQUEST ? "" : "UN-",
+@@ -3365,6 +3382,38 @@ static int scmi_probe(struct platform_device *pdev)
+ 		scmi_create_protocol_devices(child, info, prot_id, NULL);
+ 	}
+
++	/*
++	 * ACPI fallback: no DT children to iterate. Enumerate all
++	 * protocols reported by firmware via base protocol discovery.
++	 */
++	if (!np) {
++		int i;
++
++		for (i = 0; i < info->version.num_protocols; i++) {
++			u8 prot_id = info->protocols_imp[i];
++
++			if (!FIELD_FIT(MSG_PROTOCOL_ID_MASK, prot_id))
++				continue;
++
++			ret = scmi_txrx_setup(info, NULL, prot_id);
++			if (ret)
++				continue;
++
++			ret = idr_alloc(&info->active_protocols,
++					SCMI_NO_DT_NODE,
++					prot_id, prot_id + 1, GFP_KERNEL);
++			if (ret != prot_id) {
++				dev_err(dev,
++					"SCMI protocol %d already activated. Skip\n",
++					prot_id);
++				continue;
++			}
++
++			scmi_create_protocol_devices(NULL, info, prot_id,
++						     NULL);
++		}
++	}
++
+ 	return 0;
+
+ notification_exit:
+@@ -3408,7 +3457,8 @@ static void scmi_remove(struct platform_device *pdev)
+ 	mutex_unlock(&info->protocols_mtx);
+
+ 	idr_for_each_entry(&info->active_protocols, child, id)
+-		of_node_put(child);
++		if (child != SCMI_NO_DT_NODE)
++			of_node_put(child);
+ 	idr_destroy(&info->active_protocols);
+
+ 	blocking_notifier_chain_unregister(&scmi_requested_devices_nh,
+diff --git a/drivers/firmware/arm_scmi/shmem.c b/drivers/firmware/arm_scmi/shmem.c
+index dadb37557..544c80f10 100644
+--- a/drivers/firmware/arm_scmi/shmem.c
++++ b/drivers/firmware/arm_scmi/shmem.c
+@@ -5,11 +5,13 @@
+  * Copyright (C) 2019-2024 ARM Ltd.
+  */
+
++#include <linux/acpi.h>
+ #include <linux/ktime.h>
+ #include <linux/io.h>
+ #include <linux/of.h>
+ #include <linux/of_address.h>
+ #include <linux/processor.h>
++#include <linux/property.h>
+ #include <linux/types.h>
+
+ #include <linux/bug.h>
+@@ -191,6 +193,93 @@ static bool shmem_channel_intr_enabled(struct scmi_shared_mem __iomem *shmem)
+ 	return ioread32(&shmem->flags) & SCMI_SHMEM_FLAG_INTR_ENABLED;
+ }
+
++#ifdef CONFIG_ACPI
++static void __iomem *shmem_acpi_setup_iomap(struct scmi_chan_info *cinfo,
++					     struct device *dev, bool tx,
++					     struct resource *res,
++					     struct scmi_shmem_io_ops **ops)
++{
++	struct fwnode_reference_args args;
++	struct resource_entry *rentry;
++	const char *desc = tx ? "Tx" : "Rx";
++	int idx = tx ? 0 : 1;
++	struct acpi_device *adev;
++	struct resource lres = {};
++	resource_size_t size;
++	void __iomem *addr;
++	LIST_HEAD(res_list);
++	int ret;
++
++	if (!res)
++		res = &lres;
++
++	ret = fwnode_property_get_reference_args(dev_fwnode(cinfo->dev),
++						 "shmem", NULL, 0, idx, &args);
++	if (ret) {
++		dev_err(cinfo->dev,
++			"failed to get SCMI %s shmem reference\n", desc);
++		return IOMEM_ERR_PTR(ret);
++	}
++
++	if (!is_acpi_device_node(args.fwnode)) {
++		fwnode_handle_put(args.fwnode);
++		return IOMEM_ERR_PTR(-EINVAL);
++	}
++
++	adev = to_acpi_device_node(args.fwnode);
++
++	ret = acpi_dev_get_resources(adev, &res_list, NULL, NULL);
++	if (ret <= 0) {
++		fwnode_handle_put(args.fwnode);
++		return IOMEM_ERR_PTR(ret ? ret : -EINVAL);
++	}
++
++	addr = IOMEM_ERR_PTR(-ENODEV);
++	list_for_each_entry(rentry, &res_list, node) {
++		if (resource_type(rentry->res) != IORESOURCE_MEM)
++			continue;
++
++		*res = *rentry->res;
++		size = resource_size(res);
++		if (cinfo->max_msg_size + SCMI_SHMEM_LAYOUT_OVERHEAD > size) {
++			dev_err(dev, "misconfigured SCMI shared memory\n");
++			addr = IOMEM_ERR_PTR(-ENOSPC);
++			break;
++		}
++
++		addr = devm_ioremap(dev, res->start, size);
++		if (!addr) {
++			dev_err(dev,
++				"failed to ioremap SCMI %s shared memory\n",
++				desc);
++			addr = IOMEM_ERR_PTR(-EADDRNOTAVAIL);
++		}
++		break;
++	}
++
++	acpi_dev_free_resource_list(&res_list);
++
++	if (!IS_ERR(addr)) {
++		u32 reg_io_width = 4;
++
++		fwnode_property_read_u32(args.fwnode,
++					"reg-io-width", &reg_io_width);
++		switch (reg_io_width) {
++		case 4:
++			*ops = &shmem_io_ops32;
++			break;
++		default:
++			*ops = &shmem_io_ops_default;
++			break;
++		}
++	}
++
++	fwnode_handle_put(args.fwnode);
++
++	return addr;
++}
++#endif
++
+ static void __iomem *shmem_setup_iomap(struct scmi_chan_info *cinfo,
+ 				       struct device *dev, bool tx,
+ 				       struct resource *res,
+@@ -204,9 +293,16 @@ static void __iomem *shmem_setup_iomap(struct scmi_chan_info *cinfo,
+ 	void __iomem *addr;
+ 	u32 reg_io_width;
+
++	if (!cdev->of_node) {
++#ifdef CONFIG_ACPI
++		return shmem_acpi_setup_iomap(cinfo, dev, tx, res, ops);
++#else
++		return IOMEM_ERR_PTR(-ENODEV);
++#endif
++	}
++
+ 	struct device_node *shmem __free(device_node) = of_parse_phandle(cdev->of_node,
+ 		"shmem", idx);
+-
+ 	if (!shmem)
+ 		return IOMEM_ERR_PTR(-ENODEV);
+
+diff --git a/drivers/firmware/arm_scmi/transports/mailbox.c b/drivers/firmware/arm_scmi/transports/mailbox.c
+index ae0f67e6c..0502edd33 100644
+--- a/drivers/firmware/arm_scmi/transports/mailbox.c
++++ b/drivers/firmware/arm_scmi/transports/mailbox.c
+@@ -12,6 +12,7 @@
+ #include <linux/of.h>
+ #include <linux/of_address.h>
+ #include <linux/platform_device.h>
++#include <linux/property.h>
+ #include <linux/slab.h>
+
+ #include "../common.h"
+@@ -81,6 +82,9 @@ static bool mailbox_chan_available(struct device_node *of_node, int idx)
+ {
+ 	int num_mb;
+
++	if (!of_node)
++		return true;
++
+ 	/*
+ 	 * Just check if bidirrectional channels are involved, and check the
+ 	 * index accordingly; proper full validation will be made later
+@@ -112,14 +116,42 @@ static bool mailbox_chan_available(struct device_node *of_node, int idx)
+  *
+  * Return: 0 on Success or error
+  */
++static int fwnode_count_references(struct fwnode_handle *fwnode,
++				   const char *prop, unsigned int nargs)
++{
++	struct fwnode_reference_args args;
++	int count = 0;
++
++	while (!fwnode_property_get_reference_args(fwnode, prop, NULL,
++						   nargs, count, &args)) {
++		fwnode_handle_put(args.fwnode);
++		count++;
++	}
++	return count;
++}
++
+ static int mailbox_chan_validate(struct device *cdev, int *a2p_rx_chan,
+ 				 int *p2a_chan, int *p2a_rx_chan)
+ {
+ 	int num_mb, num_sh, ret = 0;
+ 	struct device_node *np = cdev->of_node;
+
+-	num_mb = of_count_phandle_with_args(np, "mboxes", "#mbox-cells");
+-	num_sh = of_count_phandle_with_args(np, "shmem", NULL);
++	if (np) {
++		num_mb = of_count_phandle_with_args(np, "mboxes",
++						    "#mbox-cells");
++		num_sh = of_count_phandle_with_args(np, "shmem", NULL);
++	} else {
++		struct fwnode_handle *fwnode = dev_fwnode(cdev);
++
++		/*
++		 * In ACPI mode, count mailbox and shmem references from
++		 * _DSD properties.  Each mbox reference has one integer
++		 * argument (the channel index), shmem references are bare.
++		 */
++		num_mb = fwnode_count_references(fwnode, "mboxes", 1);
++		num_sh = fwnode_count_references(fwnode, "shmem", 0);
++	}
++
+ 	dev_dbg(cdev, "Found %d mboxes and %d shmems !\n", num_mb, num_sh);
+
+ 	/* Bail out if mboxes and shmem descriptors are inconsistent */
+@@ -127,20 +159,21 @@ static int mailbox_chan_validate(struct device *cdev, int *a2p_rx_chan,
+ 	    (num_mb == 1 && num_sh != 1) || (num_mb == 3 && num_sh != 2) ||
+ 	    (num_mb == 4 && num_sh != 2)) {
+ 		dev_warn(cdev,
+-			 "Invalid channel descriptor for '%pOF' - mbs:%d  shm:%d\n",
+-			 np, num_mb, num_sh);
++			 "Invalid channel descriptor - mbs:%d  shm:%d\n",
++			 num_mb, num_sh);
+ 		return -EINVAL;
+ 	}
+
+ 	/* Bail out if provided shmem descriptors do not refer distinct areas  */
+-	if (num_sh > 1) {
++	if (np && num_sh > 1) {
+ 		struct device_node *np_tx __free(device_node) =
+ 					of_parse_phandle(np, "shmem", 0);
+ 		struct device_node *np_rx __free(device_node) =
+ 					of_parse_phandle(np, "shmem", 1);
+
+ 		if (!np_tx || !np_rx || np_tx == np_rx) {
+-			dev_warn(cdev, "Invalid shmem descriptor for '%pOF'\n", np);
++			dev_warn(cdev, "Invalid shmem descriptor for '%pOF'\n",
++				 np);
+ 			ret = -EINVAL;
+ 		}
+ 	}
+@@ -379,8 +412,19 @@ static const struct of_device_id scmi_of_match[] = {
+ };
+ MODULE_DEVICE_TABLE(of, scmi_of_match);
+
++#ifdef CONFIG_ACPI
++static const struct acpi_device_id scmi_acpi_match[] = {
++	{ "CIXHA006", 0 },
++	{ /* Sentinel */ },
++};
++MODULE_DEVICE_TABLE(acpi, scmi_acpi_match);
++#else
++#define scmi_acpi_match NULL
++#endif
++
+ DEFINE_SCMI_TRANSPORT_DRIVER(scmi_mailbox, scmi_mailbox_driver,
+-			     scmi_mailbox_desc, scmi_of_match, core);
++			     scmi_mailbox_desc, scmi_of_match,
++			     scmi_acpi_match, core);
+ module_platform_driver(scmi_mailbox_driver);
+
+ MODULE_AUTHOR("Sudeep Holla <sudeep.holla@arm.com>");
+diff --git a/drivers/firmware/arm_scmi/transports/optee.c b/drivers/firmware/arm_scmi/transports/optee.c
+index dbe32e141..7863b7f53 100644
+--- a/drivers/firmware/arm_scmi/transports/optee.c
++++ b/drivers/firmware/arm_scmi/transports/optee.c
+@@ -529,7 +529,7 @@ static const struct of_device_id scmi_of_match[] = {
+ };
+
+ DEFINE_SCMI_TRANSPORT_DRIVER(scmi_optee, scmi_optee_driver, scmi_optee_desc,
+-			     scmi_of_match, core);
++			     scmi_of_match, NULL, core);
+
+ static int scmi_optee_service_probe(struct tee_client_device *scmi_pta)
+ {
+diff --git a/drivers/firmware/arm_scmi/transports/smc.c b/drivers/firmware/arm_scmi/transports/smc.c
+index 21abb571e..cdd3e86d5 100644
+--- a/drivers/firmware/arm_scmi/transports/smc.c
++++ b/drivers/firmware/arm_scmi/transports/smc.c
+@@ -139,6 +139,11 @@ static int smc_chan_setup(struct scmi_chan_info *cinfo, struct device *dev,
+ 	u32 func_id;
+ 	int ret;
+
++	pr_info("smc_chan_setup: tx=%d dev=%s cdev=%s\n", tx,
++		dev_name(dev), dev_name(cdev));
++	pr_info("smc_chan_setup: dev->of_node=%pOF cdev->of_node=%pOF\n",
++		dev->of_node, cdev->of_node);
++
+ 	if (!tx)
+ 		return -ENODEV;
+
+@@ -148,12 +153,17 @@ static int smc_chan_setup(struct scmi_chan_info *cinfo, struct device *dev,
+
+ 	scmi_info->shmem = core->shmem->setup_iomap(cinfo, dev, tx, &res,
+ 						    &scmi_info->io_ops);
+-	if (IS_ERR(scmi_info->shmem))
++	if (IS_ERR(scmi_info->shmem)) {
++		pr_err("smc_chan_setup: setup_iomap failed: %ld\n",
++		       PTR_ERR(scmi_info->shmem));
+ 		return PTR_ERR(scmi_info->shmem);
++	}
+
+ 	ret = of_property_read_u32(dev->of_node, "arm,smc-id", &func_id);
+-	if (ret < 0)
++	if (ret < 0) {
++		pr_err("smc_chan_setup: arm,smc-id read failed: %d\n", ret);
+ 		return ret;
++	}
+
+ 	if (of_device_is_compatible(dev->of_node, "qcom,scmi-smc")) {
+ 		resource_size_t size = resource_size(&res);
+@@ -304,7 +314,7 @@ static const struct of_device_id scmi_of_match[] = {
+ MODULE_DEVICE_TABLE(of, scmi_of_match);
+
+ DEFINE_SCMI_TRANSPORT_DRIVER(scmi_smc, scmi_smc_driver, scmi_smc_desc,
+-			     scmi_of_match, core);
++			     scmi_of_match, NULL, core);
+ module_platform_driver(scmi_smc_driver);
+
+ MODULE_AUTHOR("Peng Fan <peng.fan@nxp.com>");
+diff --git a/drivers/firmware/arm_scmi/transports/virtio.c b/drivers/firmware/arm_scmi/transports/virtio.c
+index 3282d8271..81d1ddffc 100644
+--- a/drivers/firmware/arm_scmi/transports/virtio.c
++++ b/drivers/firmware/arm_scmi/transports/virtio.c
+@@ -815,7 +815,7 @@ static const struct of_device_id scmi_of_match[] = {
+ };
+
+ DEFINE_SCMI_TRANSPORT_DRIVER(scmi_virtio, scmi_virtio_driver, scmi_virtio_desc,
+-			     scmi_of_match, core);
++			     scmi_of_match, NULL, core);
+
+ static int scmi_vio_probe(struct virtio_device *vdev)
+ {
+diff --git a/drivers/mailbox/cix-mailbox.c b/drivers/mailbox/cix-mailbox.c
+index 43c76cdab..bca5ff81d 100644
+--- a/drivers/mailbox/cix-mailbox.c
++++ b/drivers/mailbox/cix-mailbox.c
+@@ -82,7 +82,7 @@ enum cix_mbox_chan_type {
+
+ struct cix_mbox_con_priv {
+ 	enum cix_mbox_chan_type type;
+-	struct mbox_chan	*chan;
++	struct mbox_chan    *chan;
+ 	int index;
+ };
+
+@@ -90,21 +90,12 @@ struct cix_mbox_priv {
+ 	struct device *dev;
+ 	int irq;
+ 	int dir;
+-	void __iomem *base;	/* region for mailbox */
++	bool tx_irq_mode; /* flag of enabling tx's irq mode */
++	void __iomem *base; /* region for mailbox */
++	unsigned int chan_num;
+ 	struct cix_mbox_con_priv con_priv[CIX_MBOX_CHANS];
+ 	struct mbox_chan mbox_chans[CIX_MBOX_CHANS];
+ 	struct mbox_controller mbox;
+-	bool use_shmem;
+-};
+-
+-/*
+- * The CIX mailbox supports four types of transfers:
+- * CIX_MBOX_TYPE_DB, CIX_MBOX_TYPE_FAST, CIX_MBOX_TYPE_REG, and CIX_MBOX_TYPE_FIFO.
+- * For the REG and FIFO types of transfers, the message format is as follows:
+- */
+-union cix_mbox_msg_reg_fifo {
+-	u32 length;	/* unit is byte */
+-	u32 buf[CIX_MBOX_MSG_WORDS]; /* buf[0] must be the byte length of this array */
+ };
+
+ static struct cix_mbox_priv *to_cix_mbox_priv(struct mbox_controller *mbox)
+@@ -114,36 +105,27 @@ static struct cix_mbox_priv *to_cix_mbox_priv(struct mbox_controller *mbox)
+
+ static void cix_mbox_write(struct cix_mbox_priv *priv, u32 val, u32 offset)
+ {
+-	if (priv->use_shmem)
+-		iowrite32(val, priv->base + offset - CIX_SHMEM_OFFSET);
+-	else
+-		iowrite32(val, priv->base + offset);
++	iowrite32(val, priv->base + offset);
+ }
+
+ static u32 cix_mbox_read(struct cix_mbox_priv *priv, u32 offset)
+ {
+-	if (priv->use_shmem)
+-		return ioread32(priv->base + offset - CIX_SHMEM_OFFSET);
+-	else
+-		return ioread32(priv->base + offset);
++	return ioread32(priv->base + offset);
+ }
+
+ static bool mbox_fifo_empty(struct mbox_chan *chan)
+ {
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+
+-	return ((cix_mbox_read(priv, CIX_FIFO_STAS) & CIX_FIFO_STAS_EMPTY) ? true : false);
++	return ((cix_mbox_read(priv, FIFO_STAS) & FIFO_STAS_EMPTY) ? true : false);
+ }
+
+-/*
+- *The transmission unit of the CIX mailbox is word.
+- *The byte length should be converted into the word length.
+- */
+-static inline u32 mbox_get_msg_size(void *msg)
++static inline
++u32 mbox_get_msg_size(void *msg)
+ {
+ 	u32 len;
+
+-	len = ((u32 *)msg)[0] & CIX_MBOX_MSG_LEN_MASK;
++	len = ((u32 *)msg)[0] & MBOX_MSG_LEN_MASK;
+ 	return DIV_ROUND_UP(len, 4);
+ }
+
+@@ -152,7 +134,7 @@ static int cix_mbox_send_data_db(struct mbox_chan *chan, void *data)
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+
+ 	/* trigger doorbell irq */
+-	cix_mbox_write(priv, CIX_DB_INT_BIT, CIX_REG_DB_ACK);
++	cix_mbox_write(priv, DB_INT_BIT, REG_DB_ACK);
+
+ 	return 0;
+ }
+@@ -160,18 +142,19 @@ static int cix_mbox_send_data_db(struct mbox_chan *chan, void *data)
+ static int cix_mbox_send_data_reg(struct mbox_chan *chan, void *data)
+ {
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+-	union cix_mbox_msg_reg_fifo *msg = data;
+-	u32 len, i;
++	int i;
++	u32 *arg = (u32 *)data;
++	u32 len;
+
+ 	if (!data)
+ 		return -EINVAL;
+
+ 	len = mbox_get_msg_size(data);
+ 	for (i = 0; i < len; i++)
+-		cix_mbox_write(priv, msg->buf[i], CIX_REG_MSG(i));
++		cix_mbox_write(priv, arg[i], REG_MSG(i));
+
+ 	/* trigger doorbell irq */
+-	cix_mbox_write(priv, CIX_DB_INT_BIT, CIX_REG_DB_ACK);
++	cix_mbox_write(priv, DB_INT_BIT, REG_DB_ACK);
+
+ 	return 0;
+ }
+@@ -179,21 +162,22 @@ static int cix_mbox_send_data_reg(struct mbox_chan *chan, void *data)
+ static int cix_mbox_send_data_fifo(struct mbox_chan *chan, void *data)
+ {
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+-	union cix_mbox_msg_reg_fifo *msg = data;
+-	u32 len, val, i;
++	int i;
++	u32 *arg = (u32 *)data;
++	u32 len, val_32;
+
+ 	if (!data)
+ 		return -EINVAL;
+
+ 	len = mbox_get_msg_size(data);
+-	cix_mbox_write(priv, len, CIX_FIFO_WM);
++	cix_mbox_write(priv, len, FIFO_WM);
+ 	for (i = 0; i < len; i++)
+-		cix_mbox_write(priv, msg->buf[i], CIX_FIFO_WR);
++		cix_mbox_write(priv, arg[i], FIFO_WR);
+
+ 	/* Enable fifo empty interrupt */
+-	val = cix_mbox_read(priv, CIX_INT_ENABLE);
+-	val |= CIX_FIFO_EMPTY_INT;
+-	cix_mbox_write(priv, val, CIX_INT_ENABLE);
++	val_32 = cix_mbox_read(priv, INT_ENABLE);
++	val_32 |= FIFO_EMPTY_INT;
++	cix_mbox_write(priv, val_32, INT_ENABLE);
+
+ 	return 0;
+ }
+@@ -208,12 +192,12 @@ static int cix_mbox_send_data_fast(struct mbox_chan *chan, void *data)
+ 	if (!data)
+ 		return -EINVAL;
+
+-	if (index < 0 || index > CIX_MBOX_FAST_IDX) {
++	if (index < 0 || index > MBOX_FAST_IDX) {
+ 		dev_err(priv->dev, "Invalid Mbox index %d\n", index);
+ 		return -EINVAL;
+ 	}
+
+-	cix_mbox_write(priv, arg[0], CIX_REG_F_INT(index));
++	cix_mbox_write(priv, arg[0], REG_F_INT(index));
+
+ 	return 0;
+ }
+@@ -223,7 +207,7 @@ static int cix_mbox_send_data(struct mbox_chan *chan, void *data)
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+ 	struct cix_mbox_con_priv *cp = chan->con_priv;
+
+-	if (priv->dir != CIX_MBOX_TX) {
++	if (priv->dir != MBOX_TX) {
+ 		dev_err(priv->dev, "Invalid Mbox dir %d\n", priv->dir);
+ 		return -EINVAL;
+ 	}
+@@ -253,20 +237,20 @@ static void cix_mbox_isr_db(struct mbox_chan *chan)
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+ 	u32 int_status;
+
+-	int_status = cix_mbox_read(priv, CIX_INT_STATUS);
++	int_status = cix_mbox_read(priv, INT_STATUS);
+
+-	if (priv->dir == CIX_MBOX_RX) {
++	if (priv->dir == MBOX_RX) {
+ 		/* rx interrupt is triggered */
+-		if (int_status & CIX_DB_INT) {
+-			cix_mbox_write(priv, CIX_DB_INT, CIX_INT_CLEAR);
++		if (int_status & DB_INT) {
++			cix_mbox_write(priv, DB_INT, INT_CLEAR);
+ 			mbox_chan_received_data(chan, NULL);
+ 			/* trigger ack interrupt */
+-			cix_mbox_write(priv, CIX_DB_ACK_INT_BIT, CIX_REG_DB_ACK);
++			cix_mbox_write(priv, DB_ACK_INT_BIT, REG_DB_ACK);
+ 		}
+-	} else {
++	} else if (priv->dir == MBOX_TX) {
+ 		/* tx ack interrupt is triggered */
+-		if (int_status & CIX_ACK_INT) {
+-			cix_mbox_write(priv, CIX_ACK_INT, CIX_INT_CLEAR);
++		if (int_status & ACK_INT) {
++			cix_mbox_write(priv, ACK_INT, INT_CLEAR);
+ 			mbox_chan_received_data(chan, NULL);
+ 		}
+ 	}
+@@ -276,28 +260,29 @@ static void cix_mbox_isr_reg(struct mbox_chan *chan)
+ {
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+ 	u32 int_status;
++	u32 data[CIX_MBOX_MSG_LEN];
++	int i;
++	u32 len;
+
+-	int_status = cix_mbox_read(priv, CIX_INT_STATUS);
++	int_status = cix_mbox_read(priv, INT_STATUS);
+
+-	if (priv->dir == CIX_MBOX_RX) {
++	if (priv->dir == MBOX_RX) {
+ 		/* rx interrupt is triggered */
+-		if (int_status & CIX_DB_INT) {
+-			u32 data[CIX_MBOX_MSG_WORDS], len, i;
+-
+-			cix_mbox_write(priv, CIX_DB_INT, CIX_INT_CLEAR);
+-			data[0] = cix_mbox_read(priv, CIX_REG_MSG(0));
++		if (int_status & DB_INT) {
++			cix_mbox_write(priv, DB_INT, INT_CLEAR);
++			data[0] = cix_mbox_read(priv, REG_MSG(0));
+ 			len = mbox_get_msg_size(data);
+-			for (i = 1; i < len; i++)
+-				data[i] = cix_mbox_read(priv, CIX_REG_MSG(i));
++			for (i = 0; i < len; i++)
++				data[i] = cix_mbox_read(priv, REG_MSG(i));
+
+ 			/* trigger ack interrupt */
+-			cix_mbox_write(priv, CIX_DB_ACK_INT_BIT, CIX_REG_DB_ACK);
++			cix_mbox_write(priv, DB_ACK_INT_BIT, REG_DB_ACK);
+ 			mbox_chan_received_data(chan, data);
+ 		}
+-	} else {
++	} else if (priv->dir == MBOX_TX) {
+ 		/* tx ack interrupt is triggered */
+-		if (int_status & CIX_ACK_INT) {
+-			cix_mbox_write(priv, CIX_ACK_INT, CIX_INT_CLEAR);
++		if (int_status & ACK_INT) {
++			cix_mbox_write(priv, ACK_INT, INT_CLEAR);
+ 			mbox_chan_txdone(chan, 0);
+ 		}
+ 	}
+@@ -306,46 +291,44 @@ static void cix_mbox_isr_reg(struct mbox_chan *chan)
+ static void cix_mbox_isr_fifo(struct mbox_chan *chan)
+ {
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+-	u32 int_status, status;
++	u32 data[CIX_MBOX_MSG_LEN];
++	int i = 0;
++	u32 int_status, status, val_32;
+
+-	int_status = cix_mbox_read(priv, CIX_INT_STATUS);
++	int_status = cix_mbox_read(priv, INT_STATUS);
+
+-	if (priv->dir == CIX_MBOX_RX) {
++	if (priv->dir == MBOX_RX) {
+ 		/* FIFO waterMark interrupt is generated */
+-		if (int_status & (CIX_FIFO_FULL_INT | CIX_FIFO_WM01_INT)) {
+-			u32 data[CIX_MBOX_MSG_WORDS] = { 0 }, i = 0;
+-
+-			cix_mbox_write(priv, (CIX_FIFO_FULL_INT | CIX_FIFO_WM01_INT),
+-						CIX_INT_CLEAR);
++		if (int_status & (FIFO_FULL_INT | FIFO_WM01_INT)) {
++			cix_mbox_write(priv, (FIFO_FULL_INT | FIFO_WM01_INT), INT_CLEAR);
+ 			do {
+-				data[i++] = cix_mbox_read(priv, CIX_FIFO_RD);
+-			} while (!mbox_fifo_empty(chan) && i < CIX_MBOX_MSG_WORDS);
+-
++				data[i++] = cix_mbox_read(priv, FIFO_RD);
++			} while (false == mbox_fifo_empty(chan));
+ 			mbox_chan_received_data(chan, data);
+ 		}
+ 		/* FIFO underflow is generated */
+-		if (int_status & CIX_FIFO_UFLOW_INT) {
+-			status = cix_mbox_read(priv, CIX_FIFO_STAS);
+-			dev_err(priv->dev, "fifo underflow: int_stats %d\n", status);
+-			cix_mbox_write(priv, CIX_FIFO_UFLOW_INT, CIX_INT_CLEAR);
++		if (int_status & FIFO_UFLOW_INT) {
++			status = cix_mbox_read(priv, FIFO_STAS);
++			dev_err(priv->dev,
++				"fifo underflow: int_stats %d\n",
++				status);
++			cix_mbox_write(priv, FIFO_UFLOW_INT, INT_CLEAR);
+ 		}
+-	} else {
++	} else if (priv->dir == MBOX_TX) {
+ 		/* FIFO empty interrupt is generated */
+-		if (int_status & CIX_FIFO_EMPTY_INT) {
+-			u32 val;
+-
+-			cix_mbox_write(priv, CIX_FIFO_EMPTY_INT, CIX_INT_CLEAR);
++		if (int_status & FIFO_EMPTY_INT) {
++			cix_mbox_write(priv, FIFO_EMPTY_INT, INT_CLEAR);
+ 			/* Disable empty irq*/
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE);
+-			val &= ~CIX_FIFO_EMPTY_INT;
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE);
++			val_32 = cix_mbox_read(priv, INT_ENABLE);
++			val_32 &= ~FIFO_EMPTY_INT;
++			cix_mbox_write(priv, val_32, INT_ENABLE);
+ 			mbox_chan_txdone(chan, 0);
+ 		}
+ 		/* FIFO overflow is generated */
+-		if (int_status & CIX_FIFO_OFLOW_INT) {
+-			status = cix_mbox_read(priv, CIX_FIFO_STAS);
++		if (int_status & FIFO_OFLOW_INT) {
++			status = cix_mbox_read(priv, FIFO_STAS);
+ 			dev_err(priv->dev, "fifo overflow: int_stats %d\n", status);
+-			cix_mbox_write(priv, CIX_FIFO_OFLOW_INT, CIX_INT_CLEAR);
++			cix_mbox_write(priv, FIFO_OFLOW_INT, INT_CLEAR);
+ 		}
+ 	}
+ }
+@@ -357,16 +340,19 @@ static void cix_mbox_isr_fast(struct mbox_chan *chan)
+ 	u32 int_status, data;
+
+ 	/* no irq will be trigger for TX dir mbox */
+-	if (priv->dir != CIX_MBOX_RX)
++	if (priv->dir != MBOX_RX)
+ 		return;
+
+-	int_status = cix_mbox_read(priv, CIX_INT_STATUS);
++	int_status = cix_mbox_read(priv, INT_STATUS);
+
+-	if (int_status & CIX_FAST_CH_INT(cp->index)) {
+-		cix_mbox_write(priv, CIX_FAST_CH_INT(cp->index), CIX_INT_CLEAR);
+-		data = cix_mbox_read(priv, CIX_REG_F_INT(cp->index));
++	if (int_status & FAST_CH_INT(cp->index)) {
++		cix_mbox_write(priv,
++			       FAST_CH_INT(cp->index),
++			       INT_CLEAR);
++		data = cix_mbox_read(priv, REG_F_INT(cp->index));
+ 		mbox_chan_received_data(chan, &data);
+ 	}
++
+ }
+
+ static irqreturn_t cix_mbox_isr(int irq, void *arg)
+@@ -400,8 +386,9 @@ static int cix_mbox_startup(struct mbox_chan *chan)
+ {
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+ 	struct cix_mbox_con_priv *cp = chan->con_priv;
+-	int index = cp->index, ret;
+-	u32 val;
++	int ret;
++	int index = cp->index;
++	u32 val_32;
+
+ 	ret = request_irq(priv->irq, cix_mbox_isr, IRQF_NO_SUSPEND,
+ 			  dev_name(priv->dev), chan);
+@@ -410,112 +397,117 @@ static int cix_mbox_startup(struct mbox_chan *chan)
+ 		return ret;
+ 	}
+
++	dev_info(priv->dev,
++		 "%s, base %px, irq %d, dir %d, type %d, index %d\n",
++		 __func__,
++		 priv->base,
++		 priv->irq,
++		 priv->dir,
++		 cp->type,
++		 index);
++
+ 	switch (cp->type) {
+ 	case CIX_MBOX_TYPE_DB:
+ 		/* Overwrite txdone_method for DB channel */
+ 		chan->txdone_method = MBOX_TXDONE_BY_ACK;
+ 		fallthrough;
+ 	case CIX_MBOX_TYPE_REG:
+-		if (priv->dir == CIX_MBOX_TX) {
++		if (priv->dir == MBOX_TX) {
+ 			/* Enable ACK interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE);
+-			val |= CIX_ACK_INT;
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE);
+-		} else {
++			val_32 = cix_mbox_read(priv, INT_ENABLE);
++			val_32 |= ACK_INT;
++			cix_mbox_write(priv, val_32, INT_ENABLE);
++		} else if (priv->dir == MBOX_RX) {
+ 			/* Enable Doorbell interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE_SIDE_B);
+-			val |= CIX_DB_INT;
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE_SIDE_B);
++			val_32 = cix_mbox_read(priv, INT_ENABLE_SIDE_B);
++			val_32 |= DB_INT;
++			cix_mbox_write(priv, val_32, INT_ENABLE_SIDE_B);
+ 		}
+ 		break;
+ 	case CIX_MBOX_TYPE_FIFO:
+ 		/* reset fifo */
+-		cix_mbox_write(priv, CIX_FIFO_RST_BIT, CIX_FIFO_RST);
++		cix_mbox_write(priv, FIFO_RST_BIT, FIFO_RST);
+ 		/* set default watermark */
+-		cix_mbox_write(priv, CIX_FIFO_WM_DEFAULT, CIX_FIFO_WM);
+-		if (priv->dir == CIX_MBOX_TX) {
++		cix_mbox_write(priv, FIFO_WM_DEFAULT, FIFO_WM);
++		if (priv->dir == MBOX_TX) {
+ 			/* Enable fifo overflow interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE);
+-			val |= CIX_FIFO_OFLOW_INT;
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE);
+-		} else {
++			val_32 = cix_mbox_read(priv, INT_ENABLE);
++			val_32 |= FIFO_OFLOW_INT;
++			cix_mbox_write(priv, val_32, INT_ENABLE);
++		} else if (priv->dir == MBOX_RX) {
+ 			/* Enable fifo full/underflow interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE_SIDE_B);
+-			val |= CIX_FIFO_UFLOW_INT|CIX_FIFO_WM01_INT;
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE_SIDE_B);
++			val_32 = cix_mbox_read(priv, INT_ENABLE_SIDE_B);
++			val_32 |= FIFO_UFLOW_INT|FIFO_WM01_INT;
++			cix_mbox_write(priv, val_32, INT_ENABLE_SIDE_B);
+ 		}
+ 		break;
+ 	case CIX_MBOX_TYPE_FAST:
+ 		/* Only RX channel has intterupt */
+-		if (priv->dir == CIX_MBOX_RX) {
+-			if (index < 0 || index > CIX_MBOX_FAST_IDX) {
+-				dev_err(priv->dev, "Invalid index %d\n", index);
+-				ret = -EINVAL;
+-				goto failed;
++		if (priv->dir == MBOX_RX) {
++			if (index < 0 || index > MBOX_FAST_IDX) {
++				dev_err(priv->dev,
++					"Invalid index %d\n", index);
++				return ret;
+ 			}
+ 			/* enable fast channel interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE_SIDE_B);
+-			val |= CIX_FAST_CH_INT(index);
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE_SIDE_B);
++			val_32 = cix_mbox_read(priv, INT_ENABLE_SIDE_B);
++			val_32 |= FAST_CH_INT(index);
++			cix_mbox_write(priv, val_32, INT_ENABLE_SIDE_B);
+ 		}
+ 		break;
+ 	default:
+ 		dev_err(priv->dev, "Invalid channel type: %d\n", cp->type);
+-		ret = -EINVAL;
+-		goto failed;
++		return -EINVAL;
+ 	}
+ 	return 0;
+-
+-failed:
+-	free_irq(priv->irq, chan);
+-	return ret;
+ }
+
+ static void cix_mbox_shutdown(struct mbox_chan *chan)
+ {
+ 	struct cix_mbox_priv *priv = to_cix_mbox_priv(chan->mbox);
+ 	struct cix_mbox_con_priv *cp = chan->con_priv;
++	u32 val_32;
+ 	int index = cp->index;
+-	u32 val;
+
+ 	switch (cp->type) {
+ 	case CIX_MBOX_TYPE_DB:
+ 	case CIX_MBOX_TYPE_REG:
+-		if (priv->dir == CIX_MBOX_TX) {
++		if (priv->dir == MBOX_TX) {
+ 			/* Disable ACK interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE);
+-			val &= ~CIX_ACK_INT;
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE);
+-		} else if (priv->dir == CIX_MBOX_RX) {
++			val_32 = cix_mbox_read(priv, INT_ENABLE);
++			val_32 &= ~ACK_INT;
++			cix_mbox_write(priv, val_32, INT_ENABLE);
++		} else if (priv->dir == MBOX_RX) {
+ 			/* Disable Doorbell interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE_SIDE_B);
+-			val &= ~CIX_DB_INT;
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE_SIDE_B);
++			val_32 = cix_mbox_read(priv, INT_ENABLE_SIDE_B);
++			val_32 &= ~DB_INT;
++			cix_mbox_write(priv, val_32, INT_ENABLE_SIDE_B);
+ 		}
+ 		break;
+ 	case CIX_MBOX_TYPE_FIFO:
+-		if (priv->dir == CIX_MBOX_TX) {
++		if (priv->dir == MBOX_TX) {
+ 			/* Disable empty/fifo overflow irq*/
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE);
+-			val &= ~(CIX_FIFO_EMPTY_INT | CIX_FIFO_OFLOW_INT);
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE);
+-		} else if (priv->dir == CIX_MBOX_RX) {
++			val_32 = cix_mbox_read(priv, INT_ENABLE);
++			val_32 &= ~(FIFO_EMPTY_INT | FIFO_OFLOW_INT);
++			cix_mbox_write(priv, val_32, INT_ENABLE);
++		} else if (priv->dir == MBOX_RX) {
+ 			/* Disable fifo WM01/underflow interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE_SIDE_B);
+-			val &= ~(CIX_FIFO_UFLOW_INT | CIX_FIFO_WM01_INT);
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE_SIDE_B);
++			val_32 = cix_mbox_read(priv, INT_ENABLE_SIDE_B);
++			val_32 &= ~(FIFO_UFLOW_INT | FIFO_WM01_INT);
++			cix_mbox_write(priv, val_32, INT_ENABLE_SIDE_B);
+ 		}
+ 		break;
+ 	case CIX_MBOX_TYPE_FAST:
+-		if (priv->dir == CIX_MBOX_RX) {
+-			if (index < 0 || index > CIX_MBOX_FAST_IDX) {
+-				dev_err(priv->dev, "Invalid index %d\n", index);
++		if (priv->dir == MBOX_RX) {
++			if (index < 0 || index > MBOX_FAST_IDX) {
++				dev_err(priv->dev,
++					"Invalid index %d\n", index);
+ 				break;
+ 			}
+ 			/* Disable fast channel interrupt */
+-			val = cix_mbox_read(priv, CIX_INT_ENABLE_SIDE_B);
+-			val &= ~CIX_FAST_CH_INT(index);
+-			cix_mbox_write(priv, val, CIX_INT_ENABLE_SIDE_B);
++			val_32 = cix_mbox_read(priv, INT_ENABLE_SIDE_B);
++			val_32 &= ~FAST_CH_INT(index);
++			cix_mbox_write(priv, val_32, INT_ENABLE_SIDE_B);
+ 		}
+ 		break;
+
+@@ -535,21 +527,21 @@ static const struct mbox_chan_ops cix_mbox_chan_ops = {
+
+ static void cix_mbox_init(struct cix_mbox_priv *priv)
+ {
+-	struct cix_mbox_con_priv *cp;
+ 	int i;
++	struct cix_mbox_con_priv *cp;
+
+ 	for (i = 0; i < CIX_MBOX_CHANS; i++) {
+ 		cp = &priv->con_priv[i];
+ 		cp->index = i;
+ 		cp->chan = &priv->mbox_chans[i];
+ 		priv->mbox_chans[i].con_priv = cp;
+-		if (cp->index <= CIX_MBOX_FAST_IDX)
++		if (cp->index <= MBOX_FAST_IDX)
+ 			cp->type = CIX_MBOX_TYPE_FAST;
+-		if (cp->index == CIX_MBOX_DB_IDX)
++		if (cp->index == MBOX_DB_IDX)
+ 			cp->type = CIX_MBOX_TYPE_DB;
+-		if (cp->index == CIX_MBOX_FIFO_IDX)
++		if (cp->index == MBOX_FIFO_IDX)
+ 			cp->type = CIX_MBOX_TYPE_FIFO;
+-		if (cp->index == CIX_MBOX_REG_IDX)
++		if (cp->index == MBOX_REG_IDX)
+ 			cp->type = CIX_MBOX_TYPE_REG;
+ 	}
+ }
+@@ -558,64 +550,70 @@ static int cix_mbox_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+ 	struct cix_mbox_priv *priv;
+-	struct resource *res;
+-	const char *dir_str;
+ 	int ret;
++	u32 dir;
+
+ 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+ 	if (!priv)
+ 		return -ENOMEM;
+
+ 	priv->dev = dev;
+-	priv->base = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
+-	if (IS_ERR(priv->base))
+-		return PTR_ERR(priv->base);
+-
+-	/*
+-	 * The first 0x80 bytes of the register space of the cix mailbox controller
+-	 * can be used as shared memory for clients. When this shared memory is in
+-	 * use, the base address of the mailbox is offset by 0x80. Therefore, when
+-	 * performing subsequent read/write operations, it is necessary to subtract
+-	 * the offset CIX_SHMEM_OFFSET.
+-	 *
+-	 * When the base address of the mailbox is offset by 0x80, it indicates
+-	 * that shmem is in use.
+-	 */
+-	priv->use_shmem = !!(res->start & CIX_SHMEM_OFFSET);
++
++	{
++		/*
++		 * Use devm_ioremap() instead of devm_ioremap_resource()
++		 * because SCMI shared memory regions (CIXHA005) overlap the
++		 * base of mailbox MMIO regions, causing -EBUSY under ACPI.
++		 */
++		struct resource *res;
++
++		res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++		if (!res)
++			return -EINVAL;
++		priv->base = devm_ioremap(dev, res->start, resource_size(res));
++		if (!priv->base)
++			return -ENOMEM;
++	}
+
+ 	priv->irq = platform_get_irq(pdev, 0);
+ 	if (priv->irq < 0)
+ 		return priv->irq;
+
+-	if (device_property_read_string(dev, "cix,mbox-dir", &dir_str)) {
++	if (device_property_read_u32(dev, "cix,mbox_dir", &dir)) {
+ 		dev_err(priv->dev, "cix,mbox_dir property not found\n");
+ 		return -EINVAL;
+ 	}
+
+-	if (!strcmp(dir_str, "tx"))
+-		priv->dir = 0;
+-	else if (!strcmp(dir_str, "rx"))
+-		priv->dir = 1;
+-	else {
+-		dev_err(priv->dev, "cix,mbox_dir=%s is not expected\n", dir_str);
++	if ((dir != MBOX_TX)
++	    && (dir != MBOX_RX)) {
++		dev_err(priv->dev, "Dir value is not expected! dir %d\n", dir);
+ 		return -EINVAL;
+ 	}
+
+ 	cix_mbox_init(priv);
+
++	priv->dir = (int)dir;
+ 	priv->mbox.dev = dev;
+ 	priv->mbox.ops = &cix_mbox_chan_ops;
+ 	priv->mbox.chans = priv->mbox_chans;
+ 	priv->mbox.txdone_irq = true;
+ 	priv->mbox.num_chans = CIX_MBOX_CHANS;
+-	priv->mbox.of_xlate = NULL;
++	dev_info(priv->dev, "irq %d, dir %s\n",
++		 priv->irq, priv->dir == MBOX_TX ? "tx" : "rx");
+
+ 	platform_set_drvdata(pdev, priv);
+ 	ret = devm_mbox_controller_register(dev, &priv->mbox);
+ 	if (ret)
+-		dev_err(dev, "Failed to register mailbox %d\n", ret);
++		return ret;
+
+-	return ret;
++	return 0;
++}
++
++static void cix_mbox_remove(struct platform_device *pdev)
++{
++	struct cix_mbox_priv *priv = platform_get_drvdata(pdev);
++
++	dev_info(priv->dev, "cix mbox removed\n");
+ }
+
+ static const struct of_device_id cix_mbox_dt_ids[] = {
+@@ -624,11 +622,19 @@ static const struct of_device_id cix_mbox_dt_ids[] = {
+ };
+ MODULE_DEVICE_TABLE(of, cix_mbox_dt_ids);
+
++static const struct acpi_device_id cix_mbox_acpi_match[] = {
++	{ "CIXHA001", 0 }, /* sky1 mailbox */
++	{ },
++};
++MODULE_DEVICE_TABLE(acpi, cix_mbox_acpi_match);
++
+ static struct platform_driver cix_mbox_driver = {
+ 	.probe = cix_mbox_probe,
++	.remove = cix_mbox_remove,
+ 	.driver = {
+ 		.name = "cix_mbox",
+ 		.of_match_table = cix_mbox_dt_ids,
++		.acpi_match_table = ACPI_PTR(cix_mbox_acpi_match),
+ 	},
+ };
+
+@@ -636,8 +642,8 @@ static int __init cix_mailbox_init(void)
+ {
+ 	return platform_driver_register(&cix_mbox_driver);
+ }
+-arch_initcall(cix_mailbox_init);
++subsys_initcall(cix_mailbox_init);
+
+-MODULE_AUTHOR("Cix Technology Group Co., Ltd.");
++MODULE_AUTHOR("Lihua Liu <Lihua.Liu@cixcomputing.com>");
+ MODULE_DESCRIPTION("CIX mailbox driver");
+-MODULE_LICENSE("GPL");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mailbox/Kconfig b/drivers/mailbox/Kconfig
+index 3062ee352..30bdfce06 100644
+--- a/drivers/mailbox/Kconfig
++++ b/drivers/mailbox/Kconfig
+@@ -369,9 +369,9 @@ config THEAD_TH1520_MBOX
+ 	  things.
+
+ config CIX_MBOX
+-        tristate "CIX Mailbox"
++        bool "CIX Mailbox"
+         depends on ARCH_CIX || COMPILE_TEST
+-        depends on OF
++        depends on OF || ACPI
+         help
+           Mailbox implementation for CIX IPC system. The controller supports
+           11 mailbox channels with different operating mode and every channel
+diff --git a/drivers/mailbox/mailbox.c b/drivers/mailbox/mailbox.c
+index efacd24a0..a4828ae1c 100644
+--- a/drivers/mailbox/mailbox.c
++++ b/drivers/mailbox/mailbox.c
+@@ -448,8 +448,21 @@ struct mbox_chan *mbox_request_channel(struct mbox_client *cl, int index)
+ 		return ERR_PTR(-ENODEV);
+ 	}
+
+-	ret = fwnode_property_get_reference_args(fwnode, "mboxes", "#mbox-cells",
+-						 0, index, &fwspec);
++	if (is_of_node(fwnode)) {
++		ret = fwnode_property_get_reference_args(fwnode, "mboxes",
++							"#mbox-cells", 0,
++							index, &fwspec);
++	} else {
++		/*
++		 * ACPI: provider devices don't have a '#mbox-cells' property,
++		 * so skip the nargs_prop lookup and auto-detect integer
++		 * arguments following each reference in the package.
++		 */
++		ret = fwnode_property_get_reference_args(fwnode, "mboxes",
++							NULL,
++							NR_FWNODE_REFERENCE_ARGS,
++							index, &fwspec);
++	}
+ 	if (ret) {
+ 		dev_err(dev, "%s: can't parse \"%s\" property\n", __func__, "mboxes");
+ 		return ERR_PTR(ret);
+diff --git a/drivers/mfd/syscon.c b/drivers/mfd/syscon.c
+index 21a7fcdd2..1932b6fed 100644
+--- a/drivers/mfd/syscon.c
++++ b/drivers/mfd/syscon.c
+@@ -8,6 +8,7 @@
+  * Author: Dong Aisheng <dong.aisheng@linaro.org>
+  */
+
++#include <linux/acpi.h>
+ #include <linux/cleanup.h>
+ #include <linux/clk.h>
+ #include <linux/err.h>
+@@ -16,6 +17,7 @@
+ #include <linux/mutex.h>
+ #include <linux/of.h>
+ #include <linux/of_address.h>
++#include <linux/platform_device.h>
+ #include <linux/regmap.h>
+ #include <linux/reset.h>
+ #include <linux/mfd/syscon.h>
+@@ -360,3 +362,67 @@ struct regmap *syscon_regmap_lookup_by_phandle_optional(struct device_node *np,
+ 	return regmap;
+ }
+ EXPORT_SYMBOL_GPL(syscon_regmap_lookup_by_phandle_optional);
++
++#ifdef CONFIG_ACPI
++struct syscon_platform_data {
++	const char *label;
++};
++
++static int syscon_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct syscon_platform_data *pdata = dev_get_platdata(dev);
++	struct syscon *syscon;
++	struct regmap_config syscon_config = syscon_regmap_config;
++	struct resource *res;
++	void __iomem *base;
++
++	syscon = devm_kzalloc(dev, sizeof(*syscon), GFP_KERNEL);
++	if (!syscon)
++		return -ENOMEM;
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	if (!res)
++		return -ENOENT;
++
++	base = devm_ioremap(dev, res->start, resource_size(res));
++	if (!base)
++		return -ENOMEM;
++
++	syscon_config.max_register = resource_size(res) - 4;
++	if (pdata)
++		syscon_config.name = pdata->label;
++
++	syscon->regmap = devm_regmap_init_mmio(dev, base, &syscon_config);
++	if (IS_ERR(syscon->regmap)) {
++		dev_err(dev, "regmap init failed\n");
++		return PTR_ERR(syscon->regmap);
++	}
++
++	platform_set_drvdata(pdev, syscon);
++
++	dev_dbg(dev, "regmap %pR registered\n", res);
++
++	return 0;
++}
++
++static const struct acpi_device_id syscon_acpi_match[] = {
++	{ "CIXHA018", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(acpi, syscon_acpi_match);
++
++static struct platform_driver syscon_driver = {
++	.driver = {
++		.name = "syscon",
++		.acpi_match_table = ACPI_PTR(syscon_acpi_match),
++	},
++	.probe = syscon_probe,
++};
++
++static int __init syscon_init(void)
++{
++	return platform_driver_register(&syscon_driver);
++}
++postcore_initcall(syscon_init);
++#endif
+diff --git a/drivers/pmdomain/arm/scmi_perf_domain.c b/drivers/pmdomain/arm/scmi_perf_domain.c
+index 369342345..0391d4afc 100644
+--- a/drivers/pmdomain/arm/scmi_perf_domain.c
++++ b/drivers/pmdomain/arm/scmi_perf_domain.c
+@@ -5,12 +5,15 @@
+  * Copyright (C) 2023 Linaro Ltd.
+  */
+
++#include <linux/acpi.h>
+ #include <linux/err.h>
+ #include <linux/device.h>
+ #include <linux/module.h>
+ #include <linux/pm_domain.h>
+ #include <linux/pm_opp.h>
++#include <linux/property.h>
+ #include <linux/scmi_protocol.h>
++#include <linux/scmi_perf_domain.h>
+ #include <linux/slab.h>
+
+ struct scmi_perf_domain {
+@@ -74,6 +77,57 @@ scmi_pd_detach_dev(struct generic_pm_domain *genpd, struct device *dev)
+ 	dev_pm_opp_remove_all_dynamic(dev);
+ }
+
++struct proto_fwnode_match {
++	u8 protocol_id;
++	struct fwnode_handle *result;
++};
++
++static int match_proto_reg(struct acpi_device *adev, void *data)
++{
++	struct proto_fwnode_match *match = data;
++	u32 reg;
++
++	if (fwnode_property_read_u32(acpi_fwnode_handle(adev), "reg", &reg) == 0 &&
++	    reg == match->protocol_id) {
++		match->result = acpi_fwnode_handle(adev);
++		return 1;
++	}
++	return 0;
++}
++
++/**
++ * scmi_perf_find_proto_fwnode() - Find the protocol-specific ACPI fwnode
++ * @sdev: SCMI device (inherits parent fwnode under ACPI)
++ *
++ * Under ACPI, the SCMI device's fwnode points to the parent controller
++ * (e.g. \_SB_.SCMI).  Consumers reference protocol-specific children
++ * (e.g. \_SB_.SCMI.DVFS) which have a "reg" property matching the
++ * protocol_id.  These children may have _STA=0 (namespace-only stubs),
++ * so we must use acpi_dev_for_each_child() which iterates all children
++ * including non-present ones, rather than fwnode_for_each_child_node()
++ * which skips them.
++ *
++ * Returns the protocol fwnode, or NULL if not found.
++ */
++static struct fwnode_handle *scmi_perf_find_proto_fwnode(struct scmi_device *sdev)
++{
++	struct acpi_device *parent_adev;
++	struct proto_fwnode_match match = {
++		.protocol_id = sdev->protocol_id,
++		.result = NULL,
++	};
++
++	if (sdev->dev.of_node)
++		return NULL;
++
++	parent_adev = to_acpi_device_node(dev_fwnode(&sdev->dev));
++	if (!parent_adev)
++		return NULL;
++
++	acpi_dev_for_each_child(parent_adev, match_proto_reg, &match);
++	return match.result;
++}
++
+ static int scmi_perf_domain_probe(struct scmi_device *sdev)
+ {
+ 	struct device *dev = &sdev->dev;
+@@ -88,8 +142,13 @@ static int scmi_perf_domain_probe(struct scmi_device *sdev)
+ 	if (!handle)
+ 		return -ENODEV;
+
+-	/* The OF node must specify us as a power-domain provider. */
+-	if (!of_find_property(dev->of_node, "#power-domain-cells", NULL))
++	/*
++	 * Under DT, the OF node must specify us as a power-domain provider.
++	 * Under ACPI, there's no of_node — proceed unconditionally and
++	 * register genpds globally for lookup by name.
++	 */
++	if (dev->of_node &&
++	    !of_find_property(dev->of_node, "#power-domain-cells", NULL))
+ 		return 0;
+
+ 	perf_ops = handle->devm_protocol_get(sdev, SCMI_PROTOCOL_PERF, &ph);
+@@ -141,12 +200,30 @@ static int scmi_perf_domain_probe(struct scmi_device *sdev)
+ 	scmi_pd_data->domains = domains;
+ 	scmi_pd_data->num_domains = num_domains;
+
+-	ret = of_genpd_add_provider_onecell(dev->of_node, scmi_pd_data);
+-	if (ret)
+-		goto err;
++	if (dev->of_node) {
++		ret = of_genpd_add_provider_onecell(dev->of_node, scmi_pd_data);
++		if (ret)
++			goto err;
++	} else {
++		/*
++		 * Under ACPI, register a fwnode-based provider so consumers
++		 * can resolve power-domains _DSD references.  The provider
++		 * fwnode is the protocol-specific ACPI child (e.g. DVFS)
++		 * that consumers reference, not the parent SCMI device.
++		 */
++		struct fwnode_handle *proto_fw;
++
++		proto_fw = scmi_perf_find_proto_fwnode(sdev);
++		if (proto_fw) {
++			ret = genpd_add_fwnode_provider_onecell(proto_fw,
++								scmi_pd_data);
++			if (ret)
++				goto err;
++		}
++	}
+
+ 	dev_set_drvdata(dev, scmi_pd_data);
+-	dev_info(dev, "Initialized %d performance domains", num_domains);
++	dev_info(dev, "SCMI perf domains registered (%d domains)\n", num_domains);
+ 	return 0;
+ err:
+ 	for (i--; i >= 0; i--)
+@@ -163,7 +240,16 @@ static void scmi_perf_domain_remove(struct scmi_device *sdev)
+ 	if (!scmi_pd_data)
+ 		return;
+
+-	of_genpd_del_provider(dev->of_node);
++	if (dev->of_node) {
++		of_genpd_del_provider(dev->of_node);
++	} else {
++		struct scmi_device *sdev = to_scmi_dev(dev);
++		struct fwnode_handle *proto_fw;
++
++		proto_fw = scmi_perf_find_proto_fwnode(sdev);
++		if (proto_fw)
++			genpd_del_fwnode_provider(proto_fw);
++	}
+
+ 	for (i = 0; i < scmi_pd_data->num_domains; i++)
+ 		pm_genpd_remove(scmi_pd_data->domains[i]);
+@@ -181,6 +267,57 @@ static struct scmi_driver scmi_perf_domain_driver = {
+ 	.remove		= scmi_perf_domain_remove,
+ 	.id_table	= scmi_id_table,
+ };
++/**
++ * scmi_perf_domain_est_power() - Get estimated power for a rate via SCMI
++ * @dev:   Device attached to an SCMI perf domain genpd
++ * @rate:  [in/out] Frequency in Hz (may be adjusted by firmware)
++ * @power: [out] Estimated power in firmware-native units
++ *
++ * Returns 0 on success, or negative error.
++ */
++int scmi_perf_domain_est_power(struct device *dev,
++			       unsigned long *rate, unsigned long *power)
++{
++	struct generic_pm_domain *genpd;
++	struct scmi_perf_domain *pd;
++
++	if (!dev || !dev->pm_domain)
++		return -ENODEV;
++
++	genpd = pd_to_genpd(dev->pm_domain);
++	if (IS_ERR(genpd) ||
++	    genpd->set_performance_state != scmi_pd_set_perf_state)
++		return -ENODEV;
++
++	pd = to_scmi_pd(genpd);
++	return pd->perf_ops->est_power_get(pd->ph, pd->domain_id, rate, power);
++}
++EXPORT_SYMBOL_GPL(scmi_perf_domain_est_power);
++
++/**
++ * scmi_perf_domain_power_scale() - Get power scale used by SCMI firmware
++ * @dev: Device attached to an SCMI perf domain genpd
++ *
++ * Returns the power scale enum, or SCMI_POWER_BOGOWATTS on error.
++ */
++enum scmi_power_scale scmi_perf_domain_power_scale(struct device *dev)
++{
++	struct generic_pm_domain *genpd;
++	struct scmi_perf_domain *pd;
++
++	if (!dev || !dev->pm_domain)
++		return SCMI_POWER_BOGOWATTS;
++
++	genpd = pd_to_genpd(dev->pm_domain);
++	if (IS_ERR(genpd) ||
++	    genpd->set_performance_state != scmi_pd_set_perf_state)
++		return SCMI_POWER_BOGOWATTS;
++
++	pd = to_scmi_pd(genpd);
++	return pd->perf_ops->power_scale_get(pd->ph);
++}
++EXPORT_SYMBOL_GPL(scmi_perf_domain_power_scale);
++
+ module_scmi_driver(scmi_perf_domain_driver);
+
+ MODULE_AUTHOR("Ulf Hansson <ulf.hansson@linaro.org>");
+diff --git a/drivers/pmdomain/arm/scmi_pm_domain.c b/drivers/pmdomain/arm/scmi_pm_domain.c
+index 3d73aef21..7c8d6da84 100644
+--- a/drivers/pmdomain/arm/scmi_pm_domain.c
++++ b/drivers/pmdomain/arm/scmi_pm_domain.c
+@@ -24,9 +24,35 @@ struct scmi_pm_domain {
+
+ static int scmi_pd_power(struct generic_pm_domain *domain, u32 state)
+ {
++	int ret;
++	u32 ret_state;
+ 	struct scmi_pm_domain *pd = to_scmi_pd(domain);
+
+-	return power_ops->state_set(pd->ph, pd->domain, state);
++	pr_debug("scmi_pd_power: domain %s (%d) -> state 0x%x\n",
++		 pd->name, pd->domain, state);
++
++	ret = power_ops->state_set(pd->ph, pd->domain, state);
++	if (ret) {
++		pr_err("scmi_pd_power: state_set failed: %d\n", ret);
++		return ret;
++	}
++
++	/* Verify state was actually set (like vendor kernel does) */
++	ret = power_ops->state_get(pd->ph, pd->domain, &ret_state);
++	if (ret) {
++		pr_err("scmi_pd_power: state_get failed: %d\n", ret);
++		return ret;
++	}
++
++	if (state != ret_state) {
++		pr_err("scmi_pd_power: state mismatch! requested 0x%x, got 0x%x\n",
++		       state, ret_state);
++		return -EIO;
++	}
++
++	pr_debug("scmi_pd_power: domain %s state verified: 0x%x\n",
++		 pd->name, ret_state);
++	return 0;
+ }
+
+ static int scmi_pd_power_on(struct generic_pm_domain *domain)
+@@ -108,9 +134,20 @@ static int scmi_pm_domain_probe(struct scmi_device *sdev)
+ 	scmi_pd_data->domains = domains;
+ 	scmi_pd_data->num_domains = num_domains;
+
+-	ret = of_genpd_add_provider_onecell(np, scmi_pd_data);
+-	if (ret)
+-		goto err_rm_genpds;
++	/* Register DT provider if a device tree node is available.
++	 * Under ACPI, domains are still globally registered by
++	 * pm_genpd_init() and consumers attach by name.
++	 */
++	if (np) {
++		/* Register DT provider if a device tree node is available.
++	 * Under ACPI, domains are still globally registered by
++	 * pm_genpd_init() and consumers attach by name.
++	 */
++	if (np) {
++		ret = of_genpd_add_provider_onecell(np, scmi_pd_data);
++		if (ret)
++			goto err_rm_genpds;
++	}
+
+ 	dev_set_drvdata(dev, scmi_pd_data);
+
+@@ -126,8 +163,10 @@ static int scmi_pm_domain_probe(struct scmi_device *sdev)
+
+ 	return 0;
+ err_rm_genpds:
+-	for (i = num_domains - 1; i >= 0; i--)
+-		pm_genpd_remove(domains[i]);
++	for (i = num_domains - 1; i >= 0; i--) {
++		if (domains[i])
++			pm_genpd_remove(domains[i]);
++	}
+
+ 	return ret;
+ }
+@@ -144,7 +183,8 @@ static void scmi_pm_domain_remove(struct scmi_device *sdev)
+ 	/* Remove any parent-child relationships established at probe time */
+ 	of_genpd_remove_child_ids(np, scmi_pd_data);
+
+-	of_genpd_del_provider(np);
++	if (np)
++		of_genpd_del_provider(np);
+
+ 	for (i = 0; i < scmi_pd_data->num_domains; i++) {
+ 		if (!scmi_pd_data->domains[i])
+@@ -165,7 +205,20 @@ static struct scmi_driver scmi_power_domain_driver = {
+ 	.remove = scmi_pm_domain_remove,
+ 	.id_table = scmi_id_table,
+ };
++
++/* CIX Sky1 needs early SCMI power domain init so GPU access permissions
++ * are configured before other drivers probe. Vendor kernel uses
++ * subsys_initcall_sync for this purpose.
++ */
++#ifdef CONFIG_ARCH_CIX
++static int __init scmi_power_domain_init(void)
++{
++	return scmi_register(&scmi_power_domain_driver);
++}
++subsys_initcall_sync(scmi_power_domain_init);
++#else
+ module_scmi_driver(scmi_power_domain_driver);
++#endif
+
+ MODULE_AUTHOR("Sudeep Holla <sudeep.holla@arm.com>");
+ MODULE_DESCRIPTION("ARM SCMI power domain driver");
+diff --git a/drivers/pmdomain/core.c b/drivers/pmdomain/core.c
+index 842c4169e..9e932e4be 100644
+--- a/drivers/pmdomain/core.c
++++ b/drivers/pmdomain/core.c
+@@ -23,6 +23,7 @@
+ #include <linux/export.h>
+ #include <linux/cpu.h>
+ #include <linux/debugfs.h>
++#include <linux/property.h>
+
+ /* Provides a unique ID for each genpd device */
+ static DEFINE_IDA(genpd_ida);
+@@ -2463,6 +2464,33 @@ int pm_genpd_init(struct generic_pm_domain *genpd,
+ }
+ EXPORT_SYMBOL_GPL(pm_genpd_init);
+
++/**
++ * pm_genpd_lookup_by_name() - Find a power domain by name.
++ * @name: Name of the power domain to find.
++ *
++ * Returns the generic_pm_domain with the matching name, or NULL if not found.
++ * Useful for ACPI platforms where consumers cannot use DT phandles.
++ */
++struct generic_pm_domain *pm_genpd_lookup_by_name(const char *name)
++{
++	struct generic_pm_domain *genpd;
++
++	if (!name)
++		return NULL;
++
++	mutex_lock(&gpd_list_lock);
++	list_for_each_entry(genpd, &gpd_list, gpd_list_node) {
++		if (genpd->name && !strcmp(genpd->name, name)) {
++			mutex_unlock(&gpd_list_lock);
++			return genpd;
++		}
++	}
++	mutex_unlock(&gpd_list_lock);
++
++	return NULL;
++}
++EXPORT_SYMBOL_GPL(pm_genpd_lookup_by_name);
++
+ static int genpd_remove(struct generic_pm_domain *genpd)
+ {
+ 	struct gpd_link *l, *link;
+@@ -2570,6 +2598,21 @@ static struct device *genpd_provider_bus;
+ /* Used to prevent registering devices before the bus. */
+ static bool genpd_bus_registered;
+
++/**
++ * struct fwnode_genpd_provider - Fwnode-based PM domain provider (for ACPI)
++ * @link: Entry in the global list of fwnode genpd providers
++ * @fwnode: The firmware node this provider is associated with
++ * @data: Onecell data containing the domain array
++ */
++struct fwnode_genpd_provider {
++	struct list_head link;
++	struct fwnode_handle *fwnode;
++	struct genpd_onecell_data *data;
++};
++
++/* List of fwnode-based PM domain providers, protected by of_genpd_mutex. */
++static LIST_HEAD(fwnode_genpd_providers);
++
+ /**
+  * genpd_xlate_simple() - Xlate function for direct node-domain mapping
+  * @genpdspec: OF phandle args to map into a PM domain
+@@ -2889,6 +2932,100 @@ void of_genpd_del_provider(struct device_node *np)
+ }
+ EXPORT_SYMBOL_GPL(of_genpd_del_provider);
+
++/**
++ * genpd_add_fwnode_provider_onecell() - Register a fwnode-based PM domain provider
++ * @fwnode: Firmware node to associate with this provider
++ * @data: Onecell data with domain array indexed by domain specifier
++ *
++ * Registers a fwnode-based PM domain provider for ACPI platforms where
++ * consumers reference power domains via _DSD properties rather than DT
++ * phandles.  Consumers call fwnode_property_get_reference_args() on their
++ * "power-domains" property and the resulting fwnode + args[0] index are
++ * used to look up the provider and select the domain.
++ *
++ * Returns 0 on success, negative errno on failure.
++ */
++int genpd_add_fwnode_provider_onecell(struct fwnode_handle *fwnode,
++				      struct genpd_onecell_data *data)
++{
++	struct fwnode_genpd_provider *p;
++
++	if (!fwnode || !data)
++		return -EINVAL;
++
++	p = kzalloc(sizeof(*p), GFP_KERNEL);
++	if (!p)
++		return -ENOMEM;
++
++	p->fwnode = fwnode;
++	p->data = data;
++
++	mutex_lock(&of_genpd_mutex);
++	list_add(&p->link, &fwnode_genpd_providers);
++	mutex_unlock(&of_genpd_mutex);
++
++	pr_debug("Added fwnode domain provider %pfwf\n", fwnode);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(genpd_add_fwnode_provider_onecell);
++
++/**
++ * genpd_del_fwnode_provider() - Remove a fwnode-based PM domain provider
++ * @fwnode: The firmware node whose provider to remove
++ */
++void genpd_del_fwnode_provider(struct fwnode_handle *fwnode)
++{
++	struct fwnode_genpd_provider *p, *tmp;
++
++	mutex_lock(&of_genpd_mutex);
++	list_for_each_entry_safe(p, tmp, &fwnode_genpd_providers, link) {
++		if (p->fwnode == fwnode) {
++			list_del(&p->link);
++			kfree(p);
++			break;
++		}
++	}
++	mutex_unlock(&of_genpd_mutex);
++}
++EXPORT_SYMBOL_GPL(genpd_del_fwnode_provider);
++
++/**
++ * genpd_get_from_fwnode_provider() - Look up a PM domain from fwnode providers
++ * @fwnode: Firmware node of the provider (from consumer's reference)
++ * @index: Domain index within the provider's onecell data
++ *
++ * Must be called with gpd_list_lock held (same as genpd_get_from_provider).
++ * Takes of_genpd_mutex internally.
++ *
++ * Returns a valid pointer to struct generic_pm_domain on success, or ERR_PTR()
++ * on failure.
++ */
++static struct generic_pm_domain *genpd_get_from_fwnode_provider(
++		struct fwnode_handle *fwnode, unsigned int index)
++{
++	struct generic_pm_domain *genpd = ERR_PTR(-ENOENT);
++	struct fwnode_genpd_provider *p;
++
++	if (!fwnode)
++		return ERR_PTR(-EINVAL);
++
++	mutex_lock(&of_genpd_mutex);
++	list_for_each_entry(p, &fwnode_genpd_providers, link) {
++		if (p->fwnode == fwnode) {
++			if (index < p->data->num_domains &&
++			    p->data->domains[index])
++				genpd = p->data->domains[index];
++			else
++				genpd = ERR_PTR(-EINVAL);
++			break;
++		}
++	}
++	mutex_unlock(&of_genpd_mutex);
++
++	return genpd;
++}
++
+ /**
+  * genpd_get_from_provider() - Look-up PM domain
+  * @genpdspec: OF phandle args to use for look-up
+@@ -3432,6 +3569,86 @@ static int __genpd_dev_pm_attach(struct device *dev, struct device *base_dev,
+ 	return ret;
+ }
+
++/**
++ * __genpd_dev_pm_attach_acpi - ACPI variant of __genpd_dev_pm_attach
++ *
++ * Uses fwnode_property_get_reference_args() on the base device's "power-domains"
++ * property to resolve the PM domain provider and index, then attaches @dev to
++ * the corresponding generic PM domain.  Mirrors the OF path but works with
++ * ACPI _DSD references and fwnode-based providers.
++ */
++static int __genpd_dev_pm_attach_acpi(struct device *dev,
++				      struct device *base_dev,
++				      unsigned int index,
++				      unsigned int num_domains,
++				      bool power_on)
++{
++	struct fwnode_reference_args pd_args = {};
++	struct generic_pm_domain *pd;
++	int ret;
++
++	ret = fwnode_property_get_reference_args(dev_fwnode(base_dev),
++			"power-domains", "#power-domain-cells",
++			0, index, &pd_args);
++	if (ret < 0)
++		return ret;
++
++	mutex_lock(&gpd_list_lock);
++	pd = genpd_get_from_fwnode_provider(pd_args.fwnode,
++			pd_args.nargs > 0 ? pd_args.args[0] : 0);
++	fwnode_handle_put(pd_args.fwnode);
++	if (IS_ERR(pd)) {
++		mutex_unlock(&gpd_list_lock);
++		dev_dbg(dev, "%s() failed to find PM domain: %ld\n",
++			__func__, PTR_ERR(pd));
++		return driver_deferred_probe_check_state(base_dev);
++	}
++
++	dev_dbg(dev, "adding to PM domain %s\n", pd->name);
++
++	ret = genpd_add_device(pd, dev, base_dev);
++	mutex_unlock(&gpd_list_lock);
++
++	if (ret < 0)
++		return dev_err_probe(dev, ret,
++			"failed to add to PM domain %s\n", pd->name);
++
++	dev->pm_domain->detach = genpd_dev_pm_detach;
++	dev->pm_domain->sync = genpd_dev_pm_sync;
++
++	if (num_domains == 1) {
++		ret = genpd_set_required_opp_dev(dev, base_dev);
++		if (ret)
++			goto err;
++	}
++
++	ret = genpd_set_required_opp(dev, index);
++	if (ret)
++		goto err;
++
++	if (power_on) {
++		genpd_lock(pd);
++		ret = genpd_power_on(pd, 0);
++		genpd_unlock(pd);
++	}
++
++	if (ret) {
++		if (dev_gpd_data(dev)->default_pstate) {
++			dev_pm_genpd_set_performance_state(dev, 0);
++			dev_gpd_data(dev)->default_pstate = 0;
++		}
++
++		genpd_remove_device(pd, dev);
++		return -EPROBE_DEFER;
++	}
++
++	return 1;
++
++err:
++	genpd_remove_device(pd, dev);
++	return ret;
++}
++
+ /**
+  * genpd_dev_pm_attach - Attach a device to its PM domain using DT.
+  * @dev: Device to attach.
+@@ -3483,16 +3700,32 @@ struct device *genpd_dev_pm_attach_by_id(struct device *dev,
+ {
+ 	struct device *virt_dev;
+ 	int num_domains;
++	bool use_acpi = false;
+ 	int ret;
+
+-	if (!dev->of_node)
+-		return NULL;
+-
+-	/* Verify that the index is within a valid range. */
+-	num_domains = of_count_phandle_with_args(dev->of_node, "power-domains",
+-						 "#power-domain-cells");
+-	if (num_domains < 0 || index >= num_domains)
++	if (dev->of_node) {
++		/* DT path: count power-domains phandles */
++		num_domains = of_count_phandle_with_args(dev->of_node,
++				"power-domains", "#power-domain-cells");
++		if (num_domains < 0 || index >= num_domains)
++			return NULL;
++	} else if (dev_fwnode(dev)) {
++		/* ACPI path: count power-domains fwnode references */
++		struct fwnode_reference_args args;
++
++		num_domains = 0;
++		while (!fwnode_property_get_reference_args(dev_fwnode(dev),
++				"power-domains", "#power-domain-cells",
++				0, num_domains, &args)) {
++			fwnode_handle_put(args.fwnode);
++			num_domains++;
++		}
++		if (num_domains <= 0 || index >= (unsigned int)num_domains)
++			return NULL;
++		use_acpi = true;
++	} else {
+ 		return NULL;
++	}
+
+ 	if (!genpd_bus_registered)
+ 		return ERR_PTR(-ENODEV);
+@@ -3505,7 +3738,8 @@ struct device *genpd_dev_pm_attach_by_id(struct device *dev,
+ 	dev_set_name(virt_dev, "genpd:%u:%s", index, dev_name(dev));
+ 	virt_dev->bus = &genpd_bus_type;
+ 	virt_dev->release = genpd_release_dev;
+-	virt_dev->of_node = of_node_get(dev->of_node);
++	if (dev->of_node)
++		virt_dev->of_node = of_node_get(dev->of_node);
+
+ 	ret = device_register(virt_dev);
+ 	if (ret) {
+@@ -3514,7 +3748,12 @@ struct device *genpd_dev_pm_attach_by_id(struct device *dev,
+ 	}
+
+ 	/* Try to attach the device to the PM domain at the specified index. */
+-	ret = __genpd_dev_pm_attach(virt_dev, dev, index, num_domains, false);
++	if (use_acpi)
++		ret = __genpd_dev_pm_attach_acpi(virt_dev, dev, index,
++						 num_domains, false);
++	else
++		ret = __genpd_dev_pm_attach(virt_dev, dev, index,
++					    num_domains, false);
+ 	if (ret < 1) {
+ 		device_unregister(virt_dev);
+ 		return ret ? ERR_PTR(ret) : NULL;
+@@ -3532,19 +3771,24 @@ EXPORT_SYMBOL_GPL(genpd_dev_pm_attach_by_id);
+  * @dev: The device used to lookup the PM domain.
+  * @name: The name of the PM domain.
+  *
+- * Parse device's OF node to find a PM domain specifier using the
+- * power-domain-names DT property. For further description see
++ * Parse device's OF node (or ACPI _DSD) to find a PM domain specifier using
++ * the power-domain-names property.  For further description see
+  * genpd_dev_pm_attach_by_id().
+  */
+ struct device *genpd_dev_pm_attach_by_name(struct device *dev, const char *name)
+ {
+ 	int index;
+
+-	if (!dev->of_node)
++	if (dev->of_node) {
++		index = of_property_match_string(dev->of_node,
++						 "power-domain-names", name);
++	} else if (dev_fwnode(dev)) {
++		index = fwnode_property_match_string(dev_fwnode(dev),
++						    "power-domain-names", name);
++	} else {
+ 		return NULL;
++	}
+
+-	index = of_property_match_string(dev->of_node, "power-domain-names",
+-					 name);
+ 	if (index < 0)
+ 		return NULL;
+
+diff --git a/drivers/reset/core.c b/drivers/reset/core.c
+index 38e189d04..8ecdf3bb5 100644
+--- a/drivers/reset/core.c
++++ b/drivers/reset/core.c
+@@ -30,6 +30,9 @@
+ static DEFINE_MUTEX(reset_list_mutex);
+ static LIST_HEAD(reset_controller_list);
+
++static DEFINE_MUTEX(reset_lookup_mutex);
++static LIST_HEAD(reset_lookup_list);
++
+ /* Protects reset_gpio_lookup_list */
+ static DEFINE_MUTEX(reset_gpio_lookup_mutex);
+ static LIST_HEAD(reset_gpio_lookup_list);
+@@ -1231,12 +1234,102 @@ __fwnode_reset_control_get(struct fwnode_handle *fwnode, const char *id, int ind
+ }
+ EXPORT_SYMBOL_GPL(__fwnode_reset_control_get);
+
++/**
++ * reset_controller_add_lookup - register a set of lookup entries
++ * @lookup: array of reset lookup entries
++ * @num_entries: number of entries in the lookup array
++ */
++void reset_controller_add_lookup(struct reset_control_lookup *lookup,
++				 unsigned int num_entries)
++{
++	struct reset_control_lookup *entry;
++	unsigned int i;
++
++	mutex_lock(&reset_lookup_mutex);
++	for (i = 0; i < num_entries; i++) {
++		entry = &lookup[i];
++
++		if (!entry->dev_id || !entry->provider) {
++			pr_warn("%s(): reset lookup entry badly specified, skipping\n",
++				__func__);
++			continue;
++		}
++
++		list_add_tail(&entry->list, &reset_lookup_list);
++	}
++	mutex_unlock(&reset_lookup_mutex);
++}
++EXPORT_SYMBOL_GPL(reset_controller_add_lookup);
++
++static struct reset_controller_dev *
++__reset_controller_by_name(const char *name)
++{
++	struct reset_controller_dev *rcdev;
++
++	lockdep_assert_held(&reset_list_mutex);
++
++	list_for_each_entry(rcdev, &reset_controller_list, list) {
++		if (!rcdev->dev)
++			continue;
++
++		if (!strcmp(name, dev_name(rcdev->dev)))
++			return rcdev;
++	}
++
++	return NULL;
++}
++
++static struct reset_control *
++__reset_control_get_from_lookup(struct device *dev, const char *con_id,
++				enum reset_control_flags flags)
++{
++	bool optional = flags & RESET_CONTROL_FLAGS_BIT_OPTIONAL;
++	const struct reset_control_lookup *lookup;
++	struct reset_controller_dev *rcdev;
++	const char *dev_id = dev_name(dev);
++	struct reset_control *rstc = NULL;
++
++	mutex_lock(&reset_lookup_mutex);
++
++	list_for_each_entry(lookup, &reset_lookup_list, list) {
++		if (strcmp(lookup->dev_id, dev_id))
++			continue;
++
++		if ((!con_id && !lookup->con_id) ||
++		    ((con_id && lookup->con_id) &&
++		     !strcmp(con_id, lookup->con_id))) {
++			mutex_lock(&reset_list_mutex);
++			rcdev = __reset_controller_by_name(lookup->provider);
++			if (!rcdev) {
++				mutex_unlock(&reset_list_mutex);
++				mutex_unlock(&reset_lookup_mutex);
++				/* Reset provider may not be ready yet. */
++				return ERR_PTR(-EPROBE_DEFER);
++			}
++
++			flags &= ~RESET_CONTROL_FLAGS_BIT_OPTIONAL;
++
++			rstc = __reset_control_get_internal(rcdev,
++							    lookup->index,
++							    flags);
++			mutex_unlock(&reset_list_mutex);
++			break;
++		}
++	}
++
++	mutex_unlock(&reset_lookup_mutex);
++
++	if (!rstc)
++		return optional ? NULL : ERR_PTR(-ENOENT);
++
++	return rstc;
++}
++
+ struct reset_control *__reset_control_get(struct device *dev, const char *id,
+ 					  int index, enum reset_control_flags flags)
+ {
+ 	bool shared = flags & RESET_CONTROL_FLAGS_BIT_SHARED;
+ 	bool acquired = flags & RESET_CONTROL_FLAGS_BIT_ACQUIRED;
+-	bool optional = flags & RESET_CONTROL_FLAGS_BIT_OPTIONAL;
+ 	struct fwnode_handle *fwnode = dev_fwnode(dev);
+
+ 	if (WARN_ON(shared && acquired))
+@@ -1245,7 +1338,7 @@ struct reset_control *__reset_control_get(struct device *dev, const char *id,
+ 	if (fwnode)
+ 		return __fwnode_reset_control_get(fwnode, id, index, flags);
+
+-	return optional ? NULL : ERR_PTR(-ENOENT);
++	return __reset_control_get_from_lookup(dev, id, flags);
+ }
+ EXPORT_SYMBOL_GPL(__reset_control_get);
+
+diff --git a/drivers/reset/Kconfig b/drivers/reset/Kconfig
+index d009eb084..a0cb3ecdb 100644
+--- a/drivers/reset/Kconfig
++++ b/drivers/reset/Kconfig
+@@ -423,4 +423,21 @@ source "drivers/reset/starfive/Kconfig"
+ source "drivers/reset/sti/Kconfig"
+ source "drivers/reset/tegra/Kconfig"
+
++config RESET_SKY1
++	bool "CIX Sky1 Reset Controller"
++	depends on ARCH_CIX || COMPILE_TEST
++	default ARCH_CIX
++	help
++	  This enables the reset controller driver for CIX Sky1 SoCs.
++
++config RESET_SKY1_AUDSS
++	tristate "CIX Sky1 Audio Subsystem Reset Controller"
++	depends on ARCH_CIX || COMPILE_TEST
++	depends on MFD_SYSCON
++	default ARCH_CIX
++	help
++	  This enables the audio subsystem reset controller for CIX Sky1
++	  SoCs. This is required for the audio subsystem including I2S
++	  controllers and DSP.
++
+ endif
+diff --git a/drivers/reset/Makefile b/drivers/reset/Makefile
+index 3e52569bd..e7c7735cd 100644
+--- a/drivers/reset/Makefile
++++ b/drivers/reset/Makefile
+@@ -52,3 +52,5 @@ obj-$(CONFIG_RESET_UNIPHIER) += reset-uniphier.o
+ obj-$(CONFIG_RESET_UNIPHIER_GLUE) += reset-uniphier-glue.o
+ obj-$(CONFIG_RESET_ZYNQ) += reset-zynq.o
+ obj-$(CONFIG_RESET_ZYNQMP) += reset-zynqmp.o
++obj-$(CONFIG_RESET_SKY1) += reset-sky1.o
++obj-$(CONFIG_RESET_SKY1_AUDSS) += reset-sky1-audss.o
+diff --git a/drivers/reset/reset-sky1-audss.c b/drivers/reset/reset-sky1-audss.c
+new file mode 100644
+index 000000000..7d08c7111
+--- /dev/null
++++ b/drivers/reset/reset-sky1-audss.c
+@@ -0,0 +1,200 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * CIX Sky1 Audio Subsystem Reset Controller
++ *
++ * Copyright 2024 Cix Technology Group Co., Ltd.
++ */
++
++#include <linux/acpi.h>
++#include <linux/delay.h>
++#include <linux/device/bus.h>
++#include <linux/mfd/syscon.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/property.h>
++#include <linux/regmap.h>
++#include <linux/reset-controller.h>
++
++#include <dt-bindings/reset/sky1-reset-audss.h>
++
++#define SKY1_AUDSS_SW_RST		0x78
++
++#define SKY1_RESET_SLEEP_US		10000
++
++struct sky1_audss_reset {
++	struct reset_controller_dev rcdev;
++	struct regmap *regmap;
++};
++
++static int sky1_audss_reset_update(struct sky1_audss_reset *rst,
++				   unsigned long id, bool assert)
++{
++	unsigned int bit = BIT(id);
++	unsigned int val = assert ? 0 : bit;
++
++	return regmap_update_bits(rst->regmap, SKY1_AUDSS_SW_RST, bit, val);
++}
++
++static int sky1_audss_reset(struct reset_controller_dev *rcdev,
++			    unsigned long id)
++{
++	struct sky1_audss_reset *rst = container_of(rcdev, struct sky1_audss_reset, rcdev);
++	int ret;
++
++	ret = sky1_audss_reset_update(rst, id, true);
++	if (ret)
++		return ret;
++
++	usleep_range(SKY1_RESET_SLEEP_US, SKY1_RESET_SLEEP_US * 2);
++
++	ret = sky1_audss_reset_update(rst, id, false);
++	if (ret)
++		return ret;
++
++	/* Ensure component is ready after reset release */
++	usleep_range(SKY1_RESET_SLEEP_US, SKY1_RESET_SLEEP_US * 2);
++
++	return 0;
++}
++
++static int sky1_audss_reset_assert(struct reset_controller_dev *rcdev,
++				   unsigned long id)
++{
++	struct sky1_audss_reset *rst = container_of(rcdev, struct sky1_audss_reset, rcdev);
++
++	return sky1_audss_reset_update(rst, id, true);
++}
++
++static int sky1_audss_reset_deassert(struct reset_controller_dev *rcdev,
++				     unsigned long id)
++{
++	struct sky1_audss_reset *rst = container_of(rcdev, struct sky1_audss_reset, rcdev);
++
++	return sky1_audss_reset_update(rst, id, false);
++}
++
++static int sky1_audss_reset_status(struct reset_controller_dev *rcdev,
++				   unsigned long id)
++{
++	struct sky1_audss_reset *rst = container_of(rcdev, struct sky1_audss_reset, rcdev);
++	unsigned int val;
++	int ret;
++
++	ret = regmap_read(rst->regmap, SKY1_AUDSS_SW_RST, &val);
++	if (ret)
++		return ret;
++
++	/* Reset is active-low: bit=0 means in reset */
++	return !(val & BIT(id));
++}
++
++static const struct reset_control_ops sky1_audss_reset_ops = {
++	.reset = sky1_audss_reset,
++	.assert = sky1_audss_reset_assert,
++	.deassert = sky1_audss_reset_deassert,
++	.status = sky1_audss_reset_status,
++};
++
++static int sky1_audss_reset_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct device_node *parent_np;
++	struct sky1_audss_reset *rst;
++	struct regmap *regmap;
++	int ret;
++
++	parent_np = of_get_parent(dev->of_node);
++	regmap = syscon_node_to_regmap(parent_np);
++	of_node_put(parent_np);
++
++	if (IS_ERR(regmap) && has_acpi_companion(dev)) {
++		struct fwnode_handle *fw;
++		struct device *syscon_dev;
++
++		fw = fwnode_find_reference(dev_fwnode(dev), "audss_cru", 0);
++		if (!IS_ERR(fw)) {
++			syscon_dev = bus_find_device_by_fwnode(
++					&platform_bus_type, fw);
++			fwnode_handle_put(fw);
++			if (syscon_dev) {
++				regmap = dev_get_regmap(syscon_dev, NULL);
++				put_device(syscon_dev);
++				if (!regmap)
++					regmap = ERR_PTR(-EPROBE_DEFER);
++			}
++		}
++	}
++
++	if (IS_ERR(regmap))
++		return dev_err_probe(dev, PTR_ERR(regmap),
++				     "failed to get parent regmap\n");
++
++	rst = devm_kzalloc(dev, sizeof(*rst), GFP_KERNEL);
++	if (!rst)
++		return -ENOMEM;
++
++	rst->regmap = regmap;
++	rst->rcdev.owner = THIS_MODULE;
++	rst->rcdev.nr_resets = SKY1_AUDSS_SW_RESET_NUM;
++	rst->rcdev.ops = &sky1_audss_reset_ops;
++	rst->rcdev.of_node = dev->of_node;
++	rst->rcdev.dev = dev;
++
++	ret = devm_reset_controller_register(dev, &rst->rcdev);
++	if (ret)
++		return ret;
++
++	/* Allow DLKL consumers (DMA, I2S, etc.) to enumerate now */
++	if (has_acpi_companion(dev))
++		acpi_dev_clear_dependencies(ACPI_COMPANION(dev));
++
++	/*
++	 * Under ACPI, consumers find reset lines via lookup table
++	 * (equivalent of DT phandle references).  Entries derived
++	 * from vendor DSDT RSTL objects on each consumer device.
++	 */
++	if (has_acpi_companion(dev)) {
++		static struct reset_control_lookup lookups[] = {
++			{ .index = 15, .dev_id = "CIXH1006:00",
++			  .con_id = "dma_reset" },
++			{ .index = 14, .dev_id = "CIXH6020:00",
++			  .con_id = "hda" },
++		};
++		int i;
++
++		for (i = 0; i < ARRAY_SIZE(lookups); i++)
++			lookups[i].provider = dev_name(dev);
++		reset_controller_add_lookup(lookups, ARRAY_SIZE(lookups));
++	}
++
++	return 0;
++}
++
++static const struct of_device_id sky1_audss_reset_of_match[] = {
++	{ .compatible = "cix,sky1-audss-reset" },
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(of, sky1_audss_reset_of_match);
++
++#ifdef CONFIG_ACPI
++static const struct acpi_device_id sky1_audss_reset_acpi_match[] = {
++	{ "CIXH6062", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(acpi, sky1_audss_reset_acpi_match);
++#endif
++
++static struct platform_driver sky1_audss_reset_driver = {
++	.probe = sky1_audss_reset_probe,
++	.driver = {
++		.name = "sky1-audss-reset",
++		.of_match_table = sky1_audss_reset_of_match,
++		.acpi_match_table = ACPI_PTR(sky1_audss_reset_acpi_match),
++	},
++};
++module_platform_driver(sky1_audss_reset_driver);
++
++MODULE_AUTHOR("Joakim Zhang <joakim.zhang@cixtech.com>");
++MODULE_DESCRIPTION("CIX Sky1 Audio Subsystem Reset Controller");
++MODULE_LICENSE("GPL");

@@ -1,0 +1,654 @@
+diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
+index a10affb48..d8470f8b9 100644
+--- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
++++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
+@@ -82,6 +82,7 @@ DEFINE_MUTEX(arm_smmu_asid_lock);
+ static struct arm_smmu_option_prop arm_smmu_options[] = {
+ 	{ ARM_SMMU_OPT_SKIP_PREFETCH, "hisilicon,broken-prefetch-cmd" },
+ 	{ ARM_SMMU_OPT_PAGE0_REGS_ONLY, "cavium,cn9900-broken-page1-regspace"},
++	{ ARM_SMMU_OPT_PCIE_ATS_OVERRIDE, "cix,pcie-ats-override" },
+ 	{ 0, NULL},
+ };
+
+@@ -89,7 +90,9 @@ static const char * const event_str[] = {
+ 	[EVT_ID_BAD_STREAMID_CONFIG] = "C_BAD_STREAMID",
+ 	[EVT_ID_STE_FETCH_FAULT] = "F_STE_FETCH",
+ 	[EVT_ID_BAD_STE_CONFIG] = "C_BAD_STE",
++	[EVT_ID_BAD_ATS_TREQ] = "C_BAD_ATS_TREQ",
+ 	[EVT_ID_STREAM_DISABLED_FAULT] = "F_STREAM_DISABLED",
++	[EVT_ID_TRANSL_FORBIDDEN] = "F_TRANSL_FORBIDDEN",
+ 	[EVT_ID_BAD_SUBSTREAMID_CONFIG] = "C_BAD_SUBSTREAMID",
+ 	[EVT_ID_CD_FETCH_FAULT] = "F_CD_FETCH",
+ 	[EVT_ID_BAD_CD_CONFIG] = "C_BAD_CD",
+@@ -1835,7 +1838,10 @@ void arm_smmu_make_cdtable_ste(struct arm_smmu_ste *target,
+ 			 STRTAB_STE_1_S1STALLD :
+ 			 0) |
+ 		FIELD_PREP(STRTAB_STE_1_EATS,
+-			   ats_enabled ? STRTAB_STE_1_EATS_TRANS : 0));
++			   (ats_enabled ||
++			    ((smmu->options & ARM_SMMU_OPT_PCIE_ATS_OVERRIDE) &&
++			     dev_is_pci(master->dev))) ?
++				STRTAB_STE_1_EATS_TRANS : 0));
+
+ 	if ((smmu->features & ARM_SMMU_FEAT_ATTR_TYPES_OVR) &&
+ 	    s1dss == STRTAB_STE_1_S1DSS_BYPASS)
+@@ -1887,7 +1893,10 @@ void arm_smmu_make_s2_domain_ste(struct arm_smmu_ste *target,
+
+ 	target->data[1] = cpu_to_le64(
+ 		FIELD_PREP(STRTAB_STE_1_EATS,
+-			   ats_enabled ? STRTAB_STE_1_EATS_TRANS : 0));
++			   (ats_enabled ||
++			    ((smmu->options & ARM_SMMU_OPT_PCIE_ATS_OVERRIDE) &&
++			     dev_is_pci(master->dev))) ?
++				STRTAB_STE_1_EATS_TRANS : 0));
+
+ 	if (pgtbl_cfg->quirks & IO_PGTABLE_QUIRK_ARM_S2FWB)
+ 		target->data[1] |= cpu_to_le64(STRTAB_STE_1_S2FWB);
+@@ -2038,6 +2047,7 @@ static int arm_smmu_handle_event(struct arm_smmu_device *smmu, u64 *evt,
+ 	switch (event->id) {
+ 	case EVT_ID_BAD_STE_CONFIG:
+ 	case EVT_ID_STREAM_DISABLED_FAULT:
++	case EVT_ID_TRANSL_FORBIDDEN:
+ 	case EVT_ID_BAD_SUBSTREAMID_CONFIG:
+ 	case EVT_ID_BAD_CD_CONFIG:
+ 	case EVT_ID_TRANSLATION_FAULT:
+@@ -2152,6 +2162,39 @@ static void arm_smmu_dump_event(struct arm_smmu_device *smmu, u64 *raw,
+ 	}
+ }
+
++/*
++ * Per-SID event auto-suppression.  After SMMU_EVT_SUPPRESS_THRESHOLD events
++ * from the same stream ID, further events are silently dropped.  This handles
++ * hardware that generates continuous faults on SIDs that software cannot
++ * control (e.g. PCIe DTI ATS masters with secure-only registers).
++ *
++ * Returns true if the event should be suppressed.
++ */
++static bool arm_smmu_evt_suppressed(struct arm_smmu_device *smmu, u32 sid)
++{
++	int i, free_slot = -1;
++
++	for (i = 0; i < SMMU_EVT_SUPPRESS_SLOTS; i++) {
++		if (smmu->evt_suppress[i].count && smmu->evt_suppress[i].sid == sid) {
++			if (++smmu->evt_suppress[i].count == SMMU_EVT_SUPPRESS_THRESHOLD) {
++				dev_warn(smmu->dev,
++					 "auto-suppressing events for sid %#x (%u seen)\n",
++					 sid, smmu->evt_suppress[i].count);
++			}
++			return smmu->evt_suppress[i].count >= SMMU_EVT_SUPPRESS_THRESHOLD;
++		}
++		if (!smmu->evt_suppress[i].count && free_slot < 0)
++			free_slot = i;
++	}
++
++	/* New SID — start tracking */
++	if (free_slot >= 0) {
++		smmu->evt_suppress[free_slot].sid = sid;
++		smmu->evt_suppress[free_slot].count = 1;
++	}
++	return false;
++}
++
+ static irqreturn_t arm_smmu_evtq_thread(int irq, void *dev)
+ {
+ 	u64 evt[EVTQ_ENT_DWORDS];
+@@ -2165,9 +2208,11 @@ static irqreturn_t arm_smmu_evtq_thread(int irq, void *dev)
+ 	do {
+ 		while (!queue_remove_raw(q, evt)) {
+ 			arm_smmu_decode_event(smmu, evt, &event);
++			if (arm_smmu_evt_suppressed(smmu, event.sid))
++				goto evt_next;
+ 			if (arm_smmu_handle_event(smmu, evt, &event))
+ 				arm_smmu_dump_event(smmu, evt, &event, &rs);
+-
++evt_next:
+ 			put_device(event.dev);
+ 			cond_resched();
+ 		}
+@@ -5314,6 +5359,111 @@ static void __iomem *arm_smmu_ioremap(struct device *dev, resource_size_t start,
+ 	return devm_ioremap_resource(dev, &res);
+ }
+
++/*
++ * Install bypass STEs for stream IDs specified in device tree.
++ * This handles devices that are already active at boot (e.g., display
++ * controllers left running by bootloader) before the kernel driver
++ * has attached them to the IOMMU.
++ */
++static void arm_smmu_dt_install_bypass_ste(struct arm_smmu_device *smmu)
++{
++	struct device_node *np = smmu->dev->of_node;
++	int count, i;
++	u32 sid;
++
++	if (!np)
++		return;
++
++	count = of_property_count_u32_elems(np, "arm,boot-active-sids");
++	if (count <= 0)
++		return;
++
++	for (i = 0; i < count; i++) {
++		if (of_property_read_u32_index(np, "arm,boot-active-sids",
++					       i, &sid))
++			continue;
++
++		if (arm_smmu_init_sid_strtab(smmu, sid)) {
++			dev_err(smmu->dev,
++				"boot-active SID(0x%x) bypass failed\n", sid);
++			continue;
++		}
++
++		arm_smmu_make_bypass_ste(smmu,
++			arm_smmu_get_step_for_sid(smmu, sid));
++		dev_dbg(smmu->dev,
++			"installed bypass STE for boot-active SID 0x%x\n", sid);
++	}
++}
++
++/*
++ * CIX Sky1 SoC PCIe SMMU — pre-install bypass STEs for PCIe root port
++ * and device SIDs under ACPI boot.
++ *
++ * Under device tree boot, the "arm,boot-active-sids" property on the SMMU
++ * node provides these SIDs.  Under ACPI, the IORT has no equivalent
++ * mechanism, so we detect the Sky1 PCIe SMMU by its physical base address
++ * and install bypass STEs for the known SIDs.
++ *
++ * Without these bypass STEs, PCIe devices that are already bus-mastering
++ * (NVMe, network) when the SMMU driver resets will hit abort STEs,
++ * generating C_BAD_STREAMID events and potential DMA errors.  The CIX Sky1
++ * UEFI firmware also has broken IORT stream table mappings that cause a
++ * sustained ~130 IRQ/sec event storm on CPU0 with the vendor kernel; the
++ * mainline driver reinitializes the stream table correctly but still needs
++ * bypass STEs for the window between SMMU enable and driver attachment.
++ */
++#define CIX_SKY1_PCIE_SMMU_BASE	0x0b010000ULL
++
++static const u32 cix_sky1_pcie_boot_sids[] = {
++	0x0000, 0x0100,		/* PCIe X1_0 */
++	0x3000, 0x3100,		/* PCIe X1_1 */
++	0x6000, 0x6100,		/* PCIe X2 */
++	0x9000, 0x9100,		/* PCIe X4 */
++	0xc000, 0xc100,		/* PCIe X8 */
++};
++
++static void arm_smmu_acpi_install_bypass_ste(struct arm_smmu_device *smmu)
++{
++	struct platform_device *pdev = to_platform_device(smmu->dev);
++	struct resource *res;
++	unsigned int i, count = 0;
++
++	/* Only applies under ACPI boot (DT handled by boot-active-sids) */
++	if (smmu->dev->of_node)
++		return;
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	if (!res || res->start != CIX_SKY1_PCIE_SMMU_BASE)
++		return;
++
++	for (i = 0; i < ARRAY_SIZE(cix_sky1_pcie_boot_sids); i++) {
++		u32 sid = cix_sky1_pcie_boot_sids[i];
++
++		if (arm_smmu_init_sid_strtab(smmu, sid)) {
++			dev_err(smmu->dev,
++				"Sky1 PCIe boot SID(0x%x) bypass failed\n",
++				sid);
++			continue;
++		}
++
++		arm_smmu_make_bypass_ste(smmu,
++			arm_smmu_get_step_for_sid(smmu, sid));
++		count++;
++	}
++
++	/*
++	 * Sky1 PCIe controller's DTI ATS Master sends translated TLP
++	 * messages even when endpoint devices don't support ATS.
++	 * Under DT this comes from the "cix,pcie-ats-override" property.
++	 */
++	smmu->options |= ARM_SMMU_OPT_PCIE_ATS_OVERRIDE;
++
++	dev_info(smmu->dev,
++		 "CIX Sky1 PCIe SMMU: %u bypass STEs installed, ATS override enabled\n",
++		 count);
++}
++
+ static void arm_smmu_rmr_install_bypass_ste(struct arm_smmu_device *smmu)
+ {
+ 	struct list_head rmr_list;
+@@ -5480,6 +5630,12 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
+ 	/* Check for RMRs and install bypass STEs if any */
+ 	arm_smmu_rmr_install_bypass_ste(smmu);
+
++	/* Install bypass STEs for boot-active devices from DT */
++	arm_smmu_dt_install_bypass_ste(smmu);
++
++	/* Install bypass STEs for CIX Sky1 PCIe under ACPI boot */
++	arm_smmu_acpi_install_bypass_ste(smmu);
++
+ 	/* Reset the device */
+ 	ret = arm_smmu_device_reset(smmu);
+ 	if (ret)
+diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
+index c909c9a88..11c04936b 100644
+--- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
++++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
+@@ -608,7 +608,9 @@ arm_smmu_make_cmd_tlbi(enum arm_smmu_cmdq_opcode op, u16 asid, u16 vmid)
+ #define EVT_ID_BAD_STREAMID_CONFIG	0x02
+ #define EVT_ID_STE_FETCH_FAULT		0x03
+ #define EVT_ID_BAD_STE_CONFIG		0x04
++#define EVT_ID_BAD_ATS_TREQ		0x05
+ #define EVT_ID_STREAM_DISABLED_FAULT	0x06
++#define EVT_ID_TRANSL_FORBIDDEN		0x07
+ #define EVT_ID_BAD_SUBSTREAMID_CONFIG	0x08
+ #define EVT_ID_CD_FETCH_FAULT		0x09
+ #define EVT_ID_BAD_CD_CONFIG		0x0a
+@@ -928,6 +930,7 @@ struct arm_smmu_device {
+ #define ARM_SMMU_OPT_MSIPOLL		(1 << 2)
+ #define ARM_SMMU_OPT_CMDQ_FORCE_SYNC	(1 << 3)
+ #define ARM_SMMU_OPT_TEGRA241_CMDQV	(1 << 4)
++#define ARM_SMMU_OPT_PCIE_ATS_OVERRIDE	(1 << 5)
+ 	u32				options;
+
+ 	struct arm_smmu_cmdq		cmdq;
+@@ -957,6 +960,14 @@ struct arm_smmu_device {
+
+ 	struct rb_root			streams;
+ 	struct mutex			streams_mutex;
++
++	/* Per-SID event suppression for noisy streams (e.g. PCIe DTI ATS) */
++#define SMMU_EVT_SUPPRESS_SLOTS		8
++#define SMMU_EVT_SUPPRESS_THRESHOLD	3
++	struct {
++		u32			sid;
++		u32			count;
++	} evt_suppress[SMMU_EVT_SUPPRESS_SLOTS];
+ };
+
+ struct arm_smmu_stream {
+diff --git a/drivers/irqchip/irq-gic-v3.c b/drivers/irqchip/irq-gic-v3.c
+index 99444a1b2..8df349526 100644
+--- a/drivers/irqchip/irq-gic-v3.c
++++ b/drivers/irqchip/irq-gic-v3.c
+@@ -2208,6 +2208,7 @@ static int __init gic_of_init(struct device_node *node, struct device_node *pare
+ 	u64 redist_stride;
+ 	u32 nr_redist_regions;
+ 	int err, i;
++	bool single_redist = false;
+
+ 	dist_base = gic_of_iomap(node, 0, "GICD", &res);
+ 	if (IS_ERR(dist_base)) {
+@@ -2232,6 +2233,9 @@ static int __init gic_of_init(struct device_node *node, struct device_node *pare
+ 		goto out_unmap_dist;
+ 	}
+
++	if (of_property_read_bool(node, "single-redist"))
++		single_redist = true;
++
+ 	for (i = 0; i < nr_redist_regions; i++) {
+ 		rdist_regs[i].redist_base = gic_of_iomap(node, 1 + i, "GICR", &res);
+ 		if (IS_ERR(rdist_regs[i].redist_base)) {
+@@ -2240,6 +2244,7 @@ static int __init gic_of_init(struct device_node *node, struct device_node *pare
+ 			goto out_unmap_rdist;
+ 		}
+ 		rdist_regs[i].phys_base = res.start;
++		rdist_regs[i].single_redist = single_redist;
+ 	}
+
+ 	if (of_property_read_u64(node, "redistributor-stride", &redist_stride))
+diff --git a/drivers/irqchip/irq-sky1-pdc.c b/drivers/irqchip/irq-sky1-pdc.c
+new file mode 100644
+index 000000000..ed14b3309
+--- /dev/null
++++ b/drivers/irqchip/irq-sky1-pdc.c
+@@ -0,0 +1,274 @@
++// SPDX-License-Identifier: GPL-2.0-only
++
++#include <linux/of_address.h>
++#include <linux/of_irq.h>
++#include <linux/slab.h>
++#include <linux/irqchip.h>
++#include <linux/syscore_ops.h>
++#include <linux/arm-smccc.h>
++
++#define SKY1_SIP_PDC                     0xC2000009
++#define SKY1_SIP_CONFIG_PDC_SET_WAKE     0x02
++
++#define PDC_MAX_IRQS            1000
++
++struct irq_domain *cix_domain;
++
++struct pdcv1_irqchip_data {
++	struct raw_spinlock     rlock;
++	void __iomem            *pdc_base;
++};
++
++static int pdcv1_wakeup_source_save(void *data)
++{
++	return 0;
++}
++
++static void pdcv1_wakeup_source_restore(void *data)
++{
++}
++
++static const struct syscore_ops sky1_pdc_syscore_ops = {
++	.suspend        = pdcv1_wakeup_source_save,
++	.resume         = pdcv1_wakeup_source_restore,
++};
++
++static struct syscore sky1_pdc_syscore = {
++	.ops = &sky1_pdc_syscore_ops,
++};
++
++static int sky1_pdc_irq_set_wake(struct irq_data *d, unsigned int on)
++{
++	struct pdcv1_irqchip_data *cd = d->chip_data;
++	struct arm_smccc_res res;
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&cd->rlock, flags);
++	arm_smccc_smc(SKY1_SIP_PDC, SKY1_SIP_CONFIG_PDC_SET_WAKE,
++		d->hwirq - 32, on, 0, 0, 0, 0, &res);
++	raw_spin_unlock_irqrestore(&cd->rlock, flags);
++
++	return 0;
++}
++
++static struct irq_chip pdcv1_irqchip_data_chip = {
++	.name                   = "PDCv1",
++	.irq_eoi                = irq_chip_eoi_parent,
++	.irq_mask               = irq_chip_mask_parent,
++	.irq_unmask             = irq_chip_unmask_parent,
++	.irq_set_wake           = sky1_pdc_irq_set_wake,
++	.irq_retrigger          = irq_chip_retrigger_hierarchy,
++	.irq_set_type           = irq_chip_set_type_parent,
++#ifdef CONFIG_SMP
++	.irq_set_affinity       = irq_chip_set_affinity_parent,
++#endif
++};
++
++static int sky1_pdc_domain_translate(struct irq_domain *d,
++				      struct irq_fwspec *fwspec,
++				      unsigned long *hwirq,
++				      unsigned int *type)
++{
++	if (is_of_node(fwspec->fwnode)) {
++		/* Accept both 3-cell and 4-cell GIC format */
++		if (fwspec->param_count < 3 || fwspec->param_count > 4)
++			return -EINVAL;
++
++		/* No PPI should point to this domain (param[0] must be GIC_SPI=0) */
++		if (fwspec->param[0] != 0)
++			return -EINVAL;
++
++		*hwirq = fwspec->param[1] + 32;
++		*type = fwspec->param[2];
++		return 0;
++	} else if (is_acpi_device_node(fwspec->fwnode)) {
++		if(fwspec->param_count != 2)
++			return -EINVAL;
++
++		if (fwspec->param[0] < 32) {
++			pr_err(FW_BUG "Illegal GSI%d translation request\n",
++			       fwspec->param[0]);
++			return -EINVAL;
++		}
++		*hwirq = fwspec->param[0];
++		*type = fwspec->param[1];
++
++		WARN_ON(*type == IRQ_TYPE_NONE);
++		return 0;
++	}
++
++	return -EINVAL;
++}
++
++static int sky1_pdc_domain_alloc(struct irq_domain *domain,
++				  unsigned int irq, unsigned int nr_irqs,
++				  void *data)
++{
++	struct irq_fwspec *fwspec = data;
++	struct irq_fwspec parent_fwspec;
++	irq_hw_number_t hwirq;
++	unsigned int type;
++	int err;
++	int i;
++
++	err = sky1_pdc_domain_translate(domain, fwspec, &hwirq, &type);
++	if (err)
++		return err;
++
++	if (hwirq >= PDC_MAX_IRQS)
++		return -EINVAL;
++
++	for (i = 0; i < nr_irqs; i++) {
++		irq_domain_set_hwirq_and_chip(domain, irq + i, hwirq + i,
++				&pdcv1_irqchip_data_chip, domain->host_data);
++	}
++
++	parent_fwspec = *fwspec;
++	parent_fwspec.fwnode = domain->parent->fwnode;
++
++	return irq_domain_alloc_irqs_parent(domain, irq, nr_irqs,
++					    &parent_fwspec);
++}
++
++static const struct irq_domain_ops pdcv1_irqchip_data_domain_ops = {
++	.translate      = sky1_pdc_domain_translate,
++	.alloc          = sky1_pdc_domain_alloc,
++	.free           = irq_domain_free_irqs_common,
++};
++
++static const struct of_device_id pdcv1_of_match[] = {
++	{ .compatible = "cix,sky1-pdc",  .data = (const void *) 2 },
++	{ /* END */ }
++};
++
++static int __init sky1_pdc_irqchip_init(struct device_node *node,
++			       struct device_node *parent)
++{
++	struct irq_domain *parent_domain, *domain;
++	struct pdcv1_irqchip_data *cd;
++	const struct of_device_id *id;
++
++	pr_info("sky1_pdc: init called for %pOF, parent=%pOF\n", node, parent);
++
++	if (!parent) {
++		pr_err("%pOF: no parent, giving up\n", node);
++		return -ENODEV;
++	}
++
++	id = of_match_node(pdcv1_of_match, node);
++	if (!id) {
++		pr_err("%pOF: unknown compatibility string\n", node);
++		return -ENODEV;
++	}
++
++	parent_domain = irq_find_host(parent);
++	if (!parent_domain) {
++		pr_err("%pOF: unable to get parent domain\n", node);
++		return -ENXIO;
++	}
++
++	cd = kzalloc(sizeof(struct pdcv1_irqchip_data), GFP_KERNEL);
++	if (!cd) {
++		pr_err("%pOF: kzalloc failed!\n", node);
++		return -ENOMEM;
++	}
++
++	raw_spin_lock_init(&cd->rlock);
++
++	cd->pdc_base = of_iomap(node, 0);
++	if (!cd->pdc_base) {
++		pr_err("%pOF: unable to map pdc registers\n", node);
++		kfree(cd);
++		return -ENOMEM;
++	}
++
++	domain = irq_domain_create_hierarchy(parent_domain, 0, PDC_MAX_IRQS,
++					of_fwnode_handle(node), &pdcv1_irqchip_data_domain_ops, cd);
++	if (!domain) {
++		iounmap(cd->pdc_base);
++		kfree(cd);
++		return -ENOMEM;
++	}
++	irq_set_default_domain(domain);
++
++	cix_domain = domain;
++	pr_info("sky1_pdc: domain created successfully for %pOF\n", node);
++
++	register_syscore(&sky1_pdc_syscore);
++
++	/*
++	 * Clear the OF_POPULATED flag set in of_irq_init so that
++	 * later the pdc power domain driver will not be skipped.
++	 */
++	of_node_clear_flag(node, OF_POPULATED);
++
++	return 0;
++}
++
++#ifdef CONFIG_ACPI
++static int __init sky1_acpi_pdc_irqchip_init(struct platform_device *pdev)
++{
++	struct irq_domain *domain;
++	struct pdcv1_irqchip_data *cd;
++
++	cd = kzalloc(sizeof(struct pdcv1_irqchip_data), GFP_KERNEL);
++	if (!cd) {
++		pr_err("%pACPI: kzalloc failed!\n", pdev);
++		return -ENOMEM;
++	}
++
++	raw_spin_lock_init(&cd->rlock);
++	struct resource *res_dp = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	cd->pdc_base = devm_ioremap_resource(&pdev->dev, res_dp);
++	if (!cd->pdc_base) {
++		pr_err("%pACPI: unable to map pdc registers\n", pdev);
++		kfree(cd);
++		return -ENOMEM;
++	}
++
++	domain = acpi_irq_create_hierarchy(0, PDC_MAX_IRQS, pdev->dev.fwnode,
++					   &pdcv1_irqchip_data_domain_ops, cd);
++
++	if (!domain) {
++		iounmap(cd->pdc_base);
++		kfree(cd);
++		return -ENOMEM;
++	}
++
++	irq_set_default_domain(domain);
++	cix_domain = domain;
++
++	register_syscore(&sky1_pdc_syscore);
++
++	return 0;
++}
++
++static const struct acpi_device_id pdcv1_acpi_match[] = {
++	{ .id = "CIXHA019", .driver_data = 0 },
++	{ /* END */ },
++};
++
++static int pdc_probe(struct platform_device *p_dev)
++{
++	return sky1_acpi_pdc_irqchip_init(p_dev);
++}
++
++static struct platform_driver pdc_platform_driver = {
++	.probe = pdc_probe,
++	.driver = { .name = "sky1-pdc",
++		    .owner = THIS_MODULE,
++		    .acpi_match_table = ACPI_PTR(pdcv1_acpi_match) },
++};
++
++static int __init sky1_pdc_init(void) {
++	return platform_driver_register(&pdc_platform_driver);
++}
++
++core_initcall(sky1_pdc_init);
++#endif
++
++IRQCHIP_DECLARE(sky1_pdc, "cix,sky1-pdc", sky1_pdc_irqchip_init);
++
++MODULE_AUTHOR("Copyright 2024 Cix Technology Group Co., Ltd.");
++MODULE_DESCRIPTION("Cix Sky1 irq pdc driver");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/irqchip/Kconfig b/drivers/irqchip/Kconfig
+index 42f2278a7..9616b1965 100644
+--- a/drivers/irqchip/Kconfig
++++ b/drivers/irqchip/Kconfig
+@@ -440,6 +440,14 @@ config IMX_GPCV2
+ 	help
+ 	  Enables the wakeup IRQs for IMX platforms with GPCv2 block
+
++config SKY1_PDC
++	bool
++	depends on ARM_GIC
++	default y
++	select IRQ_DOMAIN
++	help
++	  Enables the wakeup IRQs for SKY1 platforms with PDC block
++
+ config IRQ_MXS
+ 	def_bool y if MACH_ASM9260 || ARCH_MXS
+ 	select IRQ_DOMAIN
+diff --git a/drivers/irqchip/Makefile b/drivers/irqchip/Makefile
+index 74912429c..a82e4adfa 100644
+--- a/drivers/irqchip/Makefile
++++ b/drivers/irqchip/Makefile
+@@ -85,7 +85,8 @@ obj-$(CONFIG_MVEBU_GICP)		+= irq-mvebu-gicp.o
+ obj-$(CONFIG_MVEBU_ICU)			+= irq-mvebu-icu.o
+ obj-$(CONFIG_MVEBU_ODMI)		+= irq-mvebu-odmi.o
+ obj-$(CONFIG_MVEBU_PIC)			+= irq-mvebu-pic.o
+-obj-$(CONFIG_MVEBU_SEI)			+= irq-mvebu-sei.o
++obj-$(CONFIG_MVEBU_SEI)		+= irq-mvebu-sei.o
++obj-$(CONFIG_SKY1_PDC)			+= irq-sky1-pdc.o
+ obj-$(CONFIG_LS_EXTIRQ)			+= irq-ls-extirq.o
+ obj-$(CONFIG_LS_SCFG_MSI)		+= irq-ls-scfg-msi.o
+ obj-$(CONFIG_ASPEED_AST2700_INTC)	+= irq-ast2700.o irq-ast2700-intc0.o irq-ast2700-intc1.o
+diff --git a/drivers/perf/arm_spe_pmu.c b/drivers/perf/arm_spe_pmu.c
+index dbd0da111..ae738ef18 100644
+--- a/drivers/perf/arm_spe_pmu.c
++++ b/drivers/perf/arm_spe_pmu.c
+@@ -1234,6 +1234,15 @@ static void __arm_spe_pmu_dev_probe(void *info)
+ 	spe_pmu->features |= SPE_PMU_FEAT_DEV_PROBED;
+ }
+
++/* Check if current CPU supports SPE (for heterogeneous big.LITTLE systems) */
++static bool arm_spe_pmu_cpu_supported(void)
++{
++	u64 dfr0 = read_sysreg(id_aa64dfr0_el1);
++	int pmsver = cpuid_feature_extract_unsigned_field(dfr0,
++					ID_AA64DFR0_EL1_PMSVer_SHIFT);
++	return pmsver != 0;
++}
++
+ static void __arm_spe_pmu_reset_local(void)
+ {
+ 	/*
+@@ -1255,6 +1264,10 @@ static void __arm_spe_pmu_setup_one(void *info)
+ {
+ 	struct arm_spe_pmu *spe_pmu = info;
+
++	/* Skip CPUs that don't support SPE (e.g., A520 in big.LITTLE) */
++	if (!arm_spe_pmu_cpu_supported())
++		return;
++
+ 	__arm_spe_pmu_reset_local();
+ 	enable_percpu_irq(spe_pmu->irq, IRQ_TYPE_NONE);
+ }
+@@ -1263,6 +1276,10 @@ static void __arm_spe_pmu_stop_one(void *info)
+ {
+ 	struct arm_spe_pmu *spe_pmu = info;
+
++	/* Skip CPUs that don't support SPE */
++	if (!arm_spe_pmu_cpu_supported())
++		return;
++
+ 	disable_percpu_irq(spe_pmu->irq);
+ 	__arm_spe_pmu_reset_local();
+ }
