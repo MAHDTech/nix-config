@@ -947,9 +947,9 @@ index a1e2eb1ca..95f334fe6 100644
  	 */
 -	if (ptdev->coherent)
 -		return false;
-+	if (bo->base.base.dev) {
++	if (bo->base.dev) {
 +		struct panthor_device *ptdev =
-+			container_of(bo->base.base.dev, struct panthor_device, base);
++			container_of(bo->base.dev, struct panthor_device, base);
 +		if (ptdev->coherency_mode == PANTHOR_COHERENCY_ACE)
 +			return false;
 +	}
