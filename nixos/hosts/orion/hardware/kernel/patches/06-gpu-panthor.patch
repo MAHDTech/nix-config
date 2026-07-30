@@ -1012,21 +1012,37 @@ index c013d6bf9..fb732b002 100644
  	return panthor_gpu_power_on(ptdev, L2, 1, 20000);
  }
 
-@@ -465,26 +485,27 @@ u64 panthor_gpu_get_cycle_count(struct panthor_device *ptdev)
+@@ -456,28 +483,27 @@
  	return gpu_read64_counter(ptdev->gpu->iomem, GPU_CYCLE_COUNT);
  }
-
+ 
 +extern bool panthor_force_noncoherent;
  int panthor_gpu_coherency_init(struct panthor_device *ptdev)
  {
 -	BUILD_BUG_ON(GPU_COHERENCY_NONE != DRM_PANTHOR_GPU_COHERENCY_NONE);
 -	BUILD_BUG_ON(GPU_COHERENCY_ACE_LITE != DRM_PANTHOR_GPU_COHERENCY_ACE_LITE);
 -	BUILD_BUG_ON(GPU_COHERENCY_ACE != DRM_PANTHOR_GPU_COHERENCY_ACE);
-+	bool dma_coherent = device_get_dma_attr(ptdev->base.dev) == DEV_DMA_COHERENT;
-+
+-
 -	/* Start with no coherency, and update it if the device is flagged coherent. */
 -	ptdev->gpu_info.selected_coherency = GPU_COHERENCY_NONE;
 -	ptdev->coherent = device_get_dma_attr(ptdev->base.dev) == DEV_DMA_COHERENT;
+-
+-	if (!ptdev->coherent)
+-		return 0;
+-
+-	/* Check if the ACE-Lite coherency protocol is actually supported by the GPU.
+-	 * ACE protocol has never been supported for command stream frontend GPUs.
+-	 */
+-	if ((gpu_read(ptdev->gpu->iomem, GPU_COHERENCY_FEATURES) &
+-		      GPU_COHERENCY_PROT_BIT(ACE_LITE))) {
+-		ptdev->gpu_info.selected_coherency = GPU_COHERENCY_ACE_LITE;
+-		return 0;
+-	}
+-
+-	drm_err(&ptdev->base, "Coherency not supported by the device");
+-	return -ENOTSUPP;
++	bool dma_coherent = device_get_dma_attr(ptdev->base.dev) == DEV_DMA_COHERENT;
++	
 +	if (of_device_is_compatible(ptdev->base.dev->of_node, "arm,mali-valhall") || acpi_dev_hid_uid_match(ACPI_COMPANION(ptdev->base.dev), "CIXH5000", NULL)) {
 +		ptdev->coherency_mode = PANTHOR_COHERENCY_ACE_LITE;
 +		drm_info(&ptdev->base, "Using ACE-Lite bus coherency (Sky1)\n");
@@ -1035,28 +1051,17 @@ index c013d6bf9..fb732b002 100644
 +	} else {
 +		ptdev->coherency_mode = PANTHOR_COHERENCY_ACE_LITE;
 +	}
-+
--	if (!ptdev->coherent)
++	
 +	if (ptdev->coherency_mode == PANTHOR_COHERENCY_NONE)
- 		return 0;
-
--	/* Check if the ACE-Lite coherency protocol is actually supported by the GPU.
--	 * ACE protocol has never been supported for command stream frontend GPUs.
--	 */
--	if ((gpu_read(ptdev->gpu->iomem, GPU_COHERENCY_FEATURES) &
--		      GPU_COHERENCY_PROT_BIT(ACE_LITE))) {
--		ptdev->gpu_info.selected_coherency = GPU_COHERENCY_ACE_LITE;
++		return 0;
++	
 +	if (gpu_read(ptdev, GPU_COHERENCY_FEATURES) &
 +	    GPU_COHERENCY_PROT_BIT(ACE_LITE))
- 		return 0;
--	}
-
--	drm_err(&ptdev->base, "Coherency not supported by the device");
--	return -ENOTSUPP;
++		return 0;
++	
 +	drm_err(&ptdev->base, "ACE-Lite not supported by hardware");
 +	return -ENOTSUPP;
  }
-
 diff --git a/drivers/gpu/drm/panthor/panthor_hw.c b/drivers/gpu/drm/panthor/panthor_hw.c
 --- a/drivers/gpu/drm/panthor/panthor_hw.c
 +++ b/drivers/gpu/drm/panthor/panthor_hw.c
