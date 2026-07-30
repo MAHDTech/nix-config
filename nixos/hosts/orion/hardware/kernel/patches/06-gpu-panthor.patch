@@ -1012,7 +1012,7 @@ index c013d6bf9..fb732b002 100644
  	return panthor_gpu_power_on(ptdev, L2, 1, 20000);
  }
 
-@@ -456,28 +485,25 @@ u64 panthor_gpu_get_cycle_count(struct panthor_device *ptdev)
+@@ -458,23 +485,24 @@ u64 panthor_gpu_get_cycle_count(struct panthor_device *ptdev)
  	return gpu_read64_counter(ptdev->gpu->iomem, GPU_CYCLE_COUNT);
  }
 
@@ -1023,7 +1023,7 @@ index c013d6bf9..fb732b002 100644
 -	BUILD_BUG_ON(GPU_COHERENCY_ACE_LITE != DRM_PANTHOR_GPU_COHERENCY_ACE_LITE);
 -	BUILD_BUG_ON(GPU_COHERENCY_ACE != DRM_PANTHOR_GPU_COHERENCY_ACE);
 +	bool dma_coherent = device_get_dma_attr(ptdev->base.dev) == DEV_DMA_COHERENT;
-
++
 -	/* Start with no coherency, and update it if the device is flagged coherent. */
 -	ptdev->gpu_info.selected_coherency = GPU_COHERENCY_NONE;
 -	ptdev->coherent = device_get_dma_attr(ptdev->base.dev) == DEV_DMA_COHERENT;
@@ -1035,7 +1035,7 @@ index c013d6bf9..fb732b002 100644
 +	} else {
 +		ptdev->coherency_mode = PANTHOR_COHERENCY_ACE_LITE;
 +	}
-
++
 -	if (!ptdev->coherent)
 +	if (ptdev->coherency_mode == PANTHOR_COHERENCY_NONE)
  		return 0;
