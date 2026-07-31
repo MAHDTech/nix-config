@@ -103,7 +103,10 @@ in
       "earlycon=efifb"
       "keep_bootcon" # don't drop earlycon when the real console takes over
       "ignore_loglevel" # print everything regardless of loglevel
-      "initcall_debug" # log every initcall — names the driver that hangs
+      # NOTE: `initcall_debug` removed. It emitted thousands of lines to the
+      # EFI framebuffer, which has no acceleration — every scroll copies the
+      # whole buffer. That made the log unreadable and the boot glacial without
+      # telling us where it dies. The on-disk boot markers below answer that.
       # ── end diagnostics ──
 
       "console=ttyAMA0,115200n8"
@@ -193,6 +196,44 @@ in
       };
     };
   };
+
+  # ── TEMPORARY: v7.2 boot-stage markers ────────────────────────────────────
+  # ORION has NO working persistent crash capture:
+  #   - pstore_blk never registers (CONFIG_PSTORE_RAM holds the single backend slot)
+  #   - ramoops registers fine but does NOT survive a reboot — a pmsg marker
+  #     written to /dev/pmsg0 was gone after a clean software reboot, so the
+  #     firmware scrubs DRAM on every boot
+  # and the EFI framebuffer console scrolls far too fast to photograph.
+  #
+  # These markers record how far a boot got, straight onto the root filesystem.
+  # They survive DRAM loss, need no screen, and need no network — so after a
+  # rescue into the last known-good generation we can read exactly which stage
+  # the 7.2 kernel reached. Each records the kernel version, so a stale marker
+  # from a previous boot can never be mistaken for a fresh one.
+  #
+  # Remove this block once 7.2 boots.
+  boot.initrd.systemd.services.orion-boot-marker = {
+    description = "ORION: record that initrd mounted the root filesystem";
+    wantedBy = [ "initrd.target" ];
+    after = [ "sysroot.mount" ];
+    before = [ "initrd-switch-root.target" ];
+    unitConfig.DefaultDependencies = false;
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      mkdir -p /sysroot/var/lib/orion-boot-markers
+      echo "stage=initrd-root-mounted kernel=$(uname -r) uptime=$(cut -d' ' -f1 /proc/uptime)" \
+        > /sysroot/var/lib/orion-boot-markers/01-initrd
+    '';
+  };
+
+  boot.postBootCommands = ''
+    mkdir -p /var/lib/orion-boot-markers
+    echo "stage=stage2-early kernel=$(uname -r) uptime=$(cut -d' ' -f1 /proc/uptime)" \
+      > /var/lib/orion-boot-markers/02-stage2-early
+  '';
 
   environment.systemPackages = [
     cix-noe-umd
@@ -342,14 +383,39 @@ in
   # Use systemd-networkd for Ethernet management
   networking.useNetworkd = true;
   networking.useDHCP = lib.mkForce false;
-  systemd.network.wait-online.anyInterface = true;
+  systemd = {
+    network.wait-online.anyInterface = true;
 
-  systemd.network.networks."10-lan" = {
-    matchConfig.Name = [
-      "en*"
-      "eth*"
-    ];
-    networkConfig.DHCP = "yes";
+    network.networks."10-lan" = {
+      matchConfig.Name = [
+        "en*"
+        "eth*"
+      ];
+      networkConfig.DHCP = "yes";
+    };
+
+    # TEMPORARY (v7.2 debug): third boot-stage marker — see the marker block above.
+    # Captures interface and address state too, so a boot that succeeds but comes
+    # up with no NIC is distinguishable from one that never got here at all.
+    services.orion-boot-marker-late = {
+      description = "ORION: record that the boot reached multi-user";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "systemd-networkd.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        mkdir -p /var/lib/orion-boot-markers
+        {
+          echo "stage=multi-user kernel=$(uname -r) uptime=$(cut -d' ' -f1 /proc/uptime)"
+          echo "--- interfaces ---"
+          ${pkgs.iproute2}/bin/ip -o link || true
+          echo "--- addresses ---"
+          ${pkgs.iproute2}/bin/ip -o addr || true
+        } > /var/lib/orion-boot-markers/03-multi-user
+      '';
+    };
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
