@@ -124,6 +124,13 @@ in
       "clk_ignore_unused"
       # Configure global SMMU to use passthrough mappings (bypass) by default to prevent early-boot display DMA faults
       "iommu.default_domain_type=passthrough"
+      # HYPOTHESIS (v7.2 iteration 4): root is NVMe, behind PCIe, behind the SMMU,
+      # and the boot markers prove 7.2 dies before the initrd mounts root. The
+      # note below in this same file predicted exactly this: "Re-add if NVMe
+      # crashes". Allowing SMMU bypass lets devices with no valid stream-ID
+      # mapping keep working, which is the historical workaround on this board.
+      # Remove if it makes no difference.
+      "arm-smmu-v3.disable_bypass=0"
       # Disable deep CPU idle states to prevent register corruption
       "cpuidle.off=1"
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
