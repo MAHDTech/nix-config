@@ -218,6 +218,30 @@ let
       ./scripts/config --disable DEBUG_INFO_DWARF5
       ./scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
 
+      # --- Disable the CIX audio subsystem (AUDSS) ---
+      # clk-sky1-audss panics the kernel during boot:
+      #
+      #   sky1_audss_clk_probe+0x4c0/0xaf0
+      #     __pm_runtime_idle -> rpm_suspend -> genpd_runtime_suspend
+      #       sky1_audss_clk_runtime_suspend+0x44/0xb0
+      #         regmap_read -> regmap_mmio_read32le -> el1h_64_error
+      #   Kernel panic - not syncing: Asynchronous SError Interrupt
+      #
+      # The driver takes pm_runtime_get_noresume() in probe and comments that
+      # "the initial reference is kept", but its clock-gate op calls
+      # pm_runtime_put(). Partway through clock registration the count hits zero,
+      # runtime PM suspends the device, and runtime_suspend reads MMIO on a block
+      # whose clock and power are already gated — which SErrors on this SoC.
+      #
+      # AUDSS is not needed to boot, and this driver is still an out-of-tree v10
+      # patchset upstream (see scratch/orion-kernel-report.md). Disable the clock
+      # and reset halves together — they drive the same block, and the reset
+      # driver also does a bare regmap_read against it.
+      #
+      # Cost: no I2S audio or DSP until the get/put imbalance is fixed properly.
+      ./scripts/config --disable CLK_SKY1_AUDSS
+      ./scripts/config --disable RESET_SKY1_AUDSS
+
       # --- Disable irrelevant PCIe GPU drivers (CIX defconfig enables these) ---
       ./scripts/config --disable DRM_AMDGPU
       ./scripts/config --disable DRM_NOUVEAU
