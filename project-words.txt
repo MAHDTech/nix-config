@@ -9,6 +9,7 @@ APSD
 ARZCGC
 ASIX
 AUTOSUSPEND
+AUTOUPDATER
 AWKSCRIPT
 Adreno
 Adrián
@@ -46,6 +47,7 @@ CMAC
 CONNTRACK
 CONTIG
 CPPC
+CREDS
 CSTDFLOAT
 CTYPE
 CUDA
@@ -107,6 +109,7 @@ FCTEMPS
 FDDI
 FEMTO
 FIGNORE
+FLATTREE
 FOWNER
 FPCLASSIFY
 Fancontrol
@@ -126,6 +129,7 @@ GOBIN
 GOODIX
 GOPATH
 GOPROXY
+GOTPAGE
 GSYNC
 Garuda
 Gdiff
@@ -357,6 +361,7 @@ UHCI
 UNIFI
 UNIPHIER
 USBC
+USBSS
 USBSSP
 UVLO
 UWSM
@@ -417,6 +422,7 @@ acsccid
 activationlabel
 adbusers
 addrs
+adeci
 adsp
 adspr
 adsps
@@ -498,6 +504,7 @@ blueman
 bluetoothctl
 bnep
 bogo
+bootcon
 bootimg
 bootstrapper
 bootycall
@@ -518,6 +525,7 @@ btqca
 btrtl
 btusb
 bubbletea
+bubblewrap
 buildx
 bunx
 burn
@@ -682,6 +690,7 @@ dynatrace
 eabi
 earlycon
 earlyprintk
+ecam
 echoerr
 edac
 edid
@@ -759,6 +768,7 @@ foldenable
 foldl
 fontconfig
 forcergbx
+fpic
 fprintd
 framebuffers
 freedreno
@@ -811,6 +821,7 @@ globalasciiranges
 globasciiranges
 glog
 glowstab
+glthread
 glvnd
 glxgears
 glxinfo
@@ -945,9 +956,9 @@ journalctl
 joydev
 joypixels
 jsonnet
-justfile
 jumpbox
 junegunn
+justfile
 kamadorueda
 kapp
 kasmwebconfig
@@ -1095,6 +1106,7 @@ lydell
 mahdtech
 mailfile
 mailwarn
+malo
 mapfile
 mapleader
 matmul
@@ -1116,6 +1128,7 @@ microstep
 milli
 minimaxai
 minimon
+mirkolenz
 misconfigurations
 misconfigures
 mistralrs
@@ -1254,6 +1267,7 @@ ocmem
 oifname
 olddefconfig
 ollama
+omarjatoi
 ondemand
 onepassword
 oneshot
@@ -1262,6 +1276,7 @@ onig
 onlyoffice
 oom
 oomd
+oopsed
 openal
 opencascade
 opencl
@@ -1280,6 +1295,7 @@ optimus
 orama
 orangepi
 orcaslicer
+oskarwires
 ostage
 overcurrent
 overlayfs
@@ -1406,6 +1422,7 @@ quantized
 quantizer
 qupv
 racc
+radeonsi
 rakr
 raku
 ramdump
@@ -1428,6 +1445,7 @@ receiveonly
 recip
 redriver
 redscreen
+reflogs
 refquota
 refreservation
 regdb
@@ -1663,6 +1681,7 @@ terminfo
 tessen
 testsrc
 tflint
+tfrc
 tftpboot
 tftpd
 thermald
@@ -1721,6 +1740,7 @@ uhwd
 unapsd
 unblacklisted
 unblacklisting
+unbootable
 unclocked
 unetbootin
 unevictable
@@ -1777,6 +1797,7 @@ viminfo
 vimingo
 vimrc
 virt
+virtio
 virtualenv
 vkcube
 vkmark
@@ -1824,6 +1845,7 @@ wireplumber
 wlan
 wlogout
 wmem
+worktree
 worktrees
 wpctl
 writecache
@@ -1863,20 +1885,3 @@ zramctl
 zstd
 zvol
 zvols
-tfrc
-CREDS
-bubblewrap
-AUTOUPDATER
-adeci
-mirkolenz
-omarjatoi
-oskarwires
-malo
-virtio
-worktree
-reflogs
-GOTPAGE
-fpic
-ecam
-radeonsi
-glthread

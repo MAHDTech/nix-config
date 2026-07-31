@@ -213,6 +213,17 @@ let
       # Verify critical CIX and NixOS options survived configuration.
       # If any are missing, the build fails immediately rather than
       # producing a kernel with silently disabled drivers.
+      # The list below covers three groups:
+      #   1. Peripherals — the original CIX display/PHY/DSP/Type-C set.
+      #   2. Boot path — everything needed to reach a shell. Previously
+      #      unguarded, so a silently-dropped symbol produced an unbootable
+      #      kernel that still built cleanly.
+      #   3. Observability — without these, a failed boot is a black screen.
+      #
+      # NOTE on USB symbol names: 7.2 merged the CDNSP driver into cdns3.
+      # USB_CDNS_HOST, USB_CDNSP_HOST and USB_CDNSP_GADGET no longer exist
+      # upstream — USB_CDNS3_HOST and USB_CDNS3_GADGET are their replacements
+      # and now cover both the USBSS and USBSSP IP. Do not re-add the old names.
       echo "Validating kernel configuration..."
       MISSING=0
       for opt in \
@@ -220,7 +231,12 @@ let
         DRM_CIX_EDP_PANEL DRM_PANTHOR \
         PHY_CIX_USBDP PWM_SKY1 CIX_DSP \
         USB_CDNSP TYPEC TYPEC_RTS5453 \
-        BLK_DEV_NVME PSTORE PSTORE_BLK; do
+        BLK_DEV_NVME PSTORE PSTORE_BLK \
+        ARCH_CIX OF_FLATTREE EFI_STUB \
+        PCI_SKY1 PCI_ECAM PCIE_CADENCE_HOST \
+        BTRFS_FS RD_ZSTD \
+        SERIAL_AMBA_PL011_CONSOLE EFI_EARLYCON \
+        USB_CDNS3_HOST USB_CDNS3_GADGET USB_CDNSP_SKY1; do
         if ! grep -q "CONFIG_''${opt}=[ym]" .config; then
           echo "FATAL: CONFIG_''${opt} is not enabled in .config!" >&2
           MISSING=$((MISSING + 1))

@@ -79,12 +79,41 @@ in
     # Belt-and-suspenders: also add via module_blacklist= kernel param below
     blacklistedKernelModules = [ "panfrost" ];
 
+    # ── TEMPORARY: v7.2 boot diagnostics ──────────────────────────────────
+    # The 7.2.0-rc5 generation hangs with a completely black screen after the
+    # systemd-boot menu — no panic (it sat >4 min with panic=30 set, so it
+    # never oopsed), no journal, no pstore record.
+    #
+    # Nothing was captured because all three capture paths are inert:
+    #   1. `quiet` (from soe/boot, consoleLogLevel = 4) suppresses early printk
+    #   2. no earlycon, so nothing prints before the PL011 driver probes
+    #   3. pstore_blk never registers — CONFIG_PSTORE_RAM wins the single
+    #      backend slot (dmesg: "Registered ramoops as persistent store
+    #      backend"), so the 16M disk-main-pstore partition is never written
+    #
+    # Remove this block, and restore `nowatchdog`, once 7.2 boots.
+    consoleLogLevel = lib.mkForce 7; # drops `quiet` from the cmdline
+    plymouth.enable = lib.mkForce false; # drops `splash`; stops plymouth hiding the console
+
     kernelParams = [
+      # ── diagnostics (temporary — see note above) ──
+      # efifb earlycon writes straight to the EFI GOP framebuffer, so early
+      # boot messages appear on the monitor with no serial cable attached.
+      # CONFIG_EFI_EARLYCON=y is verified by the kernel validation gate.
+      "earlycon=efifb"
+      "keep_bootcon" # don't drop earlycon when the real console takes over
+      "ignore_loglevel" # print everything regardless of loglevel
+      "initcall_debug" # log every initcall — names the driver that hangs
+      # ── end diagnostics ──
+
       "console=ttyAMA0,115200n8"
       "console=tty0"
       "fbcon=map:1" # Map the system console to the native display framebuffer (fb1) rather than simpledrm (fb0)
       "acpi=off" # Force Device Tree by completely ignoring the EDK2 BIOS ACPI tables
-      "nowatchdog" # Suppress all platform watchdogs at boot (works on built-in drivers too)
+      # NOTE: `nowatchdog` temporarily removed. Despite the old comment it does
+      # NOT suppress platform watchdogs — it disables the kernel soft/hard
+      # lockup detectors, which is precisely what would print a stack trace for
+      # a silent hang like this one. Restore it once 7.2 boots.
       # Belt-and-suspenders panfrost blacklist via kernel param (NixOS option alone not sufficient)
       "module_blacklist=panfrost"
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
@@ -100,9 +129,12 @@ in
       # and add to kernel.nix: ./scripts/config --disable ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT
       # NOTE: module_blacklist=sbsa_gwdt removed — sbsa_gwdt is built-in (not a module)
       # so blacklisting it has no effect. nowatchdog handles watchdog suppression instead.
-      # Crash capture: persistent store on dedicated 16M partition + panic escalation
-      # disko labels partitions as disk-{name}-{part}
-      "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
+      # NOTE: `pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore` removed.
+      # It was a no-op: pstore supports exactly one backend and CONFIG_PSTORE_RAM
+      # (ramoops, backed by the cix_ramoops@83d00000 reserved-memory node in the
+      # Sky1 DTS) always registers first. The 16M partition was never written to.
+      # Ramoops is the better backend here anyway — it needs no drivers, so it can
+      # capture failures that happen long before NVMe is up.
       "panic_on_oops=1"
       "panic=30"
       "panic_print=0x7ff"
