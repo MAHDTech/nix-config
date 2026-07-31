@@ -136,8 +136,18 @@ in
       # Ramoops is the better backend here anyway — it needs no drivers, so it can
       # capture failures that happen long before NVMe is up.
       "panic_on_oops=1"
-      "panic=30"
-      "panic_print=0x7ff"
+      # TEMPORARY (v7.2 debug): panic=0 so the machine freezes on the panic
+      # screen instead of rebooting, and panic_print=0 so the panic banner and
+      # backtrace are the LAST thing on screen rather than being scrolled away.
+      #
+      # panic() prints the banner and dump_stack() FIRST, then panic_print_sys_info()
+      # dumps all tasks, memory, timers, locks and replays the whole printk ring.
+      # With panic_print=0x7ff that flood pushed the actual panic reason off the
+      # top of the display — observed as "scrolling white text too fast to read".
+      #
+      # Restore `panic=30` and `panic_print=0x7ff` once 7.2 boots.
+      "panic=0"
+      "panic_print=0"
     ];
 
     # 5GbE and network performance tuning
