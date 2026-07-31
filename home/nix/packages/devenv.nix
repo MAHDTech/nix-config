@@ -10,7 +10,12 @@ let
   devenvPkgsUnstable = with pkgsUnstable; [
     cachix
     devenv
-    secretspec
+    # NOTE: `secretspec` removed — devenv 2.2.0 vendors its own bin/secretspec,
+    # and listing both made home.packages fail to build:
+    #   pkgs.buildEnv error: two given paths contain a conflicting subpath:
+    #     .../secretspec-0.17.0/bin/secretspec
+    #     .../devenv-2.2.0/bin/secretspec
+    # Re-add it here if devenv ever stops bundling it.
   ];
 
   #devenvPkgs = with devenv-nixpkgs; [
