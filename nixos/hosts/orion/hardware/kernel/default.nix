@@ -87,6 +87,33 @@ let
         patch -p1 --fuzz=0 < "$p"
       done
       echo "All 12 subsystem patches applied successfully."
+
+      # ── Guard: mailbox DT binding must match the upstreamed driver ──────────
+      # 7.2 carries drivers/mailbox/cix-mailbox.c in mainline, and it reads the
+      # direction as a STRING named "cix,mbox-dir":
+      #     device_property_read_string(dev, "cix,mbox-dir", &dir_str)
+      #     "tx" -> dir 0, "rx" -> dir 1, anything else -> -EINVAL
+      #
+      # The downstream DTS used a u32 "cix,mbox_dir = <0>" instead. With the
+      # compatible string still matching, the driver bound and then failed probe
+      # with -EINVAL, so 6590000.mailbox never registered. Everything hangs off
+      # that: firmware:scmi could not probe ("supplier 6590000.mailbox not
+      # ready"), so SCMI clocks never appeared, so pcie_phy and then pcie
+      # deferred forever, so NVMe never enumerated and the initrd timed out
+      # waiting for the root device.
+      #
+      # Fail the build if the stale spelling ever comes back.
+      if grep -rn "cix,mbox_dir" arch/arm64/boot/dts/cix/ 2>/dev/null; then
+        echo "FATAL: DTS uses the stale 'cix,mbox_dir' u32 property." >&2
+        echo "Mainline cix-mailbox.c requires 'cix,mbox-dir' as a string (tx/rx)." >&2
+        echo "Mailbox probe would fail -EINVAL and the root device would never appear." >&2
+        exit 1
+      fi
+      if ! grep -rq 'cix,mbox-dir = "tx"' arch/arm64/boot/dts/cix/ 2>/dev/null; then
+        echo "FATAL: no 'cix,mbox-dir = \"tx\"' found in the Sky1 DTS." >&2
+        exit 1
+      fi
+      echo "Mailbox DT binding verified against the mainline driver."
     '';
 
     configurePhase = ''
@@ -235,6 +262,7 @@ let
         ARCH_CIX OF_FLATTREE EFI_STUB \
         PCI_SKY1 PCI_ECAM PCIE_CADENCE_HOST \
         BTRFS_FS RD_ZSTD \
+        MAILBOX CIX_MBOX ARM_SCMI_PROTOCOL ARM_SCMI_TRANSPORT_MAILBOX COMMON_CLK_SCMI \
         SERIAL_AMBA_PL011_CONSOLE EFI_EARLYCON \
         USB_CDNS3_HOST USB_CDNS3_GADGET USB_CDNSP_SKY1; do
         if ! grep -q "CONFIG_''${opt}=[ym]" .config; then

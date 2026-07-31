@@ -1813,7 +1813,7 @@ index a77c52296..cb33685f4 100644
 +			interrupts = <GIC_SPI 232 IRQ_TYPE_LEVEL_HIGH 0>;
  			#mbox-cells = <1>;
 -			cix,mbox-dir = "rx";
-+			cix,mbox_dir = <0>;
++			cix,mbox-dir = "tx";
 +			status = "disabled";
  		};
 
@@ -1826,7 +1826,7 @@ index a77c52296..cb33685f4 100644
 +			interrupts = <GIC_SPI 233 IRQ_TYPE_LEVEL_HIGH 0>;
  			#mbox-cells = <1>;
 -			cix,mbox-dir = "tx";
-+			cix,mbox_dir = <1>;
++			cix,mbox-dir = "rx";
 +			status = "disabled";
  		};
 
@@ -4128,7 +4128,7 @@ index a77c52296..cb33685f4 100644
 +			reg = <0x0 0x06590000 0x0 0x10000>;
 +			interrupts = <GIC_SPI 363 IRQ_TYPE_LEVEL_HIGH 0>;
 +			#mbox-cells = <1>;
-+			cix,mbox_dir = <0>;
++			cix,mbox-dir = "tx";
 +			status = "disabled";
 +		};
 +
@@ -4137,7 +4137,7 @@ index a77c52296..cb33685f4 100644
 +			reg = <0x0 0x065a0000 0x0 0x10000>;
 +			interrupts = <GIC_SPI 359 IRQ_TYPE_LEVEL_HIGH 0>;
 +			#mbox-cells = <1>;
-+			cix,mbox_dir = <1>;
++			cix,mbox-dir = "rx";
 +			status = "disabled";
 +		};
 +	};
@@ -4147,7 +4147,7 @@ index a77c52296..cb33685f4 100644
 +		reg = <0x0 0x08090000 0x0 0x10000>;
 +		interrupts = <GIC_SPI 391 IRQ_TYPE_LEVEL_HIGH 0>;
 +		#mbox-cells = <1>;
-+		cix,mbox_dir = <1>;
++		cix,mbox-dir = "rx";
 +		status = "okay";
 +	};
 +
@@ -4156,7 +4156,7 @@ index a77c52296..cb33685f4 100644
 +		reg = <0x0 0x080a0000 0x0 0x10000>;
 +		interrupts = <GIC_SPI 390 IRQ_TYPE_LEVEL_HIGH 0>;
 +		#mbox-cells = <1>;
-+		cix,mbox_dir = <0>;
++		cix,mbox-dir = "tx";
 +		status = "okay";
 +	};
 +
@@ -4165,7 +4165,7 @@ index a77c52296..cb33685f4 100644
 +		reg = <0x0 0x05060000 0x0 0x10000>;
 +		interrupts = <GIC_SPI 378 IRQ_TYPE_LEVEL_HIGH 0>;
 +		#mbox-cells = <1>;
-+		cix,mbox_dir = <0>;
++		cix,mbox-dir = "tx";
 +		status = "disabled";
 +	};
 +
@@ -4174,7 +4174,7 @@ index a77c52296..cb33685f4 100644
 +		reg = <0x0 0x05070000 0x0 0x10000>;
 +		interrupts = <GIC_SPI 379 IRQ_TYPE_LEVEL_HIGH 0>;
 +		#mbox-cells = <1>;
-+		cix,mbox_dir = <1>;
++		cix,mbox-dir = "rx";
 +		status = "disabled";
 +	};
 +
