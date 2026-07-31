@@ -99,8 +99,11 @@
   swapDevices = [ ];
 
   environment.variables = {
-    # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1
-    LIBVA_DRIVER_NAME = "amdgpu";
+    # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1.
+    # Mesa's VA-API driver is radeonsi_drv_video.so; "amdgpu" does not exist and
+    # silently disables hardware video decode. Must be set explicitly here because
+    # video/amd and video/intel each mkDefault this to a different value.
+    LIBVA_DRIVER_NAME = "radeonsi";
   };
 
   environment.sessionVariables = {

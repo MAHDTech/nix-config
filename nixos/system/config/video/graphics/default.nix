@@ -24,8 +24,6 @@
           [
             # Linux firmware collection
             linux-firmware
-            # AMD Video Processing Library GPU runtime for hardware video processing
-            vpl-gpu-rt
             # Vulkan loader for graphics APIs
             vulkan-loader
             # OpenCL support for AMD GPUs
@@ -78,8 +76,6 @@
           [
             # Linux firmware collection (32-bit)
             linux-firmware
-            # AMD Video Processing Library GPU runtime (32-bit)
-            vpl-gpu-rt
             # Vulkan loader for graphics APIs (32-bit)
             vulkan-loader
           ]

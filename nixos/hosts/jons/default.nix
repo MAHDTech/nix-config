@@ -13,8 +13,17 @@
   virtualisation.docker.storageDriver = "zfs";
 
   environment.variables = {
-    # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1
-    LIBVA_DRIVER_NAME = "amdgpu";
+    # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1.
+    # Must be set explicitly here: video/amd and video/intel each mkDefault this
+    # to a different value, so the host has to break the tie.
+    #
+    # Decode deliberately stays on the AMD APU rather than being offloaded to the
+    # Arc B580 — the Arc's 12GB is reserved for LLM inference and gaming, and
+    # routing browser video through it would pin VRAM and keep xe resident.
+    # Trade-off: Cezanne exposes no VP9/AV1 decode (H.264/HEVC/MPEG2/VC1/JPEG
+    # only), so VP9 and AV1 streams still decode on the CPU. See the note on
+    # forcing H.264 in browsers if YouTube remains heavy.
+    LIBVA_DRIVER_NAME = "radeonsi";
   };
 
   environment.sessionVariables = {
@@ -28,6 +37,16 @@
   services.udev.extraRules = ''
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0e:00.0", SYMLINK+="dri/amd-gpu"
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", SYMLINK+="dri/intel-gpu"
+
+    # Hide the Arc B580's DRM *card* node from logind's seat, so cosmic-comp
+    # never takes DRM master on it. No monitor is attached to the Arc, but the
+    # compositor was still opening card1, running a full multi-GPU session and
+    # polling seven permanently disconnected connectors every hotplug cycle.
+    #
+    # This only untags the card node. renderD128 keeps its uaccess tag, so
+    # OpenCL/Level Zero/ROCm-style compute, Vulkan and DRI_PRIME=1 offload all
+    # continue to work — the Arc stays fully available for LLM and gaming work.
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", TAG-="seat", TAG-="master-of-seat", ENV{ID_SEAT}=""
   '';
 
   imports = [

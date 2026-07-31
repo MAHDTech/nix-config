@@ -1878,3 +1878,5 @@ reflogs
 GOTPAGE
 fpic
 ecam
+radeonsi
+glthread

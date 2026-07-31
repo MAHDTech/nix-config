@@ -56,9 +56,14 @@
     # Ensures X11 applications use Mesa's OpenGL implementation
     __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "mesa";
 
-    # Workaround for Intel Arc B580 (BMG G21) ANV Vulkan swapchain bug in Mesa 25.x.
-    # "immediate" was the least-corrupt present mode in testing; mailbox/fifo both
-    # trigger the swapchain acquisition failure. Remove once ANV BMG support matures.
-    MESA_VK_WSI_PRESENT_MODE = lib.mkDefault "immediate";
+    # NOTE: MESA_VK_WSI_PRESENT_MODE=immediate used to be set here as a
+    # workaround for the Intel Arc B580 (BMG G21) ANV Vulkan swapchain bug in
+    # Mesa 25.x. environment.variables is global, so it also applied to the AMD
+    # display GPU — disabling vsync for every Vulkan application on the system
+    # and burning iGPU bandwidth on frames the panel discards.
+    #
+    # Set it per-application instead, on the applications that actually run on
+    # the Arc, e.g. as a Steam launch option:
+    #   MESA_VK_WSI_PRESENT_MODE=immediate DRI_PRIME=1 %command%
   };
 }
