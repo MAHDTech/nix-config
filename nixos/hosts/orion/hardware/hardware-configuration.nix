@@ -109,20 +109,18 @@ in
       # telling us where it dies. The on-disk boot markers below answer that.
       # ── end diagnostics ──
 
-      # HYPOTHESIS (v7.2 iteration 5): the screen goes black because the EFI
-      # framebuffer that earlycon=efifb writes to is taken over, not because the
-      # machine dies at that moment. CONFIG_DRM_SIMPLEDRM=y is built in, and
-      # sysfb_init() registers the "simple-framebuffer" platform device that
-      # simpledrm then binds to and reprograms.
-      #
-      # Blacklisting sysfb_init means that device is never created, so nothing
-      # binds to the EFI framebuffer and earlycon keeps ownership of it for the
-      # whole boot. If the theory holds, the display should freeze on the last
-      # kernel messages instead of blanking — a static screen that can actually
-      # be photographed, unlike the scrolling we have been fighting.
-      #
-      # Remove this, and restore fbcon=map:1, once 7.2 boots.
-      "initcall_blacklist=sysfb_init"
+      # NOTE: iteration 5 tried "initcall_blacklist=sysfb_init" here, on the
+      # theory that simpledrm was stealing the EFI framebuffer and blanking the
+      # screen. Rejected — video of a 7.2 boot shows the display dying exactly
+      # as arm-smmu-v3 initialises, and dmesg from the WORKING 6.19 kernel shows
+      # the identical fault:
+      #   arm-smmu-v3 b1b0000.iommu: event: F_TRANSLATION
+      #     client: 141d0000.disp-controller sid: 0x18 "Input address caused fault"
+      #   arm-smmu-v3 b1b0000.iommu: auto-suppressing events for sid 0x18
+      # The display controller is still scanning out the framebuffer the firmware
+      # left it, and the SMMU has no mapping for that address, so scanout stops.
+      # This happens on every kernel here — the blank screen is normal on this
+      # board and is NOT the boot failure.
 
       "console=ttyAMA0,115200n8"
       "console=tty0"
@@ -139,12 +137,25 @@ in
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
       # Required on CIX P1 to avoid slow boot and hardware init races
       "clk_ignore_unused"
-      # Configure global SMMU to use passthrough mappings (bypass) by default to prevent early-boot display DMA faults
-      "iommu.default_domain_type=passthrough"
+      # Use identity (passthrough) IOMMU domains by default, so devices are not
+      # translated by the SMMU and early-boot DMA cannot fault.
+      #
+      # This previously read `iommu.default_domain_type=passthrough`, which is
+      # NOT a kernel parameter — it is a sysfs attribute
+      # (/sys/.../iommu_group/type). drivers/iommu/iommu.c registers exactly two
+      # early_params, `iommu.passthrough` and `iommu.strict`, so the old line was
+      # silently ignored on every kernel this host has ever run. dmesg on the
+      # working 6.19 kernel proves it, reporting the opposite of what was asked:
+      #   iommu: Default domain type: Translated
+      # and the display controller then faults immediately at SMMU init.
+      #
+      # `iommu.passthrough=1` is the real spelling and actually takes effect.
+      "iommu.passthrough=1"
       # NOTE: iteration 4 tried "arm-smmu-v3.disable_bypass=0" here on the theory
       # that NVMe was faulting behind the SMMU. It made no difference — no boot
       # markers, identical failure — so the hypothesis is rejected and the param
-      # is removed rather than left to accumulate.
+      # is removed rather than left to accumulate. Note it would have been a weak
+      # test anyway: with domains still Translated, bypass was never in play.
       # Disable deep CPU idle states to prevent register corruption
       "cpuidle.off=1"
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
