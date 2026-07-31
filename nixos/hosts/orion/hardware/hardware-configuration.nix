@@ -109,9 +109,26 @@ in
       # telling us where it dies. The on-disk boot markers below answer that.
       # ── end diagnostics ──
 
+      # HYPOTHESIS (v7.2 iteration 5): the screen goes black because the EFI
+      # framebuffer that earlycon=efifb writes to is taken over, not because the
+      # machine dies at that moment. CONFIG_DRM_SIMPLEDRM=y is built in, and
+      # sysfb_init() registers the "simple-framebuffer" platform device that
+      # simpledrm then binds to and reprograms.
+      #
+      # Blacklisting sysfb_init means that device is never created, so nothing
+      # binds to the EFI framebuffer and earlycon keeps ownership of it for the
+      # whole boot. If the theory holds, the display should freeze on the last
+      # kernel messages instead of blanking — a static screen that can actually
+      # be photographed, unlike the scrolling we have been fighting.
+      #
+      # Remove this, and restore fbcon=map:1, once 7.2 boots.
+      "initcall_blacklist=sysfb_init"
+
       "console=ttyAMA0,115200n8"
       "console=tty0"
-      "fbcon=map:1" # Map the system console to the native display framebuffer (fb1) rather than simpledrm (fb0)
+      # NOTE: `fbcon=map:1` temporarily removed. It sends the console to fb1
+      # instead of fb0, which is counterproductive while we are trying to keep
+      # output on the EFI framebuffer.
       "acpi=off" # Force Device Tree by completely ignoring the EDK2 BIOS ACPI tables
       # NOTE: `nowatchdog` temporarily removed. Despite the old comment it does
       # NOT suppress platform watchdogs — it disables the kernel soft/hard
@@ -124,13 +141,10 @@ in
       "clk_ignore_unused"
       # Configure global SMMU to use passthrough mappings (bypass) by default to prevent early-boot display DMA faults
       "iommu.default_domain_type=passthrough"
-      # HYPOTHESIS (v7.2 iteration 4): root is NVMe, behind PCIe, behind the SMMU,
-      # and the boot markers prove 7.2 dies before the initrd mounts root. The
-      # note below in this same file predicted exactly this: "Re-add if NVMe
-      # crashes". Allowing SMMU bypass lets devices with no valid stream-ID
-      # mapping keep working, which is the historical workaround on this board.
-      # Remove if it makes no difference.
-      "arm-smmu-v3.disable_bypass=0"
+      # NOTE: iteration 4 tried "arm-smmu-v3.disable_bypass=0" here on the theory
+      # that NVMe was faulting behind the SMMU. It made no difference — no boot
+      # markers, identical failure — so the hypothesis is rejected and the param
+      # is removed rather than left to accumulate.
       # Disable deep CPU idle states to prevent register corruption
       "cpuidle.off=1"
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
