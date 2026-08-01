@@ -202,6 +202,39 @@ let
         fi
         echo "Sky1 detection rewritten for the arm,mali-valhall-csf DT binding."
 
+        # ── Fixup: power the GPU explicitly under DT, not just under ACPI ───
+        # 06-gpu-panthor powers SKY1_PD_GPU with a direct SMC SCMI call, but
+        # only when there is no of_node:
+        #
+        #   /* This replicates what smc_devpd does under DT ... */
+        #   if (!ptdev->base.dev->of_node) {
+        #           if (panthor_is_sky1(ptdev))
+        #                   sky1_smc_scmi_power_set(dev, SKY1_PD_GPU, 0);
+        #   }
+        #
+        # i.e. the DT path trusts the smc_devpd genpd to do it. On this firmware
+        # it does not: gpu_pd stays "off-0", and panthor_hw_init then SErrors on
+        # its first GPU register access:
+        #
+        #   SError Interrupt on CPU7, code 0xbe000011
+        #   pc : panthor_hw_init+0x34/0x820 [panthor]
+        #
+        # The glue's own domain attach is correct (dev_pm_domain_attach_by_id
+        # plus device_link_add with DL_FLAG_RPM_ACTIVE), so the gap is below it,
+        # in the SMC SCMI transport — which also logs
+        # "Malformed reply - real_sz:8 calc_sz:4" against this EDK2 build.
+        # The downstream product boots ACPI, so its DT path is the untested one.
+        #
+        # Drop the guard so the explicit power-up runs on DT as well. It is
+        # idempotent: a POWER_STATE_SET on an already-on domain is a no-op.
+        if grep -rq 'if (!ptdev->base.dev->of_node) {' drivers/gpu/drm/panthor/; then
+          sed -i 's|if (!ptdev->base.dev->of_node) {|if (1) { /* DT too: smc_devpd does not power the GPU on this firmware */|' \
+            drivers/gpu/drm/panthor/panthor_device.c
+          grep -q 'DT too: smc_devpd does not power' drivers/gpu/drm/panthor/panthor_device.c || {
+            echo "FATAL: failed to unguard the Sky1 SMC power-up" >&2; exit 1; }
+          echo "Sky1 SMC GPU power-up now runs under DT as well."
+        fi
+
         # ── Additive: GPU node for panthor ──────────────────────────────────
         # mainline's sky1.dtsi describes no GPU at all, so DRM_PANTHOR builds
         # but has nothing to bind to and /sys/class/drm stays empty.

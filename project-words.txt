@@ -93,6 +93,7 @@ Djava
 Dmenu
 EAGAIN
 EDITMSG
+EDK
 EINVAL
 EMEA
 ENODEV
@@ -1766,6 +1767,7 @@ unclocked
 unetbootin
 unevictable
 unfullscreen
+unguard
 uniseg
 unixctl
 unnamedplus
