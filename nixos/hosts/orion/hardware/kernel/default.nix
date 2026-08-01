@@ -127,7 +127,13 @@ let
         else
           ''
             echo "Applying additive CIX patches..."
-            for p in ${lib.concatStringsSep " " (map toString cixPatches)}; do
+            # NOTE: interpolate each path with "''${p}", never `toString p`.
+            # toString only stringifies the path into the flake source, which is
+            # not an input to this derivation and so does not exist inside the
+            # build sandbox — the build fails with "No such file or directory"
+            # even though the file is present in the repo. Interpolation copies
+            # the file into the store and records the dependency.
+            for p in ${lib.concatMapStringsSep " " (p: "${p}") cixPatches}; do
               echo "  Applying $(basename $p)..."
               patch -p1 --fuzz=0 < "$p"
             done
