@@ -2,7 +2,7 @@
   lib,
   pkgs,
   inputs,
-  nixConfig ? { },
+  nixSettingsFlags ? [ ],
   ...
 }:
 {
@@ -24,9 +24,12 @@
       dates = [ "Sun 21:00" ];
     };
 
-    settings = {
+    # Fleet defaults. Every key is lib.mkDefault, so any of them can be
+    # overridden for a single host via `nixSettings` in nixos/hosts/default.nix
+    # (applied at normal priority by mkHost) without editing this file.
+    settings = lib.mapAttrs (_: lib.mkDefault) {
       cores = 0;
-      max-jobs = nixConfig.maxJobs or "auto";
+      max-jobs = "auto";
       require-sigs = true;
       sandbox = true;
       sandbox-fallback = false;
@@ -90,10 +93,9 @@
         # Removed: --impure (legacy, breaks reproducibility)
         # Removed: --refresh (forces full NAR info re-download, causes timeouts)
       ]
-      ++ (lib.optionals (nixConfig ? maxJobs) [
-        "--max-jobs"
-        (toString nixConfig.maxJobs)
-      ]);
+      # Host overrides from nixSettings, so unattended rebuilds are bound by
+      # the same limits as interactive ones.
+      ++ nixSettingsFlags;
 
       dates = "03:00";
 

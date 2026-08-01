@@ -53,6 +53,31 @@ let
 
   # Backwards-compatible simple import (used by mkHome)
   pkgsImportSystem = system: pkgsImport { inherit system; };
+
+  # Render a `nixSettings` attrset as `nix` CLI flags, so unattended rebuilds
+  # (system.autoUpgrade) honour the same limits as nix.settings. `--option
+  # <name> <value>` accepts any Nix setting, so adding a new key to a host's
+  # nixSettings needs no change here.
+  mkNixSettingsFlags =
+    settings:
+    lib.concatMap (
+      name:
+      let
+        value = settings.${name};
+        rendered =
+          if lib.isBool value then
+            lib.boolToString value
+          else if lib.isList value then
+            lib.concatMapStringsSep " " toString value
+          else
+            toString value;
+      in
+      [
+        "--option"
+        name
+        rendered
+      ]
+    ) (lib.attrNames settings);
 in
 {
   inherit
@@ -72,7 +97,7 @@ in
       system,
       buildSystem ? builtins.currentSystem or system,
       hostType ? "desktop",
-      nixConfig ? { },
+      nixSettings ? { },
       extraModules ? [ ],
       overlays ? [ ],
       enableHomeManager ? true,
@@ -88,8 +113,11 @@ in
           buildSystem
           name
           hostType
-          nixConfig
+          nixSettings
           ;
+        # The same settings rendered as `nix` CLI flags, for modules that shell
+        # out (system.autoUpgrade.flags). See mkNixSettingsFlags.
+        nixSettingsFlags = mkNixSettingsFlags nixSettings;
         username = globalUsername;
         inherit globalUsername globalStateVersion;
 
@@ -99,9 +127,13 @@ in
       };
       modules = [
         { system.stateVersion = globalStateVersion; }
-        (lib.optionalAttrs (nixConfig ? maxJobs) {
-          nix.settings.max-jobs = nixConfig.maxJobs;
-        })
+        # Host-specific Nix tuning, declared per host as `nixSettings` in
+        # nixos/hosts/default.nix. Keys are real nix.settings names, passed
+        # through verbatim — any Nix setting works without touching this file.
+        # They land at normal priority, so they win over the fleet defaults in
+        # nixos/system/soe/nix (all lib.mkDefault); anything left unset keeps
+        # the fleet default.
+        { nix.settings = nixSettings; }
         {
           boot.zfs.forceImportRoot = lib.mkDefault false;
           boot.zfs.forceImportAll = lib.mkDefault false;
