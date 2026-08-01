@@ -74,7 +74,17 @@ let
     # SoC raises a fatal abort. See the GPU node below for the matching DT shape.
     ./patches/06-gpu-panthor.patch
     # ./patches/07-audio-asoc.patch
-    # ./patches/08-npu-armchina.patch
+    # ArmChina Zhouyi NPU. Mainline 7.2 has no driver for it at all --
+    # drivers/accel/ ships amdxdna, ethosu, habanalabs, ivpu, qaic and rocket,
+    # and the tree contains zero matches for zhouyi/aipu/armchina. (ethosu is
+    # ARM's Ethos-U microNPU, a different part.) So this one has to be carried.
+    #
+    # It is the safest patch in the set to carry: 92 files, 90 of them created
+    # from /dev/null under drivers/misc/armchina-npu/. The only edits to
+    # existing files are two one-line appends to drivers/misc/Kconfig and
+    # drivers/misc/Makefile, so there is nothing for upstream churn to conflict
+    # with -- unlike 04/05, which patch files mainline actively rewrites.
+    ./patches/08-npu-armchina.patch
     # ./patches/09-vpu-linlon.patch
     # ./patches/11-misc-thermal-pwm.patch
     # ./patches/12-soc-firmware-dsp.patch
@@ -412,6 +422,107 @@ let
           fi
         done
         echo "GPU node added."
+
+        # ── Additive: NPU node for 08-npu-armchina ──────────────────────────
+        # mainline's sky1.dtsi describes no NPU, so the driver builds and binds
+        # to nothing. Lifted from the downstream node (aipu@14260000) with three
+        # deliberate changes, each forced by mainline:
+        #
+        #  1. iommus = <&smmu_mmhub 0x1e>  DROPPED. mainline's sky1.dtsi has no
+        #     SMMU nodes at all, so the phandle would not resolve. This is not
+        #     cosmetic: aipu_mm.c takes a different path when there is no IOMMU
+        #        if (!mm->has_iommu) mm->res_cnt = aipu_mm_add_reserved_regions(mm);
+        #        else                mm->res_cnt = aipu_mm_add_iova_region(mm);
+        #     and its own comment says memory-region is optional only when
+        #     behind an IOMMU. Without one the carveout below is mandatory.
+        #
+        #  2. NPU_DFS_DOMAIN_ID -> SKY1_PERF_NPU. Same value (8), but that macro
+        #     is downstream-only; sky1-power.h is what mainline ships. Confirmed
+        #     against the live genpd summary, which names the domain "npu_dfs_8".
+        #
+        #  3. The reserved region moved off downstream's 0x90000000. On this
+        #     board's firmware memory map that address is not safe:
+        #        86000000-9fffffff : System RAM
+        #        a0000000-a7ffffff : reserved      <-- inside 0x90000000+0x20000000
+        #     so a 512M no-map carveout at 0x90000000 would straddle memory the
+        #     firmware already claimed. 0xb0000000 sits wholly inside the
+        #     a8000000-fffdffff System RAM span and clears the reserved hole at
+        #     0xfbfe0000. Verified against /proc/iomem on the running machine.
+        #
+        # The region node MUST be named "memory@...". aipu_mm.c matches on the
+        # node name literally:
+        #     if (!strcmp(np->name, "memory")) type = AIPU_MEM_REGION_TYPE_MEMORY;
+        #     else dev_err("invalid memory region name: %s")
+        # and then calls of_address_to_resource(np, 0), so it also needs a fixed
+        # reg -- a sizeless "reusable" pool cannot be used here.
+        #
+        # No resets property: unlike panthor, this driver never calls
+        # reset_control_get, so there is nothing to hand it. The SMC power
+        # domains bring the cores up.
+        echo "Adding ArmChina NPU node to sky1-orion-o6.dts..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'DTSEOF'
+
+        &{/reserved-memory} {
+            aipu_res_0: memory@b0000000 {
+                compatible = "shared-dma-pool";
+                no-map;
+                reg = <0x0 0xb0000000 0x0 0x20000000>;
+            };
+        };
+
+        &{/soc@0} {
+            npu: aipu@14260000 {
+                compatible = "armchina,zhouyi";
+                reg = <0x0 0x14260000 0x0 0x10000>;
+                interrupts = <GIC_SPI 327 IRQ_TYPE_LEVEL_HIGH 0>;
+                /*
+                 * core_mask is read with device_property_read_u32() and gates
+                 * the whole probe in sky1_npu_probe():
+                 *     if (mask == 0x1)                 CIX_NPU_PD_NUM = 1;
+                 *     else if (mask == 0x0 || == 0x2)  return 0;  <- silent no-op
+                 * so 3 means "all three cores", matching the three pd_core
+                 * domains below. The underscore spelling is what the driver
+                 * reads; it is not a typo for core-mask.
+                 */
+                core_mask = <3>;
+                /*
+                 * Four domains. sky1.c attaches the three core domains by name
+                 * in sky1_npu_attach_pd() and the perf domain separately in
+                 * sky1_npu_devfreq_init(), both via dev_pm_domain_attach_by_name,
+                 * so the names matter and the order does not.
+                 */
+                power-domains =
+                    <&smc_devpd SKY1_PD_NPU_CORE0>,
+                    <&smc_devpd SKY1_PD_NPU_CORE1>,
+                    <&smc_devpd SKY1_PD_NPU_CORE2>,
+                    <&scmi_dvfs SKY1_PERF_NPU>;
+                power-domain-names = "pd_core0", "pd_core1", "pd_core2", "perf";
+                /* <cluster, partition> pairs; one x2 cluster -> partition 0 */
+                cluster-partition = <0 0>;
+                /* 1 = global memory shared by tasks of every QoS level */
+                gm-policy = <1>;
+                memory-region = <&aipu_res_0>;
+                status = "okay";
+            };
+        };
+        DTSEOF
+
+        # sky1-power.h is a plain header next to the DTS, not a dt-bindings one,
+        # and sky1-orion-o6.dts does not include it -- the GPU node got away with
+        # SKY1_PD_GPU only because sky1.dtsi pulls it in. Assert rather than
+        # assume, because an unresolved macro is a dtc syntax error, not a
+        # silently-zero cell.
+        if ! grep -q 'SKY1_PD_NPU_CORE0' arch/arm64/boot/dts/cix/sky1-power.h; then
+          echo "FATAL: sky1-power.h has no SKY1_PD_NPU_CORE0." >&2
+          exit 1
+        fi
+        for want in 'armchina,zhouyi' 'SKY1_PERF_NPU' 'aipu_res_0'; do
+          if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+            echo "FATAL: NPU node incomplete, missing '$want' in the board DTS." >&2
+            exit 1
+          fi
+        done
+        echo "NPU node added."
       '';
 
     configurePhase = ''
@@ -445,6 +556,25 @@ let
       ./scripts/config --enable COMMON_CLK_SCMI
       ./scripts/config --enable PINCTRL_SKY1
       ./scripts/config --enable BLK_DEV_NVME
+
+      # ── ArmChina Zhouyi NPU (08-npu-armchina) ───────────────────────────────
+      # Deliberately a MODULE, not built in. Every unbootable state on this
+      # machine so far came from a driver faulting during boot-time probe --
+      # iwlwifi SErroring on the unpowered AX210, panthor aborting in
+      # panthor_hw_init on a GPU still held in reset -- and each cost a physical
+      # power-cycle to recover. As a module it can be blacklisted at boot and
+      # insmod'd over SSH, so a fault at probe leaves the machine reachable.
+      # Blacklist lives in hardware-configuration.nix; drop it once proven.
+      #
+      # SOC_SKY1 selects sky1/sky1.c, whose non-ACPI branch attaches
+      # pd_core0/1/2 and the "perf" domain by name -- the shape of the DT node
+      # added below. ARCH_V3_1 is the Zhouyi generation in the CIX P1.
+      ./scripts/config --module ARMCHINA_NPU
+      ./scripts/config --enable ARMCHINA_NPU_ARCH_V3_1
+      ./scripts/config --enable ARMCHINA_NPU_SOC_SKY1
+      # sky1.c guards its devfreq code on CONFIG_ENABLE_DEVFREQ, which the
+      # driver's Makefile defines from CONFIG_PM_DEVFREQ.
+      ./scripts/config --enable PM_DEVFREQ
 
       # ── Phase 3: console and diagnostics ────────────────────────────────────
       ./scripts/config --enable SERIAL_AMBA_PL011

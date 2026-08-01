@@ -94,9 +94,23 @@ in
     # Wi-Fi is not in use here (wlan0 is down; the box is on wired enP3p1s0), so
     # blacklisting is the right trade for now. The real fix is to port the
     # wlan-en regulator support as an additive patch, at which point drop this.
+    # armchina_npu: TEMPORARY, first boot of the NPU driver only.
+    #
+    # Not because it is known bad — because it is untested on this board under
+    # DT, and every unbootable state this machine has hit came from a driver
+    # faulting inside boot-time probe (iwlwifi above; panthor in panthor_hw_init
+    # on a GPU still held in reset). Each one needed a physical power-cycle.
+    #
+    # The NPU touches the same three things that produced those faults: SMC
+    # power domains, an SCMI perf domain, and MMIO on a block that may not be
+    # powered. Blacklisted, it probes only when insmod'd over SSH, so a fault is
+    # a lost session instead of a trip to the machine.
+    #
+    # Remove this entry once it has bound cleanly at least once.
     blacklistedKernelModules = [
       "panfrost"
       "iwlwifi"
+      "armchina_npu"
     ];
 
     # ── TEMPORARY: v7.2 boot diagnostics ──────────────────────────────────
