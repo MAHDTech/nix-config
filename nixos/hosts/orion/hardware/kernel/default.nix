@@ -141,6 +141,27 @@ let
       )
       + ''
 
+        # ── Fixup: drop the ACPI-only genpd lookup from 06-gpu-panthor ──────
+        # panthor_devfreq_scmi_init() has two branches, DT and ACPI. The ACPI
+        # one calls pm_genpd_lookup_by_name(), which does not exist in 7.2:
+        #
+        #   panthor_devfreq.c:348: error: implicit declaration of function
+        #                          'pm_genpd_lookup_by_name'
+        #
+        # ORION boots DT-only (acpi=off on the kernel command line), so that
+        # branch is dead code here. Null the lookup and let the existing
+        # "if (!perf_genpd) return 0;" immediately below it bail out, rather
+        # than inventing a replacement for an API we never execute.
+        if grep -q 'pm_genpd_lookup_by_name' drivers/gpu/drm/panthor/panthor_devfreq.c; then
+          sed -i 's|perf_genpd = pm_genpd_lookup_by_name(\"gpu_core\");|perf_genpd = NULL; /* ACPI path unused: ORION boots DT-only */|' \
+            drivers/gpu/drm/panthor/panthor_devfreq.c
+          if grep -q 'pm_genpd_lookup_by_name' drivers/gpu/drm/panthor/panthor_devfreq.c; then
+            echo "FATAL: failed to neutralise pm_genpd_lookup_by_name()" >&2
+            exit 1
+          fi
+          echo "Removed ACPI-only pm_genpd_lookup_by_name() call."
+        fi
+
         # ── Additive: GPU node for panthor ──────────────────────────────────
         # mainline's sky1.dtsi describes no GPU at all, so DRM_PANTHOR builds
         # but has nothing to bind to and /sys/class/drm stays empty.
