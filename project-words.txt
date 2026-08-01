@@ -1659,6 +1659,7 @@ syncobjs
 syncoid
 synctex
 syscopyarea
+sysctls
 sysfb
 sysfillrect
 sysfs

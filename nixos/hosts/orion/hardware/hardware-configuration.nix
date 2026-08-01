@@ -165,22 +165,23 @@ in
       # NOTE: `pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore` removed.
       # It was a no-op: pstore supports exactly one backend and CONFIG_PSTORE_RAM
       # (ramoops, backed by the cix_ramoops@83d00000 reserved-memory node in the
-      # Sky1 DTS) always registers first. The 16M partition was never written to.
-      # Ramoops is the better backend here anyway — it needs no drivers, so it can
-      # capture failures that happen long before NVMe is up.
-      "panic_on_oops=1"
-      # TEMPORARY (v7.2 debug): panic=0 so the machine freezes on the panic
-      # screen instead of rebooting, and panic_print=0 so the panic banner and
-      # backtrace are the LAST thing on screen rather than being scrolled away.
+      # Crash capture is configured via boot.kernel.sysctl below, not here.
       #
-      # panic() prints the banner and dump_stack() FIRST, then panic_print_sys_info()
-      # dumps all tasks, memory, timers, locks and replays the whole printk ring.
-      # With panic_print=0x7ff that flood pushed the actual panic reason off the
-      # top of the display — observed as "scrolling white text too fast to read".
+      # `panic_on_oops=1` was removed: it is not a kernel command line parameter,
+      # and 7.2 says so explicitly —
+      #   "Unknown kernel command line parameters "panic_on_oops=1", will be
+      #    passed to user space."
+      # It is a sysctl, exactly like iommu.default_domain_type turned out to be.
       #
-      # Restore `panic=30` and `panic_print=0x7ff` once 7.2 boots.
-      "panic=0"
-      "panic_print=0"
+      # `panic_print=0` was removed too: 7.2 deprecates it —
+      #   "The 'panic_print' parameter is now deprecated. Please use
+      #    'panic_sys_info' and 'panic_console_replay' instead."
+      # and the sysctl overrode it regardless.
+      #
+      # On mainline there is no cix_ramoops DT node, so efi_pstore wins the
+      # pstore backend slot and panics land in UEFI NVRAM, which survives both
+      # reboot and power loss. That is the first reliable crash capture this
+      # board has had — see the sysctl block for why it must stay small.
     ];
 
     # 5GbE and network performance tuning
@@ -194,10 +195,24 @@ in
       "net.ipv4.tcp_wmem" = "4096 1048576 16777216";
       "net.core.default_qdisc" = "fq";
       "net.ipv4.tcp_congestion_control" = "bbr";
-      # Crash capture: ensure panic settings survive into running system
-      "kernel.panic_on_oops" = 1;
-      "kernel.panic" = 30;
-      "kernel.panic_print" = 2047; # 0x7ff — all info
+      # Crash capture.
+      #
+      # These sysctls OVERRIDE the equivalent kernel command line parameters,
+      # which is why panic=0 and panic_print=0 on the cmdline had no effect: the
+      # box still rebooted (kernel.panic = 30) and still produced the all-tasks
+      # flood (kernel.panic_print = 2047).
+      #
+      # That flood destroys the evidence twice over. It pushes the panic banner
+      # and call trace off the top of the display, and it overflows the
+      # efi_pstore records — a 7.2 panic filled all 20 EFI dump variables with
+      # nothing but sched-debug and Mem-Info, with the actual reason long gone.
+      #
+      # panic_print = 0 keeps the banner and backtrace as the last thing printed
+      # and small enough to fit in pstore. panic = 0 halts instead of rebooting,
+      # so the screen can also be read. Restore both once 7.2 boots.
+      "kernel.panic_on_oops" = 1; # turn an oops into a captured panic
+      "kernel.panic" = 0;
+      "kernel.panic_print" = 0;
     };
 
     # Modern boot management
