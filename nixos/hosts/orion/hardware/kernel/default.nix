@@ -112,18 +112,72 @@ let
     NIX_CFLAGS_COMPILE = "-march=armv8-a+crypto";
 
     prePatch =
-      if cixPatches == [ ] then
-        ''
-          echo "Mainline-first build: no CIX patches applied."
-        ''
-      else
-        ''
-          echo "Applying additive CIX patches..."
-          for p in ${lib.concatStringsSep " " (map toString cixPatches)}; do
-            echo "  Applying $(basename $p)..."
-            patch -p1 --fuzz=0 < "$p"
-          done
-        '';
+      (
+        if cixPatches == [ ] then
+          ''
+            echo "Mainline-first build: no CIX patches applied."
+          ''
+        else
+          ''
+            echo "Applying additive CIX patches..."
+            for p in ${lib.concatStringsSep " " (map toString cixPatches)}; do
+              echo "  Applying $(basename $p)..."
+              patch -p1 --fuzz=0 < "$p"
+            done
+          ''
+      )
+      + ''
+
+        # ── Additive: GPU node for panthor ──────────────────────────────────
+        # mainline's sky1.dtsi describes no GPU at all, so DRM_PANTHOR builds
+        # but has nothing to bind to and /sys/class/drm stays empty.
+        #
+        # This is written against mainline's own binding
+        # (Documentation/devicetree/bindings/gpu/arm,mali-valhall-csf.yaml), NOT
+        # lifted from the downstream DTS — that node is for ARM's proprietary
+        # kbase driver ("arm,mali-valhall", physical-memory-group-manager,
+        # protected-memory-allocator) and panthor would never match it.
+        #
+        # Register range, interrupt numbers and power domains come from the
+        # downstream node; only the binding shape is different. panthor takes
+        # the core clock via devm_clk_get(dev, NULL), i.e. index 0, then
+        # "stacks"/"coregroup" optionally by name.
+        #
+        # soc@0 has no label in mainline, hence the &{/soc@0} path reference.
+        # Appended rather than patched so there are no hunk offsets to drift.
+        echo "Adding panthor GPU node to sky1-orion-o6.dts..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'DTSEOF'
+
+        &{/soc@0} {
+            gpu: gpu@15010000 {
+                compatible = "arm,mali-valhall-csf";
+                reg = <0x0 0x15010000 0x0 0x480000>;
+                interrupts =
+                    <GIC_SPI 237 IRQ_TYPE_LEVEL_HIGH 0>,
+                    <GIC_SPI 238 IRQ_TYPE_LEVEL_HIGH 0>,
+                    <GIC_SPI 239 IRQ_TYPE_LEVEL_HIGH 0>;
+                interrupt-names = "job", "mmu", "gpu";
+                clocks =
+                    <&scmi_clk CLK_TREE_GPU_CLK_CORE>,
+                    <&scmi_clk CLK_TREE_GPU_CLK_STACKS>;
+                clock-names = "core", "stacks";
+                power-domains =
+                    <&smc_devpd SKY1_PD_GPU>,
+                    <&scmi_dvfs SKY1_PERF_GPU_CORE>,
+                    <&scmi_dvfs SKY1_PERF_GPU_TOP>;
+                power-domain-names = "gpu", "perf-core", "perf-top";
+                #cooling-cells = <2>;
+                status = "okay";
+            };
+        };
+        DTSEOF
+
+        if ! grep -q 'arm,mali-valhall-csf' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          echo "FATAL: GPU node was not appended to the board DTS." >&2
+          exit 1
+        fi
+        echo "GPU node added."
+      '';
 
     configurePhase = ''
       patchShebangs scripts

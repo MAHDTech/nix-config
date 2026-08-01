@@ -450,6 +450,39 @@ in
       networkConfig.DHCP = "yes";
     };
 
+    # CIX P1 hides its Cortex-A720 turbo operating points behind the cpufreq
+    # boost control, which defaults to off. Without this the machine runs a long
+    # way below spec:
+    #
+    #                       boost=0     boost=1
+    #   policy0  A720 big    1.50 GHz -> 2.60 GHz
+    #   policy9  A720 big    1.50 GHz -> 2.50 GHz
+    #   policy5  A720 mid    1.50 GHz -> 2.30 GHz
+    #   policy7  A720 mid    1.50 GHz -> 2.20 GHz
+    #   policy1  A520 little 1.80 GHz    1.80 GHz  (already correct)
+    #
+    # The perf-domain wiring itself is fine — mainline's sky1.dtsi maps each CPU
+    # to the right SCMI domain (SKY1_PERF_CPU_L=2, B0=3, B1=4, M0=5, M1=6),
+    # which matches the downstream DTS exactly. Only the boost gate was missing.
+    services.cpufreq-boost = {
+      description = "Enable cpufreq boost (unlocks Cortex-A720 turbo OPPs)";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "sysinit.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        b=/sys/devices/system/cpu/cpufreq/boost
+        if [ -e "$b" ]; then
+          echo 1 > "$b"
+          echo "cpufreq boost enabled: $(cat $b)"
+        else
+          echo "no cpufreq boost control present; nothing to do"
+        fi
+      '';
+    };
+
     # TEMPORARY (v7.2 debug): third boot-stage marker — see the marker block above.
     # Captures interface and address state too, so a boot that succeeds but comes
     # up with no NIC is distinguishable from one that never got here at all.

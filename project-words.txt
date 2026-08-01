@@ -82,6 +82,7 @@ DMABUF
 DPMS
 DPTSW
 DSDT
+DTSEOF
 DTSI
 DVFS
 Decepticons
@@ -610,6 +611,7 @@ convco
 copyindent
 coredump
 corefonts
+coregroup
 coretemp
 coreutils
 cpio
@@ -654,6 +656,7 @@ devicetree
 devlink
 devm
 devmem
+devpd
 dhcpcd
 dialout
 difftastic
@@ -969,6 +972,7 @@ justfile
 kamadorueda
 kapp
 kasmwebconfig
+kbase
 kbcs
 kbld
 kctrl
