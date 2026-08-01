@@ -235,6 +235,50 @@ let
           echo "Sky1 SMC GPU power-up now runs under DT as well."
         fi
 
+        # ── Fixup: do not force ACE-Lite coherency on Sky1 ──────────────────
+        # With the GPU finally powered and out of reset, panthor_hw_init()
+        # succeeds and the GPU identifies itself:
+        #
+        #   [drm] Mali-G720-Immortalis id 0xc870 major 0x0 minor 0x0 status 0x8
+        #   [drm] shader_present=0x550555 l2_present=0x1 tiler_present=0x1
+        #
+        # but probe then fails -524 (-ENOTSUPP):
+        #
+        #   [drm] Using ACE-Lite bus coherency (Sky1)
+        #   [drm] *ERROR* ACE-Lite not supported by hardware
+        #
+        # The glue unconditionally forces ACE_LITE on Sky1, then a capability
+        # check reads GPU_COHERENCY_FEATURES and finds the ACE_LITE bit clear,
+        # so it bails. The downstream stack drove this GPU with ARM's kbase
+        # driver, which does not perform that check, so the combination of
+        # "force ACE-Lite" plus panthor's capability gate was never exercised.
+        #
+        # Believe the hardware: select COHERENCY_NONE instead. panthor already
+        # handles that path and simply uses non-cacheable memory attributes,
+        # which costs some cache maintenance but is functionally correct.
+        python3 - <<'PYEOF'
+        import io, re, sys
+        p = "drivers/gpu/drm/panthor/panthor_gpu.c"
+        try:
+            s = open(p).read()
+        except FileNotFoundError:
+            sys.exit(0)
+        old_a = 'ptdev->coherency_mode = PANTHOR_COHERENCY_ACE_LITE;\n'
+        old_b = '\t\tdrm_info(&ptdev->base, "Using ACE-Lite bus coherency (Sky1)\\n");'
+        new_a = 'ptdev->coherency_mode = PANTHOR_COHERENCY_NONE;\n'
+        new_b = '\t\tdrm_info(&ptdev->base, "Sky1: GPU reports no ACE-Lite; using non-coherent\\n");'
+        old = old_a + old_b
+        new = new_a + new_b
+        if old in s:
+            open(p, "w").write(s.replace(old, new, 1))
+            print("Sky1 coherency changed from forced ACE-Lite to non-coherent.")
+        elif "no ACE-Lite; using non-coherent" in s:
+            print("Sky1 coherency fixup already applied.")
+        else:
+            print("FATAL: could not find the Sky1 ACE-Lite assignment", file=sys.stderr)
+            sys.exit(1)
+        PYEOF
+
         # ── Additive: GPU node for panthor ──────────────────────────────────
         # mainline's sky1.dtsi describes no GPU at all, so DRM_PANTHOR builds
         # but has nothing to bind to and /sys/class/drm stays empty.
