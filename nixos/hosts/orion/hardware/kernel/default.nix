@@ -114,6 +114,29 @@ let
         exit 1
       fi
       echo "Mailbox DT binding verified against the mainline driver."
+
+      # ── Guard: reset controller DT binding ──────────────────────────────────
+      # Same class of bug as the mailbox. 7.2 carries drivers/reset/reset-sky1.c
+      # in mainline, matching only:
+      #   { "cix,sky1-system-control",    &variant_sky1_fch }  @ 0x04160000
+      #   { "cix,sky1-s5-system-control", &variant_sky1     }  @ 0x16000000
+      # The downstream DTS used "cix,sky1-src" / "cix,sky1-src-fch", so nothing
+      # bound, no reset controller registered, and every consumer deferred with
+      # -517 forever: pcie, usb, gpio, pwm — and therefore no root device.
+      if grep -rn 'cix,sky1-src' arch/arm64/boot/dts/cix/ 2>/dev/null; then
+        echo "FATAL: DTS uses stale 'cix,sky1-src*' reset compatibles." >&2
+        echo "Mainline reset-sky1.c only matches cix,sky1-system-control and" >&2
+        echo "cix,sky1-s5-system-control. Nothing would bind and every device" >&2
+        echo "needing a reset would defer with -EPROBE_DEFER forever." >&2
+        exit 1
+      fi
+      for c in "cix,sky1-system-control" "cix,sky1-s5-system-control"; do
+        if ! grep -rq "$c" arch/arm64/boot/dts/cix/ 2>/dev/null; then
+          echo "FATAL: DTS is missing reset compatible '$c'." >&2
+          exit 1
+        fi
+      done
+      echo "Reset controller DT binding verified against the mainline driver."
     '';
 
     configurePhase = ''

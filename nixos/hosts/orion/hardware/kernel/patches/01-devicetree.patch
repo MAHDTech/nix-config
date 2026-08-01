@@ -3734,14 +3734,14 @@ index a77c52296..cb33685f4 100644
 +		};
 +
 +		src: reset-controller@16000000 {
-+			compatible = "cix,sky1-src", "syscon";
++			compatible = "cix,sky1-s5-system-control", "syscon";
 +			reg = <0x0 0x16000000 0x0 0x1000>;
 +			#reset-cells = <1>;
 +			status = "okay";
 +		};
 +
 +		src_fch: reset-controller@04160000 {
-+			compatible = "cix,sky1-src-fch", "syscon";
++			compatible = "cix,sky1-system-control", "syscon";
 +			reg = <0x0 0x04160000 0x0 0x90>;
 +			#reset-cells = <1>;
 +			status = "okay";
