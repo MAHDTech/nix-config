@@ -65,7 +65,14 @@ let
   cixPatches = [
     # ./patches/04-usb-phy-typec.patch      # drivers/phy/cix/  (absent upstream)
     # ./patches/05-display-drm-cix.patch    # linlon-dp, trilin-dpsub
-    # ./patches/06-gpu-panthor.patch        # SCMI/DVFS glue only; panthor is upstream
+    # Sky1 SCMI/DVFS glue for panthor. panthor itself is mainline; this adds the
+    # power-domain and DVFS sequencing mainline has no way to express:
+    #   panthor_pm_domain_init()     attach pd_gpu + perf as separate domains
+    #   panthor_devfreq_scmi_init()  drive DVFS through the SCMI perf domain
+    #                                rather than dev_pm_opp_set_rate()
+    # Without it, panthor_hw_init() touches an unclocked/unpowered GPU and the
+    # SoC raises a fatal abort. See the GPU node below for the matching DT shape.
+    ./patches/06-gpu-panthor.patch
     # ./patches/07-audio-asoc.patch
     # ./patches/08-npu-armchina.patch
     # ./patches/09-vpu-linlon.patch
@@ -162,31 +169,27 @@ let
                     <&scmi_clk CLK_TREE_GPU_CLK_STACKS>;
                 clock-names = "core", "stacks";
                 /*
-                 * EXACTLY ONE power-domain, deliberately.
+                 * Two power domains, named exactly "pd_gpu" and "perf".
                  *
-                 * panthor_init_power() does:
-                 *     if (dev->pm_domain) return 0;
-                 *     return devm_pm_domain_attach_list(dev, NULL, &pd_list);
+                 * 06-gpu-panthor.patch requires this shape. Its
+                 * panthor_devfreq_scmi_init() looks the perf domain up by name:
+                 *     of_property_match_string(np, "power-domain-names", "perf")
+                 * and its panthor_pm_domain_init() attaches both domains and
+                 * drives DVFS through the SCMI perf domain with
+                 * dev_pm_opp_set_opp() instead of dev_pm_opp_set_rate().
                  *
-                 * dev->pm_domain is only populated by the genpd core when a
-                 * device has a SINGLE power-domain. With several entries it
-                 * stays NULL, the list is attached but nothing ever resumes it,
-                 * and pm_runtime_resume_and_get() in panthor_device_init()
-                 * therefore powers nothing. panthor_hw_init() then performs its
-                 * first MMIO read against an unpowered GPU, which on this SoC
-                 * raises a fatal asynchronous SError:
-                 *
-                 *   SError Interrupt on CPU11, code 0xbe000011
-                 *   pc : panthor_hw_init+0x34/0x7c0 [panthor]
-                 *   lr : panthor_device_init+0x304/0x570 [panthor]
-                 *   Kernel panic - not syncing: Asynchronous SError Interrupt
-                 *
-                 * So list only the device power domain here. GPU DVFS still
-                 * works through the OPP table plus the SCMI core clock; the
-                 * scmi_dvfs perf domains are not needed for panthor to run and
-                 * adding them back would reintroduce the panic.
+                 * Stock mainline panthor cannot do this. panthor_init_power()
+                 * only picks up dev->pm_domain, which the genpd core populates
+                 * for a SINGLE power-domain; with a list it attaches virtual
+                 * devices nothing ever resumes. Three attempts proved it:
+                 *   3 domains, no glue -> GPU unpowered, async SError
+                 *   1 domain,  no glue -> SCMI clock enable timed out, sync abort
+                 * Both faulted in panthor_hw_init+0x2c/0x34, its first GPU MMIO.
                  */
-                power-domains = <&smc_devpd SKY1_PD_GPU>;
+                power-domains =
+                    <&smc_devpd SKY1_PD_GPU>,
+                    <&scmi_dvfs SKY1_PERF_GPU_CORE>;
+                power-domain-names = "pd_gpu", "perf";
                 operating-points-v2 = <&gpu_opp_table>;
                 #cooling-cells = <2>;
                 status = "okay";
