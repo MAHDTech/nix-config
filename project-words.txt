@@ -16,6 +16,8 @@ Adreno
 Adrián
 Agentic
 Alienware
+Allwinner
+Amlogic
 Aramis
 Armv
 Ashburn

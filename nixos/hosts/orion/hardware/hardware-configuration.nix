@@ -56,23 +56,21 @@ in
     };
 
     # Load after boot (not needed during initrd)
-    # In installer mode, only load display essentials. Skip NPU, VPU, KVM,
-    # Type-C, and cpufreq — they're unnecessary for SSH-based installs.
-    kernelModules = [
-      # Display pipeline — always loaded (user needs screen output)
-      "panthor" # Immortalis-G720 MC10 GPU (CSF-based)
-      "linlon-dp" # CIX Display controller
-      "trilin-dpsub" # CIX DisplayPort subsystem
-
-      # USB-C Power Delivery and DisplayPort Alt Mode (Required for pure DT boot)
-      "typec"
-      "typec_ucsi"
-      "typec_displayport"
-    ]
-    ++ lib.optionals (!isInstaller) [
+    #
+    # MAINLINE-FIRST STAGE 1: the CIX peripheral drivers are not built, because
+    # mainline does not carry them and their patches are disabled in
+    # ./kernel/default.nix while we establish that a mainline kernel boots.
+    # Re-add each entry as its patch is rebased and verified:
+    #
+    #   "linlon-dp" "trilin-dpsub"   display pipeline
+    #   "typec" "typec_ucsi" "typec_displayport"
+    #   "aipu"                       NPU
+    #   "amvx"                       VPU
+    #
+    # panthor IS in mainline, but without the Sky1 SCMI/DVFS glue it has no
+    # power domain to attach to, so it stays out until 06-gpu-panthor returns.
+    kernelModules = lib.optionals (!isInstaller) [
       "kvm"
-      "aipu" # CIX NPU
-      "amvx" # CIX VPU
     ];
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
@@ -365,32 +363,18 @@ in
     ];
     deviceTree = {
       enable = true;
+      # Mainline's own board DTS. It enables all five PCIe root complexes
+      # (&pcie_x8_rc through &pcie_x1_1_rc) and the uart2 console, which is
+      # everything needed to reach an NVMe root filesystem.
       name = "cix/sky1-orion-o6.dtb";
-      overlays = [
-        {
-          name = "smmu-mmhub-bypass";
-          dtsText = ''
-            /dts-v1/;
-            /plugin/;
 
-            / {
-              compatible = "cix,sky1";
-              fragment@0 {
-                target-path = "/iommu@b1b0000";
-                __overlay__ {
-                  arm,boot-active-sids = <
-                    0x00 0x01 0x03 0x04 0x05
-                    0x06 0x07 0x09 0x0a 0x0b
-                    0x0c 0x0d 0x0f 0x10 0x11
-                    0x12 0x13 0x15 0x16 0x17
-                    0x18 0x19 0x1b 0x1c 0x1d
-                  >;
-                };
-              };
-            };
-          '';
-        }
-      ];
+      # NOTE: the "smmu-mmhub-bypass" overlay was removed. It targeted
+      # /iommu@b1b0000, a node that only existed in the downstream DTS —
+      # mainline's sky1.dtsi has no such node, so the overlay could not apply.
+      # Early-boot DMA faults are handled by iommu.passthrough=1 on the cmdline
+      # instead. Re-introduce a mainline-compatible overlay here if a real SMMU
+      # stream-ID problem shows up.
+      overlays = [ ];
     };
   };
 
