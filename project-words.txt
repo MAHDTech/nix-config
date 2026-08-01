@@ -952,6 +952,7 @@ ipxe
 ireduce
 isoinfo
 isolinux
+isra
 iterm
 itertools
 iwctl

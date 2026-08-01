@@ -162,6 +162,46 @@ let
           echo "Removed ACPI-only pm_genpd_lookup_by_name() call."
         fi
 
+        # ── Fixup: Sky1 detection must match our DT compatible, not ACPI ────
+        # 06-gpu-panthor identifies a Sky1 GPU with:
+        #
+        #   if (of_device_is_compatible(dev->of_node, "arm,mali-valhall"))
+        #           return true;
+        #   return acpi_dev_hid_uid_match(ACPI_COMPANION(dev), "CIXH5000", NULL);
+        #
+        # Our node uses "arm,mali-valhall-csf", the mainline panthor binding,
+        # because "arm,mali-valhall" is ARM's proprietary kbase binding. So the
+        # DT test missed, execution fell into the ACPI branch, and with acpi=off
+        # ACPI_COMPANION() is NULL:
+        #
+        #   Unable to handle kernel NULL pointer dereference at 0x98
+        #   pc : acpi_device_hid+0xc/0x48
+        #   lr : panthor_is_sky1.isra.0+0x68/0xa4 [panthor]
+        #      panthor_device_init -> panthor_probe -> panthor_init
+        #
+        # There are four such checks (Sky1 detection, clock setup, coherency and
+        # reset paths). Rewrite them all to our compatible, keyed on the function
+        # name so the of_device_id match table entry at panthor_drv.c is left
+        # alone — that one legitimately lists "arm,mali-valhall" for binding.
+        #
+        # Then neutralise the ACPI fallbacks outright: this host is DT-only, and
+        # acpi_dev_hid_uid_match() is not NULL-safe on a missing companion.
+        for f in drivers/gpu/drm/panthor/*.c; do
+          sed -i \
+            -e 's|of_device_is_compatible(\([^;]*\), "arm,mali-valhall")|of_device_is_compatible(\1, "arm,mali-valhall-csf")|g' \
+            -e 's|acpi_dev_hid_uid_match(ACPI_COMPANION([^)]*), "CIXH5000", NULL)|false /* DT-only host */|g' \
+            "$f"
+        done
+        if grep -rn 'of_device_is_compatible([^;]*"arm,mali-valhall")' drivers/gpu/drm/panthor/ 2>/dev/null; then
+          echo "FATAL: a bare arm,mali-valhall DT check survived the rewrite." >&2
+          exit 1
+        fi
+        if grep -rn 'acpi_dev_hid_uid_match' drivers/gpu/drm/panthor/ 2>/dev/null; then
+          echo "FATAL: an unguarded acpi_dev_hid_uid_match() survived." >&2
+          exit 1
+        fi
+        echo "Sky1 detection rewritten for the arm,mali-valhall-csf DT binding."
+
         # ── Additive: GPU node for panthor ──────────────────────────────────
         # mainline's sky1.dtsi describes no GPU at all, so DRM_PANTHOR builds
         # but has nothing to bind to and /sys/class/drm stays empty.
