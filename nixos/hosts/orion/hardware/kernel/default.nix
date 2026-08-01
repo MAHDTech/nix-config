@@ -310,6 +310,34 @@ let
                     <&smc_devpd SKY1_PD_GPU>,
                     <&scmi_dvfs SKY1_PERF_GPU_CORE>;
                 power-domain-names = "pd_gpu", "perf";
+                /*
+                 * The GPU comes out of reset here, and without this it never
+                 * does. panthor_device_init() runs, in order:
+                 *
+                 *   if (ptdev->gpu_reset) { assert; udelay; deassert; }
+                 *   if (ptdev->sky1_rcsu_reg) { ungate qchannel clock }
+                 *   panthor_hw_init(ptdev);            <- first GPU MMIO
+                 *
+                 * and the glue fetches it by name:
+                 *   devm_reset_control_get_optional(dev, "gpu_reset")
+                 *
+                 * Omitting resets leaves ptdev->gpu_reset NULL, so the whole
+                 * assert/deassert is skipped and the GPU is still held in reset
+                 * when hw_init touches it. That is what produced:
+                 *
+                 *   panthor 15000000.gpu: GPU power domain 21 powered on via SMC SCMI
+                 *   SError Interrupt on CPU11, code 0xbe000011
+                 *   pc : panthor_hw_init+0x34/0x820 [panthor]
+                 *
+                 * i.e. powered, but not released from reset.
+                 *
+                 * s5_syscon is mainline's label for the reset controller the
+                 * downstream DTS calls "src" (both are syscon@16000000). The
+                 * IDs are numeric because mainline ships no sky1-reset.h:
+                 *   SKY1_GPU_RCSU_RESET_N = 119, SKY1_GPU_RESET_N = 9
+                 */
+                resets = <&s5_syscon 119>, <&s5_syscon 9>;
+                reset-names = "gpu_rcsu_reset", "gpu_reset";
                 operating-points-v2 = <&gpu_opp_table>;
                 #cooling-cells = <2>;
                 status = "okay";

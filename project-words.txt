@@ -643,6 +643,7 @@ dbdir
 dconf
 deadnix
 dearmor
+deassert
 debsig
 decepticon
 deepcolor
@@ -1432,6 +1433,7 @@ qccdsp
 qcdxkmbase
 qcdxkmsuc
 qcdxkmsucpurwa
+qchannel
 qcvss
 qdisc
 qlist
@@ -1671,6 +1673,7 @@ symvers
 syncobjs
 syncoid
 synctex
+syscon
 syscopyarea
 sysctls
 sysfb
@@ -1753,6 +1756,7 @@ ubiquiti
 ubnt
 ubwc
 uckp
+udelay
 udevadm
 udevd
 udiff
@@ -1767,6 +1771,7 @@ unclocked
 unetbootin
 unevictable
 unfullscreen
+ungate
 unguard
 uniseg
 unixctl
