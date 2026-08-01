@@ -225,7 +225,27 @@ let
         &{/soc@0} {
             gpu: gpu@15010000 {
                 compatible = "arm,mali-valhall-csf";
-                reg = <0x0 0x15010000 0x0 0x480000>;
+                /*
+                 * TWO ranges, in this order. Mainline's binding says
+                 * "reg: maxItems: 1", but once panthor_is_sky1() returns true
+                 * the glue takes the Sky1 path and indexes them explicitly:
+                 *
+                 *   ptdev->iomem         = ..._get_and_ioremap_resource(pdev, 1, &res);
+                 *   ptdev->sky1_rcsu_reg = ..._ioremap_resource(pdev, 0);
+                 *
+                 * so index 0 must be the RCSU block and index 1 the GPU. With a
+                 * single range index 1 is NULL and probe fails:
+                 *   panthor 15010000.gpu: error -EINVAL: invalid resource (null)
+                 *   probe with driver panthor failed with error -22
+                 *
+                 * The RCSU range is load-bearing, not decorative: the glue uses
+                 * it for power-gating control (sky1_rcsu_reg + 0x218) and for
+                 * shader-core harvesting (+ 0x304).
+                 */
+                reg =
+                    <0x0 0x15000000 0x0 0x10000>,
+                    <0x0 0x15010000 0x0 0x480000>;
+                reg-names = "gpu_rcsu", "gpu";
                 interrupts =
                     <GIC_SPI 237 IRQ_TYPE_LEVEL_HIGH 0>,
                     <GIC_SPI 238 IRQ_TYPE_LEVEL_HIGH 0>,

@@ -280,6 +280,7 @@ QWEN
 RADV
 RAMYBQ
 RCLONE
+RCSU
 RDMA
 REDIR
 RENESAS
@@ -945,7 +946,9 @@ inetutils
 inhibitidle
 initcall
 insync
+iomem
 ionice
+ioremap
 iosevka
 ipetkov
 ipxe
@@ -1336,6 +1339,7 @@ pciutils
 pcre
 pcsc
 pcsclite
+pdev
 pdrv
 peachpuff
 pgrep
@@ -1402,6 +1406,7 @@ pstore
 psuedotiling
 psutil
 ptcp
+ptdev
 pubkeys
 pubring
 pulseaudio
@@ -1449,6 +1454,7 @@ ratatouille
 ratatui
 rawmidi
 rbdrqnjczm
+rcsu
 rcvbuf
 rdoc
 readlink
