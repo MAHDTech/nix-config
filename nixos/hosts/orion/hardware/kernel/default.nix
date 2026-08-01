@@ -166,16 +166,35 @@ let
                     <&scmi_dvfs SKY1_PERF_GPU_CORE>,
                     <&scmi_dvfs SKY1_PERF_GPU_TOP>;
                 power-domain-names = "gpu", "perf-core", "perf-top";
+                operating-points-v2 = <&gpu_opp_table>;
                 #cooling-cells = <2>;
                 status = "okay";
+
+                gpu_opp_table: opp-table {
+                    compatible = "operating-points-v2";
+                    opp-350000000 {
+                        opp-hz = /bits/ 64 <350000000>;
+                    };
+                    opp-600000000 {
+                        opp-hz = /bits/ 64 <600000000>;
+                    };
+                    opp-800000000 {
+                        opp-hz = /bits/ 64 <800000000>;
+                    };
+                    opp-1000000000 {
+                        opp-hz = /bits/ 64 <1000000000>;
+                    };
+                };
             };
         };
         DTSEOF
 
-        if ! grep -q 'arm,mali-valhall-csf' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
-          echo "FATAL: GPU node was not appended to the board DTS." >&2
-          exit 1
-        fi
+        for want in 'arm,mali-valhall-csf' 'operating-points-v2' 'opp-1000000000'; do
+          if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+            echo "FATAL: GPU node incomplete, missing '$want' in the board DTS." >&2
+            exit 1
+          fi
+        done
         echo "GPU node added."
       '';
 
