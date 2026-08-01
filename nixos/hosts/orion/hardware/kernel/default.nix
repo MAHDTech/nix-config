@@ -182,6 +182,21 @@ let
       ./scripts/config --enable FW_LOADER_COMPRESS
       ./scripts/config --enable FW_LOADER_COMPRESS_ZSTD
 
+      # vfat for the ESP at /boot
+      ./scripts/config --module VFAT_FS
+      ./scripts/config --enable FAT_FS
+
+      # TPM. arm64 defconfig gives TCG_TPM=y and TCG_TIS=m but NOT TCG_CRB, and
+      # systemd-initrd hard-requires tpm_crb — without it the initrd build fails
+      # with "modprobe: FATAL: Module tpm-crb not found", after the kernel has
+      # already compiled. Gated below so it cannot regress silently again.
+      ./scripts/config --module TCG_TIS
+      ./scripts/config --module TCG_CRB
+
+      # USB attached SCSI — "uas" is listed in boot.initrd.availableKernelModules
+      ./scripts/config --module USB_UAS
+      ./scripts/config --module USB_UHCI_HCD
+
       # AppArmor — required by security.apparmor.enable in the SOE security config
       ./scripts/config --enable SECURITY_APPARMOR
       ./scripts/config --enable DEFAULT_SECURITY_APPARMOR
@@ -233,7 +248,8 @@ let
         ARM_SCMI_PROTOCOL ARM_SCMI_TRANSPORT_MAILBOX COMMON_CLK_SCMI \
         RESET_SKY1 \
         PCI_SKY1_HOST PCIE_CADENCE_HOST PCI_ECAM \
-        BLK_DEV_NVME BTRFS_FS RD_ZSTD \
+        BLK_DEV_NVME BTRFS_FS VFAT_FS RD_ZSTD \
+        TCG_CRB TCG_TIS USB_UAS \
         SERIAL_AMBA_PL011_CONSOLE; do
         if ! grep -q "CONFIG_''${opt}=[ym]" .config; then
           echo "FATAL: CONFIG_''${opt} is not enabled in .config!" >&2
