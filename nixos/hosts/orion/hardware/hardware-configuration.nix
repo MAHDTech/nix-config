@@ -75,7 +75,29 @@ in
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
     # Belt-and-suspenders: also add via module_blacklist= kernel param below
-    blacklistedKernelModules = [ "panfrost" ];
+    #
+    # iwlwifi: on the mainline kernel this panics the machine during boot.
+    # Captured via efi_pstore:
+    #
+    #   Kernel panic - not syncing: Asynchronous SError Interrupt
+    #   CPU: 0 PID: 513 Comm: (udev-worker)
+    #     el1h_64_error
+    #     iwl_pci_probe+0xf0/0x188 [iwlwifi]
+    #     local_pci_probe -> pci_device_probe -> ... -> finit_module
+    #
+    # The Intel AX210 sits on a0c0000.pcie (PCI domain 0002:60). The downstream
+    # driver powers it through a "wlan-en" regulator — 6.19 logs
+    # "sky1-pcie a0c0000.pcie: no wlan-en regulator found" — and mainline's
+    # pci-sky1.c has no such handling. So the card is unpowered, iwlwifi's first
+    # MMIO read goes to dead hardware, and an asynchronous SError is fatal.
+    #
+    # Wi-Fi is not in use here (wlan0 is down; the box is on wired enP3p1s0), so
+    # blacklisting is the right trade for now. The real fix is to port the
+    # wlan-en regulator support as an additive patch, at which point drop this.
+    blacklistedKernelModules = [
+      "panfrost"
+      "iwlwifi"
+    ];
 
     # ── TEMPORARY: v7.2 boot diagnostics ──────────────────────────────────
     # The 7.2.0-rc5 generation hangs with a completely black screen after the
@@ -131,7 +153,10 @@ in
       # lockup detectors, which is precisely what would print a stack trace for
       # a silent hang like this one. Restore it once 7.2 boots.
       # Belt-and-suspenders panfrost blacklist via kernel param (NixOS option alone not sufficient)
-      "module_blacklist=panfrost"
+      # iwlwifi included here as well as in blacklistedKernelModules: an SError
+      # during iwl_pci_probe is fatal, so it must never load, not merely be
+      # discouraged. See the note on blacklistedKernelModules above.
+      "module_blacklist=panfrost,iwlwifi"
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
       # Required on CIX P1 to avoid slow boot and hardware init races
       "clk_ignore_unused"

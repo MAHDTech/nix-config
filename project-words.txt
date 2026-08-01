@@ -766,6 +766,7 @@ findutils
 finegrained
 finetune
 finetuned
+finit
 fishaudio
 flathub
 fmask
