@@ -1534,6 +1534,43 @@ let
       ./scripts/config --enable DRM_FBDEV_EMULATION
       ./scripts/config --enable FRAMEBUFFER_CONSOLE
 
+      # ── Netfilter / nftables ────────────────────────────────────────────────
+      # arm64 defconfig enables NETFILTER and the legacy xtables but NOT
+      # nf_tables. NixOS's firewall is nftables-based, so on this kernel it
+      # simply never started:
+      #
+      #   nftables-rules: src/mnl.c:66: Unable to initialize Netlink socket:
+      #                   Protocol not supported
+      #   nftables.service: Failed with result 'exit-code'
+      #   modprobe: FATAL: Module nf_tables not found
+      #
+      # The machine has been running with NO firewall since the switch to this
+      # kernel, on a box with a public-facing name. Built in rather than
+      # modular so the ruleset cannot lose a race with module loading at boot.
+      #
+      # The NFT_* set below is what the NixOS default ruleset actually uses:
+      # an inet table, ct state matching, counters, log, limit, reject and
+      # masquerade for NAT.
+      ./scripts/config --enable NF_TABLES
+      ./scripts/config --enable NF_TABLES_INET
+      ./scripts/config --enable NF_TABLES_NETDEV
+      ./scripts/config --enable NF_CONNTRACK
+      ./scripts/config --enable NF_NAT
+      ./scripts/config --enable NFT_CT
+      ./scripts/config --enable NFT_LOG
+      ./scripts/config --enable NFT_LIMIT
+      ./scripts/config --enable NFT_MASQ
+      ./scripts/config --enable NFT_NAT
+      ./scripts/config --enable NFT_REJECT
+      ./scripts/config --enable NFT_REJECT_INET
+      ./scripts/config --enable NFT_COMPAT
+      ./scripts/config --enable NF_REJECT_IPV4
+      ./scripts/config --enable NF_REJECT_IPV6
+      ./scripts/config --enable NF_DEFRAG_IPV4
+      ./scripts/config --enable NF_DEFRAG_IPV6
+      ./scripts/config --enable NF_CONNTRACK_FTP
+      ./scripts/config --enable NF_LOG_SYSLOG
+
       # ── Phase 4: NixOS requirements ─────────────────────────────────────────
       ./scripts/config --enable DEVTMPFS
       ./scripts/config --enable DEVTMPFS_MOUNT
@@ -1654,6 +1691,10 @@ let
       # simpledrm must be built in and must own the framebuffer, or there is no
       # KMS device and no desktop.
       USB_BUILTIN="$USB_BUILTIN DRM DRM_SIMPLEDRM SYSFB_SIMPLEFB"
+      # No firewall is a silent failure: nftables.service dies at boot and
+      # nothing else complains. Assert it rather than discover it in a journal
+      # sweep weeks later.
+      USB_BUILTIN="$USB_BUILTIN NF_TABLES NF_TABLES_INET NFT_CT NFT_REJECT"
       for opt in $USB_BUILTIN; do
         if ! grep -q "CONFIG_''${opt}=y" .config; then
           echo "FATAL: CONFIG_''${opt} must be built in (=y), not a module." >&2
