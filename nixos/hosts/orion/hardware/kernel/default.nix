@@ -980,6 +980,18 @@ let
       ./scripts/config --enable USB_XHCI_PLATFORM
       ./scripts/config --enable USB_CDNS_SUPPORT
       ./scripts/config --enable USB_CDNS_HOST
+      # USB_CDNS3 must be =y even though this board uses the USBSSP (cdnsp)
+      # controller rather than USBSS (cdns3). 04 inserts its USB_CDNSP symbol
+      # INSIDE mainline's "if USB_CDNS3 ... endif # USB_CDNS3" block, so
+      # USB_CDNSP inherits that dependency and is capped by it. USB_CDNS3
+      # defaults to m, which silently capped USB_CDNSP at m no matter what
+      # scripts/config said, and the build then reported "LD [M]":
+      #
+      #   FATAL: CONFIG_USB_CDNSP must be built in (=y), not a module.
+      #
+      # USB_CDNS3_HOST is the xHCI half; it is bool and needs USB=y.
+      ./scripts/config --enable USB_CDNS3
+      ./scripts/config --enable USB_CDNS3_HOST
       ./scripts/config --enable USB_CDNSP
       ./scripts/config --enable USB_CDNSP_SKY1
       # CIX PHYs: without these the usbss controllers get -EPROBE_DEFER forever
@@ -1129,7 +1141,7 @@ let
       # dependency is itself modular, and the first USB build did exactly
       # that -- kbuild reported "LD [M] cdnsp-sky1.o".
       USB_BUILTIN="USB USB_XHCI_HCD USB_XHCI_PLATFORM USB_CDNS_SUPPORT"
-      USB_BUILTIN="$USB_BUILTIN USB_CDNSP USB_CDNSP_SKY1 TYPEC"
+      USB_BUILTIN="$USB_BUILTIN USB_CDNS3 USB_CDNSP USB_CDNSP_SKY1 TYPEC"
       USB_BUILTIN="$USB_BUILTIN PHY_CIX_USB2 PHY_CIX_USB3 PHY_CIX_USBDP"
       USB_BUILTIN="$USB_BUILTIN USB_HID HID_GENERIC INPUT_EVDEV"
       for opt in $USB_BUILTIN; do
