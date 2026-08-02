@@ -75,6 +75,9 @@ in
       # waiting on a hotplug event -- a keyboard has to exist before the login
       # prompt, not after someone plugs something in.
       "cdnsp_sky1"
+      # NPU. Loaded at boot so /dev/aipu exists without anyone running
+      # modprobe -- the stress tooling expects it present.
+      "armchina_npu"
     ];
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
@@ -98,19 +101,11 @@ in
     # Wi-Fi is not in use here (wlan0 is down; the box is on wired enP3p1s0), so
     # blacklisting is the right trade for now. The real fix is to port the
     # wlan-en regulator support as an additive patch, at which point drop this.
-    # armchina_npu: TEMPORARY, first boot of the NPU driver only.
-    #
-    # Not because it is known bad — because it is untested on this board under
-    # DT, and every unbootable state this machine has hit came from a driver
-    # faulting inside boot-time probe (iwlwifi above; panthor in panthor_hw_init
-    # on a GPU still held in reset). Each one needed a physical power-cycle.
-    #
-    # The NPU touches the same three things that produced those faults: SMC
-    # power domains, an SCMI perf domain, and MMIO on a block that may not be
-    # powered. Blacklisted, it probes only when insmod'd over SSH, so a fault is
-    # a lost session instead of a trip to the machine.
-    #
-    # Remove this entry once it has bound cleanly at least once.
+    # armchina_npu is no longer blacklisted: it has bound cleanly and been
+    # exercised. The hardware identifies itself (Zhouyi V3, 3 cores, 4 TECs),
+    # allocates from its carveout, answers register reads and advances its tick
+    # counter, so the reason for the blacklist -- an untested driver touching
+    # SMC power domains and MMIO on a possibly-unpowered block -- is spent.
     # cdnsp-sky1 is NO LONGER blacklisted: USB now works end to end. The
     # keyboard, a card reader and two hubs all enumerate at 480 Mb/s.
     #
@@ -130,38 +125,24 @@ in
     blacklistedKernelModules = [
       "panfrost"
       "iwlwifi"
-      "armchina_npu"
     ];
 
-    # ── TEMPORARY: v7.2 boot diagnostics ──────────────────────────────────
-    # The 7.2.0-rc5 generation hangs with a completely black screen after the
-    # systemd-boot menu — no panic (it sat >4 min with panic=30 set, so it
-    # never oopsed), no journal, no pstore record.
+    # Boot diagnostics have been removed now that 7.2 boots and the hardware
+    # works. They were doing active harm at the end: earlycon + keep_bootcon +
+    # ignore_loglevel print every kernel message straight onto the EFI
+    # framebuffer, which is the same VT tuigreet draws the login prompt on, so
+    # the login screen was buried under a running commentary of USB probing.
     #
-    # Nothing was captured because all three capture paths are inert:
-    #   1. `quiet` (from soe/boot, consoleLogLevel = 4) suppresses early printk
-    #   2. no earlycon, so nothing prints before the PL011 driver probes
-    #   3. pstore_blk never registers — CONFIG_PSTORE_RAM wins the single
-    #      backend slot (dmesg: "Registered ramoops as persistent store
-    #      backend"), so the 16M disk-main-pstore partition is never written
+    # What they bought while they were here, for the record: the mailbox
+    # -EINVAL, the AUDSS SError, the iwlwifi SError, the reset-controller
+    # -EPROBE_DEFER cascade and the panthor abort were all found this way.
+    # Restore them (earlycon=efifb, keep_bootcon, ignore_loglevel,
+    # consoleLogLevel = 7) if a future boot goes dark again.
     #
-    # Remove this block, and restore `nowatchdog`, once 7.2 boots.
-    consoleLogLevel = lib.mkForce 7; # drops `quiet` from the cmdline
-    plymouth.enable = lib.mkForce false; # drops `splash`; stops plymouth hiding the console
+    # pstore keeps working regardless -- it is what captured the cdns_role_stop
+    # panic -- so a crash is still recorded without shouting at the console.
 
     kernelParams = [
-      # ── diagnostics (temporary — see note above) ──
-      # efifb earlycon writes straight to the EFI GOP framebuffer, so early
-      # boot messages appear on the monitor with no serial cable attached.
-      # CONFIG_EFI_EARLYCON=y is verified by the kernel validation gate.
-      "earlycon=efifb"
-      "keep_bootcon" # don't drop earlycon when the real console takes over
-      "ignore_loglevel" # print everything regardless of loglevel
-      # NOTE: `initcall_debug` removed. It emitted thousands of lines to the
-      # EFI framebuffer, which has no acceleration — every scroll copies the
-      # whole buffer. That made the log unreadable and the boot glacial without
-      # telling us where it dies. The on-disk boot markers below answer that.
-      # ── end diagnostics ──
 
       # NOTE: iteration 5 tried "initcall_blacklist=sysfb_init" here, on the
       # theory that simpledrm was stealing the EFI framebuffer and blanking the
@@ -182,10 +163,12 @@ in
       # instead of fb0, which is counterproductive while we are trying to keep
       # output on the EFI framebuffer.
       "acpi=off" # Force Device Tree by completely ignoring the EDK2 BIOS ACPI tables
-      # NOTE: `nowatchdog` temporarily removed. Despite the old comment it does
-      # NOT suppress platform watchdogs — it disables the kernel soft/hard
-      # lockup detectors, which is precisely what would print a stack trace for
-      # a silent hang like this one. Restore it once 7.2 boots.
+      # nowatchdog restored: it disables the kernel soft/hard lockup detectors.
+      # Those were wanted while chasing silent hangs -- they are what printed
+      # the "Sending NMI from CPU 0 to CPUs 7" trace for the USB boot lockup --
+      # but with the machine stable they are just a source of false positives
+      # under heavy load, which the UAT deliberately generates.
+      "nowatchdog"
       # Belt-and-suspenders panfrost blacklist via kernel param (NixOS option alone not sufficient)
       # iwlwifi included here as well as in blacklistedKernelModules: an SError
       # during iwl_pci_probe is fatal, so it must never load, not merely be
@@ -266,11 +249,16 @@ in
       # efi_pstore records — a 7.2 panic filled all 20 EFI dump variables with
       # nothing but sched-debug and Mem-Info, with the actual reason long gone.
       #
-      # panic_print = 0 keeps the banner and backtrace as the last thing printed
-      # and small enough to fit in pstore. panic = 0 halts instead of rebooting,
-      # so the screen can also be read. Restore both once 7.2 boots.
+      # panic_print = 0 stays: it keeps the banner and backtrace as the last
+      # thing printed and small enough to fit in pstore. That is what let the
+      # cdns_role_stop NULL deref be read back in full.
+      #
+      # panic = 30 restored (was 0 = halt). Halting was right while a human was
+      # standing at the machine reading the screen; now that crashes are
+      # recovered over SSH, rebooting itself after 30s is better -- the UAT can
+      # generate load unattended and the box comes back on its own.
       "kernel.panic_on_oops" = 1; # turn an oops into a captured panic
-      "kernel.panic" = 0;
+      "kernel.panic" = 30;
       "kernel.panic_print" = 0;
     };
 
@@ -300,44 +288,10 @@ in
       };
     };
   };
-
-  # ── TEMPORARY: v7.2 boot-stage markers ────────────────────────────────────
-  # ORION has NO working persistent crash capture:
-  #   - pstore_blk never registers (CONFIG_PSTORE_RAM holds the single backend slot)
-  #   - ramoops registers fine but does NOT survive a reboot — a pmsg marker
-  #     written to /dev/pmsg0 was gone after a clean software reboot, so the
-  #     firmware scrubs DRAM on every boot
-  # and the EFI framebuffer console scrolls far too fast to photograph.
-  #
-  # These markers record how far a boot got, straight onto the root filesystem.
-  # They survive DRAM loss, need no screen, and need no network — so after a
-  # rescue into the last known-good generation we can read exactly which stage
-  # the 7.2 kernel reached. Each records the kernel version, so a stale marker
-  # from a previous boot can never be mistaken for a fresh one.
-  #
-  # Remove this block once 7.2 boots.
-  boot.initrd.systemd.services.orion-boot-marker = {
-    description = "ORION: record that initrd mounted the root filesystem";
-    wantedBy = [ "initrd.target" ];
-    after = [ "sysroot.mount" ];
-    before = [ "initrd-switch-root.target" ];
-    unitConfig.DefaultDependencies = false;
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = ''
-      mkdir -p /sysroot/var/lib/orion-boot-markers
-      echo "stage=initrd-root-mounted kernel=$(uname -r) uptime=$(cut -d' ' -f1 /proc/uptime)" \
-        > /sysroot/var/lib/orion-boot-markers/01-initrd
-    '';
-  };
-
-  boot.postBootCommands = ''
-    mkdir -p /var/lib/orion-boot-markers
-    echo "stage=stage2-early kernel=$(uname -r) uptime=$(cut -d' ' -f1 /proc/uptime)" \
-      > /var/lib/orion-boot-markers/02-stage2-early
-  '';
+  # Boot-stage markers removed. They existed to tell "never reached stage 2"
+  # apart from "reached multi-user then died", back when 7.2 booted to a black
+  # screen with no console and no journal. The machine boots and the journal
+  # persists, so they are just files nobody reads now.
 
   environment.systemPackages = [
     cix-noe-umd
@@ -517,28 +471,6 @@ in
       '';
     };
 
-    # TEMPORARY (v7.2 debug): third boot-stage marker — see the marker block above.
-    # Captures interface and address state too, so a boot that succeeds but comes
-    # up with no NIC is distinguishable from one that never got here at all.
-    services.orion-boot-marker-late = {
-      description = "ORION: record that the boot reached multi-user";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "systemd-networkd.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-      script = ''
-        mkdir -p /var/lib/orion-boot-markers
-        {
-          echo "stage=multi-user kernel=$(uname -r) uptime=$(cut -d' ' -f1 /proc/uptime)"
-          echo "--- interfaces ---"
-          ${pkgs.iproute2}/bin/ip -o link || true
-          echo "--- addresses ---"
-          ${pkgs.iproute2}/bin/ip -o addr || true
-        } > /var/lib/orion-boot-markers/03-multi-user
-      '';
-    };
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
