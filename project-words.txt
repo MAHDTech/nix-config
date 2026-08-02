@@ -1983,3 +1983,12 @@ wdt
 mcfg
 macb
 pwms
+VPUEOF
+dptx
+linlon
+Linlon
+rpfilter
+APBCLK
+TPROXY
+CONNLIMIT
+NUMGEN

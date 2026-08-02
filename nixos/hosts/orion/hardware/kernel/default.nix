@@ -96,7 +96,10 @@ let
     # drivers/misc/Makefile, so there is nothing for upstream churn to conflict
     # with -- unlike 04/05, which patch files mainline actively rewrites.
     ./patches/08-npu-armchina.patch
-    # ./patches/09-vpu-linlon.patch
+    # Linlon V8 video codec. 63 files, 61 of them new under
+    # drivers/media/platform/linlon/; the only edits are the media/platform
+    # Kconfig and Makefile, so upstream churn has nothing to conflict with.
+    ./patches/09-vpu-linlon.patch
     # Watchdog and PWM, carved out of 11-misc-thermal-pwm.
     #
     # 11 as shipped is a grab-bag: 36 files, only 7 of them new, and 29 edits
@@ -1350,6 +1353,54 @@ let
         #
         # If this firmware does not implement 0x15 the node simply binds to
         # nothing -- one boot tells us either way.
+        # ── Additive: VPU node (09-vpu-linlon) ──────────────────────────────
+        # mainline's sky1.dtsi has no VPU, so the driver builds and binds to
+        # nothing. Lifted from downstream's vpu@14230000 with one change: the
+        # iommus property is dropped, because mainline has no SMMU nodes for
+        # the phandle to resolve to -- the same departure the NPU node needed.
+        #
+        # All six power domains and both resets are kept. The GPU taught us
+        # what omitting resets costs: the block stays held in reset and the
+        # first MMIO access takes an SError.
+        #
+        # VPU_DFS_DOMAIN_ID is downstream's name for SKY1_PERF_VPU (9), which
+        # is what mainline's sky1-power.h calls it. Everything else this node
+        # references is already upstream: CLK_TREE_VPU_APBCLK (67),
+        # SKY1_VPU_RESET_N (14), SKY1_VPU_RCSU_RESET_N (142).
+        echo "Adding the VPU node..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'VPUEOF'
+
+        &{/soc@0} {
+            vpu: vpu@14230000 {
+                compatible = "armChina,linlon-v8";
+                reg = <0x0 0x14230000 0x0 0x10000>,
+                      <0x0 0x14240000 0x0 0x10000>;
+                reg-names = "vpu_rcsu", "vpu";
+                interrupts = <GIC_SPI 326 IRQ_TYPE_LEVEL_HIGH 0>;
+                power-domains = <&smc_devpd SKY1_PD_VPU_TOP>,
+                                <&smc_devpd SKY1_PD_VPU_CORE0>,
+                                <&smc_devpd SKY1_PD_VPU_CORE1>,
+                                <&smc_devpd SKY1_PD_VPU_CORE2>,
+                                <&smc_devpd SKY1_PD_VPU_CORE3>,
+                                <&scmi_dvfs SKY1_PERF_VPU>;
+                power-domain-names = "vpu_top", "vpu_core0", "vpu_core1",
+                                      "vpu_core2", "vpu_core3", "perf";
+                clocks = <&scmi_clk CLK_TREE_VPU_APBCLK>;
+                clock-names = "vpu_clk";
+                resets = <&s5_syscon SKY1_VPU_RESET_N>,
+                          <&s5_syscon SKY1_VPU_RCSU_RESET_N>;
+                reset-names = "vpu_reset", "vpu_rcsu_reset";
+                status = "okay";
+            };
+        };
+        VPUEOF
+
+        if ! grep -q 'armChina,linlon-v8' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          echo "FATAL: VPU node missing from the board DTS." >&2
+          exit 1
+        fi
+        echo "VPU node added."
+
         # ── Additive: watchdog and PWM nodes (11a) ──────────────────────────
         # mainline's sky1.dtsi describes neither, so /dev/watchdog does not
         # exist and the two FCH PWM controllers are invisible.
@@ -1711,6 +1762,39 @@ let
       ./scripts/config --enable NF_DEFRAG_IPV6
       ./scripts/config --enable NF_CONNTRACK_FTP
       ./scripts/config --enable NF_LOG_SYSLOG
+      # The FIB expression. NixOS's generated ruleset opens with a reverse-path
+      # filter, and without these the whole ruleset is rejected at rule 18:
+      #   Error: Could not process rule: No such file or directory
+      #     fib saddr . mark oif exists accept
+      # nf_tables loading is not enough on its own -- every expression the
+      # ruleset uses has to be built too.
+      ./scripts/config --enable NFT_FIB
+      ./scripts/config --enable NFT_FIB_INET
+      ./scripts/config --enable NFT_FIB_IPV4
+      ./scripts/config --enable NFT_FIB_IPV6
+      ./scripts/config --enable NFT_FIB_NETDEV
+      ./scripts/config --enable NFT_CHAIN_NAT
+      ./scripts/config --enable NFT_SOCKET
+      ./scripts/config --enable NFT_TPROXY
+      ./scripts/config --enable NFT_QUEUE
+      ./scripts/config --enable NFT_CONNLIMIT
+      ./scripts/config --enable NFT_HASH
+      ./scripts/config --enable NFT_QUOTA
+      ./scripts/config --enable NFT_NUMGEN
+      ./scripts/config --enable NFT_REDIR
+      ./scripts/config --enable NFT_FLOW_OFFLOAD
+      ./scripts/config --enable NF_CONNTRACK_MARK
+      ./scripts/config --enable NF_NAT_MASQUERADE
+
+      # ── VPU (09-vpu-linlon) ─────────────────────────────────────────────────
+      # Hardware video encode/decode. Module rather than built in: it is not on
+      # the boot path, and a fault during probe should cost a modprobe rather
+      # than a boot -- the lesson from the USB lockup.
+      ./scripts/config --enable MEDIA_SUPPORT
+      ./scripts/config --enable MEDIA_PLATFORM_SUPPORT
+      ./scripts/config --enable V4L_MEM2MEM_DRIVERS
+      ./scripts/config --enable VIDEO_DEV
+      ./scripts/config --module VIDEO_LINLON
 
       # ── Watchdog and PWM (11a) ──────────────────────────────────────────────
       # SKY1_WATCHDOG gives /dev/watchdog, which the board has never had on
@@ -1851,7 +1935,7 @@ let
       # No firewall is a silent failure: nftables.service dies at boot and
       # nothing else complains. Assert it rather than discover it in a journal
       # sweep weeks later.
-      USB_BUILTIN="$USB_BUILTIN NF_TABLES NF_TABLES_INET NFT_CT NFT_REJECT"
+      USB_BUILTIN="$USB_BUILTIN NF_TABLES NF_TABLES_INET NFT_CT NFT_REJECT NFT_FIB_INET"
       for opt in $USB_BUILTIN; do
         if ! grep -q "CONFIG_''${opt}=y" .config; then
           echo "FATAL: CONFIG_''${opt} must be built in (=y), not a module." >&2
