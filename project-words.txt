@@ -1978,3 +1978,8 @@ muxed
 WLANEOF
 iomuxc
 pwren
+WDTEOF
+wdt
+mcfg
+macb
+pwms

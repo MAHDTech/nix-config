@@ -97,7 +97,18 @@ let
     # with -- unlike 04/05, which patch files mainline actively rewrites.
     ./patches/08-npu-armchina.patch
     # ./patches/09-vpu-linlon.patch
-    # ./patches/11-misc-thermal-pwm.patch
+    # Watchdog and PWM, carved out of 11-misc-thermal-pwm.
+    #
+    # 11 as shipped is a grab-bag: 36 files, only 7 of them new, and 29 edits
+    # to drivers that have nothing to do with this board's thermal or PWM
+    # hardware -- acpi/pci_mcfg.c, arch_topology.c, btrtl.c, i2c-cadence.c,
+    # macb_main.c, rtw89, spi-cadence and more. Applying it wholesale would
+    # overwrite mainline code we are deliberately using as-is, which is the
+    # exact failure mode this refactor exists to avoid.
+    #
+    # 11a is the subset we actually want: sky1_wdt.c, pwm-sky1.c, cix-fan.c and
+    # their three Kconfig/Makefile hooks. Nine files, applies to 7.2 clean.
+    ./patches/11a-watchdog-pwm-fan.patch
     # ./patches/12-soc-firmware-dsp.patch
   ];
 
@@ -704,6 +715,11 @@ let
         fi
         # GPIO_ACTIVE_HIGH for the WLAN regulator; mainline's board DTS pulls in
         # neither this nor the reset bindings.
+        # SW_TIMER_RST_FUNC_N lives in the non-s5 system-control header.
+        if ! grep -q 'reset/cix,sky1-system-control.h' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          sed -i '/#include "sky1-pinfunc.h"/a #include <dt-bindings/reset/cix,sky1-system-control.h>' \
+            arch/arm64/boot/dts/cix/sky1-orion-o6.dts
+        fi
         if ! grep -q 'dt-bindings/gpio/gpio.h' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
           sed -i '/#include "sky1-pinfunc.h"/a #include <dt-bindings/gpio/gpio.h>' \
             arch/arm64/boot/dts/cix/sky1-orion-o6.dts
@@ -1334,6 +1350,63 @@ let
         #
         # If this firmware does not implement 0x15 the node simply binds to
         # nothing -- one boot tells us either way.
+        # ── Additive: watchdog and PWM nodes (11a) ──────────────────────────
+        # mainline's sky1.dtsi describes neither, so /dev/watchdog does not
+        # exist and the two FCH PWM controllers are invisible.
+        #
+        # Everything they reference is already upstream: syscon@4160000 is
+        # what downstream calls src_fch, SW_TIMER_RST_FUNC_N is in
+        # cix,sky1-system-control.h, and the FCH timer clocks are in
+        # cix,sky1.h. Only the nodes were missing.
+        #
+        # The PWMs are enabled but nothing consumes them here -- see the note
+        # on SENSORS_CIX_FAN in configurePhase; this board's fan is on the EC.
+        # They are added anyway because a PWM controller with no consumer is
+        # harmless, and it makes the hardware visible for later use.
+        echo "Adding watchdog and PWM nodes..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'WDTEOF'
+
+        &{/soc@0} {
+            watchdog: watchdog@16003000 {
+                compatible = "cix,sky1-wdt";
+                reg = <0x0 0x16003000 0x0 0x1000>,
+                      <0x0 0x16008000 0x0 0x1000>;
+                interrupts = <GIC_SPI 376 IRQ_TYPE_LEVEL_HIGH 0>;
+                status = "okay";
+            };
+
+            pwm0: pwm@4110000 {
+                compatible = "cix,sky1-pwm";
+                reg = <0x0 0x04110000 0x0 0x1000>;
+                clocks = <&scmi_clk CLK_TREE_FCH_TIMER_APB>,
+                          <&scmi_clk CLK_TREE_FCH_TIMER_FUN>;
+                clock-names = "fch_pwm_apb_clk", "fch_pwm_func_clk";
+                resets = <&syscon SW_TIMER_RST_FUNC_N>;
+                reset-names = "func_reset";
+                #pwm-cells = <2>;
+                status = "okay";
+            };
+
+            pwm1: pwm@4111000 {
+                compatible = "cix,sky1-pwm";
+                reg = <0x0 0x04111000 0x0 0x1000>;
+                clocks = <&scmi_clk CLK_TREE_FCH_TIMER_APB>,
+                          <&scmi_clk CLK_TREE_FCH_TIMER_FUN>;
+                clock-names = "fch_pwm_apb_clk", "fch_pwm_func_clk";
+                resets = <&syscon SW_TIMER_RST_FUNC_N>;
+                reset-names = "func_reset";
+                #pwm-cells = <2>;
+                status = "okay";
+            };
+        };
+        WDTEOF
+
+        if ! grep -q 'cix,sky1-wdt' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          echo "FATAL: watchdog node missing from the board DTS." >&2
+          exit 1
+        fi
+        echo "Watchdog and PWM nodes added."
+
         # ── Additive: WLAN 3.3V rail ────────────────────────────────────────
         # The Intel AX210 is a combo card: Wi-Fi on PCIe, Bluetooth on USB. Both
         # misbehave, and they share one cause -- the card's 3.3V rail is switched
@@ -1638,6 +1711,22 @@ let
       ./scripts/config --enable NF_DEFRAG_IPV6
       ./scripts/config --enable NF_CONNTRACK_FTP
       ./scripts/config --enable NF_LOG_SYSLOG
+
+      # ── Watchdog and PWM (11a) ──────────────────────────────────────────────
+      # SKY1_WATCHDOG gives /dev/watchdog, which the board has never had on
+      # mainline. PWM_SKY1 drives the two FCH PWM controllers.
+      #
+      # SENSORS_CIX_FAN is deliberately NOT enabled: the fan on this board is
+      # not on a Sky1 PWM at all. Downstream wires it as
+      #     cix_fan: pwm-fan { pwms = <&cros_ec_pwm 0>; status = "disabled"; }
+      # i.e. through a ChromeOS EC, and disabled even there. There is no
+      # cros_ec in mainline's board DTS, so the driver would have nothing to
+      # bind to. The EC manages the fan on its own.
+      ./scripts/config --enable SKY1_WATCHDOG
+      ./scripts/config --enable PWM
+      ./scripts/config --enable PWM_SKY1
+      ./scripts/config --enable WATCHDOG
+      ./scripts/config --enable WATCHDOG_CORE
 
       # ── Phase 4: NixOS requirements ─────────────────────────────────────────
       ./scripts/config --enable DEVTMPFS

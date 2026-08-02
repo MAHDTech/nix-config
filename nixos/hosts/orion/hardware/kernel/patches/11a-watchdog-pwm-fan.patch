@@ -1,0 +1,965 @@
+diff --git a/drivers/hwmon/cix-fan.c b/drivers/hwmon/cix-fan.c
+new file mode 100644
+index 000000000..3b6766f89
+--- /dev/null
++++ b/drivers/hwmon/cix-fan.c
+@@ -0,0 +1,171 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * CIX Sky1 fan control driver
++ *
++ * Copyright (C) 2024 CIX Technology Group Co., Ltd.
++ *
++ * Fan control via ACPI methods on \_SB.HWMN device (CIXHA024):
++ *   SFMT - Set mute mode (fan off)
++ *   SFAT - Set auto mode (thermal controlled)
++ *   SFPF - Set performance mode (max speed)
++ *
++ * These methods delegate to \_SB.EC0 embedded controller.
++ */
++
++#include <linux/acpi.h>
++#include <linux/hwmon.h>
++#include <linux/module.h>
++#include <linux/platform_device.h>
++
++/* Fan mode maps to pwm_enable values */
++enum cix_fan_mode {
++	CIX_FAN_MODE_OFF = 0,	/* SFMT - mute/off */
++	CIX_FAN_MODE_FULL = 1,	/* SFPF - performance/full speed */
++	CIX_FAN_MODE_AUTO = 2,	/* SFAT - auto/thermal controlled */
++};
++
++struct cix_fan_data {
++	struct device *dev;
++	acpi_handle handle;
++	struct mutex lock;
++	int pwm_enable;		/* 0=off, 1=full, 2=auto */
++};
++
++static int cix_fan_set_mode(struct cix_fan_data *data, int mode)
++{
++	const char *method;
++	acpi_status status;
++
++	switch (mode) {
++	case CIX_FAN_MODE_OFF:
++		method = "SFMT";
++		break;
++	case CIX_FAN_MODE_FULL:
++		method = "SFPF";
++		break;
++	case CIX_FAN_MODE_AUTO:
++		method = "SFAT";
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	status = acpi_evaluate_object(data->handle, (char *)method, NULL, NULL);
++	if (ACPI_FAILURE(status)) {
++		dev_dbg(data->dev, "ACPI method %s failed: %s\n",
++			method, acpi_format_exception(status));
++		return -EIO;
++	}
++
++	data->pwm_enable = mode;
++	return 0;
++}
++
++static int cix_fan_read(struct device *dev, enum hwmon_sensor_types type,
++			u32 attr, int channel, long *val)
++{
++	struct cix_fan_data *data = dev_get_drvdata(dev);
++
++	if (type != hwmon_pwm || attr != hwmon_pwm_enable)
++		return -EOPNOTSUPP;
++
++	mutex_lock(&data->lock);
++	*val = data->pwm_enable;
++	mutex_unlock(&data->lock);
++
++	return 0;
++}
++
++static int cix_fan_write(struct device *dev, enum hwmon_sensor_types type,
++			 u32 attr, int channel, long val)
++{
++	struct cix_fan_data *data = dev_get_drvdata(dev);
++	int ret;
++
++	if (type != hwmon_pwm || attr != hwmon_pwm_enable)
++		return -EOPNOTSUPP;
++
++	if (val < 0 || val > 2)
++		return -EINVAL;
++
++	mutex_lock(&data->lock);
++	ret = cix_fan_set_mode(data, val);
++	mutex_unlock(&data->lock);
++
++	return ret;
++}
++
++static umode_t cix_fan_is_visible(const void *drvdata,
++				  enum hwmon_sensor_types type,
++				  u32 attr, int channel)
++{
++	if (type == hwmon_pwm && attr == hwmon_pwm_enable)
++		return 0644;
++
++	return 0;
++}
++
++static const struct hwmon_channel_info * const cix_fan_info[] = {
++	HWMON_CHANNEL_INFO(pwm, HWMON_PWM_ENABLE),
++	NULL
++};
++
++static const struct hwmon_ops cix_fan_hwmon_ops = {
++	.is_visible = cix_fan_is_visible,
++	.read = cix_fan_read,
++	.write = cix_fan_write,
++};
++
++static const struct hwmon_chip_info cix_fan_chip_info = {
++	.ops = &cix_fan_hwmon_ops,
++	.info = cix_fan_info,
++};
++
++static int cix_fan_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct cix_fan_data *data;
++	struct device *hwmon_dev;
++	acpi_handle handle;
++
++	handle = ACPI_HANDLE(dev);
++	if (!handle)
++		return -ENODEV;
++
++	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++
++	data->dev = dev;
++	data->handle = handle;
++	data->pwm_enable = CIX_FAN_MODE_AUTO;
++	mutex_init(&data->lock);
++
++	hwmon_dev = devm_hwmon_device_register_with_info(dev, "cix_fan", data,
++							 &cix_fan_chip_info,
++							 NULL);
++	if (IS_ERR(hwmon_dev))
++		return PTR_ERR(hwmon_dev);
++
++	dev_info(dev, "CIX fan control initialized\n");
++	return 0;
++}
++
++static const struct acpi_device_id cix_fan_acpi_match[] = {
++	{ "CIXHA024", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(acpi, cix_fan_acpi_match);
++
++static struct platform_driver cix_fan_driver = {
++	.probe = cix_fan_probe,
++	.driver = {
++		.name = "cix-fan",
++		.acpi_match_table = cix_fan_acpi_match,
++	},
++};
++module_platform_driver(cix_fan_driver);
++
++MODULE_AUTHOR("CIX Technology Group Co., Ltd.");
++MODULE_DESCRIPTION("CIX Sky1 fan control driver");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/hwmon/Kconfig b/drivers/hwmon/Kconfig
+index 2bfbcc033..d016d3ffc 100644
+--- a/drivers/hwmon/Kconfig
++++ b/drivers/hwmon/Kconfig
+@@ -489,6 +489,19 @@ config SENSORS_CHIPCAP2
+ 	  To compile this driver as a module, choose M here: the module
+ 	  will be called chipcap2.
+
++config SENSORS_CIX_FAN
++	tristate "CIX Sky1 fan control"
++	depends on ACPI
++	help
++	  If you say yes here you get support for fan mode control on
++	  CIX Sky1 based systems (such as Radxa Orion O6) via ACPI.
++
++	  Supports mute (off), auto (thermal controlled), and performance
++	  (full speed) modes through standard hwmon pwm_enable interface.
++
++	  To compile this driver as a module, choose M here: the module
++	  will be called cix-fan.
++
+ config SENSORS_CORSAIR_CPRO
+ 	tristate "Corsair Commander Pro controller"
+ 	depends on HID
+diff --git a/drivers/hwmon/Makefile b/drivers/hwmon/Makefile
+index 63effc0ab..9a668fc2c 100644
+--- a/drivers/hwmon/Makefile
++++ b/drivers/hwmon/Makefile
+@@ -61,6 +61,7 @@ obj-$(CONFIG_SENSORS_ATXP1)	+= atxp1.o
+ obj-$(CONFIG_SENSORS_AXI_FAN_CONTROL) += axi-fan-control.o
+ obj-$(CONFIG_SENSORS_CGBC)	+= cgbc-hwmon.o
+ obj-$(CONFIG_SENSORS_CHIPCAP2) += chipcap2.o
++obj-$(CONFIG_SENSORS_CIX_FAN)	+= cix-fan.o
+ obj-$(CONFIG_SENSORS_CORETEMP)	+= coretemp.o
+ obj-$(CONFIG_SENSORS_CORSAIR_CPRO) += corsair-cpro.o
+ obj-$(CONFIG_SENSORS_CORSAIR_PSU) += corsair-psu.o
+diff --git a/drivers/pwm/Kconfig b/drivers/pwm/Kconfig
+index e8886a9b6..45592c34b 100644
+--- a/drivers/pwm/Kconfig
++++ b/drivers/pwm/Kconfig
+@@ -854,7 +854,16 @@ config PWM_XILINX
+ 	  To compile this driver as a module, choose M here: the module
+ 	  will be called pwm-xilinx.
+
+- config RUST_PWM_ABSTRACTIONS
++config PWM_SKY1
++	tristate "CIX Sky1 PWM support"
++	depends on ARCH_CIX || COMPILE_TEST
++	help
++	  PWM driver support for CIX Sky1 SoCs.
++
++	  To compile this driver as a module, choose M here: the module
++	  will be called pwm-sky1.
++
++config RUST_PWM_ABSTRACTIONS
+ 	bool
+ 	depends on RUST
+ 	help
+diff --git a/drivers/pwm/Makefile b/drivers/pwm/Makefile
+index 5630a521a..20a93ab68 100644
+--- a/drivers/pwm/Makefile
++++ b/drivers/pwm/Makefile
+@@ -78,3 +78,4 @@ obj-$(CONFIG_PWM_TWL_LED)	+= pwm-twl-led.o
+ obj-$(CONFIG_PWM_VISCONTI)	+= pwm-visconti.o
+ obj-$(CONFIG_PWM_VT8500)	+= pwm-vt8500.o
+ obj-$(CONFIG_PWM_XILINX)	+= pwm-xilinx.o
++obj-$(CONFIG_PWM_SKY1) += pwm-sky1.o
+diff --git a/drivers/pwm/pwm-sky1.c b/drivers/pwm/pwm-sky1.c
+new file mode 100644
+index 000000000..df878748d
+--- /dev/null
++++ b/drivers/pwm/pwm-sky1.c
+@@ -0,0 +1,250 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * simple driver for PWM (Pulse Width Modulator) controller
++ * Ported to mainline 6.18+ PWM API
++ */
++
++#include <linux/bitfield.h>
++#include <linux/bitops.h>
++#include <linux/clk.h>
++#include <linux/delay.h>
++#include <linux/err.h>
++#include <linux/io.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/pwm.h>
++#include <linux/sysfb.h>
++#include <linux/slab.h>
++#include <linux/acpi.h>
++#include <linux/reset.h>
++#include <linux/pm_runtime.h>
++#include <linux/pm.h>
++#include <linux/pinctrl/consumer.h>
++
++/* PWM registers */
++#define TCTL		0x0024	/* Control register for PWM */
++#define PWMH_RW		0x0028	/* Contains PWM_HIGH_TIME value */
++#define PWMPRD_RW	0x002C	/* Contains PWM_PERIOD value */
++
++/* Timer function mode */
++#define PWM_MODE	0x3	/* PWM mode */
++
++/* TCTL register bits */
++#define ENABLE		(1 << 17)	/* Enable PWM */
++#define ENPWM		(1 << 14)	/* Enable PWM output */
++
++struct pwm_sky1_chip {
++	struct clk *pclk;
++	struct clk *tclk;
++	void __iomem *mmio_base;
++	struct reset_control *func_reset;
++};
++
++static inline struct pwm_sky1_chip *to_pwm_sky1_chip(struct pwm_chip *chip)
++{
++	return pwmchip_get_drvdata(chip);
++}
++
++static int pwm_sky1_clk_prepare_enable(struct pwm_sky1_chip *sky1)
++{
++	int ret;
++
++	ret = clk_prepare_enable(sky1->pclk);
++	if (ret)
++		return ret;
++
++	ret = clk_prepare_enable(sky1->tclk);
++	if (ret) {
++		clk_disable_unprepare(sky1->pclk);
++		return ret;
++	}
++
++	return 0;
++}
++
++static void pwm_sky1_clk_disable_unprepare(struct pwm_sky1_chip *sky1)
++{
++	clk_disable_unprepare(sky1->tclk);
++	clk_disable_unprepare(sky1->pclk);
++}
++
++static int pwm_sky1_get_state(struct pwm_chip *chip, struct pwm_device *pwm,
++			      struct pwm_state *state)
++{
++	struct pwm_sky1_chip *sky1 = to_pwm_sky1_chip(chip);
++	u64 clk_rate;
++	u32 cr, pwmh, pwmprd;
++
++	cr = readl(sky1->mmio_base + TCTL);
++	pwmh = readl(sky1->mmio_base + PWMH_RW);
++	pwmprd = readl(sky1->mmio_base + PWMPRD_RW);
++
++	clk_rate = clk_get_rate(sky1->tclk);
++
++	if (clk_rate)
++		state->period = DIV_ROUND_UP_ULL(1000000000ULL * pwmprd, clk_rate);
++	else
++		state->period = 0;
++
++	if (clk_rate)
++		state->duty_cycle = DIV_ROUND_UP_ULL(1000000000ULL * pwmh, clk_rate);
++	else
++		state->duty_cycle = 0;
++
++	state->enabled = (cr & ENABLE) && (cr & ENPWM);
++	state->polarity = PWM_POLARITY_NORMAL;
++
++	return 0;
++}
++
++static int pwm_sky1_apply(struct pwm_chip *chip, struct pwm_device *pwm,
++			  const struct pwm_state *state)
++{
++	struct pwm_sky1_chip *sky1 = to_pwm_sky1_chip(chip);
++	u64 clk_rate;
++	unsigned long pwmh, pwmprd;
++	u32 cr;
++
++	clk_rate = clk_get_rate(sky1->tclk);
++	if (!clk_rate)
++		return -EINVAL;
++
++	/* Disable PWM for configure */
++	cr = readl(sky1->mmio_base + TCTL);
++	cr &= ~(ENPWM | ENABLE);
++	writel(cr, sky1->mmio_base + TCTL);
++
++	pwmprd = DIV_ROUND_UP_ULL(clk_rate * state->period, 1000000000ULL);
++	pwmh = DIV_ROUND_UP_ULL(clk_rate * state->duty_cycle, 1000000000ULL);
++
++	writel(pwmprd, sky1->mmio_base + PWMPRD_RW);
++	writel(pwmh, sky1->mmio_base + PWMH_RW);
++
++	if (state->enabled) {
++		cr = readl(sky1->mmio_base + TCTL);
++		cr |= PWM_MODE | ENPWM | ENABLE;
++		writel(cr, sky1->mmio_base + TCTL);
++	}
++
++	return 0;
++}
++
++static const struct pwm_ops pwm_sky1_ops = {
++	.apply = pwm_sky1_apply,
++	.get_state = pwm_sky1_get_state,
++};
++
++static int __maybe_unused sky1_pwm_suspend(struct device *dev)
++{
++	struct pwm_chip *chip = dev_get_drvdata(dev);
++	struct pwm_sky1_chip *sky1 = to_pwm_sky1_chip(chip);
++
++	pwm_sky1_clk_disable_unprepare(sky1);
++	pinctrl_pm_select_sleep_state(dev);
++
++	return 0;
++}
++
++static int __maybe_unused sky1_pwm_resume(struct device *dev)
++{
++	struct pwm_chip *chip = dev_get_drvdata(dev);
++	struct pwm_sky1_chip *sky1 = to_pwm_sky1_chip(chip);
++	int ret;
++
++	ret = pwm_sky1_clk_prepare_enable(sky1);
++	if (ret)
++		return ret;
++
++	pinctrl_pm_select_default_state(dev);
++
++	return 0;
++}
++
++static SIMPLE_DEV_PM_OPS(sky1_pwm_dev_ops, sky1_pwm_suspend, sky1_pwm_resume);
++
++static const struct of_device_id pwm_sky1_dt_ids[] = {
++	{ .compatible = "cix,sky1-pwm", },
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(of, pwm_sky1_dt_ids);
++
++static const struct acpi_device_id pwm_sky1_acpi_match[] = {
++	{ "CIXH2011", 0 },
++	{ },
++};
++MODULE_DEVICE_TABLE(acpi, pwm_sky1_acpi_match);
++
++static int pwm_sky1_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct pwm_sky1_chip *sky1;
++	struct pwm_chip *chip;
++	int ret;
++	u32 pwmcr;
++
++	chip = devm_pwmchip_alloc(dev, 1, sizeof(*sky1));
++	if (IS_ERR(chip))
++		return PTR_ERR(chip);
++
++	sky1 = to_pwm_sky1_chip(chip);
++
++	sky1->pclk = devm_clk_get(dev, "fch_pwm_apb_clk");
++	if (IS_ERR(sky1->pclk))
++		return dev_err_probe(dev, PTR_ERR(sky1->pclk),
++				     "failed to get apb clock\n");
++
++	sky1->tclk = devm_clk_get(dev, "fch_pwm_func_clk");
++	if (IS_ERR(sky1->tclk))
++		return dev_err_probe(dev, PTR_ERR(sky1->tclk),
++				     "failed to get func clock\n");
++
++	sky1->func_reset = devm_reset_control_get_optional_shared(dev, "func_reset");
++	if (IS_ERR(sky1->func_reset))
++		return dev_err_probe(dev, PTR_ERR(sky1->func_reset),
++				     "failed to get reset\n");
++
++	sky1->mmio_base = devm_platform_ioremap_resource(pdev, 0);
++	if (IS_ERR(sky1->mmio_base))
++		return PTR_ERR(sky1->mmio_base);
++
++	chip->ops = &pwm_sky1_ops;
++	platform_set_drvdata(pdev, chip);
++
++	ret = pwm_sky1_clk_prepare_enable(sky1);
++	if (ret)
++		return ret;
++
++	pwmcr = readl(sky1->mmio_base + TCTL);
++
++	/* Check if PWM was already initialized by UEFI */
++	if (sysfb_primary_display.screen.lfb_linelength && (pwmcr & (PWM_MODE | ENABLE | ENPWM)))
++		return devm_pwmchip_add(dev, chip);
++
++	/* Configure timer to PWM mode */
++	writel(PWM_MODE, sky1->mmio_base + TCTL);
++
++	return devm_pwmchip_add(dev, chip);
++}
++
++static void pwm_sky1_remove(struct platform_device *pdev)
++{
++	/* devm handles cleanup */
++}
++
++static struct platform_driver sky1_pwm_driver = {
++	.driver = {
++		.name = "pwm-sky1",
++		.of_match_table = pwm_sky1_dt_ids,
++		.acpi_match_table = ACPI_PTR(pwm_sky1_acpi_match),
++		.pm = &sky1_pwm_dev_ops,
++	},
++	.probe = pwm_sky1_probe,
++	.remove = pwm_sky1_remove,
++};
++module_platform_driver(sky1_pwm_driver);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Jerry Zhu <jerry.zhu@cixtech.com>");
++MODULE_DESCRIPTION("CIX Sky1 PWM driver");
+diff --git a/drivers/watchdog/Kconfig b/drivers/watchdog/Kconfig
+index 08cb8612d..1584362c8 100644
+--- a/drivers/watchdog/Kconfig
++++ b/drivers/watchdog/Kconfig
+@@ -2352,4 +2352,14 @@ config GUNYAH_WATCHDOG
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called gunyah_wdt.
+
++config SKY1_WATCHDOG
++	tristate "CIX Sky1 SoC watchdog"
++	depends on ARCH_CIX || (ARM64 && COMPILE_TEST)
++	select WATCHDOG_CORE
++	help
++	  This option enables support for the watchdog timer on CIX Sky1 SoCs.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called sky1_wdt.
++
+ endif # WATCHDOG
+diff --git a/drivers/watchdog/Makefile b/drivers/watchdog/Makefile
+index bc1d52220..8d6790b7f 100644
+--- a/drivers/watchdog/Makefile
++++ b/drivers/watchdog/Makefile
+@@ -241,3 +241,4 @@ obj-$(CONFIG_MENZ069_WATCHDOG) += menz69_wdt.o
+ obj-$(CONFIG_RAVE_SP_WATCHDOG) += rave-sp-wdt.o
+ obj-$(CONFIG_STPMIC1_WATCHDOG) += stpmic1_wdt.o
+ obj-$(CONFIG_SL28CPLD_WATCHDOG) += sl28cpld_wdt.o
++obj-$(CONFIG_SKY1_WATCHDOG) += sky1_wdt.o
+diff --git a/drivers/watchdog/sky1_wdt.c b/drivers/watchdog/sky1_wdt.c
+new file mode 100644
+index 000000000..0c40e2b5c
+--- /dev/null
++++ b/drivers/watchdog/sky1_wdt.c
+@@ -0,0 +1,431 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#include <linux/clk.h>
++#include <linux/delay.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/iopoll.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/sched.h>
++#include <linux/of.h>
++#include <linux/of_device.h>
++#include <linux/platform_device.h>
++#include <linux/regmap.h>
++#include <linux/watchdog.h>
++#include <linux/acpi.h>
++#ifdef CONFIG_CIX_DST
++#include <mntn_public_interface.h>
++#include <linux/soc/cix/util.h>
++#endif
++
++#define DRIVER_NAME "sky1-wdt"
++
++/* Control frame registers */
++#define SKY1_WDT_WCS_RW         0x000   /* Watchdog control and status register */
++#define SKY1_WDT_WCS_ENABLE     BIT(0)  /* Watchdog Enable */
++#define SKY1_WDT_WCS_WS0        BIT(1)  /* Watchdog Signal0 */
++#define SKY1_WDT_WCS_WS1        BIT(2)  /* Watchdog Signal1 */
++
++#define SKY1_WDT_WOR_LOW_RW     0x008   /* Watchdog offset register */
++#define SKY1_WDT_WOR_HIGH_RW    0x00C   /* Watchdog offset register */
++#define SKY1_WDT_WCV_LOW_RW     0x010   /* Watchdog compare value */
++#define SKY1_WDT_WCV_HIGH_RW    0x014   /* Watchdog compare value */
++
++/* Refresh frame registers */
++#define SKY1_WDT_WRR_RW         0x000  /* Watchdog refresh register */
++#define SKY1_WDT_WRR_REFRESH    BIT(0)  /* Explicit watchdog refresh ocurrs */
++#define SKY1_WDT_W_IID_RO       0xFCC   /* W_IIDR is a 32-bit read-only register */
++
++#define SKY1_WDT_MAX_TIME       0x44B82
++#define SKY1_WDT_DEFAULT_TIME   60      /* in seconds */
++#define WDG_FEED_MOMENT_ADJUST  1
++
++#define MSECS_TO_JIFFIES	1000
++#define WDOG_SEC_TO_COUNT	1000000000 /* sky1 global watchdog frequency 1G */
++
++struct sky1_wdt_device {
++	struct watchdog_device wdd;
++	struct regmap *regmap_ctrl;
++	struct regmap *regmap_fresh;
++	unsigned int kick_time;
++	struct delayed_work sky1_wdt_delayed_work;
++	struct workqueue_struct *sky1_wdt_wq;
++};
++
++static bool nowayout = WATCHDOG_NOWAYOUT;
++module_param(nowayout, bool, 0);
++MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
++			__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
++
++static unsigned int timeout;
++module_param(timeout, uint, 0);
++MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
++			__MODULE_STRING(SKY1_WDT_DEFAULT_TIME) ")");
++
++static const struct watchdog_info sky1_wdt_info = {
++	.options  = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
++	.identity = "sky1, watchdog",
++};
++
++static int sky1_wdt_restart(struct watchdog_device *wdd,
++			  unsigned long action, void *data)
++{
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++	u32 wcs_val;
++
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, &wcs_val);
++	if (!wcs_val & SKY1_WDT_WCS_ENABLE) {
++		wcs_val |= SKY1_WDT_WCS_ENABLE;
++		regmap_write(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, wcs_val);
++	}
++
++	/*
++	 * CompareValue = SystemCounter[63:0] + ZeroExtend(WatchdogOffsetValue)
++	 * TimeoutRefresh = SystemCounter > CompareValue.
++	 */
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WOR_LOW_RW, 0);
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WOR_HIGH_RW, 0);
++
++	/* wait for reset to assert... */
++	mdelay(500);
++
++	return 0;
++}
++
++static void __sky1_wdt_set_timeout(struct watchdog_device *wdd, unsigned int timeout)
++{
++	u32 wor_low_val, wor_high_val;
++	u64 wor_val;
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WOR_LOW_RW, &wor_low_val);
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WOR_HIGH_RW, &wor_high_val);
++	wor_val = wor_high_val;
++	wor_val = wor_val << 32 | wor_low_val;
++
++	wor_val +=(u64)(timeout) * WDOG_SEC_TO_COUNT;
++	wor_low_val = (u32)wor_val;
++	wor_high_val = wor_val >> 32;
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WOR_LOW_RW, wor_low_val);
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WOR_HIGH_RW, wor_high_val);
++}
++
++static inline void sky1_wdt_setup(struct watchdog_device *wdd)
++{
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++	u32 wcs_val;
++
++	/* Keep Watchdog Disabled */
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, &wcs_val);
++	wcs_val &= ~(SKY1_WDT_WCS_ENABLE|SKY1_WDT_WCS_WS0|SKY1_WDT_WCS_WS1);
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, wcs_val);
++
++	/* Strip the old watchdog Time-Out value */
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WOR_LOW_RW, 0);
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WOR_HIGH_RW, 0);
++
++	/* Set the watchdog's Time-Out value */
++	__sky1_wdt_set_timeout(wdd, wdd->timeout);
++
++	/* enable the watchdog */
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, &wcs_val);
++	wcs_val |= SKY1_WDT_WCS_ENABLE;
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, wcs_val);
++}
++
++static inline bool sky1_wdt_is_running(struct sky1_wdt_device *wdt)
++{
++	u32 val;
++
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, &val);
++
++	return val & SKY1_WDT_WCS_ENABLE;
++}
++
++static int sky1_wdt_ping(struct watchdog_device *wdd)
++{
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++
++	dev_dbg(wdd->parent, "%s\n", __func__);
++
++	/*
++	 * An explicit watchdog refresh occurs :
++	 * 1. Watchdog Refresh Register is written.
++	 * 2. Watchdog Offset Register is written.
++	 * 3. Watchdog Control and Status register is written.
++	 */
++	regmap_write(wdt->regmap_fresh, SKY1_WDT_WRR_RW, SKY1_WDT_WRR_REFRESH);
++
++	return 0;
++}
++
++static int sky1_wdt_set_timeout(struct watchdog_device *wdd,
++				  unsigned int timeout)
++{
++	unsigned int actual;
++
++	dev_dbg(wdd->parent, "%s timeout: %d sec\n", __func__, timeout);
++
++	actual = min(timeout, (unsigned int)(SKY1_WDT_MAX_TIME));
++	__sky1_wdt_set_timeout(wdd, actual);
++	wdd->timeout = actual;
++	return 0;
++}
++
++/* disable watchdog timers reset */
++static int wdt_disable(struct watchdog_device *wdd)
++{
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++	u32 wcs_val;
++
++	/* Keep Watchdog Disabled */
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, &wcs_val);
++	wcs_val &= ~SKY1_WDT_WCS_ENABLE;
++	regmap_write(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, wcs_val);
++
++	return 0;
++}
++
++static void sky1_wdt_mond(struct work_struct *work)
++{
++	struct sky1_wdt_device *wdt = NULL;
++
++	wdt = container_of(work, struct sky1_wdt_device, sky1_wdt_delayed_work.work);
++	sky1_wdt_ping(&wdt->wdd);
++
++	if (cpu_online(0))
++		queue_delayed_work_on(0, wdt->sky1_wdt_wq,
++					&wdt->sky1_wdt_delayed_work,
++					msecs_to_jiffies(wdt->kick_time * MSECS_TO_JIFFIES));
++	else
++		queue_delayed_work(wdt->sky1_wdt_wq,
++					&wdt->sky1_wdt_delayed_work,
++					msecs_to_jiffies(wdt->kick_time * MSECS_TO_JIFFIES));
++}
++
++static int sky1_wdt_start(struct watchdog_device *wdd)
++{
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++
++	dev_dbg(wdd->parent, "%s\n", __func__);
++	if (sky1_wdt_is_running(wdt))
++		return sky1_wdt_set_timeout(wdd, wdd->timeout);
++
++	sky1_wdt_setup(wdd);
++	set_bit(WDOG_HW_RUNNING, &wdd->status);
++
++	return sky1_wdt_ping(wdd);
++}
++
++static const struct watchdog_ops sky1_wdt_ops = {
++	.owner = THIS_MODULE,
++	.start = sky1_wdt_start,
++	.ping  = sky1_wdt_ping,
++	.set_timeout = sky1_wdt_set_timeout,
++	.restart = sky1_wdt_restart,
++};
++
++static const struct regmap_config sky1_wdt_regmap_config = {
++	.reg_bits = 32,
++	.reg_stride = 4,
++	.val_bits = 32,
++};
++
++static int sky1_wdt_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct sky1_wdt_device *wdt;
++	struct watchdog_device *wdd;
++	void __iomem *base_ctrl, *base_fresh;
++	u32 val;
++	int ret;
++
++#ifdef CONFIG_CIX_DST
++	if (check_himntn(HIMNTN_AP_WDT) == 0) {
++		dev_err(dev, "ap watchdog is closed in nv!!!\n");
++		return -1;
++	}
++#endif
++	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
++	if (!wdt)
++		return -ENOMEM;
++
++	/* This is the watchdog control base.*/
++	base_ctrl = devm_platform_ioremap_resource(pdev, 0);
++	if (IS_ERR(base_ctrl))
++		return PTR_ERR(base_ctrl);
++
++	wdt->regmap_ctrl = devm_regmap_init_mmio_clk(dev, NULL,
++			base_ctrl, &sky1_wdt_regmap_config);
++	if (IS_ERR(wdt->regmap_ctrl)) {
++		dev_err(dev, "regmap ctrl init failed\n");
++		return PTR_ERR(wdt->regmap_ctrl);
++	}
++
++	/* This is the watchdog refresh base.*/
++	base_fresh = devm_platform_ioremap_resource(pdev, 1);
++	if (IS_ERR(base_fresh))
++		return PTR_ERR(base_fresh);
++
++	wdt->regmap_fresh = devm_regmap_init_mmio_clk(dev, NULL,
++			base_fresh, &sky1_wdt_regmap_config);
++	if (IS_ERR(wdt->regmap_fresh)) {
++		dev_err(dev, "regmap fresh init failed\n");
++		return PTR_ERR(wdt->regmap_fresh);
++	}
++
++	/* Initialize struct watchdog_device. */
++	wdd = &wdt->wdd;
++	wdd->parent = dev;
++	wdd->info = &sky1_wdt_info;
++	wdd->ops = &sky1_wdt_ops;
++	wdd->min_timeout = 1;
++	wdd->timeout = SKY1_WDT_DEFAULT_TIME;
++	wdd->max_hw_heartbeat_ms = SKY1_WDT_MAX_TIME;
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, &val);
++	wdd->bootstatus = val & SKY1_WDT_WCS_WS0 ? WDIOF_CARDRESET : 0;
++
++	platform_set_drvdata(pdev, wdd);
++	watchdog_set_drvdata(wdd, wdt);
++	watchdog_set_nowayout(wdd, nowayout);
++	watchdog_set_restart_priority(wdd, 128);
++	watchdog_init_timeout(wdd, timeout, dev);
++
++	if ((wdd->timeout >> 1) < WDG_FEED_MOMENT_ADJUST)
++		wdt->kick_time = (wdd->timeout >> 1) - 1;
++	else
++		wdt->kick_time = ((wdd->timeout >> 1) - 1) / WDG_FEED_MOMENT_ADJUST; /* minus 1 from the total */
++
++	INIT_DELAYED_WORK(&wdt->sky1_wdt_delayed_work, sky1_wdt_mond);
++	wdt->sky1_wdt_wq = alloc_workqueue("wdt_wq", WQ_MEM_RECLAIM | WQ_HIGHPRI, 1);
++	if (wdt->sky1_wdt_wq == NULL) {
++		dev_err(dev, "alloc workqueue failed\n");
++		ret = -ENOMEM;
++		goto probe_fail;
++	}
++
++	ret = devm_watchdog_register_device(dev, wdd);
++	if (ret) {
++		dev_err(dev, "watchdog_register_device() failed: %d\n", ret);
++		goto workqueue_destroy;
++	}
++
++	if (cpu_online(0))
++		queue_delayed_work_on(0, wdt->sky1_wdt_wq, &wdt->sky1_wdt_delayed_work, 0);
++	else
++		queue_delayed_work(wdt->sky1_wdt_wq, &wdt->sky1_wdt_delayed_work, 0);
++
++	ret = sky1_wdt_start(wdd);
++	if (ret)
++		return ret;
++	regmap_read(wdt->regmap_ctrl, SKY1_WDT_WCS_RW, &val);
++
++	dev_info(dev, "registeration successful\n");
++
++	return 0;
++
++workqueue_destroy:
++	if (wdt->sky1_wdt_wq != NULL) {
++		destroy_workqueue(wdt->sky1_wdt_wq);
++		wdt->sky1_wdt_wq = NULL;
++	}
++probe_fail:
++	dev_err(dev, "Probe Failled!!!\n");
++	return ret;
++}
++
++static void sky1_wdt_shutdown(struct platform_device *pdev)
++{
++	struct watchdog_device *wdd = platform_get_drvdata(pdev);
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++
++	if (sky1_wdt_is_running(wdt)) {
++		/*
++		 * We are running, configure max timeout before reboot
++		 * will take place.
++		 */
++		__sky1_wdt_set_timeout(wdd, SKY1_WDT_MAX_TIME);
++		sky1_wdt_ping(wdd);
++		dev_crit(&pdev->dev, "Device shutdown: Expect reboot!\n");
++	}
++}
++
++/* Disable watchdog if it is active */
++static int sky1_wdt_suspend(struct device *dev)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++
++	/* The watchdog IP block is running */
++	if (sky1_wdt_is_running(wdt)) {
++		/*
++		 * Don't update wdd->timeout, we'll restore the current value
++		 * during resume.
++		 */
++		__sky1_wdt_set_timeout(wdd, SKY1_WDT_MAX_TIME);
++		sky1_wdt_ping(wdd);
++		cancel_delayed_work(&wdt->sky1_wdt_delayed_work);
++		wdt_disable(wdd);
++	}
++
++	dev_dbg(dev,"%s-\n", __func__);
++
++	return 0;
++}
++
++static int sky1_wdt_resume(struct device *dev)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	struct sky1_wdt_device *wdt = watchdog_get_drvdata(wdd);
++
++	if (watchdog_active(wdd) && !sky1_wdt_is_running(wdt)) {
++		/*
++		 * If the watchdog is still active and resumes
++		 * from deep sleep state, need to restart the
++		 * watchdog again.
++		 */
++
++		sky1_wdt_setup(wdd);
++
++		if (cpu_online(0))
++			queue_delayed_work_on(0, wdt->sky1_wdt_wq, &wdt->sky1_wdt_delayed_work, 0);
++		else
++			queue_delayed_work(wdt->sky1_wdt_wq, &wdt->sky1_wdt_delayed_work, 0);
++
++	}
++	dev_dbg(dev,"%s-\n", __func__);
++	return 0;
++}
++
++static SIMPLE_DEV_PM_OPS(sky1_wdt_pm_ops, sky1_wdt_suspend,
++		sky1_wdt_resume);
++
++static const struct of_device_id sky1_wdt_device_of_match[] = {
++	{ .compatible = "cix,sky1-wdt", .data = NULL },
++	{ /* end node */ }
++};
++MODULE_DEVICE_TABLE(of, sky1_wdt_device_of_match);
++
++static const struct acpi_device_id sky1_wdt_acpi_match[] = {
++        { "CIXH1005", 0 },
++        { }
++};
++MODULE_DEVICE_TABLE(acpi, sky1_wdt_acpi_match);
++
++static struct platform_driver sky1_wdt_driver = {
++	.shutdown       = sky1_wdt_shutdown,
++	.probe          = sky1_wdt_probe,
++	.driver         = {
++		.name   = DRIVER_NAME,
++		.pm	= &sky1_wdt_pm_ops,
++		.of_match_table = of_match_ptr(sky1_wdt_device_of_match),
++		.acpi_match_table = ACPI_PTR(sky1_wdt_acpi_match),
++	},
++};
++module_platform_driver(sky1_wdt_driver);
++
++MODULE_AUTHOR("Jerry Zhu <Jerry.Zhu@cixtech.com>");
++MODULE_DESCRIPTION("Watchdog driver for SKY1 and later");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:" DRIVER_NAME);
