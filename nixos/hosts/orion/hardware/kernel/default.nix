@@ -1429,6 +1429,15 @@ let
                 aclk_freq_fixed = <800000000>;
                 status = "okay";
 
+                /*
+                 * BOTH pipelines must be described. linlondp_parse_dt() walks
+                 * 0..n_pipelines-1 where n_pipelines is read from the hardware,
+                 * and a pipeline without a DT node is fatal:
+                 *   Pipeline-1 doesn't have a DT node.
+                 *   linlondp 141d0000.disp-controller: probe ... error -22
+                 * Each also needs its own pxclk; linlondp_parse_pipe_dt()
+                 * returns PTR_ERR on a missing one.
+                 */
                 dpu4_pipe0: pipeline@0 {
                     reg = <0>;
                     clocks = <&scmi_clk CLK_TREE_DP4_PIXEL0>;
@@ -1439,6 +1448,12 @@ let
                             remote-endpoint = <&dp4_0_in>;
                         };
                     };
+                };
+
+                dpu4_pipe1: pipeline@1 {
+                    reg = <1>;
+                    clocks = <&scmi_clk CLK_TREE_DP4_PIXEL1>;
+                    clock-names = "pxclk";
                 };
             };
 

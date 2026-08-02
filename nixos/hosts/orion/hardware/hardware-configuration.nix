@@ -133,9 +133,17 @@ in
     blacklistedKernelModules = [
       "panfrost"
       "iwlwifi"
-      "linlondp"
-      "trilin_dp"
-      "cix_dp"
+      # The REAL module names. The first attempt guessed linlondp/trilin_dp/
+      # cix_dp, none of which exist, so the blacklist matched nothing and udev
+      # loaded linlon_dp at boot anyway. It removed the conflicting framebuffer
+      # (killing simpledrm), then failed:
+      #   linlondp 141d0000.disp-controller: probe ... failed with error -22
+      # leaving the machine with no console at all -- exactly what the
+      # blacklist existed to prevent. Names verified against the built .ko
+      # files: linlon-dp.ko, trilin-dpsub.ko, sky1-drm.ko.
+      "linlon_dp"
+      "trilin_dpsub"
+      "sky1_drm"
     ];
 
     # Boot diagnostics have been removed now that 7.2 boots and the hardware
