@@ -1303,6 +1303,48 @@ let
         };
         USBEOF
 
+        # ── Additive: SCMI sensor protocol ──────────────────────────────────
+        # The board has no thermal readings at all on mainline -- no hwmon, no
+        # thermal_zone*, so btop shows nothing and every stress result so far
+        # has carried "thermal behaviour UNVERIFIED".
+        #
+        # Nothing was missing but a node. SENSORS_ARM_SCMI=y and THERMAL_OF=y
+        # are already in the config; the temperatures come over SCMI protocol
+        # 0x15, and mainline's firmware/scmi block declares only @13 (perf) and
+        # @14 (clocks). The protocol was never asked for, so no scmi_dev was
+        # created and the hwmon driver had nothing to bind to.
+        #
+        # Sixteen sensors are defined by the firmware:
+        #    0 VPU          4 DDR_BOTTOM4   8 CPU_M1    12 SOC_TRC
+        #    1 GPU_BOTTOM   5 DDR_TOP       9 CPU_B1    13 GPU_AVERAGE
+        #    2 GPU_TOP      6 CI700        10 CPU_M0    14 NTC0
+        #    3 SOC_BRC      7 NPU          11 CPU_B0    15 NTC1
+        #
+        # Deliberately NOT adding thermal-zones yet. SENSORS_ARM_SCMI registers
+        # an hwmon device for every sensor the firmware reports, which is what
+        # makes temperatures visible. Thermal zones add trip points, and a
+        # critical trip wired to a sensor whose scaling has not been verified
+        # can power the machine off. Read the values first, then add zones.
+        #
+        # If this firmware does not implement 0x15 the node simply binds to
+        # nothing -- one boot tells us either way.
+        echo "Adding the SCMI sensor protocol node..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'THERMEOF'
+
+        &ap_to_pm_scmi {
+            scmi_sensor: protocol@15 {
+                reg = <0x15>;
+                #thermal-sensor-cells = <1>;
+            };
+        };
+        THERMEOF
+
+        if ! grep -q 'protocol@15' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          echo "FATAL: SCMI sensor node missing from the board DTS." >&2
+          exit 1
+        fi
+        echo "SCMI sensor node added."
+
         for want in 'cix,sky1-usbssp' 'cdns,usbssp' 'cix,sky1-usb3-phy' 'sky1_usbhs_0' 'usb6 = &sky1_usbhs_0'; do
           if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
             echo "FATAL: USB nodes incomplete, missing '$want' in the board DTS." >&2

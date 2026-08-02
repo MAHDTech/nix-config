@@ -1972,3 +1972,4 @@ CRTC
 SIMPLEFB
 unaccelerated
 svid
+THERMEOF
