@@ -1164,7 +1164,34 @@ let
       ./scripts/config --enable EFI
       ./scripts/config --enable EFI_STUB
       ./scripts/config --enable EFI_EARLYCON
+      # ── Display: give the compositor a KMS device ───────────────────────
+      # panthor is render-only -- card0 has zero connectors and no CRTC -- and
+      # the Sky1 display controller driver is not ported, so without this there
+      # is NO KMS device on the machine at all. greetd starts, the login is
+      # accepted (pam opens the session), and then the compositor exits because
+      # it has nothing to drive. On screen that is a blinking cursor.
+      #
+      # The framebuffer itself works; it was just claimed by the wrong driver:
+      #
+      #   efifb: mode is 1920x1080x32
+      #   fb0: EFI VGA frame buffer device      <- legacy fbdev, not DRM
+      #
+      # sysfb hands the EFI GOP to either a legacy "efi-framebuffer" device or a
+      # "simple-framebuffer" one, and that choice is SYSFB_SIMPLEFB. It was not
+      # set, so efifb won and simpledrm (=m) never had a device to bind to.
+      # Select simple-framebuffer, build simpledrm in, and drop FB_EFI so the
+      # two cannot race for the same memory.
+      #
+      # This is unaccelerated scanout of the firmware framebuffer, not the real
+      # display pipeline -- 1920x1080 fixed, no mode setting. It is enough for a
+      # desktop to appear and be looked at. The proper fix is porting
+      # 05-display-drm-cix, at which point this becomes a fallback.
+      ./scripts/config --enable SYSFB
+      ./scripts/config --enable SYSFB_SIMPLEFB
       ./scripts/config --enable DRM_SIMPLEDRM
+      ./scripts/config --disable FB_EFI
+      ./scripts/config --enable DRM_FBDEV_EMULATION
+      ./scripts/config --enable FRAMEBUFFER_CONSOLE
 
       # ── Phase 4: NixOS requirements ─────────────────────────────────────────
       ./scripts/config --enable DEVTMPFS
@@ -1283,6 +1310,9 @@ let
       USB_BUILTIN="$USB_BUILTIN USB_CDNS3 USB_CDNSP TYPEC"
       USB_BUILTIN="$USB_BUILTIN PHY_CIX_USB2 PHY_CIX_USB3 PHY_CIX_USBDP"
       USB_BUILTIN="$USB_BUILTIN USB_HID HID_GENERIC INPUT_EVDEV"
+      # simpledrm must be built in and must own the framebuffer, or there is no
+      # KMS device and no desktop.
+      USB_BUILTIN="$USB_BUILTIN DRM_SIMPLEDRM SYSFB_SIMPLEFB"
       for opt in $USB_BUILTIN; do
         if ! grep -q "CONFIG_''${opt}=y" .config; then
           echo "FATAL: CONFIG_''${opt} must be built in (=y), not a module." >&2

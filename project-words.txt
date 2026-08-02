@@ -1968,3 +1968,6 @@ pinfunc
 TYPEA
 ENXIO
 reindentation
+CRTC
+SIMPLEFB
+unaccelerated
