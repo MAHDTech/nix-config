@@ -568,6 +568,28 @@ let
         #
         # "src" in the downstream DTS is mainline's s5_syscon (syscon@16000000),
         # confirmed by the reset IDs living in cix,sky1-s5-system-control.h.
+        # The USB nodes reference reset IDs by name (SKY1_USBC_HS0_PRST_N and
+        # friends). mainline's sky1.dtsi includes arm-gic.h, cix,sky1.h and
+        # sky1-power.h but NOT the reset bindings, so those symbols do not
+        # resolve and dtc fails the whole board DTB:
+        #
+        #   Lexical error: sky1-orion-o6.dts:283.30-50
+        #                  Unexpected 'SKY1_USBC_HS0_PRST_N'
+        #   FATAL ERROR: Syntax error parsing input tree
+        #
+        # The GPU node sidesteps this by using bare numbers (&s5_syscon 119),
+        # which is fine for two IDs and unreadable for twenty. Pull the header
+        # in instead. Inserted after the existing includes rather than appended,
+        # because a #include has to precede its first use.
+        if ! grep -q 'cix,sky1-s5-system-control.h' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          sed -i '/#include "sky1-pinfunc.h"/a #include <dt-bindings/reset/cix,sky1-s5-system-control.h>' \
+            arch/arm64/boot/dts/cix/sky1-orion-o6.dts
+        fi
+        grep -q 'cix,sky1-s5-system-control.h' arch/arm64/boot/dts/cix/sky1-orion-o6.dts || {
+          echo "FATAL: could not add the reset bindings include to the board DTS." >&2
+          exit 1
+        }
+
         echo "Adding USB nodes to sky1-orion-o6.dts..."
         cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'USBEOF'
 

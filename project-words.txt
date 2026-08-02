@@ -1964,3 +1964,4 @@ syscon
 usbphy
 USBEOF
 PRST
+pinfunc
