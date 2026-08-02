@@ -535,6 +535,98 @@ let
         done
         echo "NPU node added."
 
+        # ── Fixup: cdnsp-plat never starts a role on 7.2 ────────────────────
+        # Symptom: all four controllers bound, probe returned 0, nothing was
+        # logged -- and no xHCI host ever appeared.
+        #
+        #   9250310.usb            -> cdnsp-sky1
+        #   9260000.usb-controller -> cdns-usbssp
+        #   /sys/bus/usb/devices/  -> empty
+        #
+        # Cause: 7.2 split cdns_init() and cdns_core_init_role() into two
+        # separately exported functions; cdns_init() no longer starts a role.
+        # Mainline's own cdns3-plat.c therefore does four things:
+        #
+        #   ret = cdns_init(cdns);
+        #   cdns->gadget_init = cdns3_plat_gadget_init;
+        #   cdns->host_init   = cdns3_plat_host_init;
+        #   ret = cdns_core_init_role(cdns);
+        #
+        # 04's cdnsp-plat.c was written when cdns_init() did both, so it sets
+        # gadget_init, calls cdns_init(), and stops. host_init stays NULL and no
+        # role is ever started. That is why the failure was silent: the -ENXIO
+        # for a NULL host_init lives inside cdns_core_init_role(), which never
+        # ran. host_init is only ever READ in core.c -- the platform glue has to
+        # assign it.
+        #
+        # cdnsp-plat.c also lacks the host-export.h include, so cdns_host_init
+        # is not even declared.
+        #
+        # The match strings are built from \t escapes rather than literal tabs,
+        # so neither nixfmt reindentation nor editorconfig can silently change
+        # what is being compared against the kernel source.
+        python3 - <<'PYEOF'
+        import sys
+
+        p = "drivers/usb/cdns3/cdnsp-plat.c"
+        s = open(p).read()
+
+        if "cdns_core_init_role" in s:
+            print("cdnsp-plat role init fixup already applied.")
+            sys.exit(0)
+
+        inc_old = '#include "gadget-export.h"\n'
+        inc_new = '#include "gadget-export.h"\n#include "host-export.h"\n'
+        if inc_old not in s:
+            print("FATAL: cdnsp-plat.c has no gadget-export.h include", file=sys.stderr)
+            sys.exit(1)
+        s = s.replace(inc_old, inc_new, 1)
+
+        old = (
+            "\tcdns->gadget_init = cdnsp_gadget_init;\n"
+            "\n"
+            "\tret = cdns_init(cdns);\n"
+            "\tif (ret)\n"
+            "\t\tgoto err_cdns_init;\n"
+        )
+        new = (
+            "\tcdns->gadget_init = cdnsp_gadget_init;\n"
+            "\n"
+            "\tret = cdns_init(cdns);\n"
+            "\tif (ret)\n"
+            "\t\tgoto err_cdns_init;\n"
+            "\n"
+            "\t/*\n"
+            "\t * 7.2 split cdns_init() and cdns_core_init_role(). Without the\n"
+            "\t * call below the controller binds, probe returns 0, and no role\n"
+            "\t * is ever started, so no xHCI host is registered and no port\n"
+            "\t * enumerates.\n"
+            "\t */\n"
+            "\tcdns->host_init = cdns_host_init;\n"
+            "\n"
+            "\tret = cdns_core_init_role(cdns);\n"
+            "\tif (ret)\n"
+            "\t\tgoto err_cdns_init_role;\n"
+        )
+        if old not in s:
+            print("FATAL: cdns_init call site not found in cdnsp-plat.c", file=sys.stderr)
+            sys.exit(1)
+        s = s.replace(old, new, 1)
+
+        old_err = "err_cdns_init:\n\tset_phy_power_off(cdns);"
+        new_err = (
+            "err_cdns_init_role:\n\tcdns_remove(cdns);\n"
+            "err_cdns_init:\n\tset_phy_power_off(cdns);"
+        )
+        if old_err not in s:
+            print("FATAL: err_cdns_init label not found", file=sys.stderr)
+            sys.exit(1)
+        s = s.replace(old_err, new_err, 1)
+
+        open(p, "w").write(s)
+        print("cdnsp-plat now sets host_init and calls cdns_core_init_role.")
+        PYEOF
+
         # ── Fixup: 04's cdns3 Makefile declares two self-composite objects ──
         # The patch adds:
         #     cdnsp-sky1-y := cdnsp-sky1.o
