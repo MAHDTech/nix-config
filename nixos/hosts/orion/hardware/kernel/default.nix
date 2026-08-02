@@ -63,7 +63,18 @@ let
   #                        reset-sky1.c, cix-mailbox.c and SCMI/clock support.
   #                        Kept only for reference; do not re-enable.
   cixPatches = [
-    # ./patches/04-usb-phy-typec.patch      # drivers/phy/cix/  (absent upstream)
+    # USB. Mainline 7.2 describes no USB on this SoC at all -- no usb, xhci,
+    # dwc3, cdns3 or typec node anywhere in sky1.dtsi -- and the CIX PHYs
+    # (cix,sky1-usb2-phy / -usb3-phy / -usbdp-phy) have no upstream driver.
+    # usbcore and xhci-hcd register but nothing ever probes, so no keyboard.
+    #
+    # Verified to apply to 7.2 with zero conflicts before enabling, including
+    # the two hunks that looked risky: drivers/usb/host/xhci-plat.c and the
+    # cdns3 Kconfig that upstream restructured in this cycle.
+    #
+    # 11 of its 18 files are new; the rest are Kconfig/Makefile hooks plus
+    # xhci-plat.c. Adds drivers/phy/cix/ and the cdnsp platform glue.
+    ./patches/04-usb-phy-typec.patch
     # ./patches/05-display-drm-cix.patch    # linlon-dp, trilin-dpsub
     # Sky1 SCMI/DVFS glue for panthor. panthor itself is mainline; this adds the
     # power-domain and DVFS sequencing mainline has no way to express:
@@ -523,6 +534,324 @@ let
           fi
         done
         echo "NPU node added."
+
+        # ── Additive: USB nodes for 04-usb-phy-typec ────────────────────────
+        # mainline's sky1.dtsi describes no USB at all: no usb, xhci, dwc3,
+        # cdns3 or typec node anywhere. usbcore and xhci-hcd are built and
+        # registered, but nothing ever probes, which is why /sys/bus/usb/devices
+        # is empty and no keyboard enumerates.
+        #
+        # The board has TEN controllers, all Cadence USBSSP behind a CIX wrapper:
+        #   usbhs_0..3   USB2 only, high-speed, host, and crucially NO phys
+        #                property at all -- no PHY dependency to get wrong
+        #   usbss_4..5   USB3, fed by the plain "cix,sky1-usb3-phy" (usb3_phy4)
+        #   usbss_0..3   USB3 on the Type-C ports, fed by the usbdp combo PHY
+        #
+        # Every clock and reset ID these need is ALREADY in mainline's headers
+        # (all 57 checked before writing this), so only the nodes were missing.
+        #
+        # Three deliberate departures from the downstream board file:
+        #
+        #  1. dr_mode = "host" everywhere. Downstream runs usbss_0/1/4/5 as
+        #     "otg" with usb-role-switch and endpoints wired to an rts5453 PD
+        #     controller over I2C. Role switching needs that whole chain; host
+        #     mode needs none of it and is what makes a keyboard work. The PD
+        #     controller is in 04's typec/ directory and can be added later.
+        #
+        #  2. No DisplayPort alt-mode. The dp-port sub-nodes stay disabled --
+        #     they would bind to a display driver that is not ported, so
+        #     enabling them buys nothing and adds a probe that can fail.
+        #
+        #  3. No orientation-switch / mode-switch / port endpoints on the usbdp
+        #     PHYs. Those exist to let the PD controller flip lanes on cable
+        #     orientation; with no PD controller there is nothing to flip them.
+        #
+        # "src" in the downstream DTS is mainline's s5_syscon (syscon@16000000),
+        # confirmed by the reset IDs living in cix,sky1-s5-system-control.h.
+        echo "Adding USB nodes to sky1-orion-o6.dts..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'USBEOF'
+
+        &{/soc@0} {
+            /*
+              * USB2 high-speed host controllers. These are the safest of the
+              * ten: high-speed only, host only, and no PHY phandle to resolve.
+              * If anything USB works at all, it should be these.
+              */
+            sky1_usbhs_0: usb@9250000 {
+                compatible = "cix,sky1-usbssp";
+                #address-cells = <2>;
+                #size-cells = <2>;
+                ranges;
+                reg = <0x0 0x09250310 0x0 0x4>, <0x0 0x09250400 0x0 0x4>;
+                reg-names = "axi_property", "controller_status";
+                resets = <&s5_syscon SKY1_USBC_HS0_PRST_N>,
+                          <&s5_syscon SKY1_USBC_HS0_RST_N>;
+                reset-names = "usb_preset", "usb_reset";
+                clocks = <&scmi_clk CLK_TREE_USB2_0_CLK_SOF>,
+                          <&scmi_clk CLK_TREE_USB2_0_AXI_GATE>,
+                          <&scmi_clk CLK_TREE_USB2_0_CLK_LPM>,
+                          <&scmi_clk CLK_TREE_USB2_0_APB_GATE>;
+                clock-names = "sof_clk", "usb_aclk", "lpm_clk", "usb_pclk";
+                cix,usb_syscon = <&s5_syscon>;
+                axi_bmax_value = <0x7>;
+                sof_clk_freq = <8000000>;
+                lpm_clk_freq = <32000>;
+                status = "okay";
+
+                usbhs_0: usb-controller@9260000 {
+                    compatible = "cdns,usbssp";
+                    reg = <0x0 0x9260000 0x0 0x4000>,
+                          <0x0 0x9264000 0x0 0x4000>,
+                          <0x0 0x9268000 0x0 0x8000>;
+                    reg-names = "otg", "dev", "xhci";
+                    interrupts = <GIC_SPI 240 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 240 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 241 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 240 IRQ_TYPE_LEVEL_HIGH 0>;
+                    interrupt-names = "host", "peripheral", "otg", "wakeup";
+                    maximum-speed = "high-speed";
+                    dr_mode = "host";
+                    status = "okay";
+                };
+            };
+
+            sky1_usbhs_1: usb@9280000 {
+                compatible = "cix,sky1-usbssp";
+                #address-cells = <2>;
+                #size-cells = <2>;
+                ranges;
+                reg = <0x0 0x09280310 0x0 0x4>, <0x0 0x09280400 0x0 0x4>;
+                reg-names = "axi_property", "controller_status";
+                resets = <&s5_syscon SKY1_USBC_HS1_PRST_N>,
+                          <&s5_syscon SKY1_USBC_HS1_RST_N>;
+                reset-names = "usb_preset", "usb_reset";
+                clocks = <&scmi_clk CLK_TREE_USB2_1_CLK_SOF>,
+                          <&scmi_clk CLK_TREE_USB2_1_AXI_GATE>,
+                          <&scmi_clk CLK_TREE_USB2_1_CLK_LPM>,
+                          <&scmi_clk CLK_TREE_USB2_1_APB_GATE>;
+                clock-names = "sof_clk", "usb_aclk", "lpm_clk", "usb_pclk";
+                cix,usb_syscon = <&s5_syscon>;
+                axi_bmax_value = <0x7>;
+                sof_clk_freq = <8000000>;
+                lpm_clk_freq = <32000>;
+                status = "okay";
+
+                usbhs_1: usb-controller@9290000 {
+                    compatible = "cdns,usbssp";
+                    reg = <0x0 0x9290000 0x0 0x4000>,
+                          <0x0 0x9294000 0x0 0x4000>,
+                          <0x0 0x9298000 0x0 0x8000>;
+                    reg-names = "otg", "dev", "xhci";
+                    interrupts = <GIC_SPI 243 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 243 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 244 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 243 IRQ_TYPE_LEVEL_HIGH 0>;
+                    interrupt-names = "host", "peripheral", "otg", "wakeup";
+                    maximum-speed = "high-speed";
+                    dr_mode = "host";
+                    status = "okay";
+                };
+            };
+
+            sky1_usbhs_2: usb@92b0000 {
+                compatible = "cix,sky1-usbssp";
+                #address-cells = <2>;
+                #size-cells = <2>;
+                ranges;
+                reg = <0x0 0x092b0310 0x0 0x4>, <0x0 0x092b0400 0x0 0x4>;
+                reg-names = "axi_property", "controller_status";
+                resets = <&s5_syscon SKY1_USBC_HS2_PRST_N>,
+                          <&s5_syscon SKY1_USBC_HS2_RST_N>;
+                reset-names = "usb_preset", "usb_reset";
+                clocks = <&scmi_clk CLK_TREE_USB2_2_CLK_SOF>,
+                          <&scmi_clk CLK_TREE_USB2_2_AXI_GATE>,
+                          <&scmi_clk CLK_TREE_USB2_2_CLK_LPM>,
+                          <&scmi_clk CLK_TREE_USB2_2_APB_GATE>;
+                clock-names = "sof_clk", "usb_aclk", "lpm_clk", "usb_pclk";
+                cix,usb_syscon = <&s5_syscon>;
+                axi_bmax_value = <0x7>;
+                sof_clk_freq = <8000000>;
+                lpm_clk_freq = <32000>;
+                status = "okay";
+
+                usbhs_2: usb-controller@92c0000 {
+                    compatible = "cdns,usbssp";
+                    reg = <0x0 0x92c0000 0x0 0x4000>,
+                          <0x0 0x92c4000 0x0 0x4000>,
+                          <0x0 0x92c8000 0x0 0x8000>;
+                    reg-names = "otg", "dev", "xhci";
+                    interrupts = <GIC_SPI 246 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 246 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 247 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 246 IRQ_TYPE_LEVEL_HIGH 0>;
+                    interrupt-names = "host", "peripheral", "otg", "wakeup";
+                    maximum-speed = "high-speed";
+                    dr_mode = "host";
+                    status = "okay";
+                };
+            };
+
+            sky1_usbhs_3: usb@92e0000 {
+                compatible = "cix,sky1-usbssp";
+                #address-cells = <2>;
+                #size-cells = <2>;
+                ranges;
+                reg = <0x0 0x092e0310 0x0 0x4>, <0x0 0x092e0400 0x0 0x4>;
+                reg-names = "axi_property", "controller_status";
+                resets = <&s5_syscon SKY1_USBC_HS3_PRST_N>,
+                          <&s5_syscon SKY1_USBC_HS3_RST_N>;
+                reset-names = "usb_preset", "usb_reset";
+                clocks = <&scmi_clk CLK_TREE_USB2_3_CLK_SOF>,
+                          <&scmi_clk CLK_TREE_USB2_3_AXI_GATE>,
+                          <&scmi_clk CLK_TREE_USB2_3_CLK_LPM>,
+                          <&scmi_clk CLK_TREE_USB2_3_APB_GATE>;
+                clock-names = "sof_clk", "usb_aclk", "lpm_clk", "usb_pclk";
+                cix,usb_syscon = <&s5_syscon>;
+                axi_bmax_value = <0x7>;
+                sof_clk_freq = <8000000>;
+                lpm_clk_freq = <32000>;
+                status = "okay";
+
+                usbhs_3: usb-controller@92f0000 {
+                    compatible = "cdns,usbssp";
+                    reg = <0x0 0x92f0000 0x0 0x4000>,
+                          <0x0 0x92f4000 0x0 0x4000>,
+                          <0x0 0x92f8000 0x0 0x8000>;
+                    reg-names = "otg", "dev", "xhci";
+                    interrupts = <GIC_SPI 249 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 249 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 250 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 249 IRQ_TYPE_LEVEL_HIGH 0>;
+                    interrupt-names = "host", "peripheral", "otg", "wakeup";
+                    maximum-speed = "high-speed";
+                    dr_mode = "host";
+                    status = "okay";
+                };
+            };
+
+            /*
+              * USB3 PHY feeding the two Type-A SuperSpeed controllers. One PHY
+              * block with two ports; each usbss takes one.
+              */
+            usb3_phy4: usb-phy@9210000 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                compatible = "cix,sky1-usb3-phy";
+                reg = <0x0 0x09210000 0x0 0x40000>;
+                resets = <&s5_syscon SKY1_USBPHY_SS_RST_N>,
+                          <&s5_syscon SKY1_USBPHY_SS_PST_N>;
+                reset-names = "reset", "preset";
+                clocks = <&scmi_clk CLK_TREE_USB3A_PHY3_GATE>,
+                          <&scmi_clk CLK_TREE_USB3A_PHY_x2_REF>;
+                clock-names = "apb_clk", "ref_clk";
+                cix,usbphy_syscon = <&s5_syscon>;
+                status = "okay";
+
+                usb3_phy4_0: usb-port@0 {
+                    #phy-cells = <0>;
+                    reg = <0>;
+                    id = <0>;
+                    status = "okay";
+                };
+                usb3_phy4_1: usb-port@1 {
+                    #phy-cells = <0>;
+                    reg = <1>;
+                    id = <1>;
+                    status = "okay";
+                };
+            };
+
+            sky1_usbss_4: usb@91c0300 {
+                compatible = "cix,sky1-usbssp";
+                #address-cells = <2>;
+                #size-cells = <2>;
+                ranges;
+                reg = <0x0 0x091c0314 0x0 0x4>, <0x0 0x091c0400 0x0 0x4>;
+                reg-names = "axi_property", "controller_status";
+                resets = <&s5_syscon SKY1_USBC_SS2_PRST_N>,
+                          <&s5_syscon SKY1_USBC_SS2_RST_N>;
+                reset-names = "usb_preset", "usb_reset";
+                clocks = <&scmi_clk CLK_TREE_USB3A_H0_CLK_SOF>,
+                          <&scmi_clk CLK_TREE_USB3A_0_AXI_GATE>,
+                          <&scmi_clk CLK_TREE_USB3A_H0_CLK_LPM>,
+                          <&scmi_clk CLK_TREE_USB3A_0_APB_GATE>;
+                clock-names = "sof_clk", "usb_aclk", "lpm_clk", "usb_pclk";
+                cix,usb_syscon = <&s5_syscon>;
+                axi_bmax_value = <0x7>;
+                sof_clk_freq = <8000000>;
+                lpm_clk_freq = <32000>;
+                status = "okay";
+
+                usbss_4: usb-controller@91d0000 {
+                    compatible = "cdns,usbssp";
+                    reg = <0x0 0x91d0000 0x0 0x4000>,
+                          <0x0 0x91d4000 0x0 0x4000>,
+                          <0x0 0x91d8000 0x0 0x8000>;
+                    reg-names = "otg", "dev", "xhci";
+                    interrupts = <GIC_SPI 252 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 252 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 253 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 252 IRQ_TYPE_LEVEL_HIGH 0>;
+                    interrupt-names = "host", "peripheral", "otg", "wakeup";
+                    maximum-speed = "super-speed-plus";
+                    dr_mode = "host";
+                    phys = <&usb3_phy4_0>;
+                    phy-names = "cdnsp,usb3-phy";
+                    usb3-lpm-capable;
+                    status = "okay";
+                };
+            };
+
+            sky1_usbss_5: usb@91c0304 {
+                compatible = "cix,sky1-usbssp";
+                #address-cells = <2>;
+                #size-cells = <2>;
+                ranges;
+                reg = <0x0 0x091c0324 0x0 0x4>, <0x0 0x091c0410 0x0 0x4>;
+                reg-names = "axi_property", "controller_status";
+                resets = <&s5_syscon SKY1_USBC_SS3_PRST_N>,
+                          <&s5_syscon SKY1_USBC_SS3_RST_N>;
+                reset-names = "usb_preset", "usb_reset";
+                clocks = <&scmi_clk CLK_TREE_USB3A_H1_CLK_SOF>,
+                          <&scmi_clk CLK_TREE_USB3A_1_AXI_GATE>,
+                          <&scmi_clk CLK_TREE_USB3A_H1_CLK_LPM>,
+                          <&scmi_clk CLK_TREE_USB3A_1_APB_GATE>;
+                clock-names = "sof_clk", "usb_aclk", "lpm_clk", "usb_pclk";
+                cix,usb_syscon = <&s5_syscon>;
+                axi_bmax_value = <0x7>;
+                sof_clk_freq = <8000000>;
+                lpm_clk_freq = <32000>;
+                status = "okay";
+
+                usbss_5: usb-controller@91e0000 {
+                    compatible = "cdns,usbssp";
+                    reg = <0x0 0x91e0000 0x0 0x4000>,
+                          <0x0 0x91e4000 0x0 0x4000>,
+                          <0x0 0x91e8000 0x0 0x8000>;
+                    reg-names = "otg", "dev", "xhci";
+                    interrupts = <GIC_SPI 257 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 257 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 258 IRQ_TYPE_LEVEL_HIGH 0>,
+                                  <GIC_SPI 257 IRQ_TYPE_LEVEL_HIGH 0>;
+                    interrupt-names = "host", "peripheral", "otg", "wakeup";
+                    maximum-speed = "super-speed-plus";
+                    dr_mode = "host";
+                    phys = <&usb3_phy4_1>;
+                    phy-names = "cdnsp,usb3-phy";
+                    usb3-lpm-capable;
+                    status = "okay";
+                };
+            };
+        };
+        USBEOF
+
+        for want in 'cix,sky1-usbssp' 'cdns,usbssp' 'cix,sky1-usb3-phy' 'sky1_usbhs_0'; do
+          if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+            echo "FATAL: USB nodes incomplete, missing '$want' in the board DTS." >&2
+            exit 1
+          fi
+        done
+        echo "USB nodes added."
       '';
 
     configurePhase = ''
@@ -591,6 +920,36 @@ let
       # sky1.c guards its devfreq code on CONFIG_ENABLE_DEVFREQ, which the
       # driver's Makefile defines from CONFIG_PM_DEVFREQ.
       ./scripts/config --enable PM_DEVFREQ
+
+      # ── USB (04-usb-phy-typec) ──────────────────────────────────────────────
+      # The controllers are Cadence USBSSP behind a CIX wrapper, so the stack is
+      # USB_CDNS_SUPPORT -> USB_CDNSP -> USB_CDNSP_SKY1, plus the CIX PHYs.
+      # Built in rather than modular: USB is how the machine is operated from
+      # the console, and a keyboard that only appears once /nix has been read is
+      # no use for rescuing a bad boot.
+      ./scripts/config --enable USB_SUPPORT
+      ./scripts/config --enable USB
+      ./scripts/config --enable USB_XHCI_HCD
+      ./scripts/config --enable USB_XHCI_PLATFORM
+      ./scripts/config --enable USB_CDNS_SUPPORT
+      ./scripts/config --enable USB_CDNS_HOST
+      ./scripts/config --enable USB_CDNSP
+      ./scripts/config --enable USB_CDNSP_SKY1
+      # CIX PHYs: without these the usbss controllers get -EPROBE_DEFER forever
+      # on their phys phandle and never bind.
+      ./scripts/config --enable GENERIC_PHY
+      # The PHY symbols are bool and named per-block; there is no umbrella
+      # PHY_CIX. USBDP is needed even though DP alt-mode is not enabled,
+      # because it owns the USB3 lanes on the Type-C ports.
+      ./scripts/config --enable PHY_CIX_USB2
+      ./scripts/config --enable PHY_CIX_USB3
+      ./scripts/config --enable PHY_CIX_USBDP
+      # Input devices, so a keyboard is actually usable once enumerated.
+      ./scripts/config --enable HID
+      ./scripts/config --enable HID_GENERIC
+      ./scripts/config --enable USB_HID
+      ./scripts/config --enable INPUT_EVDEV
+      ./scripts/config --enable USB_STORAGE
 
       # ── Phase 3: console and diagnostics ────────────────────────────────────
       ./scripts/config --enable SERIAL_AMBA_PL011
