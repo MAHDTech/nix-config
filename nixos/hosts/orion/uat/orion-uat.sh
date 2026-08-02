@@ -51,6 +51,15 @@ mkdir -p "$OUTDIR"
 GPU_DEVFREQ=/sys/class/devfreq/15000000.gpu
 NIXPKGS="nixpkgs"
 
+# NixOS ships two sudo binaries: /run/current-system/sw/bin/sudo (not setuid, fails
+# with "must be owned by uid 0") and /run/wrappers/bin/sudo (the real one).
+# An interactive shell finds the wrapper first; a systemd unit with a narrow
+# PATH does not. Getting this wrong silently voided every dmesg check in the
+# first full run -- all four capture files were zero bytes -- and skipped the
+# NPU phase entirely.
+SUDO=/run/wrappers/bin/sudo
+[ -u "$SUDO" ] || SUDO=$(command -v sudo)
+
 say() { printf '\n\033[1m== %s ==\033[0m\n' "$*"; }
 note() { printf '   %s\n' "$*"; }
 die() {
@@ -140,11 +149,11 @@ summarise() {
 # immediately before the load, then judge only lines that appeared since.
 KERN_BAD="SError|Internal error|Unable to handle|BUG:|Call trace|hung task|thermal.*critical|GPU fault|MMU fault|watchdog"
 
-dmesg_snapshot() { sudo -n dmesg 2>/dev/null | tee "$1" >/dev/null; }
+dmesg_snapshot() { "$SUDO" -n dmesg 2>/dev/null | tee "$1" >/dev/null; }
 
 dmesg_verdict() {
 	local pre="$1" out="$2"
-	sudo -n dmesg 2>/dev/null | tee "$out.now" >/dev/null
+	"$SUDO" -n dmesg 2>/dev/null | tee "$out.now" >/dev/null
 	# Lines present now but absent from the snapshot: produced by this phase.
 	grep -Fxv -f "$pre" "$out.now" >"$out" 2>/dev/null
 	rm -f "$out.now"
@@ -204,12 +213,35 @@ phase_gpu() {
 
 	# glmark2 is a fixed-length benchmark, so loop it to fill the window and keep
 	# the GPU continuously busy rather than idling between runs.
+	# Abort the loop if a run stops producing a score. The first full UAT spun
+	# 64300 times in 29 minutes writing a 620 MB log of
+	#   MESA: error: DRM_IOCTL_PANTHOR_BO_CREATE failed (err=19)
+	# because panthor had unplugged the device after a failed reset and every
+	# subsequent glmark2 exited instantly. A dead GPU must fail the phase, not
+	# be hammered for the rest of the window.
+	local consecutive_fail=0
 	while [ "$(date +%s)" -lt "$end" ]; do
 		run=$((run + 1))
+		local before
+		before=$(grep -c "glmark2 Score" "$OUTDIR/gpu-glmark2.log" 2>/dev/null || echo 0)
 		"$GLMARK2" --off-screen -b build -b texture -b shading -b bump \
 			-b refract -b conditionals -b function -b terrain \
-			2>&1 | tee -a "$OUTDIR/gpu-glmark2.log" | grep -E "glmark2 Score|FPS" | tail -3
-		note "run $run complete, $((end - $(date +%s)))s remaining"
+			2>&1 | tail -400 >>"$OUTDIR/gpu-glmark2.log"
+		local after
+		after=$(grep -c "glmark2 Score" "$OUTDIR/gpu-glmark2.log" 2>/dev/null || echo 0)
+		if [ "$after" -le "$before" ]; then
+			consecutive_fail=$((consecutive_fail + 1))
+			note "run $run produced NO score (failure $consecutive_fail)"
+			if [ "$consecutive_fail" -ge 3 ]; then
+				echo "   FAIL: glmark2 stopped producing scores after $run runs --"
+				echo "         the GPU is no longer usable. Aborting the phase."
+				break
+			fi
+		else
+			consecutive_fail=0
+			grep "glmark2 Score" "$OUTDIR/gpu-glmark2.log" | tail -1 | sed 's/^/   /'
+			note "run $run complete, $((end - $(date +%s)))s remaining"
+		fi
 	done
 
 	wait $sampler 2>/dev/null
@@ -237,12 +269,12 @@ phase_npu() {
 
 	if [ ! -e /dev/aipu ]; then
 		note "/dev/aipu absent — loading the module (blacklisted for now)"
-		sudo -n modprobe armchina_npu 2>&1 | sed 's/^/     /'
+		"$SUDO" -n modprobe armchina_npu 2>&1 | sed 's/^/     /'
 		sleep 2
 	fi
 	if [ ! -e /dev/aipu ]; then
 		echo "   FAIL: /dev/aipu still absent; the driver did not bind" >&2
-		sudo -n dmesg | grep -iE "aipu|armchina|npu" | tail -20 | sed 's/^/     /'
+		"$SUDO" -n dmesg | grep -iE "aipu|armchina|npu" | tail -20 | sed 's/^/     /'
 		return 1
 	fi
 
@@ -256,13 +288,13 @@ phase_npu() {
 	# /dev/aipu is root:render 0660 and this user is in video, not render, so
 	# the smoke run failed with EACCES. sudo rather than a group change: the
 	# tool needs no other privilege and this keeps the test self-contained.
-	sudo -n "$bin" --stress "$SECS" 2>&1 | tee "$OUTDIR/npu-uat.log"
+	"$SUDO" -n "$bin" --stress "$SECS" 2>&1 | tee "$OUTDIR/npu-uat.log"
 	local rc=${PIPESTATUS[0]}
 
 	wait $sampler 2>/dev/null
 	say "NPU result"
 	note "power domains:"
-	sudo -n grep -iE "npu" /sys/kernel/debug/pm_genpd/pm_genpd_summary 2>/dev/null | sed 's/^/     /'
+	"$SUDO" -n grep -iE "npu" /sys/kernel/debug/pm_genpd/pm_genpd_summary 2>/dev/null | sed 's/^/     /'
 	note "interrupts:"
 	grep -iE "aipu|npu" /proc/interrupts 2>/dev/null | sed 's/^/     /' || note "  (none registered)"
 	summarise "$OUTDIR/npu.csv" npu
