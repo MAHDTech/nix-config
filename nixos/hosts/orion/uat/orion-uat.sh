@@ -53,6 +53,41 @@ NIXPKGS="nixpkgs"
 
 say() { printf '\n\033[1m== %s ==\033[0m\n' "$*"; }
 note() { printf '   %s\n' "$*"; }
+die() {
+	printf '\n!! %s\n' "$*" >&2
+	exit 1
+}
+
+# ── resolve every tool BEFORE any phase starts ───────────────────────────────
+# Learned the hard way: `nix shell` inside a systemd unit aborted with
+#   aborting: temp-path '.' must be readable and writeable
+# and because this script runs under `set -uo pipefail` (no -e), the CPU phase
+# skipped stress-ng entirely while the telemetry sampler happily ran for the
+# full 30 minutes. The unit exited 0 and the run looked green having tested
+# nothing. A missing tool must abort the run, loudly, before any timing starts.
+resolve_tool() {
+	local pkg="$1" bin="$2" path
+	path=$(nix build --no-link --print-out-paths "$NIXPKGS#$pkg" 2>/dev/null | tail -1)
+	[ -n "$path" ] || die "cannot resolve $pkg from nixpkgs — refusing to start a phase that would silently do nothing"
+	[ -x "$path/bin/$bin" ] || die "$pkg resolved to $path but has no bin/$bin"
+	printf '%s' "$path/bin/$bin"
+}
+
+# ── did the phase actually load the machine? ─────────────────────────────────
+# A phase that produced no load must fail, even if every command exited 0.
+# Compares the mean sampled frequency against an idle floor.
+assert_loaded() {
+	local csv="$1" col="$2" floor="$3" what="$4"
+	local mean
+	mean=$(awk -F, -v c="$col" 'NR>1 {s+=$c; n++} END {print (n? int(s/n) : 0)}' "$csv")
+	if [ "$mean" -lt "$floor" ]; then
+		echo "   FAIL: mean $what was $mean, below the idle floor $floor —"
+		echo "         the phase did not actually load the machine"
+		return 1
+	fi
+	echo "   load confirmed: mean $what $mean (floor $floor)"
+	return 0
+}
 
 # ── telemetry ────────────────────────────────────────────────────────────────
 # Sampled once a second for the whole phase and summarised afterwards. Recording
@@ -88,24 +123,37 @@ summarise() {
       printf "   samples          : %d over %d s\n", n, n
       printf "   CPU max / mean   : %.2f GHz / %.2f GHz\n", cmax/1e6, (csum/n)/1e6
       if (gmax>0) printf "   GPU max / mean   : %d MHz / %d MHz\n", gmax/1e6, (gsum/n)/1e6
-      printf "   temp max / mean  : %.1f C / %.1f C\n", tmax/1000, (tsum/n)/1000
+      if (tmax>0) printf "   temp max / mean  : %.1f C / %.1f C\n", tmax/1000, (tsum/n)/1000
+      else {
+        printf "   temperature      : NOT OBSERVABLE\n"
+        printf "                      this board exposes no thermal zones on mainline\n"
+        printf "                      (thermal driver unported), so thermal behaviour\n"
+        printf "                      under sustained load is UNVERIFIED\n"
+      }
       if (gmax>0) { printf "   GPU freq residency:\n"; for (f in gfreq) printf "     %d MHz : %d s\n", f/1e6, gfreq[f] }
     }' "$csv"
 }
 
-# Snapshot the ring buffer before any phase, so dmesg_verdict only judges lines
-# that could have been produced by the run itself.
-dmesg_before() { sudo -n dmesg 2>/dev/null | tee "$OUTDIR/dmesg-pre.txt" >/dev/null; }
+# The ring buffer must be DIFFED, not just grepped. Grepping the whole buffer
+# reported the boot-time armchina IRQ warning as a failure of every phase --
+# a pre-existing line has nothing to do with what the stress run did. Snapshot
+# immediately before the load, then judge only lines that appeared since.
+KERN_BAD="SError|Internal error|Unable to handle|BUG:|Call trace|hung task|thermal.*critical|GPU fault|MMU fault|watchdog"
+
+dmesg_snapshot() { sudo -n dmesg 2>/dev/null | tee "$1" >/dev/null; }
+
 dmesg_verdict() {
-	local out="$1"
-	sudo -n dmesg 2>/dev/null | tail -400 >"$out"
-	# Anything in here during a stress run is a real failure, not noise.
-	if grep -qiE "SError|Internal error|Unable to handle|BUG:|Call trace|hung task|thermal.*critical|GPU fault|MMU fault|watchdog" "$out"; then
-		echo "   KERNEL ERRORS DETECTED:"
-		grep -iE "SError|Internal error|Unable to handle|BUG:|Call trace|hung task|thermal.*critical|GPU fault|MMU fault|watchdog" "$out" | head -10 | sed 's/^/     /'
+	local pre="$1" out="$2"
+	sudo -n dmesg 2>/dev/null | tee "$out.now" >/dev/null
+	# Lines present now but absent from the snapshot: produced by this phase.
+	grep -Fxv -f "$pre" "$out.now" >"$out" 2>/dev/null
+	rm -f "$out.now"
+	if grep -qiE "$KERN_BAD" "$out"; then
+		echo "   KERNEL ERRORS DURING THIS PHASE:"
+		grep -iE "$KERN_BAD" "$out" | head -10 | sed 's/^/     /'
 		return 1
 	fi
-	echo "   kernel ring buffer clean (no SError, oops, fault or hung task)"
+	echo "   kernel ring buffer clean for this phase (no new SError, oops, fault or hung task)"
 	return 0
 }
 
@@ -115,21 +163,30 @@ phase_cpu() {
 	note "12 cores: 4x Cortex-A720 @ up to 2.6 GHz, 4x A720, 4x A520"
 	note "boost = $(cat /sys/devices/system/cpu/cpufreq/boost 2>/dev/null)"
 
+	dmesg_snapshot "$OUTDIR/cpu-dmesg-pre.txt"
 	sample_telemetry "$OUTDIR/cpu.csv" &
 	local sampler=$!
 
 	# --cpu 0 uses every online CPU. matrix and vm alongside cpu exercise FPU/SIMD
 	# and the memory subsystem, not just the integer pipeline, so a marginal
 	# regulator or a memory clock problem has a chance to show up.
-	nix shell "$NIXPKGS#stress-ng" --command \
-		stress-ng --cpu 0 --matrix 0 --vm 2 --vm-bytes 1G \
+	"$STRESS_NG" --cpu 0 --matrix 0 --vm 2 --vm-bytes 1G \
 		--timeout "${SECS}s" --metrics-brief --times \
 		2>&1 | tee "$OUTDIR/cpu-stress.log" | tail -25
 
 	wait $sampler 2>/dev/null
 	say "CPU result"
+	local rc=0
 	summarise "$OUTDIR/cpu.csv" cpu
-	dmesg_verdict "$OUTDIR/cpu-dmesg.txt"
+	# 1.2 GHz mean: comfortably above idle, well under any real load level.
+	assert_loaded "$OUTDIR/cpu.csv" 2 1200000 "CPU kHz" || rc=1
+	grep -qE "successful run completed" "$OUTDIR/cpu-stress.log" ||
+		{
+			echo "   FAIL: stress-ng did not report a successful run"
+			rc=1
+		}
+	dmesg_verdict "$OUTDIR/cpu-dmesg-pre.txt" "$OUTDIR/cpu-dmesg.txt" || rc=1
+	return $rc
 }
 
 # ── GPU ──────────────────────────────────────────────────────────────────────
@@ -140,6 +197,7 @@ phase_gpu() {
 	note "It does NOT prove absence of visual corruption — that needs a human"
 	note "at the display once USB/keyboard and the display driver are working."
 
+	dmesg_snapshot "$OUTDIR/gpu-dmesg-pre.txt"
 	sample_telemetry "$OUTDIR/gpu.csv" &
 	local sampler=$!
 	local end=$(($(date +%s) + SECS)) run=0
@@ -148,8 +206,7 @@ phase_gpu() {
 	# the GPU continuously busy rather than idling between runs.
 	while [ "$(date +%s)" -lt "$end" ]; do
 		run=$((run + 1))
-		nix shell "$NIXPKGS#glmark2" --command \
-			glmark2-es2-gbm --off-screen -b build -b texture -b shading -b bump \
+		"$GLMARK2" --off-screen -b build -b texture -b shading -b bump \
 			-b refract -b conditionals -b function -b terrain \
 			2>&1 | tee -a "$OUTDIR/gpu-glmark2.log" | grep -E "glmark2 Score|FPS" | tail -3
 		note "run $run complete, $((end - $(date +%s)))s remaining"
@@ -160,8 +217,17 @@ phase_gpu() {
 	note "scores across $run runs:"
 	grep "glmark2 Score" "$OUTDIR/gpu-glmark2.log" | sed 's/^/     /'
 	# A score that decays run over run means thermal or power throttling.
+	local rc=0
 	summarise "$OUTDIR/gpu.csv" gpu
-	dmesg_verdict "$OUTDIR/gpu-dmesg.txt"
+	# 500 MHz mean: above the 350 MHz idle OPP, so the governor really ramped.
+	assert_loaded "$OUTDIR/gpu.csv" 3 500000000 "GPU Hz" || rc=1
+	grep -q "glmark2 Score" "$OUTDIR/gpu-glmark2.log" ||
+		{
+			echo "   FAIL: no glmark2 score recorded"
+			rc=1
+		}
+	dmesg_verdict "$OUTDIR/gpu-dmesg-pre.txt" "$OUTDIR/gpu-dmesg.txt" || rc=1
+	return $rc
 }
 
 # ── NPU ──────────────────────────────────────────────────────────────────────
@@ -170,7 +236,7 @@ phase_npu() {
 	note "ArmChina Zhouyi V3 via armchina_npu (out-of-tree, carried patch)"
 
 	if [ ! -e /dev/aipu ]; then
-		note "/dev/aipu absent — loading the module (blacklisted on first boot)"
+		note "/dev/aipu absent — loading the module (blacklisted for now)"
 		sudo -n modprobe armchina_npu 2>&1 | sed 's/^/     /'
 		sleep 2
 	fi
@@ -181,13 +247,16 @@ phase_npu() {
 	fi
 
 	local bin="$OUTDIR/aipu-uat"
-	nix shell "$NIXPKGS#gcc" --command \
-		cc -O2 -Wall -o "$bin" "$(dirname "$0")/aipu-uat.c" || return 1
+	"$CC" -O2 -Wall -o "$bin" "$(dirname "$0")/aipu-uat.c" || return 1
 
+	dmesg_snapshot "$OUTDIR/npu-dmesg-pre.txt"
 	sample_telemetry "$OUTDIR/npu.csv" &
 	local sampler=$!
 
-	"$bin" --stress "$SECS" 2>&1 | tee "$OUTDIR/npu-uat.log"
+	# /dev/aipu is root:render 0660 and this user is in video, not render, so
+	# the smoke run failed with EACCES. sudo rather than a group change: the
+	# tool needs no other privilege and this keeps the test self-contained.
+	sudo -n "$bin" --stress "$SECS" 2>&1 | tee "$OUTDIR/npu-uat.log"
 	local rc=${PIPESTATUS[0]}
 
 	wait $sampler 2>/dev/null
@@ -197,14 +266,33 @@ phase_npu() {
 	note "interrupts:"
 	grep -iE "aipu|npu" /proc/interrupts 2>/dev/null | sed 's/^/     /' || note "  (none registered)"
 	summarise "$OUTDIR/npu.csv" npu
-	dmesg_verdict "$OUTDIR/npu-dmesg.txt"
+	dmesg_verdict "$OUTDIR/npu-dmesg-pre.txt" "$OUTDIR/npu-dmesg.txt"
 	return "$rc"
 }
 
 # ── run ──────────────────────────────────────────────────────────────────────
 say "Orion O6 UAT — $(uname -r) — ${MINUTES} min per phase"
 note "output: $OUTDIR"
-dmesg_before
+
+# Resolve up front so a phase can never be skipped by a tooling failure.
+case "$PHASE" in
+cpu | all)
+	STRESS_NG=$(resolve_tool stress-ng stress-ng)
+	note "stress-ng: $STRESS_NG"
+	;;
+esac
+case "$PHASE" in
+gpu | all)
+	GLMARK2=$(resolve_tool glmark2 glmark2-es2-gbm)
+	note "glmark2:   $GLMARK2"
+	;;
+esac
+case "$PHASE" in
+npu | all)
+	CC=$(resolve_tool gcc gcc)
+	note "cc:        $CC"
+	;;
+esac
 
 rc=0
 case "$PHASE" in
