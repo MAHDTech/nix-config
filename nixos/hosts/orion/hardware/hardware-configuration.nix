@@ -107,10 +107,23 @@ in
     # a lost session instead of a trip to the machine.
     #
     # Remove this entry once it has bound cleanly at least once.
+    # cdnsp-sky1: TEMPORARY, same reasoning as armchina_npu above but learned
+    # the hard way. Built in, this driver hung the machine solid during boot:
+    #
+    #   Sending NMI from CPU 0 to CPUs 7:
+    #   NMI backtrace for cpu 7 skipped
+    #
+    # an unrecoverable CPU lockup needing a power cycle and a boot-menu pick.
+    # Six brand-new USB controllers probing at once is precisely the situation
+    # that wants an escape hatch, and building it in threw the hatch away.
+    #
+    # Blacklisted, it probes only when insmod'd over SSH. Remove once every
+    # controller has bound cleanly and the driver goes back to =y.
     blacklistedKernelModules = [
       "panfrost"
       "iwlwifi"
       "armchina_npu"
+      "cdnsp_sky1"
     ];
 
     # ── TEMPORARY: v7.2 boot diagnostics ──────────────────────────────────

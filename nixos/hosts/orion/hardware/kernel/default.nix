@@ -792,19 +792,19 @@ let
                           <&scmi_clk CLK_TREE_USB3A_PHY_x2_REF>;
                 clock-names = "apb_clk", "ref_clk";
                 cix,usbphy_syscon = <&s5_syscon>;
-                status = "okay";
+                status = "disabled";
 
                 usb3_phy4_0: usb-port@0 {
                     #phy-cells = <0>;
                     reg = <0>;
                     id = <0>;
-                    status = "okay";
+                    status = "disabled";
                 };
                 usb3_phy4_1: usb-port@1 {
                     #phy-cells = <0>;
                     reg = <1>;
                     id = <1>;
-                    status = "okay";
+                    status = "disabled";
                 };
             };
 
@@ -827,7 +827,7 @@ let
                 axi_bmax_value = <0x7>;
                 sof_clk_freq = <8000000>;
                 lpm_clk_freq = <32000>;
-                status = "okay";
+                status = "disabled";
 
                 usbss_4: usb-controller@91d0000 {
                     compatible = "cdns,usbssp";
@@ -845,7 +845,7 @@ let
                     phys = <&usb3_phy4_0>;
                     phy-names = "cdnsp,usb3-phy";
                     usb3-lpm-capable;
-                    status = "okay";
+                    status = "disabled";
                 };
             };
 
@@ -868,7 +868,7 @@ let
                 axi_bmax_value = <0x7>;
                 sof_clk_freq = <8000000>;
                 lpm_clk_freq = <32000>;
-                status = "okay";
+                status = "disabled";
 
                 usbss_5: usb-controller@91e0000 {
                     compatible = "cdns,usbssp";
@@ -886,7 +886,7 @@ let
                     phys = <&usb3_phy4_1>;
                     phy-names = "cdnsp,usb3-phy";
                     usb3-lpm-capable;
-                    status = "okay";
+                    status = "disabled";
                 };
             };
         };
@@ -971,9 +971,23 @@ let
       # ── USB (04-usb-phy-typec) ──────────────────────────────────────────────
       # The controllers are Cadence USBSSP behind a CIX wrapper, so the stack is
       # USB_CDNS_SUPPORT -> USB_CDNSP -> USB_CDNSP_SKY1, plus the CIX PHYs.
-      # Built in rather than modular: USB is how the machine is operated from
-      # the console, and a keyboard that only appears once /nix has been read is
-      # no use for rescuing a bad boot.
+      #
+      # cdnsp-sky1 is a MODULE on purpose. Built in, it hung the machine solid
+      # during boot -- an unrecoverable CPU lockup, screen stuck on:
+      #
+      #   Sending NMI from CPU 0 to CPUs 7:
+      #   NMI backtrace for cpu 7 skipped
+      #
+      # and only a physical power cycle and a menu pick got the board back. The
+      # reasoning for building it in (a keyboard has to exist early enough to
+      # rescue a bad boot) was sound but backwards in sequencing: it removed the
+      # ability to iterate at exactly the point where six brand-new controllers
+      # probe for the first time. The NPU pattern is the right one -- module,
+      # blacklisted, insmod over SSH -- and it goes back to =y only once every
+      # controller has probed cleanly at least once.
+      #
+      # xHCI and HID stay built in; they are mainline code that already works,
+      # and nothing binds to them until the platform glue is loaded.
       ./scripts/config --enable USB_SUPPORT
       ./scripts/config --enable USB
       ./scripts/config --enable USB_XHCI_HCD
@@ -993,7 +1007,7 @@ let
       ./scripts/config --enable USB_CDNS3
       ./scripts/config --enable USB_CDNS3_HOST
       ./scripts/config --enable USB_CDNSP
-      ./scripts/config --enable USB_CDNSP_SKY1
+      ./scripts/config --module USB_CDNSP_SKY1
       # CIX PHYs: without these the usbss controllers get -EPROBE_DEFER forever
       # on their phys phandle and never bind.
       ./scripts/config --enable GENERIC_PHY
@@ -1141,7 +1155,7 @@ let
       # dependency is itself modular, and the first USB build did exactly
       # that -- kbuild reported "LD [M] cdnsp-sky1.o".
       USB_BUILTIN="USB USB_XHCI_HCD USB_XHCI_PLATFORM USB_CDNS_SUPPORT"
-      USB_BUILTIN="$USB_BUILTIN USB_CDNS3 USB_CDNSP USB_CDNSP_SKY1 TYPEC"
+      USB_BUILTIN="$USB_BUILTIN USB_CDNS3 USB_CDNSP TYPEC"
       USB_BUILTIN="$USB_BUILTIN PHY_CIX_USB2 PHY_CIX_USB3 PHY_CIX_USBDP"
       USB_BUILTIN="$USB_BUILTIN USB_HID HID_GENERIC INPUT_EVDEV"
       for opt in $USB_BUILTIN; do
@@ -1151,6 +1165,14 @@ let
           exit 1
         fi
       done
+      # The inverse assertion: cdnsp-sky1 must NOT be built in. Being wrong
+      # here costs a physical power cycle, so it is worth a gate of its own.
+      if ! grep -q "CONFIG_USB_CDNSP_SKY1=m" .config; then
+        echo "FATAL: CONFIG_USB_CDNSP_SKY1 must be a module (=m) until the" >&2
+        echo "       USB controllers have probed cleanly at least once." >&2
+        grep "CONFIG_USB_CDNSP_SKY1" .config >&2 || echo "  (absent)" >&2
+        exit 1
+      fi
       echo "All critical kernel config options verified."
     '';
 
