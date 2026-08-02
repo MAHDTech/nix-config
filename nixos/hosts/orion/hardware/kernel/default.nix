@@ -568,8 +568,24 @@ let
       #
       # SOC_SKY1 selects sky1/sky1.c, whose non-ACPI branch attaches
       # pd_core0/1/2 and the "perf" domain by name -- the shape of the DT node
-      # added below. ARCH_V3_1 is the Zhouyi generation in the CIX P1.
+      # added below.
+      #
+      # Both V3 and V3_1 architectures are built in, because the ISA version is
+      # read from the hardware at probe, not declared in the DT -- the node's
+      # compatible is the generic "armchina,zhouyi". aipu_priv.c dispatches on
+      # that value against whichever handlers were compiled in, and falls over
+      # if the matching one is absent:
+      #
+      #   armchina 14260000.aipu: unidentified hardware version number: 5
+      #   armchina 14260000.aipu: aipu real probe failed, ret: -22
+      #
+      # 5 is AIPU_ISA_VERSION_ZHOUYI_V3. This silicon reports V3, not the V3_1
+      # its marketing generation would suggest, so V3 is the one that actually
+      # matters here; V3_1 is kept because it costs one object file and removes
+      # a class of surprise if a later board revision reports 6. Corroborated by
+      # the DT node itself: cluster-partition is parsed by v3_priv.c.
       ./scripts/config --module ARMCHINA_NPU
+      ./scripts/config --enable ARMCHINA_NPU_ARCH_V3
       ./scripts/config --enable ARMCHINA_NPU_ARCH_V3_1
       ./scripts/config --enable ARMCHINA_NPU_SOC_SKY1
       # sky1.c guards its devfreq code on CONFIG_ENABLE_DEVFREQ, which the
