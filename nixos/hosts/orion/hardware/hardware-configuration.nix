@@ -424,19 +424,12 @@ in
     AIPULIB_PATH = "${cix-noe-umd}/lib";
   };
 
-  # iwd is enabled for every host by system/config/network/wireless. On ORION
-  # there is nothing for it to manage: iwlwifi is blacklisted because the AX210
-  # is unpowered (mainline's pci-sky1.c has no wlan-en regulator) and an SError
-  # during iwl_pci_probe is fatal. iwd therefore fails and is restarted, six
-  # times per boot:
-  #
-  #   Failed to start Wireless service.        x6
-  #
-  # Overridden here rather than in the shared module so only this host is
-  # affected. Drop the override if the wlan-en regulator is ever ported.
+  # NOTE: iwd is left enabled deliberately, even though it fails six times per
+  # boot here (iwlwifi is blacklisted, so it has nothing to manage). Whether to
+  # disable it depends on the Bluetooth question: the AX210 is a combo card, so
+  # if Bluetooth turns out to need that card powered, the blacklist has to go
+  # and iwd becomes relevant again. Decide once, not twice.
   networking = {
-    wireless.iwd.enable = lib.mkForce false;
-
     # Use systemd-networkd for Ethernet management
     useNetworkd = true;
     useDHCP = lib.mkForce false;
