@@ -71,6 +71,10 @@ in
     # power domain to attach to, so it stays out until 06-gpu-panthor returns.
     kernelModules = lib.optionals (!isInstaller) [
       "kvm"
+      # USB platform glue. Loaded here so USB is up during boot rather than
+      # waiting on a hotplug event -- a keyboard has to exist before the login
+      # prompt, not after someone plugs something in.
+      "cdnsp_sky1"
     ];
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
@@ -107,23 +111,26 @@ in
     # a lost session instead of a trip to the machine.
     #
     # Remove this entry once it has bound cleanly at least once.
-    # cdnsp-sky1: TEMPORARY, same reasoning as armchina_npu above but learned
-    # the hard way. Built in, this driver hung the machine solid during boot:
+    # cdnsp-sky1 is NO LONGER blacklisted: USB now works end to end. The
+    # keyboard, a card reader and two hubs all enumerate at 480 Mb/s.
+    #
+    # It stays a MODULE rather than going back to =y. The earlier boot lockup
     #
     #   Sending NMI from CPU 0 to CPUs 7:
     #   NMI backtrace for cpu 7 skipped
     #
-    # an unrecoverable CPU lockup needing a power cycle and a boot-menu pick.
-    # Six brand-new USB controllers probing at once is precisely the situation
-    # that wants an escape hatch, and building it in threw the hatch away.
-    #
-    # Blacklisted, it probes only when insmod'd over SSH. Remove once every
-    # controller has bound cleanly and the driver goes back to =y.
+    # is understood now -- cdnsp-plat never called cdns_core_init_role(), so
+    # cdns->roles[] stayed empty and any teardown walked a NULL role pointer
+    # (the same fault later captured as a panic in cdns_role_stop). That is
+    # fixed. But "understood" is not "proven at boot", and the difference
+    # between the two is a physical trip to the machine. As a module, udev
+    # loads it during boot so USB is available without anyone typing modprobe,
+    # and a probe that misbehaves stalls a udev worker instead of wedging the
+    # kernel. Revisit =y once it has come up cleanly across a few boots.
     blacklistedKernelModules = [
       "panfrost"
       "iwlwifi"
       "armchina_npu"
-      "cdnsp_sky1"
     ];
 
     # ── TEMPORARY: v7.2 boot diagnostics ──────────────────────────────────
