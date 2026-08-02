@@ -75,7 +75,10 @@ let
     # 11 of its 18 files are new; the rest are Kconfig/Makefile hooks plus
     # xhci-plat.c. Adds drivers/phy/cix/ and the cdnsp platform glue.
     ./patches/04-usb-phy-typec.patch
-    # ./patches/05-display-drm-cix.patch    # linlon-dp, trilin-dpsub
+    # Display pipeline. 79 files, 76 of them new under drivers/gpu/drm/cix/
+    # and drivers/gpu/drm/sky1/; the only edits are the DRM Kconfig, the DRM
+    # Makefile and pwm_bl.c. Applies to 7.2 clean.
+    ./patches/05-display-drm-cix.patch
     # Sky1 SCMI/DVFS glue for panthor. panthor itself is mainline; this adds the
     # power-domain and DVFS sequencing mainline has no way to express:
     #   panthor_pm_domain_init()     attach pd_gpu + perf as separate domains
@@ -1353,6 +1356,145 @@ let
         #
         # If this firmware does not implement 0x15 the node simply binds to
         # nothing -- one boot tells us either way.
+        # ── Additive: HDMI display chain (05-display-drm-cix) ───────────────
+        # The board's video topology, read out of the downstream DTS:
+        #
+        #   HDMI     dpu4 -> dp4 -> usbc3_dp_phy -> PS185 bridge -> connector
+        #   USB-C DP dpu0 -> dp0 -> usbc0_dp_phy
+        #            dpu1 -> dp1 -> usbc1_dp_phy
+        #   eDP      dpu2 -> dp2 -> laptop panel (not this board)
+        #
+        # HDMI is the target: it needs no Type-C PD negotiation, unlike the
+        # USB-C outputs whose alt-mode entry normally comes from the rts5453
+        # this configuration deliberately leaves out.
+        #
+        # The PS185 is a DP-to-HDMI converter. Downstream declares it as
+        # "parade,ps185hdm", but NO driver for that compatible exists -- not in
+        # 05, not anywhere in the twelve patches, not in mainline. What makes
+        # this worth trying anyway is that the dptx driver never calls
+        # of_drm_find_bridge or devm_drm_of_get_bridge, so it does not look for
+        # one: the converter is fed DP and expected to do its job in hardware,
+        # with EDID and HPD riding the AUX channel. So the ps185 node itself is
+        # omitted and only its power rail is provided.
+        #
+        # iommus is dropped, as for the NPU and VPU -- mainline has no SMMU
+        # nodes. This is a bigger assumption here than there: a display
+        # controller scans out continuously, and there is prior evidence on
+        # this board of the DPU faulting the SMMU
+        #   arm-smmu-v3: event: F_TRANSLATION client: 141d0000.disp-controller
+        # so iommu.passthrough=1 on the cmdline is doing the work.
+        echo "Adding the HDMI display chain..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'DISPEOF'
+
+        &iomuxc {
+            pinctrl_ps185_pdb: ps185-pdb-cfg {
+                pins {
+                    pinmux = <CIX_PAD_GPIO031_FUNC_GPIO031>;
+                    bias-pull-up;
+                    drive-strength = <8>;
+                };
+            };
+        };
+
+        / {
+            ps185_pdb: regulator-ps185-pdb {
+                compatible = "regulator-fixed";
+                regulator-name = "PS185_PDB";
+                pinctrl-names = "default";
+                pinctrl-0 = <&pinctrl_ps185_pdb>;
+                regulator-min-microvolt = <3300000>;
+                regulator-max-microvolt = <3300000>;
+                gpio = <&fch_gpio0 31 GPIO_ACTIVE_LOW>;
+                regulator-boot-on;
+                regulator-always-on;
+            };
+        };
+
+        &{/soc@0} {
+            dpu4: disp-controller@141d0000 {
+                device-id = <4>;
+                #address-cells = <1>;
+                #size-cells = <0>;
+                compatible = "armchina,linlon-d6";
+                reg = <0x0 0x141d0000 0x0 0x20000>;
+                interrupts = <GIC_SPI 324 IRQ_TYPE_LEVEL_HIGH 0>;
+                power-domains = <&smc_devpd SKY1_PD_DPU4>;
+                power-domain-names = "dpu_pd";
+                clocks = <&scmi_clk CLK_TREE_DPU4_ACLK>;
+                clock-names = "aclk";
+                resets = <&s5_syscon SKY1_DPU4_RCSU_RESET_N>,
+                          <&s5_syscon SKY1_DPU_RESET4_N>;
+                reset-names = "rcsu_reset", "ip_reset";
+                enabled_by_gop = <0>;
+                aclk_freq_fixed = <800000000>;
+                status = "okay";
+
+                dpu4_pipe0: pipeline@0 {
+                    reg = <0>;
+                    clocks = <&scmi_clk CLK_TREE_DP4_PIXEL0>;
+                    clock-names = "pxclk";
+
+                    port {
+                        dpu4_pipe0_out: endpoint {
+                            remote-endpoint = <&dp4_0_in>;
+                        };
+                    };
+                };
+            };
+
+            dp4: dp@14220000 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                #sound-dai-cells = <0>;
+                compatible = "cix,sky1-dptx";
+                reg = <0x0 0x14224000 0x0 0x4000>,
+                      <0x0 0x14228000 0x0 0x4000>,
+                      <0x0 0x1422ff00 0x0 0x0100>,
+                      <0x0 0x14210000 0x0 0x304>;
+                reg-names = "dp", "dsc", "dp_phy", "dp_rcsu";
+                interrupts = <GIC_SPI 336 IRQ_TYPE_LEVEL_HIGH 0>;
+                clocks = <&scmi_clk CLK_TREE_DPC4_APBCLK>,
+                          <&scmi_clk CLK_TREE_DPC4_VIDCLK0>,
+                          <&scmi_clk CLK_TREE_DPC4_VIDCLK1>;
+                clock-names = "apb_clk", "vid_clk0", "vid_clk1";
+                resets = <&s5_syscon SKY1_DP4_RCSU_RESET_N>,
+                          <&s5_syscon SKY1_DP_RESET4_N>;
+                reset-names = "dp_rcsu_reset", "dp_reset";
+                phys = <&usbc3_dp_phy>;
+                phy-names = "dp_phy";
+                support_d3_cmd = "yes";
+                enabled_by_gop = <0>;
+                cix,dp-max-rate = <540000>;
+                status = "okay";
+
+                ports {
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+
+                    port@0 {
+                        reg = <0>;
+                        dp4_0_in: endpoint {
+                            remote-endpoint = <&dpu4_pipe0_out>;
+                        };
+                    };
+                };
+            };
+        };
+
+        /* the DP half of the Type-C combo PHY that feeds the PS185 */
+        &usbc3_dp_phy {
+            status = "okay";
+        };
+        DISPEOF
+
+        for want in 'armchina,linlon-d6' 'cix,sky1-dptx' 'PS185_PDB'; do
+          if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+            echo "FATAL: display chain incomplete, missing '$want'." >&2
+            exit 1
+          fi
+        done
+        echo "HDMI display chain added."
+
         # ── Additive: VPU node (09-vpu-linlon) ──────────────────────────────
         # mainline's sky1.dtsi has no VPU, so the driver builds and binds to
         # nothing. Lifted from downstream's vpu@14230000 with one change: the
@@ -1785,6 +1927,23 @@ let
       ./scripts/config --enable NFT_FLOW_OFFLOAD
       ./scripts/config --enable NF_CONNTRACK_MARK
       ./scripts/config --enable NF_NAT_MASQUERADE
+
+      # ── Display (05-display-drm-cix) ────────────────────────────────────────
+      # MODULES, and blacklisted on first boot. simpledrm is currently the only
+      # thing putting a picture on screen; if linlon-dp takes over scanout and
+      # fails, the result is a machine with no console at all. Loading these by
+      # hand over SSH keeps that failure to a lost modprobe.
+      #
+      # DRM_CIX_VIRTUAL and the eDP panel driver stay off: the virtual display
+      # is for headless bring-up and the eDP panel is a laptop part this board
+      # does not have.
+      ./scripts/config --module DRM_CIX
+      ./scripts/config --module DRM_LINLONDP
+      ./scripts/config --module DRM_TRILIN_DPSUB
+      ./scripts/config --module DRM_TRILIN_DP_CIX
+      ./scripts/config --module DRM_SKY1
+      ./scripts/config --disable DRM_CIX_VIRTUAL
+      ./scripts/config --disable DRM_CIX_EDP_PANEL
 
       # ── VPU (09-vpu-linlon) ─────────────────────────────────────────────────
       # Hardware video encode/decode. Module rather than built in: it is not on

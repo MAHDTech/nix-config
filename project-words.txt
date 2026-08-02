@@ -1992,3 +1992,13 @@ APBCLK
 TPROXY
 CONNLIMIT
 NUMGEN
+DISPEOF
+dpsub
+ps185
+pdb
+hdm
+EDID
+HPD
+scanout
+pxclk
+VIDCLK

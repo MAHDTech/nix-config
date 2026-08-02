@@ -122,9 +122,20 @@ in
     # loads it during boot so USB is available without anyone typing modprobe,
     # and a probe that misbehaves stalls a udev worker instead of wedging the
     # kernel. Revisit =y once it has come up cleanly across a few boots.
+    # linlondp / trilin_dp: TEMPORARY, first boot of the display pipeline.
+    #
+    # simpledrm is currently the only thing putting a picture on screen. If
+    # these bind, take over scanout and then fail, the machine has no console
+    # at all -- a worse outcome than the USB lockup, because there would be
+    # nothing to read the failure from. Blacklisted, they load only when
+    # insmod'd over SSH and /sys/class/drm can be inspected before trusting
+    # them. Remove once a connector has come up.
     blacklistedKernelModules = [
       "panfrost"
       "iwlwifi"
+      "linlondp"
+      "trilin_dp"
+      "cix_dp"
     ];
 
     # Boot diagnostics have been removed now that 7.2 boots and the hardware
