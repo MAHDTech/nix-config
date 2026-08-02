@@ -890,9 +890,42 @@ let
                 };
             };
         };
+
+        /*
+         * cdnsp-sky1 refuses to probe without an index:
+         *
+         *   ret = of_alias_get_id(dev->of_node, "usb");
+         *   if (ret == -ENODEV) device_property_read_u32(dev, "id", &ret);
+         *   if (ret < 0 || ret > 9) { dev_err("get alias failed."); return ret; }
+         *
+         * which is exactly what the first load produced:
+         *   cdnsp-sky1 9250310.usb: get alias failed.   (x4)
+         *
+         * The number is NOT arbitrary. It indexes sky1_usb_signals[], the
+         * table of USB_MODE_STRAP bits in the S5 syscon, so the wrong value
+         * writes another controller's mode bits:
+         *
+         *   U3_TYPEA_CTRL0_ID 4   U2_HOST0_ID 6   U2_HOST2_ID 8
+         *   U3_TYPEA_CTRL1_ID 5   U2_HOST1_ID 7   U2_HOST3_ID 9
+         *
+         * These match the downstream board file's aliases one for one. The
+         * enum also settles which ports these are: usbss_4/5 are named
+         * U3_TYPEA_*, i.e. the USB3 Type-A sockets.
+         *
+         * usb4/usb5 are declared now even though those nodes are disabled for
+         * this attempt, so enabling them later needs no second change here.
+         */
+        &{/aliases} {
+            usb4 = &sky1_usbss_4;
+            usb5 = &sky1_usbss_5;
+            usb6 = &sky1_usbhs_0;
+            usb7 = &sky1_usbhs_1;
+            usb8 = &sky1_usbhs_2;
+            usb9 = &sky1_usbhs_3;
+        };
         USBEOF
 
-        for want in 'cix,sky1-usbssp' 'cdns,usbssp' 'cix,sky1-usb3-phy' 'sky1_usbhs_0'; do
+        for want in 'cix,sky1-usbssp' 'cdns,usbssp' 'cix,sky1-usb3-phy' 'sky1_usbhs_0' 'usb6 = &sky1_usbhs_0'; do
           if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
             echo "FATAL: USB nodes incomplete, missing '$want' in the board DTS." >&2
             exit 1
