@@ -944,11 +944,20 @@ let
       ./scripts/config --enable PHY_CIX_USB2
       ./scripts/config --enable PHY_CIX_USB3
       ./scripts/config --enable PHY_CIX_USBDP
+      # TYPEC is required even though Type-C alt-mode and PD are NOT enabled.
+      # phy-cix-usbdp.c registers itself as a Type-C mux and orientation switch
+      # unconditionally in cix_udphy_probe(), so without it the kernel does not
+      # link:
+      #   phy-cix-usbdp.o: undefined reference to `typec_switch_register'
+      #   phy-cix-usbdp.o: undefined reference to `typec_mux_register'
+      # =y rather than =m because PHY_CIX_USBDP is bool, i.e. built in, and a
+      # built-in object cannot resolve symbols from a module.
       # Input devices, so a keyboard is actually usable once enumerated.
       ./scripts/config --enable HID
       ./scripts/config --enable HID_GENERIC
       ./scripts/config --enable USB_HID
       ./scripts/config --enable INPUT_EVDEV
+      ./scripts/config --enable TYPEC
       ./scripts/config --enable USB_STORAGE
 
       # ── Phase 3: console and diagnostics ────────────────────────────────────
