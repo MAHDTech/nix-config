@@ -535,6 +535,31 @@ let
         done
         echo "NPU node added."
 
+        # ── Fixup: 04's cdns3 Makefile declares two self-composite objects ──
+        # The patch adds:
+        #     cdnsp-sky1-y := cdnsp-sky1.o
+        #     obj-$(CONFIG_USB_CDNSP_SKY1) += cdnsp-sky1.o
+        # which tells kbuild that the composite module cdnsp-sky1.o is built
+        # FROM cdnsp-sky1.o, i.e. from itself:
+        #
+        #   make: Circular drivers/usb/cdns3/cdnsp-sky1.o <- cdnsp-sky1.o
+        #         dependency dropped.
+        #   ld.bfd: input file 'cdnsp-sky1.o' is the same as output file
+        #
+        # A single-file module needs only the obj- line; the "-y :=" line is
+        # what creates the cycle. Same mistake for cdnsp-plat. Drop both lines
+        # rather than rewriting the Makefile, so the patch stays recognisable.
+        for m in cdnsp-sky1 cdnsp-plat; do
+          if grep -q "^$m-y := $m.o$" drivers/usb/cdns3/Makefile; then
+            sed -i "/^$m-y := $m\.o$/d" drivers/usb/cdns3/Makefile
+            echo "Dropped self-composite $m-y from the cdns3 Makefile."
+          fi
+        done
+        if grep -qE '^(cdnsp-sky1|cdnsp-plat)-y' drivers/usb/cdns3/Makefile; then
+          echo "FATAL: a self-composite cdnsp object survived the fixup." >&2
+          exit 1
+        fi
+
         # ── Additive: USB nodes for 04-usb-phy-typec ────────────────────────
         # mainline's sky1.dtsi describes no USB at all: no usb, xhci, dwc3,
         # cdns3 or typec node anywhere. usbcore and xhci-hcd are built and
@@ -1093,6 +1118,24 @@ let
       for opt in PCI_SKY1_HOST BLK_DEV_NVME RESET_SKY1 CIX_MBOX; do
         if ! grep -q "CONFIG_''${opt}=y" .config; then
           echo "FATAL: CONFIG_''${opt} must be built in (=y), not a module." >&2
+          exit 1
+        fi
+      done
+
+      # USB must be built in too. It is how this machine is driven from the
+      # console, and a keyboard that only appears after /nix has been read is
+      # no use for rescuing a bad boot. Asserted rather than assumed because
+      # "scripts/config --enable" on a tristate silently yields =m when a
+      # dependency is itself modular, and the first USB build did exactly
+      # that -- kbuild reported "LD [M] cdnsp-sky1.o".
+      USB_BUILTIN="USB USB_XHCI_HCD USB_XHCI_PLATFORM USB_CDNS_SUPPORT"
+      USB_BUILTIN="$USB_BUILTIN USB_CDNSP USB_CDNSP_SKY1 TYPEC"
+      USB_BUILTIN="$USB_BUILTIN PHY_CIX_USB2 PHY_CIX_USB3 PHY_CIX_USBDP"
+      USB_BUILTIN="$USB_BUILTIN USB_HID HID_GENERIC INPUT_EVDEV"
+      for opt in $USB_BUILTIN; do
+        if ! grep -q "CONFIG_''${opt}=y" .config; then
+          echo "FATAL: CONFIG_''${opt} must be built in (=y), not a module." >&2
+          grep "CONFIG_''${opt}" .config >&2 || echo "  (absent from .config)" >&2
           exit 1
         fi
       done
