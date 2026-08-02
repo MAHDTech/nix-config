@@ -1472,6 +1472,19 @@ let
       # display pipeline -- 1920x1080 fixed, no mode setting. It is enough for a
       # desktop to appear and be looked at. The proper fix is porting
       # 05-display-drm-cix, at which point this becomes a fallback.
+      # DRM must be =y for simpledrm to be =y -- a tristate cannot exceed the
+      # symbol it depends on, the same trap as USB_CDNS3 capping USB_CDNSP.
+      # arm64 defconfig ships DRM=m, which silently capped DRM_SIMPLEDRM at m:
+      #
+      #   FATAL: CONFIG_DRM_SIMPLEDRM must be built in (=y), not a module.
+      #
+      # simpledrm is the only KMS device on this board, so it needs to exist
+      # before userspace rather than depending on a udev autoload that, if it
+      # ever failed, would leave no console and no desktop. panthor stays =m --
+      # it is a render node, nothing needs it early.
+      ./scripts/config --enable DRM
+      ./scripts/config --enable DRM_KMS_HELPER
+      ./scripts/config --enable DRM_CLIENT_SELECTION
       ./scripts/config --enable SYSFB
       ./scripts/config --enable SYSFB_SIMPLEFB
       ./scripts/config --enable DRM_SIMPLEDRM
@@ -1598,7 +1611,7 @@ let
       USB_BUILTIN="$USB_BUILTIN USB_HID HID_GENERIC INPUT_EVDEV"
       # simpledrm must be built in and must own the framebuffer, or there is no
       # KMS device and no desktop.
-      USB_BUILTIN="$USB_BUILTIN DRM_SIMPLEDRM SYSFB_SIMPLEFB"
+      USB_BUILTIN="$USB_BUILTIN DRM DRM_SIMPLEDRM SYSFB_SIMPLEFB"
       for opt in $USB_BUILTIN; do
         if ! grep -q "CONFIG_''${opt}=y" .config; then
           echo "FATAL: CONFIG_''${opt} must be built in (=y), not a module." >&2
