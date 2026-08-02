@@ -702,6 +702,12 @@ let
           sed -i '/#include "sky1-pinfunc.h"/a #include <dt-bindings/reset/cix,sky1-s5-system-control.h>' \
             arch/arm64/boot/dts/cix/sky1-orion-o6.dts
         fi
+        # GPIO_ACTIVE_HIGH for the WLAN regulator; mainline's board DTS pulls in
+        # neither this nor the reset bindings.
+        if ! grep -q 'dt-bindings/gpio/gpio.h' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          sed -i '/#include "sky1-pinfunc.h"/a #include <dt-bindings/gpio/gpio.h>' \
+            arch/arm64/boot/dts/cix/sky1-orion-o6.dts
+        fi
         grep -q 'cix,sky1-s5-system-control.h' arch/arm64/boot/dts/cix/sky1-orion-o6.dts || {
           echo "FATAL: could not add the reset bindings include to the board DTS." >&2
           exit 1
@@ -1328,6 +1334,68 @@ let
         #
         # If this firmware does not implement 0x15 the node simply binds to
         # nothing -- one boot tells us either way.
+        # ── Additive: WLAN 3.3V rail ────────────────────────────────────────
+        # The Intel AX210 is a combo card: Wi-Fi on PCIe, Bluetooth on USB. Both
+        # misbehave, and they share one cause -- the card's 3.3V rail is switched
+        # by a GPIO that mainline never turns on.
+        #
+        #   iwlwifi  : SError during iwl_pci_probe (hence the blacklist)
+        #   bluetooth: enumerates, reads its bootloader, starts the firmware
+        #              download, then drops off the bus mid-transfer:
+        #                usb 3-1: USB disconnect, device number 2
+        #                Bluetooth: hci0: Failed to send firmware data (-19)
+        #                Bluetooth: hci0: FW download error recovery failed (-19)
+        #
+        # The card appears in lspci, so the firmware leaves it partially powered
+        # -- enough to enumerate, not enough to run. Downstream drives the rail
+        # from a regulator-fixed that its PCIe driver claims as "wlan-en"; that
+        # is the "no wlan-en regulator found" line from the 6.19 logs. Mainline's
+        # pci-sky1.c has no regulator support at all, so nothing asserts it.
+        #
+        # regulator-fixed IS mainline, so no driver patch is needed -- only the
+        # node, marked always-on because there is no consumer to request it.
+        # GPIO013 is not muxed to GPIO mode upstream either (the s5 hog covers
+        # GPIO014 only), hence the pinctrl entry.
+        #
+        # This is expected to help Bluetooth. Wi-Fi stays blacklisted regardless;
+        # if the rail turns out to be what iwlwifi needed, that is a separate
+        # decision to make deliberately rather than by side effect.
+        echo "Adding the WLAN 3.3V regulator..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'WLANEOF'
+
+        &iomuxc_s5 {
+            pinctrl_wlan_pwren: wlan-pwren-cfg {
+                pins {
+                    pinmux = <CIX_PAD_GPIO013_FUNC_GPIO013>;
+                    bias-pull-up;
+                    drive-strength = <8>;
+                };
+            };
+        };
+
+        / {
+            vdd_3v3_wlan: regulator-vdd-3v3-wlan {
+                compatible = "regulator-fixed";
+                regulator-name = "vdd_3v3_wlan";
+                pinctrl-names = "default";
+                pinctrl-0 = <&pinctrl_wlan_pwren>;
+                regulator-min-microvolt = <3300000>;
+                regulator-max-microvolt = <3300000>;
+                gpio = <&s5_gpio0 12 GPIO_ACTIVE_HIGH>;
+                enable-active-high;
+                regulator-boot-on;
+                regulator-always-on;
+                off-on-delay-us = <15000>;
+            };
+        };
+        WLANEOF
+
+        if ! grep -q 'vdd_3v3_wlan' arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+          echo "FATAL: WLAN regulator missing from the board DTS." >&2
+          exit 1
+        fi
+        echo "WLAN 3.3V regulator added."
+
         echo "Adding the SCMI sensor protocol node..."
         cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'THERMEOF'
 

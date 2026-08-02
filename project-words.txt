@@ -1974,3 +1974,7 @@ unaccelerated
 svid
 THERMEOF
 xtables
+muxed
+WLANEOF
+iomuxc
+pwren
