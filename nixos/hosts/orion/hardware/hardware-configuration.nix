@@ -227,8 +227,20 @@ in
       # markers, identical failure — so the hypothesis is rejected and the param
       # is removed rather than left to accumulate. Note it would have been a weak
       # test anyway: with domains still Translated, bypass was never in play.
-      # Disable deep CPU idle states to prevent register corruption
-      "cpuidle.off=1"
+      # NOTE: "cpuidle.off=1" removed (was added 2026-06-08, "disable CPU idle
+      # due to Orion crashing", commit 0ced3815). It predates the entire
+      # mainline-7.2 bring-up -- the kernel, SCMI perf/power domains and every
+      # CIX patch have changed underneath it since, and no crash signature was
+      # ever recorded, so the original justification cannot be evaluated as
+      # written. It also had a real cost: the CPUs never entered a deep idle
+      # state at all (/sys/devices/system/cpu/cpu0/cpuidle was empty) and the
+      # kernel logged "failed to register cpuidle driver" on every boot.
+      #
+      # Retested deliberately: kernel.panic = 0 means a bad boot halts instead
+      # of looping, and the previous generation stays in the boot menu.
+      # Re-add this line if the board becomes unstable at idle -- and if so,
+      # record the actual signature here so the next retest has something to
+      # test against.
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
       # BIOS 1.2.1 may have fixed the IORT table. Re-add if NVMe crashes:
       #   "arm-smmu-v3.disable_bypass=0"
