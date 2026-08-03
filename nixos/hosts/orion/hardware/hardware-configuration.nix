@@ -462,12 +462,30 @@ in
     AIPULIB_PATH = "${cix-noe-umd}/lib";
   };
 
-  # NOTE: iwd is left enabled deliberately, even though it fails six times per
-  # boot here (iwlwifi is blacklisted, so it has nothing to manage). Whether to
-  # disable it depends on the Bluetooth question: the AX210 is a combo card, so
-  # if Bluetooth turns out to need that card powered, the blacklist has to go
-  # and iwd becomes relevant again. Decide once, not twice.
+  # Wi-Fi is off on this host and Bluetooth does not need it.
+  #
+  # The AX210 is a combo card but its two halves are independent devices on
+  # different buses: Bluetooth is USB (btusb, internal bus 3), Wi-Fi is PCIe
+  # (iwlwifi, 0001:61:00.0). Blacklisting iwlwifi leaves Bluetooth completely
+  # untouched -- hci0 pairs and discovers with the blacklist in place.
+  #
+  # Wi-Fi stays off because iwl_pci_probe panics the machine:
+  #   iwlwifi 0001:61:00.0: Unable to change power state from D3cold to D0,
+  #                         device inaccessible
+  #   SError Interrupt on CPU11 -- Kernel panic
+  # The card sits in D3cold and nothing brings it out. vdd_3v3_wlan supplies
+  # the rail (which is what got Bluetooth working) but mainline's pci-sky1.c
+  # has no PCIe power-state handling, so the PCIe function stays inaccessible.
+  #
+  # iwd is therefore pointless here and merely fails six times per boot. It is
+  # enabled for every host by system/config/network/wireless; overridden for
+  # this one only, leaving the shared module alone. The SOE's 20-wireless
+  # networkd unit is already disabled, so iwd is the only piece to stop.
+  #
+  # Revisit if D3cold->D0 handling is ever added to the PCIe driver.
   networking = {
+    wireless.iwd.enable = lib.mkForce false;
+
     # Use systemd-networkd for Ethernet management
     useNetworkd = true;
     useDHCP = lib.mkForce false;
