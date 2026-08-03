@@ -1906,15 +1906,25 @@ let
       ./scripts/config --enable USB_HID
       ./scripts/config --enable INPUT_EVDEV
       # uinput: bluetoothd creates virtual input devices through it for the LE
-      # Audio profiles. Without it every one of them fails to register:
+      # Audio profiles. Without it MCS fails to register:
       #   mcp.c:gmcs_new() MCS: failed to init uinput: No such file or directory
-      #   bap_adapter_probe() Unable to create BAP instance
-      #   csis_server_probe() Unable to create CSIP instance
       # Plain pairing works regardless, which is why this went unnoticed.
       ./scripts/config --enable INPUT_MISC
       ./scripts/config --enable INPUT_UINPUT
       ./scripts/config --enable TYPEC
       ./scripts/config --enable USB_STORAGE
+
+      # Bluetooth Low Energy. The inherited defconfig builds BR/EDR only:
+      #   CONFIG_BT=m / CONFIG_BT_BREDR=y / # CONFIG_BT_LE is not set
+      # so the kernel registers no ISO protocol (/proc/net/protocols lists only
+      # SCO and L2CAP) and every LE profile bluetoothd offers fails EINVAL:
+      #   bap_adapter_probe()  Unable to create BAP instance   -> bap: (22)
+      #   csis_server_probe()  Unable to create CSIP instance  -> csis: (22)
+      # BR/EDR pairing is unaffected, which is why hci0 looked healthy. This
+      # also means no BLE peripheral of any kind could work, not just LE Audio.
+      # BT_LE is a bool under a modular BT, so =y here is correct.
+      ./scripts/config --enable BT_LE
+      ./scripts/config --enable BT_LE_L2CAP_ECRED
 
       # ── Phase 3: console and diagnostics ────────────────────────────────────
       ./scripts/config --enable SERIAL_AMBA_PL011
@@ -2212,6 +2222,10 @@ let
       # nothing else complains. Assert it rather than discover it in a journal
       # sweep weeks later.
       USB_BUILTIN="$USB_BUILTIN NF_TABLES NF_TABLES_INET NFT_CT NFT_REJECT NFT_FIB_INET"
+      # Bluetooth LE and uinput are the same class of silent failure: hci0 comes
+      # up and pairs over BR/EDR either way, so only a journal sweep reveals
+      # that every LE profile is failing EINVAL. Assert both.
+      USB_BUILTIN="$USB_BUILTIN BT_LE INPUT_UINPUT"
       for opt in $USB_BUILTIN; do
         if ! grep -q "CONFIG_''${opt}=y" .config; then
           echo "FATAL: CONFIG_''${opt} must be built in (=y), not a module." >&2
