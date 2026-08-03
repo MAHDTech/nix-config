@@ -1356,6 +1356,85 @@ let
         #
         # If this firmware does not implement 0x15 the node simply binds to
         # nothing -- one boot tells us either way.
+        # ── Additive: fan control via the ChromeOS EC ───────────────────────
+        # An earlier pass concluded fan control was unreachable from Linux.
+        # That was wrong, and worth correcting: it was based on the pwm-fan
+        # node being status="disabled" downstream. It is disabled because
+        # downstream drives the fan through its own cix,cix-ec-fan instead --
+        # a compatible with NO driver anywhere in the twelve patches, only a
+        # DTS entry. So downstream's path is the dead end, not this one.
+        #
+        # The EC itself is completely standard and every driver is mainline:
+        #   google,cros-ec-i2c  -> CROS_EC_I2C=y      (already built)
+        #   google,cros-ec-pwm  -> PWM_CROS_EC=m      (already built)
+        #   pwm-fan             -> SENSORS_PWM_FAN=m  (already built)
+        # so this needs no patch at all, only nodes.
+        #
+        # The other candidate, cix-fan.c from patch 11, is unusable here: it
+        # has an acpi_match_table and no of_match_table, and this board boots
+        # acpi=off. It also exposes only a mode switch, not fan speed.
+        echo "Adding the EC and fan-control nodes..."
+        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'FANEOF'
+
+        &iomuxc {
+            pinctrl_fch_i2c6: fch-i2c6-cfg {
+                pins {
+                    pinmux = <CIX_PAD_I2C6_SCL_FUNC_I2C6_SCL>,
+                              <CIX_PAD_I2C6_SDA_FUNC_I2C6_SDA>;
+                    bias-pull-up;
+                    drive-strength = <8>;
+                };
+            };
+        };
+
+        &i2c6 {
+            status = "okay";
+            clock-frequency = <100000>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&pinctrl_fch_i2c6>;
+
+            cros_ec: ec@76 {
+                compatible = "google,cros-ec-i2c";
+                reg = <0x76>;
+                interrupt-parent = <&s5_gpio0>;
+                interrupts = <6 IRQ_TYPE_EDGE_RISING>;
+                wakeup-source;
+                status = "okay";
+
+                cros_ec_pwm: ec-pwm {
+                    compatible = "google,cros-ec-pwm";
+                    #pwm-cells = <1>;
+                    status = "okay";
+                };
+            };
+        };
+
+        / {
+            /*
+              * cooling-levels are downstream's, and the #cooling-cells makes
+              * this usable as a thermal cooling device later. There are no
+              * thermal-zones yet -- the sensors read correctly but no trip
+              * points are defined, and a critical trip on an unverified sensor
+              * can power the machine off. Manual control via hwmon first.
+              */
+            cix_fan: pwm-fan {
+                compatible = "pwm-fan";
+                pwms = <&cros_ec_pwm 0>;
+                cooling-levels = <0 150 200 255>;
+                #cooling-cells = <2>;
+                status = "okay";
+            };
+        };
+        FANEOF
+
+        for want in 'google,cros-ec-i2c' 'google,cros-ec-pwm' 'pwm-fan'; do
+          if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
+            echo "FATAL: fan chain incomplete, missing '$want'." >&2
+            exit 1
+          fi
+        done
+        echo "EC and fan-control nodes added."
+
         # ── Additive: HDMI display chain (05-display-drm-cix) ───────────────
         # The board's video topology, read out of the downstream DTS:
         #
@@ -1996,6 +2075,16 @@ let
       # i.e. through a ChromeOS EC, and disabled even there. There is no
       # cros_ec in mainline's board DTS, so the driver would have nothing to
       # bind to. The EC manages the fan on its own.
+      # I2C6 carries the ChromeOS EC that owns the fan. Built in so the EC is
+      # available early rather than racing module load.
+      ./scripts/config --enable I2C
+      ./scripts/config --enable I2C_CADENCE
+      ./scripts/config --enable CHROME_PLATFORMS
+      ./scripts/config --enable CROS_EC
+      ./scripts/config --enable CROS_EC_I2C
+      ./scripts/config --enable MFD_CROS_EC_DEV
+      ./scripts/config --module PWM_CROS_EC
+      ./scripts/config --module SENSORS_PWM_FAN
       ./scripts/config --enable SKY1_WATCHDOG
       ./scripts/config --enable PWM
       ./scripts/config --enable PWM_SKY1

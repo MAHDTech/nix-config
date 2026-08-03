@@ -2005,3 +2005,5 @@ VIDCLK
 linlondpdrmfb
 simpledrmdrmfb
 fbmap
+FANEOF
+fch
