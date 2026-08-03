@@ -138,18 +138,24 @@ in
     #
     # They are still modules, and are loaded from kernelModules below rather
     # than left to udev, so the order is explicit.
-    # iwlwifi is no longer blacklisted.
+    # iwlwifi is blacklisted again. Unblacklisting it made the machine
+    # unbootable and needed a power cycle and a boot-menu pick to recover.
     #
-    # It was blocked because iwl_pci_probe took a fatal SError -- the AX210 was
-    # unpowered, mainline's pci-sky1.c having no wlan-en regulator support. That
-    # cause is gone: the vdd_3v3_wlan regulator added for Bluetooth powers the
-    # same card, and Bluetooth now completes its firmware download and discovers
-    # devices, which it could not do before.
+    # The reasoning for lifting it was that vdd_3v3_wlan -- added to get
+    # Bluetooth working -- powers the same AX210, so the unpowered-card cause
+    # of the original SError was gone. That was half right and wholly wrong:
+    # Bluetooth is the card's USB half, Wi-Fi is its PCIe half. Powering the
+    # card fixed the USB side without demonstrating anything about PCIe, and
+    # "the card is powered" was treated as "iwlwifi will probe", which are
+    # different claims.
     #
-    # So the card is properly powered and the SError should not recur. "Should"
-    # is doing work in that sentence -- if it panics, put iwlwifi back here.
+    # It stays a module and stays blacklisted, so any future attempt is an
+    # insmod over SSH -- the same pattern used for the NPU, the USB glue and
+    # the display drivers, each of which caught a fatal probe without costing
+    # a trip to the machine. That pattern existed and was not applied here.
     blacklistedKernelModules = [
       "panfrost"
+      "iwlwifi"
     ];
 
     # Boot diagnostics have been removed now that 7.2 boots and the hardware
@@ -198,7 +204,7 @@ in
       # iwlwifi included here as well as in blacklistedKernelModules: an SError
       # during iwl_pci_probe is fatal, so it must never load, not merely be
       # discouraged. See the note on blacklistedKernelModules above.
-      "module_blacklist=panfrost"
+      "module_blacklist=panfrost,iwlwifi"
       # clk_ignore_unused: prevent kernel from disabling clocks before drivers initialise
       # Required on CIX P1 to avoid slow boot and hardware init races
       "clk_ignore_unused"
