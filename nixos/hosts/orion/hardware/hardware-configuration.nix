@@ -284,12 +284,19 @@ in
       # thing printed and small enough to fit in pstore. That is what let the
       # cdns_role_stop NULL deref be read back in full.
       #
-      # panic = 30 restored (was 0 = halt). Halting was right while a human was
-      # standing at the machine reading the screen; now that crashes are
-      # recovered over SSH, rebooting itself after 30s is better -- the UAT can
-      # generate load unattended and the box comes back on its own.
+      # panic = 0 (halt), NOT 30 (auto-reboot).
+      #
+      # 30 was set so the box would recover itself from a runtime crash. It
+      # does the opposite for a crash during boot: the machine panics, reboots
+      # into the same default generation, panics again, forever. That is
+      # exactly what happened when iwlwifi was unblacklisted -- an infinite
+      # loop that had to be broken by hand at the boot menu.
+      #
+      # Halting is the safer default here. Every failure on this board so far
+      # has been at boot rather than at runtime, and a halted machine can be
+      # pointed at another generation; a looping one cannot.
       "kernel.panic_on_oops" = 1; # turn an oops into a captured panic
-      "kernel.panic" = 30;
+      "kernel.panic" = 0;
       "kernel.panic_print" = 0;
     };
 
