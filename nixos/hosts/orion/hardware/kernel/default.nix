@@ -1409,22 +1409,20 @@ let
             };
         };
 
-        / {
-            /*
-              * cooling-levels are downstream's, and the #cooling-cells makes
-              * this usable as a thermal cooling device later. There are no
-              * thermal-zones yet -- the sensors read correctly but no trip
-              * points are defined, and a critical trip on an unverified sensor
-              * can power the machine off. Manual control via hwmon first.
-              */
-            cix_fan: pwm-fan {
-                compatible = "pwm-fan";
-                pwms = <&cros_ec_pwm 0>;
-                cooling-levels = <0 150 200 255>;
-                #cooling-cells = <2>;
-                status = "okay";
-            };
-        };
+        /*
+         * NO pwm-fan node, deliberately.
+         *
+         * pwm-fan takes ownership of the PWM at probe and drives its own duty
+         * cycle, which would displace the EC's built-in temperature curve with
+         * a fixed speed. That curve already works -- the board peaks at 66 C
+         * through an hour of full CPU and GPU load with no OS involvement --
+         * so replacing it with something unvalidated is a downgrade.
+         *
+         * Visibility is what is wanted, not control, and mainline has exactly
+         * that: SENSORS_CROS_EC (drivers/hwmon/cros_ec_hwmon.c) reads fan RPM
+         * and temperatures from the EC without touching its PWM. The EC keeps
+         * deciding; Linux just gets to watch.
+         */
         FANEOF
 
         for want in 'google,cros-ec-i2c' 'google,cros-ec-pwm' 'pwm-fan'; do
@@ -2083,8 +2081,10 @@ let
       ./scripts/config --enable CROS_EC
       ./scripts/config --enable CROS_EC_I2C
       ./scripts/config --enable MFD_CROS_EC_DEV
-      ./scripts/config --module PWM_CROS_EC
-      ./scripts/config --module SENSORS_PWM_FAN
+      # Read-only fan and temperature monitoring from the EC. Deliberately NOT
+      # PWM_CROS_EC or SENSORS_PWM_FAN -- either would let something take the
+      # PWM away from the EC's own curve, the opposite of what is wanted.
+      ./scripts/config --module SENSORS_CROS_EC
       ./scripts/config --enable SKY1_WATCHDOG
       ./scripts/config --enable PWM
       ./scripts/config --enable PWM_SKY1
