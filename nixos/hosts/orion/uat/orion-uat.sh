@@ -98,6 +98,61 @@ assert_loaded() {
 	return 0
 }
 
+# ── temperature log ──────────────────────────────────────────────────────────
+# Written to a FIXED path outside $OUTDIR as well as inside it, and synced to
+# disk after every sample. The point is to survive an unplanned reboot: the GPU
+# died once during a CPU-then-GPU sequence and there was no temperature record
+# at all, so we could not tell heat from a power-sequencing fault. A log that is
+# still in the page cache when the box resets is no better than no log.
+TEMPLOG=/var/tmp/orion-temps.csv
+
+temp_header() {
+	local hdr="epoch,phase"
+	for t in /sys/class/hwmon/hwmon*/temp*_input; do
+		[ -e "$t" ] || continue
+		local lbl
+		lbl=$(cat "${t%_input}_label" 2>/dev/null || basename "$t")
+		hdr="$hdr,$lbl"
+	done
+	echo "$hdr"
+}
+
+temp_logger() {
+	local phase="$1" end=$(($(date +%s) + SECS + 10))
+	[ -s "$TEMPLOG" ] || temp_header >"$TEMPLOG"
+	while [ "$(date +%s)" -lt "$end" ]; do
+		local row
+		row="$(date +%s),$phase"
+		for t in /sys/class/hwmon/hwmon*/temp*_input; do
+			[ -e "$t" ] || continue
+			row="$row,$(awk -v x="$(cat "$t" 2>/dev/null || echo 0)" 'BEGIN{printf "%.1f", x/1000}')"
+		done
+		echo "$row" >>"$TEMPLOG"
+		# fsync the directory entry and data; 1 Hz makes this cheap and it is
+		# the difference between having the last reading before a crash and not.
+		sync -d "$TEMPLOG" 2>/dev/null || sync
+		sleep 1
+	done
+}
+
+# Hottest sensor seen during a phase, straight from the persisted log.
+temp_summary() {
+	local phase="$1"
+	[ -s "$TEMPLOG" ] || {
+		echo "   no temperature log"
+		return
+	}
+	awk -F, -v ph="$phase" '
+	  NR==1 { for (i=3; i<=NF; i++) name[i]=$i; next }
+	  $2==ph { n++; for (i=3; i<=NF; i++) { if ($i+0 > mx[i]) mx[i]=$i+0; sum[i]+=$i } }
+	  END {
+	    if (!n) { print "   no samples for this phase"; exit }
+	    printf "   peak temperatures over %d samples:\n", n
+	    for (i=3; i<=NF; i++)
+	      if (mx[i] > 0) printf "     %-10s max %5.1f C   mean %5.1f C\n", name[i], mx[i], sum[i]/n
+	  }' "$TEMPLOG"
+}
+
 # ── telemetry ────────────────────────────────────────────────────────────────
 # Sampled once a second for the whole phase and summarised afterwards. Recording
 # raw samples rather than a start/end pair is what lets us distinguish "ran at
@@ -173,6 +228,8 @@ phase_cpu() {
 	note "boost = $(cat /sys/devices/system/cpu/cpufreq/boost 2>/dev/null)"
 
 	dmesg_snapshot "$OUTDIR/cpu-dmesg-pre.txt"
+	temp_logger cpu &
+	local templog=$!
 	sample_telemetry "$OUTDIR/cpu.csv" &
 	local sampler=$!
 
@@ -186,7 +243,9 @@ phase_cpu() {
 	wait $sampler 2>/dev/null
 	say "CPU result"
 	local rc=0
+	wait $templog 2>/dev/null
 	summarise "$OUTDIR/cpu.csv" cpu
+	temp_summary cpu
 	# 1.2 GHz mean: comfortably above idle, well under any real load level.
 	assert_loaded "$OUTDIR/cpu.csv" 2 1200000 "CPU kHz" || rc=1
 	grep -qE "successful run completed" "$OUTDIR/cpu-stress.log" ||
@@ -207,6 +266,8 @@ phase_gpu() {
 	note "at the display once USB/keyboard and the display driver are working."
 
 	dmesg_snapshot "$OUTDIR/gpu-dmesg-pre.txt"
+	temp_logger gpu &
+	local templog=$!
 	sample_telemetry "$OUTDIR/gpu.csv" &
 	local sampler=$!
 	local end=$(($(date +%s) + SECS)) run=0
@@ -250,7 +311,9 @@ phase_gpu() {
 	grep "glmark2 Score" "$OUTDIR/gpu-glmark2.log" | sed 's/^/     /'
 	# A score that decays run over run means thermal or power throttling.
 	local rc=0
+	wait $templog 2>/dev/null
 	summarise "$OUTDIR/gpu.csv" gpu
+	temp_summary gpu
 	# 500 MHz mean: above the 350 MHz idle OPP, so the governor really ramped.
 	assert_loaded "$OUTDIR/gpu.csv" 3 500000000 "GPU Hz" || rc=1
 	grep -q "glmark2 Score" "$OUTDIR/gpu-glmark2.log" ||
@@ -282,6 +345,8 @@ phase_npu() {
 	"$CC" -O2 -Wall -o "$bin" "$(dirname "$0")/aipu-uat.c" || return 1
 
 	dmesg_snapshot "$OUTDIR/npu-dmesg-pre.txt"
+	temp_logger npu &
+	local templog=$!
 	sample_telemetry "$OUTDIR/npu.csv" &
 	local sampler=$!
 
@@ -297,7 +362,9 @@ phase_npu() {
 	"$SUDO" -n grep -iE "npu" /sys/kernel/debug/pm_genpd/pm_genpd_summary 2>/dev/null | sed 's/^/     /'
 	note "interrupts:"
 	grep -iE "aipu|npu" /proc/interrupts 2>/dev/null | sed 's/^/     /' || note "  (none registered)"
+	wait $templog 2>/dev/null
 	summarise "$OUTDIR/npu.csv" npu
+	temp_summary npu
 	dmesg_verdict "$OUTDIR/npu-dmesg-pre.txt" "$OUTDIR/npu-dmesg.txt"
 	return "$rc"
 }

@@ -1356,82 +1356,24 @@ let
         #
         # If this firmware does not implement 0x15 the node simply binds to
         # nothing -- one boot tells us either way.
-        # ── Additive: fan control via the ChromeOS EC ───────────────────────
-        # An earlier pass concluded fan control was unreachable from Linux.
-        # That was wrong, and worth correcting: it was based on the pwm-fan
-        # node being status="disabled" downstream. It is disabled because
-        # downstream drives the fan through its own cix,cix-ec-fan instead --
-        # a compatible with NO driver anywhere in the twelve patches, only a
-        # DTS entry. So downstream's path is the dead end, not this one.
+        # NOTE: no ChromeOS EC or fan node here, deliberately.
         #
-        # The EC itself is completely standard and every driver is mainline:
-        #   google,cros-ec-i2c  -> CROS_EC_I2C=y      (already built)
-        #   google,cros-ec-pwm  -> PWM_CROS_EC=m      (already built)
-        #   pwm-fan             -> SENSORS_PWM_FAN=m  (already built)
-        # so this needs no patch at all, only nodes.
+        # The EC does answer at i2c6 0x76, so the bus, pinctrl and address were
+        # all right -- but its replies do not match the protocol the mainline
+        # cros_ec driver speaks:
+        #   cros-ec-i2c 0-0076: response data size is too large:
+        #                       expected 0, got 1280
+        #   cros-ec-i2c 0-0076: Failed to continue RWSIG: -90
+        #   cros-ec-i2c 0-0076: packet too long (10 bytes, expected 4)
+        # Despite the google,cros-ec-i2c compatible downstream, this is CIX
+        # firmware that only partly implements that protocol -- which is
+        # presumably why downstream wrote its own cix,cix-ec-fan instead, a
+        # compatible with no driver in any of the twelve patches.
         #
-        # The other candidate, cix-fan.c from patch 11, is unusable here: it
-        # has an acpi_match_table and no of_match_table, and this board boots
-        # acpi=off. It also exposes only a mode switch, not fan speed.
-        echo "Adding the EC and fan-control nodes..."
-        cat >> arch/arm64/boot/dts/cix/sky1-orion-o6.dts <<'FANEOF'
-
-        &iomuxc {
-            pinctrl_fch_i2c6: fch-i2c6-cfg {
-                pins {
-                    pinmux = <CIX_PAD_I2C6_SCL_FUNC_I2C6_SCL>,
-                              <CIX_PAD_I2C6_SDA_FUNC_I2C6_SDA>;
-                    bias-pull-up;
-                    drive-strength = <8>;
-                };
-            };
-        };
-
-        &i2c6 {
-            status = "okay";
-            clock-frequency = <100000>;
-            pinctrl-names = "default";
-            pinctrl-0 = <&pinctrl_fch_i2c6>;
-
-            cros_ec: ec@76 {
-                compatible = "google,cros-ec-i2c";
-                reg = <0x76>;
-                interrupt-parent = <&s5_gpio0>;
-                interrupts = <6 IRQ_TYPE_EDGE_RISING>;
-                wakeup-source;
-                status = "okay";
-
-                cros_ec_pwm: ec-pwm {
-                    compatible = "google,cros-ec-pwm";
-                    #pwm-cells = <1>;
-                    status = "okay";
-                };
-            };
-        };
-
-        /*
-         * NO pwm-fan node, deliberately.
-         *
-         * pwm-fan takes ownership of the PWM at probe and drives its own duty
-         * cycle, which would displace the EC's built-in temperature curve with
-         * a fixed speed. That curve already works -- the board peaks at 66 C
-         * through an hour of full CPU and GPU load with no OS involvement --
-         * so replacing it with something unvalidated is a downgrade.
-         *
-         * Visibility is what is wanted, not control, and mainline has exactly
-         * that: SENSORS_CROS_EC (drivers/hwmon/cros_ec_hwmon.c) reads fan RPM
-         * and temperatures from the EC without touching its PWM. The EC keeps
-         * deciding; Linux just gets to watch.
-         */
-        FANEOF
-
-        for want in 'google,cros-ec-i2c' 'google,cros-ec-pwm' 'pwm-fan'; do
-          if ! grep -q "$want" arch/arm64/boot/dts/cix/sky1-orion-o6.dts; then
-            echo "FATAL: fan chain incomplete, missing '$want'." >&2
-            exit 1
-          fi
-        done
-        echo "EC and fan-control nodes added."
+        # So fan monitoring is a driver problem, not a DT one, and the nodes
+        # only produced error spam. Removed. The EC keeps running its own fan
+        # curve regardless, which is the desired behaviour: the board peaks at
+        # 66 C through an hour of full CPU and GPU load with no OS involvement.
 
         # ── Additive: HDMI display chain (05-display-drm-cix) ───────────────
         # The board's video topology, read out of the downstream DTS:
@@ -2073,18 +2015,11 @@ let
       # i.e. through a ChromeOS EC, and disabled even there. There is no
       # cros_ec in mainline's board DTS, so the driver would have nothing to
       # bind to. The EC manages the fan on its own.
-      # I2C6 carries the ChromeOS EC that owns the fan. Built in so the EC is
-      # available early rather than racing module load.
+      # I2C is kept -- it is generally useful and the buses are on the SoC --
+      # but the ChromeOS EC drivers are not: this board's EC does not speak
+      # that protocol. See the note by the DT nodes.
       ./scripts/config --enable I2C
       ./scripts/config --enable I2C_CADENCE
-      ./scripts/config --enable CHROME_PLATFORMS
-      ./scripts/config --enable CROS_EC
-      ./scripts/config --enable CROS_EC_I2C
-      ./scripts/config --enable MFD_CROS_EC_DEV
-      # Read-only fan and temperature monitoring from the EC. Deliberately NOT
-      # PWM_CROS_EC or SENSORS_PWM_FAN -- either would let something take the
-      # PWM away from the EC's own curve, the opposite of what is wanted.
-      ./scripts/config --module SENSORS_CROS_EC
       ./scripts/config --enable SKY1_WATCHDOG
       ./scripts/config --enable PWM
       ./scripts/config --enable PWM_SKY1
