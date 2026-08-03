@@ -78,6 +78,13 @@ in
       # NPU. Loaded at boot so /dev/aipu exists without anyone running
       # modprobe -- the stress tooling expects it present.
       "armchina_npu"
+      # Display. linlon_dp is the DRM master and uses the component framework,
+      # so it waits for trilin_dpsub to register before binding; both are listed
+      # so neither depends on udev ordering. This replaces simpledrm as the
+      # console, at the monitor's native resolution rather than a fixed 1080p.
+      "linlon_dp"
+      "trilin_dpsub"
+      "sky1_drm"
     ];
 
     # Prevent panfrost from loading (wrong driver for Immortalis-G720 CSF, use panthor)
@@ -122,28 +129,18 @@ in
     # loads it during boot so USB is available without anyone typing modprobe,
     # and a probe that misbehaves stalls a udev worker instead of wedging the
     # kernel. Revisit =y once it has come up cleanly across a few boots.
-    # linlondp / trilin_dp: TEMPORARY, first boot of the display pipeline.
+    # The display drivers are no longer blacklisted: the pipeline works.
     #
-    # simpledrm is currently the only thing putting a picture on screen. If
-    # these bind, take over scanout and then fail, the machine has no console
-    # at all -- a worse outcome than the USB lockup, because there would be
-    # nothing to read the failure from. Blacklisted, they load only when
-    # insmod'd over SSH and /sys/class/drm can be inspected before trusting
-    # them. Remove once a connector has come up.
+    #   linlondp 141d0000.disp-controller -> card1, connectors=3
+    #   trilin-dptx-cix 14224000.dp: main link training done! rate:270000 lanes:4
+    #   card1-DP-1: connected, 3440x1440 native, 384 bytes of EDID
+    #   fb0: linlondpdrmfb 3440x1440
+    #
+    # They are still modules, and are loaded from kernelModules below rather
+    # than left to udev, so the order is explicit.
     blacklistedKernelModules = [
       "panfrost"
       "iwlwifi"
-      # The REAL module names. The first attempt guessed linlondp/trilin_dp/
-      # cix_dp, none of which exist, so the blacklist matched nothing and udev
-      # loaded linlon_dp at boot anyway. It removed the conflicting framebuffer
-      # (killing simpledrm), then failed:
-      #   linlondp 141d0000.disp-controller: probe ... failed with error -22
-      # leaving the machine with no console at all -- exactly what the
-      # blacklist existed to prevent. Names verified against the built .ko
-      # files: linlon-dp.ko, trilin-dpsub.ko, sky1-drm.ko.
-      "linlon_dp"
-      "trilin_dpsub"
-      "sky1_drm"
     ];
 
     # Boot diagnostics have been removed now that 7.2 boots and the hardware
