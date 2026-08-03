@@ -73,9 +73,9 @@
     # Form Factor: Desktop
     ../../system/config/hardware/desktop
 
-    # Networking (Wired and Wireless)
+    # Networking (Wired only -- see hardware-configuration.nix for why the
+    # shared wireless module is deliberately not imported here.)
     ../../system/config/network/hosts.nix
-    ../../system/config/network/wireless
 
     # Desktop Applications and Services
     ../../system/config/programs/1password

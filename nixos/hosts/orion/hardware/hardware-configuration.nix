@@ -477,14 +477,19 @@ in
   # the rail (which is what got Bluetooth working) but mainline's pci-sky1.c
   # has no PCIe power-state handling, so the PCIe function stays inaccessible.
   #
-  # iwd is therefore pointless here and merely fails six times per boot. It is
-  # enabled for every host by system/config/network/wireless; overridden for
-  # this one only, leaving the shared module alone. The SOE's 20-wireless
-  # networkd unit is already disabled, so iwd is the only piece to stop.
+  # Wi-Fi is abandoned on this host, so no wireless stack runs at all. The
+  # shared system/config/network/wireless module is simply not imported in
+  # this host's default.nix, which is cleaner than importing it and then
+  # fighting it. These stay as belt-and-braces so an import added elsewhere
+  # cannot quietly start a supplicant on a box with no Wi-Fi device.
+  #
+  # NetworkManager is deliberately left enabled: it manages the wired link
+  # (enP3p1s0). Only the wireless daemons are suppressed.
   #
   # Revisit if D3cold->D0 handling is ever added to the PCIe driver.
   networking = {
-    wireless.iwd.enable = lib.mkForce false;
+    wireless.enable = lib.mkForce false; # wpa_supplicant
+    wireless.iwd.enable = lib.mkForce false; # iwd / iwctl
 
     # Use systemd-networkd for Ethernet management
     useNetworkd = true;
