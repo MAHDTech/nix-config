@@ -57,6 +57,7 @@ CONTIG
 CPPC
 CREDS
 CRTC
+CSIP
 CSTDFLOAT
 CTYPE
 CUDA
@@ -136,6 +137,7 @@ Ferdium
 Fira
 Flatpaks
 Flatseal
+Fseq
 GDSC
 GELU
 GETFL
@@ -159,6 +161,7 @@ HCIBTUSB
 HCIUART
 HIDP
 HIDPHCIBTUSBHCIUART
+HIGHPRI
 HIPPI
 HISI
 HMAC
@@ -180,6 +183,7 @@ IPCC
 IPEX
 IPRANGE
 IPROC
+IRQF
 ISATTY
 Identiv
 Illumos
@@ -274,6 +278,7 @@ PARTEOF
 PARTSIZE
 PCSCD
 PENSANDO
+PERCPU
 PHYLIB
 PINCTRL
 PKTTYPE
@@ -546,6 +551,7 @@ blkdev
 blkid
 blueman
 bluetoothctl
+bluetoothd
 bmax
 bnep
 bogo
@@ -667,6 +673,7 @@ crossterm
 crudini
 cryptsetup
 csiphy
+csis
 cstate
 csum
 ctxt
@@ -887,6 +894,7 @@ glvnd
 glxgears
 glxinfo
 gmax
+gmcs
 gnnome
 gnugrep
 gnumake
@@ -1313,6 +1321,7 @@ nohup
 nojoinspaces
 nomodeline
 nopauth
+noprof
 noresume
 norounding
 northamerica
@@ -1843,6 +1852,7 @@ udiff
 uevent
 uevents
 uhwd
+uinput
 unaccelerated
 unapsd
 unblacklisted
@@ -1874,6 +1884,7 @@ usbnet
 usbphy
 usbss
 usbutils
+usecs
 usermod
 usermode
 userprop
@@ -1958,6 +1969,7 @@ wireplumber
 wlan
 wlogout
 wmem
+workqueue
 worktree
 worktrees
 wpctl

@@ -469,6 +469,20 @@ in
   # (iwlwifi, 0001:61:00.0). Blacklisting iwlwifi leaves Bluetooth completely
   # untouched -- hci0 pairs and discovers with the blacklist in place.
   #
+  # Expected noise, do not chase: the Bluetooth firmware download always fails
+  # on its first attempt and always succeeds on the retry.
+  #   Bluetooth: hci0: Failed to send firmware data (-19)
+  #   Bluetooth: hci0: FW download error recovery failed (-108)
+  #   ...device re-enumerates, btusb retries...
+  #   Bluetooth: hci0: Firmware loaded in 1342165 usecs
+  #   Bluetooth: hci0: Fseq status: Success (0x00)
+  # hci0 therefore runs the full patched firmware (build 82122), not the
+  # bootloader fallback. The -19 is ENODEV from the card dropping off the bus
+  # as it switches out of bootloader mode, which is an Intel quirk and not a
+  # fault in our cdnsp USB work: every prior boot shows the identical
+  # fail-then-succeed pair, and there are zero other USB errors across the 24
+  # enumerated devices. Costs roughly 1.3s of boot time and nothing else.
+  #
   # Wi-Fi stays off because iwl_pci_probe panics the machine:
   #   iwlwifi 0001:61:00.0: Unable to change power state from D3cold to D0,
   #                         device inaccessible

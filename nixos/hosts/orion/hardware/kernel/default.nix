@@ -669,6 +669,60 @@ let
           exit 1
         fi
 
+        # ── Fixup: give wdt_wq an explicit locality flag (11a-watchdog) ─────
+        # 7.2 requires every workqueue to declare WQ_PERCPU or WQ_UNBOUND, and
+        # WARNs on probe when neither is present:
+        #
+        #   workqueue: wdt_wq is using neither WQ_PERCPU or WQ_UNBOUND.
+        #                                                Setting WQ_PERCPU.
+        #   WARNING: kernel/workqueue.c:5851 at __alloc_workqueue+0x734/0x7a0
+        #   Call trace: __alloc_workqueue / alloc_workqueue_noprof
+        #               / sky1_wdt_probe
+        #
+        # The vendor driver predates that requirement. WQ_UNBOUND is the right
+        # answer rather than the WQ_PERCPU the kernel falls back to: this queue
+        # only pings a watchdog, so there is nothing to gain from binding it to
+        # the submitting CPU, and WQ_MEM_RECLAIM already guarantees forward
+        # progress. Behaviour is otherwise unchanged -- this only silences a
+        # genuine API-misuse WARN in a file our own patch adds.
+        # NOTE: '@' is the sed delimiter throughout this block. The patterns
+        # contain '|' (the C bitwise-or between flags), so '|' cannot be used
+        # as the delimiter without escaping every occurrence.
+        sed -i 's@WQ_MEM_RECLAIM | WQ_HIGHPRI, 1@WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_UNBOUND, 1@' \
+          drivers/watchdog/sky1_wdt.c
+        if ! grep -q 'alloc_workqueue("wdt_wq", WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_UNBOUND, 1)' \
+              drivers/watchdog/sky1_wdt.c; then
+          echo "FATAL: wdt_wq did not get an explicit locality flag." >&2
+          exit 1
+        fi
+
+        # ── Fixup: drop IRQF_ONESHOT from the NPU IRQ (08-npu-armchina) ─────
+        # IRQF_ONESHOT means "keep the IRQ masked until the threaded handler
+        # finishes", so it is meaningless on a request_irq() with no thread_fn.
+        # 7.2 WARNs on exactly that combination:
+        #
+        #   WARNING: kernel/irq/manage.c:1502 at __setup_irq+0xc8/0x76c
+        #   Call trace: __setup_irq / request_threaded_irq
+        #               / aipu_create_irq_object [armchina_npu]
+        #
+        # The NPU registers only an upper-half handler, so the flag never did
+        # anything here. IRQF_SHARED and IRQF_PROBE_SHARED are kept -- the AIPU
+        # genuinely shares its line.
+        sed -i 's@IRQF_ONESHOT | IRQF_SHARED | IRQF_PROBE_SHARED@IRQF_SHARED | IRQF_PROBE_SHARED@' \
+          drivers/misc/armchina-npu/aipu_irq.c
+        # Gate on the flag expression, not the bare word: the driver also
+        # mentions IRQF_ONESHOT in a comment just above the call, which a
+        # naive `grep -q IRQF_ONESHOT` would match forever.
+        if grep -q 'IRQF_ONESHOT |' drivers/misc/armchina-npu/aipu_irq.c; then
+          echo "FATAL: IRQF_ONESHOT survived on the non-threaded NPU IRQ." >&2
+          exit 1
+        fi
+        if ! grep -q 'IRQF_SHARED | IRQF_PROBE_SHARED,' \
+              drivers/misc/armchina-npu/aipu_irq.c; then
+          echo "FATAL: the NPU IRQ flags fixup did not apply." >&2
+          exit 1
+        fi
+
         # ── Additive: USB nodes for 04-usb-phy-typec ────────────────────────
         # mainline's sky1.dtsi describes no USB at all: no usb, xhci, dwc3,
         # cdns3 or typec node anywhere. usbcore and xhci-hcd are built and
@@ -1851,6 +1905,14 @@ let
       ./scripts/config --enable HID_GENERIC
       ./scripts/config --enable USB_HID
       ./scripts/config --enable INPUT_EVDEV
+      # uinput: bluetoothd creates virtual input devices through it for the LE
+      # Audio profiles. Without it every one of them fails to register:
+      #   mcp.c:gmcs_new() MCS: failed to init uinput: No such file or directory
+      #   bap_adapter_probe() Unable to create BAP instance
+      #   csis_server_probe() Unable to create CSIP instance
+      # Plain pairing works regardless, which is why this went unnoticed.
+      ./scripts/config --enable INPUT_MISC
+      ./scripts/config --enable INPUT_UINPUT
       ./scripts/config --enable TYPEC
       ./scripts/config --enable USB_STORAGE
 
