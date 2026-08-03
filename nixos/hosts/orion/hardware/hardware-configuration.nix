@@ -520,23 +520,15 @@ in
   #
   # Revisit if D3cold->D0 handling is ever added to the PCIe driver.
 
-  # Bluetooth Low Energy. The shared system/config/bluetooth module sets
-  # ControllerMode = "bredr", which switches LE off on the adapter entirely:
-  #   supported settings: ... br/edr le ... cis-central cis-peripheral
-  #   current  settings: powered fast-connectable ssp br/edr secure-conn
-  # With no "le" in the current settings, bluetoothd cannot instantiate any LE
-  # profile and they all fail EINVAL (BAP, CSIP, MCP). That module also sets
-  # KernelExperimental specifically to "Enable ISO sockets for BAP", so the
-  # bredr line contradicts its own intent -- but other hosts may depend on it,
-  # so override here rather than changing the shared module.
-  #
-  # "dual" enables BR/EDR and LE together. Verified on this adapter: the AX210
-  # reports cis-central and cis-peripheral once LE is on, which is the
-  # isochronous transport LE Audio needs.
-  #
-  # Note this is only half the fix -- the kernel had CONFIG_BT_LE unset, so it
-  # registered no ISO protocol at all. See kernel/default.nix. Both are needed.
-  hardware.bluetooth.settings.General.ControllerMode = lib.mkForce "dual";
+  # Bluetooth Low Energy needs two things, and this host needed both:
+  #   1. ControllerMode = "dual", or LE is switched off on the adapter and
+  #      every LE profile fails EINVAL. Now fixed for all hosts in the shared
+  #      system/config/bluetooth module, so no override is needed here.
+  #   2. CONFIG_BT_LE, or the kernel registers no ISO protocol at all. That is
+  #      specific to this host's custom kernel -- see kernel/default.nix, where
+  #      it is asserted =y alongside INPUT_UINPUT.
+  # Verified on the AX210: with both in place the adapter reports cis-central
+  # and cis-peripheral, the isochronous transport LE Audio needs.
 
   networking = {
     wireless.enable = lib.mkForce false; # wpa_supplicant
