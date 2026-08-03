@@ -1876,9 +1876,25 @@ let
       ./scripts/config --enable DRM
       ./scripts/config --enable DRM_KMS_HELPER
       ./scripts/config --enable DRM_CLIENT_SELECTION
+      # simpledrm is DISABLED now that linlondp drives the panel.
+      #
+      # Keeping both produced two DRM devices for one monitor:
+      #   fb0 simpledrmdrmfb 1920x1080   (card0, firmware framebuffer)
+      #   fb1 linlondpdrmfb  3440x1440   (card2, DP-1 connected)
+      # linlondp takes over the display hardware but does not evict simpledrm,
+      # so the console kept drawing into a firmware buffer that was no longer
+      # being scanned out -- a black screen with a perfectly healthy system
+      # behind it. con2fbmap 1 1 fixes it at runtime; removing the duplicate
+      # fixes it properly.
+      #
+      # The cost is no framebuffer console for the second or so before
+      # linlon_dp loads. Acceptable: it is in kernelModules so it loads early,
+      # the serial console on ttyAMA0 is unaffected, and the boot menu and SSH
+      # remain as fallbacks. Re-enable both symbols if the display driver ever
+      # has to be backed out.
       ./scripts/config --enable SYSFB
-      ./scripts/config --enable SYSFB_SIMPLEFB
-      ./scripts/config --enable DRM_SIMPLEDRM
+      ./scripts/config --disable SYSFB_SIMPLEFB
+      ./scripts/config --disable DRM_SIMPLEDRM
       ./scripts/config --disable FB_EFI
       ./scripts/config --enable DRM_FBDEV_EMULATION
       ./scripts/config --enable FRAMEBUFFER_CONSOLE
@@ -2105,7 +2121,7 @@ let
       USB_BUILTIN="$USB_BUILTIN USB_HID HID_GENERIC INPUT_EVDEV"
       # simpledrm must be built in and must own the framebuffer, or there is no
       # KMS device and no desktop.
-      USB_BUILTIN="$USB_BUILTIN DRM DRM_SIMPLEDRM SYSFB_SIMPLEFB"
+      USB_BUILTIN="$USB_BUILTIN DRM"
       # No firewall is a silent failure: nftables.service dies at boot and
       # nothing else complains. Assert it rather than discover it in a journal
       # sweep weeks later.
