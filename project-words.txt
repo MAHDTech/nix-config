@@ -1483,6 +1483,7 @@ projectmap
 promptvars
 protontricks
 ps185
+psci
 pseudotile
 pstate
 pstore

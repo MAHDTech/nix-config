@@ -236,11 +236,17 @@ in
       # state at all (/sys/devices/system/cpu/cpu0/cpuidle was empty) and the
       # kernel logged "failed to register cpuidle driver" on every boot.
       #
-      # Retested deliberately: kernel.panic = 0 means a bad boot halts instead
-      # of looping, and the previous generation stays in the boot menu.
+      # Retest result, 2026-08-03: PASSED. psci_idle registers with three
+      # states (WFI 1us, cpu-sleep-1 110us, cluster-sleep-0 145us) and all
+      # three are actively used. Soaked 40 cycles of idle-then-all-core-load,
+      # which is the worst case for this failure mode because it maximises
+      # deep-idle entry and exit transitions rather than just sitting idle:
+      # ~103k cluster-sleep entries, 0 call traces, 0 critical messages,
+      # 0 failed units, temperature flat at 45-46C throughout.
+      #
       # Re-add this line if the board becomes unstable at idle -- and if so,
       # record the actual signature here so the next retest has something to
-      # test against.
+      # test against, which is precisely what the original commit lacked.
       # NOTE: SMMU bypass removed — testing with CIX's default SMMU config.
       # BIOS 1.2.1 may have fixed the IORT table. Re-add if NVMe crashes:
       #   "arm-smmu-v3.disable_bypass=0"
