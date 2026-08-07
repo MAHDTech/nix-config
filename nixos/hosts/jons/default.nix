@@ -115,6 +115,9 @@
     # Games
     ../../system/config/games
 
+    # JONS-only: Beyond All Reason launcher pinned to the Arc B580.
+    ./beyond-all-reason-arc.nix
+
     # Virtual Desktop
     ../../system/config/services/wayvnc
 
