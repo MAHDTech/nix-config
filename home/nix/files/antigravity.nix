@@ -19,7 +19,7 @@
         {
           "colorScheme": "tokyo night",
           "enableTerminalSandbox": false,
-          "model": "Gemini 3.5 Flash (High)",
+          "model": "Gemini 3.6 Flash (High)",
           "notifications": true,
           "permissions": {
             "allow": [
