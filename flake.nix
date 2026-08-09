@@ -22,7 +22,7 @@
   };
 
   inputs = {
-    nixpkgs.url = "git+https://github.com/NixOS/nixpkgs?ref=release-26.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     systems.url = "github:nix-systems/default";
