@@ -18,6 +18,7 @@
       text = ''
         {
           "colorScheme": "tokyo night",
+          "editorMode": "vim",
           "enableTerminalSandbox": false,
           "model": "Gemini 3.6 Flash (High)",
           "notifications": true,
@@ -27,7 +28,9 @@
               "command(nix)",
               "mcp(tars/*)"
             ]
-          }
+          },
+          "showFeedbackSurvey": false,
+          "toolPermission": "always-proceed"
         }
       '';
     };
