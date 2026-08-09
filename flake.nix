@@ -92,10 +92,14 @@
               inputs.nixpkgs.legacyPackages.${system}.hello;
         }
         // builtins.listToAttrs (
+          # Only expose a host's installer under the system that actually
+          # builds it, otherwise every host lands in every system's package
+          # set and e.g. packages.aarch64-linux.installer-test-nixos resolves
+          # to an x86_64-linux ISO.
           map (host: {
             name = "installer-${lib.toLower host.name}";
             value = self.nixosConfigurations."installer-${lib.toLower host.name}".config.system.build.image;
-          }) hosts.list
+          }) (builtins.filter (host: (host.buildSystem or host.system) == system) hosts.list)
         )
       );
 

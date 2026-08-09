@@ -130,9 +130,11 @@ in
         # Host-specific Nix tuning, declared per host as `nixSettings` in
         # nixos/hosts/default.nix. Keys are real nix.settings names, passed
         # through verbatim — any Nix setting works without touching this file.
-        # They land at normal priority, so they win over the fleet defaults in
-        # nixos/system/soe/nix (all lib.mkDefault); anything left unset keeps
-        # the fleet default.
+        # They land at normal priority, so they win over the lib.mkDefault
+        # fleet defaults in nixos/system/soe/nix; anything left unset keeps the
+        # fleet default. Exceptions: trusted-users and system-features are set
+        # at normal priority there (see the comment in that file), so a host
+        # override merges with them rather than replacing them.
         { nix.settings = nixSettings; }
         {
           boot.zfs.forceImportRoot = lib.mkDefault false;
