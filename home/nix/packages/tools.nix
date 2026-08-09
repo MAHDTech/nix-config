@@ -30,6 +30,11 @@ let
     else
       [ ];
 
+  # Disable the Video Encoder so Pipewire/Teams Screen Sharing works.
+  brave_video_encoder_disabled = pkgs.brave.override {
+    commandLineArgs = "--disable-features=OutdatedBuildDetector,UseChromeOSDirectVideoDecoder,AcceleratedVideoEncoder";
+  };
+
 in
 {
   home.packages =
@@ -143,7 +148,7 @@ in
       # GUI
       signal-desktop
       remmina
-      brave
+      brave_video_encoder_disabled
 
       # Trezor
       trezor-suite
