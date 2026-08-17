@@ -12,6 +12,16 @@
   # Override docker storage driver for ZFS (this host still uses ZFS)
   virtualisation.docker.storageDriver = "zfs";
 
+  # GitHub Actions runner, registered at the enterprise level. The PAT
+  # comes from 1Password via opnix (op://fleet/GitHub Runner/credential).
+  services.github-runner-fleet = {
+    enable = true;
+    runners.enterprise = {
+      url = "https://github.com/enterprises/MAHDTech";
+      runnerGroup = "bingamon-lab";
+    };
+  };
+
   environment.variables = {
     # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1.
     # Must be set explicitly here: video/amd and video/intel each mkDefault this

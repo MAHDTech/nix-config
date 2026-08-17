@@ -13,6 +13,9 @@
     ./secrets
     ./services
     ./security
+
+    # Fleet-wide optional modules (disabled unless enabled per host).
+    ../config/services/github-runner
   ];
 
   time.timeZone = "Australia/Canberra";
