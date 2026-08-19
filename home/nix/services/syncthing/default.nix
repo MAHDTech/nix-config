@@ -6,6 +6,18 @@
 }:
 let
 
+  # MIGRATION KILL SWITCH — set to true to resume syncing.
+  #
+  # While false, the syncthing user service is disabled and stopped on every
+  # host. Nothing is deleted: synced files, the syncthing database and config
+  # under ~/.local/state/syncthing, and file versions under .stversions are all
+  # left exactly as they are. Flipping this back to true and rebuilding brings
+  # the service up against the same state.
+  #
+  # The per-host syncthing.nix files (device IDs, folder definitions) are
+  # deliberately left in place so the folder layout survives the migration.
+  syncthingEnabled = false;
+
   # .stignore profile: default
   # Full file sync with common build artifacts and ephemeral state excluded.
   # Use for general-purpose directories (documents, configs, media).
@@ -146,7 +158,7 @@ in
 
   services = lib.mkIf (syncthingConfig != null) {
     syncthing = {
-      enable = true;
+      enable = syncthingEnabled;
 
       package = pkgs.syncthing;
 
