@@ -398,7 +398,7 @@ in
         #########################
 
         agent_servers = {
-          "antigravity" = {
+          "antigravity-acp" = {
             type = "registry";
           };
           "claude-acp" = {
