@@ -5,8 +5,10 @@
 }:
 let
   unstablePkgs = with pkgsUnstable; [
+    antigravity-cli
+    antigravity-ide-fhs
     claude-agent-acp
-    #claude-code # Opus 5 released, using custom pkg
+    claude-code
     claude-monitor
   ];
 
