@@ -2017,3 +2017,5 @@ zstd
 zvol
 zvols
 stversions
+dnode
+inodes

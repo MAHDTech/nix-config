@@ -11,6 +11,13 @@ in
   boot = {
     kernelParams = [
       "zfs.zfs_arc_max=12884901888"
+
+      # arc_dnode_limit derives from 10% of arc_max by default, which the
+      # 12 GiB cap above shrinks to ~1.2 GB - well under this pool's ~2.1 GB
+      # dnode working set. arc_prune then spins permanently trying to evict
+      # pinned inodes it can never free. 50% gives a 6 GiB dnode budget
+      # without growing total ARC.
+      "zfs.zfs_arc_dnode_limit_percent=50"
     ];
     zfs = {
       requestEncryptionCredentials = true;
