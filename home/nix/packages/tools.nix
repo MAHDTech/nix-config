@@ -5,8 +5,8 @@
 }:
 let
   unstablePkgs = with pkgsUnstable; [
-    antigravity-cli
-    antigravity-ide-fhs
+    #antigravity-cli
+    #antigravity-ide-fhs
     claude-agent-acp
     claude-code
     claude-monitor
