@@ -1017,7 +1017,7 @@ index c013d6bf9..fb732b002 100644
 @@ -456,28 +483,27 @@
  	return gpu_read64_counter(ptdev->gpu->iomem, GPU_CYCLE_COUNT);
  }
- 
+
 +extern bool panthor_force_noncoherent;
  int panthor_gpu_coherency_init(struct panthor_device *ptdev)
  {
@@ -1044,7 +1044,7 @@ index c013d6bf9..fb732b002 100644
 -	drm_err(&ptdev->base, "Coherency not supported by the device");
 -	return -ENOTSUPP;
 +	bool dma_coherent = device_get_dma_attr(ptdev->base.dev) == DEV_DMA_COHERENT;
-+	
++
 +	if (of_device_is_compatible(ptdev->base.dev->of_node, "arm,mali-valhall") || acpi_dev_hid_uid_match(ACPI_COMPANION(ptdev->base.dev), "CIXH5000", NULL)) {
 +		ptdev->coherency_mode = PANTHOR_COHERENCY_ACE_LITE;
 +		drm_info(&ptdev->base, "Using ACE-Lite bus coherency (Sky1)\n");
@@ -1053,14 +1053,14 @@ index c013d6bf9..fb732b002 100644
 +	} else {
 +		ptdev->coherency_mode = PANTHOR_COHERENCY_ACE_LITE;
 +	}
-+	
++
 +	if (ptdev->coherency_mode == PANTHOR_COHERENCY_NONE)
 +		return 0;
-+	
++
 +	if (gpu_read(ptdev, GPU_COHERENCY_FEATURES) &
 +	    GPU_COHERENCY_PROT_BIT(ACE_LITE))
 +		return 0;
-+	
++
 +	drm_err(&ptdev->base, "ACE-Lite not supported by hardware");
 +	return -ENOTSUPP;
  }
@@ -1070,28 +1070,28 @@ diff --git a/drivers/gpu/drm/panthor/panthor_hw.c b/drivers/gpu/drm/panthor/pant
 @@ -234,8 +234,25 @@
  		ptdev->gpu_info.l2_present = gpu_read64(gpu_iomem, GPU_L2_PRESENT);
  	}
- 
+
 -	return overload_shader_present(ptdev);
 +	int ret = overload_shader_present(ptdev);
 +	if (ret)
 +		return ret;
-+	
++
 +	/* On CIX Sky1 SoC some shader cores can be disabled via RCSU */
 +	if (of_device_is_compatible(ptdev->base.dev->of_node, "arm,mali-valhall") &&
 +	    ptdev->sky1_rcsu_reg) {
 +		u32 sky1_harvesting_reg_val = readl(ptdev->sky1_rcsu_reg + 0x304);
 +		u64 sky1_harvesting_core_mask = ~((sky1_harvesting_reg_val & 0xFFFFFF0) >> 4) & 0x550555;
-+	
++
 +		ptdev->gpu_info.shader_present &= sky1_harvesting_core_mask;
-+	
++
 +		drm_info(&ptdev->base,
 +			 "sky1 harvesting: reg=0x%x core_mask=0x%llx",
 +			 sky1_harvesting_reg_val, sky1_harvesting_core_mask);
 +	}
-+	
++
 +	return 0;
  }
- 
+
  static int panthor_hw_info_init(struct panthor_device *ptdev)
  {
 diff --git a/drivers/gpu/drm/panthor/panthor_mmu.c b/drivers/gpu/drm/panthor/panthor_mmu.c
