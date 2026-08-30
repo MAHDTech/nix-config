@@ -36,7 +36,7 @@ jobs:
 
       - id: setup_qemu
         name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - id: install_nix
         name: "Install Nix ❄️"
