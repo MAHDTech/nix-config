@@ -8,7 +8,8 @@ let
     #antigravity-cli
     #antigravity-ide-fhs
     claude-agent-acp
-    claude-code
+    # claude-code is a custom package, see packages/custom/claude-code
+    #claude-code
     claude-monitor
   ];
 

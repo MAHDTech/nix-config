@@ -53,7 +53,9 @@ stdenv.mkDerivation (finalAttrs: {
     installBin $src
 
     wrapProgram $out/bin/claude \
+      --argv0 claude \
       --set DISABLE_AUTOUPDATER 1 \
+      --set-default DISABLE_NON_ESSENTIAL_MODEL_CALLS 1 \
       --set-default FORCE_AUTOUPDATE_PLUGINS 1 \
       --set DISABLE_INSTALLATION_CHECKS 1 \
       --set USE_BUILTIN_RIPGREP 0 \

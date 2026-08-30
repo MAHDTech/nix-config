@@ -1,0 +1,156 @@
+---
+name: Custom Packages update
+
+# Weekly update of the self-updating custom packages under
+# home/nix/packages/custom. Discovery is dynamic: every
+# home/nix/packages/custom/*/update.sh is executed, so adding or removing a
+# package requires no changes here. Each script is self-contained via a
+# nix-shell shebang; the only host dependency is nix itself.
+#
+# Runs Wednesday 14:00 UTC (midnight AEST Thursday), deliberately clear of
+# Dependabot's Sunday flake.lock updates.
+
+on:
+  schedule:
+    - cron: "0 14 * * 3"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  NIXPKGS_ALLOW_UNFREE: 1
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: checkout_repository
+        name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+          submodules: recursive
+
+      - id: free_disk_space
+        name: Free Disk Space
+        uses: ./.github/actions/free-disk-space
+
+      - id: install_nix
+        name: "Install Nix ❄️"
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - id: run_update_scripts
+        name: Run update scripts
+        run: |
+          set -uo pipefail
+
+          UPDATED=()
+          FAILED=()
+
+          revert() {
+            git checkout -- "$1"
+            git clean -fd -- "$1"
+          }
+
+          for script in $(git ls-files 'home/nix/packages/custom/*/update.sh'); do
+            dir=$(dirname "$script")
+            name=$(basename "$dir")
+
+            # Both manifest.json (claude-code) and sources.json carry .version
+            version_file=""
+            for candidate in sources.json manifest.json; do
+              [[ -f "$dir/$candidate" ]] && version_file="$dir/$candidate"
+            done
+            old_version=$([[ -n $version_file ]] && jq -r '.version' "$version_file" || echo "unknown")
+
+            echo "::group::Updating $name (current: $old_version)"
+
+            if ! "./$script"; then
+              echo "::error::$name: update.sh failed"
+              FAILED+=("$name: update.sh failed")
+              revert "$dir"
+              echo "::endgroup::"
+              continue
+            fi
+
+            if git status --porcelain -- "$dir" | grep -q .; then
+              new_version=$([[ -n $version_file ]] && jq -r '.version' "$version_file" || echo "unknown")
+              echo "Verifying $name $old_version -> $new_version builds..."
+              if nix build --impure --no-link \
+                --expr "with import <nixpkgs> { config.allowUnfree = true; }; callPackage ./$dir { }"; then
+                if [[ "$old_version" == "$new_version" ]]; then
+                  UPDATED+=("$name: metadata refresh ($new_version)")
+                else
+                  UPDATED+=("$name: $old_version -> $new_version")
+                fi
+              else
+                echo "::error::$name: verification build failed"
+                FAILED+=("$name: verification build failed ($old_version -> $new_version)")
+                revert "$dir"
+              fi
+            else
+              echo "$name is already up to date."
+            fi
+
+            echo "::endgroup::"
+          done
+
+          # PR body and job summary
+          BODY="$RUNNER_TEMP/pr-body.md"
+          {
+            echo "Weekly automated update of custom packages."
+            echo
+            if ((${#UPDATED[@]})); then
+              echo "## Updated"
+              echo
+              printf -- '- %s\n' "${UPDATED[@]}"
+              echo
+            fi
+            if ((${#FAILED[@]})); then
+              echo "## Failed (changes excluded)"
+              echo
+              printf -- '- %s\n' "${FAILED[@]}"
+              echo
+            fi
+          } | tee "$BODY" >>"$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "body_path=$BODY"
+            echo "failed_count=${#FAILED[@]}"
+          } >>"$GITHUB_OUTPUT"
+
+      - id: create_pull_request
+        name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.MAHDTECH_TOKEN_CREATE_PR }}
+          branch: update-custom-packages
+          delete-branch: true
+          add-paths: home/nix/packages/custom/**
+          commit-message: "chore: update custom packages"
+          title: "Update custom packages"
+          body-path: ${{ steps.run_update_scripts.outputs.body_path }}
+          author: "Nix Custom Packages Bot <github-actions@users.noreply.github.com>"
+          committer: "Nix Custom Packages Bot <github-actions@users.noreply.github.com>"
+          labels: |
+            dependencies
+            nix
+
+      - id: print_pr_number
+        name: Print PR Number
+        run: |
+          echo PR number: ${{ steps.create_pull_request.outputs.pull-request-number }}
+
+      - id: fail_on_errors
+        name: Fail if any package failed
+        if: steps.run_update_scripts.outputs.failed_count != '0'
+        run: |
+          echo "::error::${{ steps.run_update_scripts.outputs.failed_count }} package(s) failed to update; see job summary."
+          exit 1

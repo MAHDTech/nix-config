@@ -1,6 +1,10 @@
-#!/usr/bin/env nix
-#!nix shell --ignore-environment .#cacert .#coreutils .#curl .#bash --command bash
-# shellcheck disable=SC1008
+#!/usr/bin/env nix-shell
+#shellcheck disable=SC1008
+#!nix-shell -i bash -p bash curl cacert
+#
+# Claude Code Nix Update Script
+# Fetches the release manifest (version + per-platform checksums) for the
+# latest version, or the version given as $1, and writes manifest.json.
 
 set -euo pipefail
 

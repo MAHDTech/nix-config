@@ -21,7 +21,7 @@ in
     #(pkgs.callPackage ./litert-lm.nix {})
     (pkgs.callPackage ./antigravity-cli { })
     (pkgs.callPackage ./antigravity-hub { })
-    #(pkgs.callPackage ./claude-code { })
+    (pkgs.callPackage ./claude-code { })
     #(pkgs.callPackage ./ls-colors.nix { })
   ]
   ++ bambuStudio;

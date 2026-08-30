@@ -1,13 +1,13 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#shellcheck disable=SC1008
+#!nix-shell -i bash -p bash curl jq nix cacert
 #
 # Antigravity Hub Nix Update Script
 # Fetches the latest release from the Cloud Run updater API, prefetches the
 # platform tarballs into the Nix store to compute their hashes, and writes
 # sources.json. Upstream no longer publishes per-platform manifest.json files,
 # so hashes must be computed locally.
-# Can be run via: nix-shell -p curl jq nix --run ./update.sh
 
-clear
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
