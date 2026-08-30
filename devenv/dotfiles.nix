@@ -37,7 +37,7 @@ in
   };
 
   dotenv = {
-    enable = true;
+    enable = false;
     disableHint = false;
   };
 
