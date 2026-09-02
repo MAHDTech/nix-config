@@ -5,6 +5,7 @@
     #########################
     # Theme
     #########################
+
     [theme]
     name = "vesper"
     auto_switch = false
@@ -24,10 +25,14 @@
     #########################
     # UI & Notifications
     #########################
+
     [ui]
     status_indicators = "symbols"
     show_agent_labels_on_pane_borders = true
     agent_panel_sort = "spaces"
+
+    [ui.sound]
+    enabled = false
 
     [ui.toast]
     delivery = "system"
@@ -35,6 +40,7 @@
     #########################
     # Keybindings
     #########################
+
     [keys]
     prefix = "ctrl+b"
 
