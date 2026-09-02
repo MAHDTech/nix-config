@@ -10,6 +10,7 @@
     ./goose
     ./gptcommit.nix
     ./grok
+    ./herdr.nix
     ./opencode
     ./scripts
     ./xdg.nix
