@@ -50,11 +50,11 @@
     # Pane zoom / fullscreen toggle inside Herdr
     zoom = ["prefix+z", "alt+enter"]
 
-    # Vim directional navigation between panes
-    focus_pane_left = "prefix+h"
-    focus_pane_down = "prefix+j"
-    focus_pane_up = "prefix+k"
-    focus_pane_right = "prefix+l"
+    # Directional navigation between panes (Vim keys + WezTerm style Ctrl+Shift+Arrows / Alt+Arrows)
+    focus_pane_left = ["prefix+h", "ctrl+shift+left", "alt+left"]
+    focus_pane_down = ["prefix+j", "ctrl+shift+down", "alt+down"]
+    focus_pane_up = ["prefix+k", "ctrl+shift+up", "alt+up"]
+    focus_pane_right = ["prefix+l", "ctrl+shift+right", "alt+right"]
 
     # Vim pane swapping
     swap_pane_left = "prefix+shift+h"
