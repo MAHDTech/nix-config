@@ -1,4 +1,3 @@
-{ _ }:
 {
   xdg.configFile."herdr/config.toml".text = ''
     onboarding = false
