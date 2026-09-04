@@ -1,6 +1,6 @@
 {
   imports = [
-    #./alacritty.nix
+    ./alacritty
     ./bash.nix
     ./btop.nix
     ./command-not-found.nix
