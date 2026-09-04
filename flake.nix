@@ -8,6 +8,7 @@
       https://devenv.cachix.org
       https://mahdtech.cachix.org
       https://salt-labs.cachix.org
+      https://herdr.cachix.org
     '';
     extra-trusted-public-keys = "
       cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
@@ -15,6 +16,7 @@
       devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
       mahdtech.cachix.org-1:LtqGFUwyvUqRrl+LijURnBwkwQLwRO52dbDfrYkjWTg=
       salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
+      herdr.cachix.org-1:3nH7IStRsS0ASfdonA0DCRR2ZrSCeWitZ7Kwew0cR4I=
     ";
     warn-dirty = true;
     cores = 0;

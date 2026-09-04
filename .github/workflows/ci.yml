@@ -25,7 +25,7 @@ jobs:
     steps:
       - id: checkout_repository
         name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           lfs: false
           submodules: recursive
@@ -47,7 +47,7 @@ jobs:
 
       - id: enable_cachix
         name: "Enable Cachix ❄️"
-        uses: cachix/cachix-action@v16
+        uses: cachix/cachix-action@v17
         if: ${{ vars.CACHIX_CACHE_NAME != '' }}
         with:
           name: ${{ vars.CACHIX_CACHE_NAME }}

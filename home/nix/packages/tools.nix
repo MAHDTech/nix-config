@@ -11,6 +11,8 @@ let
     # claude-code is a custom package, see packages/custom/claude-code
     #claude-code
     claude-monitor
+    herdr
+    zellij
   ];
 
   systemArchPackages =

@@ -20,7 +20,7 @@
           "colorScheme": "tokyo night",
           "editorMode": "vim",
           "enableTerminalSandbox": false,
-          "model": "Gemini 3.7 Flash (High)",
+          "model": "Gemini 3.8 Flash (High)",
           "notifications": true,
           "permissions": {
             "allow": [
