@@ -6,36 +6,72 @@ in
   # Metadata for other flake outputs
   # buildSystem: the machine that compiles. When it differs from system,
   #              nixpkgs is configured for cross-compilation automatically.
+  # nixSettings: host-specific Nix settings, keyed by real nix.settings names
+  #              (e.g. max-jobs, cores). Passed through verbatim into
+  #              nix.settings and, as --option flags, into
+  #              system.autoUpgrade.flags. Any Nix setting works; unset keys
+  #              keep the fleet default from nixos/system/soe/nix.
   list = [
     {
       name = "JONS";
       system = "x86_64-linux";
-      buildSystem = "x86_64-linux"; # native
+      buildSystem = "x86_64-linux";
+      nixSettings = { };
     }
     {
       name = "ARC";
       system = "x86_64-linux";
-      buildSystem = "x86_64-linux"; # native
+      buildSystem = "x86_64-linux";
+      nixSettings = { };
     }
     {
       name = "ZENBOOK";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native (real ARM64 hardware)
+      buildSystem = "aarch64-linux";
+      nixSettings = {
+        max-jobs = 2;
+      };
     }
     {
       name = "ORION";
       system = "aarch64-linux";
-      buildSystem = "aarch64-linux"; # native (real ARM64 hardware)
+      buildSystem = "aarch64-linux";
+      nixSettings = {
+        max-jobs = 2;
+      };
     }
     {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "x86_64-linux"; # cross-compilation
+      buildSystem = "aarch64-linux";
+      nixSettings = {
+        # Low-power 8-core Cortex-A53: build sequentially to avoid OOM.
+        max-jobs = 1;
+        cores = 4;
+      };
+    }
+    {
+      name = "test-nixos";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+      nixSettings = { };
     }
   ];
 
   # Actual configurations
-  configs = {
+  configs = rec {
+    test-nixos = mkHost {
+      name = "test-nixos";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+      hostType = "server";
+      enableHomeManager = false;
+      extraModules = [
+        inputs.disko.nixosModules.disko
+      ];
+    };
+    TEST-NIXOS = test-nixos;
+
     JONS = mkHost {
       name = "JONS";
       system = "x86_64-linux";
@@ -72,6 +108,9 @@ in
       system = "aarch64-linux";
       buildSystem = "aarch64-linux";
       hostType = "laptop";
+      nixSettings = {
+        max-jobs = 2;
+      };
       extraModules = [
         inputs.disko.nixosModules.disko
         ./zenbook/hardware/disko-config.nix
@@ -83,6 +122,9 @@ in
       system = "aarch64-linux";
       buildSystem = "aarch64-linux";
       hostType = "server";
+      nixSettings = {
+        max-jobs = 2;
+      };
       extraModules = [
         inputs.disko.nixosModules.disko
         ./orion/hardware/disko-config.nix
@@ -92,8 +134,13 @@ in
     BOOTYCALL = mkHost {
       name = "BOOTYCALL";
       system = "aarch64-linux";
-      buildSystem = "x86_64-linux"; # cross-compilation
+      buildSystem = "aarch64-linux";
       hostType = "server";
+      nixSettings = {
+        # Low-power 8-core Cortex-A53: build sequentially to avoid OOM.
+        max-jobs = 1;
+        cores = 4;
+      };
       enableHomeManager = false;
       extraModules = [
         inputs.disko.nixosModules.disko

@@ -1,15 +1,11 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
 
   extraPackagesUnstable = with pkgsUnstable; [
     # Tools
@@ -186,6 +182,7 @@ in
           typescript
 
           # Infrastructure Tools
+          devenv
           opentofu
           pulumi
           pulumiPackages.pulumi-go
@@ -401,10 +398,19 @@ in
         #########################
 
         agent_servers = {
-          "opencode" = {
+          "antigravity-acp" = {
             type = "registry";
           };
-          "antigravity" = {
+          "claude-acp" = {
+            type = "registry";
+          };
+          "goose" = {
+            type = "registry";
+          };
+          "grok-build" = {
+            type = "registry";
+          };
+          "opencode" = {
             type = "registry";
           };
         };
@@ -609,9 +615,9 @@ in
             url = "https://build.avax.network/api/mcp";
           };
 
-          daisyui-blueprint = {
+          daisyui = {
             # Use a wrapper that injects the DaisyUI license.
-            command = "/home/mahdtech/.local/bin/daisyui-mcp-server-start";
+            command = "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start";
             args = [ ];
             env = { };
           };
@@ -623,18 +629,28 @@ in
           };
 
           nixos = {
-            command = "nix";
-            args = [
-              "run"
-              "github:utensils/mcp-nixos"
-              "--"
-            ];
+            command = "${config.home.homeDirectory}/.local/bin/mcp-nixos-start";
+            args = [ ];
             env = { };
           };
 
           github = {
             # Use a wrapper that injects the GITHUB_TOKEN using gh CLI
             command = "${config.home.homeDirectory}/.local/bin/github-mcp-server-start";
+            args = [ ];
+            env = { };
+          };
+
+          terraform = {
+            # Use a wrapper that creates credentials and runs registry-only mode
+            command = "${config.home.homeDirectory}/.local/bin/terraform-mcp-server-start";
+            args = [ ];
+            env = { };
+          };
+
+          opentofu = {
+            # Use a wrapper that runs registry-only mode
+            command = "${config.home.homeDirectory}/.local/bin/opentofu-mcp-server-start";
             args = [ ];
             env = { };
           };
@@ -646,6 +662,14 @@ in
         #########################
 
         lsp = {
+          devenv-lsp = {
+            binary = {
+              path = lib.getExe pkgs.devenv;
+              args = [
+                "lsp"
+              ];
+            };
+          };
           gitlab-ci = {
             binary = {
               path = lib.getExe pkgs.gitlab-ci-ls;
@@ -814,6 +838,7 @@ in
             };
             enable_language_server = true;
             language_servers = [
+              "devenv-lsp"
               "nixd"
               "nil"
             ];

@@ -1,9 +1,12 @@
 { pkgs, ... }:
 {
 
+  # RustDesk needs a ScreenCast portal implementation to capture the session.
+  # The COSMIC desktop module already provides xdg-desktop-portal-cosmic; this
+  # is a defensive restatement so the service works on hosts without COSMIC.
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+    extraPortals = [ pkgs.xdg-desktop-portal-cosmic ];
   };
 
   environment.systemPackages = with pkgs; [

@@ -1,18 +1,6 @@
 { config, ... }:
 {
   home.file = {
-    # Electron flags for apps like VSCode
-    "electron-flags" = {
-      target = "${config.home.homeDirectory}/.config/electron-flags.conf";
-      executable = false;
-
-      text = ''
-        --enable-features=UseOzonePlatform,WaylandWindowDecorations,WebRTCPipeWireCapturer
-        --ozone-platform-hint=auto
-        --ozone-platform=wayland
-      '';
-    };
-
     # Sommelierrc for ChromeOS
     "sommelierrc" = {
       target = "${config.home.homeDirectory}/.sommelierrc";

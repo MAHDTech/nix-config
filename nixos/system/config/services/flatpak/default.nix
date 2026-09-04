@@ -29,6 +29,8 @@
       #"flathub:app/com.slack.Slack//stable"
       # Flatpak
       "flathub:app/com.github.tchx84.Flatseal//stable"
+      # 3D Printing
+      "flathub:app/com.orcaslicer.OrcaSlicer//stable"
       # Video
       #"flathub:app/fr.handbrake.ghb//stable"
       # Audio

@@ -1,8 +1,6 @@
 {
   config,
   pkgs,
-  lib,
-  osConfig ? null,
   ...
 }:
 {
@@ -51,52 +49,12 @@
           gpu-context=wayland
         '';
       };
-    }
-    // (
-      let
-        hostname =
-          if
-            osConfig != null
-            && builtins.hasAttr "networking" osConfig
-            && builtins.hasAttr "hostName" osConfig.networking
-          then
-            osConfig.networking.hostName
-          else
-            "";
-      in
-      if lib.hasInfix "ORION" hostname then
-        {
-          "uwsm/env" = {
-            target = "uwsm/env";
-            text = ''
-              export AQ_DRM_DEVICES="/dev/dri/cix-gpu:/dev/dri/cix-display"
-              export AQ_NO_MODIFIERS=1
-            '';
-          };
-        }
-      else if (lib.hasInfix "JONS" hostname || lib.hasInfix "ARC" hostname) then
-        {
-          "uwsm/env" = {
-            target = "uwsm/env";
-            text = ''
-              export AQ_DRM_DEVICES="/dev/dri/amd-gpu:/dev/dri/intel-gpu"
-              export WLR_DRM_DEVICES="/dev/dri/amd-gpu:/dev/dri/intel-gpu"
-            '';
-          };
-        }
-      else if lib.hasInfix "ZENBOOK" hostname then
-        {
-          "uwsm/env" = {
-            target = "uwsm/env";
-            text = ''
-              export AQ_DRM_DEVICES="/dev/dri/adreno-gpu"
-              export WLR_DRM_DEVICES="/dev/dri/adreno-gpu"
-            '';
-          };
-        }
-      else
-        { }
-    );
+    };
+
+    # NOTE: this used to also write a per-host ~/.config/uwsm/env exporting
+    # AQ_DRM_DEVICES / WLR_DRM_DEVICES. UWSM was Hyprland's session manager and
+    # COSMIC does not use it, so the file was inert. GPU selection now lives in
+    # each host's environment.sessionVariables as COSMIC_RENDER_DEVICE.
 
     dataFile = {
       "1password.desktop" = {

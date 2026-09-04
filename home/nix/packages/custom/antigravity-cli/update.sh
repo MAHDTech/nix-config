@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#shellcheck disable=SC1008
+#!nix-shell -i bash -p bash curl jq cacert
 #
 # Antigravity CLI Nix Update Script
 # Automatically fetches the latest manifests directly from Google Cloud Storage,
 # extracts versions/hashes, and writes to sources.json.
-# Can be run via: nix-shell -p curl jq --run ./update.sh
 
-clear
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

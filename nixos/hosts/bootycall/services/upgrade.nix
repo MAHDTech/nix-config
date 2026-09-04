@@ -1,9 +1,13 @@
-_: {
+{
+  nixSettingsFlags ? [ ],
+  ...
+}:
+{
   nix = {
-    # Low-power settings to prevent OOM/overheating during builds
+    # NOTE: cores/max-jobs live in this host's `nixSettings` in
+    # nixos/hosts/default.nix; mkHost applies them to nix.settings and the
+    # autoUpgrade flags below pass the same limits to unattended rebuilds.
     settings = {
-      cores = 4; # Use only 4 of the 8 low-power Cortex-A53 cores
-      max-jobs = 1; # Run builds sequentially
       trusted-users = [ "cooper" ];
       experimental-features = [
         "nix-command"
@@ -35,6 +39,7 @@ _: {
     flags = [
       "--accept-flake-config"
       "--show-trace"
-    ];
+    ]
+    ++ nixSettingsFlags;
   };
 }

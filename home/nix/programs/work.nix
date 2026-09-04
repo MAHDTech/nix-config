@@ -1,10 +1,10 @@
 {
   pkgs,
-  #inputs,
+  # For unstable packages, add `pkgsUnstable,` here — it is supplied by
+  # lib/default.nix via specialArgs. Do not import nixpkgs-unstable directly.
   ...
 }:
 let
-  #pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
   # System common packages.
   systemCommonPackages = [

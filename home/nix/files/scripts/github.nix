@@ -35,7 +35,7 @@ in
             echo "${scriptName}: no token from 'gh auth token' — run 'gh auth login'." >&2
             exit 1
           else
-            echo "${scriptName}: using token from 'gh auth token'"
+            echo "${scriptName}: using token from 'gh auth token'" >&2
           fi
 
           export GITHUB_PERSONAL_ACCESS_TOKEN="''${TOKEN}"

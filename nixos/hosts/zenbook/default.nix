@@ -38,7 +38,10 @@
     ../../system/config/services
 
     # Desktop Environment
-    ../../system/config/desktop-environment/hyprland.nix
+    ../../system/config/desktop-environment/cosmic.nix
+
+    # Login Manager
+    ../../system/config/desktop-environment/greetd.nix
 
     # Theme
     ../../system/config/theme/stylix
@@ -65,9 +68,9 @@
   };
 
   environment.sessionVariables = {
-    # Force Hyprland to use our stable udev symlink for rendering
-    AQ_DRM_DEVICES = "/dev/dri/adreno-gpu";
-    WLR_DRM_DEVICES = "/dev/dri/adreno-gpu";
+    # Point cosmic-comp at our stable udev symlink for rendering. The value is
+    # resolved against /dev/dri, so it must be a bare name rather than a path.
+    COSMIC_RENDER_DEVICE = "adreno-gpu";
   };
 
   services.udev.extraRules = ''

@@ -6,17 +6,17 @@
       https://cache.nixos.org
       https://cosmic.cachix.org/
       https://devenv.cachix.org
-      https://hyprland.cachix.org/
       https://mahdtech.cachix.org
       https://salt-labs.cachix.org
+      https://herdr.cachix.org
     '';
     extra-trusted-public-keys = "
       cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
       cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=
       devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
-      hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=
       mahdtech.cachix.org-1:LtqGFUwyvUqRrl+LijURnBwkwQLwRO52dbDfrYkjWTg=
       salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
+      herdr.cachix.org-1:3nH7IStRsS0ASfdonA0DCRR2ZrSCeWitZ7Kwew0cR4I=
     ";
     warn-dirty = true;
     cores = 0;
@@ -24,7 +24,7 @@
   };
 
   inputs = {
-    nixpkgs.url = "git+https://github.com/NixOS/nixpkgs?ref=release-26.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     systems.url = "github:nix-systems/default";
@@ -36,6 +36,7 @@
     stylix.url = "github:nix-community/stylix?ref=release-26.05";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
     devenv.url = "github:cachix/devenv/main";
+    devenv-nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
     impermanence.url = "github:nix-community/impermanence/master";
     crane.url = "github:ipetkov/crane";
     disko = {
@@ -44,6 +45,10 @@
     };
     opnix = {
       url = "github:brizzbuzz/opnix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    cosmic-manager = {
+      url = "github:HeitorAugustoLN/cosmic-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -65,7 +70,8 @@
         map (host: {
           name = "installer-${lib.toLower host.name}";
           value = mylib.mkInstaller {
-            inherit (host) system buildSystem;
+            inherit (host) system;
+            buildSystem = host.buildSystem or builtins.currentSystem or host.system;
             module = ./nixos/hosts/${lib.toLower host.name}/installer.nix;
           };
         }) hosts.list
@@ -88,10 +94,14 @@
               inputs.nixpkgs.legacyPackages.${system}.hello;
         }
         // builtins.listToAttrs (
+          # Only expose a host's installer under the system that actually
+          # builds it, otherwise every host lands in every system's package
+          # set and e.g. packages.aarch64-linux.installer-test-nixos resolves
+          # to an x86_64-linux ISO.
           map (host: {
             name = "installer-${lib.toLower host.name}";
             value = self.nixosConfigurations."installer-${lib.toLower host.name}".config.system.build.image;
-          }) hosts.list
+          }) (builtins.filter (host: (host.buildSystem or host.system) == system) hosts.list)
         )
       );
 

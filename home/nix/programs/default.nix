@@ -1,6 +1,6 @@
 {
   imports = [
-    #./alacritty.nix
+    ./alacritty
     ./bash.nix
     ./btop.nix
     ./command-not-found.nix
@@ -25,9 +25,6 @@
     ./vim.nix
     #./vscode.nix
     ./zed
-
-    # Hyprland
-    ./hyprland
 
     # Work Tools
     ./work.nix

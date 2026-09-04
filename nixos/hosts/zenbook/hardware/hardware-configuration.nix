@@ -66,8 +66,6 @@ in
         "evdev"
 
         # Filesystems
-        # vfat/fat: required for the ESP (/boot) — CONFIG_VFAT_FS is =m in the
-        # defconfig. With includeDefaultModules=false these must be explicit.
         "vfat"
         "fat"
         "iso9660"
@@ -78,48 +76,31 @@ in
         "ext4"
       ]
       ++ lib.optionals (!isInstaller) [
-        # Early display — drm panel drivers are forced =y (built-in) in kernel.nix.
-        # Note: drm_simpledrm is NOT a separate loadable module in this kernel
-        # (confirmed on live device — efifb handles early display, MSM DRM takes over).
-        # Panel entries below are belt-and-suspenders in case of future =m regressions.
         "drm_panel_edp"
         "drm_panel_simple"
         "drm_panel_samsung_atna33xc20"
       ];
       kernelModules = [ ];
 
-      # Load crucial platform firmware directly in stage 1 to prevent driver crashes
-      # (Not needed anymore since remoteproc and Type-C modules are moved to Stage 2)
       extraFirmwarePaths = [ ];
     };
 
     blacklistedKernelModules = [
-      # Issue 22: Audio playback causes instant PMIC hard reset.
-      # The WSA884x speaker amplifier fails on SoundWire bus 6b10000 (Slave 0,
-      # register 3452) with continuous FIFO errors from boot. Attempting audio
-      # playback triggers PMIC overcurrent shutdown. The `i_accept_the_danger`
-      # module parameter was removed/renamed in next-20260611 (upstream volume-
-      # limiting patch may have replaced it). All audio codecs are blacklisted
-      # until upstream fixes land. Bluetooth audio works via PipeWire.
-      # See: ISSUES.md Issue 22, lore.kernel.org (thomas.kuang, 2026-06-08).
-      # Future: try un-blacklisting only WCD938x (headphones) separately.
-      "snd_soc_x1e80100" # ASoC machine driver (X1E80100 platform)
-      "snd_soc_wsa884x" # WSA884x speaker amplifier — SoundWire bus errors, PMIC crash trigger
-      "snd_soc_wcd938x" # WCD938x headphone codec — may work independently (untested)
-      "snd_soc_wcd938x_sdw" # WCD938x SoundWire transport layer
-      "snd_soc_wcd_common" # WCD common codec operations
-
-      # Issue 23: SoundWire controller + LPASS macro modules generate a continuous
-      # interrupt storm (~6,769+ IRQs on IRQ 258) from boot due to WSA884x bus errors.
-      # This adds constant baseline current draw and CPU overhead that contributes
-      # to PMIC OCP under sustained CPU stress. Blacklisting eliminates the storm.
-      # These modules have zero users (no audio codecs loaded) so are purely waste.
-      "soundwire_qcom" # Qualcomm SoundWire controller — source of the IRQ storm
-      "snd_soc_lpass_wsa_macro" # LPASS WSA macro (speaker amp path)
-      "snd_soc_lpass_rx_macro" # LPASS RX macro (playback path)
-      "snd_soc_lpass_tx_macro" # LPASS TX macro (capture path)
-      "snd_soc_lpass_va_macro" # LPASS VA macro (voice activation path)
-      "snd_soc_lpass_macro_common" # LPASS macro common ops (dependency of above)
+      # SoundWire & Audio modules are UN-BLACKLISTED for testing Linux 7.2.0-rc5 native audio support.
+      # Upstream 7.2 includes native SoundWire channel maps and audio routing in x1e80100.c and board DTS.
+      #
+      # If audio issues occur, un-comment the lines below to re-blacklist:
+      # "snd_soc_x1e80100"
+      # "snd_soc_wsa884x"
+      # "snd_soc_wcd938x"
+      # "snd_soc_wcd938x_sdw"
+      # "snd_soc_wcd_common"
+      # "soundwire_qcom"
+      # "snd_soc_lpass_wsa_macro"
+      # "snd_soc_lpass_rx_macro"
+      # "snd_soc_lpass_tx_macro"
+      # "snd_soc_lpass_va_macro"
+      # "snd_soc_lpass_macro_common"
 
       # Blacklist remoteproc from udev auto-load. It is loaded explicitly by
       # qcom-remoteproc-load.service AFTER pd-mapper.service is running, to
@@ -133,17 +114,9 @@ in
     ];
 
     kernelParams = [
-      # Issue 21: fw_devlink — Phase 2 (strict probe ordering with timeout safety net).
-      # Research (2026-06-12) confirmed all 323 DT dependency cycles are auto-resolved
-      # by the kernel on next-20260611. Zero device link failures, zero permanent
-      # deferred probes. The sync_state timeout prevents indefinite blocking if any
-      # consumer fails to probe (e.g. GCC waiting for all clock consumers).
-      # Rollback: change fw_devlink=on → fw_devlink=permissive if boot issues occur.
       "fw_devlink=on"
       "fw_devlink.sync_state=timeout"
       "deferred_probe_timeout=30"
-      # clk/pd_ignore_unused: prevent late_initcall cleanup of bootloader-enabled
-      # clocks and power domains. Matches Ubuntu's linux-qcom-x1e kernel.
       "clk_ignore_unused"
       "pd_ignore_unused"
       "usbcore.quirks=0b95:1790:k"
@@ -152,32 +125,23 @@ in
       "console=ttyMSM0,115200n8"
       "console=tty0"
       "cma=128M"
-      "systemd.tpm2_wait=0" # Don't wait for fTPM during early boot (OP-TEE may be slow)
-      # Suppress all platform watchdogs at boot (works on built-in drivers too)
+      "systemd.tpm2_wait=0"
       "nowatchdog"
-      # Raw NVMe partition for persistent crash logging via pstore-blk
-      "pstore_blk.blkdev=/dev/disk/by-partlabel/disk-main-pstore"
-      # Panic escalation parameters for crash dump flushing
       "panic_on_oops=1"
       "panic=30"
       "panic_print=0x7ff"
     ];
 
-    # Issue 22: Audio module configuration (currently dead code — all audio
-    # modules are blacklisted above). Retained for when audio is re-enabled.
     extraModprobeConfig = ''
       options snd-soc-x1e80100
-      # SoundWire boot ordering: ensure ADSP remoteproc loads before speaker codec
       softdep snd-soc-wsa884x pre: qcom_q6v5_pas
       softdep snd-soc-wcd938x-sdw pre: qcom_q6v5_pas
     '';
 
-    # netconsole moved to systemd service (netconsole.nix) — loads after network is up
     kernelModules = lib.optionals (!isInstaller) [
       "msm"
     ];
 
-    # Modern boot management
     loader = {
       systemd-boot.enable = true;
       systemd-boot.editor = lib.mkForce true;
@@ -190,8 +154,6 @@ in
 
   hardware = {
     graphics.enable = true;
-    # We restore the external DTB because the UEFI DTB might be missing nodes
-    # causing instant reboots or missing dependencies for USB/DSPs.
     deviceTree = {
       enable = true;
       name = "qcom/x1e80100-asus-zenbook-a14.dtb";
@@ -201,29 +163,16 @@ in
           dtsFile = ../files/ramoops-overlay.dts;
         }
         {
-          # Issue 23: Add passive thermal trip points + cooling-maps to CPU
-          # cluster thermal zones. Upstream x1e80100.dtsi has no CPU cooling-maps
-          # so the cpufreq cooling devices (cpufreq-cpu0/4/8) sit idle. This
-          # overlay binds them to 75°C passive trips so the step_wise governor
-          # throttles CPU frequency before sustained current draw trips the PMIC.
           name = "cpu-cooling-overlay";
           dtsFile = ../files/cpu-cooling-overlay.dts;
         }
       ];
     };
     enableRedistributableFirmware = true;
-    # Keep firmware uncompressed during platform bringup. OEM-signed blobs
-    # (ADSP, CDSP, zap shaders) may have TrustZone hash verification.
-    # The space savings (~6MB) are negligible. Revisit once stable.
     firmwareCompression = "none";
-    # NOTE: hardware.firmware is managed in ./firmware/default.nix
   };
 
-  # Audio UCM2 configuration is now upstream in alsa-ucm-conf.
-  # The alexVinarskis README confirms: "Works with latest upstream alsa-ucm-config"
-
   systemd = {
-    # Use systemd-networkd for Ethernet management
     network.networks."10-lan" = {
       matchConfig.Name = [
         "en*"
@@ -290,18 +239,13 @@ in
 
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
-  # Force-disable Plymouth and AppArmor at the parent configuration level
-  # to completely exclude them from the shared boot initrd.
   boot.plymouth.enable = lib.mkForce false;
   security.apparmor.enable = lib.mkForce false;
 
-  # Specialisation to test built-in audio without blacklisted kernel modules.
-  # Selecting this boot entry un-blacklists all SoundWire and WSA/WCD codecs.
   specialisation.enable-audio.configuration = {
     system.nixos.tags = [ "enable-audio" ];
     boot.blacklistedKernelModules = lib.mkForce (
       [
-        # Keep non-audio modules blacklisted:
         "qcom_q6v5_pas"
       ]
       ++ lib.optionals isInstaller [
@@ -312,9 +256,6 @@ in
     );
   };
 
-  # Specialisation to force Thunderbolt/Type-C dock into USB 2.0 fallback mode.
-  # Blacklists UCSI and Alt Mode negotiation drivers to bypass the failed
-  # Alt Mode negotiation cycle, making the dock's USB ports and Ethernet functional.
   specialisation.dock-fallback.configuration = {
     system.nixos.tags = [ "dock-fallback" ];
     boot.blacklistedKernelModules = [

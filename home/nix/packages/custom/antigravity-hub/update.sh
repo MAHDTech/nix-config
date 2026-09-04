@@ -1,8 +1,13 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p curl jq nix coreutils
-# shellcheck shell=bash
+#shellcheck disable=SC1008
+#!nix-shell -i bash -p bash curl jq nix cacert
+#
+# Antigravity Hub Nix Update Script
+# Fetches the latest release from the Cloud Run updater API, prefetches the
+# platform tarballs into the Nix store to compute their hashes, and writes
+# sources.json. Upstream no longer publishes per-platform manifest.json files,
+# so hashes must be computed locally.
 
-clear
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
@@ -30,32 +35,33 @@ fi
 
 echo "Updating Antigravity Hub to $VERSION (exec id $EXEC_ID)..."
 
-# 2. Fetch platform manifests containing pre-calculated hashes
-fetch_manifest() {
+# 2. Prefetch each platform tarball to compute its SRI sha256
+tarball_url() {
 	local platform_path="$1"
-	curl -fsSL "https://storage.googleapis.com/antigravity-public/antigravity-hub/${VERSION}-${EXEC_ID}/${platform_path}/manifest.json"
+	echo "https://storage.googleapis.com/antigravity-public/antigravity-hub/${VERSION}-${EXEC_ID}/${platform_path}/Antigravity.tar.gz"
 }
 
-echo "Fetching platform manifests..."
-linux_amd64=$(fetch_manifest "linux-x64")
-linux_arm64=$(fetch_manifest "linux-arm")
-
-# Convert hex sha256 from GCS manifest to standard Nix SRI format
-convert_hash() {
-	local hex="$1"
-	nix hash convert --to sri "sha256:$hex"
+prefetch_hash() {
+	local url="$1"
+	nix store prefetch-file --json "$url" | jq -r '.hash'
 }
 
-hash_x64=$(convert_hash "$(echo "$linux_amd64" | jq -r '.sha256hash')")
-hash_arm=$(convert_hash "$(echo "$linux_arm64" | jq -r '.sha256hash')")
+url_x64=$(tarball_url "linux-x64")
+url_arm=$(tarball_url "linux-arm")
+
+echo "Prefetching linux-x64 tarball (this downloads ~170MB)..."
+hash_x64=$(prefetch_hash "$url_x64")
+
+echo "Prefetching linux-arm tarball (this downloads ~170MB)..."
+hash_arm=$(prefetch_hash "$url_arm")
 
 # 3. Write sources.json
 jq -n \
 	--arg ver "$VERSION" \
-	--arg url_x64 "$(echo "$linux_amd64" | jq -r '.url')" \
+	--arg url_x64 "$url_x64" \
 	--arg hash_x64 "$hash_x64" \
 	--arg root_x64 "Antigravity-x64" \
-	--arg url_arm "$(echo "$linux_arm64" | jq -r '.url')" \
+	--arg url_arm "$url_arm" \
 	--arg hash_arm "$hash_arm" \
 	--arg root_arm "Antigravity-arm64" \
 	'{

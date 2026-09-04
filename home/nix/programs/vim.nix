@@ -1,12 +1,10 @@
 {
-  inputs,
   config,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
-
   unstablePlugins = with pkgsUnstable.vimPlugins; [ ];
 in
 {

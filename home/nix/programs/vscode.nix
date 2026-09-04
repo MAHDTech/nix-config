@@ -1,14 +1,10 @@
 {
-  inputs,
   pkgs,
   ...
 }:
-let
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+# NOTE: unstable packages are available by adding `pkgsUnstable,` to the
+# arguments above — it is supplied by lib/default.nix, no import needed.
 
-  _unstablePkgs = with pkgsUnstable; [ ];
-
-in
 # Visual Studio Code Insiders
 #vscode-insiders = (pkgs.vscode.override {isInsiders = true;}).overrideAttrs (_oldAttrs: {
 #  version = "latest";

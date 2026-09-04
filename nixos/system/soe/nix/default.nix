@@ -1,6 +1,8 @@
 {
-  inputs,
+  lib,
   pkgs,
+  inputs,
+  nixSettingsFlags ? [ ],
   ...
 }:
 {
@@ -22,38 +24,46 @@
       dates = [ "Sun 21:00" ];
     };
 
-    settings = {
-      cores = 0;
-      max-jobs = "auto";
-      require-sigs = true;
-      sandbox = true;
-      sandbox-fallback = false;
-      system-features = [
-        "benchmark"
-        "big-parallel"
-        "kvm"
-        "nixos-test"
-        "uid-range"
-      ];
-      auto-optimise-store = true;
-      auto-allocate-uids = true;
-      use-cgroups = true;
-      keep-outputs = true;
-      keep-derivations = true;
-      trusted-users = [
-        "mahdtech"
-      ];
-      experimental-features = [
-        "auto-allocate-uids"
-        "ca-derivations"
-        "cgroups"
-        "flakes"
-        "nix-command"
-      ];
-      extra-platforms = [
-        "aarch64-linux"
-      ];
-    };
+    # Fleet defaults. Every key here is lib.mkDefault, so any of them can be
+    # overridden for a single host via `nixSettings` in nixos/hosts/default.nix
+    # (applied at normal priority by mkHost) without editing this file.
+    settings = lib.mkMerge [
+      (lib.mapAttrs (_: lib.mkDefault) {
+        cores = 0;
+        max-jobs = "auto";
+        require-sigs = true;
+        sandbox = true;
+        sandbox-fallback = false;
+        auto-optimise-store = true;
+        auto-allocate-uids = true;
+        use-cgroups = true;
+        keep-outputs = true;
+        keep-derivations = true;
+        experimental-features = [
+          "auto-allocate-uids"
+          #"ca-derivations" # NOTE: This breaks devenv when enabled.
+          "cgroups"
+          "flakes"
+          "nix-command"
+        ];
+        extra-platforms = [
+          "aarch64-linux"
+        ];
+      })
+
+      # NOT mkDefault. nixpkgs defines both of these at normal priority in
+      # nixos/modules/config/nix.nix (`trusted-users = [ "root" ]` and
+      # `system-features = defaultSystemFeatures`). A mkDefault definition here
+      # loses to that outright and is discarded rather than merged, which
+      # silently dropped "mahdtech" and "uid-range". Defining them at normal
+      # priority makes them merge with the upstream values instead.
+      # Consequence: a host `nixSettings` override adds to these lists rather
+      # than replacing them.
+      {
+        trusted-users = [ "mahdtech" ];
+        system-features = [ "uid-range" ];
+      }
+    ];
 
     extraOptions = "";
 
@@ -87,7 +97,10 @@
         "--show-trace"
         # Removed: --impure (legacy, breaks reproducibility)
         # Removed: --refresh (forces full NAR info re-download, causes timeouts)
-      ];
+      ]
+      # Host overrides from nixSettings, so unattended rebuilds are bound by
+      # the same limits as interactive ones.
+      ++ nixSettingsFlags;
 
       dates = "03:00";
 

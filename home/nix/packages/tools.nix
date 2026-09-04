@@ -1,18 +1,18 @@
 {
-  inputs,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 let
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-    config.allowUnfree = true;
-  };
-
   unstablePkgs = with pkgsUnstable; [
+    #antigravity-cli
+    #antigravity-ide-fhs
     claude-agent-acp
-    claude-code
+    # claude-code is a custom package, see packages/custom/claude-code
+    #claude-code
     claude-monitor
+    herdr
+    zellij
   ];
 
   systemArchPackages =
@@ -34,6 +34,11 @@ let
       ]
     else
       [ ];
+
+  # Disable the Video Encoder so Pipewire/Teams Screen Sharing works.
+  brave_video_encoder_disabled = pkgs.brave.override {
+    commandLineArgs = "--disable-features=OutdatedBuildDetector,UseChromeOSDirectVideoDecoder,AcceleratedVideoEncoder";
+  };
 
 in
 {
@@ -148,7 +153,7 @@ in
       # GUI
       signal-desktop
       remmina
-      brave
+      brave_video_encoder_disabled
 
       # Trezor
       trezor-suite

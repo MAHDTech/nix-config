@@ -1,28 +1,31 @@
 {
-  inputs,
-  pkgs,
-  isNixosHM ? false,
+  pkgsUnstable,
   ...
 }:
 let
-  targetSystem = pkgs.stdenv.hostPlatform.system;
+  # To use the devenv-nixpkgs input instead, add `inputs,` and `pkgs,` back to
+  # the arguments above:
+  #devenv-nixpkgs = inputs.devenv-nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 
-  # Disable devenv packages inside NixOS Home Manager on aarch64 to prevent
-  # cross-compilation IFD bootstrap failures on AMD64. It remains fully enabled
-  # in standalone Home Manager (on your ARM64 dev station) and native AMD64 hosts!
-  devenvEnabled = !(isNixosHM && targetSystem == "aarch64-linux");
+  devenvPkgsUnstable = with pkgsUnstable; [
+    cachix
+    devenv
+    # NOTE: `secretspec` removed — devenv 2.2.0 vendors its own bin/secretspec,
+    # and listing both made home.packages fail to build:
+    #   pkgs.buildEnv error: two given paths contain a conflicting subpath:
+    #     .../secretspec-0.17.0/bin/secretspec
+    #     .../devenv-2.2.0/bin/secretspec
+    # Re-add it here if devenv ever stops bundling it.
+  ];
 
-  devenvPkgs =
-    if devenvEnabled then
-      [
-        pkgs.cachix
-        inputs.devenv.packages.${targetSystem}.devenv
-        inputs.nixpkgs-unstable.legacyPackages.${targetSystem}.secretspec
-      ]
-    else
-      [ ];
+  #devenvPkgs = with devenv-nixpkgs; [
+  #  cachix
+  #  devenv
+  #  secretspec
+  #];
 
 in
 {
-  home.packages = devenvPkgs;
+  #home.packages = devenvPkgs;
+  home.packages = devenvPkgsUnstable;
 }

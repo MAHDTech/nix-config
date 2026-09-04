@@ -165,7 +165,7 @@ stdenv.mkDerivation {
       --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations}}" \
       ${lib.optionalString (passwordStore != "") "--add-flags --password-store=${passwordStore}"} \
       --prefix PATH : ${lib.makeBinPath runtimePath} \
-      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath desktopLibs} \
+      --prefix LD_LIBRARY_PATH : "/run/opengl-driver/lib:${lib.makeLibraryPath desktopLibs}" \
       --prefix XDG_DATA_DIRS : "${gsettings-desktop-schemas}/share/gsettings-schemas/${gsettings-desktop-schemas.name}" \
       --prefix XDG_DATA_DIRS : "${gtk3}/share/gsettings-schemas/${gtk3.name}"
 

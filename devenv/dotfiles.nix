@@ -8,7 +8,12 @@
 
 let
 
-  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  # devenv modules cannot receive specialArgs, so this is the one place that
+  # still reaches into lib directly. Everything else takes `pkgsUnstable` as a
+  # module argument — see lib/default.nix.
+  pkgsUnstable = (import ../lib { inherit lib inputs; }).pkgsUnstableImport {
+    system = pkgs.stdenv.hostPlatform.system;
+  };
 
   unstablePkgs = with pkgsUnstable; [
   ];
@@ -32,7 +37,7 @@ in
   };
 
   dotenv = {
-    enable = true;
+    enable = false;
     disableHint = false;
   };
 
@@ -109,6 +114,10 @@ in
       };
       cspell = {
         enable = true;
+        args = [
+          "lint"
+          "--no-must-find-files"
+        ];
         package = pkgs.cspell;
       };
       dialyzer.enable = true;

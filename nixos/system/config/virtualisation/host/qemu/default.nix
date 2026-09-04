@@ -12,7 +12,7 @@
     etc = {
       "qemu/bridge.conf" = {
         text = ''
-          allow br0
+          #allow br0
         '';
         mode = "0644";
       };

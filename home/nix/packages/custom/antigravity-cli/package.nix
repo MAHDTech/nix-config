@@ -1,14 +1,15 @@
 {
   lib,
-  stdenv,
+  stdenvNoCC,
   fetchurl,
   autoPatchelfHook,
+  versionCheckHook,
 }:
 
 let
   sources = lib.importJSON ./sources.json;
 in
-stdenv.mkDerivation {
+stdenvNoCC.mkDerivation {
   pname = "antigravity-cli";
   inherit (sources) version;
 
@@ -17,8 +18,8 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     inherit
-      (sources.sources.${stdenv.hostPlatform.system}
-        or (throw "Unsupported system: ${stdenv.hostPlatform.system}")
+      (sources.sources.${stdenvNoCC.hostPlatform.system}
+        or (throw "Unsupported system: ${stdenvNoCC.hostPlatform.system}")
       )
       url
       sha512
@@ -27,25 +28,31 @@ stdenv.mkDerivation {
 
   sourceRoot = ".";
 
-  # The source archive is a tar.gz containing the single binary named 'antigravity'.
-  # The default unpackPhase will unpack it into the current directory.
-  # We copy 'antigravity' to $out/bin/agy and create a symlink named 'antigravity' to it.
-  # If running on macOS, we don't need any patching, but on Linux we need autoPatchelfHook.
-  nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  # The tarball holds a single prebuilt binary named 'antigravity', installed as 'agy'.
+  # ELF platforms need autoPatchelfHook; Mach-O binaries run as shipped.
+  nativeBuildInputs = lib.optionals stdenvNoCC.hostPlatform.isElf [ autoPatchelfHook ];
+
+  dontConfigure = true;
+  dontBuild = true;
 
   installPhase = ''
     runHook preInstall
-    mkdir -p $out/bin
-    cp antigravity $out/bin/agy
+
+    install -Dm755 antigravity $out/bin/agy
+
     runHook postInstall
   '';
 
+  nativeInstallCheckInputs = [ versionCheckHook ];
+  doInstallCheck = true;
+
   passthru.updateScript = ./update.sh;
 
-  meta = with lib; {
+  meta = {
     description = "Antigravity CLI - A powerful tool for agentic workflows";
     homepage = "https://antigravity.google";
-    license = licenses.unfree;
+    changelog = "https://antigravity.google/changelog";
+    license = lib.licenses.unfree;
     platforms = [
       "x86_64-linux"
       "aarch64-linux"
@@ -53,8 +60,7 @@ stdenv.mkDerivation {
       "aarch64-darwin"
     ];
     mainProgram = "agy";
-    maintainers = with maintainers; [
-      deftdawg
-    ];
+    sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
+    maintainers = with lib.maintainers; [ ];
   };
 }

@@ -27,7 +27,7 @@ theme = dark:TARS Dark,light:TARS Light
 background-opacity = 0.95
 
 # Blur the background behind the transparency (KDE Plasma / macOS).
-background-blur = true
+background-blur = false
 
 # Ensure readable contrast even with dim palette colours.
 minimum-contrast = 1.1
@@ -61,6 +61,26 @@ freetype-load-flags = hinting,no-force-autohint,no-monochrome,autohint
 
 # Better colour rendering.
 alpha-blending = linear-corrected
+
+##################################################
+# Unicode / grapheme width  (fixes shell prompt cursor drift)
+##################################################
+
+# Size graphemes with wcwidth (legacy) instead of the Unicode width
+# tables (unicode, the default).
+#
+# Ghostty's default `unicode` method draws emoji — especially
+# variation-selector ones like ❄️ ↕️ ⚔️ ⚠️ — two cells wide, but
+# bash/readline size the prompt with the older wcwidth(), which counts
+# them as one. The mismatch makes the shell cursor sit left of the text
+# so you overtype it (most visible in devenv/nix shells, which add more
+# such glyphs to the Starship prompt). `legacy` makes Ghostty use
+# wcwidth too, so terminal and shell agree and the cursor stays put.
+#
+# Trade-off: a few graphemes (skin-tone emoji, some scripts) may render
+# at a technically-wrong width. Apps that request terminal mode 2027
+# still get correct Unicode widths regardless of this setting.
+grapheme-width-method = legacy
 
 ##################################################
 # Cursor  (fixes the "overtype / block cursor" issue)

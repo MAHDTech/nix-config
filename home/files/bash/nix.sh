@@ -263,7 +263,6 @@ function _dotfiles_actions() {
 		nixos-rebuild \
 			"${ACTION}" \
 			--sudo \
-			--refresh \
 			--impure \
 			--accept-flake-config \
 			--flake "${FLAKE_LOCATION}#" \

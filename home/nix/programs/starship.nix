@@ -431,6 +431,7 @@
 
       shlvl = {
         disabled = false;
+        symbol = "↕️ ";
       };
 
       singularity = {
@@ -474,8 +475,9 @@
           format = "[$symbol$env_value]($style) ";
         };
 
+        # OS Layer, ChromeOS, Crostini, WSL.
         OS_LAYER = {
-          disabled = false;
+          disabled = true;
 
           variable = "OS_LAYER";
           symbol = "🍰 ";

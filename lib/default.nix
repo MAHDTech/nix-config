@@ -3,47 +3,101 @@ let
   globalUsername = "mahdtech";
   globalStateVersion = "26.05";
 
-  # Import nixpkgs for a given system, with optional cross-compilation.
+  # Repository-wide overlays, applied ahead of any caller-supplied ones.
+  # See ../overlays/default.nix.
+  globalOverlays = [ (import ../overlays) ];
+
+  # Import a nixpkgs source for a given system, with optional cross-compilation.
   # When buildSystem != system, configures localSystem/crossSystem for
   # native cross-compilation (no QEMU emulation).
-  pkgsImport =
+  importNixpkgs =
+    source:
     {
       system,
       buildSystem ? system,
       overlays ? [ ],
     }:
-    if buildSystem == system then
-      # Native build — standard import
-      import inputs.nixpkgs {
-        inherit system overlays;
-        config = {
-          allowUnfree = true;
-        };
-      }
-    else
-      # Cross-compilation — build natively on buildSystem, target system
-      import inputs.nixpkgs {
-        localSystem = buildSystem;
-        crossSystem = system;
+    let
+      common = {
         inherit overlays;
         config = {
           allowUnfree = true;
         };
       };
+    in
+    if buildSystem == system then
+      # Native build — standard import
+      import source (common // { inherit system; })
+    else
+      # Cross-compilation — build natively on buildSystem, target system
+      import source (
+        common
+        // {
+          localSystem = buildSystem;
+          crossSystem = system;
+        }
+      );
+
+  pkgsImport =
+    args:
+    importNixpkgs inputs.nixpkgs (args // { overlays = globalOverlays ++ (args.overlays or [ ]); });
+
+  # The unstable channel, handed to every module as `pkgsUnstable` via
+  # specialArgs / extraSpecialArgs. Declare it here and nowhere else — modules
+  # should take it as an argument rather than re-importing nixpkgs-unstable,
+  # which historically drifted on both allowUnfree and cross-compilation.
+  #
+  # Deliberately without globalOverlays: those packages target the stable set,
+  # and duplicating them here would build them twice.
+  pkgsUnstableImport = importNixpkgs inputs.nixpkgs-unstable;
 
   # Backwards-compatible simple import (used by mkHome)
   pkgsImportSystem = system: pkgsImport { inherit system; };
+
+  # Render a `nixSettings` attrset as `nix` CLI flags, so unattended rebuilds
+  # (system.autoUpgrade) honour the same limits as nix.settings. `--option
+  # <name> <value>` accepts any Nix setting, so adding a new key to a host's
+  # nixSettings needs no change here.
+  mkNixSettingsFlags =
+    settings:
+    lib.concatMap (
+      name:
+      let
+        value = settings.${name};
+        rendered =
+          if lib.isBool value then
+            lib.boolToString value
+          else if lib.isList value then
+            lib.concatMapStringsSep " " toString value
+          else
+            toString value;
+      in
+      [
+        "--option"
+        name
+        rendered
+      ]
+    ) (lib.attrNames settings);
 in
 {
-  inherit globalUsername globalStateVersion pkgsImportSystem;
+  inherit
+    globalUsername
+    globalStateVersion
+    pkgsImportSystem
+    # Exported for consumers that cannot receive specialArgs — currently only
+    # the devenv devShell (devenv/dotfiles.nix). NixOS and home-manager modules
+    # should take `pkgsUnstable` as an argument instead.
+    pkgsUnstableImport
+    ;
 
   # Helper for standard NixOS hosts
   mkHost =
     {
       name,
       system,
-      buildSystem ? system, # defaults to native; set to differ for cross-compilation
+      buildSystem ? builtins.currentSystem or system,
       hostType ? "desktop",
+      nixSettings ? { },
       extraModules ? [ ],
       overlays ? [ ],
       enableHomeManager ? true,
@@ -59,12 +113,29 @@ in
           buildSystem
           name
           hostType
+          nixSettings
           ;
+        # The same settings rendered as `nix` CLI flags, for modules that shell
+        # out (system.autoUpgrade.flags). See mkNixSettingsFlags.
+        nixSettingsFlags = mkNixSettingsFlags nixSettings;
         username = globalUsername;
         inherit globalUsername globalStateVersion;
+
+        # Available to every NixOS module as `pkgsUnstable`. Lazy, so hosts
+        # that never reference it pay no evaluation cost.
+        pkgsUnstable = pkgsUnstableImport { inherit system buildSystem; };
       };
       modules = [
         { system.stateVersion = globalStateVersion; }
+        # Host-specific Nix tuning, declared per host as `nixSettings` in
+        # nixos/hosts/default.nix. Keys are real nix.settings names, passed
+        # through verbatim — any Nix setting works without touching this file.
+        # They land at normal priority, so they win over the lib.mkDefault
+        # fleet defaults in nixos/system/soe/nix; anything left unset keeps the
+        # fleet default. Exceptions: trusted-users and system-features are set
+        # at normal priority there (see the comment in that file), so a host
+        # override merges with them rather than replacing them.
+        { nix.settings = nixSettings; }
         {
           boot.zfs.forceImportRoot = lib.mkDefault false;
           boot.zfs.forceImportAll = lib.mkDefault false;
@@ -82,7 +153,7 @@ in
   mkInstaller =
     {
       system,
-      buildSystem ? system, # defaults to native; set to differ for cross-compilation
+      buildSystem ? builtins.currentSystem or system,
       module,
       ...
     }:
@@ -111,6 +182,7 @@ in
         ../home
         inputs.stylix.homeModules.stylix
         inputs.opnix.homeManagerModules.default
+        inputs.cosmic-manager.homeManagerModules.default
       ];
       extraSpecialArgs = {
         inherit
@@ -123,6 +195,7 @@ in
         inCI = false;
         isNixosHM = false;
         syncthingConfig = null;
+        pkgsUnstable = pkgsUnstableImport { inherit system; };
       };
     };
 }

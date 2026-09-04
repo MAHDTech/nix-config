@@ -16,6 +16,7 @@
         id = "syncthing-shared";
         path = "/home/mahdtech/Sync";
         type = "sendreceive";
+        stignoreProfile = "default";
 
         devices = [
           #"Zenbook"
