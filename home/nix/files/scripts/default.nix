@@ -23,5 +23,8 @@
 
     # NixOS MCP
     ./mcp-nixos.nix
+
+    # Antigravity CLI
+    ./antigravity.nix
   ];
 }
