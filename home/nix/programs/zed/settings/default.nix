@@ -401,6 +401,9 @@ in
           "antigravity-acp" = {
             type = "registry";
           };
+          "codex-acp" = {
+            type = "registry";
+          };
           "claude-acp" = {
             type = "registry";
           };
@@ -430,7 +433,7 @@ in
           default_profile = "ask";
 
           notify_when_agent_waiting = "primary_screen";
-          play_sound_when_agent_done = true;
+          play_sound_when_agent_done = "always";
 
           expand_edit_card = true;
           expand_terminal_card = true;
@@ -465,9 +468,6 @@ in
               fetch = {
                 default = "allow";
               };
-              web_search = {
-                default = "allow";
-              };
             };
           };
 
@@ -498,7 +498,6 @@ in
                 read_file = true;
                 terminal = true;
                 thinking = true;
-                web_search = true;
               };
             };
 
@@ -518,7 +517,6 @@ in
                 project_notifications = false;
                 read_file = true;
                 thinking = true;
-                web_search = true;
               };
             };
 
