@@ -13,6 +13,8 @@ let
     claude-monitor
     herdr
     zellij
+    codex
+    codex-acp
   ];
 
   systemArchPackages =
