@@ -22,6 +22,8 @@ in
     (pkgs.callPackage ./antigravity-cli { })
     (pkgs.callPackage ./antigravity-hub { })
     (pkgs.callPackage ./claude-code { })
+    # Remove once nixpkgs codex >= 0.153.4 and re-enable codex in ../tools.nix
+    (pkgs.callPackage ./codex { })
     #(pkgs.callPackage ./ls-colors.nix { })
   ]
   ++ bambuStudio;

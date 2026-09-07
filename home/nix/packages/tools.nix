@@ -18,14 +18,16 @@ let
         # claude-code is a custom package, see packages/custom/claude-code
         #claude-code
         # OpenAI
-        codex
+        # codex is a custom package (needs 0.153.4+), see packages/custom/codex
+        #codex
         codex-acp
       ]
     else if pkgs.stdenv.hostPlatform.system == "aarch64-linux" then
       with pkgsUnstable;
       [
         # aarch64 only packages
-        codex
+        # codex is a custom package (needs 0.153.4+), see packages/custom/codex
+        #codex
         codex-acp
       ]
     else

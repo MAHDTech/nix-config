@@ -2024,3 +2024,10 @@ endgroup
 herdr
 ipfs
 ipns
+librusty
+codegen
+delafthi
+bindgen
+codegen
+bitstr
+jeafleohj
