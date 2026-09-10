@@ -685,7 +685,6 @@ cursorrules
 cxxdev
 cyberjack
 daddr
-daisyui
 daml
 dbaeumer
 dbdir

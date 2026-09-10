@@ -101,11 +101,6 @@
               "command": "${config.home.homeDirectory}/.local/bin/mcp-nixos-start",
               "args": [],
               "env": {}
-            },
-            "daisyui": {
-              "command": "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start",
-              "args": [],
-              "env": {}
             }
           }
         }

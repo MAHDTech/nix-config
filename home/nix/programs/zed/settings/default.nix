@@ -613,13 +613,6 @@ in
             url = "https://build.avax.network/api/mcp";
           };
 
-          daisyui = {
-            # Use a wrapper that injects the DaisyUI license.
-            command = "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start";
-            args = [ ];
-            env = { };
-          };
-
           devenv = {
             command = "devenv";
             args = [ "mcp" ];

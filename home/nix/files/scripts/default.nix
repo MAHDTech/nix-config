@@ -18,9 +18,6 @@
     # OpenTofu
     ./opentofu.nix
 
-    # DaisyUI
-    ./daisyui.nix
-
     # NixOS MCP
     ./mcp-nixos.nix
 
