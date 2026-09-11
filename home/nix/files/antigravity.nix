@@ -20,12 +20,12 @@
           "colorScheme": "tokyo night",
           "editorMode": "vim",
           "enableTerminalSandbox": false,
-          "model": "Gemini 3.8 Flash (High)",
           "notifications": true,
           "permissions": {
             "allow": [
               "command(devenv)",
               "command(nix)",
+              "mcp(github/*)",
               "mcp(tars/*)"
             ]
           },
@@ -58,6 +58,9 @@
             },
             "globalPermissionGrants": {
               "allow": [
+                "command(devenv)",
+                "command(nix)",
+                "mcp(github/*)",
                 "mcp(tars/*)"
               ]
             },
