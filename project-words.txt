@@ -2042,3 +2042,6 @@ ENOEXEC
 ssize
 fgetxattr
 fsetxattr
+nixlib
+qcow
+paas

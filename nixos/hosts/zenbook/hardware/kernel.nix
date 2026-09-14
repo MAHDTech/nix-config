@@ -329,6 +329,8 @@ let
     '';
 
     passthru = rec {
+      buildDTBs = true;
+      target = "Image";
       modDirVersion = kernelVersion;
       version = modDirVersion;
       dev = kernelBuild;

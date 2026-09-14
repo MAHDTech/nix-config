@@ -28,6 +28,11 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixlib.follows = "nixpkgs";
+    };
     systems.url = "github:nix-systems/default";
     home-manager = {
       url = "github:nix-community/home-manager/master";
@@ -93,6 +98,26 @@
               self.devShells.${system}.default.config.procfileScript
             else
               inputs.nixpkgs.legacyPackages.${system}.hello;
+        }
+        // lib.optionalAttrs (system == "x86_64-linux") {
+          github-runner-image = inputs.nixos-generators.nixosGenerate {
+            inherit system;
+            pkgs = mylib.pkgsImportSystem system;
+            format = "qcow-efi";
+            modules = [
+              ./nixos/hosts/github-runner/common/base.nix
+              ./nixos/hosts/github-runner/common/bootstrap.nix
+              {
+                system.stateVersion = mylib.globalStateVersion;
+                networking.hostName = "";
+                virtualisation.diskSize = 16384;
+                # Preload the runner closure without registering the image as runner 01.
+                system.extraDependencies = [
+                  self.nixosConfigurations.github-runner-01.config.system.build.toplevel
+                ];
+              }
+            ];
+          };
         }
         // builtins.listToAttrs (
           # Only expose a host's installer under the system that actually

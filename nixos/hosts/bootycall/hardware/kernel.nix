@@ -143,6 +143,8 @@ let
 
     # NixOS kernel interface compatibility
     passthru = rec {
+      buildDTBs = true;
+      target = "Image";
       modDirVersion = kernelVersion;
       version = modDirVersion;
       dev = kernelBuild;

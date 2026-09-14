@@ -1,6 +1,12 @@
 { mylib, inputs, ... }:
 let
   inherit (mylib) mkHost;
+  runnerNames = [
+    "github-runner-01"
+    "github-runner-02"
+    "github-runner-03"
+    "github-runner-04"
+  ];
 in
 {
   # Metadata for other flake outputs
@@ -56,95 +62,112 @@ in
       buildSystem = "x86_64-linux";
       nixSettings = { };
     }
-  ];
+  ]
+  ++ map (name: {
+    inherit name;
+    system = "x86_64-linux";
+    buildSystem = "x86_64-linux";
+    nixSettings = { };
+  }) runnerNames;
 
   # Actual configurations
-  configs = rec {
-    test-nixos = mkHost {
-      name = "test-nixos";
-      system = "x86_64-linux";
-      buildSystem = "x86_64-linux";
-      hostType = "server";
-      enableHomeManager = false;
-      extraModules = [
-        inputs.disko.nixosModules.disko
-      ];
-    };
-    TEST-NIXOS = test-nixos;
-
-    JONS = mkHost {
-      name = "JONS";
-      system = "x86_64-linux";
-      buildSystem = "x86_64-linux";
-      hostType = "desktop";
-      extraModules = [
-        inputs.nixos-hardware.nixosModules.common-cpu-amd
-        inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
-        inputs.nixos-hardware.nixosModules.common-gpu-intel
-        inputs.nixos-hardware.nixosModules.common-hidpi
-        inputs.nixos-hardware.nixosModules.common-pc
-        inputs.nixos-hardware.nixosModules.common-pc-ssd
-      ];
-    };
-
-    ARC = mkHost {
-      name = "ARC";
-      system = "x86_64-linux";
-      buildSystem = "x86_64-linux";
-      hostType = "desktop";
-      extraModules = [
-        inputs.disko.nixosModules.disko
-        inputs.nixos-hardware.nixosModules.common-cpu-amd
-        inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
-        inputs.nixos-hardware.nixosModules.common-gpu-intel
-        inputs.nixos-hardware.nixosModules.common-hidpi
-        inputs.nixos-hardware.nixosModules.common-pc
-        inputs.nixos-hardware.nixosModules.common-pc-ssd
-      ];
-    };
-
-    ZENBOOK = mkHost {
-      name = "ZENBOOK";
-      system = "aarch64-linux";
-      buildSystem = "aarch64-linux";
-      hostType = "laptop";
-      nixSettings = {
-        max-jobs = 2;
+  configs =
+    inputs.nixpkgs.lib.genAttrs runnerNames (
+      name:
+      mkHost {
+        inherit name;
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "server";
+        enableHomeManager = false;
+      }
+    )
+    // rec {
+      test-nixos = mkHost {
+        name = "test-nixos";
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "server";
+        enableHomeManager = false;
+        extraModules = [
+          inputs.disko.nixosModules.disko
+        ];
       };
-      extraModules = [
-        inputs.disko.nixosModules.disko
-        ./zenbook/hardware/disko-config.nix
-      ];
-    };
+      TEST-NIXOS = test-nixos;
 
-    ORION = mkHost {
-      name = "ORION";
-      system = "aarch64-linux";
-      buildSystem = "aarch64-linux";
-      hostType = "server";
-      nixSettings = {
-        max-jobs = 2;
+      JONS = mkHost {
+        name = "JONS";
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "desktop";
+        extraModules = [
+          inputs.nixos-hardware.nixosModules.common-cpu-amd
+          inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+          inputs.nixos-hardware.nixosModules.common-gpu-intel
+          inputs.nixos-hardware.nixosModules.common-hidpi
+          inputs.nixos-hardware.nixosModules.common-pc
+          inputs.nixos-hardware.nixosModules.common-pc-ssd
+        ];
       };
-      extraModules = [
-        inputs.disko.nixosModules.disko
-        ./orion/hardware/disko-config.nix
-      ];
-    };
 
-    BOOTYCALL = mkHost {
-      name = "BOOTYCALL";
-      system = "aarch64-linux";
-      buildSystem = "aarch64-linux";
-      hostType = "server";
-      nixSettings = {
-        # Low-power 8-core Cortex-A53: build sequentially to avoid OOM.
-        max-jobs = 1;
-        cores = 4;
+      ARC = mkHost {
+        name = "ARC";
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "desktop";
+        extraModules = [
+          inputs.disko.nixosModules.disko
+          inputs.nixos-hardware.nixosModules.common-cpu-amd
+          inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
+          inputs.nixos-hardware.nixosModules.common-gpu-intel
+          inputs.nixos-hardware.nixosModules.common-hidpi
+          inputs.nixos-hardware.nixosModules.common-pc
+          inputs.nixos-hardware.nixosModules.common-pc-ssd
+        ];
       };
-      enableHomeManager = false;
-      extraModules = [
-        inputs.disko.nixosModules.disko
-      ];
+
+      ZENBOOK = mkHost {
+        name = "ZENBOOK";
+        system = "aarch64-linux";
+        buildSystem = "aarch64-linux";
+        hostType = "laptop";
+        nixSettings = {
+          max-jobs = 2;
+        };
+        extraModules = [
+          inputs.disko.nixosModules.disko
+          ./zenbook/hardware/disko-config.nix
+        ];
+      };
+
+      ORION = mkHost {
+        name = "ORION";
+        system = "aarch64-linux";
+        buildSystem = "aarch64-linux";
+        hostType = "server";
+        nixSettings = {
+          max-jobs = 2;
+        };
+        extraModules = [
+          inputs.disko.nixosModules.disko
+          ./orion/hardware/disko-config.nix
+        ];
+      };
+
+      BOOTYCALL = mkHost {
+        name = "BOOTYCALL";
+        system = "aarch64-linux";
+        buildSystem = "aarch64-linux";
+        hostType = "server";
+        nixSettings = {
+          # Low-power 8-core Cortex-A53: build sequentially to avoid OOM.
+          max-jobs = 1;
+          cores = 4;
+        };
+        enableHomeManager = false;
+        extraModules = [
+          inputs.disko.nixosModules.disko
+        ];
+      };
     };
-  };
 }

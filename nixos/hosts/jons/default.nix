@@ -30,7 +30,7 @@
     enable = true;
     runners.enterprise = {
       url = "https://github.com/enterprises/MAHDTech";
-      runnerGroup = "bingamon-lab";
+      runnerGroup = "tars-cloud";
     };
   };
 
