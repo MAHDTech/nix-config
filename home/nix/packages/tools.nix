@@ -4,16 +4,34 @@
   ...
 }:
 let
-  unstablePkgs = with pkgsUnstable; [
-    #antigravity-cli
-    #antigravity-ide-fhs
-    claude-agent-acp
-    # claude-code is a custom package, see packages/custom/claude-code
-    #claude-code
-    claude-monitor
-    herdr
-    zellij
-  ];
+  unstablePkgs =
+    if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
+      with pkgsUnstable;
+      [
+        # terminal multiplexer
+        herdr
+        # Google
+        #antigravity-cli
+        #antigravity-ide-fhs
+        # Anthropic
+        claude-agent-acp
+        # claude-code is a custom package, see packages/custom/claude-code
+        #claude-code
+        # OpenAI
+        # codex is a custom package (needs 0.153.4+), see packages/custom/codex
+        #codex
+        codex-acp
+      ]
+    else if pkgs.stdenv.hostPlatform.system == "aarch64-linux" then
+      with pkgsUnstable;
+      [
+        # aarch64 only packages
+        # codex is a custom package (needs 0.153.4+), see packages/custom/codex
+        #codex
+        codex-acp
+      ]
+    else
+      [ ];
 
   systemArchPackages =
     if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then

@@ -91,9 +91,16 @@
         variant = "Bottom";
       };
       anchor_gap = true;
+      # Auto-hide so maximised/tiled windows get the full screen height. Values
+      # match what cosmic-settings writes when toggling "Automatically hide dock".
       autohide = {
         __type = "optional";
-        value = null;
+        value = {
+          wait_time = 1000;
+          transition_time = 200;
+          handle_size = 4;
+          unhide_delay = 200;
+        };
       };
       autohover_delay_ms = {
         __type = "optional";
@@ -104,7 +111,9 @@
         variant = "ThemeDefault";
       };
       border_radius = 160;
-      exclusive_zone = true;
+      # Must be false with autohide, otherwise windows still reserve space for the
+      # hidden dock.
+      exclusive_zone = false;
       expand_to_edges = false;
       keyboard_interactivity = {
         __type = "enum";

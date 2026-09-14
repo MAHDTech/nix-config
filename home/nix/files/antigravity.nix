@@ -20,12 +20,12 @@
           "colorScheme": "tokyo night",
           "editorMode": "vim",
           "enableTerminalSandbox": false,
-          "model": "Gemini 3.8 Flash (High)",
           "notifications": true,
           "permissions": {
             "allow": [
               "command(devenv)",
               "command(nix)",
+              "mcp(github/*)",
               "mcp(tars/*)"
             ]
           },
@@ -58,6 +58,9 @@
             },
             "globalPermissionGrants": {
               "allow": [
+                "command(devenv)",
+                "command(nix)",
+                "mcp(github/*)",
                 "mcp(tars/*)"
               ]
             },
@@ -99,11 +102,6 @@
             },
             "nixos": {
               "command": "${config.home.homeDirectory}/.local/bin/mcp-nixos-start",
-              "args": [],
-              "env": {}
-            },
-            "daisyui": {
-              "command": "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start",
               "args": [],
               "env": {}
             }
