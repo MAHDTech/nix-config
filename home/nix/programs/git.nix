@@ -30,7 +30,7 @@
     difftastic = {
       enable = true;
       git.enable = true;
-      git.diffToolMode = true;
+      git.mode = "both";
       options = {
         background = "dark";
         color = "always";

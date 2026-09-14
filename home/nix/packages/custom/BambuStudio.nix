@@ -20,7 +20,7 @@ let
   #   (SYSV) ISO 9660 CD-ROM filesystem
   # file -k type2.AppImage
   #   (SYSV) (Lepton 3.x), scale 232-60668
-  appimageContents = appimageTools.extractType2 {
+  appimageContents = appimageTools.extract {
     inherit pname version src;
   };
 in
