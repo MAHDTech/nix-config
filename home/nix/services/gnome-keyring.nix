@@ -2,7 +2,7 @@
 {
   #home.packages = with pkgs; [gcr gnome-keyring seahorse libsecret];
   home.packages = with pkgs; [
-    gcr
+    gcr_3
     gnome-keyring
     seahorse
   ];

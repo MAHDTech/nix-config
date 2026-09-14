@@ -37,8 +37,6 @@
           [
             # OpenCL and Level Zero compute runtime for 12th Gen and newer Intel ARC GPUs
             intel-compute-runtime
-            # Level Zero GPU backend driver (libze_intel_gpu.so) for GPU compute workloads
-            intel-compute-runtime.drivers
             # Hardware video acceleration driver for modern Intel GPUs (supports both iHD and ARC)
             intel-media-driver
             # Intel Video Processing Library GPU runtime for hardware video processing
@@ -85,8 +83,6 @@
           [
             # OpenCL and Level Zero compute runtime for 12th Gen and newer Intel ARC GPUs (32-bit)
             intel-compute-runtime
-            # Level Zero GPU backend driver (32-bit)
-            intel-compute-runtime.drivers
             # Intel Video Processing Library GPU runtime (32-bit)
             vpl-gpu-rt
           ]

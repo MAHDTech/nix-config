@@ -29,7 +29,7 @@
         # Desktop Shell Components
         cosmic-panel
         cosmic-launcher
-        cosmic-applibrary
+        cosmic-app-library
         cosmic-applets
         cosmic-icons
         cosmic-wallpapers

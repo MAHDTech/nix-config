@@ -2039,3 +2039,6 @@ vite
 nodedir
 shebangless
 ENOEXEC
+ssize
+fgetxattr
+fsetxattr

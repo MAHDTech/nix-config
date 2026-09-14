@@ -219,11 +219,17 @@ in
         inherit (runner) url runnerGroup;
         inherit name;
 
-        # The runner's internal hashFiles helper still requires Node 20.
-        nodeRuntimes = [
-          "node20"
-          "node24"
-        ];
+        nodeRuntimes = [ "node24" ];
+
+        # Runner 2.337.0 defaults internal helpers to Node 20, removed by Nixpkgs.
+        package = pkgs.github-runner.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            substituteInPlace src/Runner.Common/Util/NodeUtil.cs \
+              --replace-fail 'private const string _defaultNodeVersion = "node20";' \
+                'private const string _defaultNodeVersion = "node24";' \
+              --replace-fail 'new(new[] { "node20" })' 'new(new[] { "node24" })'
+          '';
+        });
 
         # Untrusted runners must never carry state between jobs.
         ephemeral = runner.ephemeral || !runner.trusted;
