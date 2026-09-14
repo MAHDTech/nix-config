@@ -9,6 +9,18 @@
     nat.externalInterface = lib.mkForce "enp12s0";
   };
 
+  # Created with: zfs create -o mountpoint=/var/lib/nix-build
+  #   -o utf8only=off -o normalization=none -o atime=off zpool/nix-build
+  fileSystems."/var/lib/nix-build" = {
+    device = "zpool/nix-build";
+    fsType = "zfs";
+    options = [ "zfsutil" ];
+  };
+
+  # Package tests may create filenames that are not valid UTF-8.
+  nix.settings.build-dir = "/var/lib/nix-build";
+  systemd.services.nix-daemon.unitConfig.RequiresMountsFor = [ "/var/lib/nix-build" ];
+
   # Override docker storage driver for ZFS (this host still uses ZFS)
   virtualisation.docker.storageDriver = "zfs";
 
