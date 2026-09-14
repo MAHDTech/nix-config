@@ -19,8 +19,6 @@
       });
     '';
 
-    debug = false;
-
     adminIdentities = [
       "unix-group:wheel"
     ];

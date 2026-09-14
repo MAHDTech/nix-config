@@ -74,11 +74,6 @@ in
 
     JONS = mkHost {
       name = "JONS";
-      # Compatibility runtime for runner hashFiles; remove when it uses Node 24.
-      nixpkgsConfig.permittedInsecurePackages = [
-        "nodejs-20.20.2"
-        "nodejs-slim-20.20.2"
-      ];
       system = "x86_64-linux";
       buildSystem = "x86_64-linux";
       hostType = "desktop";
