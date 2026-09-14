@@ -219,6 +219,12 @@ in
         inherit (runner) url runnerGroup;
         inherit name;
 
+        # The runner's internal hashFiles helper still requires Node 20.
+        nodeRuntimes = [
+          "node20"
+          "node24"
+        ];
+
         # Untrusted runners must never carry state between jobs.
         ephemeral = runner.ephemeral || !runner.trusted;
 

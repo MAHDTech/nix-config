@@ -66,13 +66,6 @@ in
                   "${config.home.homeDirectory}/.local/bin/mcp-nixos-start"
                 ],
                 "environment": { }
-              },
-              "daisyui": {
-                "type": "local",
-                "command": [
-                  "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start"
-                ],
-                "environment": { }
               }
             },
             "disabled_providers": [

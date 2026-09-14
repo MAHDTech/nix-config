@@ -1,22 +1,10 @@
-_: {
+{ config, lib, ... }: {
   services.onepassword-secrets = {
-    enable = true;
+    enable = lib.mkDefault (
+      config.services.onepassword-secrets.secrets != { }
+      || config.services.onepassword-secrets.configFiles != [ ]
+    );
     tokenFile = "/etc/opnix-token";
-    secrets = {
-      "daisyuiEmail" = {
-        reference = "op://fleet/DaisyUI/email";
-        path = "/run/secrets/daisyui-email";
-        owner = "root";
-        group = "root";
-        mode = "0400";
-      };
-      "daisyuiPassword" = {
-        reference = "op://fleet/DaisyUI/password";
-        path = "/run/secrets/daisyui-password";
-        owner = "root";
-        group = "root";
-        mode = "0400";
-      };
-    };
+    secrets = { };
   };
 }

@@ -63,11 +63,6 @@ in
           command = "${config.home.homeDirectory}/.local/bin/mcp-nixos-start"
           args = []
           enabled = true
-
-          [mcp_servers.daisyui]
-          command = "${config.home.homeDirectory}/.local/bin/daisyui-mcp-server-start"
-          args = []
-          enabled = true
         '';
       };
     };

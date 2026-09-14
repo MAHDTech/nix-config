@@ -16,13 +16,15 @@ let
       system,
       buildSystem ? system,
       overlays ? [ ],
+      nixpkgsConfig ? { },
     }:
     let
       common = {
         inherit overlays;
         config = {
           allowUnfree = true;
-        };
+        }
+        // nixpkgsConfig;
       };
     in
     if buildSystem == system then
@@ -101,10 +103,16 @@ in
       extraModules ? [ ],
       overlays ? [ ],
       enableHomeManager ? true,
+      nixpkgsConfig ? { },
     }:
     lib.nixosSystem {
       pkgs = pkgsImport {
-        inherit system buildSystem overlays;
+        inherit
+          system
+          buildSystem
+          overlays
+          nixpkgsConfig
+          ;
       };
       specialArgs = {
         inherit

@@ -462,19 +462,15 @@ function dotfiles() {
 
 		local CHECK_ARGS=(--keep-going --accept-flake-config --impure)
 		local NIX_ARGS=()
-		local SHOULD_BUILD="FALSE"
 		for arg in "${EXTRA_ARGS[@]}"; do
-			if [[ $arg == "--build" ]]; then
-				SHOULD_BUILD="TRUE"
-			else
+			# Keep accepting the former opt-in flag; builds are now the default.
+			if [[ $arg != "--build" ]]; then
 				NIX_ARGS+=("$arg")
 			fi
 		done
 
-		if [[ $SHOULD_BUILD == "FALSE" ]]; then
-			CHECK_ARGS+=(--no-build)
-		fi
-
+		# --no-build makes the store read-only, breaking evaluation of generated
+		# inputs (Stylix themes and the Zenbook kernel config) on a cold store.
 		# When remote the URL is passed, otherwise the local flake is used.
 		nix flake check \
 			"${CHECK_ARGS[@]}" \
