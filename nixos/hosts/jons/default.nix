@@ -68,7 +68,7 @@
     # This only untags the card node. renderD128 keeps its uaccess tag, so
     # OpenCL/Level Zero/ROCm-style compute, Vulkan and DRI_PRIME=1 offload all
     # continue to work — the Arc stays fully available for LLM and gaming work.
-    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", TAG-="seat", TAG-="master-of-seat", ENV{ID_SEAT}=""
+    # SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", TAG-="seat", TAG-="master-of-seat", ENV{ID_SEAT}=""
   '';
 
   imports = [

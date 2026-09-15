@@ -5,7 +5,10 @@
   ...
 }:
 {
-  imports = [ "${modulesPath}/profiles/qemu-guest.nix" ];
+  imports = [
+    "${modulesPath}/profiles/qemu-guest.nix"
+    ../../../system/config/services/cloud-init
+  ];
 
   boot = {
     initrd.availableKernelModules = [
@@ -44,8 +47,8 @@
   };
   services = {
     qemuGuest.enable = true;
+    cloud-init-diagnostics.enable = true;
     cloud-init = {
-      enable = true;
       network.enable = true;
       extraPackages = [
         pkgs.nix

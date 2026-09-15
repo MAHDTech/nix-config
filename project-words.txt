@@ -2045,3 +2045,8 @@ fsetxattr
 nixlib
 qcow
 paas
+TTYVTDisallocate
+getent
+logcfg
+asctime
+levelname

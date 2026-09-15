@@ -14,7 +14,7 @@ until VM acceptance and the separate JONS cutover.
 ```bash
 nix build .#github-runner-image --accept-flake-config --out-link result-github-runner
 qemu-img convert -c -O qcow2 result-github-runner/nixos.qcow2 \
-  "github-runner-$(date +%y%m%d).qcow2"
+  "github-runner-$(date +%Y%m%d).qcow2"
 ```
 
 This uses nixos-generators' EFI qcow2 format and preloads the runner-01 system
@@ -46,7 +46,7 @@ root-owned, mode `0400`. OpNix subsequently reads the GitHub PAT from
 `op://Bingamon/GitHub Runner/credential`. Neither token belongs in cloud-init,
 the image, Git, or OpenTofu state.
 
-`github-runner-bootstrap.service` waits for cloud-init, validates the hostname
+`github-runner-bootstrap.service` waits for cloud-init, validates the runtime hostname
 and token file, builds that flake host's boot generation, then reboots. Failures
 retry every five minutes. Inspect it with:
 
@@ -62,6 +62,34 @@ default branch. Publishing the JONS change there can trigger its automatic
 cutover; defer that until acceptance.
 
 ## Verify each VM
+
+The shared `nixos/system/config/services/cloud-init` module enables cloud-init
+diagnostics on the bootstrap image and all four hosts. It selects `tty1` for
+Prism's VGA console and prevents getty from clearing boot output. Other VMs can
+import it and enable `services.cloud-init-diagnostics.enable`, optionally setting
+`console` and the list of `users` whose home-directory SSH key files are checked.
+Networking, users, and datasource settings remain the importing VM's responsibility.
+
+Cloud-init stage output goes to the console and `/var/log/cloud-init-output.log`.
+After cloud-final finishes, `cloud-init-report.service` prints status, hostname,
+addresses, failed cloud-init units, and SSH key-file presence. Key presence does
+not guarantee SSH access: account and sshd policy still apply. A failed or hung
+cloud-final stage remains visible through its live output; the completion report
+cannot run until that stage exits.
+
+Runner bootstrap prints separately to the console, including when it is waiting
+for `/etc/opnix-token`, rebuilding, or scheduling a reboot. No token is printed.
+To inspect retained output over SSH:
+
+```bash
+journalctl -b -u cloud-init -u cloud-config -u cloud-final -u cloud-init-report
+journalctl -b -u github-runner-bootstrap
+tail -n 100 /var/log/cloud-init-output.log
+```
+
+Test a fresh VM using the new image; updating the Caddy file does not modify
+existing guests. Publish these Nix changes to the selected runner flake branch
+before bootstrap so the post-reboot host retains the diagnostics configuration.
 
 ```bash
 hostnamectl --static
