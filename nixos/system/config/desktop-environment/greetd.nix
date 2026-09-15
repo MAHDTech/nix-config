@@ -10,6 +10,7 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }:
 {
@@ -24,21 +25,30 @@
 
     settings = {
       default_session = {
-        command = ''
-          ${pkgs.tuigreet}/bin/tuigreet \
-          --asterisks \
-          --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions \
-          --greet-align center \
-          --greeting "Welcome to Salt Labs Cloud" \
-          --power-reboot 'shutdown -r now' \
-          --power-shutdown 'shutdown -h now' \
-          --remember \
-          --remember-session \
-          --time \
-          --time-format '%I:%M %p | %a • %h | %F' \
-          --width 100 \
-          --theme border=magenta;text=cyan;prompt=green;time=red;action=blue;button=yellow;container=black;input=red
-        '';
+        # greetd's parser rejects multiline TOML strings emitted by the generator.
+        command = lib.escapeShellArgs [
+          "${pkgs.tuigreet}/bin/tuigreet"
+          "--asterisks"
+          "--sessions"
+          "${config.services.displayManager.sessionData.desktops}/share/wayland-sessions"
+          "--greet-align"
+          "center"
+          "--greeting"
+          "Welcome to Salt Labs Cloud"
+          "--power-reboot"
+          "shutdown -r now"
+          "--power-shutdown"
+          "shutdown -h now"
+          "--remember"
+          "--remember-session"
+          "--time"
+          "--time-format"
+          "%I:%M %p | %a • %h | %F"
+          "--width"
+          "100"
+          "--theme"
+          "border=magenta;text=cyan;prompt=green;time=red;action=blue;button=yellow;container=black;input=red"
+        ];
         user = "greeter";
       };
     };
