@@ -63,6 +63,24 @@ cutover; defer that until acceptance.
 
 ## Verify each VM
 
+The x86_64 runners support ARM64 userspace through QEMU and binfmt. The shared
+image/host configuration enables `aarch64-linux` in Nix's extra platforms and
+uses a static interpreter for Nix sandboxes and containers. The runner still
+advertises GitHub's `X64` label; workflows must explicitly select ARM64 packages
+or container platforms and use separate architecture cache keys.
+
+For example, use `nix build .#packages.aarch64-linux.<package>` for a flake that
+exports that target, or `docker run --rm --platform linux/arm64 alpine uname -m`.
+Emulation supports ARM64 userspace build/test jobs, not an ARM64 kernel or
+hardware-specific tests. Compilation can be substantially slower than native.
+
+After deploying the configuration, verify:
+
+```bash
+cat /proc/sys/fs/binfmt_misc/aarch64-linux
+nix config show extra-platforms
+```
+
 The shared `nixos/system/config/services/cloud-init` module enables cloud-init
 diagnostics on the bootstrap image and all four hosts. It selects `tty1` for
 Prism's VGA console and prevents getty from clearing boot output. Other VMs can

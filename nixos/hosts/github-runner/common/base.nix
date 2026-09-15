@@ -11,6 +11,11 @@
   ];
 
   boot = {
+    binfmt = {
+      emulatedSystems = [ "aarch64-linux" ];
+      # Preload a static interpreter so ARM64 programs also run inside containers.
+      preferStaticEmulators = true;
+    };
     initrd.availableKernelModules = [
       "virtio_pci"
       "virtio_scsi"
