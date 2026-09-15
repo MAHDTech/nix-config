@@ -60,8 +60,18 @@ in
     systemd.services.cloud-init-report = {
       description = "Report cloud-init and SSH access readiness";
       wantedBy = [ "multi-user.target" ];
-      wants = [ "cloud-final.service" ];
-      after = [ "cloud-final.service" ];
+      wants = [
+        "cloud-final.service"
+      ]
+      ++ lib.optional (
+        config.services.openssh.enable && config.services.openssh.generateHostKeys
+      ) "sshd-keygen.service";
+      after = [
+        "cloud-final.service"
+      ]
+      ++ lib.optional (
+        config.services.openssh.enable && config.services.openssh.generateHostKeys
+      ) "sshd-keygen.service";
       path = [
         pkgs.cloud-init
         pkgs.coreutils

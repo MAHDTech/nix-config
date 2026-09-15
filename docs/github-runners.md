@@ -47,19 +47,22 @@ root-owned, mode `0400`. OpNix subsequently reads the GitHub PAT from
 the image, Git, or OpenTofu state.
 
 `github-runner-bootstrap.service` waits for cloud-init, validates the runtime hostname
-and token file, builds that flake host's boot generation, then reboots. Failures
-retry every five minutes. Inspect it with:
+then stays in its starting state until the token arrives. Waiting is expected:
+it has no timeout and prints a reminder every five minutes. The service checks
+for the token every five seconds, builds that flake host's boot generation, then
+reboots. Only the build has a two-hour limit; genuine failures retry every five
+minutes. The console shows four setup stages, while detailed build output is
+retained in the journal. Inspect it with:
 
 ```bash
 cloud-init status --long
 journalctl -u github-runner-bootstrap -b
+journalctl -b -t github-runner-build
 ```
 
-Publish the approved runner configuration on the `github-runners` branch before
-provisioning. Both bootstrap and daily updates read the same `RUNNER_FLAKE`
-setting. This lets the VMs update independently of JONS, which follows the
-default branch. Publishing the JONS change there can trigger its automatic
-cutover; defer that until acceptance.
+Publish the approved runner configuration on `trunk` before provisioning.
+Deployment cloud-init writes `/etc/github-runner-bootstrap` with the selected
+`RUNNER_FLAKE` reference. Both bootstrap and daily updates read that setting.
 
 ## Verify each VM
 
@@ -98,7 +101,7 @@ ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519_bingamon root@<VM-IP>
 ```
 
 Cloud-init stage output goes to the console and `/var/log/cloud-init-output.log`.
-After cloud-final finishes, `cloud-init-report.service` prints status, hostname,
+After cloud-final and SSH host-key generation finish, `cloud-init-report.service` prints status, hostname,
 addresses, failed cloud-init units, and SSH key-file presence. Key presence does
 not guarantee SSH access: account and sshd policy still apply. A failed or hung
 cloud-final stage remains visible through its live output; the completion report
@@ -111,6 +114,7 @@ To inspect retained output over SSH:
 ```bash
 journalctl -b -u cloud-init -u cloud-config -u cloud-final -u cloud-init-report
 journalctl -b -u github-runner-bootstrap
+journalctl -b -t github-runner-build
 tail -n 100 /var/log/cloud-init-output.log
 ```
 
