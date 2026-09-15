@@ -1093,6 +1093,8 @@ leejet
 lessac
 letmein
 levelname
+deletekeys
+genkeytypes
 libadwaita
 libarc
 libavutil

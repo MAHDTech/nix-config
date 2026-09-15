@@ -67,6 +67,7 @@ in
         pkgs.coreutils
         pkgs.getent
         pkgs.iproute2
+        pkgs.openssh
         pkgs.systemd
       ];
       serviceConfig = {
@@ -96,6 +97,18 @@ in
             echo "$user: no authorized_keys in home directory"
           fi
         done
+        ${lib.optionalString config.services.openssh.enable ''
+          echo "SSH host key fingerprints:"
+          for key in ${
+            lib.escapeShellArgs (map (key: "${key.path}.pub") config.services.openssh.hostKeys)
+          }; do
+            if [ -s "$key" ]; then
+              ssh-keygen -lf "$key" || true
+            else
+              echo "$key: not available yet"
+            fi
+          done
+        ''}
         echo "Logs: /var/log/cloud-init.log and /var/log/cloud-init-output.log"
         echo "======================================="
       '';

@@ -70,6 +70,15 @@ import it and enable `services.cloud-init-diagnostics.enable`, optionally settin
 `console` and the list of `users` whose home-directory SSH key files are checked.
 Networking, users, and datasource settings remain the importing VM's responsibility.
 
+NixOS sshd generates unique host keys on each VM. Cloud-init leaves those keys
+alone, and the console report prints their fingerprints using `ssh-keygen`.
+This replaces cloud-init's unavailable fingerprint helper and avoids competing
+host-key generation. SSH still requires the Bingamon deployment key:
+
+```bash
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519_bingamon root@<VM-IP>
+```
+
 Cloud-init stage output goes to the console and `/var/log/cloud-init-output.log`.
 After cloud-final finishes, `cloud-init-report.service` prints status, hostname,
 addresses, failed cloud-init units, and SSH key-file presence. Key presence does

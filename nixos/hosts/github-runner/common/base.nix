@@ -49,6 +49,12 @@
     qemuGuest.enable = true;
     cloud-init-diagnostics.enable = true;
     cloud-init = {
+      # NixOS sshd generates per-VM host keys; cloud-init must not replace them.
+      settings = {
+        ssh_deletekeys = false;
+        ssh_genkeytypes = [ ];
+        ssh.emit_keys_to_console = false;
+      };
       network.enable = true;
       extraPackages = [
         pkgs.nix
