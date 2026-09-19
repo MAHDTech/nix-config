@@ -27,7 +27,7 @@
   # GitHub Actions runner, registered at the enterprise level. The PAT
   # comes from 1Password via opnix (op://fleet/GitHub Runner/credential).
   services.github-runner-fleet = {
-    enable = true;
+    enable = false;
     runners.enterprise = {
       url = "https://github.com/enterprises/MAHDTech";
       runnerGroup = "tars-cloud";
