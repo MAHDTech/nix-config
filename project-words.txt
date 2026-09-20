@@ -2052,3 +2052,6 @@ getent
 logcfg
 asctime
 levelname
+capset
+setdomainname
+sethostname

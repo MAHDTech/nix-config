@@ -134,6 +134,12 @@ let
         description = "Runner group to register into (enterprise/org scopes).";
       };
 
+      bubblewrap = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable unprivileged Bubblewrap sandboxes inside runner jobs.";
+      };
+
       name = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
@@ -246,11 +252,35 @@ in
         ++ runner.extraLabels;
 
         extraPackages =
-          basePackages ++ lib.optionals runner.trusted ([ pkgs.docker ] ++ runner.extraPackages);
+          basePackages
+          ++ lib.optional runner.bubblewrap pkgs.bubblewrap
+          ++ lib.optionals runner.trusted ([ pkgs.docker ] ++ runner.extraPackages);
 
-        serviceOverrides = lib.optionalAttrs runner.trusted {
-          SupplementaryGroups = [ "docker" ];
-        };
+        serviceOverrides =
+          lib.optionalAttrs runner.trusted {
+            SupplementaryGroups = [ "docker" ];
+          }
+          // lib.optionalAttrs runner.bubblewrap {
+            # --unshare-all uses these namespaces; time namespaces remain denied.
+            RestrictNamespaces = "user mnt pid net ipc uts cgroup";
+            # These mask /proc entries, preventing an unprivileged child PID
+            # namespace from mounting a fresh procfs (Bubblewrap --proc /proc).
+            ProtectHostname = false;
+            ProtectKernelLogs = false;
+            ProtectKernelTunables = false;
+            # Replace the upstream mkBefore list, allowing @mount and capset.
+            # Keep the remaining syscall denials, including hostname changes.
+            SystemCallFilter = lib.mkForce [
+              "~@clock"
+              "~@cpu-emulation"
+              "~@module"
+              "~@obsolete"
+              "~@raw-io"
+              "~@reboot"
+              "~setdomainname"
+              "~sethostname"
+            ];
+          };
       }
     ) cfg.runners;
 
