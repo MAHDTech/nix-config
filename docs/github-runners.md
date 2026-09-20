@@ -9,15 +9,24 @@ Jobs have Nix, devenv, Cachix, Node 24, Python, C/C++ build tools, Git, and Dock
 
 ## Build the qcow2 image
 
+Run the build helper script:
+
+```bash
+./scripts/generate-github-runner.sh
+```
+
+Or manually:
+
 ```bash
 nix build .#github-runner-image --accept-flake-config --out-link result-github-runner
 qemu-img convert -c -O qcow2 result-github-runner/nixos.qcow2 \
   "github-runner-$(date +%Y%m%d).qcow2"
 ```
 
-This uses nixos-generators' EFI qcow2 format and preloads the runner-01 system
-closure. The image boots a neutral cloud-init/bootstrap system with no active
-runner, credentials or update timer. It never registers clones as runner 01.
+This uses nixos-generators' EFI qcow2 format and preloads the runner system
+closures (both `bingamon-lab` and `tars-cloud`). The image boots a neutral
+cloud-init/bootstrap system with no active runner, credentials or update timer.
+It never registers clones as any specific runner.
 Its 16 GiB virtual disk expands to the disk provisioned by Nutanix; the
 deployment specification is UEFI, 8 vCPUs, 16 GiB RAM and 250 GiB disk, in
 `vm-workloads` on the IPAM-backed `Nutanix Virtual Machines` subnet with
@@ -28,13 +37,13 @@ and credential-delivery task live in the `bingamon-lab/lz-paas` repository's
 `docs/runbooks/github-runners.md`. For future images update the image name and
 URL there together. Review the OpenTofu replacement plan before updating VMs.
 
-The legacy `installer-github-runner-0N` outputs remain raw bootstrap images.
-Use `github-runner-image` for this qcow2 deployment path.
+The generic `installer-github-runner` and legacy `installer-github-runner-0N`
+outputs provide raw bootstrap images. Use `github-runner-image` for this qcow2 deployment path.
 
 ## Bootstrap and secrets
 
-Cloud-init must set an exact hostname from `github-runner-01` through
-`github-runner-10`, provide the operator's SSH public key, and write
+Cloud-init must set a hostname matching `github-runner-*` (e.g., `github-runner-01`
+through `github-runner-10`), provide the operator's SSH public key, and write
 `/etc/github-runner-bootstrap` with a published `RUNNER_FLAKE` reference.
 It must not run a competing `nixos-rebuild switch` command.
 

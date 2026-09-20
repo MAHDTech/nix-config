@@ -47,3 +47,5 @@ WIP/
 # Ignore the flash recovery log
 flash-recovery.log
 /result-github-runner
+output/
+

@@ -40,8 +40,8 @@
       # Cloud-init sets the runtime hostname on the neutral bootstrap image.
       runner_host="$(${pkgs.systemd}/bin/hostnamectl --transient)"
       case "$runner_host" in
-        github-runner-0[1-9]|github-runner-10) ;;
-        *) echo "cloud-init must set hostname to github-runner-01 through github-runner-10" >&2; exit 1 ;;
+        github-runner-*) ;;
+        *) echo "cloud-init must set hostname matching github-runner-*" >&2; exit 1 ;;
       esac
       echo "GitHub runner first-boot setup - $runner_host"
       cloud_status=0
@@ -53,14 +53,14 @@
       echo "[1/4] Cloud-init complete"
       waited=0
       while [ ! -s /etc/opnix-token ]; do
-        if [ "$((waited % 300))" -eq 0 ]; then
-          echo "[2/4] Waiting for deployment to deliver the 1Password token"
-          echo "      This is expected. Setup will continue automatically."
+        if [ "$((waited % 30))" -eq 0 ]; then
+          echo "[2/4] Waiting for deployment to deliver the 1Password token (/etc/opnix-token)... ($waited s elapsed)"
+          echo "      This is expected. Setup will continue automatically once credentials arrive."
         fi
         sleep 5
         waited=$((waited + 5))
       done
-      echo "[2/4] Token received"
+      echo "[2/4] Token received (/etc/opnix-token)"
       echo "[3/4] Building the runner configuration - this may take several minutes"
       echo "      Build log: journalctl -b -t github-runner-build"
       if timeout --kill-after=30s 2h nixos-rebuild boot \

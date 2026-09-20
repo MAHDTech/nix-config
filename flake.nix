@@ -72,16 +72,23 @@
       ];
 
       # Installer configurations generated dynamically
-      installerConfigs = builtins.listToAttrs (
-        map (host: {
-          name = "installer-${lib.toLower host.name}";
-          value = mylib.mkInstaller {
-            inherit (host) system;
-            buildSystem = host.buildSystem or builtins.currentSystem or host.system;
-            module = ./nixos/hosts/${lib.toLower host.name}/installer.nix;
+      installerConfigs =
+        builtins.listToAttrs (
+          map (host: {
+            name = "installer-${lib.toLower host.name}";
+            value = mylib.mkInstaller {
+              inherit (host) system;
+              buildSystem = host.buildSystem or builtins.currentSystem or host.system;
+              module = ./nixos/hosts/${lib.toLower host.name}/installer.nix;
+            };
+          }) hosts.list
+        )
+        // {
+          installer-github-runner = mylib.mkInstaller {
+            system = "x86_64-linux";
+            module = ./nixos/hosts/github-runner/common/installer.nix;
           };
-        }) hosts.list
-      );
+        };
     in
     {
       nixosConfigurations = hosts.configs // installerConfigs;
@@ -100,6 +107,8 @@
               inputs.nixpkgs.legacyPackages.${system}.hello;
         }
         // lib.optionalAttrs (system == "x86_64-linux") {
+          installer-github-runner =
+            self.nixosConfigurations.installer-github-runner.config.system.build.image;
           github-runner-image = inputs.nixos-generators.nixosGenerate {
             inherit system;
             pkgs = mylib.pkgsImportSystem system;
@@ -111,9 +120,10 @@
                 system.stateVersion = mylib.globalStateVersion;
                 networking.hostName = "";
                 virtualisation.diskSize = 16384;
-                # Preload the runner closure without registering the image as runner 01.
+                # Preload the runner closures without registering the image to any runner or group.
                 system.extraDependencies = [
                   self.nixosConfigurations.github-runner-01.config.system.build.toplevel
+                  self.nixosConfigurations.github-runner-06.config.system.build.toplevel
                 ];
               }
             ];
