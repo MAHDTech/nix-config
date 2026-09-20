@@ -6,6 +6,12 @@ let
     "github-runner-02"
     "github-runner-03"
     "github-runner-04"
+    "github-runner-05"
+    "github-runner-06"
+    "github-runner-07"
+    "github-runner-08"
+    "github-runner-09"
+    "github-runner-10"
   ];
 in
 {

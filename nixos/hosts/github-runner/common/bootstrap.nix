@@ -40,8 +40,8 @@
       # Cloud-init sets the runtime hostname on the neutral bootstrap image.
       runner_host="$(${pkgs.systemd}/bin/hostnamectl --transient)"
       case "$runner_host" in
-        github-runner-0[1-4]) ;;
-        *) echo "cloud-init must set hostname to github-runner-01 through github-runner-04" >&2; exit 1 ;;
+        github-runner-0[1-9]|github-runner-10) ;;
+        *) echo "cloud-init must set hostname to github-runner-01 through github-runner-10" >&2; exit 1 ;;
       esac
       echo "GitHub runner first-boot setup - $runner_host"
       cloud_status=0

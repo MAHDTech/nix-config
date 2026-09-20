@@ -1,13 +1,11 @@
 # GitHub runner VMs
 
-The four `github-runner-01` through `github-runner-04` hosts share a QEMU
-configuration. Each registers one ephemeral enterprise runner in
-`MAHDTech` / `bingamon-lab`. Jobs have Nix, devenv, Cachix, Node 24, Python,
-C/C++ build tools, Git, and Docker available.
-
-The enterprise `tars-cloud` group is prepared for JONS. Its configuration
-targets that group, but its live registration must remain in `bingamon-lab`
-until VM acceptance and the separate JONS cutover.
+The ten `github-runner-01` through `github-runner-10` hosts share a common
+base configuration. `github-runner-01` through `github-runner-05` register in
+the enterprise `bingamon-lab` runner group (token reference: `op://Bingamon/GitHub Runner/credential`),
+while `github-runner-06` through `github-runner-10` register in the enterprise
+`tars-cloud` runner group (token reference: `op://fleet/GitHub Runner/credential`).
+Jobs have Nix, devenv, Cachix, Node 24, Python, C/C++ build tools, Git, and Docker available.
 
 ## Build the qcow2 image
 
@@ -36,14 +34,15 @@ Use `github-runner-image` for this qcow2 deployment path.
 ## Bootstrap and secrets
 
 Cloud-init must set an exact hostname from `github-runner-01` through
-`github-runner-04`, provide the operator's SSH public key, and write
+`github-runner-10`, provide the operator's SSH public key, and write
 `/etc/github-runner-bootstrap` with a published `RUNNER_FLAKE` reference.
 It must not run a competing `nixos-rebuild switch` command.
 
 The deployment task streams the shared 1Password service-account token from
 `OPNIX_GITHUB_RUNNERS` into `/etc/opnix-token` over verified SSH. That file is
 root-owned, mode `0400`. OpNix subsequently reads the GitHub PAT from
-`op://Bingamon/GitHub Runner/credential`. Neither token belongs in cloud-init,
+`op://Bingamon/GitHub Runner/credential` (for `bingamon-lab` runners 01-05) or
+`op://fleet/GitHub Runner/credential` (for `tars-cloud` runners 06-10). Neither token belongs in cloud-init,
 the image, Git, or OpenTofu state.
 
 `github-runner-bootstrap.service` waits for cloud-init, validates the runtime hostname
@@ -130,7 +129,7 @@ systemctl list-timers nixos-upgrade.timer
 lsblk -f
 ```
 
-Confirm all four runners appear online in `bingamon-lab`. Run a trusted workflow
+Confirm runners appear online in their respective groups (`bingamon-lab` and `tars-cloud`). Run a trusted workflow
 on each hostname label checking Node, Nix, Docker and an actual repository's
 devenv shell/tests. Run two jobs in succession to verify ephemeral registration.
 
