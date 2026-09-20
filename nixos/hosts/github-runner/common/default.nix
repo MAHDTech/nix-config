@@ -112,10 +112,31 @@ in
         ];
       };
     };
-    nix.settings.trusted-users = lib.mkForce [
-      "root"
-      "@nix-runners"
-    ];
+
+    nix = {
+      gc = {
+        automatic = true;
+        dates = lib.mkForce "02:00";
+        options = lib.mkForce "--delete-older-than 3d";
+        randomizedDelaySec = lib.mkForce "15m";
+      };
+
+      optimise = {
+        automatic = true;
+        dates = lib.mkForce [ "02:30" ];
+      };
+
+      settings = {
+        trusted-users = lib.mkForce [
+          "root"
+          "@nix-runners"
+        ];
+        min-free = lib.mkForce (15 * 1024 * 1024 * 1024); # 15 GiB
+        max-free = lib.mkForce (35 * 1024 * 1024 * 1024); # 35 GiB
+        keep-outputs = lib.mkForce false;
+        keep-derivations = lib.mkForce false;
+      };
+    };
 
     system.autoUpgrade = {
       flake = lib.mkForce "github:MAHDTech/nix-config#${name}";

@@ -145,6 +145,8 @@ devenv shell/tests. Run two jobs in succession to verify ephemeral registration.
 Updates run daily at 03:00 Canberra time with up to 30 minutes of jitter and a
 two-hour timeout. Every successful update schedules a reboot one minute later,
 including userspace-only changes. Failed updates do not reboot. Maintenance can
-interrupt jobs. Nix garbage collection retains 14 days, Docker prunes unused
-images daily, and the journal is capped at 1 GiB. Runner failures retry every
-30 seconds; credential retrieval retries every five minutes.
+interrupt jobs. Nix garbage collection runs daily at 02:00 (retaining 3 days),
+store deduplication runs at 02:30, and dynamic GC triggers during builds if free
+space falls below 15 GiB (clearing up to 35 GiB). Docker prunes unused images
+daily, and the journal is capped at 1 GiB. Runner failures retry every 30 seconds;
+credential retrieval retries every five minutes.
