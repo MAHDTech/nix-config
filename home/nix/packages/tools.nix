@@ -70,7 +70,6 @@ in
       rsync
 
       # Nix
-      nixos-generators
       #nix-du
       nil
       nixfmt

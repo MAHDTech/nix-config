@@ -167,7 +167,10 @@ in
     }:
     lib.nixosSystem {
       pkgs = pkgsImport { inherit system buildSystem; };
-      specialArgs = { inherit inputs buildSystem; };
+      specialArgs = {
+        inherit inputs buildSystem;
+        inherit (inputs) self;
+      };
       modules = [
         { system.stateVersion = globalStateVersion; }
         {

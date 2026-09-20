@@ -35,17 +35,23 @@ else
 fi
 
 echo ""
-echo "[1/2] Building qcow-efi image with Nix..."
+echo "[1/2] Building qemu-efi image with Nix..."
 nix build .#github-runner-image --accept-flake-config --out-link "${OUT_LINK}"
 
-if [ ! -f "${OUT_LINK}/nixos.qcow2" ]; then
-	echo "Error: Built artifact ${OUT_LINK}/nixos.qcow2 not found." >&2
+if [ -f "${OUT_LINK}/nixos.qcow2" ]; then
+	SRC_IMG="${OUT_LINK}/nixos.qcow2"
+else
+	SRC_IMG="$(find "${OUT_LINK}" -maxdepth 1 -name "*.qcow2" | head -n 1)"
+fi
+
+if [ -z "${SRC_IMG:-}" ] || [ ! -f "${SRC_IMG}" ]; then
+	echo "Error: Built artifact not found in ${OUT_LINK}." >&2
 	exit 1
 fi
 
 echo ""
 echo "[2/2] Compressing image to ${OUTPUT_FILE}..."
-"${QEMU_IMG[@]}" convert -c -O qcow2 "${OUT_LINK}/nixos.qcow2" "${OUTPUT_FILE}"
+"${QEMU_IMG[@]}" convert -c -O qcow2 "${SRC_IMG}" "${OUTPUT_FILE}"
 
 FILE_SIZE="$(du -h "${OUTPUT_FILE}" | cut -f1)"
 

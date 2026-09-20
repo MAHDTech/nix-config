@@ -28,12 +28,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixlib.follows = "nixpkgs";
-    };
     systems.url = "github:nix-systems/default";
+
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -88,6 +84,10 @@
             system = "x86_64-linux";
             module = ./nixos/hosts/github-runner/common/installer.nix;
           };
+          github-runner-image = mylib.mkInstaller {
+            system = "x86_64-linux";
+            module = ./nixos/hosts/github-runner/common/image.nix;
+          };
         };
     in
     {
@@ -109,25 +109,8 @@
         // lib.optionalAttrs (system == "x86_64-linux") {
           installer-github-runner =
             self.nixosConfigurations.installer-github-runner.config.system.build.image;
-          github-runner-image = inputs.nixos-generators.nixosGenerate {
-            inherit system;
-            pkgs = mylib.pkgsImportSystem system;
-            format = "qcow-efi";
-            modules = [
-              ./nixos/hosts/github-runner/common/base.nix
-              ./nixos/hosts/github-runner/common/bootstrap.nix
-              {
-                system.stateVersion = mylib.globalStateVersion;
-                networking.hostName = "";
-                virtualisation.diskSize = 16384;
-                # Preload the runner closures without registering the image to any runner or group.
-                system.extraDependencies = [
-                  self.nixosConfigurations.github-runner-01.config.system.build.toplevel
-                  self.nixosConfigurations.github-runner-06.config.system.build.toplevel
-                ];
-              }
-            ];
-          };
+          github-runner-image =
+            self.nixosConfigurations.github-runner-image.config.system.build.images.qemu-efi;
         }
         // builtins.listToAttrs (
           # Only expose a host's installer under the system that actually

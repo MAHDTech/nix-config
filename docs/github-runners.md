@@ -23,7 +23,8 @@ qemu-img convert -c -O qcow2 result-github-runner/nixos.qcow2 \
   "github-runner-$(date +%Y%m%d).qcow2"
 ```
 
-This uses nixos-generators' EFI qcow2 format and preloads the runner system
+This uses Nixpkgs' native EFI QEMU qcow2 format (`qemu-efi` variant, replacing
+the legacy nixos-generators) and preloads the runner system
 closures (both `bingamon-lab` and `tars-cloud`). The image boots a neutral
 cloud-init/bootstrap system with no active runner, credentials or update timer.
 It never registers clones as any specific runner.
