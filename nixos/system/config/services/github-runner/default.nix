@@ -164,6 +164,12 @@ let
         default = [ ];
         description = "Extra packages in the job PATH (trusted runners only).";
       };
+
+      workDir = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Working directory on disk. Defaults to /var/lib/github-runner-work/<name>.";
+      };
     };
   };
 in
@@ -214,16 +220,21 @@ in
         }
       ];
 
+    systemd.tmpfiles.rules = [
+      "d /var/lib/github-runner-work 0755 root root -"
+    ];
+
     services.github-runners = lib.mapAttrs' (
       _: runner:
       let
         name = runnerName runner;
+        workDir = if runner.workDir != null then runner.workDir else "/var/lib/github-runner-work/${name}";
       in
       lib.nameValuePair name {
         enable = true;
 
         inherit (runner) url runnerGroup;
-        inherit name;
+        inherit name workDir;
 
         nodeRuntimes = [ "node24" ];
 
@@ -257,7 +268,12 @@ in
           ++ lib.optionals runner.trusted ([ pkgs.docker ] ++ runner.extraPackages);
 
         serviceOverrides =
-          lib.optionalAttrs runner.trusted {
+          lib.optionalAttrs (runner.workDir == null) {
+            StateDirectory = [
+              "github-runner-work/${name}"
+            ];
+          }
+          // lib.optionalAttrs runner.trusted {
             SupplementaryGroups = [ "docker" ];
           }
           // lib.optionalAttrs runner.bubblewrap {
