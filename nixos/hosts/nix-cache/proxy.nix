@@ -6,6 +6,8 @@ let
     proxy_ssl_server_name on;
     proxy_ssl_name cache.nixos.org;
     proxy_ssl_verify on;
+    # Allow upstream certificate chains with multiple intermediate certificates.
+    proxy_ssl_verify_depth 3;
     proxy_ssl_trusted_certificate ${config.security.pki.caBundle};
     proxy_connect_timeout 5s;
     proxy_read_timeout 60s;
