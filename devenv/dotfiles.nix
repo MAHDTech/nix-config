@@ -76,6 +76,7 @@ in
   };
 
   git-hooks = {
+    tools.elixir = pkgs.beamPackages.elixir;
     excludes = [
       ".*\\.drawio$"
       "^\\.cache(/.*)?$"

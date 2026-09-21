@@ -12,6 +12,16 @@ let
     "github-runner-08"
     "github-runner-09"
     "github-runner-10"
+    "github-runner-11"
+    "github-runner-12"
+    "github-runner-13"
+    "github-runner-14"
+    "github-runner-15"
+    "github-runner-16"
+    "github-runner-17"
+    "github-runner-18"
+    "github-runner-19"
+    "github-runner-20"
   ];
 in
 {
@@ -24,6 +34,12 @@ in
   #              system.autoUpgrade.flags. Any Nix setting works; unset keys
   #              keep the fleet default from nixos/system/soe/nix.
   list = [
+    {
+      name = "nix-cache";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+      nixSettings = { };
+    }
     {
       name = "JONS";
       system = "x86_64-linux";
@@ -89,6 +105,13 @@ in
       }
     )
     // rec {
+      nix-cache = mkHost {
+        name = "nix-cache";
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "server";
+        enableHomeManager = false;
+      };
       test-nixos = mkHost {
         name = "test-nixos";
         system = "x86_64-linux";

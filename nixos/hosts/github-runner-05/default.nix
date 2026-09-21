@@ -1,4 +1,4 @@
 { ... }:
 {
-  imports = [ ../github-runner/groups/bingamon-lab.nix ];
+  imports = [ ../github-runner/groups/tars-cloud.nix ];
 }

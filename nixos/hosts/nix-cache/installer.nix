@@ -1,5 +1,5 @@
 { lib, ... }:
 {
-  imports = [ ../../base-qemu ];
+  imports = [ ../base-qemu ];
   image.format = lib.mkForce "raw";
 }

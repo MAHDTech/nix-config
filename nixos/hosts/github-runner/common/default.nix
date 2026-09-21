@@ -62,6 +62,7 @@ in
     ../../../system/soe/secrets/opnix.nix
     ../../../system/soe/programs/nix-ld
     ../../../system/config/services/github-runner
+    ../../../system/config/services/nix-cache/client.nix
   ];
 
   config = {

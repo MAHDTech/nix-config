@@ -1,82 +1,49 @@
 # GitHub runner VMs
 
-The ten `github-runner-01` through `github-runner-10` hosts share a common
-base configuration. `github-runner-01` through `github-runner-05` register in
-the enterprise `bingamon-lab` runner group (token reference: `op://Bingamon/GitHub Runner/credential`),
-while `github-runner-06` through `github-runner-10` register in the enterprise
-`tars-cloud` runner group (token reference: `op://fleet/GitHub Runner/credential`).
+The twenty `github-runner-01` through `github-runner-20` hosts share a common
+base configuration. `github-runner-01` through `github-runner-10` register in
+the enterprise `tars-cloud` runner group (token reference: `op://fleet/GitHub Runner/credential`),
+while `github-runner-11` through `github-runner-20` register in the enterprise
+`bingamon-lab` runner group (token reference: `op://Bingamon/GitHub Runner/credential`).
 Jobs have Nix, devenv, Cachix, Node 24, Python, C/C++ build tools, Git, and Docker available.
 
 ## Build the qcow2 image
 
-Run the build helper script:
+Build the shared, workload-free QEMU image:
 
 ```bash
-./scripts/generate-github-runner.sh
+./scripts/generate-cloud-image.sh
 ```
 
-Or manually:
+Select `qemu`, or pass `qemu` as the first argument for automation. The output is
+`output/nixos-qemu.img` in qcow2 format, with a 16 GiB expandable disk and UEFI
+boot. Secure Boot must be disabled. No runner closures or credentials are included.
+See [generic cloud images](cloud-images.md) for the configuration and release contract.
 
-```bash
-nix build .#github-runner-image --accept-flake-config --out-link result-github-runner
-qemu-img convert -c -O qcow2 result-github-runner/nixos.qcow2 \
-  "github-runner-$(date +%Y%m%d).qcow2"
-```
-
-This uses Nixpkgs' native EFI QEMU qcow2 format (`qemu-efi` variant, replacing
-the legacy nixos-generators) and preloads the runner system
-closures (both `bingamon-lab` and `tars-cloud`). The image boots a neutral
-cloud-init/bootstrap system with no active runner, credentials or update timer.
-It never registers clones as any specific runner.
-Its 16 GiB virtual disk expands to the disk provisioned by Nutanix; the
-deployment specification is UEFI, 8 vCPUs, 16 GiB RAM and 250 GiB disk, in
-`vm-workloads` on the IPAM-backed `Nutanix Virtual Machines` subnet with
-`backup-none`. Secure Boot must be disabled.
-
-Upload the dated qcow2 to the Caddy images mirror. The deployment configuration
-and credential-delivery task live in the `bingamon-lab/lz-paas` repository's
-`docs/runbooks/github-runners.md`. For future images update the image name and
-URL there together. Review the OpenTofu replacement plan before updating VMs.
-
-The generic `installer-github-runner` and legacy `installer-github-runner-0N`
-outputs provide raw bootstrap images. Use `github-runner-image` for this qcow2 deployment path.
+The `github-runner-image` and raw installer outputs remain compatibility entry
+points for the same generic bootstrap configuration.
 
 ## Bootstrap and secrets
 
-Cloud-init must set a hostname matching `github-runner-*` (e.g., `github-runner-01`
-through `github-runner-10`), provide the operator's SSH public key, and write
-`/etc/github-runner-bootstrap` with a published `RUNNER_FLAKE` reference.
-It must not run a competing `nixos-rebuild switch` command.
-
-The deployment task streams the shared 1Password service-account token from
-`OPNIX_GITHUB_RUNNERS` into `/etc/opnix-token` over verified SSH. That file is
-root-owned, mode `0400`. OpNix subsequently reads the GitHub PAT from
-`op://Bingamon/GitHub Runner/credential` (for `bingamon-lab` runners 01-05) or
-`op://fleet/GitHub Runner/credential` (for `tars-cloud` runners 06-10). Neither token belongs in cloud-init,
-the image, Git, or OpenTofu state.
-
-`github-runner-bootstrap.service` waits for cloud-init, validates the runtime hostname
-then stays in its starting state until the token arrives. Waiting is expected:
-it has no timeout and prints a reminder every five minutes. The service checks
-for the token every five seconds, builds that flake host's boot generation, then
-reboots. Only the build has a two-hour limit; genuine failures retry every five
-minutes. The console shows four setup stages, while detailed build output is
-retained in the journal. Inspect it with:
+Cloud-init supplies the declared hostname, operator SSH public key and non-secret
+`/etc/nixos-bootstrap.json`. The controller delivers `/etc/opnix-token` outside
+cloud-init, then releases `nixos-bootstrap.service` for a pinned flake revision.
+The worker prepares the final host for boot and reboots; the controller verifies
+that transition. The final host does not enable the bootstrap service.
 
 ```bash
 cloud-init status --long
-journalctl -u github-runner-bootstrap -b
-journalctl -b -t github-runner-build
+journalctl -u nixos-bootstrap.service -b
 ```
 
-Publish the approved runner configuration on `trunk` before provisioning.
-Deployment cloud-init writes `/etc/github-runner-bootstrap` with the selected
-`RUNNER_FLAKE` reference. Both bootstrap and daily updates read that setting.
+The deployment controller and secret-delivery tasks live in `bingamon-lab/lz-paas`.
+Publish the selected flake revision before provisioning. Subsequent updates remain
+the responsibility of each final host's update configuration.
 
 ## Verify each VM
 
 The x86_64 runners support ARM64 userspace through QEMU and binfmt. The shared
-image/host configuration enables `aarch64-linux` in Nix's extra platforms and
+final host configuration enables `aarch64-linux` in Nix's extra platforms and
 uses a static interpreter for Nix sandboxes and containers. The runner still
 advertises GitHub's `X64` label; workflows must explicitly select ARM64 packages
 or container platforms and use separate architecture cache keys.
@@ -94,7 +61,7 @@ nix config show extra-platforms
 ```
 
 The shared `nixos/system/config/services/cloud-init` module enables cloud-init
-diagnostics on the bootstrap image and all four hosts. It selects `tty1` for
+diagnostics on the bootstrap image and enrolled hosts. It selects `tty1` for
 Prism's VGA console and prevents getty from clearing boot output. Other VMs can
 import it and enable `services.cloud-init-diagnostics.enable`, optionally setting
 `console` and the list of `users` whose home-directory SSH key files are checked.
@@ -122,7 +89,7 @@ To inspect retained output over SSH:
 
 ```bash
 journalctl -b -u cloud-init -u cloud-config -u cloud-final -u cloud-init-report
-journalctl -b -u github-runner-bootstrap
+journalctl -b -u nixos-bootstrap.service
 journalctl -b -t github-runner-build
 tail -n 100 /var/log/cloud-init-output.log
 ```

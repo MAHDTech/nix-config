@@ -2055,3 +2055,7 @@ levelname
 capset
 setdomainname
 sethostname
+slopageddon
+narinfo
+timesyncd
+runcmd

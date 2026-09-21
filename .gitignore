@@ -49,3 +49,5 @@ flash-recovery.log
 /result-github-runner
 output/
 
+
+/result-cloud-*

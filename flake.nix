@@ -80,6 +80,10 @@
           }) hosts.list
         )
         // {
+          base-qemu = mylib.mkInstaller {
+            system = "x86_64-linux";
+            module = ./nixos/hosts/base-qemu;
+          };
           installer-github-runner = mylib.mkInstaller {
             system = "x86_64-linux";
             module = ./nixos/hosts/github-runner/common/installer.nix;
@@ -107,10 +111,10 @@
               inputs.nixpkgs.legacyPackages.${system}.hello;
         }
         // lib.optionalAttrs (system == "x86_64-linux") {
+          qemu-image = self.nixosConfigurations.base-qemu.config.system.build.image;
           installer-github-runner =
             self.nixosConfigurations.installer-github-runner.config.system.build.image;
-          github-runner-image =
-            self.nixosConfigurations.github-runner-image.config.system.build.images.qemu-efi;
+          github-runner-image = self.nixosConfigurations.github-runner-image.config.system.build.image;
         }
         // builtins.listToAttrs (
           # Only expose a host's installer under the system that actually

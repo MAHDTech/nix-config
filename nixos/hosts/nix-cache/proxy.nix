@@ -1,0 +1,100 @@
+{ config, lib, ... }:
+let
+  cfg = config.services.nix-cache-proxy;
+  proxySettings = ''
+    proxy_set_header Host cache.nixos.org;
+    proxy_ssl_server_name on;
+    proxy_ssl_name cache.nixos.org;
+    proxy_ssl_verify on;
+    proxy_ssl_trusted_certificate ${config.security.pki.caBundle};
+    proxy_connect_timeout 5s;
+    proxy_read_timeout 60s;
+    proxy_cache nixpkgs;
+    proxy_cache_key "cache.nixos.org$request_uri";
+    proxy_no_cache $nix_cache_skip;
+    proxy_cache_lock on;
+    proxy_cache_lock_timeout 120s;
+    proxy_cache_lock_age 120s;
+    proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+    proxy_cache_revalidate on;
+    add_header X-Cache-Status $upstream_cache_status always;
+    limit_except GET { deny all; }
+  '';
+  upstream = {
+    proxyPass = "https://$nix_cache_upstream";
+    recommendedProxySettings = false;
+  };
+in
+{
+  options.services.nix-cache-proxy.allowedNetworks = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [
+      "10.0.0.0/8"
+      "172.16.0.0/12"
+      "192.168.0.0/16"
+      "127.0.0.1/32"
+      "::1/128"
+    ];
+    description = "Client CIDRs allowed to read the cache; narrow to routed environment networks as needed.";
+  };
+
+  config = {
+    networking.firewall.allowedTCPPorts = [ 443 ];
+    services.nginx = {
+      enable = true;
+      recommendedTlsSettings = true;
+      recommendedOptimisation = true;
+      resolver = {
+        addresses = [
+          "1.1.1.1"
+          "1.0.0.1"
+        ];
+        valid = "300s";
+        ipv6 = false;
+      };
+      proxyCachePath.nixpkgs = {
+        enable = true;
+        keysZoneName = "nixpkgs";
+        keysZoneSize = "128m";
+        maxSize = "750g";
+        inactive = "30d";
+        useTempPath = false;
+      };
+      commonHttpConfig = ''
+        map $upstream_status $nix_cache_skip {
+          default 1;
+          200 0;
+        }
+        log_format nix_cache '$remote_addr "$request" $status $body_bytes_sent '
+                              '$upstream_cache_status $request_time';
+      '';
+      virtualHosts."nix-cache.slopageddon.app" = {
+        extraConfig = ''
+          set $nix_cache_upstream cache.nixos.org;
+          access_log /var/log/nginx/nix-cache-access.log nix_cache;
+          ${lib.concatMapStringsSep "\n" (network: "allow ${network};") cfg.allowedNetworks}
+          deny all;
+        '';
+        locations = {
+          "= /nix-cache-info" = upstream // {
+            extraConfig = proxySettings + ''
+              proxy_cache_valid 200 1h;
+            '';
+          };
+          "~ \"^/[0-9a-z]{32}\\.narinfo$\"" = upstream // {
+            extraConfig = proxySettings + ''
+              proxy_ignore_headers Cache-Control Expires;
+              proxy_cache_valid 200 1h;
+            '';
+          };
+          "/nar/" = upstream // {
+            extraConfig = proxySettings + ''
+              proxy_cache_valid 200 365d;
+            '';
+          };
+          "/".return = "404";
+        };
+      };
+    };
+  };
+}
