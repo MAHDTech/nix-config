@@ -81,9 +81,12 @@ It prefers `https://nix-cache.slopageddon.app?priority=10`, retains `https://cac
 The timeout applies per connection attempt, not to the total duration of retries or stalled transfers.
 Existing signature checks and the upstream cache signing key remain in place; the proxy needs no signing key.
 
-Keep this internal endpoint out of repository-wide `nixConfig` and SaaS runner configuration.
-SaaS runners should use public caches directly.
-The cache host itself does not import the client configuration, so upgrades do not depend on its own proxy being healthy.
+The repository-wide `nixConfig` also prefers this endpoint and sets a five-second connection timeout.
+Commands accepting the flake configuration will try it, including on Googong and SaaS runners;
+where private DNS or routing is unavailable, they must fall back to the retained public caches.
+Use `--accept-flake-config` to accept these settings non-interactively.
+The cache host itself does not import the client module, but flake commands accepting `nixConfig`
+will also try its proxy; public caches remain available during bootstrap and maintenance.
 Cache-to-cache failover does not require enabling Nix's `fallback` setting, which allows source builds after substitution failures.
 
 ## Validation and operations

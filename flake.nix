@@ -3,6 +3,7 @@
 
   nixConfig = {
     extra-substituters = ''
+      https://nix-cache.slopageddon.app?priority=10
       https://cache.nixos.org
       https://cosmic.cachix.org/
       https://devenv.cachix.org
@@ -19,6 +20,7 @@
       herdr.cachix.org-1:3nH7IStRsS0ASfdonA0DCRR2ZrSCeWitZ7Kwew0cR4I=
     ";
     warn-dirty = true;
+    connect-timeout = 5;
     cores = 0;
     max-jobs = "auto";
   };
