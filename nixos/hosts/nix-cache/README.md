@@ -12,6 +12,7 @@ This host is independent of the GitHub runner service and does not register a ru
 - The OS image uses filesystem labels `nixos` and `ESP`, with root growth enabled.
 - Nginx stores its cache under `/var/cache/nginx` on the root filesystem; no separate disk or cache filesystem label is required.
 - The cache is capped at 750 GiB, with entries unused for 30 days eligible for eviction.
+- Nginx also evicts cached downloads when filesystem free space falls below 100 GiB (`min_free=100g`). This asynchronous cleanup is not a hard space reservation.
 - The QEMU guest agent is enabled; expose its guest-agent channel in the VM configuration.
 
 The disk layout and network restrictions should be confirmed before deployment.

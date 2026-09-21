@@ -54,15 +54,10 @@ in
         valid = "300s";
         ipv6 = false;
       };
-      proxyCachePath.nixpkgs = {
-        enable = true;
-        keysZoneName = "nixpkgs";
-        keysZoneSize = "128m";
-        maxSize = "750g";
-        inactive = "30d";
-        useTempPath = false;
-      };
       commonHttpConfig = ''
+        # The NixOS proxyCachePath options do not expose min_free.
+        proxy_cache_path /var/cache/nginx/nixpkgs levels=1:2 keys_zone=nixpkgs:128m
+          max_size=750g min_free=100g inactive=30d use_temp_path=off;
         map $upstream_status $nix_cache_skip {
           default 1;
           200 0;
