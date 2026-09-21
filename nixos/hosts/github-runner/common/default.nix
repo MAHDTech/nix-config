@@ -149,6 +149,9 @@ in
       rebootWindow = lib.mkForce null;
     };
     systemd = {
+      # OpenSSH still reads and writes the legacy last-login database.
+      # Create it if missing, preserving existing login history.
+      tmpfiles.rules = [ "f /var/log/lastlog 0644 root root -" ]; # cspell:ignore lastlog
       services = {
         opnix-secrets = {
           unitConfig.StartLimitIntervalSec = lib.mkForce 0;
