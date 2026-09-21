@@ -1,10 +1,13 @@
 { config, lib, ... }:
 let
   cfg = config.services.nix-cache-proxy;
-  proxySettings = ''
-    proxy_set_header Host cache.nixos.org;
+  upstreams = builtins.fromJSON (
+    builtins.readFile ../../system/config/services/nix-cache/upstreams.json
+  );
+  proxySettings = host: ''
+    proxy_set_header Host ${host};
     proxy_ssl_server_name on;
-    proxy_ssl_name cache.nixos.org;
+    proxy_ssl_name ${host};
     proxy_ssl_verify on;
     # Allow upstream certificate chains with multiple intermediate certificates.
     proxy_ssl_verify_depth 3;
@@ -12,7 +15,7 @@ let
     proxy_connect_timeout 5s;
     proxy_read_timeout 60s;
     proxy_cache nixpkgs;
-    proxy_cache_key "cache.nixos.org$request_uri";
+    proxy_cache_key "${host}$request_uri";
     proxy_no_cache $nix_cache_skip;
     proxy_cache_lock on;
     proxy_cache_lock_timeout 120s;
@@ -22,10 +25,29 @@ let
     add_header X-Cache-Status $upstream_cache_status always;
     limit_except GET { deny all; }
   '';
-  upstream = {
-    proxyPass = "https://$nix_cache_upstream";
-    recommendedProxySettings = false;
-  };
+  cacheLocations =
+    cache:
+    let
+      location = pattern: ttl: extra: {
+        name = "~ \"^${cache.prefix}(${pattern})$\"";
+        value = {
+          proxyPass = "https://$nix_cache_upstream$1$is_args$args";
+          recommendedProxySettings = false;
+          extraConfig = ''
+            set $nix_cache_upstream ${cache.host};
+            ${proxySettings cache.host}
+            proxy_cache_valid 200 ${ttl};
+            ${extra}
+          '';
+        };
+      };
+    in
+    [
+      (location "/nix-cache-info" "1h" "")
+      (location "/[0-9a-z]{32}\\.narinfo" "1h" "proxy_ignore_headers Cache-Control Expires;")
+      (location "/nar/.*" "365d" "")
+    ];
+
 in
 {
   options.services.nix-cache-proxy.allowedNetworks = lib.mkOption {
@@ -67,28 +89,11 @@ in
       '';
       virtualHosts."nix-cache.slopageddon.app" = {
         extraConfig = ''
-          set $nix_cache_upstream cache.nixos.org;
           access_log /var/log/nginx/nix-cache-access.log nix_cache;
           ${lib.concatMapStringsSep "\n" (network: "allow ${network};") cfg.allowedNetworks}
           deny all;
         '';
-        locations = {
-          "= /nix-cache-info" = upstream // {
-            extraConfig = proxySettings + ''
-              proxy_cache_valid 200 1h;
-            '';
-          };
-          "~ \"^/[0-9a-z]{32}\\.narinfo$\"" = upstream // {
-            extraConfig = proxySettings + ''
-              proxy_ignore_headers Cache-Control Expires;
-              proxy_cache_valid 200 1h;
-            '';
-          };
-          "/nar/" = upstream // {
-            extraConfig = proxySettings + ''
-              proxy_cache_valid 200 365d;
-            '';
-          };
+        locations = builtins.listToAttrs (lib.concatMap cacheLocations upstreams) // {
           "/".return = "404";
         };
       };

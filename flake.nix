@@ -4,9 +4,16 @@
   nixConfig = {
     extra-substituters = ''
       https://nix-cache.slopageddon.app?priority=10
+      https://nix-cache.slopageddon.app/devenv?priority=10
+      https://nix-cache.slopageddon.app/tars-cloud?priority=10
+      https://nix-cache.slopageddon.app/bingamon-lab?priority=10
+      https://nix-cache.slopageddon.app/bingamon-lab-tf-modules?priority=10
       https://cache.nixos.org
       https://cosmic.cachix.org/
       https://devenv.cachix.org
+      https://tars-cloud.cachix.org
+      https://bingamon-lab.cachix.org
+      https://bingamon-lab-tf-modules.cachix.org
       https://mahdtech.cachix.org
       https://salt-labs.cachix.org
       https://herdr.cachix.org
@@ -15,6 +22,9 @@
       cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
       cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=
       devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+      tars-cloud.cachix.org-1:LYeXk9Ur0sYmP7uid5iwm3uqwBzwr93EyEdccoPxu7A=
+      bingamon-lab.cachix.org-1:an+S3U4koN/ka4SUeKGuqR+wxLbCBe+0wF9ThdvqBtw=
+      bingamon-lab-tf-modules.cachix.org-1:QEPNsUVgYDLYFYzKL6HD6SgbQ808yWcBdQ/Rcne1l9o=
       mahdtech.cachix.org-1:LtqGFUwyvUqRrl+LijURnBwkwQLwRO52dbDfrYkjWTg=
       salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
       herdr.cachix.org-1:3nH7IStRsS0ASfdonA0DCRR2ZrSCeWitZ7Kwew0cR4I=

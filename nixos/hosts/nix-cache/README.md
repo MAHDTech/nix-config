@@ -1,8 +1,29 @@
 # Nix download cache
 
-`nix-cache.slopageddon.app` serves a disk-backed Nginx mirror of `cache.nixos.org` over HTTPS.
+`nix-cache.slopageddon.app` serves disk-backed Nginx mirrors of public Nix caches over HTTPS.
 It caches downloads on demand, preserves upstream Nix signatures, and does not accept uploads.
 This host is independent of the GitHub runner service and does not register a runner.
+
+## Upstream caches
+
+The server routes and runner settings are generated from
+[`upstreams.json`](../../system/config/services/nix-cache/upstreams.json).
+Each entry defines a name, upstream host, local URL prefix and upstream public signing key.
+
+| Local URL path             | Upstream                                     |
+| -------------------------- | -------------------------------------------- |
+| `/`                        | `https://cache.nixos.org`                    |
+| `/devenv`                  | `https://devenv.cachix.org`                  |
+| `/tars-cloud`              | `https://tars-cloud.cachix.org`              |
+| `/bingamon-lab`            | `https://bingamon-lab.cachix.org`            |
+| `/bingamon-lab-tf-modules` | `https://bingamon-lab-tf-modules.cachix.org` |
+
+All upstreams share the 750 GiB cache limit and 100 GiB free-space threshold.
+Cache keys include the upstream host and request URI, keeping their contents separate.
+Only listed upstreams are exposed; this is not an arbitrary forward proxy.
+When adding a public cache, update the catalog and the matching URLs and signing keys
+in `flake.nix`. Private upstreams require a separate credential and access-control design.
+Deploy the cache server before upgrading clients to use new endpoints.
 
 ## Deployment inputs
 
@@ -78,11 +99,11 @@ journalctl -b -u nixos-bootstrap.service
 
 The dedicated GitHub runners import `nixos/system/config/services/nix-cache/client.nix`.
 Other connected NixOS hosts can import the same file.
-It prefers `https://nix-cache.slopageddon.app?priority=10`, retains `https://cache.nixos.org`, and sets a five-second connection timeout.
+It prefers the local URLs with `priority=10`, retains every upstream URL for fallback, and sets a five-second connection timeout.
 The timeout applies per connection attempt, not to the total duration of retries or stalled transfers.
-Existing signature checks and the upstream cache signing key remain in place; the proxy needs no signing key.
+Signature checks remain enabled, with the public signing keys of all listed upstreams; the proxy needs no signing key.
 
-The repository-wide `nixConfig` also prefers this endpoint and sets a five-second connection timeout.
+The repository-wide `nixConfig` also prefers these endpoints and sets a five-second connection timeout.
 Commands accepting the flake configuration will try it, including on Googong and SaaS runners;
 where private DNS or routing is unavailable, they must fall back to the retained public caches.
 Use `--accept-flake-config` to accept these settings non-interactively.

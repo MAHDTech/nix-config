@@ -1,0 +1,32 @@
+[
+  {
+    "name": "nixpkgs",
+    "host": "cache.nixos.org",
+    "prefix": "",
+    "publicKey": "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+  },
+  {
+    "name": "devenv",
+    "host": "devenv.cachix.org",
+    "prefix": "/devenv",
+    "publicKey": "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+  },
+  {
+    "name": "tars-cloud",
+    "host": "tars-cloud.cachix.org",
+    "prefix": "/tars-cloud",
+    "publicKey": "tars-cloud.cachix.org-1:LYeXk9Ur0sYmP7uid5iwm3uqwBzwr93EyEdccoPxu7A="
+  },
+  {
+    "name": "bingamon-lab",
+    "host": "bingamon-lab.cachix.org",
+    "prefix": "/bingamon-lab",
+    "publicKey": "bingamon-lab.cachix.org-1:an+S3U4koN/ka4SUeKGuqR+wxLbCBe+0wF9ThdvqBtw="
+  },
+  {
+    "name": "bingamon-lab-tf-modules",
+    "host": "bingamon-lab-tf-modules.cachix.org",
+    "prefix": "/bingamon-lab-tf-modules",
+    "publicKey": "bingamon-lab-tf-modules.cachix.org-1:QEPNsUVgYDLYFYzKL6HD6SgbQ808yWcBdQ/Rcne1l9o="
+  }
+]
