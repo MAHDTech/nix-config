@@ -18,7 +18,7 @@ Build the shared, workload-free QEMU image:
 Select `qemu`, or pass `qemu` as the first argument for automation. The output is
 `output/nixos-qemu.img` in qcow2 format, with a 16 GiB expandable disk and UEFI
 boot. Secure Boot must be disabled. No runner closures or credentials are included.
-See [generic cloud images](cloud-images.md) for the configuration and release contract.
+See [generic cloud images](cloud-images.md) for the configuration and prerequisite contract.
 
 The `github-runner-image` and raw installer outputs remain compatibility entry
 points for the same generic bootstrap configuration.
@@ -26,10 +26,10 @@ points for the same generic bootstrap configuration.
 ## Bootstrap and secrets
 
 Cloud-init supplies the declared hostname, operator SSH public key and non-secret
-`/etc/nixos-bootstrap.json`. The controller delivers `/etc/opnix-token` outside
-cloud-init, then releases `nixos-bootstrap.service` for a pinned flake revision.
-The worker prepares the final host for boot and reboots; the controller verifies
-that transition. The final host does not enable the bootstrap service.
+`/etc/nixos-bootstrap/bootstrap.yaml`, listing `/etc/opnix-token` as a prerequisite.
+A preparation task delivers that token outside cloud-init. The guest independently
+pins the configured ref, builds and reboots. The final host keeps only the small
+completion service to verify that transition. See ADR 0041 in `bingamon-lab/lz-paas`.
 
 ```bash
 cloud-init status --long

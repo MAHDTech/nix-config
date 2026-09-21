@@ -29,5 +29,5 @@ fi
 "${QEMU_IMG[@]}" convert -c -f qcow2 -O qcow2 "result-cloud-${cloud}/nixos-qemu.qcow2" "$tmp"
 mv -f "$tmp" "$out"
 echo "Created $out (qcow2, x86_64, UEFI)."
-echo "Supply cloud-init with /etc/nixos-bootstrap.json and operator SSH public keys."
-echo "Controlled provisioning waits for a release record; no secrets belong in user-data."
+echo "Supply cloud-init with /etc/nixos-bootstrap/bootstrap.yaml and operator SSH public keys."
+echo "The guest waits for prerequisite files, then builds and reboots; no secrets belong in user-data."

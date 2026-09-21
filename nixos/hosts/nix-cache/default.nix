@@ -12,16 +12,6 @@ in
     ./proxy.nix
   ];
 
-  fileSystems."/var/cache/nginx" = {
-    device = "/dev/disk/by-label/nix-cache";
-    fsType = "ext4";
-    options = [
-      "nofail"
-      "noatime"
-      "x-systemd.device-timeout=10s"
-    ];
-  };
-
   services.onepassword-secrets.secrets.cloudflareAcmeSlopageddon = {
     reference = "op://fleet/Cloudflare ACME Slopageddon/token";
     path = tokenPath;
@@ -67,12 +57,6 @@ in
     ${renewalService} = {
       requires = [ "opnix-secrets.service" ];
       after = [ "opnix-secrets.service" ];
-    };
-    nginx = {
-      # A missing data disk must not redirect cache writes onto the OS disk.
-      requires = [ "var-cache-nginx.mount" ];
-      after = [ "var-cache-nginx.mount" ];
-      unitConfig.ConditionPathIsMountPoint = "/var/cache/nginx";
     };
   };
 

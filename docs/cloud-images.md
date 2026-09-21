@@ -1,17 +1,15 @@
 # Generic cloud images
 
-Run `scripts/generate-cloud-image.sh` and select `qemu`, or pass `qemu` as an
-argument. It builds `.#qemu-image` and writes `output/nixos-qemu.img` (qcow2).
-VMware and public-cloud outputs are deferred. The image is x86_64, UEFI without
-Secure Boot, GPT, ext4 root labelled `nixos` and FAT EFI partition labelled `ESP`.
-The initial 16 GiB virtual disk grows to the provisioned size on boot.
+Run `scripts/generate-cloud-image.sh` and select `qemu`, or pass `qemu` for
+non-interactive builds. It writes `output/nixos-qemu.img`: compressed qcow2,
+x86_64 UEFI with Secure Boot disabled, a 16 GiB expandable ext4 root labelled
+`nixos`, and a FAT EFI partition labelled `ESP`. VMware is deferred.
 
-`nixos/hosts/base-qemu` imports the reusable guest hardware/disk module and the
-separate `services.nixos-bootstrap` module. Final QEMU hosts import the guest
-module but not the bootstrap module. No application closures, credentials, SSH
-keys, registration or fleet upgrade timers belong in this base image.
+## Guest-owned provisioning (ADR 0041)
 
-Cloud-init supplies hostname, operator public keys and this non-secret file:
+`nixos/hosts/base-qemu` imports the generic guest hardware module and the separate
+`services.nixos-bootstrap` dispatcher. Cloud-init supplies only public keys,
+hostname and non-secret configuration:
 
 ```yaml
 #cloud-config
@@ -19,62 +17,107 @@ hostname: example-host
 ssh_authorized_keys:
   - ssh-ed25519 REPLACE_WITH_OPERATOR_PUBLIC_KEY
 write_files:
-  - path: /etc/nixos-bootstrap.json
+  - path: /etc/nixos-bootstrap/bootstrap.yaml
     owner: root:root
     permissions: "0600"
     content: |
-      {"protocol": 1, "hostname": "example-host", "mode": "controlled"}
+      schema_version: 1
+      hostname: example-host
+      flake:
+        url: github:MAHDTech/nix-config
+        ref: trunk
+      prerequisites:
+        files:
+          - /etc/opnix-token
 ```
 
-Cloud-init never waits for prerequisites. The controller verifies instance
-identity, delivers secrets through a separate mechanism, and invokes:
+Use `files: []` for hosts without prerequisites. A separate task delivers any
+credentials; never put tokens in cloud-init, the image or Nix expressions.
+The YAML and credential files must be regular runtime files. Both configuration
+and state directories are root-owned mode `0700`, on the writable root disk;
+there are no `environment.etc` entries for them. The YAML is root-owned `0600`;
+OpNix tokens remain `0400` and should be replaced atomically.
+
+The timer checks every 30 seconds. The worker requires successful cloud-init,
+valid configuration matching the live hostname, and every prerequisite to be a
+readable, non-empty regular file. Missing files mean waiting. Failed cloud-init
+and malformed configuration fail visibly in the journal without starting a build.
+
+Each guest independently resolves its configured Git ref once, records the
+commit and builds that pinned revision with its flake lock unchanged. The worker
+sets the system profile, runs `switch-to-configuration boot`, records the intended
+closure and boot ID, then requests reboot. Application services start on the
+final OS boot. No controller release, callback or reboot watcher is involved.
+
+The default guest attempt budget is **24 hours**, including ref resolution,
+build and boot preparation. Configure it through
+`services.nixos-bootstrap.buildTimeoutSeconds` in the bootstrap image. It is
+independent of any SSH-preparation deadline. Waiting for prerequisites does not
+consume that budget. Builds survive controller disconnection.
+
+## Completion, failures and recovery
+
+Final hosts import `nixos/system/config/services/nixos-bootstrap/completion.nix`
+and enable `services.nixos-bootstrap-completion.enable`; they omit the build
+dispatcher. The shared QEMU guest module already does this for runners and cache.
+The completion service validates persistent machine identity, hostname, a new
+boot ID and the exact intended system. It atomically records completion without
+contacting a controller. Once complete it ignores later system upgrades, token
+rotation and restarts. Retained completion records also protect rollback boots.
+
+State lives in root-only `/var/lib/nixos-bootstrap/`. `status.json` records the
+attempt, revision, stages and boot evidence; `complete.json` records verified
+completion; `result` is a Nix GC root for the built system, not mutable state.
+No record contains credentials. Keep these paths, machine identity and SSH host
+keys across adoption and upgrades. Clear them when publishing a new base image.
 
 ```bash
-python3 /var/lib/nixos-bootstrap/worker.py release < release.json
+cloud-init status --long
+journalctl -u nixos-bootstrap.service -b
+nixos-bootstrap status
+# After diagnosing a failed/interrupted build:
+sudo nixos-bootstrap retry
 ```
 
-The root-owned release contains `protocol: 1`, `hostname`, provider `vm_id`, a
-40-character `revision` in `MAHDTech/nix-config`, a unique 32-character hexadecimal
-`attempt`, and `timeout` in seconds (1–86400). No secrets belong in these records.
-An optional `vm_id` in configuration restricts release to that expected instance.
-The current controller verifies identity independently through Prism and SSH.
+Retries are explicit: the next readiness check resolves the ref again. A lock
+prevents overlapping attempts. Failures retain diagnostics and do not automatically
+retry. Pending reboot and verification mismatch refuse rebuilds; investigate the
+bootloader/system and preserve the evidence. Completed hosts cannot be retried.
 
-For hosts with no external prerequisites, explicit `mode: automatic` additionally
-requires `revision` and `vm_id` in configuration. It makes one initial attempt;
-a failed attempt requires diagnosis and an explicit controller release to retry.
+OpNix consumers separately check the task's `opnix-pending` marker once a minute,
+using the same credential lock as delivery. Successful secret refresh clears the
+marker; failure keeps it for retry. This belongs to the OpNix consumer module,
+not the generic bootstrap worker.
 
-The worker builds with the pinned lock unchanged, sets the system profile,
-activates with `switch-to-configuration boot`, records the intended system and
-boot identity, then reboots. It does not activate application services live.
-`status`, `release` and `complete` CLI actions retain the protocol-1 controller
-interface. Completion requires a different boot ID and the exact intended system.
+## Migration and acceptance
 
-The final host omits the bootstrap module. Its service and timers disappear from
-the active configuration, while Python, the durable protocol client and records
-remain available for verification. Preserve injected operator access, SSH host
-keys, disk labels and `/etc/opnix-token` where used. Old generations still exist;
-completion and pending-boot records prevent treating rollback as new provisioning.
+This replaces the old JSON configuration and controller release protocol. Do not
+change running legacy guests in place. Coordinate a new versioned Prism image
+with the ADR 0041 lz-paas configuration and preparation-only hooks; overwriting the
+mirror filename does not replace imported images. Existing host upgrade ownership
+is unchanged. Publication and fleet deployment are separate operations.
 
-Before publication, boot two fresh clones, verify unique identities, DHCP,
-guest-agent discovery, key-only SSH, cloud-init completion and root growth.
-Verify a minimal final host adoption and reboot with unchanged SSH identity.
-Nutanix acceptance and publishing to the image mirror are deployment operations.
+Before publication, test no-prerequisite adoption with no controller, delayed
+atomic prerequisite delivery, clone identity isolation, SSH identity retention,
+root growth, guest-owned completion, failure/retry behavior and OpNix refresh.
 
-## Validation
+### Local ADR 0041 validation
 
-Local QEMU/KVM acceptance on 2026-09-21 verified UEFI boot, NoCloud hostname,
-key injection, `write_files`, `runcmd`, DHCP, guest-agent address reporting and
-root growth on independent 20 GiB and 24 GiB clones. Machine IDs and SSH host
-keys differed between clones. A fresh final-build clone also grew to 28 GiB.
+Two QEMU/KVM clones adopted a minimal final configuration from a local Git flake
+fixture. Cloud-init prepared that fixture; the shipping image contains no final
+host closure. One clone had no prerequisites and completed unattended. The other
+waited through missing and empty file checks, then built and completed after
+atomic delivery and SSH disconnection, without any release command.
 
-A minimal final configuration was built locally and supplied through a local
-flake fixture for the adoption test; the worker's repository constant was
-redirected only in that test VM. The actual Nix build/profile/boot/reboot flow
-preserved identity, booted the exact intended system, removed the bootstrap
-service and timer, and allowed the controller to record verified completion.
-This tests adoption mechanics without claiming a live GitHub runner deployment.
+The clones had distinct machine identities, grew to 24 and 28 GiB, and retained
+SSH identity through adoption. Configuration remained a root-owned regular `0600`
+file and state directories stayed `0700`. Both wrote completion automatically;
+final systems retained the completion unit and omitted the dispatcher. Credential
+rotation and a later dispatcher invocation did not rebuild a completed guest.
 
-The compressed artifact passed `qemu-img check`; flake evaluation, ShellCheck,
-eight local worker tests and 17 related controller compatibility tests passed.
-Nutanix/Prism import and live fleet provisioning remain deployment acceptance
-checks, not operations performed by the local image builder.
+Twelve worker tests cover validation, locks, pinning, explicit retries, interrupted
+attempts and completion across later upgrades. OpNix refresh was checked with a
+stub service: failure retains its pending marker and success removes it. Actual
+1Password access and Nutanix fleet rollout still require deployment validation.
+Statix, Nix formatting, ShellCheck, local-system flake evaluation and image
+integrity checks passed.

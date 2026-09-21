@@ -6,60 +6,47 @@
 }:
 let
   cfg = config.services.nixos-bootstrap;
-  worker = ./worker.py;
+  worker = import ./package.nix { inherit pkgs; };
 in
 {
-  options.services.nixos-bootstrap.enable = lib.mkEnableOption "one-time generic NixOS adoption";
+  imports = [ ./completion.nix ];
+  options.services.nixos-bootstrap = {
+    enable = lib.mkEnableOption "guest-owned initial NixOS adoption";
+    buildTimeoutSeconds = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 86400;
+      description = "Guest attempt budget, independent of deployment preparation deadlines.";
+    };
+  };
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.python3 ];
-    # Keep the protocol client available after the final configuration removes
-    # this module, so the controller can verify the reboot and record completion.
+    services.nixos-bootstrap-completion.enable = true;
     systemd = {
-      tmpfiles.rules = [
-        "d /var/lib/nixos-bootstrap 0700 root root -"
-        "C /var/lib/nixos-bootstrap/worker.py 0700 root root - ${worker}"
-      ];
-      services = {
-        nixos-bootstrap = {
-          description = "Adopt the selected NixOS flake host";
-          wants = [ "network-online.target" ];
-          after = [
-            "network-online.target"
-            "cloud-final.service"
-          ];
-          path = with pkgs; [
-            nix
-            git
-            openssh
-            coreutils
-            systemd
-            cloud-init
-          ];
-          unitConfig.ConditionPathExists = [
-            "/var/lib/nixos-bootstrap/release.json"
-            "!/var/lib/nixos-bootstrap/complete.json"
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.python3}/bin/python3 ${worker} build";
-            TimeoutStartSec = "1d";
-            KillMode = "control-group";
-            UMask = "0077";
-          };
-        };
-        # A timer avoids a permanently present malformed release causing a path
-        # activation loop. No waiting job blocks cloud-init or multi-user.target.
-        nixos-bootstrap-prepare = {
-          description = "Prepare automatic NixOS adoption when explicitly configured";
-          wantedBy = [ "multi-user.target" ];
-          wants = [ "cloud-final.service" ];
-          after = [ "cloud-final.service" ];
-          path = [ pkgs.systemd ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.python3}/bin/python3 ${worker} prepare";
-            UMask = "0077";
-          };
+      services.nixos-bootstrap = {
+        description = "Wait for prerequisites and adopt the configured NixOS flake host";
+        wants = [
+          "network-online.target"
+          "cloud-final.service"
+        ];
+        after = [
+          "network-online.target"
+          "cloud-final.service"
+          "nixos-bootstrap-complete.service"
+        ];
+        path = with pkgs; [
+          nix
+          git
+          openssh
+          coreutils
+          systemd
+          cloud-init
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${worker}/bin/nixos-bootstrap run --timeout ${toString cfg.buildTimeoutSeconds}";
+          # The worker bounds its whole attempt and records timeout failures.
+          TimeoutStartSec = "infinity";
+          KillMode = "control-group";
+          UMask = "0077";
         };
       };
       timers.nixos-bootstrap = {

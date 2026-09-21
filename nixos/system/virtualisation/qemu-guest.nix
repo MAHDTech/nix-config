@@ -7,6 +7,7 @@
 {
   imports = [
     "${modulesPath}/profiles/qemu-guest.nix"
+    ../config/services/nixos-bootstrap/completion.nix
     ../config/services/cloud-init
   ];
 
@@ -46,6 +47,7 @@
     useNetworkd = true;
   };
   services = {
+    nixos-bootstrap-completion.enable = true;
     qemuGuest.enable = true;
     cloud-init-diagnostics.enable = true;
     cloud-init = {
@@ -71,7 +73,7 @@
       };
     };
   };
-  # Retained after adoption for controller verification and secret reconciliation.
+  # Retained after adoption for diagnostics and credential preparation tasks.
   environment.systemPackages = [ pkgs.python3 ];
   time.timeZone = "Australia/Canberra";
   nix.settings.experimental-features = lib.mkDefault [

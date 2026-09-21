@@ -8,11 +8,10 @@ This host is independent of the GitHub runner service and does not register a ru
 
 - Nutanix VM: x86-64, UEFI, VirtIO storage/network, 8 vCPU, 16 GiB RAM.
 - DHCP is the default; use a reservation or supply network configuration through cloud-init.
-- Suggested storage: 64 GB OS disk plus a separate cache disk using the remainder of the approximately 1 TB allocation.
+- Storage: a single 1 TiB OS disk shared by the system and download cache.
 - The OS image uses filesystem labels `nixos` and `ESP`, with root growth enabled.
-- Attach a separately provisioned ext4 filesystem labelled `nix-cache`; it mounts at `/var/cache/nginx`.
+- Nginx stores its cache under `/var/cache/nginx` on the root filesystem; no separate disk or cache filesystem label is required.
 - The cache is capped at 750 GiB, with entries unused for 30 days eligible for eviction.
-- The host does not format an attached disk automatically. Nginx refuses to start without the cache mount, while `nofail` lets the VM boot for repair.
 - The QEMU guest agent is enabled; expose its guest-agent channel in the VM configuration.
 
 The disk layout and network restrictions should be confirmed before deployment.
@@ -49,7 +48,7 @@ Use the same deployment flow as the GitHub runners:
 6. Nginx reloads after certificate issuance or renewal.
 
 Neither token belongs in Git, the Nix store, the generated image, or a build log.
-The controller delivers `/etc/opnix-token` before releasing bootstrap; opnix retries failures rather than permanently stopping when credentials are unavailable.
+The controller delivers `/etc/opnix-token` before the guest starts bootstrap; opnix retries failures rather than permanently stopping when credentials are unavailable.
 The ACME module may initially create a temporary self-signed certificate; do not consider deployment ready until the trusted certificate has been issued.
 
 ## Image and bootstrap
@@ -60,10 +59,10 @@ Use the [generic QEMU image](../../../docs/cloud-images.md):
 ./scripts/generate-cloud-image.sh qemu
 ```
 
-Import `output/nixos-qemu.img` (qcow2), enlarge the OS disk and attach any cache
-data disk. Cloud-init supplies operator SSH keys and non-secret bootstrap
+Import `output/nixos-qemu.img` (qcow2) and enlarge the OS disk to 1 TiB.
+Cloud-init supplies operator SSH keys and non-secret bootstrap
 configuration selecting `nix-cache`. The controller delivers the OpNix token
-outside cloud-init, then releases the pinned flake revision. No cache closure or
+outside cloud-init, the guest then resolves its configured ref and owns build, reboot and completion. No cache closure or
 credentials are preloaded. The `installer-nix-cache` output is a compatibility
 entry point producing the generic image in raw format.
 
@@ -102,14 +101,14 @@ Local validation completed on 2026-09-21:
 - Both runner groups have 10 members, all dedicated runners have the cache and Bubblewrap enabled, and JONS's runner remains disabled.
 
 The runtime fixture used local ports and a test CA; it did not request a real certificate or contact 1Password.
-The VM image has not been built or booted yet.
-Before rollout, verify delayed credential delivery, real certificate issuance/renewal, and cache disk failure behaviour.
+The deployed VM has booted and expanded its root filesystem to 1 TiB.
+Before rollout, verify delayed credential delivery and real certificate issuance/renewal.
 Also verify stale serving during upstream outages and connectivity/fallback from each deployed environment.
 
 Inspect `X-Cache-Status` response headers and `/var/log/nginx/nix-cache-access.log` for cache activity.
 Metadata is refreshed sooner than immutable archives; entries may be evicted independently, so the cache is an accelerator rather than a guaranteed offline mirror.
 Cache size enforcement is asynchronous; retain filesystem headroom for active downloads and eviction.
-Back up configuration, secret references and `/var/lib/acme`; the cache disk is rebuildable and need not be backed up.
+Back up configuration, secret references and `/var/lib/acme`; cached downloads under `/var/cache/nginx` are rebuildable and need not be backed up.
 
 ```sh
 systemctl status opnix-secrets acme-order-renew-nix-cache.slopageddon.app nginx
