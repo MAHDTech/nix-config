@@ -8,17 +8,25 @@ in
   imports = [
     ./base.nix
     ../../system/soe/nix
+    ../../system/config/services/nixos-drain
     ../../system/soe/secrets/opnix.nix
     ./proxy.nix
   ];
 
-  services.onepassword-secrets.secrets.cloudflareAcmeSlopageddon = {
-    reference = "op://fleet/Cloudflare ACME Slopageddon/token";
-    path = tokenPath;
-    owner = "root";
-    group = "root";
-    mode = "0400";
-    services = [ renewalService ];
+  services = {
+    nixos-drain.enable = true;
+    onepassword-secrets.secrets.cloudflareAcmeSlopageddon = {
+      reference = "op://fleet/Cloudflare ACME Slopageddon/token";
+      path = tokenPath;
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      services = [ renewalService ];
+    };
+    nginx.virtualHosts.${domain} = {
+      forceSSL = true;
+      useACMEHost = domain;
+    };
   };
 
   security.acme = {
@@ -32,12 +40,12 @@ in
       reloadServices = [ "nginx.service" ];
     };
   };
-  services.nginx.virtualHosts.${domain} = {
-    forceSSL = true;
-    useACMEHost = domain;
-  };
 
   systemd.services = {
+    nixos-upgrade = {
+      preStart = "/run/current-system/sw/bin/nixos-drain drain --profile upgrade";
+      postStart = "/run/current-system/sw/bin/nixos-drain cancel";
+    };
     opnix-secrets = {
       wants = [ "cloud-final.service" ];
       after = [ "cloud-final.service" ];

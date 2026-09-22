@@ -81,6 +81,7 @@ in
     ../../../system/soe/secrets/opnix.nix
     ../../../system/soe/programs/nix-ld
     ../../../system/config/services/github-runner
+    ../../../system/config/services/github-runner/drain.nix
     ../../../system/config/services/nix-cache/client.nix
   ];
 
@@ -188,11 +189,15 @@ in
         nixos-upgrade = {
           environment.RUNNER_FLAKE = "github:MAHDTech/nix-config";
           serviceConfig.EnvironmentFile = "-/etc/github-runner-bootstrap";
+          serviceConfig.TimeoutStartSec = lib.mkForce (
+            7200 + config.services.nixos-drain.profiles.upgrade.timeoutSeconds + 60
+          );
           script = lib.mkForce ''
             ${config.system.build.nixos-rebuild}/bin/nixos-rebuild boot \
               --flake "$RUNNER_FLAKE#${name}" --accept-flake-config --show-trace --refresh
+            /run/current-system/sw/bin/nixos-drain drain --profile upgrade
+            ${config.systemd.package}/bin/systemctl reboot --no-block
           '';
-          postStart = "${config.systemd.package}/bin/shutdown -r +1";
         };
       };
       timers.nixos-upgrade.timerConfig.Persistent = true;

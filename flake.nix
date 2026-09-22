@@ -109,6 +109,10 @@
     {
       nixosConfigurations = hosts.configs // installerConfigs;
 
+      checks.x86_64-linux.nixos-drain = import ./tests/nixos-drain.nix {
+        pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+      };
+
       homeConfigurations = forEachSystem (system: {
         ${mylib.globalUsername} = mylib.mkHome { inherit system; };
       });

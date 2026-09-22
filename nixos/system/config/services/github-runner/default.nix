@@ -177,6 +177,12 @@ in
   options.services.github-runner-fleet = {
     enable = lib.mkEnableOption "GitHub Actions self-hosted runners on this host";
 
+    restartOnTokenChange = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Restart runners when their token rotates. Disable when ephemeral registrations must finish before restarting.";
+    };
+
     tokenReference = lib.mkOption {
       type = lib.types.str;
       default = "op://fleet/GitHub Runner/credential";
@@ -313,7 +319,7 @@ in
         owner = "root";
         group = "root";
         mode = "0400";
-        services = [ "github-runner-${name}" ];
+        services = lib.optional cfg.restartOnTokenChange "github-runner-${name}";
       }
     ) cfg.runners;
   };

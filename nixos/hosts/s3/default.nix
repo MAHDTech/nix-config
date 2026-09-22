@@ -3,11 +3,13 @@
   imports = [
     ../../system/virtualisation/qemu-guest.nix
     ../../system/soe/nix
+    ../../system/config/services/nixos-drain
     ../../system/config/services/rustfs/opnix.nix
     ../../system/config/services/rustfs/frontend.nix
   ];
   networking.hostName = "s3";
   services = {
+    nixos-drain.enable = true;
     cloud-init.settings.preserve_hostname = true;
     journald.settings.Journal.SystemMaxUse = "1G";
     rustfs-managed = {
@@ -46,6 +48,10 @@
     flake = lib.mkForce "github:MAHDTech/nix-config#s3";
     operation = lib.mkForce "switch";
     allowReboot = lib.mkForce false;
+  };
+  systemd.services.nixos-upgrade = {
+    preStart = "/run/current-system/sw/bin/nixos-drain drain --profile upgrade";
+    postStart = "/run/current-system/sw/bin/nixos-drain cancel";
   };
   nix.settings.trusted-users = lib.mkForce [ "root" ];
 }
