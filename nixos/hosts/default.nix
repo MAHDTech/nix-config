@@ -35,6 +35,12 @@ in
   #              keep the fleet default from nixos/system/soe/nix.
   list = [
     {
+      name = "s3";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+      nixSettings = { };
+    }
+    {
       name = "nix-cache";
       system = "x86_64-linux";
       buildSystem = "x86_64-linux";
@@ -105,6 +111,13 @@ in
       }
     )
     // rec {
+      s3 = mkHost {
+        name = "s3";
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "server";
+        enableHomeManager = false;
+      };
       nix-cache = mkHost {
         name = "nix-cache";
         system = "x86_64-linux";
