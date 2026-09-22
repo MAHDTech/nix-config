@@ -9,16 +9,35 @@
 let
   cfg = config.hosts.github-runner;
   runnerName = "${name}-enterprise-mahdtech";
-  jobPackages =
+  ciTools =
     with pkgs;
     [
-      nodejs_24
-      python3
-      gnumake
-      gcc
-      pkg-config
+      bash
+      bzip2
+      coreutils
+      curl
+      diffutils
+      file
+      findutils
+      gawk
+      gh
+      git
+      git-lfs
+      gnugrep
+      gnused
+      gnutar
+      gzip
+      jq
+      openssh
+      openssl
+      patch
+      procps
+      rsync
       unzip
+      util-linux
+      xz
       zip
+      zstd
     ]
     ++ [
       pkgsUnstable.devenv
@@ -67,10 +86,7 @@ in
 
   config = {
     networking.hostName = name;
-    environment.systemPackages = jobPackages ++ [
-      pkgs.git
-      pkgs.jq
-    ];
+    environment.systemPackages = ciTools;
 
     virtualisation.docker = {
       enable = true;
@@ -89,7 +105,7 @@ in
         inherit (cfg) tokenReference;
         runners.enterprise = {
           inherit (cfg) url runnerGroup extraLabels;
-          extraPackages = jobPackages ++ cfg.extraPackages;
+          extraPackages = ciTools ++ cfg.extraPackages;
         };
       };
       github-runners.${runnerName} = {

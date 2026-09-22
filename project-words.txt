@@ -713,6 +713,7 @@ dhcpcd
 dialout
 difftastic
 difftool
+diffutils
 dircolors
 direnv
 direxpand

@@ -5,7 +5,20 @@ base configuration. `github-runner-01` through `github-runner-10` register in
 the enterprise `tars-cloud` runner group (token reference: `op://fleet/GitHub Runner/credential`),
 while `github-runner-11` through `github-runner-20` register in the enterprise
 `bingamon-lab` runner group (token reference: `op://Bingamon/GitHub Runner/credential`).
-Jobs have Nix, devenv, Cachix, Node 24, Python, C/C++ build tools, Git, and Docker available.
+Jobs have Nix, devenv, Cachix, and Docker available. The shared runner configuration
+defines `ciTools` for both the host and runner job PATH, so workflow steps can use
+these commands without entering a Nix shell:
+
+- Shell and scripting: Bash, coreutils, findutils, grep, sed, and awk.
+- Git and GitHub: Git, Git LFS, and the GitHub CLI (`gh`).
+- Networking and credentials: curl, OpenSSH (`ssh`, `scp`, `ssh-agent`), and OpenSSL.
+- Data and files: jq, file, diffutils, patch, and rsync.
+- Archives: tar, gzip, bzip2, xz, zip, unzip, and zstd.
+- Process and system utilities: procps and util-linux (including `ps` and `flock`).
+
+Language runtimes, compilers, and build tools belong in each project's nix-shell
+or devenv environment. The runner retains its internal Node runtime for JavaScript
+actions; it does not expose a general-purpose Node installation through `ciTools`.
 
 ## Build the qcow2 image
 
@@ -107,7 +120,7 @@ lsblk -f
 ```
 
 Confirm runners appear online in their respective groups (`bingamon-lab` and `tars-cloud`). Run a trusted workflow
-on each hostname label checking Node, Nix, Docker and an actual repository's
+on each hostname label checking Git, Git LFS, `gh`, Nix, Docker and an actual repository's
 devenv shell/tests. Run two jobs in succession to verify ephemeral registration.
 
 Updates run daily at 03:00 Canberra time with up to 30 minutes of jitter and a
