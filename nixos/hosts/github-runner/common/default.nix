@@ -7,8 +7,11 @@
   ...
 }:
 let
+
   cfg = config.hosts.github-runner;
+
   runnerName = "${name}-enterprise-mahdtech";
+
   ciTools =
     with pkgs;
     [
