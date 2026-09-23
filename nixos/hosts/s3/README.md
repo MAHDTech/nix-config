@@ -89,6 +89,13 @@ The host file only selects shared infrastructure and declares service policy:
 - `rustfs/frontend.nix`: optional internal Nginx API and console frontends.
 - `cloudflare-acme/default.nix`: reusable Cloudflare DNS-01/Opnix integration.
 
+Failed certificate requests retry every 15 minutes until successful. Configure
+`services.cloudflare-acme.retryIntervalSeconds` to change the delay. Successful
+requests return to the normal daily renewal schedule and reload Nginx. This
+recovers from transient network/API failures; invalid credentials still require
+correction. Dependency failures before the ACME process starts are not covered
+by its restart policy; inspect `opnix-secrets` if credentials are unavailable.
+
 Add a bucket under `services.rustfs-managed.buckets`, setting `publicRead` (default
 false), `retentionDays` (default 30) and optionally `abortMultipartDays` (default 1).
 Add a writer with its permitted bucket names and runtime credential-file paths,

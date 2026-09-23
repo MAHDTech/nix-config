@@ -2,42 +2,27 @@
 let
   domain = "nix-cache.slopageddon.app";
   tokenPath = "/run/secrets/cloudflare-acme-slopageddon";
-  renewalService = "acme-order-renew-${domain}";
 in
 {
   imports = [
     ./base.nix
     ../../system/soe/nix
     ../../system/config/services/nixos-drain
-    ../../system/soe/secrets/opnix.nix
+    ../../system/config/services/cloudflare-acme
     ./proxy.nix
   ];
 
   services = {
     nixos-drain.enable = true;
-    onepassword-secrets.secrets.cloudflareAcmeSlopageddon = {
-      reference = "op://fleet/Cloudflare ACME Slopageddon/token";
-      path = tokenPath;
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      services = [ renewalService ];
+    cloudflare-acme = {
+      enable = true;
+      domains = [ domain ];
+      tokenReference = "op://fleet/Cloudflare ACME Slopageddon/token";
+      inherit tokenPath;
     };
     nginx.virtualHosts.${domain} = {
       forceSSL = true;
       useACMEHost = domain;
-    };
-  };
-
-  security.acme = {
-    acceptTerms = true;
-    certs.${domain} = {
-      dnsProvider = "cloudflare";
-      # Public validation must bypass any internal split DNS zone.
-      dnsResolver = "1.1.1.1:53";
-      credentialFiles.CF_DNS_API_TOKEN_FILE = tokenPath;
-      group = "nginx";
-      reloadServices = [ "nginx.service" ];
     };
   };
 
@@ -61,10 +46,6 @@ in
           ${pkgs.coreutils}/bin/sleep 30
         done
       '';
-    };
-    ${renewalService} = {
-      requires = [ "opnix-secrets.service" ];
-      after = [ "opnix-secrets.service" ];
     };
   };
 

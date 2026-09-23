@@ -58,6 +58,11 @@ The configuration requests only `nix-cache.slopageddon.app`, but the token's DNS
 There is no wildcard certificate or `.lab` SAN.
 An ACME contact email has not yet been selected; NixOS supports registration without one, or set `security.acme.certs."nix-cache.slopageddon.app".email`.
 
+The shared `services.cloudflare-acme` module retries failed certificate requests
+every 15 minutes until success, then returns to daily renewal checks. Override
+`services.cloudflare-acme.retryIntervalSeconds` to change this delay. Credentials
+must first be available from Opnix; an Opnix dependency failure needs separate recovery.
+
 ## 1Password and cloud-init
 
 Use the same deployment flow as the GitHub runners:

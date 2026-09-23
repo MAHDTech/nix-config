@@ -12,6 +12,11 @@ in
       default = [ ];
     };
     tokenReference = lib.mkOption { type = lib.types.str; };
+    retryIntervalSeconds = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 900;
+      description = "Delay between failed certificate requests. Retries continue until success; 15 minutes accommodates ACME authorization-failure limits.";
+    };
     tokenPath = lib.mkOption {
       type = lib.types.str;
       default = "/run/secrets/cloudflare-acme-token";
@@ -39,6 +44,11 @@ in
     systemd.services = lib.genAttrs (map (domain: "acme-order-renew-${domain}") cfg.domains) (_: {
       requires = [ "opnix-secrets.service" ];
       after = [ "opnix-secrets.service" ];
+      unitConfig.StartLimitIntervalSec = 0;
+      serviceConfig = {
+        Restart = "on-failure";
+        RestartSec = lib.mkForce cfg.retryIntervalSeconds;
+      };
     });
   };
 }
