@@ -73,8 +73,9 @@ accounts must also be able to read the required `fleet` items. Opnix materialize
 only the fields referenced by that host. Vault-level access may be broader than
 these per-host references; configure 1Password permissions accordingly.
 
-Files under `/run/secrets` are root-owned and mode 0400. Systemd passes agent
-tokens and keys through `LoadCredential`; the hub's bootstrap environment file
+Files under `/run/secrets` are root-owned and mode 0400. The hub restores a missing
+final newline on the private key before validating it with OpenSSH.
+Systemd passes agent tokens and keys through `LoadCredential`; the hub's bootstrap environment file
 is read by systemd. The hub prepares its inventory from credentials immediately
 before starting, with mode 0600. The Nix store contains references and field names,
 not credential values. Missing or invalid credentials prevent startup rather than

@@ -32,9 +32,13 @@ def prepare(manifest, directory, credentials, keygen):
     private_key = None
     if manifest["privateKey"]:
         key_file = credentials / "hub-private-key"
-        subprocess.run([keygen, "-y", "-P", "", "-f", str(key_file)], check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        private_key = key_file.read_text()
+        # Secret text fields can lose the final newline required by OpenSSH.
+        private_key = key_file.read_text().rstrip("\r\n") + "\n"
+        with tempfile.NamedTemporaryFile(mode="w", prefix="beszel-key-") as candidate:
+            candidate.write(private_key)
+            candidate.flush()
+            subprocess.run([keygen, "-y", "-P", "", "-f", candidate.name], check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     marker = directory / ".nixos-managed-inventory"
     if not manifest["managed"] and marker.exists():
         (directory / "config.yml").unlink(missing_ok=True)

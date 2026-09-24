@@ -37,6 +37,7 @@ class BeszelIntegration(unittest.TestCase):
             key = credentials / "hub-private-key"
             keygen = shutil.which("ssh-keygen")
             subprocess.run([keygen, "-q", "-t", "ed25519", "-N", "", "-f", str(key)], check=True)
+            key.write_bytes(key.read_bytes().rstrip(b"\n"))
             token = secrets.token_urlsafe(32)
             (credentials / "token-fixture").write_text(token)
             email = "fixture@example.test"
@@ -49,6 +50,7 @@ class BeszelIntegration(unittest.TestCase):
             prepare.prepare(manifest, data, credentials, keygen)
             self.assertEqual((data / "config.yml").stat().st_mode & 0o777, 0o600)
             self.assertEqual((data / "id_ed25519").stat().st_mode & 0o777, 0o600)
+            self.assertTrue((data / "id_ed25519").read_bytes().endswith(b"\n"))
             previous = (data / "config.yml").read_bytes()
             (credentials / "token-fixture").write_text("\n")
             with self.assertRaises(ValueError):
