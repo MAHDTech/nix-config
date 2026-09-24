@@ -29,10 +29,12 @@ function nix-upgrade-daemon() {
 			return 1
 		}
 
-		nix-channel --update || {
-			writeLog "ERROR" "Failed to update nix channels"
-			return 1
-		}
+		nix-channel \
+			--update ||
+			{
+				writeLog "ERROR" "Failed to update nix channels"
+				return 1
+			}
 
 		#nix profile upgrade cachix || {
 		#	writeLog "ERROR" "Failed to upgrade cachix profile"
@@ -533,17 +535,21 @@ function dotfiles() {
 
 	update)
 
-		nix-channel --update || {
-			writeLog "ERROR" "Failed to update Nix channel"
-			popd >/dev/null 2>&1 || true
-			return 1
-		}
+		nix-channel \
+			--update ||
+			{
+				writeLog "ERROR" "Failed to update Nix channel"
+				popd >/dev/null 2>&1 || true
+				return 1
+			}
 
-		nix flake update || {
-			writeLog "ERROR" "Failed to update Nix flake"
-			popd >/dev/null 2>&1 || true
-			return 1
-		}
+		nix flake update \
+			--accept-flake-config ||
+			{
+				writeLog "ERROR" "Failed to update Nix flake"
+				popd >/dev/null 2>&1 || true
+				return 1
+			}
 
 		;;
 
