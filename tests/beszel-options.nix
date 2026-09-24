@@ -12,6 +12,20 @@ let
       ];
     }).config;
   disabled = evaluate { };
+  managedHub = evaluate {
+    services.beszel.hub = {
+      enable = true;
+      opnix = {
+        enable = true;
+        privateKeyReference = "op://fixture/hub/key";
+        bootstrapReference = "op://fixture/hub/bootstrap";
+        tokenReferences = {
+          github-runner-01 = "op://fixture/agents/github-runner-01";
+          nix-cache = "op://fixture/agents/nix-cache";
+        };
+      };
+    };
+  };
   hub = evaluate {
     services.beszel.hub = {
       enable = true;
@@ -51,6 +65,7 @@ in
 assert !disabled.services.beszel.hub.enable && !disabled.services.beszel.agent.enable;
 assert !(disabled.systemd.services ? beszel-hub) && !(disabled.systemd.services ? beszel-agent);
 assert hub.services.beszel.hub.systems == null;
+assert builtins.stringLength managedHub.systemd.services.opnix-secrets.script > 0;
 assert
   !(lib.any (
     assertion: !assertion.assertion && lib.hasPrefix "Beszel" assertion.message

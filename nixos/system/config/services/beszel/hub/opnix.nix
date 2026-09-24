@@ -41,7 +41,8 @@ in
     }
     // lib.mapAttrs' (
       name: reference:
-      lib.nameValuePair "beszelHubToken-${name}" (
+      # Opnix identifiers must be alphanumeric; hashing avoids hostname collisions.
+      lib.nameValuePair "beszelHubToken${builtins.hashString "sha256" name}" (
         secret reference "/run/secrets/beszel-hub-token-${name}"
       )
     ) op.tokenReferences;
