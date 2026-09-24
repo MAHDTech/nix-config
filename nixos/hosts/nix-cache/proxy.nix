@@ -1,3 +1,4 @@
+# cspell:ignore localtime nosniff
 { config, lib, ... }:
 let
   cfg = config.services.nix-cache-proxy;
@@ -94,7 +95,26 @@ in
           deny all;
         '';
         locations = builtins.listToAttrs (lib.concatMap cacheLocations upstreams) // {
-          "/".return = "404";
+          "= /_browser.css" = {
+            alias = "${./browser.css}";
+            extraConfig = ''
+              default_type text/css;
+              limit_except GET { deny all; }
+              add_header X-Content-Type-Options "nosniff" always;
+            '';
+          };
+          "/" = {
+            root = "/var/cache/nginx/nixpkgs";
+            extraConfig = ''
+              autoindex on;
+              autoindex_exact_size off;
+              autoindex_localtime on;
+              sub_filter '</head>' '<meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/_browser.css"></head>';
+              sub_filter_once on;
+              limit_except GET { deny all; }
+              add_header X-Content-Type-Options "nosniff" always;
+            '';
+          };
         };
       };
     };

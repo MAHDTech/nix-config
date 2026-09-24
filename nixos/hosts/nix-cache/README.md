@@ -4,6 +4,24 @@
 It caches downloads on demand, preserves upstream Nix signatures, and does not accept uploads.
 This host is independent of the GitHub runner service and does not register a runner.
 
+## Read-only browser
+
+Open `https://nix-cache.slopageddon.app/` to browse the local cache folders.
+Nginx's directory listing shows file sizes and modification times. Folder totals
+are not calculated. The browser uses the existing HTTPS port and network allowlist,
+and permits only GET and HEAD requests; there are no upload or deletion controls.
+Listings use a local dark stylesheet with cyan files, magenta folders and amber
+parent-directory links. No JavaScript or external assets are required. The HTML
+filter is scoped to the directory browser, not the binary-cache proxy routes.
+
+This shows Nginx's physical cache layout: hash-named files under its `1:2`
+directory structure, rather than original package names. Files contain Nginx cache
+headers as well as the downloaded data; use the normal cache URLs for Nix clients.
+The existing `nix-cache-info`, `.narinfo` and `/nar/` proxy routes take precedence
+over the directory listing, including all configured upstream prefixes.
+Browsing directories does not fetch upstream objects or change proxy-cache keys,
+signatures, retention or eviction settings.
+
 ## Upstream caches
 
 The server routes and runner settings are generated from

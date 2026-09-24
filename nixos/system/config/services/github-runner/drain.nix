@@ -49,6 +49,8 @@ in
   systemd.services = lib.mapAttrs' (
     name: _:
     lib.nameValuePair "github-runner-${name}" {
+      # Ephemeral registrations adopt the new unit on their next natural start.
+      restartIfChanged = false;
       serviceConfig.ExecCondition = [ "+${handler}/bin/github-runner-drain gate" ];
     }
   ) runners;

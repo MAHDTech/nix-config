@@ -1,0 +1,67 @@
+:root {
+  color-scheme: dark;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  background: #080b14;
+  color: #d5e1f0;
+}
+
+body {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: radial-gradient(ellipse at top right, #24132e, transparent 70%);
+  min-height: 90vh;
+}
+
+body::before {
+  content: "NIX CACHE // READ ONLY";
+  display: block;
+  color: #71f7f0;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #713653;
+}
+
+pre {
+  padding: 1.25rem;
+  overflow-x: auto;
+  line-height: 1.9;
+  background: #0e1522;
+  border: 1px solid #26364c;
+  border-left: 3px solid #71f7f0;
+  border-radius: 4px;
+  box-shadow: 0 0 24px #71f7f008;
+}
+
+a {
+  color: #71f7f0;
+  text-underline-offset: 0.2em;
+}
+
+a[href$="/"] {
+  color: #ff83c1;
+}
+
+a[href="../"] {
+  color: #ffd479;
+}
+
+a:hover {
+  color: #ffffff;
+  text-shadow: 0 0 8px currentColor;
+}
+
+a:focus-visible {
+  outline: 2px solid #ffd479;
+  outline-offset: 3px;
+}

@@ -107,7 +107,9 @@ captured settings and needs a one-time `nixos-drain cancel`.
 ## Upgrades and Terraform
 
 Runner upgrades stage a boot generation, drain the `upgrade` profile, then request
-a reboot only on success. A failed or cancelled drain prevents that reboot.
+a reboot only on success. If the staged generation is already booted, they skip
+the drain and reboot. A failed or cancelled drain prevents that reboot. Host
+upgrade times are [staggered within each group](github-runners.md).
 S3 and nix-cache run their notification-only profile before their existing
 `switch` upgrade and cancel it after success; neither gains automatic reboots.
 

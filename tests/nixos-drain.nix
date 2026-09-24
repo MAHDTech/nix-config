@@ -9,6 +9,9 @@ pkgs.testers.runNixOSTest {
       };
       config = {
         environment.systemPackages = [ pkgs.python3 ];
+        specialisation.changed-runner.configuration = {
+          systemd.services.github-runner-test.environment.CONFIG_REVISION = "changed";
+        };
         services.nixos-drain.timeoutSeconds = 8;
         services.github-runners.test = {
           enable = true;
@@ -59,6 +62,11 @@ pkgs.testers.runNixOSTest {
     plain.succeed("nixos-drain cancel")
 
     runner.wait_for_file("/run/job-active")
+    original_pid = runner.succeed("systemctl show github-runner-test -p MainPID --value").strip()
+    runner.succeed("/run/current-system/specialisation/changed-runner/bin/switch-to-configuration test")
+    assert runner.succeed("systemctl show github-runner-test -p MainPID --value").strip() == original_pid
+    runner.succeed("test -f /run/job-active; test $(wc -l < /run/registrations) -eq 1")
+    runner.succeed("systemctl show github-runner-test -p Environment | grep CONFIG_REVISION=changed")
     runner.succeed("nixos-drain drain --profile destroy > /run/drain-client.log 2>&1 & echo $! > /run/client-pid")
     runner.wait_for_file("/run/nixos-drain/github-runners/maintenance")
     runner.succeed("kill $(cat /run/client-pid)")

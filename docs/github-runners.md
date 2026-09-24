@@ -123,11 +123,47 @@ Confirm runners appear online in their respective groups (`bingamon-lab` and `ta
 on each hostname label checking Git, Git LFS, `gh`, Nix, Docker and an actual repository's
 devenv shell/tests. Run two jobs in succession to verify ephemeral registration.
 
-Updates run daily at 03:00 Canberra time with up to 30 minutes of jitter and a
-two-hour timeout. Every successful update schedules a reboot one minute later,
-including userspace-only changes. Failed updates do not reboot. Maintenance can
-interrupt jobs. Nix garbage collection runs daily at 02:00 (retaining 3 days),
+Each host sets `hosts.github-runner.upgradeTime` in its host configuration:
+
+```nix
+hosts.github-runner.upgradeTime = "05:00";
+```
+
+Daily upgrades are staggered two hours apart within each group, in Canberra time,
+with up to five minutes of jitter:
+
+| tars-cloud | bingamon-lab | Upgrade time |
+| ---------- | ------------ | ------------ |
+| 01         | 11           | 03:00        |
+| 02         | 12           | 05:00        |
+| 03         | 13           | 07:00        |
+| 04         | 14           | 09:00        |
+| 05         | 15           | 11:00        |
+| 06         | 16           | 13:00        |
+| 07         | 17           | 15:00        |
+| 08         | 18           | 17:00        |
+| 09         | 19           | 19:00        |
+| 10         | 20           | 21:00        |
+
+Missed runs are not caught up at boot, avoiding simultaneous upgrades after a
+fleet restart. These are scheduled start times, not a fleet-wide concurrency
+limit; slow builds can overlap.
+
+Updates stage a boot generation and compare it with the booted system. An
+unchanged system skips draining and rebooting. Changed systems drain before
+requesting a reboot, including userspace-only changes. Failed builds or drains
+do not reboot. Upgrade drain failures automatically restore registrations; see
+[host draining](nixos-drain.md) for timeout and cancellation behaviour.
+
+Runner startup waits for the initial secret retrieval attempt. Failed or hung
+registrations retry: startup is bounded to five minutes, with 30 seconds between
+runner attempts. Secret retrieval retries every five minutes. Configuration
+switches do not restart a running ephemeral runner just because its unit changed;
+the next registration adopts the new unit. This does not protect jobs from an
+explicit service restart or changes to dependencies such as Docker. Prefer the
+staged boot-and-drain update path.
+
+Nix garbage collection runs daily at 02:00 (retaining 3 days),
 store deduplication runs at 02:30, and dynamic GC triggers during builds if free
 space falls below 15 GiB (clearing up to 35 GiB). Docker prunes unused images
-daily, and the journal is capped at 1 GiB. Runner failures retry every 30 seconds;
-credential retrieval retries every five minutes.
+daily, and the journal is capped at 1 GiB.

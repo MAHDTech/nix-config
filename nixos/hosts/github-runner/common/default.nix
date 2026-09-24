@@ -49,6 +49,12 @@ let
 in
 {
   options.hosts.github-runner = {
+    upgradeTime = lib.mkOption {
+      type = lib.types.strMatching "(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]";
+      default = "03:00";
+      description = "Daily upgrade start time in the host timezone (HH:MM). Stagger within each runner group.";
+    };
+
     runnerGroup = lib.mkOption {
       type = lib.types.str;
       description = "GitHub Actions runner group for registration.";
@@ -161,10 +167,10 @@ in
 
     system.autoUpgrade = {
       flake = lib.mkForce "github:MAHDTech/nix-config#${name}";
-      dates = lib.mkForce "03:00";
-      randomizedDelaySec = lib.mkForce "30m";
-      # The upstream reboot check only detects kernel changes. Reboot after
-      # every successful boot-generation update so userspace changes apply too.
+      dates = lib.mkForce cfg.upgradeTime;
+      randomizedDelaySec = lib.mkForce "5m";
+      persistent = lib.mkForce false;
+      # Compare whole generations so userspace updates also receive a reboot.
       allowReboot = lib.mkForce false;
       rebootWindow = lib.mkForce null;
     };
@@ -181,29 +187,33 @@ in
           };
         };
         "github-runner-${runnerName}" = {
+          wants = [ "opnix-secrets.service" ];
+          after = [ "opnix-secrets.service" ];
           unitConfig.StartLimitIntervalSec = 0;
           serviceConfig = {
             # Preserve supplementary group IDs for the Nix daemon and Docker socket.
             PrivateUsers = false;
             Restart = lib.mkForce "always";
             RestartSec = "30s";
+            TimeoutStartSec = "5min";
           };
         };
         nixos-upgrade = {
           environment.RUNNER_FLAKE = "github:MAHDTech/nix-config";
+          environment.RUNNER_HOST = name;
+          path = [
+            config.system.build.nixos-rebuild
+            pkgs.coreutils
+            config.systemd.package
+            (import ../../../system/config/services/nixos-drain/package.nix { inherit pkgs; })
+          ];
           serviceConfig.EnvironmentFile = "-/etc/github-runner-bootstrap";
           serviceConfig.TimeoutStartSec = lib.mkForce (
             7200 + 2 * config.services.nixos-drain.profiles.upgrade.timeoutSeconds + 60
           );
-          script = lib.mkForce ''
-            ${config.system.build.nixos-rebuild}/bin/nixos-rebuild boot \
-              --flake "$RUNNER_FLAKE#${name}" --accept-flake-config --show-trace --refresh
-            /run/current-system/sw/bin/nixos-drain drain --profile upgrade
-            ${config.systemd.package}/bin/systemctl reboot --no-block
-          '';
+          script = lib.mkForce (builtins.readFile ./upgrade.sh);
         };
       };
-      timers.nixos-upgrade.timerConfig.Persistent = true;
     };
   };
 }
