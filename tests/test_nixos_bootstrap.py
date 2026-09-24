@@ -1,6 +1,7 @@
 """ADR 0041: readiness, pinning, durable failures and guest-owned completion."""
 
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -175,6 +176,22 @@ class BootstrapTest(unittest.TestCase):
         with patch.object(worker, "command") as run:
             worker.dispatch(86400)
             run.assert_not_called()
+
+    def test_completed_retry_cli_reports_actionable_error(self):
+        worker.write_record("complete", self.record | {"stage": "complete"})
+        previous_umask = os.umask(0o077)
+        self.addCleanup(os.umask, previous_umask)
+        with (
+            patch("sys.argv", ["nixos-bootstrap", "retry"]),
+            patch("sys.stderr", new_callable=io.StringIO) as error,
+            self.assertRaises(SystemExit) as result,
+        ):
+            worker.cli()
+        self.assertEqual(result.exception.code, 1)
+        self.assertIn("already completed", error.getvalue())
+        self.assertIn("systemctl start nixos-upgrade.service", error.getvalue())
+        self.assertNotIn("Traceback", error.getvalue())
+        self.assertEqual(worker.read_record("complete")["stage"], "complete")
 
     def test_completion_needs_new_boot_and_exact_closure(self):
         worker.write_record("status", self.record)

@@ -13,6 +13,7 @@ import signal
 import socket
 import stat
 import subprocess
+import sys
 import time
 import uuid
 from urllib.parse import quote, urlsplit
@@ -322,7 +323,10 @@ def complete():
 
 def retry():
     if completed():
-        raise ValueError("Completed machines cannot bootstrap again")
+        raise ValueError(
+            "Bootstrap already completed. To update this machine, run: "
+            "systemctl start nixos-upgrade.service"
+        )
     record = read_record("status")
     if record:
         check_identity(record)
@@ -370,5 +374,13 @@ def main():
             retry()
 
 
+def cli():
+    try:
+        main()
+    except (ValueError, RuntimeError, OSError) as error:
+        print(f"nixos-bootstrap: {error}", file=sys.stderr)
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    main()
+    cli()
