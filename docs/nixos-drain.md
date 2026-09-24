@@ -19,7 +19,10 @@ Scripts should print short progress lines and flush buffered output.
 
 Only one drain can own a host. Repeating its profile joins the current attempt or
 returns its successful result. Another profile is rejected until cancellation.
-Failed and timed-out attempts also require explicit cancellation before retrying.
+Failed and timed-out attempts require explicit cancellation before retrying unless
+the profile enables `cancelOnFailure`. With that option, failure or worker
+termination automatically starts cancellation; the drain caller still fails.
+Cleanup failures remain visible and require an explicit `cancel` retry.
 
 `cancel` stops the drain script and runs that profile's cancellation script. It
 does not stop the application service. Successful cleanup releases the host for a
@@ -36,6 +39,7 @@ services.nixos-drain = {
   timeoutSeconds = 3600;
   profiles = {
     upgrade = {
+      cancelOnFailure = true;
       script = ''
         ${myApplication}/bin/drain
       '';
@@ -87,9 +91,18 @@ active ones. Token rotation is picked up at the next ephemeral registration,
 rather than restarting a runner mid-job.
 
 An idle, already registered runner is allowed one final job. If no job arrives,
-the drain can time out. Timeout leaves the runner alive and the maintenance
-marker in place. Inspect status and use `cancel` to resume registration. Missing
-or failed services are reported as errors rather than assumed safe.
+the drain can time out. The runner `upgrade` profile enables `cancelOnFailure`:
+timeout or failure removes the maintenance marker and starts inactive services,
+without interrupting a running job. The upgrade fails without rebooting and can
+retry on its next schedule. Destroy and maintenance profiles keep the marker
+until an explicit `cancel`. Missing or failed services are reported as errors
+rather than assumed safe.
+
+Previously, an upgrade timeout left the marker in place. A runner could remain
+connected for hours, finish its next job successfully, then disappear because
+its next registration was blocked. Automatic upgrade cancellation prevents this
+delayed loss of capacity. An attempt created before this change still uses its
+captured settings and needs a one-time `nixos-drain cancel`.
 
 ## Upgrades and Terraform
 

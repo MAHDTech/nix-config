@@ -19,6 +19,11 @@ let
         default = "";
         description = "Commands to undo a drain, including a partially completed or failed drain.";
       };
+      cancelOnFailure = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Automatically run cancellation after a failed, timed-out or interrupted drain. The drain caller still fails.";
+      };
       timeoutSeconds = lib.mkOption {
         type = lib.types.ints.positive;
         default = cfg.timeoutSeconds;
@@ -28,7 +33,7 @@ let
     };
   };
   profiles = lib.mapAttrs (name: profile: {
-    inherit (profile) timeoutSeconds;
+    inherit (profile) timeoutSeconds cancelOnFailure;
     notificationOnly = profile.script == "";
     script = pkgs.writeShellScript "nixos-drain-${name}" ''
       set -euo pipefail

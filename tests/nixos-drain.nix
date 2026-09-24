@@ -82,9 +82,24 @@ pkgs.testers.runNixOSTest {
 
     # An idle registration is also allowed to wait for its final job until timeout.
     runner.fail("nixos-drain drain --profile upgrade")
+    runner.succeed("nixos-drain status | grep 'Drain cancelled after failure'")
+    runner.succeed("test -f /run/job-active; test ! -e /run/nixos-drain/github-runners/maintenance")
+    runner.succeed("touch /run/finish-job")
+    runner.wait_until_succeeds("test $(wc -l < /run/registrations) -eq 3")
+    runner.wait_for_file("/run/job-active")
+
+    # A destroy timeout still blocks registration until an explicit cancel.
+    runner.fail("nixos-drain drain --profile destroy")
     runner.succeed("nixos-drain status | grep timed-out")
-    runner.succeed("test -f /run/job-active; test -f /run/nixos-drain/github-runners/maintenance")
+    runner.succeed("test -f /run/nixos-drain/github-runners/maintenance")
     runner.succeed("nixos-drain cancel")
+
+    # Worker termination also restores registration for upgrade profiles.
+    runner.succeed("nixos-drain drain --profile upgrade > /run/client.log 2>&1 &")
+    runner.wait_for_file("/run/nixos-drain/github-runners/maintenance")
+    runner.succeed("systemctl stop $(python3 -c 'import json; print(json.load(open(\"/run/nixos-drain/status.json\"))[\"unit\"])')")
+    runner.wait_until_succeeds("nixos-drain status | grep 'State:     cancelled'")
+    runner.succeed("test -f /run/job-active; test ! -e /run/nixos-drain/github-runners/maintenance")
 
     # An abruptly stopped worker cannot leave a caller waiting forever.
     runner.succeed("nixos-drain drain --profile maintenance > /run/client.log 2>&1 &")

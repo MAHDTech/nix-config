@@ -193,7 +193,7 @@ in
           environment.RUNNER_FLAKE = "github:MAHDTech/nix-config";
           serviceConfig.EnvironmentFile = "-/etc/github-runner-bootstrap";
           serviceConfig.TimeoutStartSec = lib.mkForce (
-            7200 + config.services.nixos-drain.profiles.upgrade.timeoutSeconds + 60
+            7200 + 2 * config.services.nixos-drain.profiles.upgrade.timeoutSeconds + 60
           );
           script = lib.mkForce ''
             ${config.system.build.nixos-rebuild}/bin/nixos-rebuild boot \

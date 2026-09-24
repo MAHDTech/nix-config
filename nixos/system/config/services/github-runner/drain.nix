@@ -36,7 +36,9 @@ in
   services.nixos-drain = {
     enable = true;
     profiles = {
-      upgrade = profile;
+      upgrade = profile // {
+        cancelOnFailure = true;
+      };
       destroy = profile;
       maintenance = profile;
     };

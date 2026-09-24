@@ -47,12 +47,13 @@ class DrainTest(unittest.TestCase):
         path.chmod(0o755)
         return str(path)
 
-    def configure(self, script="true", cancel="true", timeout=1):
+    def configure(self, script="true", cancel="true", timeout=1, cancel_on_failure=False):
         profile = {
             "script": self.script("drain.sh", script),
             "cancelScript": self.script("cancel.sh", cancel),
             "timeoutSeconds": timeout,
             "notificationOnly": script == "true",
+            "cancelOnFailure": cancel_on_failure,
         }
         drain.CONFIG.write_text(json.dumps(dict(upgrade=profile, destroy=profile)))
 
@@ -129,6 +130,52 @@ class DrainTest(unittest.TestCase):
         self.work(attempt, "cancelling")
         self.assertEqual(drain.wait(attempt, "drained"), 1)
         self.assertEqual(drain.wait(attempt, "cancelled"), 0)
+
+    def test_upgrade_timeout_recovers_registration_before_next_job_exits(self):
+        marker = self.root / "maintenance"
+        self.configure(f'touch "{marker}"; sleep 5', cancel=f'rm -f "{marker}"',
+                       cancel_on_failure=True)
+        attempt = drain.request("upgrade")
+        with self.assertRaises(TimeoutError):
+            self.work(attempt)
+        self.assertEqual(drain.read()["state"], "cancelling")
+        self.work(attempt, "cancelling")
+        self.assertEqual(runner.gate(), 0)
+        self.assertEqual(drain.wait(attempt, "drained"), 1)
+        self.assertIn("timed out", drain.read()["failure"])
+        self.assertNotEqual(drain.request("upgrade"), attempt)
+
+    def test_automatic_cleanup_failure_does_not_loop(self):
+        self.configure("exit 7", cancel="exit 8", cancel_on_failure=True)
+        attempt = drain.request("upgrade")
+        with self.assertRaises(RuntimeError):
+            self.work(attempt)
+        self.assertEqual(drain.read()["state"], "cancelling")
+        with self.assertRaises(RuntimeError):
+            self.work(attempt, "cancelling")
+        self.assertEqual(drain.read()["state"], "failed")
+        self.assertEqual(self.launch_mock.call_count, 2)
+
+    def test_stale_failure_cannot_cancel_a_new_attempt(self):
+        self.configure(cancel_on_failure=True)
+        old = drain.request("upgrade")
+        old_unit = drain.read()["unit"]
+        drain.cancel()
+        self.work(old, "cancelling")
+        current = drain.request("destroy")
+        drain.fail(old, "draining", old_unit, RuntimeError("late failure"))
+        self.assertEqual(drain.read()["attempt"], current)
+        self.assertEqual(drain.read()["state"], "draining")
+
+    def test_automatic_cleanup_launch_failure_allows_manual_retry(self):
+        self.configure(cancel_on_failure=True)
+        attempt = drain.request("upgrade")
+        with patch.object(drain, "launch", side_effect=RuntimeError("systemd unavailable")):
+            drain.fail(attempt, "draining", drain.read()["unit"], TimeoutError("timed out"))
+        self.assertEqual(drain.read()["state"], "failed")
+        drain.cancel()
+        self.work(attempt, "cancelling")
+        self.assertEqual(drain.read()["state"], "cancelled")
 
     def test_cancellation_failure_can_be_retried(self):
         allowed = self.root / "allow-cleanup"

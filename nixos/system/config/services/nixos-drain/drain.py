@@ -115,6 +115,27 @@ def cancel():
         return state["attempt"]
 
 
+def fail(attempt, phase, unit, error):
+    with locked():
+        state = read()
+        if state.get("attempt") != attempt or state["state"] != phase or state.get("unit") != unit:
+            return
+        state.update(
+            state="timed-out" if isinstance(error, (TimeoutError, subprocess.TimeoutExpired)) else "failed",
+            progress=str(error), finished=time.time(),
+        )
+        if phase == "draining" and state["settings"].get("cancelOnFailure", False):
+            state.update(state="cancelling", failure=str(error), drainUnit=unit,
+                         progress=f"Undoing failed drain: {error}")
+            state.pop("finished", None)
+            try:
+                launch(state, "cancelling")
+            except Exception as cleanup_error:
+                state.update(state="failed", finished=time.time(),
+                             progress=f"Could not start automatic cancellation: {cleanup_error}; run cancel")
+        save(state)
+
+
 def run_script(state, phase):
     settings = state["settings"]
     script = settings["script" if phase == "draining" else "cancelScript"]
@@ -130,7 +151,7 @@ def run_script(state, phase):
             selector.register(process.stdout, selectors.EVENT_READ)
             while selector.get_map():
                 if time.monotonic() >= deadline:
-                    raise TimeoutError("Profile script timed out; cancel to undo partial drain actions")
+                    raise TimeoutError("Profile script timed out")
                 for key, _ in selector.select(timeout=0.2):
                     chunk = os.read(key.fileobj.fileno(), 4096)
                     if not chunk:
@@ -179,15 +200,13 @@ def worker(attempt, phase, unit):
             attempt, phase, unit, state="drained" if phase == "draining" else "cancelled",
             progress="Notification only; no application drain configured"
             if phase == "draining" and state["settings"]["notificationOnly"]
-            else "Drain complete" if phase == "draining" else "Drain cancelled",
+            else "Drain complete" if phase == "draining"
+            else f"Drain cancelled after failure: {state['failure']}" if "failure" in state
+            else "Drain cancelled",
             finished=time.time(),
         )
     except Exception as error:
-        update(
-            attempt, phase, unit,
-            state="timed-out" if isinstance(error, (TimeoutError, subprocess.TimeoutExpired)) else "failed",
-            progress=str(error), finished=time.time(),
-        )
+        fail(attempt, phase, unit, error)
         raise
 
 
@@ -244,7 +263,7 @@ def main():
     if args.command == "_worker":
         worker(args.attempt, args.phase, args.unit)
     else:
-        update(args.attempt, args.phase, args.unit, state="failed", progress="Worker stopped unexpectedly; cancel to clean up", finished=time.time())
+        fail(args.attempt, args.phase, args.unit, RuntimeError("Worker stopped unexpectedly"))
     return 0
 
 
