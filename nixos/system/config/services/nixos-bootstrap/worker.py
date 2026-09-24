@@ -233,6 +233,7 @@ def dispatch(timeout):
                     "nix",
                     "flake",
                     "metadata",
+                    "--refresh",
                     "--accept-flake-config",
                     "--json",
                     "--no-write-lock-file",
@@ -332,7 +333,7 @@ def retry():
         write_record("previous-attempt", record)
         (ROOT / "status.json").unlink()
     print(
-        "Retry authorized; the next readiness check will resolve the configured ref again"
+        "Retry authorized; the next readiness check will force-refresh the configured ref"
     )
 
 

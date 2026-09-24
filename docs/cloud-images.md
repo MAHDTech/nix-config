@@ -79,7 +79,10 @@ nixos-bootstrap status
 sudo nixos-bootstrap retry
 ```
 
-Retries are explicit: the next readiness check resolves the ref again. A lock
+Retries are explicit: the next readiness check force-refreshes the configured ref
+using `nix flake metadata --refresh`, bypassing cached branch metadata. Initial
+attempts also force a refresh; the build then uses the resolved commit with its
+lock file unchanged. A lock
 prevents overlapping attempts. Failures retain diagnostics and do not automatically
 retry. Pending reboot and verification mismatch refuse rebuilds; investigate the
 bootloader/system and preserve the evidence. Completed hosts cannot be retried.

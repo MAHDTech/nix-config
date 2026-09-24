@@ -138,6 +138,7 @@ class BootstrapTest(unittest.TestCase):
         self.assertIn("/" + "c" * 40 + "#nixosConfigurations.guest", commands[1][-1])
         self.assertIn("--no-update-lock-file", commands[1])
         self.assertIn("--accept-flake-config", commands[0])
+        self.assertIn("--refresh", commands[0])
         self.assertIn("--accept-flake-config", commands[1])
         self.assertEqual(
             commands[-2], ["/nix/store/final/bin/switch-to-configuration", "boot"]
@@ -157,6 +158,10 @@ class BootstrapTest(unittest.TestCase):
         worker.retry()
         self.assertFalse(worker.read_record("status"))
         self.assertEqual(worker.read_record("previous-attempt")["stage"], "failed")
+        with patch.object(worker, "command", side_effect=RuntimeError("stop after resolution")) as run:
+            with self.assertRaises(RuntimeError):
+                worker.dispatch(86400)
+            self.assertIn("--refresh", run.call_args.args[0])
 
     def test_interrupted_attempt_becomes_failure(self):
         worker.write_record("status", self.record | {"stage": "building"})
