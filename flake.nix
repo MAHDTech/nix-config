@@ -109,14 +109,24 @@
     {
       nixosConfigurations = hosts.configs // installerConfigs;
 
-      checks.x86_64-linux.nixos-drain = import ./tests/nixos-drain.nix {
-        pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-      };
-      checks.x86_64-linux.cloudflare-acme = import ./tests/cloudflare-acme.nix {
-        pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-        opnixModule = inputs.opnix.nixosModules.default;
-      };
+      checks.x86_64-linux = {
+        nixos-drain = import ./tests/nixos-drain.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+        };
+        cloudflare-acme = import ./tests/cloudflare-acme.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          opnixModule = inputs.opnix.nixosModules.default;
+        };
+        beszel = import ./tests/beszel.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          opnixModule = inputs.opnix.nixosModules.default;
+        };
+        beszel-options = import ./tests/beszel-options.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          opnixModule = inputs.opnix.nixosModules.default;
+        };
 
+      };
       homeConfigurations = forEachSystem (system: {
         ${mylib.globalUsername} = mylib.mkHome { inherit system; };
       });

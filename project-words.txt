@@ -2071,3 +2071,6 @@ addext
 keyout
 fastcgi
 scgi
+beszel
+smartmon
+getkey

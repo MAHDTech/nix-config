@@ -1,9 +1,28 @@
-# cspell:ignore localtime nosniff
-{ config, lib, ... }:
+# cspell:ignore nosniff
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.services.nix-cache-proxy;
   upstreams = builtins.fromJSON (
     builtins.readFile ../../system/config/services/nix-cache/upstreams.json
+  );
+  landingPage = pkgs.writeText "nix-cache-index.html" (
+    builtins.replaceStrings
+      [ "@hostname@" "@system@" "@version@" "@hub@" "@upstreams@" ]
+      [
+        (lib.escapeXML config.networking.hostName)
+        (lib.escapeXML pkgs.stdenv.hostPlatform.system)
+        (lib.escapeXML config.system.nixos.release)
+        (lib.escapeXML (import ../fleet.nix).beszel.url)
+        (lib.concatMapStringsSep "\n" (upstream: ''
+          <li><a href="${lib.escapeXML upstream.prefix}/nix-cache-info"><span>${lib.escapeXML upstream.name}</span><span class="origin">${lib.escapeXML upstream.host}</span><span aria-hidden="true">↗</span></a></li>
+        '') upstreams)
+      ]
+      (builtins.readFile ./landing.html)
   );
   proxySettings = host: ''
     proxy_set_header Host ${host};
@@ -85,8 +104,9 @@ in
           default 1;
           200 0;
         }
-        log_format nix_cache '$remote_addr "$request" $status $body_bytes_sent '
-                              '$upstream_cache_status $request_time';
+        log_format nix_cache escape=json '{"time":"$time_iso8601","method":"$request_method",'
+          '"uri":"$uri","status":$status,"bytes":$body_bytes_sent,'
+          '"cache":"$upstream_cache_status","duration":$request_time}';
       '';
       virtualHosts."nix-cache.slopageddon.app" = {
         extraConfig = ''
@@ -95,26 +115,32 @@ in
           deny all;
         '';
         locations = builtins.listToAttrs (lib.concatMap cacheLocations upstreams) // {
-          "= /_browser.css" = {
-            alias = "${./browser.css}";
+          "= /_landing.css" = {
+            alias = "${./landing.css}";
             extraConfig = ''
               default_type text/css;
+              access_log off;
               limit_except GET { deny all; }
               add_header X-Content-Type-Options "nosniff" always;
             '';
           };
-          "/" = {
-            root = "/var/cache/nginx/nixpkgs";
+          "= /" = {
+            root = pkgs.linkFarm "nix-cache-landing" [
+              {
+                name = "index.html";
+                path = landingPage;
+              }
+            ];
+            tryFiles = "/index.html =404";
             extraConfig = ''
-              autoindex on;
-              autoindex_exact_size off;
-              autoindex_localtime on;
-              sub_filter '</head>' '<meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/_browser.css"></head>';
-              sub_filter_once on;
+              default_type text/html;
+              access_log off;
               limit_except GET { deny all; }
               add_header X-Content-Type-Options "nosniff" always;
+              add_header Cache-Control "no-cache";
             '';
           };
+          "/".return = "404";
         };
       };
     };

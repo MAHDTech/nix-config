@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Nix Cache // Slopageddon</title>
+    <link rel="stylesheet" href="/_landing.css" />
+  </head>
+  <body>
+    <main>
+      <header class="masthead">
+        <span class="brand">SLOPAGEDDON<span class="brand-mark">_</span></span>
+        <span class="tag">INFRASTRUCTURE / 01</span>
+      </header>
+      <section class="hero" aria-labelledby="title">
+        <p class="eyebrow">BINARY CACHE // READ ONLY</p>
+        <h1 id="title">Build less.<br /><span>Ship more.</span></h1>
+        <p class="intro">
+          Your local gateway to Nix packages.<br />One place to find the cache and the fleet behind
+          it.
+        </p>
+        <div class="identity"><span>@hostname@</span><span>NIX CACHE</span></div>
+      </section>
+      <a class="hub-card" href="@hub@">
+        <div>
+          <span class="eyebrow">01 / OBSERVABILITY</span>
+          <h2>Open the hub <span aria-hidden="true">↗</span></h2>
+          <p>Host metrics, service status and fleet history in Beszel.</p>
+        </div>
+        <span class="button-label">VIEW FLEET <span aria-hidden="true">→</span></span>
+      </a>
+      <section class="cache-panel" aria-labelledby="upstreams-title">
+        <div class="panel-heading">
+          <h2 id="upstreams-title">Cache endpoints</h2>
+          <span class="tag">02 / UPSTREAMS</span>
+        </div>
+        <p class="muted">Endpoint links open their cache information.</p>
+        <ul class="upstreams">
+          @upstreams@
+        </ul>
+      </section>
+      <footer>
+        <dl>
+          <div>
+            <dt>HOST</dt>
+            <dd>@hostname@</dd>
+          </div>
+          <div>
+            <dt>CONFIGURATION</dt>
+            <dd>NixOS @version@</dd>
+          </div>
+          <div>
+            <dt>ARCHITECTURE</dt>
+            <dd>@system@</dd>
+          </div>
+        </dl>
+        <p>Declared configuration. Live status is available in the hub.</p>
+        <span class="footer-mark" aria-hidden="true">// END OF LINE</span>
+      </footer>
+    </main>
+  </body>
+</html>

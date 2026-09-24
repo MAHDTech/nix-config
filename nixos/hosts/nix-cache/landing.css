@@ -1,0 +1,228 @@
+:root {
+  color-scheme: dark;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  background: #080b14;
+  color: #d5e1f0;
+  --cyan: #71f7f0;
+  --pink: #ff83c1;
+  --muted: #9aaabd;
+  --line: #26364c;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 90% 15%, #281329 0, transparent 48%),
+    linear-gradient(90deg, #71f7f003 1px, transparent 1px);
+  background-size:
+    auto,
+    48px 48px;
+}
+main {
+  max-width: 1080px;
+  margin: auto;
+  padding: 2rem clamp(1.25rem, 5vw, 4rem);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:focus-visible {
+  outline: 2px solid #ffd479;
+  outline-offset: 5px;
+}
+.masthead,
+.panel-heading,
+.hub-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.masthead {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1.5rem;
+}
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.brand-mark {
+  color: var(--pink);
+}
+.tag,
+.eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+}
+.tag {
+  color: var(--muted);
+}
+.eyebrow {
+  color: var(--cyan);
+}
+.hero {
+  padding: 4.5rem 0 3rem;
+}
+h1 {
+  font-family: system-ui, sans-serif;
+  font-size: clamp(3.5rem, 9vw, 6rem);
+  line-height: 1.03;
+  letter-spacing: -0.06em;
+  margin: 1.2rem 0;
+}
+h1 span {
+  color: var(--cyan);
+  text-shadow: 0 0 45px #71f7f01a;
+}
+.intro {
+  font-family: system-ui, sans-serif;
+  color: #b5c1d2;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+.identity {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.8rem;
+  font-size: 0.7rem;
+}
+.identity span {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+}
+.identity span:first-child {
+  border-color: #713653;
+  color: var(--pink);
+}
+.hub-card {
+  padding: 1.7rem;
+  border: 1px solid #347779;
+  border-left: 3px solid var(--cyan);
+  background: linear-gradient(100deg, #102329, #101623);
+  box-shadow: 0 0 35px #71f7f006;
+}
+.hub-card:hover {
+  border-color: var(--cyan);
+  background: #13282e;
+}
+h2 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0.7rem 0;
+}
+.hub-card h2 {
+  font-family: system-ui, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+.hub-card h2 span {
+  color: var(--cyan);
+}
+.hub-card p {
+  font-family: system-ui, sans-serif;
+  color: #b5c1d2;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+.button-label {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--cyan);
+}
+.cache-panel {
+  margin-top: 2rem;
+  padding: 1.5rem 1.7rem;
+  background: #0e1522;
+  border: 1px solid var(--line);
+}
+.muted {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.upstreams {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+}
+.upstreams li {
+  border-top: 1px solid var(--line);
+}
+.upstreams a {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  font-size: 0.8rem;
+}
+.upstreams a:hover {
+  color: var(--cyan);
+}
+.origin {
+  color: var(--muted);
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+.upstreams a > :last-child {
+  color: var(--pink);
+}
+footer {
+  padding: 2rem 0 1rem;
+  color: var(--muted);
+}
+dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 3rem;
+}
+dt {
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+}
+dd {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #c7d3e3;
+}
+footer p {
+  font-size: 0.65rem;
+  line-height: 1.6;
+}
+.footer-mark {
+  display: block;
+  margin-top: 2rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--pink);
+}
+@media (max-width: 650px) {
+  .masthead > .tag {
+    display: none;
+  }
+  .hero {
+    padding-top: 3rem;
+  }
+  .hub-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .button-label {
+    margin-top: 0.75rem;
+  }
+  .upstreams a {
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+  }
+  .upstreams a .origin {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .upstreams a > :last-child {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+}

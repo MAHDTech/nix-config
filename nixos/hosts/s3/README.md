@@ -4,6 +4,10 @@ This host runs RustFS with an internal S3 API at `https://s3.slopageddon.app`
 and the authenticated web console at `https://s3-console.slopageddon.app`.
 It stores disposable CI caches, not durable release artifacts or backups.
 
+The host also runs a Beszel agent reporting to `https://hub.slopageddon.app`.
+Its additional Opnix references are listed in the [hub setup](../hub/README.md).
+Monitoring uses outbound HTTPS and does not change S3 API or console routes.
+
 ## Deployment
 
 Use the existing generic QEMU image and guest-owned bootstrap process described in

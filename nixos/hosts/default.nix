@@ -1,28 +1,17 @@
 { mylib, inputs, ... }:
 let
-  inherit (mylib) mkHost;
-  runnerNames = [
-    "github-runner-01"
-    "github-runner-02"
-    "github-runner-03"
-    "github-runner-04"
-    "github-runner-05"
-    "github-runner-06"
-    "github-runner-07"
-    "github-runner-08"
-    "github-runner-09"
-    "github-runner-10"
-    "github-runner-11"
-    "github-runner-12"
-    "github-runner-13"
-    "github-runner-14"
-    "github-runner-15"
-    "github-runner-16"
-    "github-runner-17"
-    "github-runner-18"
-    "github-runner-19"
-    "github-runner-20"
-  ];
+  fleet = import ./fleet.nix;
+  inherit (fleet) runnerNames;
+  mkHost =
+    args:
+    mylib.mkHost (
+      args
+      // {
+        extraModules =
+          (args.extraModules or [ ])
+          ++ inputs.nixpkgs.lib.optional (builtins.hasAttr args.name fleet.beszel.members) ./beszel-agent.nix;
+      }
+    );
 in
 {
   # Metadata for other flake outputs
@@ -34,6 +23,12 @@ in
   #              system.autoUpgrade.flags. Any Nix setting works; unset keys
   #              keep the fleet default from nixos/system/soe/nix.
   list = [
+    {
+      name = "hub";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+      nixSettings = { };
+    }
     {
       name = "s3";
       system = "x86_64-linux";
@@ -111,6 +106,13 @@ in
       }
     )
     // rec {
+      hub = mkHost {
+        name = "hub";
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "server";
+        enableHomeManager = false;
+      };
       s3 = mkHost {
         name = "s3";
         system = "x86_64-linux";

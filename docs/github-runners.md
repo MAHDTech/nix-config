@@ -1,5 +1,10 @@
 # GitHub runner VMs
 
+All twenty dedicated runners are Beszel agents reporting to
+`https://hub.slopageddon.app`. Their Opnix service accounts need the additional
+`fleet` references documented in the [hub setup](../nixos/hosts/hub/README.md).
+Monitoring uses outbound HTTPS; no additional inbound runner port is opened.
+
 The twenty `github-runner-01` through `github-runner-20` hosts share a common
 base configuration. `github-runner-01` through `github-runner-10` register in
 the enterprise `tars-cloud` runner group (token reference: `op://fleet/GitHub Runner/credential`),
