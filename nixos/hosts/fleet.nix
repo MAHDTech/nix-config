@@ -17,7 +17,7 @@ in
         (name: {
           inherit name;
           value = {
-            host = name;
+            host = "${name}.slopageddon.app";
             tokenReference = "op://fleet/Beszel Agents/${name}";
           };
         })

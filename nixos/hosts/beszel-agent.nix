@@ -7,6 +7,8 @@ in
   imports = [ ../system/config/services/beszel/agent ];
   services.beszel.agent = {
     enable = true;
+    openFirewall = true;
+    environment.DISABLE_SSH = "false";
     environment.HUB_URL = lib.mkDefault fleet.url;
     opnix = {
       enable = true;

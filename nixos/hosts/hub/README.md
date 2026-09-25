@@ -23,9 +23,13 @@ Outbound DNS and HTTPS access to 1Password, Cloudflare and Let's Encrypt is requ
 
 The default frontend allowlist permits RFC1918 and loopback addresses. Override
 `services.beszel.hub.frontend.allowedNetworks` to narrow it or add routed IPv6
-networks. Agents initiate HTTPS connections; their Beszel SSH listeners are
-disabled and port 45876 remains closed. Administrative SSH retains its existing
-key-based policy.
+networks. Agents initiate HTTPS connections and also accept Beszel SSH fallback
+on TCP 45876, opened by the native NixOS agent firewall option. This port is not
+restricted to the hub's source IP; the agent authenticates the existing Beszel
+hub key delivered through Opnix. No additional administrator keys are needed.
+The Beszel inventory uses fully qualified
+`<name>.slopageddon.app` addresses while retaining short display names.
+Administrative SSH on port 22 retains its existing key-based policy.
 
 ## Required 1Password items
 
