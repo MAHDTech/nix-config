@@ -10,37 +10,31 @@
   <body>
     <main>
       <header class="masthead">
-        <span class="brand">SLOPAGEDDON<span class="brand-mark">_</span></span>
-        <span class="tag">INFRASTRUCTURE / 01</span>
+        <span class="brand">SLOPAGEDDON<span class="brand-mark" aria-hidden="true">_</span></span>
+        <a class="header-link" href="@hub@">Open hub <span aria-hidden="true">↗</span></a>
       </header>
       <section class="hero" aria-labelledby="title">
-        <p class="eyebrow">BINARY CACHE // READ ONLY</p>
         <h1 id="title">Build less.<br /><span>Ship more.</span></h1>
-        <p class="intro">
-          Your local gateway to Nix packages.<br />One place to find the cache and the fleet behind
-          it.
-        </p>
-        <div class="identity"><span>@hostname@</span><span>NIX CACHE</span></div>
+        <p class="intro">Shared Nix packages for the Slopageddon fleet.</p>
       </section>
-      <a class="hub-card" href="@hub@">
+      <a class="panel hub-card" href="@hub@">
         <div>
-          <span class="eyebrow">01 / OBSERVABILITY</span>
-          <h2>Open the hub <span aria-hidden="true">↗</span></h2>
+          <h2 class="panel-title">OBSERVABILITY</h2>
+          <h3>Open the hub <span aria-hidden="true">↗</span></h3>
           <p>Host metrics, service status and fleet history in Beszel.</p>
         </div>
         <span class="button-label">VIEW FLEET <span aria-hidden="true">→</span></span>
       </a>
-      <section class="cache-panel" aria-labelledby="upstreams-title">
-        <div class="panel-heading">
-          <h2 id="upstreams-title">Cache endpoints</h2>
-          <span class="tag">02 / UPSTREAMS</span>
-        </div>
+      <section class="panel" aria-labelledby="upstreams-title">
+        <h2 class="panel-title" id="upstreams-title">UPSTREAMS</h2>
+        <h3>Cache endpoints</h3>
         <p class="muted">Endpoint links open their cache information.</p>
         <ul class="upstreams">
           @upstreams@
         </ul>
       </section>
-      <footer>
+      <section class="panel" aria-labelledby="summary-title">
+        <h2 class="panel-title" id="summary-title">SYSTEM SUMMARY</h2>
         <dl>
           <div>
             <dt>HOST</dt>
@@ -55,9 +49,8 @@
             <dd>@system@</dd>
           </div>
         </dl>
-        <p>Declared configuration. Live status is available in the hub.</p>
-        <span class="footer-mark" aria-hidden="true">// END OF LINE</span>
-      </footer>
+        <p class="muted">Declared configuration. Live status is available in the hub.</p>
+      </section>
     </main>
   </body>
 </html>
