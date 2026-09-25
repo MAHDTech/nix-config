@@ -47,6 +47,9 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     config = config.replace('/var/cache/nginx/nixpkgs', str(root / 'cache'))
     config = config.replace('min_free=100g', 'min_free=0').replace('keys_zone=nixpkgs:128m', 'keys_zone=nixpkgs:1m')
     config = config.replace('/var/log/nginx/nix-cache-access.log', str(root / 'access.log'))
+    snapshot = b'{"checked_at":"2026-09-25T00:00:00+00:00","endpoints":[]}'
+    (root / 'summary.json').write_bytes(snapshot)
+    config = config.replace('/var/lib/nix-cache-summary/summary.json', str(root / 'summary.json'))
     config = config.replace('https://$nix_cache_upstream', f'http://127.0.0.1:{upstream.server_port}')
     (root / 'nginx.conf').write_text(config)
     proc = subprocess.Popen([nginx, '-p', tmp, '-c', str(root / 'nginx.conf')], stderr=subprocess.PIPE)
@@ -67,10 +70,20 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         assert status == 200 and b'https://hub.slopageddon.app' in body
         assert headers['Content-Type'] == 'text/html'
         assert b'@hostname@' not in body
+        assert b'Endpoint links open' not in body
+        assert b'href="/devenv/nix-cache-info"' not in body
+        assert b'data-endpoint="devenv"' in body
         assert get('/', 'HEAD')[0] == 200
         assert get('/', 'POST')[0] == 403
         status, headers, body = get('/_landing.css')
         assert status == 200 and headers['Content-Type'] == 'text/css'
+        status, headers, body = get('/_landing.js')
+        assert status == 200 and headers['Content-Type'] == 'application/javascript'
+        status, headers, body = get('/_dashboard/summary.json')
+        assert status == 200 and body == snapshot
+        assert headers['Content-Type'] == 'application/json'
+        assert headers['Cache-Control'] == 'no-store'
+        assert get('/_dashboard/summary.json', 'POST')[0] == 403
         assert get('/unknown')[0] == 404
         prefixes = ['', '/bingamon-lab', '/bingamon-lab-tf-modules', '/devenv', '/tars-cloud']
         for prefix in prefixes:
@@ -95,7 +108,7 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         upstream.shutdown()
     logs = [json.loads(line) for line in (root / 'access.log').read_text().splitlines()]
     assert logs and all('private' not in entry['uri'] for entry in logs)
-    assert all(entry['uri'] not in ['/', '/_landing.css'] for entry in logs)
+    assert all(entry['uri'] not in ['/', '/_landing.css', '/_landing.js', '/_dashboard/summary.json'] for entry in logs)
     for entry in logs:
         datetime.datetime.fromisoformat(entry['time'])
     print('PASS: landing, CSS, methods, all 15 cache routes MISS/HIT/HEAD, uncached 404s, timestamped JSON logs')

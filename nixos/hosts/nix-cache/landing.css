@@ -155,24 +155,42 @@ h3 {
 .upstreams li {
   border-top: 1px solid var(--line);
 }
-.upstreams a {
+.upstreams li {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
   padding: 1rem 0;
   font-size: 0.8rem;
 }
-.upstreams a:hover {
+.upstreams li > div {
+  display: grid;
+  gap: 0.5rem;
+}
+.endpoint-summary {
+  text-align: right;
+}
+.endpoint-status {
+  color: var(--muted);
+}
+.endpoint-status[data-state="reachable"] {
   color: var(--cyan);
+}
+.endpoint-status[data-state="stale"] {
+  color: #ffd479;
+}
+.endpoint-status[data-state="unavailable"],
+.endpoint-status[data-state="invalid"] {
+  color: var(--pink);
+}
+.endpoint-metrics {
+  color: var(--muted);
+  font-size: 0.7rem;
 }
 .origin {
   color: var(--muted);
   font-size: 0.7rem;
   overflow-wrap: anywhere;
-}
-.upstreams a > :last-child {
-  color: var(--pink);
 }
 dl {
   display: grid;
@@ -206,16 +224,11 @@ dd {
   dl {
     grid-template-columns: 1fr;
   }
-  .upstreams a {
-    grid-template-columns: 1fr auto;
-    gap: 0.5rem;
+  .upstreams li {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
-  .upstreams a .origin {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .upstreams a > :last-child {
-    grid-column: 2;
-    grid-row: 1 / 3;
+  .endpoint-summary {
+    text-align: left;
   }
 }

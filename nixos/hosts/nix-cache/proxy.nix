@@ -19,7 +19,7 @@ let
         (lib.escapeXML config.system.nixos.release)
         (lib.escapeXML (import ../fleet.nix).beszel.url)
         (lib.concatMapStringsSep "\n" (upstream: ''
-          <li><a href="${lib.escapeXML upstream.prefix}/nix-cache-info"><span>${lib.escapeXML upstream.name}</span><span class="origin">${lib.escapeXML upstream.host}</span><span aria-hidden="true">↗</span></a></li>
+          <li data-endpoint="${lib.escapeXML upstream.name}"><div><span>${lib.escapeXML upstream.name}</span><span class="origin">${lib.escapeXML upstream.host}</span></div><div class="endpoint-summary"><span class="endpoint-status">Not checked</span><span class="endpoint-metrics">—</span></div></li>
         '') upstreams)
       ]
       (builtins.readFile ./landing.html)
@@ -83,6 +83,39 @@ in
   };
 
   config = {
+    users.groups.nix-cache-summary = { };
+    users.users.nix-cache-summary = {
+      isSystemUser = true;
+      group = "nix-cache-summary";
+    };
+    systemd.services.nix-cache-summary = {
+      description = "Collect lightweight upstream cache metadata";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      path = [ pkgs.curl ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "nix-cache-summary";
+        Group = "nix-cache-summary";
+        StateDirectory = "nix-cache-summary";
+        StateDirectoryMode = "0755";
+        ExecStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-summary/summary.json";
+        TimeoutStartSec = "30s";
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        MemoryMax = "128M";
+      };
+    };
+    systemd.timers.nix-cache-summary = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "1min";
+        OnCalendar = "*:0/15";
+        Persistent = true;
+      };
+    };
     networking.firewall.allowedTCPPorts = [ 443 ];
     services.nginx = {
       enable = true;
@@ -115,6 +148,26 @@ in
           deny all;
         '';
         locations = builtins.listToAttrs (lib.concatMap cacheLocations upstreams) // {
+          "= /_dashboard/summary.json" = {
+            alias = "/var/lib/nix-cache-summary/summary.json";
+            extraConfig = ''
+              default_type application/json;
+              access_log off;
+              limit_except GET { deny all; }
+              add_header Cache-Control "no-store" always;
+              add_header X-Content-Type-Options "nosniff" always;
+            '';
+          };
+          "= /_landing.js" = {
+            alias = "${./landing.js}";
+            extraConfig = ''
+              types { }
+              default_type application/javascript;
+              access_log off;
+              limit_except GET { deny all; }
+              add_header X-Content-Type-Options "nosniff" always;
+            '';
+          };
           "= /_landing.css" = {
             alias = "${./landing.css}";
             extraConfig = ''

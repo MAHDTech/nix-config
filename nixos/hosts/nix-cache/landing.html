@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="dark" />
     <title>Nix Cache // Slopageddon</title>
     <link rel="stylesheet" href="/_landing.css" />
+    <script src="/_landing.js" defer></script>
   </head>
   <body>
     <main>
@@ -28,7 +29,9 @@
       <section class="panel" aria-labelledby="upstreams-title">
         <h2 class="panel-title" id="upstreams-title">UPSTREAMS</h2>
         <h3>Cache endpoints</h3>
-        <p class="muted">Endpoint links open their cache information.</p>
+        <p class="muted" id="summary-updated" role="status">
+          Summary not loaded. Checks run every 15 minutes.
+        </p>
         <ul class="upstreams">
           @upstreams@
         </ul>
