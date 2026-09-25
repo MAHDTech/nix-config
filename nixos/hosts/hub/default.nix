@@ -17,7 +17,8 @@ in
     beszel.hub = {
       enable = true;
       environment = {
-        USER_CREATION = "false";
+        DISABLE_PASSWORD_AUTH = "true";
+        USER_CREATION = "true";
         CHECK_UPDATES = "false";
         CONTAINER_DETAILS = "false";
       };
