@@ -92,12 +92,11 @@ not reset existing passwords on subsequent starts.
    `admin`. Beszel 0.20's environment-based migration does not set this role.
 3. Create routine viewer accounts with role `readonly` and `verified=true`.
    They do not need PocketBase superuser accounts.
-4. Assign those emails declaratively through `services.beszel.hub.systems.<name>.users`
-   and deploy the hub. Include the administrator email if it should retain access.
-   Assignments made only in the UI will be replaced by the generated inventory.
-5. Log into the normal hub URL using OAuth with a viewer account.
+4. Log into the normal hub URL using OAuth with a viewer account. All systems
+   are shared with all Beszel users through `SHARE_ALL_SYSTEMS=true`; individual
+   system assignments are not required.
 
-Read-only viewers can view assigned systems and create their own alerts; they
+Read-only viewers can view all systems and create their own alerts; they
 cannot create/delete systems or administer the monitored machines. Container
 details/logs are disabled on this hub. Agents on Docker hosts retain upstream
 Docker metrics access, which gives the agent process access to the Docker socket.
@@ -107,9 +106,9 @@ Configure OAuth2 in PocketBase using callback
 `https://hub.slopageddon.app/api/oauth2-redirect`. Dashboard password login is
 disabled; the separate PocketBase superuser login at `/_/` remains available.
 Automatic OAuth account creation is enabled. Beszel creates these accounts with
-the `user` role, so change routine viewers to `readonly` after signup and assign
-their system access declaratively as above. OAuth client secrets should also be
-stored in 1Password.
+the `user` role, so change routine viewers to `readonly` after signup. Until then,
+they can edit or delete shared systems in Beszel. OAuth client secrets should
+also be stored in 1Password.
 
 ## Inventory, overrides and state
 

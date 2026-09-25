@@ -19,6 +19,7 @@ in
       environment = {
         DISABLE_PASSWORD_AUTH = "true";
         USER_CREATION = "true";
+        SHARE_ALL_SYSTEMS = "true";
         CHECK_UPDATES = "false";
         CONTAINER_DETAILS = "false";
       };
