@@ -63,9 +63,9 @@ in
               description = "Allow anonymous GetObject, but not bucket listing or writes.";
             };
             retentionDays = mkOption {
-              type = types.ints.positive;
+              type = types.nullOr types.ints.positive;
               default = 30;
-              description = "Expire objects by age, not last access; lifecycle enforcement is asynchronous.";
+              description = "Expire objects by age, not last access; null disables object expiration. Lifecycle enforcement is asynchronous.";
             };
             abortMultipartDays = mkOption {
               type = types.ints.positive;

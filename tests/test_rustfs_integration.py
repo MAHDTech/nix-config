@@ -148,6 +148,7 @@ def main():
             print("PASS: multipart upload")
             config["buckets"]["github-actions"]["publicRead"] = False
             config["buckets"]["github-actions"]["retentionDays"] = 7
+            config["buckets"]["private-test"]["retentionDays"] = None
             config["writers"]["actions"]["buckets"] = ["github-actions"]
             (creds / "actions-secret").write_text(secrets.token_hex(32))
             reconciler.reconcile(config, creds, root / "state")
@@ -157,6 +158,9 @@ def main():
             assert actions.get_object(Bucket="github-actions", Key="hello.txt")["Body"].read() == b"cache fixture"
             assert_denied(lambda: actions.get_object(Bucket="private-test", Key="hello.txt"))
             assert admin.get_bucket_lifecycle_configuration(Bucket="github-actions")["Rules"][0]["Expiration"]["Days"] == 7
+            permanent = admin.get_bucket_lifecycle_configuration(Bucket="private-test")["Rules"][0]
+            assert "Expiration" not in permanent and "NoncurrentVersionExpiration" not in permanent
+            assert permanent["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"] == 1
             print("PASS: secret rotation, reduced grants, public-to-private, retention changes")
             (creds / "actions-access").write_text(secrets.token_hex(16))
             reconciler.reconcile(config, creds, root / "state")

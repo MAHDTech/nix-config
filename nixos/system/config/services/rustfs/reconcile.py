@@ -142,12 +142,14 @@ def reconcile(config, credentials, state_directory):
         else:
             # IAM still grants access to scoped writers; no anonymous policy remains.
             client.delete_bucket_policy(Bucket=name)
-        client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration={"Rules": [{
+        lifecycle = {
             "ID": "nixos-cache-retention", "Status": "Enabled", "Filter": {"Prefix": ""},
-            "Expiration": {"Days": spec["retentionDays"]},
-            "NoncurrentVersionExpiration": {"NoncurrentDays": spec["retentionDays"]},
             "AbortIncompleteMultipartUpload": {"DaysAfterInitiation": spec["abortMultipartDays"]},
-        }]})
+        }
+        if spec["retentionDays"] is not None:
+            lifecycle["Expiration"] = {"Days": spec["retentionDays"]}
+            lifecycle["NoncurrentVersionExpiration"] = {"NoncurrentDays": spec["retentionDays"]}
+        client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration={"Rules": [lifecycle]})
         print(f"Reconciled bucket: {name}", flush=True)
 
     updated = {}

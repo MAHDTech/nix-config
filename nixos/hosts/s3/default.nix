@@ -26,9 +26,24 @@
         writerItems = {
           github-actions = "op://fleet/RustFS GitHub Actions Writer";
           github-packages = "op://fleet/RustFS GitHub Packages Writer";
+          terraform-state-bingamon = "op://fleet/RustFS Terraform State Bingamon";
+          terraform-state-bingamon-nkp = "op://fleet/RustFS Terraform State Bingamon NKP";
+          terraform-state-big-stack-iac = "op://fleet/RustFS Terraform State Big Stack IAC";
         };
       };
       buckets = {
+        terraform-state-bingamon = {
+          publicRead = false;
+          retentionDays = null;
+        };
+        terraform-state-bingamon-nkp = {
+          publicRead = false;
+          retentionDays = null;
+        };
+        terraform-state-big-stack-iac = {
+          publicRead = false;
+          retentionDays = null;
+        };
         github-actions = {
           publicRead = true;
           retentionDays = 30;
@@ -41,6 +56,9 @@
       writers = {
         github-actions.buckets = [ "github-actions" ];
         github-packages.buckets = [ "github-packages" ];
+        terraform-state-bingamon.buckets = [ "terraform-state-bingamon" ];
+        terraform-state-bingamon-nkp.buckets = [ "terraform-state-bingamon-nkp" ];
+        terraform-state-big-stack-iac.buckets = [ "terraform-state-big-stack-iac" ];
       };
     };
   };

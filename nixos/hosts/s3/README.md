@@ -38,12 +38,15 @@ administrator access key and secret key from 1Password.
 
 All items are in the `fleet` vault:
 
-| Item                            | Fields                     | Purpose                                     |
-| ------------------------------- | -------------------------- | ------------------------------------------- |
-| `RustFS S3 Admin`               | `access_key`, `secret_key` | Server administrator and provisioning       |
-| `RustFS GitHub Actions Writer`  | `access_key`, `secret_key` | Read/list/write/delete in `github-actions`  |
-| `RustFS GitHub Packages Writer` | `access_key`, `secret_key` | Read/list/write/delete in `github-packages` |
-| `Cloudflare ACME Slopageddon`   | `token`                    | Certificates for both hostnames             |
+| Item                                   | Fields                     | Purpose                                                   |
+| -------------------------------------- | -------------------------- | --------------------------------------------------------- |
+| `RustFS S3 Admin`                      | `access_key`, `secret_key` | Server administrator and provisioning                     |
+| `RustFS GitHub Actions Writer`         | `access_key`, `secret_key` | Read/list/write/delete in `github-actions`                |
+| `RustFS GitHub Packages Writer`        | `access_key`, `secret_key` | Read/list/write/delete in `github-packages`               |
+| `RustFS Terraform State Bingamon`      | `access_key`, `secret_key` | Read/list/write/delete in `terraform-state-bingamon`      |
+| `RustFS Terraform State Bingamon NKP`  | `access_key`, `secret_key` | Read/list/write/delete in `terraform-state-bingamon-nkp`  |
+| `RustFS Terraform State Big Stack IAC` | `access_key`, `secret_key` | Read/list/write/delete in `terraform-state-big-stack-iac` |
+| `Cloudflare ACME Slopageddon`          | `token`                    | Certificates for both hostnames                           |
 
 Opnix writes root-owned runtime files with mode 0400. systemd delivers private
 credential copies to RustFS and the provisioning service. Application secrets are
@@ -67,10 +70,19 @@ write, delete or administrative operations. This means any client with network
 access and an object URL can read the content. Writer identities are independent
 and restricted to their own buckets, including multipart operations.
 
-| Bucket            | Object expiration | Abandoned multipart uploads |
-| ----------------- | ----------------- | --------------------------- |
-| `github-actions`  | 30 days           | 1 day                       |
-| `github-packages` | 30 days           | 1 day                       |
+| Bucket                          | Object expiration | Abandoned multipart uploads |
+| ------------------------------- | ----------------- | --------------------------- |
+| `github-actions`                | 30 days           | 1 day                       |
+| `github-packages`               | 30 days           | 1 day                       |
+| `terraform-state-bingamon`      | Never             | 1 day                       |
+| `terraform-state-bingamon-nkp`  | Never             | 1 day                       |
+| `terraform-state-big-stack-iac` | Never             | 1 day                       |
+
+The three Terraform state buckets are private, each with a separate writer.
+Their `retentionDays = null` disables expiration of both current and noncurrent
+objects; abandoned multipart uploads are still cleaned up. Environment names
+map to bucket names by adding the `terraform-state-` prefix. Writer permissions
+also cover Terraform's `.tflock` objects. Versioning is not enabled by this module.
 
 Lifecycle expiration is based on object age, not last read time, and runs
 asynchronously. Noncurrent versions also expire if versioning is enabled later.
