@@ -1,12 +1,12 @@
 {
   pkgs,
-  #pkgsUnstable,
+  pkgsUnstable,
   ...
 }:
 let
-  claude-code = pkgs.callPackage ./claude-code { };
-  # Remove once nixpkgs codex >= 0.153.4 and re-enable codex in ../tools.nix
-  codex = pkgs.callPackage ./codex { };
+  #claude-code = pkgs.callPackage ./c#laude-code { };
+
+  #codex = pkgs.callPackage ./codex { };
 
   # Tracks upstream releases faster than nixpkgs; bump with t3code/update.sh.
   # The wrapper puts the enabled agent CLIs on t3code's PATH, so they must be
@@ -25,6 +25,10 @@ let
       [ (pkgs.callPackage ./BambuStudio.nix { }) ]
     else
       [ ];
+
+  unstablePkgs = with pkgsUnstable; [
+    codex
+  ];
 in
 {
   home.packages = [
@@ -37,10 +41,11 @@ in
     #(pkgs.callPackage ./litert-lm.nix {})
     (pkgs.callPackage ./antigravity-cli { })
     (pkgs.callPackage ./antigravity-hub { })
-    claude-code
-    codex
+    #claude-code
+    #codex
     #t3code
     #(pkgs.callPackage ./ls-colors.nix { })
   ]
-  ++ bambuStudio;
+  ++ bambuStudio
+  ++ unstablePkgs;
 }
