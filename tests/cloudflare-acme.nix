@@ -1,5 +1,6 @@
 { pkgs, opnixModule }:
 let
+  stateVersion = import ../lib/stateVersion.nix;
   domains = [
     "api.example.test"
     "console.example.test"
@@ -8,6 +9,7 @@ in
 pkgs.testers.runNixOSTest {
   name = "cloudflare-acme-retry";
   nodes.machine = { lib, ... }: {
+    system.stateVersion = stateVersion;
     imports = [
       opnixModule
       ../nixos/system/config/services/cloudflare-acme

@@ -1,7 +1,7 @@
 { lib, inputs, ... }:
 let
   globalUsername = "mahdtech";
-  globalStateVersion = "26.05";
+  globalStateVersion = import ./stateVersion.nix;
 
   # Repository-wide overlays, applied ahead of any caller-supplied ones.
   # See ../overlays/default.nix.

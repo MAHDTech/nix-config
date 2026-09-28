@@ -75,5 +75,4 @@
     efi.canTouchEfiVariables = lib.mkForce false;
   };
 
-  system.stateVersion = "26.05";
 }

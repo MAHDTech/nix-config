@@ -1,4 +1,7 @@
 { pkgs }:
+let
+  stateVersion = import ../lib/stateVersion.nix;
+in
 pkgs.testers.runNixOSTest {
   name = "nixos-drain";
   nodes = {
@@ -8,6 +11,7 @@ pkgs.testers.runNixOSTest {
         type = lib.types.bool;
       };
       config = {
+        system.stateVersion = stateVersion;
         environment.systemPackages = [ pkgs.python3 ];
         specialisation.changed-runner.configuration = {
           systemd.services.github-runner-test.environment.CONFIG_REVISION = "changed";
@@ -46,6 +50,7 @@ pkgs.testers.runNixOSTest {
       };
     };
     plain = { ... }: {
+      system.stateVersion = stateVersion;
       imports = [ ../nixos/system/config/services/nixos-drain ];
       services.nixos-drain = {
         enable = true;

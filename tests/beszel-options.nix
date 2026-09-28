@@ -6,6 +6,7 @@ let
     (import (pkgs.path + "/nixos/lib/eval-config.nix") {
       system = "x86_64-linux";
       modules = [
+        { system.stateVersion = import ../lib/stateVersion.nix; }
         opnixModule
         ../nixos/system/config/services/beszel
         extra

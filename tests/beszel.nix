@@ -1,9 +1,13 @@
 # cspell:ignore pathlib urlsafe fetchall fetchone
 { pkgs, opnixModule }:
+let
+  stateVersion = import ../lib/stateVersion.nix;
+in
 pkgs.testers.runNixOSTest {
   name = "beszel-managed";
   nodes = {
     hub = { lib, ... }: {
+      system.stateVersion = stateVersion;
       imports = [
         opnixModule
         ../nixos/system/config/services/beszel
@@ -86,6 +90,7 @@ pkgs.testers.runNixOSTest {
       ];
     };
     client = _: {
+      system.stateVersion = stateVersion;
       networking.hosts."192.168.1.2" = [ "hub.example.test" ];
     };
   };
