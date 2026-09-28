@@ -1,0 +1,71 @@
+--- a/src/Runner.Listener/Runner.cs
++++ b/src/Runner.Listener/Runner.cs
+@@ -403,6 +403,44 @@
+             return HostContext.GetService<IMessageListener>();
+         }
+ 
++        private async Task<TaskAgentMessage> GetNextMessageOrDrainAsync(CancellationToken token)
++        {
++            string marker = Environment.GetEnvironmentVariable("GITHUB_RUNNER_DRAIN_MARKER");
++            if (string.IsNullOrEmpty(marker))
++            {
++                return await _listener.GetNextMessageAsync(token);
++            }
++
++            if (File.Exists(marker))
++            {
++                return null;
++            }
++
++            using var pollToken = CancellationTokenSource.CreateLinkedTokenSource(token);
++            Task<TaskAgentMessage> nextMessage = _listener.GetNextMessageAsync(pollToken.Token);
++            while (!nextMessage.IsCompleted)
++            {
++                token.ThrowIfCancellationRequested();
++                if (File.Exists(marker))
++                {
++                    pollToken.Cancel();
++                    try
++                    {
++                        // A received message wins the race with draining and must be handled.
++                        return await nextMessage;
++                    }
++                    catch (OperationCanceledException) when (!token.IsCancellationRequested)
++                    {
++                        return null;
++                    }
++                }
++
++                await Task.WhenAny(nextMessage, Task.Delay(1000, token));
++            }
++
++            return await nextMessage;
++        }
++
+         //create worker manager, create message listener and start listening to the queue
+         private async Task<int> RunAsync(RunnerSettings settings, bool runOnce = false, bool returnRunOnceJobResult = false)
+         {
+@@ -527,7 +565,10 @@
+                         bool skipMessageDeletion = false;
+                         try
+                         {
+-                            Task<TaskAgentMessage> getNextMessage = _listener.GetNextMessageAsync(messageQueueLoopTokenSource.Token);
++                            Task<TaskAgentMessage> getNextMessage =
++                                runOnceJobReceived || jobDispatcher.Busy || autoUpdateInProgress
++                                    ? _listener.GetNextMessageAsync(messageQueueLoopTokenSource.Token)
++                                    : GetNextMessageOrDrainAsync(messageQueueLoopTokenSource.Token);
+                             if (autoUpdateInProgress)
+                             {
+                                 Trace.Verbose("Auto update task running at backend, waiting for getNextMessage or selfUpdateTask to finish.");
+@@ -604,6 +645,11 @@
+                             }
+ 
+                             message = await getNextMessage; //get next message
++                            if (message == null)
++                            {
++                                Trace.Info("Drain requested while idle; retiring runner session.");
++                                return Constants.Runner.ReturnCode.Success;
++                            }
+                             HostContext.WritePerfCounter($"MessageReceived_{message.MessageType}");
+                             if (string.Equals(message.MessageType, AgentRefreshMessage.MessageType, StringComparison.OrdinalIgnoreCase))
+                             {

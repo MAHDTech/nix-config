@@ -27,6 +27,12 @@ pkgs.testers.runNixOSTest {
           ExecStart = lib.mkForce (
             pkgs.writeShellScript "fake-runner" ''
               echo started >> /run/registrations
+              if [ -e /run/runner-idle ]; then
+                touch /run/runner-idle-ready
+                while [ ! -e /run/nixos-drain/github-runners/maintenance ]; do sleep 0.1; done
+                rm /run/runner-idle-ready
+                exit 0
+              fi
               touch /run/job-active
               while [ ! -e /run/finish-job ]; do sleep 0.1; done
               rm /run/job-active /run/finish-job
@@ -88,7 +94,7 @@ pkgs.testers.runNixOSTest {
     runner.succeed("test $(cat /run/client-result) -ne 0; test -f /run/job-active")
     runner.succeed("test $(wc -l < /run/registrations) -eq 2")
 
-    # An idle registration is also allowed to wait for its final job until timeout.
+    # A running job can outlast the upgrade timeout and must survive cancellation.
     runner.fail("nixos-drain drain --profile upgrade")
     runner.succeed("nixos-drain status | grep 'Drain cancelled after failure'")
     runner.succeed("test -f /run/job-active; test ! -e /run/nixos-drain/github-runners/maintenance")
@@ -126,5 +132,12 @@ pkgs.testers.runNixOSTest {
     runner.wait_for_unit("multi-user.target")
     runner.succeed("nixos-drain status | grep idle")
     runner.wait_for_file("/run/job-active")
+
+    # An idle registration retires on drain without waiting for another job.
+    runner.succeed("touch /run/runner-idle /run/finish-job")
+    runner.wait_for_file("/run/runner-idle-ready")
+    runner.succeed("nixos-drain drain --profile upgrade")
+    runner.succeed("nixos-drain status | grep 'State:     drained'")
+    runner.succeed("test ! -e /run/job-active; test ! -e /run/runner-idle-ready")
   '';
 }

@@ -63,6 +63,7 @@ in
     lib.nameValuePair "github-runner-${name}" {
       # Ephemeral registrations adopt the new unit on their next natural start.
       restartIfChanged = false;
+      environment.GITHUB_RUNNER_DRAIN_MARKER = "/run/nixos-drain/github-runners/maintenance";
       serviceConfig.ExecCondition = [ "+${handler}/bin/github-runner-drain gate" ];
     }
   ) runners;

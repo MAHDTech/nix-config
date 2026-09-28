@@ -246,6 +246,7 @@ in
 
         # Runner 2.337.0 defaults internal helpers to Node 20, removed by Nixpkgs.
         package = pkgs.github-runner.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ./runner-drain.patch ];
           postPatch = (old.postPatch or "") + ''
             substituteInPlace src/Runner.Common/Util/NodeUtil.cs \
               --replace-fail 'private const string _defaultNodeVersion = "node20";' \

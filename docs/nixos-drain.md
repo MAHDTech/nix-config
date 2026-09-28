@@ -87,8 +87,10 @@ offline or malformed API data is an error, never an idle result. This is an
 observation, not permission to stop a runner: a job can be assigned after the
 API response.
 An `ExecCondition` checks a maintenance marker before each new registration. The
-gate and drain request share a lock. Starts admitted before the marker may finish
-their registration and one job; subsequent registrations are skipped.
+gate and drain request share a lock. The packaged listener also checks that marker
+while waiting for work: an idle listener deletes its session and exits.
+If a job message arrives as the marker appears, the listener handles that job and
+exits after it finishes. Subsequent registrations are skipped.
 
 The handler waits for every runner service to become inactive, including startup,
 job execution and service cleanup. It never sends a stop signal to a live runner.
@@ -96,8 +98,12 @@ Cancellation removes the marker and starts inactive services without restarting
 active ones. Token rotation is picked up at the next ephemeral registration,
 rather than restarting a runner mid-job.
 
-An idle, already registered runner is allowed one final job. If no job arrives,
-the drain can time out. The runner `upgrade` profile enables `cancelOnFailure`:
+When first deploying the listener change with `nixos-rebuild switch`, an existing
+runner process keeps running the old binary. The new behavior starts after its
+next natural restart following a job, or after a controlled host reboot.
+
+An idle runner drains without waiting for another job. A running job can still
+outlast the drain timeout. The runner `upgrade` profile enables `cancelOnFailure`:
 timeout or failure removes the maintenance marker and starts inactive services,
 without interrupting a running job. The upgrade fails without rebooting and can
 retry on its next schedule. Destroy and maintenance profiles keep the marker
@@ -114,7 +120,8 @@ captured settings and needs a one-time `nixos-drain cancel`.
 
 Runner upgrades stage a boot generation, drain the `upgrade` profile, then request
 a reboot only on success. If the staged generation is already booted, they skip
-the drain and reboot. A failed or cancelled drain prevents that reboot. Host
+the drain and reboot. A failed or cancelled drain, or a staged generation that
+changes during draining, prevents that reboot. Host
 upgrade times are [staggered within each group](github-runners.md).
 S3 and nix-cache run their notification-only profile before their existing
 `switch` upgrade and cancel it after success; neither gains automatic reboots.

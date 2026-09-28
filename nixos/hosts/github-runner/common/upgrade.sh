@@ -13,4 +13,8 @@ if [[ $staged_system == "$booted_system" && $staged_system == "$current_system" 
 fi
 
 nixos-drain drain --profile upgrade
+if [[ $(readlink -e /nix/var/nix/profiles/system) != "$staged_system" ]]; then
+	echo "Staged system changed during drain; refusing to reboot" >&2
+	exit 1
+fi
 systemctl reboot --no-block
