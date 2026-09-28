@@ -1,6 +1,7 @@
 """Exercise drain scripts, request ownership, failure and cancellation contracts."""
 
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -32,6 +33,7 @@ class DrainTest(unittest.TestCase):
             (drain, "ROOT", self.root),
             (drain, "CONFIG", self.root / "config.json"),
             (runner, "ROOT", self.root),
+            (runner, "CONFIG", self.root / "runner-config.json"),
         ):
             replacement = patch.object(module, attribute, value)
             replacement.start()
@@ -235,6 +237,47 @@ class DrainTest(unittest.TestCase):
             with patch.object(runner.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, properties)):
                 with self.assertRaises(RuntimeError):
                     runner.drain(["runner.service"])
+
+    def test_runner_busy_uses_its_registration_and_boolean_api_status(self):
+        token = self.root / "token"
+        token.write_text("fixture-token\n")
+        runner.CONFIG.write_text(json.dumps({
+            "runner.service": {
+                "name": "github-runner-01-enterprise-mahdtech",
+                "url": "https://github.com/enterprises/MAHDTech",
+                "tokenFile": str(token),
+            },
+        }))
+        responses = [
+            io.BytesIO(json.dumps({"runners": [{"name": "github-runner-01-enterprise-mahdtech",
+                                               "status": "online", "busy": value}]}).encode())
+            for value in (False, True)
+        ]
+        with patch.object(runner.urllib.request, "urlopen", side_effect=responses) as get:
+            self.assertFalse(runner.busy(["runner.service"]))
+            self.assertTrue(runner.busy(["runner.service"]))
+        request = get.call_args_list[0].args[0]
+        self.assertEqual(request.full_url,
+                         "https://api.github.com/enterprises/MAHDTech/actions/runners?name=github-runner-01-enterprise-mahdtech&per_page=100")
+        self.assertEqual(request.get_header("Authorization"), "Bearer fixture-token")
+
+    def test_runner_busy_fails_closed_on_missing_or_offline_registration(self):
+        token = self.root / "token"
+        token.write_text("fixture-token\n")
+        runner.CONFIG.write_text(json.dumps({
+            "runner.service": {
+                "name": "runner",
+                "url": "https://github.com/enterprises/MAHDTech",
+                "tokenFile": str(token),
+            },
+        }))
+        for payload in ({"runners": []},
+                        {"runners": [{"name": "runner", "status": "offline", "busy": False}]},
+                        {"runners": [{"name": "runner", "status": "online", "busy": "false"}]}):
+            with patch.object(runner.urllib.request, "urlopen",
+                              return_value=io.BytesIO(json.dumps(payload).encode())):
+                with self.assertRaises(RuntimeError):
+                    runner.busy(["runner.service"])
 
 
 if __name__ == "__main__":

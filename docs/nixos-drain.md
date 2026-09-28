@@ -80,6 +80,12 @@ host unexpectedly reboots before deletion.
 ## GitHub runners
 
 The runner-specific module supplies all three profiles with the same handler.
+On runner hosts, `sudo github-runner-drain busy` prints `true` if any registered
+runner on the host is executing a job and `false` if all are idle. It reads the
+GitHub runner API using each runner's existing registration PAT. Missing,
+offline or malformed API data is an error, never an idle result. This is an
+observation, not permission to stop a runner: a job can be assigned after the
+API response.
 An `ExecCondition` checks a maintenance marker before each new registration. The
 gate and drain request share a lock. Starts admitted before the marker may finish
 their registration and one job; subsequent registrations are skipped.

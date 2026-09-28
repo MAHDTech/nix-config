@@ -7,6 +7,16 @@
 let
   runners = lib.filterAttrs (_: runner: runner.enable) config.services.github-runners;
   units = map (name: "github-runner-${name}.service") (builtins.attrNames runners);
+  runnerConfig = pkgs.writeText "github-runner-drain.json" (
+    builtins.toJSON (
+      lib.mapAttrs' (
+        name: runner:
+        lib.nameValuePair "github-runner-${name}.service" {
+          inherit (runner) name url tokenFile;
+        }
+      ) runners
+    )
+  );
   handler = pkgs.writeShellApplication {
     name = "github-runner-drain";
     runtimeInputs = [
@@ -14,6 +24,7 @@ let
       pkgs.systemd
     ];
     text = ''
+      export GITHUB_RUNNER_DRAIN_CONFIG=${lib.escapeShellArg (toString runnerConfig)}
       exec python3 ${./drain.py} "$@" ${lib.escapeShellArgs units}
     '';
   };
@@ -45,6 +56,7 @@ in
   };
   # Ephemeral registrations pick up new tokens naturally without interrupting a job.
   services.github-runner-fleet.restartOnTokenChange = false;
+  environment.systemPackages = [ handler ];
   systemd.tmpfiles.rules = [ "d /run/nixos-drain/github-runners 0755 root root -" ];
   systemd.services = lib.mapAttrs' (
     name: _:

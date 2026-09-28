@@ -1,13 +1,18 @@
-"""Retire ephemeral registrations without stopping a runner that may own a job."""
+"""Inspect and retire ephemeral registrations without interrupting jobs."""
 
 from contextlib import contextmanager
 import fcntl
+import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import time
+import urllib.parse
+import urllib.request
 
 ROOT = Path("/run/nixos-drain/github-runners")
+CONFIG = Path(os.environ.get("GITHUB_RUNNER_DRAIN_CONFIG", "/etc/github-runner-drain.json"))
 
 
 @contextmanager
@@ -21,6 +26,52 @@ def gate():
     # ExecCondition runs before registration. An already admitted start may finish one job.
     with locked():
         return 1 if (ROOT / "maintenance").exists() else 0
+
+
+def busy(units):
+    """Return whether any configured runner is executing a job on GitHub."""
+    config = json.loads(CONFIG.read_text())
+    states = []
+    for unit in units:
+        runner = config[unit]
+        name = runner["name"]
+        url = urllib.parse.urlsplit(runner["url"])
+        parts = url.path.strip("/").split("/")
+        if url.scheme != "https" or url.netloc != "github.com":
+            raise RuntimeError(f"Unsupported registration URL for {unit}")
+        if len(parts) == 2 and parts[0] == "enterprises":
+            endpoint = f"/enterprises/{urllib.parse.quote(parts[1], safe='')}/actions/runners"
+        elif len(parts) == 1:
+            endpoint = f"/orgs/{urllib.parse.quote(parts[0], safe='')}/actions/runners"
+        elif len(parts) == 2:
+            endpoint = "/repos/{}/{}/actions/runners".format(
+                *(urllib.parse.quote(part, safe="") for part in parts)
+            )
+        else:
+            raise RuntimeError(f"Unsupported registration URL for {unit}")
+        token = Path(runner["tokenFile"]).read_text().strip()
+        if not token:
+            raise RuntimeError(f"Empty GitHub token for {unit}")
+        query = urllib.parse.urlencode({"name": name, "per_page": 100})
+        request = urllib.request.Request(
+            f"https://api.github.com{endpoint}?{query}",
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {token}",
+                "User-Agent": "nixos-drain",
+                "X-GitHub-Api-Version": "2026-03-10",
+            },
+        )
+        with urllib.request.urlopen(request, timeout=10) as response:
+            registrations = json.load(response)["runners"]
+        matches = [registration for registration in registrations if registration["name"] == name]
+        if len(matches) != 1:
+            raise RuntimeError(f"Expected one GitHub registration for {unit}; found {len(matches)}")
+        registration = matches[0]
+        if registration.get("status") != "online" or type(registration.get("busy")) is not bool:
+            raise RuntimeError(f"GitHub runner status is unavailable for {unit}")
+        states.append(registration["busy"])
+    return any(states)
 
 
 def drain(units):
@@ -63,6 +114,9 @@ if __name__ == "__main__":
         command, *units = sys.argv[1:]
         if command == "gate":
             sys.exit(gate())
+        if command == "busy":
+            print("true" if busy(units) else "false")
+            sys.exit(0)
         if command == "drain":
             drain(units)
         elif command == "cancel":
