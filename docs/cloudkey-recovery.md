@@ -17,11 +17,22 @@ NixOS on the Ubiquiti CloudKey Gen2 Plus (APQ8053).
 
 ### 1. Build the installer
 
+Because BOOTYCALL is an ARM64 (`aarch64-linux`) device, the installer package is scoped under `packages.aarch64-linux`.
+
+When building from an x86_64 host (such as JONS), specify the architecture attribute (or use `--accept-flake-config` if prompted for flake settings):
+
 ```bash
 cd /boot/nixos/nix-config
-nix build .#installer-bootycall
+nix build .#packages.aarch64-linux.installer-bootycall
 # Output: ./result/boot.img and ./result/rootfs.iso
 ```
+
+> [!NOTE]
+> Alternatively, you can build directly via the NixOS configuration:
+>
+> ```bash
+> nix build .#nixosConfigurations.installer-bootycall.config.system.build.image
+> ```
 
 ### 2. Start the HTTP server
 

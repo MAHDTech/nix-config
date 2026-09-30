@@ -39,7 +39,7 @@ if {$port == ""} {
 foreach f {result/rootfs.iso result/boot.img} {
     if {![file exists $f]} {
         puts stderr "ERROR: $f not found!"
-        puts stderr "Build the installer first: nix build .#installer-bootycall"
+        puts stderr "Build the installer first: nix build .#packages.aarch64-linux.installer-bootycall"
         exit 1
     }
 }
