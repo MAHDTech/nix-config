@@ -8,7 +8,7 @@ NixOS on the Ubiquiti CloudKey Gen2 Plus (APQ8053).
 | Item                   | Details                                                        |
 | ---------------------- | -------------------------------------------------------------- |
 | CloudKey IP (recovery) | `10.10.200.200` (DHCP reservation for MAC `74:83:c2:7b:82:9f`) |
-| Server IP              | `10.10.1.93` (JONS — the build machine)                        |
+| Server IP              | `10.10.1.139` (JONS — the build machine)                       |
 | HTTP port              | `16000` (Python HTTP server)                                   |
 | Netcat port            | `16000` (ramoops dump receiver)                                |
 | Recovery credentials   | `root` / `ubnt`                                                |
@@ -54,7 +54,7 @@ python3 -m http.server 16000
 Make sure to include `inetutils` in the `nix-shell` so that `telnet` is available:
 
 ```bash
-nix-shell -p expect inetutils --run "./nixos/hosts/bootycall/scripts/flash-recovery.exp 10.10.200.200 10.10.1.93 16000"
+nix-shell -p expect inetutils --run "./nixos/hosts/bootycall/scripts/flash-recovery.exp 10.10.200.200 10.10.1.139 16000"
 ```
 
 The script will:
@@ -66,14 +66,56 @@ The script will:
 - Flash `boot.img` → `/dev/mmcblk0p42` (boot partition) and verify its written size.
 - Sync and reboot.
 
-### 5. Wait for NixOS to boot
+### 5. Wait for the installer environment to boot
 
-After reboot, wait 5–7 minutes for the full boot sequence (booting can be slow due to the CPU running at its bootloader-default frequency and decompressing SquashFS on the fly):
+After reboot, wait 5–7 minutes for the installer to boot (booting can be slow due to the CPU running at bootloader-default frequency and decompressing SquashFS on the fly):
 
 - **Stage-1 (scripted initrd)**: mounts ISO, squashfs, overlay.
-- **Stage-2 (systemd)**: starts services, DHCP, SSH.
+- **Stage-2 (systemd)**: starts services, DHCP, and SSH (`installer-bootycall`).
 
-Check your router's DHCP lease table for MAC `74:83:c2:7b:82:9f`.
+Verify SSH access into the installer:
+
+```bash
+ssh nixos@10.10.200.200
+# or: ssh root@10.10.200.200 (password: nixos, or via loaded SSH key)
+```
+
+### 6. Install NixOS to the SSD via nixos-anywhere
+
+From the root of `/boot/nixos/nix-config` on JONS, run `nixos-anywhere` to partition the internal SSD with Disko and install the target configuration:
+
+```bash
+nix run github:nix-community/nixos-anywhere -- \
+  --flake .#bootycall \
+  --target-host root@10.10.200.200 \
+  --phases disko,install \
+  --build-on local
+```
+
+> [!IMPORTANT]
+> The `--phases disko,install` flag is **mandatory**.
+> Omitting it causes `nixos-anywhere` to attempt `kexec`, which crashes the Qualcomm APQ8053 SoC.
+> The `--build-on local` flag ensures packages are built/fetched from caches on JONS rather than compiling on the CloudKey.
+
+The installation will:
+
+1. **Disko**: Partition `/dev/sda`, format `/dev/sda1` as BTRFS with label `NIXOS_ROOT`, create subvolumes (`/root`, `/nix`), and mount them under `/mnt`.
+2. **Install**: Copy the NixOS closure to the SSD and execute the custom bootloader script (`install-cloudkey-bootloader.sh`).
+   - This script packages the kernel + DTB into `boot.img` and writes it to `/dev/mmcblk0p42`.
+
+### 7. Reboot into the installed system
+
+Once `nixos-anywhere` completes, reboot the device:
+
+```bash
+ssh root@10.10.200.200 reboot
+```
+
+Wait 5–7 minutes for the system to boot from SSD into the final NixOS install. Then SSH in as `cooper`:
+
+```bash
+ssh cooper@bootycall.tars-cloud.ai
+```
 
 ---
 
@@ -99,7 +141,7 @@ In another terminal, run:
 
 ```bash
 #nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/capture-dump.exp <cloud-key-ip> <host-ip> <host-port>"
-nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/capture-dump.exp 10.10.200.200 10.10.1.93 16000"
+nix-shell -p expect --run "./nixos/hosts/bootycall/scripts/capture-dump.exp 10.10.200.200 10.10.1.139 16000"
 ```
 
 ### 3. Parse and analyze the dump
@@ -130,12 +172,12 @@ telnet 10.10.200.200
 
 # Flash rootfs.iso
 umount /dev/mmcblk0p46 2>/dev/null || true
-wget -T 30 -qO- http://10.10.1.93:16000/result/rootfs.iso | dd of=/dev/mmcblk0p46 bs=4M
+wget -qO- http://10.10.1.139:16000/result/rootfs.iso | dd of=/dev/mmcblk0p46 bs=4M
 sync
 
 # Flash boot.img
 cd /tmp && rm -f boot.img
-wget -T 30 http://10.10.1.93:16000/result/boot.img
+wget -q -O boot.img http://10.10.1.139:16000/result/boot.img
 dd if=boot.img of=/dev/mmcblk0p42 bs=4096
 sync
 

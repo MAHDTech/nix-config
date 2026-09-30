@@ -213,5 +213,6 @@ in
           inputs.disko.nixosModules.disko
         ];
       };
+      bootycall = BOOTYCALL;
     };
 }
