@@ -225,8 +225,19 @@ def wait(attempt, success):
         time.sleep(0.2)
 
 
-def status():
+def status(as_json=False):
     state = read()
+    if as_json:
+        result = dict(state)
+        if "profile" in state:
+            result["elapsed"] = int(state.get("finished", time.time()) - state["started"])
+            result["mode"] = (
+                "notification-only"
+                if state["settings"].get("notificationOnly", False)
+                else "application drain"
+            )
+        print(json.dumps(result, indent=2))
+        return
     print(f"State:     {state['state']}")
     if "profile" in state:
         elapsed = int(state.get("finished", time.time()) - state["started"])
@@ -241,7 +252,10 @@ def status():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("status")
+    status_parser = commands.add_parser("status")
+    status_parser.add_argument("--json", action="store_true", help="Output status as JSON")
+    commands.add_parser("is-drained", help="Exit 0 if the host is in drained state, 1 otherwise")
+    commands.add_parser("is-idle", help="Exit 0 if the host is in idle state, 1 otherwise")
     commands.add_parser("cancel")
     drain = commands.add_parser("drain")
     drain.add_argument("--profile", required=True)
@@ -252,8 +266,12 @@ def main():
         internal.add_argument("unit")
     args = parser.parse_args()
     if args.command == "status":
-        status()
+        status(as_json=args.json)
         return 0
+    if args.command == "is-drained":
+        return 0 if read().get("state") == "drained" else 1
+    if args.command == "is-idle":
+        return 0 if read().get("state") == "idle" else 1
     if os.geteuid() != 0:
         raise RuntimeError("Run this command as root (sudo)")
     if args.command == "drain":

@@ -77,6 +77,8 @@ def busy(units):
 def drain(units):
     with locked():
         (ROOT / "maintenance").touch()
+    last_waiting = None
+    last_logged = 0.0
     while True:
         waiting = []
         for unit in units:
@@ -95,7 +97,11 @@ def drain(units):
         if not waiting:
             print("All runner registrations have retired", flush=True)
             return
-        print("Waiting for " + ", ".join(waiting), flush=True)
+        now = time.monotonic()
+        if waiting != last_waiting or (now - last_logged) >= 30:
+            print("Waiting for " + ", ".join(waiting), flush=True)
+            last_waiting = list(waiting)
+            last_logged = now
         time.sleep(2)
 
 

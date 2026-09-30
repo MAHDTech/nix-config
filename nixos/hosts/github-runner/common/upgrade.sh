@@ -2,7 +2,7 @@
 set -euo pipefail
 
 nixos-rebuild boot \
-	--flake "${RUNNER_FLAKE:?}#${RUNNER_HOST:?}" --accept-flake-config --show-trace --refresh
+	--flake "${RUNNER_FLAKE:?}#${RUNNER_HOST:?}" --accept-flake-config --show-trace
 
 staged_system=$(readlink -e /nix/var/nix/profiles/system)
 booted_system=$(readlink -e /run/booted-system)

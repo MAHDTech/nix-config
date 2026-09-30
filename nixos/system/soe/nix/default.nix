@@ -62,12 +62,11 @@
       {
         trusted-users = [ "mahdtech" ];
         system-features = [ "uid-range" ];
+        nix-path = [ "nixpkgs=${inputs.nixpkgs}" ];
       }
     ];
 
     extraOptions = "";
-
-    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
     registry.nixpkgs.flake = inputs.nixpkgs;
   };

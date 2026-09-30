@@ -194,7 +194,7 @@ in
             # Preserve supplementary group IDs for the Nix daemon and Docker socket.
             PrivateUsers = false;
             Restart = lib.mkForce "always";
-            RestartSec = "30s";
+            RestartSec = "5s";
             TimeoutStartSec = "5min";
           };
         };

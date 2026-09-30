@@ -279,6 +279,64 @@ class DrainTest(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     runner.busy(["runner.service"])
 
+    def test_status_json_output(self):
+        output = io.StringIO()
+        with patch("sys.stdout", output):
+            drain.status(as_json=True)
+        data = json.loads(output.getvalue())
+        self.assertEqual(data.get("state"), "idle")
+
+        attempt = drain.request("upgrade")
+        self.work(attempt)
+        output = io.StringIO()
+        with patch("sys.stdout", output):
+            drain.status(as_json=True)
+        data = json.loads(output.getvalue())
+        self.assertEqual(data.get("state"), "drained")
+        self.assertEqual(data.get("profile"), "upgrade")
+        self.assertIn("elapsed", data)
+        self.assertIn("mode", data)
+
+    def test_predicates_and_cli_status(self):
+        with patch("sys.argv", ["nixos-drain", "is-idle"]):
+            self.assertEqual(drain.main(), 0)
+        with patch("sys.argv", ["nixos-drain", "is-drained"]):
+            self.assertEqual(drain.main(), 1)
+
+        attempt = drain.request("upgrade")
+        self.work(attempt)
+
+        with patch("sys.argv", ["nixos-drain", "is-idle"]):
+            self.assertEqual(drain.main(), 1)
+        with patch("sys.argv", ["nixos-drain", "is-drained"]):
+            self.assertEqual(drain.main(), 0)
+
+        output = io.StringIO()
+        with patch("sys.argv", ["nixos-drain", "status", "--json"]), patch("sys.stdout", output):
+            self.assertEqual(drain.main(), 0)
+        data = json.loads(output.getvalue())
+        self.assertEqual(data.get("state"), "drained")
+
+    def test_runner_drain_deduplicates_repeated_waiting_logs(self):
+        # 5 active states, then inactive.
+        results = [subprocess.CompletedProcess([], 0, "LoadState=loaded\nActiveState=active\nSubState=running\n")
+                   for _ in range(5)]
+        results.append(subprocess.CompletedProcess([], 0, "LoadState=loaded\nActiveState=inactive\nSubState=dead\n"))
+
+        output = io.StringIO()
+        with patch.object(runner.subprocess, "run", side_effect=results), \
+             patch.object(runner.time, "sleep"), \
+             patch("sys.stdout", output):
+            runner.drain(["runner.service"])
+
+        lines = [line.strip() for line in output.getvalue().splitlines() if line.strip()]
+        # "Waiting for runner.service (running)" should appear only ONCE, followed by "All runner registrations have retired"
+        self.assertEqual(lines, [
+            "Waiting for runner.service (running)",
+            "All runner registrations have retired"
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()
+

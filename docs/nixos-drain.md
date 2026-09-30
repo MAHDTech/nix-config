@@ -6,6 +6,9 @@ Other hosts and installer images do not import the module.
 
 ```bash
 nixos-drain status
+nixos-drain status --json
+nixos-drain is-drained
+nixos-drain is-idle
 sudo nixos-drain drain --profile upgrade
 sudo nixos-drain drain --profile destroy
 sudo nixos-drain drain --profile maintenance
@@ -14,7 +17,9 @@ sudo nixos-drain cancel
 
 `drain` waits and exits zero only after the script succeeds. The systemd worker
 continues if SSH disconnects or the waiting command is interrupted. `status` shows
-the profile, state, elapsed time, timeout, latest script output and journal command.
+the profile, state, elapsed time, timeout, latest script output and journal command,
+or machine-readable JSON with `--json`. Dedicated predicates (`is-drained` and
+`is-idle`) exit zero on match and non-zero otherwise for simple health-check scripts.
 Scripts should print short progress lines and flush buffered output.
 
 Only one drain can own a host. Repeating its profile joins the current attempt or
