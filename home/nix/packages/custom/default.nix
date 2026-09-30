@@ -6,7 +6,7 @@
 let
   #claude-code = pkgs.callPackage ./c#laude-code { };
 
-  #codex = pkgs.callPackage ./codex { };
+  codex = pkgs.callPackage ./codex { };
 
   # Tracks upstream releases faster than nixpkgs; bump with t3code/update.sh.
   # The wrapper puts the enabled agent CLIs on t3code's PATH, so they must be
@@ -42,7 +42,7 @@ in
     (pkgs.callPackage ./antigravity-cli { })
     (pkgs.callPackage ./antigravity-hub { })
     #claude-code
-    #codex
+    codex
     #t3code
     #(pkgs.callPackage ./ls-colors.nix { })
   ]
