@@ -1,0 +1,14 @@
+{
+  "version": "3.0.0+1",
+  "tag": "v3.0.0+1",
+  "sources": {
+    "x86_64-linux": {
+      "url": "https://github.com/wakatime/desktop-wakatime/releases/download/v3.0.0%2B1/wakatime-linux-x86_64.AppImage",
+      "hash": "sha512-8fYVHVaOGXwBvgUVIayUQh5QHLkKytmXiUzqHohJzXvhte4cOhjeSwEOuhwH0R9upfSI5ETrcKx+DjUzH2WwWw=="
+    },
+    "aarch64-linux": {
+      "url": "https://github.com/wakatime/desktop-wakatime/releases/download/v3.0.0%2B1/wakatime-linux-arm64.AppImage",
+      "hash": "sha512-6QU41/W3FO5+RIJhJUf7Duvlr5Jz/v3T/OmRNNSMxntvS1sOaHMSgJnFi4l0+m+KDsJ37Fr445HSFUVhyK/ufw=="
+    }
+  }
+}

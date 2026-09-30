@@ -26,6 +26,9 @@ let
     else
       [ ];
 
+  wakatimeDesktop =
+    if pkgs.stdenv.hostPlatform.isLinux then [ (pkgs.callPackage ./wakatime-desktop { }) ] else [ ];
+
   unstablePkgs = with pkgsUnstable; [
     codex
   ];
@@ -47,5 +50,6 @@ in
     #(pkgs.callPackage ./ls-colors.nix { })
   ]
   ++ bambuStudio
+  ++ wakatimeDesktop
   ++ unstablePkgs;
 }
