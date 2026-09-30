@@ -4,6 +4,32 @@ This archive contains detailed documentation for issues that have been successfu
 
 ---
 
+### Forced Vulkan FIFO stalls hidden Wayland windows (2026-09-30)
+
+- **Change**: Removed the global `MESA_VK_WSI_PRESENT_MODE=fifo` override from
+  `nixos/system/config/video/qcom/default.nix`. The OpenGL `vblank_mode=3` policy,
+  kernel, firmware, frequency limits, and watchdog settings are unchanged.
+- **Diagnosis**: Slopageddon's hidden-window notification fixture stalled in Mesa's
+  Wayland present wait when FIFO was forced. Clearing only that override restored
+  progress with the original Bevy code. The June 3 overcurrent explanation was
+  weakened by Issue 23's later watchdog-starvation diagnosis; no recent kernel
+  commit has been identified as fixing a VSync-dependent reset on this host.
+- **Before deployment**: Six controlled Adreno resource/Cancel fixtures passed
+  without forced FIFO. A separate default-feature Adreno resource fixture passed
+  with 100 visible stations and ten history streams. Boot identity was unchanged;
+  GPU thermal readings remained below 35°C in the latter short check, with no
+  matching GPU/watchdog/regulator kernel messages. These bounded checks do not
+  establish long-term stability for every Vulkan application.
+- **Deployment acceptance**: Verify a fresh login no longer inherits the override,
+  then repeat active/hidden window checks. Retain the previous NixOS generation
+  for rollback. Slopageddon still honors explicit user presentation overrides;
+  its controlled test fixtures clear the variable separately.
+- **Kernel follow-up**: The host currently pins 7.2-rc5 without out-of-tree patches.
+  Stable 7.2.8 contains later MSM corrections, but a kernel migration requires its
+  own boot/display/suspend qualification and is separate from this change.
+
+---
+
 ### Issue 1: Vulkan rendering broken (vkcube blank, vkmark DEVICE_LOST)
 
 - [x] **Status**: Resolved (DRM_SYNCOBJ fix verified with vkcube running stable under Wayland)

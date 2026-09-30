@@ -19,8 +19,7 @@
   ];
 
   environment.variables = {
-    # Force VSync/frame limits on Qualcomm Snapdragon GPU to prevent overcurrent regulator watchdogs
+    # Keep the OpenGL VSync policy; Vulkan applications select their own present mode.
     vblank_mode = "3";
-    MESA_VK_WSI_PRESENT_MODE = "fifo";
   };
 }
