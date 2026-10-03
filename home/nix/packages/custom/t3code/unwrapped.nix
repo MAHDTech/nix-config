@@ -29,6 +29,13 @@ stdenv.mkDerivation (
     appName = "T3 Code (Alpha)";
     electron = electron_43;
     pnpm = pnpm_11;
+    # Keep the revision and cache version in sync with scripts/lib/third-party-licenses.ts.
+    spdxLicenseData = fetchFromGitHub {
+      owner = "spdx";
+      repo = "license-list-data";
+      rev = "c4a7237ec8f4654e867546f9f409749300f1bf4c";
+      hash = "sha256-FbeeEBAg9ih6DkAsXdU6ruZwkC7A2u2zYBvblpl54q0=";
+    };
     desktopIcon =
       if stdenv.hostPlatform.isDarwin then
         "assets/prod/black-macos-1024.png"
@@ -38,7 +45,7 @@ stdenv.mkDerivation (
   in
   {
     pname = "t3code-unwrapped";
-    version = "0.0.42";
+    version = "0.0.45";
     strictDeps = true;
     __structuredAttrs = true;
 
@@ -46,7 +53,7 @@ stdenv.mkDerivation (
       owner = "pingdotgg";
       repo = "t3code";
       tag = "v${finalAttrs.version}";
-      hash = "sha256-YV86WqqpGQwjeovXB0IoE3f/o4IUC5DDVdBEdT4xzjc=";
+      hash = "sha256-8drTHjFqa2vJ96jhpRZXmNbtbXtKk1q40jOEp9dohNc=";
     };
 
     postPatch = ''
@@ -101,10 +108,14 @@ stdenv.mkDerivation (
         ;
 
       fetcherVersion = 4;
-      hash = "sha256-gEY2em9pNTC1EuVX0V3L/Wu1apZ+BKBXxALEcPQ/pwA=";
+      hash = "sha256-2dGEHOQrnidTei54NlZTJh5u5/i810hb2LddK4XfUNQ=";
     };
 
     preBuild = ''
+      # The license plugin otherwise downloads missing templates inside the sandbox.
+      mkdir -p .generated/third-party-licenses/spdx/v3.28.0
+      cp ${spdxLicenseData}/json/details/*.json .generated/third-party-licenses/spdx/v3.28.0/
+
       # pnpm 11 otherwise detects the package version updates below as
       # dependency drift and runs another install, including lifecycle scripts.
       export pnpm_config_verify_deps_before_run=false
