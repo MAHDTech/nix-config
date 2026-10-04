@@ -1,7 +1,7 @@
 # Beszel monitoring hub
 
-`https://hub.slopageddon.app` provides Beszel metrics and history for the twenty
-dedicated GitHub runners, `nix-cache`, `s3`, and `hub` itself. There are 23 agents.
+`https://hub.slopageddon.app` provides Beszel metrics and history for the 25
+dedicated GitHub runners, `nix-cache`, `s3`, and `hub` itself. There are 28 agents.
 Cockpit and GoAccess are not installed. Dashboard users are Beszel accounts;
 there is no additional Linux login account.
 
@@ -42,10 +42,10 @@ Git, cloud-init user-data or command arguments used for builds.
 | `Beszel Hub`                  | `private_key`           | An unencrypted OpenSSH Ed25519 private key, preserving line breaks and the final newline |
 | `Beszel Hub`                  | `public_key`            | Its matching OpenSSH public key                                                          |
 | `Beszel Hub`                  | `bootstrap_environment` | Multiline systemd environment file described below                                       |
-| `Beszel Agents`               | One field per host      | A different random registration token for each of the 23 hosts                           |
+| `Beszel Agents`               | One field per host      | A different random registration token for each of the 28 hosts                           |
 | `Cloudflare ACME Slopageddon` | `token`                 | Existing DNS-01 token; reuse the current item                                            |
 
-The agent field names are `github-runner-01` through `github-runner-20`,
+The agent field names are `github-runner-01` through `github-runner-25`,
 `nix-cache`, `s3` and `hub`. Generate each token independently with your password
 manager, using at least 32 random URL-safe characters without whitespace.
 

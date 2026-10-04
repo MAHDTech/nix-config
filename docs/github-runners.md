@@ -1,15 +1,13 @@
 # GitHub runner VMs
 
-All twenty dedicated runners are Beszel agents reporting to
+All 25 dedicated runners are Beszel agents reporting to
 `https://hub.slopageddon.app`. Their Opnix service accounts need the additional
 `fleet` references documented in the [hub setup](../nixos/hosts/hub/README.md).
 Monitoring uses outbound HTTPS; no additional inbound runner port is opened.
 
-The twenty `github-runner-01` through `github-runner-20` hosts share a common
-base configuration. `github-runner-01` through `github-runner-10` register in
-the enterprise `tars-cloud` runner group (token reference: `op://fleet/GitHub Runner/credential`),
-while `github-runner-11` through `github-runner-20` register in the enterprise
-`bingamon-lab` runner group (token reference: `op://Bingamon/GitHub Runner/credential`).
+The 25 `github-runner-01` through `github-runner-25` hosts share a common
+base configuration and register in the enterprise `tars-cloud` runner group
+(token reference: `op://fleet/GitHub Runner/credential`).
 Jobs have Nix, devenv, Cachix, and Docker available. The shared runner configuration
 defines `ciTools` for both the host and runner job PATH, so workflow steps can use
 these commands without entering a Nix shell:
@@ -124,7 +122,7 @@ systemctl list-timers nixos-upgrade.timer
 lsblk -f
 ```
 
-Confirm runners appear online in their respective groups (`bingamon-lab` and `tars-cloud`). Run a trusted workflow
+Confirm runners appear online in the `tars-cloud` runner group. Run a trusted workflow
 on each hostname label checking Git, Git LFS, `gh`, Nix, Docker and an actual repository's
 devenv shell/tests. Run two jobs in succession to verify ephemeral registration.
 
@@ -134,21 +132,21 @@ Each host sets `hosts.github-runner.upgradeTime` in its host configuration:
 hosts.github-runner.upgradeTime = "05:00";
 ```
 
-Daily upgrades are staggered two hours apart within each group, in Canberra time,
+Daily upgrades are staggered two hours apart across the runners, in Canberra time,
 with up to five minutes of jitter:
 
-| tars-cloud | bingamon-lab | Upgrade time |
-| ---------- | ------------ | ------------ |
-| 01         | 11           | 03:00        |
-| 02         | 12           | 05:00        |
-| 03         | 13           | 07:00        |
-| 04         | 14           | 09:00        |
-| 05         | 15           | 11:00        |
-| 06         | 16           | 13:00        |
-| 07         | 17           | 15:00        |
-| 08         | 18           | 17:00        |
-| 09         | 19           | 19:00        |
-| 10         | 20           | 21:00        |
+| Runners    | Upgrade time |
+| ---------- | ------------ |
+| 01, 11, 21 | 03:00        |
+| 02, 12, 22 | 05:00        |
+| 03, 13, 23 | 07:00        |
+| 04, 14, 24 | 09:00        |
+| 05, 15, 25 | 11:00        |
+| 06, 16     | 13:00        |
+| 07, 17     | 15:00        |
+| 08, 18     | 17:00        |
+| 09, 19     | 19:00        |
+| 10, 20     | 21:00        |
 
 Missed runs are not caught up at boot, avoiding simultaneous upgrades after a
 fleet restart. These are scheduled start times, not a fleet-wide concurrency

@@ -1,7 +1,7 @@
 # Host draining
 
 `nixos-drain` runs a named, root-owned application script before planned disruption.
-It is enabled on `github-runner-01` through `github-runner-20`, `s3` and `nix-cache`.
+It is enabled on `github-runner-01` through `github-runner-25`, `s3` and `nix-cache`.
 Other hosts and installer images do not import the module.
 
 ```bash
