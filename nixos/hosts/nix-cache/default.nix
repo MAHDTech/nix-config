@@ -31,17 +31,6 @@ in
       preStart = "/run/current-system/sw/bin/nixos-drain drain --profile upgrade";
       postStart = "/run/current-system/sw/bin/nixos-drain cancel";
     };
-    opnix-secrets = {
-      wants = [ "cloud-final.service" ];
-      after = [ "cloud-final.service" ];
-      serviceConfig.TimeoutStartSec = "infinity";
-      preStart = ''
-        while [ ! -s /etc/opnix-token ]; do
-          echo "Waiting for cloud-init to deliver /etc/opnix-token"
-          ${pkgs.coreutils}/bin/sleep 30
-        done
-      '';
-    };
   };
 
   # Keep host upgrades independent of the cache service itself.

@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, ... }:
 let
   fleet = (import ../fleet.nix).beszel;
 in
@@ -46,17 +46,6 @@ in
     nixos-upgrade = {
       preStart = "/run/current-system/sw/bin/nixos-drain drain --profile upgrade";
       postStart = "/run/current-system/sw/bin/nixos-drain cancel";
-    };
-    opnix-secrets = {
-      wants = [ "cloud-final.service" ];
-      after = [ "cloud-final.service" ];
-      serviceConfig.TimeoutStartSec = "infinity";
-      preStart = ''
-        while [ ! -s /etc/opnix-token ]; do
-          echo "Waiting for the Opnix service-account token"
-          ${pkgs.coreutils}/bin/sleep 30
-        done
-      '';
     };
   };
   nix.settings.trusted-users = lib.mkForce [ "root" ];

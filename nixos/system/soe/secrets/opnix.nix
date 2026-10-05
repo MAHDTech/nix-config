@@ -63,6 +63,17 @@ let
       echo "OpNix failure $failures; backing off ''${delay}s before the next 1Password attempt"
     '';
   };
+
+  # The deployment controller installs the token out of band (cloud-init only
+  # lists it as a bootstrap prerequisite). Upstream opnix exits 0 without a
+  # token, which would start dependents with no secrets, so wait for it.
+  tokenFile = config.services.onepassword-secrets.tokenFile;
+  tokenWait = pkgs.writeShellScript "opnix-token-wait" ''
+    until [ -s ${tokenFile} ]; do
+      echo "Waiting for the deployment controller to deliver ${tokenFile}"
+      ${pkgs.coreutils}/bin/sleep 30
+    done
+  '';
 in
 {
   services.onepassword-secrets = {
@@ -91,9 +102,12 @@ in
           RestartSec = lib.mkForce "10s";
           # Retry missing references too, so fixing 1Password self-heals.
           RestartPreventExitStatus = lib.mkForce [ ];
-          # Longest backoff sleep (max plus 25% jitter) plus the resolution itself.
-          TimeoutStartSec = lib.mkDefault "8h";
-          ExecStartPre = lib.mkBefore [ "${backoff.gate}" ];
+          # The token may take arbitrarily long to arrive on a fresh guest.
+          TimeoutStartSec = lib.mkDefault "infinity";
+          ExecStartPre = lib.mkBefore [
+            "${tokenWait}"
+            "${backoff.gate}"
+          ];
           ExecStartPost = [ "${backoff.reset}" ];
           ExecStopPost = [ "${backoff.record}" ];
         };

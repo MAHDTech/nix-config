@@ -92,7 +92,7 @@ must first be available from Opnix; an Opnix dependency failure needs separate r
 
 Use the same deployment flow as the GitHub runners:
 
-1. Cloud-init delivers the **1Password service-account token** to `/etc/opnix-token`, owned by root with mode `0600`.
+1. The deployment controller delivers the **1Password service-account token** to `/etc/opnix-token` outside cloud-init; cloud-init only lists it as a bootstrap prerequisite.
 2. Ensure that service account can read the `fleet` vault and the item below.
 3. Opnix reads `op://fleet/Cloudflare ACME Slopageddon/token`.
 4. Opnix writes the **Cloudflare API token** to `/run/secrets/cloudflare-acme-slopageddon`, owned by root with mode `0400`.
