@@ -179,13 +179,6 @@ in
       # Create it if missing, preserving existing login history.
       tmpfiles.rules = [ "f /var/log/lastlog 0644 root root -" ]; # cspell:ignore lastlog
       services = {
-        opnix-secrets = {
-          unitConfig.StartLimitIntervalSec = lib.mkForce 0;
-          serviceConfig = {
-            RestartPreventExitStatus = lib.mkForce [ ];
-            RestartSec = lib.mkForce "5min";
-          };
-        };
         "github-runner-${runnerName}" = {
           wants = [ "opnix-secrets.service" ];
           after = [ "opnix-secrets.service" ];

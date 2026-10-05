@@ -34,12 +34,7 @@ in
     opnix-secrets = {
       wants = [ "cloud-final.service" ];
       after = [ "cloud-final.service" ];
-      unitConfig.StartLimitIntervalSec = lib.mkForce 0;
-      serviceConfig = {
-        RestartPreventExitStatus = lib.mkForce [ ];
-        RestartSec = lib.mkForce "5min";
-        TimeoutStartSec = "infinity";
-      };
+      serviceConfig.TimeoutStartSec = "infinity";
       preStart = ''
         while [ ! -s /etc/opnix-token ]; do
           echo "Waiting for cloud-init to deliver /etc/opnix-token"

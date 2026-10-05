@@ -65,13 +65,6 @@ in
         requires = [ "opnix-secrets.service" ];
         after = [ "opnix-secrets.service" ];
       };
-      opnix-secrets = {
-        unitConfig.StartLimitIntervalSec = lib.mkForce 0;
-        serviceConfig = {
-          RestartPreventExitStatus = lib.mkForce [ ];
-          RestartSec = lib.mkForce "1min";
-        };
-      };
     };
   };
 }
