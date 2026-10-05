@@ -97,6 +97,72 @@ let
     ]
     ++ [ config.nix.package ];
 
+  syncRunnerGroupScript =
+    runner:
+    let
+      name = runnerName runner;
+      scope = scopeOf runner.url;
+      apiEndpoint =
+        if scope != null && scope.type == "enterprise" then
+          "enterprises/${lib.toLower scope.slug}"
+        else if scope != null && scope.type == "org" then
+          "orgs/${lib.toLower scope.slug}"
+        else
+          null;
+    in
+    pkgs.writeShellScript "sync-runner-group-${name}" ''
+      set -euo pipefail
+
+      TARGET_GROUP="${runner.runnerGroup}"
+      MARKER_DIR="/var/lib/github-runner-fleet/${name}"
+      MARKER_FILE="$MARKER_DIR/current-group"
+      TOKEN_FILE="${secretPath name}"
+
+      ${pkgs.coreutils}/bin/mkdir -p "$MARKER_DIR"
+      if [[ -f "$MARKER_FILE" ]] && [[ "$(${pkgs.coreutils}/bin/cat "$MARKER_FILE")" == "$TARGET_GROUP" ]]; then
+        exit 0
+      fi
+
+      if [[ ! -f "$TOKEN_FILE" ]]; then
+        echo "github-runner-fleet: Token file $TOKEN_FILE not found, skipping runner group sync."
+        exit 0
+      fi
+
+      TOKEN="$(${pkgs.coreutils}/bin/tr -d '\r\n' < "$TOKEN_FILE")"
+      API_BASE="https://api.github.com/${apiEndpoint}"
+
+      # 1. Resolve runner group ID
+      GROUPS_JSON="$(${pkgs.curl}/bin/curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" "$API_BASE/actions/runner-groups")" || exit 0
+      GROUP_ID="$(echo "$GROUPS_JSON" | ${pkgs.jq}/bin/jq -r --arg g "$TARGET_GROUP" '.runner_groups[] | select(.name == $g) | .id')"
+
+      if [[ -z "$GROUP_ID" || "$GROUP_ID" == "null" ]]; then
+        echo "github-runner-fleet: Runner group '$TARGET_GROUP' not found on GitHub, skipping sync."
+        exit 0
+      fi
+
+      # 2. Resolve runner ID
+      RUNNERS_JSON="$(${pkgs.curl}/bin/curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" "$API_BASE/actions/runners?name=${name}")" || exit 0
+      RUNNER_ID="$(echo "$RUNNERS_JSON" | ${pkgs.jq}/bin/jq -r --arg n "${name}" '.runners[] | select(.name == $n) | .id')"
+
+      if [[ -z "$RUNNER_ID" || "$RUNNER_ID" == "null" ]]; then
+        echo "github-runner-fleet: Runner ${name} not yet registered on GitHub, will sync on next start."
+        exit 0
+      fi
+
+      # 3. Add runner to target group (idempotent PUT)
+      STATUS="$(${pkgs.curl}/bin/curl -s -o /dev/null -w "%{http_code}" -X PUT \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Accept: application/vnd.github+json" \
+        "$API_BASE/actions/runner-groups/$GROUP_ID/runners/$RUNNER_ID")" || exit 0
+
+      if [[ "$STATUS" == "204" || "$STATUS" == "200" ]]; then
+        echo "$TARGET_GROUP" > "$MARKER_FILE"
+        echo "github-runner-fleet: Synced runner ${name} (ID $RUNNER_ID) to group $TARGET_GROUP (ID $GROUP_ID)."
+      else
+        echo "github-runner-fleet: Warning: Failed to add runner ${name} to group $TARGET_GROUP (HTTP $STATUS)"
+      fi
+    '';
+
   runnerType = lib.types.submodule {
     options = {
       url = lib.mkOption {
@@ -228,6 +294,7 @@ in
 
     systemd.tmpfiles.rules = [
       "d /var/lib/github-runner-work 0755 root root -"
+      "d /var/lib/github-runner-fleet 0755 root root -"
     ];
 
     services.github-runners = lib.mapAttrs' (
@@ -323,5 +390,26 @@ in
         services = lib.optional cfg.restartOnTokenChange "github-runner-${name}";
       }
     ) cfg.runners;
+
+    systemd.services = lib.pipe cfg.runners [
+      (lib.filterAttrs (
+        _: runner:
+        let
+          scope = scopeOf runner.url;
+        in
+        runner.runnerGroup != null && scope != null && (scope.type == "enterprise" || scope.type == "org")
+      ))
+      (lib.mapAttrs' (
+        _: runner:
+        let
+          name = runnerName runner;
+        in
+        lib.nameValuePair "github-runner-${name}" {
+          serviceConfig.ExecStartPre = lib.mkAfter [
+            "+${syncRunnerGroupScript runner}"
+          ];
+        }
+      ))
+    ];
   };
 }
