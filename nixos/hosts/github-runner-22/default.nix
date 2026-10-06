@@ -1,5 +1,5 @@
 { ... }:
 {
   imports = [ ../github-runner/groups/tars-cloud.nix ];
-  hosts.github-runner.upgradeTime = "05:00";
+  hosts.github-runner.upgradeTime = "22:00";
 }

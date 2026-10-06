@@ -132,21 +132,35 @@ Each host sets `hosts.github-runner.upgradeTime` in its host configuration:
 hosts.github-runner.upgradeTime = "05:00";
 ```
 
-Daily upgrades are staggered two hours apart across the runners, in Canberra time,
-with up to five minutes of jitter:
+Daily upgrades are staggered hourly in Canberra time, without random delay.
+Runner numbers map to the hour modulo 24, so runners 01 and 25 share 01:00:
 
-| Runners    | Upgrade time |
-| ---------- | ------------ |
-| 01, 11, 21 | 03:00        |
-| 02, 12, 22 | 05:00        |
-| 03, 13, 23 | 07:00        |
-| 04, 14, 24 | 09:00        |
-| 05, 15, 25 | 11:00        |
-| 06, 16     | 13:00        |
-| 07, 17     | 15:00        |
-| 08, 18     | 17:00        |
-| 09, 19     | 19:00        |
-| 10, 20     | 21:00        |
+| Runner | Upgrade time |
+| ------ | ------------ |
+| 01, 25 | 01:00        |
+| 02     | 02:00        |
+| 03     | 03:00        |
+| 04     | 04:00        |
+| 05     | 05:00        |
+| 06     | 06:00        |
+| 07     | 07:00        |
+| 08     | 08:00        |
+| 09     | 09:00        |
+| 10     | 10:00        |
+| 11     | 11:00        |
+| 12     | 12:00        |
+| 13     | 13:00        |
+| 14     | 14:00        |
+| 15     | 15:00        |
+| 16     | 16:00        |
+| 17     | 17:00        |
+| 18     | 18:00        |
+| 19     | 19:00        |
+| 20     | 20:00        |
+| 21     | 21:00        |
+| 22     | 22:00        |
+| 23     | 23:00        |
+| 24     | 00:00        |
 
 Missed runs are not caught up at boot, avoiding simultaneous upgrades after a
 fleet restart. These are scheduled start times, not a fleet-wide concurrency

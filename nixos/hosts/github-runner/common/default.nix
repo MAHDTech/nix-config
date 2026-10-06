@@ -52,7 +52,7 @@ in
     upgradeTime = lib.mkOption {
       type = lib.types.strMatching "(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]";
       default = "03:00";
-      description = "Daily upgrade start time in the host timezone (HH:MM). Stagger within each runner group.";
+      description = "Daily upgrade start time in the host timezone (HH:MM). Stagger across the runner fleet.";
     };
 
     runnerGroup = lib.mkOption {
@@ -168,7 +168,7 @@ in
     system.autoUpgrade = {
       flake = lib.mkForce "github:MAHDTech/nix-config#${name}";
       dates = lib.mkForce cfg.upgradeTime;
-      randomizedDelaySec = lib.mkForce "5m";
+      randomizedDelaySec = lib.mkForce "0";
       persistent = lib.mkForce false;
     };
     systemd = {
