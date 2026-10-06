@@ -7,6 +7,8 @@
 }:
 let
   cfg = config.services.nix-cache-proxy;
+  cacheLimitGiB = 750;
+  cacheReserveGiB = 100;
   upstreams = builtins.fromJSON (
     builtins.readFile ../../system/config/services/nix-cache/upstreams.json
   );
@@ -83,28 +85,34 @@ in
   };
 
   config = {
-    users.groups.nix-cache-summary = { };
-    users.users.nix-cache-summary = {
-      isSystemUser = true;
-      group = "nix-cache-summary";
-    };
     systemd.services.nix-cache-summary = {
-      description = "Collect lightweight upstream cache metadata";
-      after = [ "network-online.target" ];
+      description = "Collect cache health, capacity and traffic statistics";
+      after = [
+        "network-online.target"
+        "nginx.service"
+      ];
       wants = [ "network-online.target" ];
-      path = [ pkgs.curl ];
+      path = [
+        pkgs.curl
+        pkgs.coreutils
+      ];
       serviceConfig = {
         Type = "oneshot";
-        User = "nix-cache-summary";
-        Group = "nix-cache-summary";
+        # Nginx cache directories are private to its service user (0700).
+        User = config.services.nginx.user;
+        Group = config.services.nginx.group;
         StateDirectory = "nix-cache-summary";
         StateDirectoryMode = "0755";
-        ExecStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-summary/summary.json";
-        TimeoutStartSec = "30s";
+        ExecStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-summary/summary.json --limit-gib ${toString cacheLimitGiB} --reserve-gib ${toString cacheReserveGiB}";
+        TimeoutStartSec = "2min";
         NoNewPrivileges = true;
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateTmp = true;
+        PrivateDevices = true;
+        CapabilityBoundingSet = "";
+        Nice = 10;
+        IOSchedulingClass = "idle";
         MemoryMax = "128M";
       };
     };
@@ -132,7 +140,7 @@ in
       commonHttpConfig = ''
         # The NixOS proxyCachePath options do not expose min_free.
         proxy_cache_path /var/cache/nginx/nixpkgs levels=1:2 keys_zone=nixpkgs:128m
-          max_size=750g min_free=100g inactive=30d use_temp_path=off;
+          max_size=${toString cacheLimitGiB}g min_free=${toString cacheReserveGiB}g inactive=30d use_temp_path=off;
         map $upstream_status $nix_cache_skip {
           default 1;
           200 0;

@@ -26,6 +26,56 @@
         </div>
         <span class="button-label">VIEW FLEET <span aria-hidden="true">→</span></span>
       </a>
+      <section class="panel" aria-labelledby="statistics-title">
+        <h2 class="panel-title" id="statistics-title">CACHE STATISTICS</h2>
+        <h3>Space and traffic</h3>
+        <p class="muted" id="statistics-updated" role="status">
+          Statistics not loaded. Updated every 15 minutes.
+        </p>
+        <dl class="statistics">
+          <div>
+            <dt>FREE DISK SPACE</dt>
+            <dd id="disk-free">—</dd>
+            <p class="muted" id="disk-detail">Available space on the cache filesystem.</p>
+            <meter
+              id="disk-meter"
+              min="0"
+              max="100"
+              value="0"
+              aria-label="Disk space used"
+              hidden
+            ></meter>
+          </div>
+          <div>
+            <dt>CACHE ON DISK</dt>
+            <dd id="cache-size">—</dd>
+            <p class="muted" id="cache-detail">Waiting for a size measurement.</p>
+          </div>
+          <div>
+            <dt>ARCHIVE HIT RATE</dt>
+            <dd id="cache-hit-rate">—</dd>
+            <p class="muted" id="hit-detail">Measured by bytes, over the last 24 hours.</p>
+          </div>
+          <div>
+            <dt>ARCHIVES SERVED</dt>
+            <dd id="archive-bytes">—</dd>
+            <p class="muted">Bytes delivered over the last 24 hours.</p>
+          </div>
+          <div>
+            <dt>REQUESTS</dt>
+            <dd id="cache-requests">—</dd>
+            <p class="muted" id="requests-detail">
+              Cache endpoint requests over the last 24 hours.
+            </p>
+          </div>
+          <div>
+            <dt>SERVER ERRORS</dt>
+            <dd id="cache-errors">—</dd>
+            <p class="muted" id="errors-detail">HTTP 5xx responses over the last 24 hours.</p>
+          </div>
+        </dl>
+        <p class="muted" id="cache-growth">Cache growth appears after two size measurements.</p>
+      </section>
       <section class="panel" aria-labelledby="upstreams-title">
         <h2 class="panel-title" id="upstreams-title">UPSTREAMS</h2>
         <h3>Cache endpoints</h3>

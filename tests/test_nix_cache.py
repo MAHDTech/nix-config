@@ -73,6 +73,9 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         assert b'Endpoint links open' not in body
         assert b'href="/devenv/nix-cache-info"' not in body
         assert b'data-endpoint="devenv"' in body
+        assert b'CACHE STATISTICS' in body
+        assert b'id="disk-free"' in body
+        assert b'id="cache-hit-rate"' in body
         assert get('/', 'HEAD')[0] == 200
         assert get('/', 'POST')[0] == 403
         status, headers, body = get('/_landing.css')
@@ -85,8 +88,19 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         assert headers['Cache-Control'] == 'no-store'
         assert get('/_dashboard/summary.json', 'POST')[0] == 403
         assert get('/unknown')[0] == 404
-        prefixes = ['', '/bingamon-lab', '/bingamon-lab-tf-modules', '/devenv', '/tars-cloud']
-        for prefix in prefixes:
+        assert get('/_dashboard/stats-state.json')[0] == 404
+        upstreams = {
+            '': 'cache.nixos.org',
+            '/bingamon-lab': 'bingamon-lab.cachix.org',
+            '/bingamon-lab-tf-modules': 'bingamon-lab-tf-modules.cachix.org',
+            '/devenv': 'devenv.cachix.org',
+            '/tars-cloud': 'tars-cloud.cachix.org',
+            '/mahdtech': 'mahdtech.cachix.org',
+            '/salt-labs': 'salt-labs.cachix.org',
+            '/herdr': 'herdr.cachix.org',
+            '/cosmic': 'cosmic.cachix.org',
+        }
+        for prefix, host in upstreams.items():
             for suffix in ['/nix-cache-info', '/' + 'a' * 32 + '.narinfo', '/nar/fixture.nar.xz']:
                 path = prefix + suffix
                 first = get(path)
@@ -94,7 +108,7 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
                 assert first[0] == second[0] == 200, path
                 assert first[1]['X-Cache-Status'] == 'MISS', (path, first)
                 assert second[1]['X-Cache-Status'] == 'HIT', (path, second)
-                assert first[2] == second[2] and first[2].endswith(suffix.encode())
+                assert first[2] == second[2] == (host + suffix).encode()
                 assert get(path, 'HEAD')[0] == 200
             for _ in range(2):
                 missing = get(prefix + '/nar/missing')
@@ -111,4 +125,4 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     assert all(entry['uri'] not in ['/', '/_landing.css', '/_landing.js', '/_dashboard/summary.json'] for entry in logs)
     for entry in logs:
         datetime.datetime.fromisoformat(entry['time'])
-    print('PASS: landing, CSS, methods, all 15 cache routes MISS/HIT/HEAD, uncached 404s, timestamped JSON logs')
+    print(f'PASS: landing, CSS, methods, all {len(upstreams) * 3} cache routes MISS/HIT/HEAD, uncached 404s, timestamped JSON logs')

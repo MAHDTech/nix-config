@@ -213,6 +213,18 @@ dd {
   color: #c7d3e3;
   overflow-wrap: anywhere;
 }
+.statistics dd {
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  color: var(--cyan);
+}
+[data-state="warning"] {
+  color: #ffd479 !important;
+}
+meter {
+  width: 100%;
+  height: 0.7rem;
+  accent-color: var(--cyan);
+}
 @media (max-width: 650px) {
   .hub-card {
     align-items: flex-start;

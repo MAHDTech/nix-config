@@ -28,5 +28,29 @@
     "host": "bingamon-lab-tf-modules.cachix.org",
     "prefix": "/bingamon-lab-tf-modules",
     "publicKey": "bingamon-lab-tf-modules.cachix.org-1:QEPNsUVgYDLYFYzKL6HD6SgbQ808yWcBdQ/Rcne1l9o="
+  },
+  {
+    "name": "mahdtech",
+    "host": "mahdtech.cachix.org",
+    "prefix": "/mahdtech",
+    "publicKey": "mahdtech.cachix.org-1:LtqGFUwyvUqRrl+LijURnBwkwQLwRO52dbDfrYkjWTg="
+  },
+  {
+    "name": "salt-labs",
+    "host": "salt-labs.cachix.org",
+    "prefix": "/salt-labs",
+    "publicKey": "salt-labs.cachix.org-1:4Nbwc8BQYqmH6leV8EFvOqr3ukOMDEsGXvnOfqRjamo="
+  },
+  {
+    "name": "herdr",
+    "host": "herdr.cachix.org",
+    "prefix": "/herdr",
+    "publicKey": "herdr.cachix.org-1:3nH7IStRsS0ASfdonA0DCRR2ZrSCeWitZ7Kwew0cR4I="
+  },
+  {
+    "name": "cosmic",
+    "host": "cosmic.cachix.org",
+    "prefix": "/cosmic",
+    "publicKey": "cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE="
   }
 ]

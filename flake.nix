@@ -8,6 +8,10 @@
       https://nix-cache.slopageddon.app/tars-cloud?priority=10
       https://nix-cache.slopageddon.app/bingamon-lab?priority=10
       https://nix-cache.slopageddon.app/bingamon-lab-tf-modules?priority=10
+      https://nix-cache.slopageddon.app/mahdtech?priority=10
+      https://nix-cache.slopageddon.app/salt-labs?priority=10
+      https://nix-cache.slopageddon.app/herdr?priority=10
+      https://nix-cache.slopageddon.app/cosmic?priority=10
       https://cache.nixos.org
       https://cosmic.cachix.org/
       https://devenv.cachix.org
@@ -26,7 +30,7 @@
       bingamon-lab.cachix.org-1:an+S3U4koN/ka4SUeKGuqR+wxLbCBe+0wF9ThdvqBtw=
       bingamon-lab-tf-modules.cachix.org-1:QEPNsUVgYDLYFYzKL6HD6SgbQ808yWcBdQ/Rcne1l9o=
       mahdtech.cachix.org-1:LtqGFUwyvUqRrl+LijURnBwkwQLwRO52dbDfrYkjWTg=
-      salt-labs.cachix.org-1:9lBlhm9rPAHrb1GXnclFomAHsnj3kV+4DyJspy/nQlw=
+      salt-labs.cachix.org-1:4Nbwc8BQYqmH6leV8EFvOqr3ukOMDEsGXvnOfqRjamo=
       herdr.cachix.org-1:3nH7IStRsS0ASfdonA0DCRR2ZrSCeWitZ7Kwew0cR4I=
     ";
     warn-dirty = true;

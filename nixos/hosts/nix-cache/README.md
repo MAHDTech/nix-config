@@ -7,17 +7,37 @@ This host is independent of the GitHub runner service and does not register a ru
 ## Landing page and monitoring
 
 Open `https://nix-cache.slopageddon.app/` for the cyberpunk landing page, declared
-host information, upstream summaries and a link to `https://hub.slopageddon.app`.
-The page uses local CSS and JavaScript. Each page load fetches a static snapshot;
-refresh to see the latest check. No browser polling or external assets are used.
+host information, cache statistics, upstream summaries and a link to `https://hub.slopageddon.app`.
+The page uses local CSS and JavaScript. It fetches a static snapshot on load and
+every 15 minutes while open. No external assets are used.
 
 `nix-cache-summary.timer` runs every 15 minutes and shortly after boot. Its
 unprivileged service probes each upstream's `nix-cache-info` directly, with
 bounded response sizes and timeouts, and atomically publishes a JSON snapshot.
 The table shows metadata reachability, response time and advertised priority.
-Snapshots older than 30 minutes are marked stale. This checks metadata, not
-package downloads or signatures. It never scans cache files or access logs, so
-collection work does not grow with cache size. Traffic analytics remain deferred.
+Snapshots older than 30 minutes are marked stale. Upstream probes check metadata,
+not package downloads or signatures.
+
+The statistics section shows available disk space, cache size and size change,
+archive bytes served, archive hit rate by bytes, request counts and HTTP 5xx
+errors. Traffic covers the last 24 hours with one-minute resolution. HTTP 404
+responses are counted separately because package availability probes normally
+produce them. Hits include stale and revalidated responses served from disk;
+archive metrics include successful full and partial transfers.
+
+The collector runs as the Nginx user to read its private cache directories, with
+a read-only system sandbox and persistent writes restricted to its state directory. Disk
+availability is read directly from the filesystem; a low-priority `du` scan has
+a 30-second timeout. Failed measurements display as unavailable, not zero.
+Free space below the configured 100 GiB reserve is highlighted.
+
+The first traffic collection reads the current access log and its uncompressed
+rotation. Later collections use inode and byte offsets stored in
+`/var/lib/nix-cache-summary/stats-state.json`, keeping only 24 hours of minute
+buckets. This supports the host's weekly rotation with delayed compression and
+does not expose request paths or client addresses. The public snapshot is
+`summary.json` in the same directory. Cache size change becomes available after
+two successful measurements and includes both new downloads and eviction.
 
 The exact root, asset and `/_dashboard/summary.json` locations are separate from the existing
 `nix-cache-info`, `.narinfo` and `/nar/` routes, including upstream prefixes.
@@ -26,8 +46,8 @@ Keys, signatures, retention, eviction and the network allowlist are unchanged.
 
 This host runs a Beszel agent. See the [hub setup](../hub/README.md) for the
 required Opnix references, enrollment and read-only dashboard accounts.
-Beszel shows host resources and service status; Nginx cache HIT/MISS analytics
-and live Nginx log viewing remain deferred.
+Beszel shows host resources and service status. Live Nginx log viewing remains
+outside the landing page.
 
 ## Upstream caches
 
@@ -42,6 +62,10 @@ Each entry defines a name, upstream host, local URL prefix and upstream public s
 | `/tars-cloud`              | `https://tars-cloud.cachix.org`              |
 | `/bingamon-lab`            | `https://bingamon-lab.cachix.org`            |
 | `/bingamon-lab-tf-modules` | `https://bingamon-lab-tf-modules.cachix.org` |
+| `/mahdtech`                | `https://mahdtech.cachix.org`                |
+| `/salt-labs`               | `https://salt-labs.cachix.org`               |
+| `/herdr`                   | `https://herdr.cachix.org`                   |
+| `/cosmic`                  | `https://cosmic.cachix.org`                  |
 
 All upstreams share the 750 GiB cache limit and 100 GiB free-space threshold.
 Cache keys include the upstream host and request URI, keeping their contents separate.
@@ -49,6 +73,12 @@ Only listed upstreams are exposed; this is not an arbitrary forward proxy.
 When adding a public cache, update the catalog and the matching URLs and signing keys
 in `flake.nix`. Private upstreams require a separate credential and access-control design.
 Deploy the cache server before upgrading clients to use new endpoints.
+
+These routes cache Nix binary archives and metadata. GitHub source archives,
+Actions downloads, npm packages, Python wheels, Maven artifacts and container
+layers do not pass through this proxy. Cache those in their package managers,
+workflow caches or dedicated registry mirrors; adding their hosts here does not
+make them Nix substituters.
 
 ## Deployment inputs
 
@@ -144,7 +174,7 @@ Cache-to-cache failover does not require enabling Nix's `fallback` setting, whic
 ## Validation and operations
 
 The landing-page regression fixture runs the generated nginx configuration with
-local upstreams. It checks the page and stylesheet, all fifteen cache routes,
+local upstreams. It checks the page and stylesheet, all twenty-seven cache routes,
 MISS/HIT responses, HEAD requests, uncached 404s and timestamped JSON logs:
 
 ```sh
@@ -156,6 +186,14 @@ NGINX_CONFIG=$(nix build --no-link --print-out-paths --impure --expr \
 Run from the repository root with nginx on PATH, or set `NGINX_BIN` to its binary.
 The fixture substitutes local HTTP listeners for TLS; certificate issuance and
 the HTTPS frontend are covered separately by the ACME and Beszel VM checks.
+
+The collector's rolling windows, append/rotation handling and unavailable disk
+measurements are covered by:
+
+```sh
+python3 -m unittest discover -s tests -p test_nix_cache_summary.py
+node tests/test_nix_cache_dashboard.js
+```
 
 Local validation completed on 2026-09-21:
 
