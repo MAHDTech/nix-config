@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Browse Nix Cache // Slopageddon</title>
+    <link rel="stylesheet" href="/_landing.css" />
+    <link rel="stylesheet" href="/_browse.css" />
+    <script src="/_catalog.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header class="masthead">
+        <a class="brand" href="/"
+          >SLOPAGEDDON<span class="brand-mark" aria-hidden="true">_</span></a
+        >
+        <a class="header-link" href="/">Back to home →</a>
+      </header>
+      <section class="hero">
+        <h1>Already here.<br /><span>Ready to build.</span></h1>
+        <p class="intro">Browse the Nix downloads cached by the Slopageddon fleet.</p>
+      </section>
+      <section class="panel">
+        <h2 class="panel-title">CACHED DOWNLOADS</h2>
+        <p class="muted" id="catalog-status" role="status">Loading catalog…</p>
+        <p class="muted">
+          A snapshot of complete cached downloads. Names come from available package metadata. Files
+          may be evicted after the snapshot; downloads use the normal cache routes and can fetch
+          from upstream again.
+        </p>
+        <div class="catalog-controls">
+          <label
+            >Search packages or archives<input
+              id="catalog-search"
+              type="search"
+              placeholder="Package name or archive hash"
+          /></label>
+          <label
+            >Upstream<select id="catalog-upstream">
+              <option value="">All upstreams</option>
+            </select></label
+          >
+          <label
+            >File type<select id="catalog-kind">
+              <option value="archive">Archives</option>
+              <option value="">All files</option>
+              <option value="metadata">Package metadata</option>
+            </select></label
+          >
+        </div>
+        <div class="table-scroll">
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>Name / download</th>
+                <th>Upstream</th>
+                <th>Size</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody id="catalog-rows"></tbody>
+          </table>
+        </div>
+        <div class="catalog-controls">
+          <button id="catalog-previous" type="button" disabled>← Previous</button>
+          <span class="muted" id="catalog-page" role="status"></span>
+          <button id="catalog-next" type="button" disabled>Next →</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

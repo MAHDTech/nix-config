@@ -27,6 +27,7 @@ in
             "nix-cache"
             "s3"
             "hub"
+            "mirror"
           ]
         )
     );

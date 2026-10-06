@@ -21,6 +21,16 @@ in
       type = lib.types.str;
       default = "/run/secrets/cloudflare-acme-token";
     };
+    certificateGroup = lib.mkOption {
+      type = lib.types.str;
+      default = "nginx";
+      description = "Group allowed to read the issued certificates.";
+    };
+    reloadServices = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ "nginx.service" ];
+      description = "Services to reload after certificate renewal.";
+    };
   };
   config = lib.mkIf cfg.enable {
     services.onepassword-secrets.secrets.cloudflareAcme = {
@@ -37,8 +47,8 @@ in
         dnsProvider = "cloudflare";
         dnsResolver = "1.1.1.1:53";
         credentialFiles.CF_DNS_API_TOKEN_FILE = cfg.tokenPath;
-        group = "nginx";
-        reloadServices = [ "nginx.service" ];
+        group = cfg.certificateGroup;
+        inherit (cfg) reloadServices;
       });
     };
     systemd.services = lib.genAttrs (map (domain: "acme-order-renew-${domain}") cfg.domains) (_: {

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>{{html .Name}} // Slopageddon Mirror</title>
+    <link rel="stylesheet" href="/_landing.css" />
+    <link rel="stylesheet" href="/_browse.css" />
+  </head>
+  <body>
+    <main>
+      <header class="masthead">
+        <a class="brand" href="/"
+          >SLOPAGEDDON<span class="brand-mark" aria-hidden="true">_</span></a
+        >
+        <a class="header-link" href="/">Back to home →</a>
+      </header>
+      <section class="hero">
+        <h1>Browse.<br /><span>Download.</span></h1>
+        <p class="intro">Files from the Slopageddon mirror.</p>
+      </section>
+      <section class="panel">
+        <h2 class="panel-title">FILE BROWSER</h2>
+        <nav class="breadcrumbs" aria-label="Directory">
+          <a href="/browse/">All files</a>{{range .Breadcrumbs}}{{if .Link}} /
+          <a href="{{html .Link}}">{{html .Text}}</a>{{end}}{{end}}
+        </nav>
+        <div class="table-scroll">
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>
+                  Name <a href="?sort=namedirfirst&order=asc" aria-label="Name ascending">↑</a>
+                  <a href="?sort=namedirfirst&order=desc" aria-label="Name descending">↓</a>
+                </th>
+                <th>
+                  Size <a href="?sort=size&order=asc" aria-label="Size ascending">↑</a>
+                  <a href="?sort=size&order=desc" aria-label="Size descending">↓</a>
+                </th>
+                <th>
+                  Modified <a href="?sort=time&order=asc" aria-label="Modified ascending">↑</a>
+                  <a href="?sort=time&order=desc" aria-label="Modified descending">↓</a>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {{if .CanGoUp}}
+              <tr>
+                <td><a href="..">↑ Parent directory</a></td>
+                <td></td>
+                <td></td>
+              </tr>
+              {{end}} {{range .Items}} {{$url := trimPrefix "./" .URL}}
+              <tr>
+                <td>
+                  <a href="{{if not $.CanGoUp}}/{{html $url}}{{else}}{{html .URL}}{{end}}"
+                    >{{html .Name}}</a
+                  >
+                </td>
+                <td>{{if .IsDir}}Directory{{else}}{{.HumanSize}}{{end}}</td>
+                <td><time>{{.HumanModTime "2006-01-02 15:04 MST"}}</time></td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="3" class="muted">This directory is empty.</td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

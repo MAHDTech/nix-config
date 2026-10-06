@@ -44,6 +44,22 @@ The exact root, asset and `/_dashboard/summary.json` locations are separate from
 Physical cache files are no longer exposed through directory listings.
 Keys, signatures, retention, eviction and the network allowlist are unchanged.
 
+The top-right **Browse files** button opens `/browse/`, a themed catalog of
+complete cached archives and package metadata. It supports search, upstream and
+file-type filters, and pages of 100 entries. Archive names are matched to package
+names when the corresponding cached `.narinfo` is available; otherwise the
+archive filename is shown. Downloads use the existing cache URLs, never the
+internal nginx cache files. Evicted downloads may be fetched upstream again.
+
+`nix-cache-catalog.timer` publishes `/_dashboard/catalog.json` every 15 minutes
+and shortly after boot. Its collector reads bounded headers and small metadata
+bodies, validates cache keys against their hashed filenames, and skips incomplete
+files, query-bearing URLs and unknown upstreams. It runs as nginx with read-only
+cache access. A scan is limited to 100,000 files and 90 seconds; partial catalogs
+are marked explicitly. Failed runs retain the last snapshot, which the browser
+marks stale after 30 minutes. This is a cache snapshot, not an upstream package
+inventory or a guarantee that an entry remains cached.
+
 This host runs a Beszel agent. See the [hub setup](../hub/README.md) for the
 required Opnix references, enrollment and read-only dashboard accounts.
 Beszel shows host resources and service status. Live Nginx log viewing remains

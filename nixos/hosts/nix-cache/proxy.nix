@@ -85,43 +85,79 @@ in
   };
 
   config = {
-    systemd.services.nix-cache-summary = {
-      description = "Collect cache health, capacity and traffic statistics";
-      after = [
-        "network-online.target"
-        "nginx.service"
-      ];
-      wants = [ "network-online.target" ];
-      path = [
-        pkgs.curl
-        pkgs.coreutils
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        # Nginx cache directories are private to its service user (0700).
-        User = config.services.nginx.user;
-        Group = config.services.nginx.group;
-        StateDirectory = "nix-cache-summary";
-        StateDirectoryMode = "0755";
-        ExecStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-summary/summary.json --limit-gib ${toString cacheLimitGiB} --reserve-gib ${toString cacheReserveGiB}";
-        TimeoutStartSec = "2min";
-        NoNewPrivileges = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        CapabilityBoundingSet = "";
-        Nice = 10;
-        IOSchedulingClass = "idle";
-        MemoryMax = "128M";
+    systemd = {
+      services = {
+        nix-cache-summary = {
+          description = "Collect cache health, capacity and traffic statistics";
+          after = [
+            "network-online.target"
+            "nginx.service"
+          ];
+          wants = [ "network-online.target" ];
+          path = [
+            pkgs.curl
+            pkgs.coreutils
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            # Nginx cache directories are private to its service user (0700).
+            User = config.services.nginx.user;
+            Group = config.services.nginx.group;
+            StateDirectory = "nix-cache-summary";
+            StateDirectoryMode = "0755";
+            ExecStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-summary/summary.json --limit-gib ${toString cacheLimitGiB} --reserve-gib ${toString cacheReserveGiB}";
+            TimeoutStartSec = "2min";
+            NoNewPrivileges = true;
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            PrivateTmp = true;
+            PrivateDevices = true;
+            CapabilityBoundingSet = "";
+            Nice = 10;
+            IOSchedulingClass = "idle";
+            MemoryMax = "128M";
+          };
+        };
+        nix-cache-catalog = {
+          description = "Index cached Nix downloads for the file browser";
+          after = [ "nginx.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            User = config.services.nginx.user;
+            Group = config.services.nginx.group;
+            StateDirectory = "nix-cache-catalog";
+            StateDirectoryMode = "0755";
+            ExecStart = "${pkgs.python3}/bin/python3 ${./collect-catalog.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-catalog/catalog.json";
+            TimeoutStartSec = "2min";
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            PrivateTmp = true;
+            PrivateDevices = true;
+            NoNewPrivileges = true;
+            CapabilityBoundingSet = "";
+            Nice = 10;
+            IOSchedulingClass = "idle";
+            MemoryMax = "256M";
+          };
+        };
       };
-    };
-    systemd.timers.nix-cache-summary = {
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "1min";
-        OnCalendar = "*:0/15";
-        Persistent = true;
+      timers = {
+        nix-cache-summary = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "1min";
+            OnCalendar = "*:0/15";
+            Persistent = true;
+          };
+        };
+        nix-cache-catalog = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "2min";
+            OnCalendar = "*:0/15";
+            Persistent = true;
+          };
+        };
       };
     };
     networking.firewall.allowedTCPPorts = [ 443 ];
@@ -156,6 +192,49 @@ in
           deny all;
         '';
         locations = builtins.listToAttrs (lib.concatMap cacheLocations upstreams) // {
+          "= /browse".return = "308 /browse/";
+          "= /browse/" = {
+            root = pkgs.linkFarm "nix-cache-catalog-page" [
+              {
+                name = "index.html";
+                path = ./catalog.html;
+              }
+            ];
+            tryFiles = "/index.html =404";
+            extraConfig = ''
+              default_type text/html;
+              access_log off;
+              limit_except GET { deny all; }
+              add_header Cache-Control "no-cache";
+            '';
+          };
+          "= /_catalog.js" = {
+            alias = "${./catalog.js}";
+            extraConfig = ''
+              types { }
+              default_type application/javascript;
+              access_log off;
+              limit_except GET { deny all; }
+            '';
+          };
+          "= /_browse.css" = {
+            alias = "${../../system/config/services/file-browser/browser.css}";
+            extraConfig = ''
+              default_type text/css;
+              access_log off;
+              limit_except GET { deny all; }
+            '';
+          };
+          "= /_dashboard/catalog.json" = {
+            alias = "/var/lib/nix-cache-catalog/catalog.json";
+            extraConfig = ''
+              default_type application/json;
+              access_log off;
+              limit_except GET { deny all; }
+              add_header Cache-Control "no-store" always;
+              add_header X-Content-Type-Options "nosniff" always;
+            '';
+          };
           "= /_dashboard/summary.json" = {
             alias = "/var/lib/nix-cache-summary/summary.json";
             extraConfig = ''

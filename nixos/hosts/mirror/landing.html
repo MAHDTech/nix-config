@@ -4,8 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
-    <title>Nix Cache // Slopageddon</title>
+    <title>Mirror // Slopageddon</title>
     <link rel="stylesheet" href="/_landing.css" />
+    <link rel="stylesheet" href="/_browse.css" />
     <script src="/_landing.js" defer></script>
   </head>
   <body>
@@ -15,8 +16,8 @@
         <a class="header-link" href="/browse/">Browse files <span aria-hidden="true">→</span></a>
       </header>
       <section class="hero" aria-labelledby="title">
-        <h1 id="title">Build less.<br /><span>Ship more.</span></h1>
-        <p class="intro">Shared Nix packages for the Slopageddon fleet.</p>
+        <h1 id="title">One mirror.<br /><span>Many sources.</span></h1>
+        <p class="intro">Software, images and dark site bundles for the Slopageddon fleet.</p>
       </section>
       <a class="panel hub-card" href="@hub@">
         <div>
@@ -27,8 +28,8 @@
         <span class="button-label">VIEW FLEET <span aria-hidden="true">→</span></span>
       </a>
       <section class="panel" aria-labelledby="statistics-title">
-        <h2 class="panel-title" id="statistics-title">CACHE STATISTICS</h2>
-        <h3>Space and traffic</h3>
+        <h2 class="panel-title" id="statistics-title">MIRROR STATISTICS</h2>
+        <h3>Space for what comes next</h3>
         <p class="muted" id="statistics-updated" role="status">
           Statistics not loaded. Updated every 15 minutes.
         </p>
@@ -36,7 +37,7 @@
           <div>
             <dt>FREE DISK SPACE</dt>
             <dd id="disk-free">—</dd>
-            <p class="muted" id="disk-detail">Available space on the cache filesystem.</p>
+            <p class="muted" id="disk-detail">Available space on the mirror filesystem.</p>
             <meter
               id="disk-meter"
               min="0"
@@ -47,44 +48,44 @@
             ></meter>
           </div>
           <div>
-            <dt>CACHE ON DISK</dt>
-            <dd id="cache-size">—</dd>
-            <p class="muted" id="cache-detail">Waiting for a size measurement.</p>
+            <dt>MIRROR ON DISK</dt>
+            <dd id="mirror-size">—</dd>
+            <p class="muted">Stored files. Shared disk with NixOS.</p>
           </div>
           <div>
-            <dt>ARCHIVE HIT RATE</dt>
-            <dd id="cache-hit-rate">—</dd>
-            <p class="muted" id="hit-detail">Measured by bytes, over the last 24 hours.</p>
-          </div>
-          <div>
-            <dt>ARCHIVES SERVED</dt>
-            <dd id="archive-bytes">—</dd>
-            <p class="muted">Bytes delivered over the last 24 hours.</p>
-          </div>
-          <div>
-            <dt>REQUESTS</dt>
-            <dd id="cache-requests">—</dd>
-            <p class="muted" id="requests-detail">
-              Cache endpoint requests over the last 24 hours.
-            </p>
-          </div>
-          <div>
-            <dt>SERVER ERRORS</dt>
-            <dd id="cache-errors">—</dd>
-            <p class="muted" id="errors-detail">HTTP 5xx responses over the last 24 hours.</p>
+            <dt>TOTAL DISK SPACE</dt>
+            <dd id="disk-total">—</dd>
+            <p class="muted">Usable filesystem capacity.</p>
           </div>
         </dl>
-        <p class="muted" id="cache-growth">Cache growth appears after two size measurements.</p>
       </section>
-      <section class="panel" aria-labelledby="upstreams-title">
-        <h2 class="panel-title" id="upstreams-title">UPSTREAMS</h2>
-        <h3>Cache endpoints</h3>
-        <p class="muted" id="summary-updated" role="status">
-          Summary not loaded. Checks run every 15 minutes.
-        </p>
-        <ul class="upstreams">
-          @upstreams@
+      <section class="panel" aria-labelledby="collections-title">
+        <h2 class="panel-title" id="collections-title">COLLECTIONS</h2>
+        <h3>Find your next download</h3>
+        <ul class="collection-links">
+          <li>
+            <a href="/nutanix/">Nutanix <span>LCM, NKP, bundles and appliances →</span></a>
+          </li>
+          <li>
+            <a href="/f5/">F5 <span>Packages, disk images and appliances →</span></a>
+          </li>
+          <li>
+            <a href="/terraform/">OpenTofu / Terraform <span>Provider mirror →</span></a>
+          </li>
+          <li>
+            <a href="/iso/">Installation media <span>ISO files →</span></a>
+          </li>
+          <li>
+            <a href="/images/">Disk images <span>Generic VM images →</span></a>
+          </li>
+          <li>
+            <a href="/ubuntu/">Ubuntu <span>Reserved for a future mirror →</span></a>
+          </li>
+          <li>
+            <a href="/redhat/">Red Hat <span>Reserved for a future mirror →</span></a>
+          </li>
         </ul>
+        <a class="header-link" href="/browse/">Browse all files →</a>
       </section>
       <section class="panel" aria-labelledby="summary-title">
         <h2 class="panel-title" id="summary-title">SYSTEM SUMMARY</h2>

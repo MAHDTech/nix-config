@@ -24,6 +24,12 @@ in
   #              keep the fleet default from nixos/system/soe/nix.
   list = [
     {
+      name = "mirror";
+      system = "x86_64-linux";
+      buildSystem = "x86_64-linux";
+      nixSettings = { };
+    }
+    {
       name = "hub";
       system = "x86_64-linux";
       buildSystem = "x86_64-linux";
@@ -106,6 +112,13 @@ in
       }
     )
     // rec {
+      mirror = mkHost {
+        name = "mirror";
+        system = "x86_64-linux";
+        buildSystem = "x86_64-linux";
+        hostType = "server";
+        enableHomeManager = false;
+      };
       hub = mkHost {
         name = "hub";
         system = "x86_64-linux";

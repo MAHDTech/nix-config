@@ -6,6 +6,7 @@ Only listeners, TLS and runtime paths are substituted; cache routes stay intact.
 
 import datetime
 import http.server
+import importlib.util
 import json
 import os
 import pathlib
@@ -50,6 +51,8 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     snapshot = b'{"checked_at":"2026-09-25T00:00:00+00:00","endpoints":[]}'
     (root / 'summary.json').write_bytes(snapshot)
     config = config.replace('/var/lib/nix-cache-summary/summary.json', str(root / 'summary.json'))
+    (root / 'catalog.json').write_text('{"entries":[],"truncated":false}')
+    config = config.replace('/var/lib/nix-cache-catalog/catalog.json', str(root / 'catalog.json'))
     config = config.replace('https://$nix_cache_upstream', f'http://127.0.0.1:{upstream.server_port}')
     (root / 'nginx.conf').write_text(config)
     proc = subprocess.Popen([nginx, '-p', tmp, '-c', str(root / 'nginx.conf')], stderr=subprocess.PIPE)
@@ -76,6 +79,7 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         assert b'CACHE STATISTICS' in body
         assert b'id="disk-free"' in body
         assert b'id="cache-hit-rate"' in body
+        assert b'href="/browse/"' in body
         assert get('/', 'HEAD')[0] == 200
         assert get('/', 'POST')[0] == 403
         status, headers, body = get('/_landing.css')
@@ -87,6 +91,14 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         assert headers['Content-Type'] == 'application/json'
         assert headers['Cache-Control'] == 'no-store'
         assert get('/_dashboard/summary.json', 'POST')[0] == 403
+        status, headers, body = get('/browse/')
+        assert status == 200 and b'CACHED DOWNLOADS' in body, (status, body)
+        assert get('/browse/', 'HEAD')[0] == 200
+        assert get('/browse/', 'POST')[0] == 403
+        assert get('/_catalog.js')[0] == 200
+        assert get('/_browse.css')[0] == 200
+        assert get('/_dashboard/catalog.json')[0] == 200
+        assert get('/_dashboard/catalog.json', 'POST')[0] == 403
         assert get('/unknown')[0] == 404
         assert get('/_dashboard/stats-state.json')[0] == 404
         upstreams = {
@@ -114,6 +126,16 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
                 missing = get(prefix + '/nar/missing')
                 assert missing[0] == 404 and missing[1]['X-Cache-Status'] == 'MISS'
         get('/nix-cache-info?private=not-for-log')
+        spec = importlib.util.spec_from_file_location('catalog', pathlib.Path(__file__).resolve().parents[1] / 'nixos/hosts/nix-cache/collect-catalog.py')
+        catalog = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(catalog)
+        catalog_sources = json.loads((pathlib.Path(__file__).resolve().parents[1] / 'nixos/system/config/services/nix-cache/upstreams.json').read_text())
+        entries = catalog.collect_catalog(root / 'cache', catalog_sources)['entries']
+        urls = {entry['url'] for entry in entries}
+        for prefix in upstreams:
+            assert prefix + '/nar/fixture.nar.xz' in urls, (prefix, entries)
+            assert prefix + '/' + 'a' * 32 + '.narinfo' in urls, (prefix, entries)
+        assert all('missing' not in url and 'private' not in url for url in urls)
     finally:
         proc.terminate()
         _, errors = proc.communicate(timeout=10)
@@ -122,7 +144,7 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         upstream.shutdown()
     logs = [json.loads(line) for line in (root / 'access.log').read_text().splitlines()]
     assert logs and all('private' not in entry['uri'] for entry in logs)
-    assert all(entry['uri'] not in ['/', '/_landing.css', '/_landing.js', '/_dashboard/summary.json'] for entry in logs)
+    assert all(entry['uri'] not in ['/', '/_landing.css', '/_landing.js', '/_dashboard/summary.json', '/browse/', '/_catalog.js', '/_browse.css', '/_dashboard/catalog.json'] for entry in logs)
     for entry in logs:
         datetime.datetime.fromisoformat(entry['time'])
-    print(f'PASS: landing, CSS, methods, all {len(upstreams) * 3} cache routes MISS/HIT/HEAD, uncached 404s, timestamped JSON logs')
+    print(f'PASS: landing, catalog, CSS, methods, all {len(upstreams) * 3} cache routes MISS/HIT/HEAD, uncached 404s, real cache catalog, timestamped JSON logs')

@@ -1,0 +1,92 @@
+.breadcrumbs {
+  margin: 1rem 0 1.5rem;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+.breadcrumbs a,
+.file-table a,
+.collection-links a {
+  color: var(--cyan);
+}
+.breadcrumbs a:hover,
+.file-table a:hover {
+  text-decoration: underline;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.8rem;
+}
+.file-table th,
+.file-table td {
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.file-table th {
+  color: var(--muted);
+  font-weight: 400;
+}
+.file-table td:first-child {
+  overflow-wrap: anywhere;
+  min-width: 12rem;
+}
+.file-table td:not(:first-child) {
+  white-space: nowrap;
+  color: var(--muted);
+}
+.collection-links {
+  list-style: none;
+  padding: 0;
+}
+.collection-links li {
+  border-top: 1px solid var(--line);
+}
+.collection-links a {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+.collection-links span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.catalog-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.catalog-controls label {
+  display: grid;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.catalog-controls input,
+.catalog-controls select,
+.catalog-controls button {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  background: #080b14;
+  color: var(--cyan);
+  font: inherit;
+}
+.catalog-controls button {
+  cursor: pointer;
+}
+.catalog-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+@media (max-width: 650px) {
+  .collection-links a {
+    flex-direction: column;
+  }
+}
