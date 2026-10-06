@@ -68,13 +68,15 @@ def launch(state, phase):
     )
 
 
-def request(profile):
+def request(profile, exclusive=False):
     profiles = json.loads(CONFIG.read_text())
     if profile not in profiles:
         raise RuntimeError(f"Unknown profile: {profile}")
     with locked():
         state = read()
         if state["state"] not in ("idle", "cancelled"):
+            if exclusive:
+                raise RuntimeError("An existing drain needs attention; refusing to take ownership.")
             if state.get("profile") == profile and state["state"] in ("draining", "drained"):
                 return state["attempt"]
             raise RuntimeError("An existing drain needs attention; inspect status and cancel it first.")
@@ -95,9 +97,11 @@ def request(profile):
         return state["attempt"]
 
 
-def cancel():
+def cancel(expected_attempt=None):
     with locked():
         state = read()
+        if expected_attempt is not None and state.get("attempt") != expected_attempt:
+            raise RuntimeError("Drain attempt was replaced; refusing to cancel another owner.")
         if state["state"] in ("idle", "cancelled"):
             return None
         if state["state"] == "cancelling":
@@ -254,11 +258,15 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     status_parser = commands.add_parser("status")
     status_parser.add_argument("--json", action="store_true", help="Output status as JSON")
-    commands.add_parser("is-drained", help="Exit 0 if the host is in drained state, 1 otherwise")
+    drained = commands.add_parser("is-drained", help="Exit 0 if the host is in drained state, 1 otherwise")
+    drained.add_argument("--attempt", help="Require this drain attempt to still own the host")
     commands.add_parser("is-idle", help="Exit 0 if the host is in idle state, 1 otherwise")
-    commands.add_parser("cancel")
+    cancel_parser = commands.add_parser("cancel")
+    cancel_parser.add_argument("--attempt", help="Cancel only this drain attempt")
     drain = commands.add_parser("drain")
     drain.add_argument("--profile", required=True)
+    drain.add_argument("--owned", action="store_true",
+                       help="Claim a new drain, print its ID, and cancel it if the caller is interrupted")
     for name in ("_worker", "_stopped"):
         internal = commands.add_parser(name, help=argparse.SUPPRESS)
         internal.add_argument("attempt")
@@ -269,15 +277,37 @@ def main():
         status(as_json=args.json)
         return 0
     if args.command == "is-drained":
-        return 0 if read().get("state") == "drained" else 1
+        state = read()
+        return 0 if state.get("state") == "drained" and (
+            args.attempt is None or state.get("attempt") == args.attempt
+        ) else 1
     if args.command == "is-idle":
         return 0 if read().get("state") == "idle" else 1
     if os.geteuid() != 0:
         raise RuntimeError("Run this command as root (sudo)")
     if args.command == "drain":
-        return wait(request(args.profile), "drained")
+        attempt = None
+        old_handler = None
+        def interrupted(signum, frame):
+            raise KeyboardInterrupt
+        try:
+            if args.owned:
+                old_handler = signal.signal(signal.SIGTERM, interrupted)
+            attempt = request(args.profile, exclusive=args.owned)
+            if args.owned:
+                print(attempt, flush=True)
+            return wait(attempt, "drained")
+        except KeyboardInterrupt:
+            if args.owned and attempt is not None:
+                wait(cancel(attempt), "cancelled")
+                print("Owned drain cancelled after interruption.", file=sys.stderr)
+                return 130
+            raise
+        finally:
+            if old_handler is not None:
+                signal.signal(signal.SIGTERM, old_handler)
     if args.command == "cancel":
-        return wait(cancel(), "cancelled")
+        return wait(cancel(args.attempt), "cancelled")
     if args.command == "_worker":
         worker(args.attempt, args.phase, args.unit)
     else:

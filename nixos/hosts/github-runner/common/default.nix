@@ -170,9 +170,6 @@ in
       dates = lib.mkForce cfg.upgradeTime;
       randomizedDelaySec = lib.mkForce "5m";
       persistent = lib.mkForce false;
-      # Compare whole generations so userspace updates also receive a reboot.
-      allowReboot = lib.mkForce false;
-      rebootWindow = lib.mkForce null;
     };
     systemd = {
       # OpenSSH still reads and writes the legacy last-login database.
@@ -190,21 +187,6 @@ in
             RestartSec = "5s";
             TimeoutStartSec = "5min";
           };
-        };
-        nixos-upgrade = {
-          environment.RUNNER_FLAKE = "github:MAHDTech/nix-config";
-          environment.RUNNER_HOST = name;
-          path = [
-            config.system.build.nixos-rebuild
-            pkgs.coreutils
-            config.systemd.package
-            (import ../../../system/config/services/nixos-drain/package.nix { inherit pkgs; })
-          ];
-          serviceConfig.EnvironmentFile = "-/etc/github-runner-bootstrap";
-          serviceConfig.TimeoutStartSec = lib.mkForce (
-            7200 + 2 * config.services.nixos-drain.profiles.upgrade.timeoutSeconds + 60
-          );
-          script = lib.mkForce (builtins.readFile ./upgrade.sh);
         };
       };
     };

@@ -131,10 +131,12 @@ Do not reuse a managed writer identity for unrelated policies or groups.
 ## Upgrades and future availability
 
 The host inherits nightly upgrades at 03:00 plus up to one hour of random delay,
-with catch-up after missed runs. It follows `github:MAHDTech/nix-config#s3`, switches
-configuration, and does not automatically reboot. Changed services may restart.
-The current Nixpkgs pin supplies RustFS `1.0.0-rc.6`. Writer reconciliation uses its
-admin API, so rerun the integration test when updating RustFS/Nixpkgs.
+with catch-up after missed runs. It follows `github:MAHDTech/nix-config#s3`, stages
+a boot generation, drains and automatically reboots. The application handler stops
+provisioning, drains nginx while RustFS remains available, then stops RustFS. See
+[host draining](../../../docs/nixos-drain.md) for timeouts and cancellation.
+Writer reconciliation uses the RustFS admin API, so rerun the integration test
+when updating RustFS/Nixpkgs.
 Caches can be discarded and repopulated if an application upgrade needs recovery;
 a NixOS rollback is not a guarantee of an on-disk format rollback.
 

@@ -24,6 +24,7 @@ in
   imports = [
     ./opnix.nix
     ./frontend.nix
+    ./drain.nix
   ];
   options.services.beszel.hub = {
     privateKeyFile = lib.mkOption {

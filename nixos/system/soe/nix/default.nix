@@ -103,10 +103,6 @@
 
       dates = "03:00";
 
-      rebootWindow = {
-        lower = "02:00";
-        upper = "04:00";
-      };
       randomizedDelaySec = "1h";
     };
   };

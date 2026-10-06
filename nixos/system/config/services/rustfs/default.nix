@@ -31,6 +31,7 @@ let
   validName = name: builtins.match "[a-z0-9][a-z0-9-]*[a-z0-9]" name != null;
 in
 {
+  imports = [ ./drain.nix ];
   options.services.rustfs-managed = {
     enable = lib.mkEnableOption "managed RustFS cache buckets";
     dataDir = mkOption {

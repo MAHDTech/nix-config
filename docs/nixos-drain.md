@@ -1,8 +1,9 @@
 # Host draining
 
 `nixos-drain` runs a named, root-owned application script before planned disruption.
-It is enabled on `github-runner-01` through `github-runner-25`, `s3` and `nix-cache`.
-Other hosts and installer images do not import the module.
+Every managed host has the same interface. Application modules supply their own
+profiles; hosts without an application handler use notification-only profiles.
+Installer images do not import the shared upgrade module.
 
 ```bash
 nixos-drain status
@@ -29,6 +30,11 @@ the profile enables `cancelOnFailure`. With that option, failure or worker
 termination automatically starts cancellation; the drain caller still fails.
 Cleanup failures remain visible and require an explicit `cancel` retry.
 
+Automation uses `drain --profile upgrade --owned` to claim a new attempt and print
+its ID. It refuses to join an existing drain and cancels its own attempt if the
+waiting process is interrupted. `is-drained --attempt ID` verifies ownership;
+`cancel --attempt ID` refuses to cancel a different attempt.
+
 `cancel` stops the drain script and runs that profile's cancellation script. It
 does not stop the application service. Successful cleanup releases the host for a
 new drain; failed cleanup remains visible and can be retried with `cancel`.
@@ -36,7 +42,8 @@ Cancellation scripts must tolerate partial drains and repeated execution.
 
 ## Configuration
 
-Import `nixos/system/config/services/nixos-drain` on the intended host:
+Keep application-specific scripts with the application module and contribute
+profiles to the shared interface:
 
 ```nix
 services.nixos-drain = {
@@ -74,7 +81,8 @@ secrets out of these scripts and their output.
 The module generates `/etc/nixos-drain/config.json`, referencing executable scripts
 in the Nix store. Do not edit it manually. With an empty script, the profile sends
 a `wall` message and immediately succeeds. Status calls this `notification-only`;
-it does not establish application safety. S3 and nix-cache use these defaults.
+it does not establish application safety. Hosts without application handlers use
+these defaults.
 
 Mutable state is root-owned under `/run/nixos-drain` and readable for status.
 Configuration is captured when an attempt starts, so cancellation uses that
@@ -103,9 +111,8 @@ Cancellation removes the marker and starts inactive services without restarting
 active ones. Token rotation is picked up at the next ephemeral registration,
 rather than restarting a runner mid-job.
 
-When first deploying the listener change with `nixos-rebuild switch`, an existing
-runner process keeps running the old binary. The new behavior starts after its
-next natural restart following a job, or after a controlled host reboot.
+Stage deployments with `nixos-rebuild boot`, then drain and reboot. The new
+listener behavior starts with the next boot.
 
 An idle runner drains without waiting for another job. A running job can still
 outlast the drain timeout. The runner `upgrade` profile enables `cancelOnFailure`:
@@ -121,15 +128,47 @@ its next registration was blocked. Automatic upgrade cancellation prevents this
 delayed loss of capacity. An attempt created before this change still uses its
 captured settings and needs a one-time `nixos-drain cancel`.
 
+## Cache, S3 and hub
+
+Nginx receives `SIGQUIT` on stop, with `KillMode=mixed` and a five-minute stop
+limit. It closes listening sockets and finishes active requests. If that limit
+expires, systemd kills the remaining processes: this is a bounded drain, not a
+guarantee that arbitrarily long transfers finish. An unclean service stop fails
+the upgrade drain and triggers cancellation instead of rebooting.
+
+The cache handler stops nginx. S3 first stops bucket provisioning and its timer,
+then drains nginx while RustFS remains available, and finally stops RustFS with
+`SIGTERM`. The hub stops Beszel with `SIGTERM` first to close persistent streams,
+then drains nginx. Backend stop limits are also five minutes.
+
+The shared service handler records which units were running, blocks service
+starts during the drain, and stops units in the application-defined order.
+Cancellation removes the gate and restores only previously running units, in
+reverse order. Reboot clears the runtime gate. Destroy and maintenance drains
+remain in effect until explicit cancellation or reboot.
+
+Clients see a brief outage during draining and reboot. Existing cache downloads
+can finish within the stop limit; new connections use configured retries and
+upstream fallback. S3 clients must retry interrupted requests, and a multipart
+upload may span the outage. Draining does not provide continuous availability
+for these single-host services.
+
 ## Upgrades and Terraform
 
-Runner upgrades stage a boot generation, drain the `upgrade` profile, then request
-a reboot only on success. If the staged generation is already booted, they skip
-the drain and reboot. A failed or cancelled drain, or a staged generation that
-changes during draining, prevents that reboot. Host
-upgrade times are [staggered within each group](github-runners.md).
-S3 and nix-cache run their notification-only profile before their existing
-`switch` upgrade and cancel it after success; neither gains automatic reboots.
+All managed hosts use the shared upgrade module: `nixos-rebuild boot` stages the
+configuration, the `upgrade` profile drains applications, and a successful drain
+requests an automatic reboot. This includes BOOTYCALL and userspace-only updates.
+No scheduled upgrade activates the configuration with `switch`.
+
+If the staged generation is already both booted and active, the job skips draining
+and rebooting. Failed builds leave applications running. Failed or cancelled
+drains, or a staged generation that changes during draining, prevent reboot.
+A rejected reboot request cancels the owned drain and restores services. Existing
+operator drains are never adopted or cancelled by an upgrade.
+
+Host upgrade schedules remain unchanged, including the runner
+[staggering within each group](github-runners.md). There is no additional reboot
+window: after a scheduled build and successful drain, the host can reboot.
 
 For a Terraform/OpenTofu destroy hook, run:
 
@@ -150,9 +189,18 @@ no fleet-wide capacity policy or job migration.
 
 ```bash
 python3 -m unittest discover -s tests -p test_nixos_drain.py -v
-nix build .#checks.x86_64-linux.nixos-drain --no-link
+python3 -m unittest discover -s tests -p test_nixos_upgrade.py -v
+python3 -m unittest discover -s tests -p test_service_drain.py -v
+nix build .#checks.x86_64-linux.nixos-drain .#checks.x86_64-linux.nixos-drain-services --no-link
 ```
 
 The VM test uses simulated ephemeral jobs and real systemd services. It checks
 registration gating, completion, cancellation, timeout, worker termination,
 notification-only profiles and reboot reset without GitHub credentials.
+
+The service VM check verifies that an active nginx download completes while new
+connections are refused, service starts remain gated, and cancellation restores
+service availability without starting previously stopped services. It also checks
+RustFS drain and recovery, including reading an object stored before the drain.
+The Beszel VM check verifies hub drain, restart gating and reconnection after
+cancellation.

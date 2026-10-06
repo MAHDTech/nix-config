@@ -6,14 +6,12 @@ in
   imports = [
     ../../system/virtualisation/qemu-guest.nix
     ../../system/soe/nix
-    ../../system/config/services/nixos-drain
     ../../system/config/services/beszel/hub
   ];
   networking.hostName = "hub";
   services = {
     cloud-init.settings.preserve_hostname = true;
     journald.settings.Journal.SystemMaxUse = "1G";
-    nixos-drain.enable = true;
     beszel.hub = {
       enable = true;
       environment = {
@@ -39,14 +37,6 @@ in
   };
   system.autoUpgrade = {
     flake = lib.mkForce "github:MAHDTech/nix-config#hub";
-    operation = lib.mkForce "switch";
-    allowReboot = lib.mkForce false;
-  };
-  systemd.services = {
-    nixos-upgrade = {
-      preStart = "/run/current-system/sw/bin/nixos-drain drain --profile upgrade";
-      postStart = "/run/current-system/sw/bin/nixos-drain cancel";
-    };
   };
   nix.settings.trusted-users = lib.mkForce [ "root" ];
 }

@@ -148,8 +148,10 @@ outside cloud-init, the guest then resolves its configured ref and owns build, r
 credentials are preloaded. The `installer-nix-cache` output is a compatibility
 entry point producing the generic image in raw format.
 
-The final host's auto-upgrade source is configured in `default.nix`; it switches
-configurations without automatic reboots.
+The final host's auto-upgrade source is configured in `default.nix`. Upgrades stage
+a boot generation, drain nginx, then automatically reboot. Nginx finishes active
+requests for up to five minutes while refusing new connections. See
+[host draining](../../../docs/nixos-drain.md) for cancellation and failure handling.
 
 ```sh
 journalctl -b -u nixos-bootstrap.service

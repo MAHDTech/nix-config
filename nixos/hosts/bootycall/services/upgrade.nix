@@ -29,11 +29,9 @@
     };
   };
 
-  # Enable NixOS daily auto-upgrades in-place (no reboot)
+  # The shared upgrade module stages boot generations, drains and reboots.
   system.autoUpgrade = {
     enable = true;
-    allowReboot = false; # Do not reboot automatically (halts the CPU)
-    operation = "switch"; # Apply configuration live in-place
     flake = "github:MAHDTech/nix-config";
     dates = "03:00";
     flags = [

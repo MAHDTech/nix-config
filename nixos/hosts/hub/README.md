@@ -147,6 +147,13 @@ system record and can lose associated history. Renaming a member or changing its
 host/port can recreate its identity. Keep stable names. Empty inventories are
 rejected because upstream does not interpret them as removing all systems.
 
+## Upgrades
+
+Upgrades stage a boot generation, drain and automatically reboot. The hub handler
+stops Beszel first so persistent streams can close, then drains nginx. Failed
+upgrade drains restore previously running services. See
+[host draining](../../../docs/nixos-drain.md) for timeouts and cancellation.
+
 ## Verification and operations
 
 ```bash

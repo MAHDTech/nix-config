@@ -7,13 +7,12 @@ in
   imports = [
     ./base.nix
     ../../system/soe/nix
-    ../../system/config/services/nixos-drain
     ../../system/config/services/cloudflare-acme
     ./proxy.nix
+    ./drain.nix
   ];
 
   services = {
-    nixos-drain.enable = true;
     cloudflare-acme = {
       enable = true;
       domains = [ domain ];
@@ -26,18 +25,9 @@ in
     };
   };
 
-  systemd.services = {
-    nixos-upgrade = {
-      preStart = "/run/current-system/sw/bin/nixos-drain drain --profile upgrade";
-      postStart = "/run/current-system/sw/bin/nixos-drain cancel";
-    };
-  };
-
   # Keep host upgrades independent of the cache service itself.
   system.autoUpgrade = {
     flake = lib.mkForce "github:MAHDTech/nix-config#nix-cache";
-    operation = lib.mkForce "switch";
-    allowReboot = lib.mkForce false;
   };
   nix.settings.trusted-users = lib.mkForce [ "root" ];
   environment.systemPackages = [

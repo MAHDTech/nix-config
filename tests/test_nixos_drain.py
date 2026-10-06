@@ -1,5 +1,7 @@
 """Exercise drain scripts, request ownership, failure and cancellation contracts."""
 
+# cspell:ignore geteuid
+
 import importlib.util
 import io
 import json
@@ -84,6 +86,34 @@ class DrainTest(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 drain.request(profile)
         self.assertEqual(self.launch_mock.call_count, 1)
+
+    def test_exclusive_request_does_not_join_an_existing_drain(self):
+        attempt = drain.request("upgrade", exclusive=True)
+        with self.assertRaises(RuntimeError):
+            drain.request("upgrade", exclusive=True)
+        self.work(attempt)
+        with self.assertRaises(RuntimeError):
+            drain.request("upgrade", exclusive=True)
+        self.assertEqual(drain.read()["attempt"], attempt)
+
+    def test_guarded_cancel_cannot_cancel_another_attempt(self):
+        attempt = drain.request("upgrade")
+        with self.assertRaises(RuntimeError):
+            drain.cancel("wrong-attempt")
+        self.assertEqual(drain.read()["state"], "draining")
+        self.assertEqual(drain.cancel(attempt), attempt)
+
+    def test_owned_cli_interruption_cancels_its_attempt(self):
+        output = io.StringIO()
+        with patch("sys.argv", ["nixos-drain", "drain", "--profile", "upgrade", "--owned"]), \
+             patch.object(drain.os, "geteuid", return_value=0), \
+             patch("sys.stdout", output), \
+             patch.object(drain, "wait", side_effect=[KeyboardInterrupt, 0]) as wait:
+            self.assertEqual(drain.main(), 130)
+        attempt = output.getvalue().strip()
+        self.assertEqual(drain.read()["attempt"], attempt)
+        self.assertEqual(drain.read()["state"], "cancelling")
+        self.assertEqual(wait.call_args.args, (attempt, "cancelled"))
 
     def test_profile_environment_and_progress(self):
         self.configure('printf "%s" "$NIXOS_DRAIN_PROFILE" > "' + str(self.root / "profile") + '"\necho waiting')
@@ -310,6 +340,10 @@ class DrainTest(unittest.TestCase):
             self.assertEqual(drain.main(), 1)
         with patch("sys.argv", ["nixos-drain", "is-drained"]):
             self.assertEqual(drain.main(), 0)
+        with patch("sys.argv", ["nixos-drain", "is-drained", "--attempt", attempt]):
+            self.assertEqual(drain.main(), 0)
+        with patch("sys.argv", ["nixos-drain", "is-drained", "--attempt", "wrong-attempt"]):
+            self.assertEqual(drain.main(), 1)
 
         output = io.StringIO()
         with patch("sys.argv", ["nixos-drain", "status", "--json"]), patch("sys.stdout", output):
@@ -339,4 +373,3 @@ class DrainTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

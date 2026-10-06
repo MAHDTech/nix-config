@@ -151,6 +151,7 @@ in
         inputs.opnix.nixosModules.default
         inputs.stylix.nixosModules.stylix
         inputs.flatpaks.nixosModules.default
+        ../nixos/system/config/services/nixos-upgrade
         ../nixos/hosts/${lib.toLower name}
       ]
       ++ lib.optional enableHomeManager ../nixos/system/home-manager.nix

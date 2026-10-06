@@ -118,5 +118,16 @@ pkgs.testers.runNixOSTest {
     hub.succeed("cmp /run/previous-inventory /var/lib/beszel-fixture/beszel_data/config.yml")
     hub.succeed("cp /run/secrets/beszel-agent-token /run/secrets/beszel-hub-token-fixture; systemctl reset-failed beszel-hub; systemctl start beszel-hub")
     hub.wait_until_succeeds(query)
+
+    hub.succeed("nixos-drain drain --profile upgrade; nixos-drain is-drained")
+    hub.fail("systemctl is-active beszel-hub")
+    hub.fail("systemctl is-active nginx")
+    hub.succeed("systemctl start beszel-hub nginx")
+    hub.fail("systemctl is-active beszel-hub")
+    hub.fail("systemctl is-active nginx")
+    hub.succeed("nixos-drain cancel")
+    hub.wait_for_unit("nginx.service")
+    hub.wait_for_unit("beszel-hub.service")
+    hub.wait_until_succeeds(query)
   '';
 }
