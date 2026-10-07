@@ -4,18 +4,18 @@
   ...
 }:
 let
-  claude-code = pkgs.callPackage ./claude-code { };
+  #claude-code = pkgs.callPackage ./claude-code { };
 
-  codex = pkgs.callPackage ./codex { };
+  #codex = pkgs.callPackage ./codex { };
 
   # Tracks upstream releases faster than nixpkgs; bump with t3code/update.sh.
   # The wrapper puts the enabled agent CLIs on t3code's PATH, so they must be
   # the same builds installed elsewhere in this config.
   t3code = pkgs.callPackage ./t3code {
-    inherit claude-code codex;
+    #inherit claude-code codex;
     inherit (pkgsUnstable) opencode grok-build;
-    enableClaude = true;
-    enableCodex = true;
+    enableClaude = false;
+    enableCodex = false;
     enableOpencode = true;
     enableGrokBuild = true;
   };
@@ -45,7 +45,7 @@ in
     (pkgs.callPackage ./antigravity-cli { })
     (pkgs.callPackage ./antigravity-hub { })
     #claude-code
-    codex
+    #codex
     t3code
     #(pkgs.callPackage ./ls-colors.nix { })
   ]
