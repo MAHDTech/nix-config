@@ -29,8 +29,11 @@
               "mcp(tars/*)"
             ]
           },
+          "pickerGrouping": "grouped",
+          "queuedMessages": "queue",
           "showFeedbackSurvey": false,
-          "toolPermission": "always-proceed"
+          "toolPermission": "always-proceed",
+          "verbosity": "medium"
         }
       '';
     };
