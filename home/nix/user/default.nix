@@ -15,8 +15,11 @@
       # This location is read by direnv to change into the flake dir to launch devShells
       DEVENV_DEVSHELLS_HOME = "${config.home.homeDirectory}/dotfiles";
 
-      # Wakatime Home Directory
-      WAKATIME_HOME = "${config.home.homeDirectory}/.wakatime";
+      # Wakatime Data Directory
+      WAKATIME_DATA = "${config.home.homeDirectory}/.wakatime";
+
+      # Wakatime Configuration File
+      WAKATIME_CONFIG = "${config.home.homeDirectory}/.wakatime.cfg";
 
       # Agent Skills Home Directory
       AGENT_SKILLS_HOME = "${config.home.homeDirectory}/Projects/syncthing/GitHub/MAHDTech/agent-skills";

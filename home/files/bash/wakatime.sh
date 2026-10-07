@@ -7,14 +7,14 @@
 
 function checkWakaTime() {
 
-	local WAKATIME_HOME="${WAKATIME_HOME:-$HOME}"
-	local WAKATIME_CONFIG="${WAKATIME_HOME}/.wakatime.cfg"
+	local WAKATIME_DATA="${WAKATIME_DATA:-$HOME/.wakatime}"
+	local WAKATIME_CONFIG="${WAKATIME_CONFIG:-$HOME/.wakatime.cfg}"
 
-	if [[ ! -d ${WAKATIME_HOME} ]]; then
+	if [[ ! -d ${WAKATIME_DATA} ]]; then
 
-		mkdir --parents "${WAKATIME_HOME}"
+		mkdir --parents "${WAKATIME_DATA}"
 
-		writeLog "INFO" "Wakatime home directory created."
+		writeLog "INFO" "Wakatime data directory created."
 
 	fi
 
@@ -66,7 +66,7 @@ function checkWakaTime() {
 			no_ssl_verify = false
 			ssl_certs_file =
 			timeout = 30
-			log_file = ${WAKATIME_HOME}/wakatime.log
+			log_file = ${WAKATIME_DATA}/wakatime.log
 
 			[projectmap]
 			#projects/foo = new project name
