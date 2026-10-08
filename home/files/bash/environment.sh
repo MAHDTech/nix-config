@@ -144,5 +144,5 @@ GITHUB_TOKEN="$(gh auth token)"
 export GITLAB_TOKEN=""
 
 # Wakatime
-export WAKATIME_API_KEY=""
+#export WAKATIME_API_KEY="<put-key-here>"
 export WAKATIME_DEBUG="false"
