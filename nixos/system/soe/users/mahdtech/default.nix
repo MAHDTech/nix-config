@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 let
   username = "mahdtech";
 in
@@ -63,7 +68,7 @@ in
     };
   };
 
-  systemd.services."home-manager-${username}" = {
+  systemd.services."home-manager-${username}" = lib.mkIf (config.users.groups ? onepassword-secrets) {
     serviceConfig.SupplementaryGroups = [ "onepassword-secrets" ];
   };
 }
