@@ -24,9 +24,9 @@ Certificates use the shared Cloudflare DNS-01 ACME module with the token at
 `op://fleet/Cloudflare ACME Slopageddon/token`. The certificate belongs to group
 `caddy`, and renewal reloads Caddy. No custom Caddy DNS plugin is needed.
 
-The fleet configuration also enrolls this host in Beszel. Prepare
+To enroll this host in Beszel once deployed, prepare
 `op://fleet/Beszel Agents/mirror` and the existing Beszel hub public-key reference
-using the same onboarding procedure as nix-cache.
+using the same onboarding procedure as nix-cache, then add `"mirror"` to `fleet.nix`.
 
 ## Web interface
 
