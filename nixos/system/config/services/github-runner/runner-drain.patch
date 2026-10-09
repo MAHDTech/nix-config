@@ -3,7 +3,7 @@
 @@ -403,6 +403,44 @@
              return HostContext.GetService<IMessageListener>();
          }
- 
+
 +        private async Task<TaskAgentMessage> GetNextMessageOrDrainAsync(CancellationToken token)
 +        {
 +            string marker = Environment.GetEnvironmentVariable("GITHUB_RUNNER_DRAIN_MARKER");
@@ -59,7 +59,7 @@
                                  Trace.Verbose("Auto update task running at backend, waiting for getNextMessage or selfUpdateTask to finish.");
 @@ -604,6 +645,11 @@
                              }
- 
+
                              message = await getNextMessage; //get next message
 +                            if (message == null)
 +                            {

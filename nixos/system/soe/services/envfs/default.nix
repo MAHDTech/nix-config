@@ -1,5 +1,9 @@
+{ pkgs, ... }:
 {
-  # TODO: Re-enabled when the dreaded error is fixed.
-  # "Refusing to run in unsupported environment where /usr/ is not populated"
-  services.envfs.enable = false;
+  services.envfs = {
+    enable = true;
+    extraFallbackPathCommands = ''
+      ln -s ${pkgs.bash}/bin/bash $out/bash
+    '';
+  };
 }

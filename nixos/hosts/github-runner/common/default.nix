@@ -89,6 +89,7 @@ in
     ../../../system/soe/nix
     ../../../system/soe/secrets/opnix.nix
     ../../../system/soe/programs/nix-ld
+    ../../../system/soe/services/envfs
     ../../../system/config/services/github-runner
     ../../../system/config/services/github-runner/drain.nix
     ../../../system/config/services/nix-cache/client.nix
