@@ -13,7 +13,7 @@ runs:
         remove_dotnet: true
         remove_haskell: true
         remove_tool_cache: true
-        remove_swap: false
+        remove_swap: true
         remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*"
         remove_packages_one_command: true
         remove_folders: >-
@@ -34,12 +34,16 @@ runs:
       name: Ensure Adequate Swap Space for Flake Evaluation
       shell: bash
       run: |
-        if [ $(swapon --show | wc -l) -le 1 ]; then
-          echo "Configuring 8G swapfile on /mnt..."
-          # cspell:ignore fallocate
-          sudo fallocate -l 8G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=8192
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
+        sudo swapoff -a || true
+        sudo rm -f /swapfile /mnt/swapfile || true
+        SWAP_FILE="/mnt/swapfile"
+        if [ ! -d "/mnt" ] || [ "$(df -m /mnt | awk 'NR==2 {print $4}')" -lt 16384 ]; then
+          SWAP_FILE="/swapfile"
         fi
+        echo "Configuring 16G swapfile at $SWAP_FILE..."
+        # cspell:ignore fallocate swapoff
+        sudo fallocate -l 16G "$SWAP_FILE" || sudo dd if=/dev/zero of="$SWAP_FILE" bs=1M count=16384
+        sudo chmod 600 "$SWAP_FILE"
+        sudo mkswap "$SWAP_FILE"
+        sudo swapon "$SWAP_FILE"
         free -h
