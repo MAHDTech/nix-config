@@ -34,15 +34,25 @@ runs:
       name: Ensure Adequate Swap Space for Flake Evaluation
       shell: bash
       run: |
+        sudo systemctl stop systemd-oomd || true
+        sudo systemctl mask systemd-oomd || true
         sudo swapoff -a || true
         sudo rm -f /swapfile /mnt/swapfile || true
-        SWAP_FILE="/mnt/swapfile"
-        if [ ! -d "/mnt" ] || [ "$(df -m /mnt | awk 'NR==2 {print $4}')" -lt 16384 ]; then
-          SWAP_FILE="/swapfile"
+        SWAP_DIR="/mnt"
+        if [ ! -d "$SWAP_DIR" ]; then
+          SWAP_DIR=""
         fi
-        echo "Configuring 16G swapfile at $SWAP_FILE..."
-        # cspell:ignore fallocate swapoff
-        sudo fallocate -l 16G "$SWAP_FILE" || sudo dd if=/dev/zero of="$SWAP_FILE" bs=1M count=16384
+        AVAIL_MB=$(df -m "${SWAP_DIR:-/}" | awk 'NR==2 {print $4}')
+        TARGET_MB=$(( AVAIL_MB - 10240 ))
+        if [ "$TARGET_MB" -gt 32768 ]; then
+          TARGET_MB=32768
+        elif [ "$TARGET_MB" -lt 8192 ]; then
+          TARGET_MB=8192
+        fi
+        SWAP_FILE="${SWAP_DIR}/swapfile"
+        echo "Configuring ${TARGET_MB}M swapfile at $SWAP_FILE (available: ${AVAIL_MB}M)..."
+        # cspell:ignore fallocate swapoff oomd
+        sudo fallocate -l "${TARGET_MB}M" "$SWAP_FILE" || sudo dd if=/dev/zero of="$SWAP_FILE" bs=1M count="$TARGET_MB"
         sudo chmod 600 "$SWAP_FILE"
         sudo mkswap "$SWAP_FILE"
         sudo swapon "$SWAP_FILE"
