@@ -65,16 +65,58 @@ jobs:
           --command
           devenv test
 
-      - id: check_flake
-        name: Check Nix Flake
-        run: >-
-          nix flake check
-          --accept-flake-config
-          --no-eval-cache
-          --all-systems
-          --impure
-          --keep-going
-          --verbose
+      - id: check_vm_tests
+        name: Check Flake VM Tests
+        run: |
+          FAILED_CHECKS=()
+          for CHECK in $(nix flake show --json 2>/dev/null | jq -r '.checks."x86_64-linux" // {} | keys[]'); do
+            echo "::group::Running VM test $CHECK"
+            if ! nix build .#checks.x86_64-linux."$CHECK" --accept-flake-config --impure --no-link; then
+              echo "::error::Failed VM test $CHECK"
+              FAILED_CHECKS+=("$CHECK")
+            fi
+            echo "::endgroup::"
+          done
+          if [ ${#FAILED_CHECKS[@]} -gt 0 ]; then
+            echo "The following VM tests failed: ${FAILED_CHECKS[*]}"
+            exit 1
+          fi
+
+      - id: check_home_manager
+        name: Check Home Manager
+        run: |
+          FAILED_HM=()
+          for SYSTEM in x86_64-linux aarch64-linux; do
+            echo "::group::Checking Home Manager ($SYSTEM)"
+            if ! nix eval .#homeConfigurations."$SYSTEM".mahdtech.activationPackage.drvPath --accept-flake-config --impure; then
+              echo "::error::Failed Home Manager evaluation for $SYSTEM"
+              FAILED_HM+=("$SYSTEM")
+            fi
+            echo "::endgroup::"
+          done
+          if [ ${#FAILED_HM[@]} -gt 0 ]; then
+            echo "Home Manager failed for: ${FAILED_HM[*]}"
+            exit 1
+          fi
+
+      - id: check_nixos_hosts
+        name: Check NixOS Hosts
+        run: |
+          FAILED_HOSTS=()
+          HOSTS=$(nix flake show --json 2>/dev/null | jq -r '.nixosConfigurations | keys[]')
+          for HOST in $HOSTS; do
+            echo "::group::Checking NixOS host $HOST"
+            if ! nix eval .#nixosConfigurations."$HOST".config.system.build.toplevel.drvPath --accept-flake-config --impure; then
+              echo "::error::Failed evaluating NixOS host $HOST"
+              FAILED_HOSTS+=("$HOST")
+            fi
+            echo "Finished checking NixOS host $HOST"
+            echo "::endgroup::"
+          done
+          if [ ${#FAILED_HOSTS[@]} -gt 0 ]; then
+            echo "The following NixOS hosts failed evaluation: ${FAILED_HOSTS[*]}"
+            exit 1
+          fi
 
       - id: check_statix
         name: Check Statix
