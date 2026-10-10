@@ -153,4 +153,7 @@
     port = 6666;
     logFile = "/var/log/netconsole.log";
   };
+
+  # Prevent automatic unattended reboots on JONS; stage boot generation instead.
+  system.autoUpgrade.allowReboot = false;
 }

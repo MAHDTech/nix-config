@@ -16,9 +16,9 @@ in
   ];
   services.nixos-drain.enable = true;
   system.autoUpgrade = {
-    operation = lib.mkForce "boot";
-    allowReboot = lib.mkForce true;
-    rebootWindow = lib.mkForce null;
+    operation = lib.mkDefault "boot";
+    allowReboot = lib.mkDefault true;
+    rebootWindow = lib.mkDefault null;
   };
   systemd.services.nixos-upgrade = lib.mkIf cfg.enable {
     path = [
@@ -31,9 +31,16 @@ in
       7200 + 2 * config.services.nixos-drain.profiles.upgrade.timeoutSeconds + 60
     );
     serviceConfig.TimeoutStopSec = 2 * config.services.nixos-drain.profiles.upgrade.timeoutSeconds + 60;
-    script = lib.mkForce ''
-      exec ${pkgs.bash}/bin/bash ${./upgrade.sh} --flake ${lib.escapeShellArg cfg.flake} ${lib.escapeShellArgs flags}
-    '';
+    script = lib.mkForce (
+      if cfg.allowReboot then
+        ''
+          exec ${pkgs.bash}/bin/bash ${./upgrade.sh} --flake ${lib.escapeShellArg cfg.flake} ${lib.escapeShellArgs flags}
+        ''
+      else
+        ''
+          exec ${config.system.build.nixos-rebuild}/bin/nixos-rebuild ${cfg.operation} --flake ${lib.escapeShellArg cfg.flake} ${lib.escapeShellArgs flags}
+        ''
+    );
   };
   assertions = [
     {

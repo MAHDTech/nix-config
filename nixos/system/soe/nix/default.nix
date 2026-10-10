@@ -85,9 +85,9 @@
     autoUpgrade = {
       enable = true;
 
-      allowReboot = true;
+      allowReboot = lib.mkDefault true;
 
-      operation = "boot";
+      operation = lib.mkDefault "boot";
 
       flake = "github:MAHDTech/nix-config";
 
