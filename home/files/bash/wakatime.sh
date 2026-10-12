@@ -89,6 +89,21 @@ function checkWakaTime() {
 
 	fi
 
+	# Archive older Antigravity conversations to keep SQLite cumulative size under wakatime-cli's 256MB parser budget
+	local AGY_CONV="$HOME/.gemini/antigravity-cli/conversations"
+	local AGY_ARCHIVE="$HOME/.gemini/antigravity-cli/conversations-archive"
+	if [[ -d ${AGY_CONV} ]]; then
+		mkdir --parents "${AGY_ARCHIVE}"
+		find "${AGY_CONV}" -maxdepth 1 -name "*.db*" -mtime +2 -exec mv -t "${AGY_ARCHIVE}" {} + 2>/dev/null || true
+	fi
+
+	local AGY_DESKTOP_CONV="$HOME/.gemini/antigravity/conversations"
+	local AGY_DESKTOP_ARCHIVE="$HOME/.gemini/antigravity/conversations-archive"
+	if [[ -d ${AGY_DESKTOP_CONV} ]]; then
+		mkdir --parents "${AGY_DESKTOP_ARCHIVE}"
+		find "${AGY_DESKTOP_CONV}" -maxdepth 1 -name "*.db*" -mtime +2 -exec mv -t "${AGY_DESKTOP_ARCHIVE}" {} + 2>/dev/null || true
+	fi
+
 	return 0
 
 }
