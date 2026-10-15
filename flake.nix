@@ -2,16 +2,16 @@
   description = "NixOS and Home Manager configuration";
 
   nixConfig = {
+    #https://nix-cache.slopageddon.app?priority=10
+    #https://nix-cache.slopageddon.app/devenv?priority=10
+    #https://nix-cache.slopageddon.app/tars-cloud?priority=10
+    #https://nix-cache.slopageddon.app/bingamon-lab?priority=10
+    #https://nix-cache.slopageddon.app/bingamon-lab-tf-modules?priority=10
+    #https://nix-cache.slopageddon.app/mahdtech?priority=10
+    #https://nix-cache.slopageddon.app/salt-labs?priority=10
+    #https://nix-cache.slopageddon.app/herdr?priority=10
+    #https://nix-cache.slopageddon.app/cosmic?priority=10
     extra-substituters = ''
-      https://nix-cache.slopageddon.app?priority=10
-      https://nix-cache.slopageddon.app/devenv?priority=10
-      https://nix-cache.slopageddon.app/tars-cloud?priority=10
-      https://nix-cache.slopageddon.app/bingamon-lab?priority=10
-      https://nix-cache.slopageddon.app/bingamon-lab-tf-modules?priority=10
-      https://nix-cache.slopageddon.app/mahdtech?priority=10
-      https://nix-cache.slopageddon.app/salt-labs?priority=10
-      https://nix-cache.slopageddon.app/herdr?priority=10
-      https://nix-cache.slopageddon.app/cosmic?priority=10
       https://cache.nixos.org
       https://cosmic.cachix.org/
       https://devenv.cachix.org

@@ -1,7 +1,7 @@
 {
   cctools,
   copyDesktopItems,
-  electron_43,
+  electron_44,
   fetchFromGitHub,
   installShellFiles,
   lib,
@@ -27,7 +27,7 @@ stdenv.mkDerivation (
   finalAttrs:
   let
     appName = "T3 Code (Alpha)";
-    electron = electron_43;
+    electron = electron_44;
     pnpm = pnpm_11;
     # Keep the revision and cache version in sync with scripts/lib/third-party-licenses.ts.
     spdxLicenseData = fetchFromGitHub {
@@ -123,6 +123,7 @@ stdenv.mkDerivation (
       node scripts/update-release-package-versions.ts ${finalAttrs.version}
 
       export npm_config_nodedir=${nodejs}
+      export npm_config_build_from_source=true
       export ELECTRON_SKIP_BINARY_DOWNLOAD=1
       # Exclude the `@t3tools/monorepo` workspace from the pending rebuild since
       # `vp config` needs git
@@ -174,7 +175,10 @@ stdenv.mkDerivation (
 
       makeWrapper ${lib.getExe electron} "$out"/bin/t3code-desktop \
         --add-flags "$out"/libexec/t3code/apps/desktop \
-        --inherit-argv0
+        --inherit-argv0 \
+        ${lib.optionalString stdenv.hostPlatform.isLinux "--prefix LD_LIBRARY_PATH : ${
+          lib.makeLibraryPath [ stdenv.cc.cc.lib ]
+        }"}
     ''
     + lib.optionalString stdenv.hostPlatform.isDarwin ''
       # node-pty tries to chmod this helper at runtime, but the Nix store is
