@@ -103,6 +103,7 @@ in
       # CLI
       bat
       bottom
+      bubblewrap
       charasay
       curlFull
       complete-alias
