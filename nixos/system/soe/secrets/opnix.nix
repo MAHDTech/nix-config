@@ -85,14 +85,28 @@ in
     secrets = { };
   };
 
+  # Ensure the group and token permissions exist even when only Home Manager
+  # consumes /etc/opnix-token and no system-level secrets are configured.
+  users.groups.onepassword-secrets = { };
+
+  system.activationScripts.opnixTokenPermissions = lib.stringAfter [ "users" ] ''
+    if [ -f ${lib.escapeShellArg tokenFile} ]; then
+      chown root:onepassword-secrets ${lib.escapeShellArg tokenFile}
+      chmod 0640 ${lib.escapeShellArg tokenFile}
+    fi
+  '';
+
   # Tasks atomically install tokens and leave this marker, including while a
   # guest is adopting its final OS. Refresh does not need a controller watcher.
-  systemd = lib.mkIf config.services.onepassword-secrets.enable {
+  systemd = {
     tmpfiles.rules = [
+      "z ${tokenFile} 0640 root onepassword-secrets -"
+    ]
+    ++ lib.optionals config.services.onepassword-secrets.enable [
       "d /var/lib/nixos-bootstrap 0700 root root -"
       "d ${backoff.stateDir} 0700 root root -"
     ];
-    services = {
+    services = lib.mkIf config.services.onepassword-secrets.enable {
       opnix-secrets = {
         # The gate owns retry pacing; a start limit would wedge the unit failed
         # and stop it ever recovering once 1Password is fixed.
@@ -140,7 +154,7 @@ in
         '';
       };
     };
-    timers.opnix-pending-refresh = {
+    timers.opnix-pending-refresh = lib.mkIf config.services.onepassword-secrets.enable {
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "1min";
