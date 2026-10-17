@@ -1,14 +1,14 @@
 {
-  "version": "2.23.0",
+  "version": "2.24.0",
   "sources": {
     "x86_64-linux": {
-      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.23.0-5238607586394112/linux-x64/Antigravity.tar.gz",
-      "sha256": "sha256-ldbiZ1Ae4yur3YpkPpDaQil1LKNFR6FgcvxBpLrc3xA=",
+      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.24.0-5780333019398144/linux-x64/Antigravity.tar.gz",
+      "sha256": "sha256-iAi/WAAzxdE2UULh5m/zdHTwSl+g2fwkt8JMghas3MY=",
       "sourceRoot": "Antigravity-x64"
     },
     "aarch64-linux": {
-      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.23.0-5238607586394112/linux-arm/Antigravity.tar.gz",
-      "sha256": "sha256-la/sqgFvG6yqIFftG0eB4ZgUXpu9pZLTc3h/6/dIR5U=",
+      "url": "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.24.0-5780333019398144/linux-arm/Antigravity.tar.gz",
+      "sha256": "sha256-X65Glc+IXZUE8BGJ9IHqbzh58NKwS3bexhMbmO5xCrA=",
       "sourceRoot": "Antigravity-arm64"
     }
   }
