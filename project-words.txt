@@ -2076,3 +2076,11 @@ smartmon
 getkey
 tflock
 uncheckpointed
+clamd
+eicar
+fileset
+lookback
+unsnooze
+unsnoozed
+virusevent
+virusname

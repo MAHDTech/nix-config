@@ -97,13 +97,20 @@ in
         ];
       };
       convco.enable = true;
-      clippy.enable = true;
-      cargo-check.enable = true;
+      clippy = {
+        enable = true;
+        excludes = [ "^nixos/system/config/services/clamav-notify/" ];
+      };
+      cargo-check = {
+        enable = true;
+        excludes = [ "^nixos/system/config/services/clamav-notify/" ];
+      };
       custom-cargo-test = {
         enable = true;
         name = "cargo-test";
         description = "Run cargo test";
         entry = "cargo test";
+        excludes = [ "^nixos/system/config/services/clamav-notify/" ];
         pass_filenames = false;
         types_or = [ "rust" ];
       };

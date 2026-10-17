@@ -125,6 +125,7 @@
 
     # Desktop Applications and Services
     ../../system/config/programs/1password
+    ../../system/config/services/clamav-notify
     ../../system/config/services/trezor
 
     # VMware virtualisation and Docker Container Host.

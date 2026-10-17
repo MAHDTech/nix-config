@@ -132,7 +132,9 @@
           pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
           opnixModule = inputs.opnix.nixosModules.default;
         };
-
+        clamav-notify = import ./tests/clamav-notify.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+        };
       };
       homeConfigurations = forEachSystem (system: {
         ${mylib.globalUsername} = mylib.mkHome { inherit system; };
