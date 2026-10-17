@@ -49,7 +49,7 @@ enum Commands {
         #[arg(long)]
         once: bool,
         /// Lookback window when no saved journal cursor exists
-        #[arg(long, default_value = "-7 days")]
+        #[arg(long, default_value = "-7 days", allow_hyphen_values = true)]
         since: String,
     },
     /// List inbox notifications in the terminal
@@ -1452,5 +1452,14 @@ mod tests {
         assert_eq!(parse_duration_str("7d").unwrap(), TimeDelta::days(7));
         assert!(parse_duration_str("0m").is_err());
         assert!(parse_duration_str("invalid").is_err());
+    }
+
+    #[test]
+    fn test_daemon_since_hyphen_value() {
+        let cli = Cli::try_parse_from(["clamav-notify", "daemon", "--since", "-7 days"]).unwrap();
+        match cli.command {
+            Some(Commands::Daemon { since, .. }) => assert_eq!(since, "-7 days"),
+            other => panic!("Expected Daemon command, got {other:?}"),
+        }
     }
 }

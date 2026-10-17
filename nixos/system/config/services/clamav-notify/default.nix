@@ -44,7 +44,7 @@ in
       wantedBy = [ "default.target" ];
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${cfg.package}/bin/clamav-notify daemon --since ${lib.escapeShellArg cfg.since}";
+        ExecStart = "${cfg.package}/bin/clamav-notify daemon --since=${lib.escapeShellArg cfg.since}";
         Restart = "always";
         RestartSec = 5;
       };
