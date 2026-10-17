@@ -1,5 +1,6 @@
 {
   imports = [
+    ./antigravity.nix
     ./cosmic-desktop
     ./gnome-keyring.nix
     #./kwallet.nix

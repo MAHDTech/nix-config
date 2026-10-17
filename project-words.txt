@@ -1415,6 +1415,7 @@ pastetoggle
 patchset
 pavucontrol
 pblp
+pbtxt
 pciutils
 pclk
 pcre
