@@ -23,5 +23,8 @@
 
     # Antigravity CLI
     ./antigravity.nix
+
+    # Burn-in-safe Wayland screensaver & multi-layer idle inhibitor
+    ./dont-sleep.nix
   ];
 }
