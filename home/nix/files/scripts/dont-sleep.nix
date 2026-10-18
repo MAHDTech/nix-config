@@ -343,81 +343,81 @@ in
                   ("SINGULARITY", "See you on the other side, Coop."),
               )
 
-              FONT_4X6: dict[str, tuple[int, int, int, int, int, int]] = {
-                  " ": (0, 0, 0, 0, 0, 0),
-                  "A": (6, 9, 15, 9, 9, 0),
-                  "B": (14, 9, 14, 9, 14, 0),
-                  "C": (7, 8, 8, 8, 7, 0),
-                  "D": (14, 9, 9, 9, 14, 0),
-                  "E": (15, 8, 14, 8, 15, 0),
-                  "F": (15, 8, 14, 8, 8, 0),
-                  "G": (7, 8, 11, 9, 7, 0),
-                  "H": (9, 9, 15, 9, 9, 0),
-                  "I": (14, 4, 4, 4, 14, 0),
-                  "J": (3, 1, 1, 9, 6, 0),
-                  "K": (9, 10, 12, 10, 9, 0),
-                  "L": (8, 8, 8, 8, 15, 0),
-                  "M": (9, 15, 15, 9, 9, 0),
-                  "N": (9, 13, 11, 9, 9, 0),
-                  "O": (6, 9, 9, 9, 6, 0),
-                  "P": (14, 9, 14, 8, 8, 0),
-                  "Q": (6, 9, 9, 11, 7, 0),
-                  "R": (14, 9, 14, 10, 9, 0),
-                  "S": (7, 8, 6, 1, 14, 0),
-                  "T": (14, 4, 4, 4, 4, 0),
-                  "U": (9, 9, 9, 9, 6, 0),
-                  "V": (9, 9, 9, 6, 6, 0),
-                  "W": (9, 9, 15, 15, 9, 0),
-                  "X": (9, 9, 6, 9, 9, 0),
-                  "Y": (9, 9, 6, 4, 4, 0),
-                  "Z": (15, 2, 4, 8, 15, 0),
-                  "a": (0, 6, 1, 7, 7, 0),
-                  "b": (8, 14, 9, 9, 14, 0),
-                  "c": (0, 7, 8, 8, 7, 0),
-                  "d": (1, 7, 9, 9, 7, 0),
-                  "e": (0, 6, 15, 8, 7, 0),
-                  "f": (3, 4, 14, 4, 4, 0),
-                  "g": (0, 7, 9, 7, 1, 6),
-                  "h": (8, 14, 9, 9, 9, 0),
-                  "i": (4, 0, 4, 4, 4, 0),
-                  "j": (2, 0, 2, 2, 10, 4),
-                  "k": (8, 9, 14, 10, 9, 0),
-                  "l": (12, 4, 4, 4, 14, 0),
-                  "m": (0, 15, 15, 9, 9, 0),
-                  "n": (0, 14, 9, 9, 9, 0),
-                  "o": (0, 6, 9, 9, 6, 0),
-                  "p": (0, 14, 9, 14, 8, 8),
-                  "q": (0, 7, 9, 7, 1, 1),
-                  "r": (0, 7, 8, 8, 8, 0),
-                  "s": (0, 7, 12, 3, 14, 0),
-                  "t": (4, 14, 4, 4, 3, 0),
-                  "u": (0, 9, 9, 9, 7, 0),
-                  "v": (0, 9, 9, 6, 6, 0),
-                  "w": (0, 9, 15, 15, 6, 0),
-                  "x": (0, 9, 6, 6, 9, 0),
-                  "y": (0, 9, 9, 7, 1, 6),
-                  "z": (0, 15, 6, 12, 15, 0),
-                  "0": (6, 11, 9, 13, 6, 0),
-                  "1": (4, 12, 4, 4, 14, 0),
-                  "2": (14, 1, 6, 8, 15, 0),
-                  "3": (14, 1, 6, 1, 14, 0),
-                  "4": (9, 9, 15, 1, 1, 0),
-                  "5": (15, 8, 14, 1, 14, 0),
-                  "6": (7, 8, 14, 9, 6, 0),
-                  "7": (15, 1, 2, 4, 4, 0),
-                  "8": (6, 9, 6, 9, 6, 0),
-                  "9": (6, 9, 7, 1, 14, 0),
-                  "[": (7, 4, 4, 4, 7, 0),
-                  "]": (14, 2, 2, 2, 14, 0),
-                  ":": (0, 4, 0, 4, 0, 0),
-                  "%": (9, 2, 4, 8, 9, 0),
-                  '"': (10, 10, 0, 0, 0, 0),
-                  "'": (4, 4, 0, 0, 0, 0),
-                  "?": (6, 9, 2, 0, 2, 0),
-                  ".": (0, 0, 0, 0, 4, 0),
-                  ",": (0, 0, 0, 0, 4, 8),
-                  "/": (1, 2, 4, 8, 8, 0),
-                  "-": (0, 0, 14, 0, 0, 0),
+              FONT_5X7: dict[str, tuple[int, int, int, int, int, int, int]] = {
+                  " ": (0, 0, 0, 0, 0, 0, 0),
+                  "A": (14, 17, 17, 31, 17, 17, 0),
+                  "B": (30, 17, 30, 17, 17, 30, 0),
+                  "C": (14, 17, 16, 16, 17, 14, 0),
+                  "D": (30, 17, 17, 17, 17, 30, 0),
+                  "E": (31, 16, 30, 16, 16, 31, 0),
+                  "F": (31, 16, 30, 16, 16, 16, 0),
+                  "G": (14, 17, 16, 23, 17, 15, 0),
+                  "H": (17, 17, 31, 17, 17, 17, 0),
+                  "I": (14, 4, 4, 4, 4, 14, 0),
+                  "J": (7, 2, 2, 2, 18, 12, 0),
+                  "K": (17, 18, 28, 18, 17, 17, 0),
+                  "L": (16, 16, 16, 16, 16, 31, 0),
+                  "M": (17, 27, 21, 17, 17, 17, 0),
+                  "N": (17, 25, 21, 19, 17, 17, 0),
+                  "O": (14, 17, 17, 17, 17, 14, 0),
+                  "P": (30, 17, 17, 30, 16, 16, 0),
+                  "Q": (14, 17, 17, 21, 18, 13, 0),
+                  "R": (30, 17, 17, 30, 18, 17, 0),
+                  "S": (15, 16, 14, 1, 1, 30, 0),
+                  "T": (31, 4, 4, 4, 4, 4, 0),
+                  "U": (17, 17, 17, 17, 17, 14, 0),
+                  "V": (17, 17, 17, 17, 10, 4, 0),
+                  "W": (17, 17, 17, 21, 27, 17, 0),
+                  "X": (17, 10, 4, 4, 10, 17, 0),
+                  "Y": (17, 10, 4, 4, 4, 4, 0),
+                  "Z": (31, 1, 2, 4, 8, 31, 0),
+                  "a": (0, 14, 1, 15, 17, 15, 0),
+                  "b": (16, 16, 30, 17, 17, 30, 0),
+                  "c": (0, 14, 17, 16, 17, 14, 0),
+                  "d": (1, 1, 15, 17, 17, 15, 0),
+                  "e": (0, 14, 17, 31, 16, 14, 0),
+                  "f": (6, 8, 30, 8, 8, 8, 0),
+                  "g": (0, 15, 17, 17, 15, 1, 14),
+                  "h": (16, 16, 30, 17, 17, 17, 0),
+                  "i": (4, 0, 12, 4, 4, 14, 0),
+                  "j": (2, 0, 6, 2, 2, 18, 12),
+                  "k": (16, 16, 18, 20, 28, 18, 0),
+                  "l": (12, 4, 4, 4, 4, 14, 0),
+                  "m": (0, 26, 21, 21, 17, 17, 0),
+                  "n": (0, 30, 17, 17, 17, 17, 0),
+                  "o": (0, 14, 17, 17, 17, 14, 0),
+                  "p": (0, 30, 17, 17, 30, 16, 16),
+                  "q": (0, 15, 17, 17, 15, 1, 1),
+                  "r": (0, 22, 25, 16, 16, 16, 0),
+                  "s": (0, 15, 16, 14, 1, 30, 0),
+                  "t": (8, 8, 30, 8, 8, 6, 0),
+                  "u": (0, 17, 17, 17, 17, 15, 0),
+                  "v": (0, 17, 17, 17, 10, 4, 0),
+                  "w": (0, 17, 17, 21, 21, 10, 0),
+                  "x": (0, 17, 10, 4, 10, 17, 0),
+                  "y": (0, 17, 17, 17, 15, 1, 14),
+                  "z": (0, 31, 2, 4, 8, 31, 0),
+                  "0": (14, 17, 19, 21, 25, 14, 0),
+                  "1": (4, 12, 4, 4, 4, 14, 0),
+                  "2": (14, 17, 1, 6, 8, 31, 0),
+                  "3": (31, 2, 6, 1, 17, 14, 0),
+                  "4": (2, 6, 10, 18, 31, 2, 0),
+                  "5": (31, 16, 30, 1, 17, 14, 0),
+                  "6": (6, 8, 30, 17, 17, 14, 0),
+                  "7": (31, 1, 2, 4, 8, 8, 0),
+                  "8": (14, 17, 14, 17, 17, 14, 0),
+                  "9": (14, 17, 17, 15, 2, 12, 0),
+                  "[": (14, 8, 8, 8, 8, 14, 0),
+                  "]": (14, 2, 2, 2, 2, 14, 0),
+                  ":": (0, 12, 12, 0, 12, 12, 0),
+                  "%": (25, 26, 4, 4, 11, 19, 0),
+                  '"': (10, 10, 0, 0, 0, 0, 0),
+                  "'": (4, 4, 8, 0, 0, 0, 0),
+                  "?": (14, 17, 2, 4, 0, 4, 0),
+                  ".": (0, 0, 0, 0, 12, 12, 0),
+                  ",": (0, 0, 0, 0, 12, 4, 8),
+                  "/": (1, 2, 4, 4, 8, 16, 0),
+                  "-": (0, 0, 0, 31, 0, 0, 0),
               }
 
               BEVEL_4X7: dict[str, tuple[int, int, int, int, int, int, int]] = {
@@ -432,15 +432,21 @@ in
               def __init__(self, width: int, height: int) -> None:
                   self.w = width
                   self.h = height
-                  self.banner_w = len(self.WIDE_BANNER[0]) * 4
-                  self.banner_h = len(self.WIDE_BANNER) * 7
-                  self.card_w = 416
-                  self.card_h = 56
+                  self.f_scale = max(1, min(3, width // 540, height // 320))
+                  self.b_scale = 4 if self.f_scale >= 3 else (2 if self.f_scale == 2 else 1)
+                  self.cell_w = 4 * self.b_scale
+                  self.cell_h = 7 * self.b_scale
+                  self.banner_w = len(self.WIDE_BANNER[0]) * self.cell_w
+                  self.banner_h = len(self.WIDE_BANNER) * self.cell_h
+                  self.char_adv = 6 * self.f_scale
+                  self.quote_gap = 8 * self.f_scale
+                  self.card_w = min(max(320, self.w - 16), max(self.banner_w, 82 * self.char_adv) + 12)
+                  self.card_h = self.banner_h + self.quote_gap + 7 * self.f_scale + 3
 
-                  self.x = random.randint(12, max(12, self.w - self.card_w - 12))
-                  self.y = random.randint(12, max(12, self.h - self.card_h - 12))
-                  self.dx = 2
-                  self.dy = 2
+                  self.x = random.randint(8, max(8, self.w - self.card_w - 8))
+                  self.y = random.randint(8, max(8, self.h - self.card_h - 8))
+                  self.dx = max(2, 2 * self.f_scale)
+                  self.dy = max(2, 2 * self.f_scale - 1)
                   self.color_index = 0
                   self.quote_index = 0
                   self.corner_quote_index = 0
@@ -449,14 +455,14 @@ in
 
                   self.history: list[tuple[int, int]] = []
                   self.dirty_rects: list[tuple[int, int, int, int]] = []
-                  self.prev_star_px: list[tuple[int, int]] = []
-                  self.prev_spark_px: list[tuple[int, int]] = []
+                  self.prev_star_rects: list[tuple[int, int, int]] = []
+                  self.prev_spark_rects: list[tuple[int, int]] = []
                   self.sparks: list[list[float]] = []
 
                   self.stars = [
                       [
-                          ((i * 73 + 19) % self.w),
-                          ((i * 41 + 11) % self.h),
+                          ((i * 293 + 71) % max(1, self.w - 16)) + 8,
+                          ((i * 163 + 43) % max(1, self.h - 16)) + 8,
                           i % 5,
                           (i % 3) + 1,
                       ]
@@ -493,8 +499,8 @@ in
                   t2_face = self._pack_rgb(int(r * 0.13), int(g * 0.13), int(b * 0.13))
                   t2_bevel = self._pack_rgb(int(r * 0.06), int(g * 0.06), int(b * 0.06))
 
-                  banner_pad_left = (self.card_w - self.banner_w) // 2
-                  banner_pad_right = self.card_w - self.banner_w - banner_pad_left
+                  banner_pad_left = max(0, (self.card_w - self.banner_w) // 2)
+                  banner_pad_right = max(0, self.card_w - self.banner_w - banner_pad_left)
                   left_pad_bytes = bg * banner_pad_left
                   right_pad_bytes = bg * banner_pad_right
 
@@ -502,45 +508,53 @@ in
                   trail1_rows: list[tuple[int, bytes]] = []
                   trail2_rows: list[tuple[int, bytes]] = []
 
+                  bs = self.b_scale
+                  cw = self.cell_w
                   for row_idx, line_str in enumerate(self.WIDE_BANNER):
                       for sub_y in range(7):
-                          ry = row_idx * 7 + sub_y
                           fg_chunks = [left_pad_bytes]
                           t1_chunks = [left_pad_bytes]
                           t2_chunks = [left_pad_bytes]
 
                           for ch in line_str:
                               if ch == " ":
-                                  cell4 = bg * 4
-                                  fg_chunks.append(cell4)
-                                  t1_chunks.append(cell4)
-                                  t2_chunks.append(cell4)
+                                  cell_bg = bg * cw
+                                  fg_chunks.append(cell_bg)
+                                  t1_chunks.append(cell_bg)
+                                  t2_chunks.append(cell_bg)
                               elif ch == "█":
                                   px = spec_px if sub_y == 0 else face_px
-                                  fg_chunks.append(px * 4)
-                                  t1_chunks.append(t1_face * 4)
-                                  t2_chunks.append(t2_face * 4)
+                                  fg_chunks.append(px * cw)
+                                  t1_chunks.append(t1_face * cw)
+                                  t2_chunks.append(t2_face * cw)
                               else:
                                   mask = self.BEVEL_4X7.get(ch, (0, 0, 0, 0, 0, 0, 0))[sub_y]
                                   fg_chunks.append(
-                                      b"".join(bevel_px if (mask & (1 << (3 - bit))) else bg for bit in range(4))
+                                      b"".join((bevel_px if (mask & (1 << (3 - bit))) else bg) * bs for bit in range(4))
                                   )
                                   t1_chunks.append(
-                                      b"".join(t1_bevel if (mask & (1 << (3 - bit))) else bg for bit in range(4))
+                                      b"".join((t1_bevel if (mask & (1 << (3 - bit))) else bg) * bs for bit in range(4))
                                   )
                                   t2_chunks.append(
-                                      b"".join(t2_bevel if (mask & (1 << (3 - bit))) else bg for bit in range(4))
+                                      b"".join((t2_bevel if (mask & (1 << (3 - bit))) else bg) * bs for bit in range(4))
                                   )
 
                           fg_chunks.append(right_pad_bytes)
                           t1_chunks.append(right_pad_bytes)
                           t2_chunks.append(right_pad_bytes)
 
-                          active_rows.append((ry, b"".join(fg_chunks)))
-                          if ry % 2 == 0:
-                              trail1_rows.append((ry, b"".join(t1_chunks)))
-                          if ry % 3 == 0:
-                              trail2_rows.append((ry, b"".join(t2_chunks)))
+                          fg_row = b"".join(fg_chunks)[: self.card_w * 4]
+                          t1_row = b"".join(t1_chunks)[: self.card_w * 4]
+                          t2_row = b"".join(t2_chunks)[: self.card_w * 4]
+
+                          base_ry = (row_idx * 7 + sub_y) * bs
+                          for dy in range(bs):
+                              ry = base_ry + dy
+                              active_rows.append((ry, fg_row))
+                              if ry % max(2, bs) == 0:
+                                  trail1_rows.append((ry, t1_row))
+                              if ry % max(3, bs + 2) == 0:
+                                  trail2_rows.append((ry, t2_row))
 
                   if self.is_corner_hit:
                       tag, quote = self.CORNER_QUOTES[self.corner_quote_index % len(self.CORNER_QUOTES)]
@@ -554,27 +568,32 @@ in
                   tag_str = f"[ {tag} ] "
                   quote_str = f'"{quote}"'
                   full_str = tag_str + quote_str
-                  text_px_w = len(full_str) * 5
+                  fs = self.f_scale
+                  adv = self.char_adv
+                  text_px_w = len(full_str) * adv
                   q_pad_left = max(0, (self.card_w - text_px_w) // 2)
 
-                  tag_px = self._pack_rgb(*tag_rgb)
-                  quote_px = self._pack_rgb(*quote_rgb)
+                  tag_px_s = self._pack_rgb(*tag_rgb) * fs
+                  quote_px_s = self._pack_rgb(*quote_rgb) * fs
+                  bg_s = bg * fs
 
-                  for q_row in range(6):
-                      ry = self.banner_h + 7 + q_row
+                  for q_row in range(7):
                       row_chunks = [bg * q_pad_left]
                       for ch_idx, ch in enumerate(full_str):
-                          if q_pad_left + (ch_idx + 1) * 5 > self.card_w:
+                          if q_pad_left + (ch_idx + 1) * adv > self.card_w:
                               break
-                          c_px = tag_px if ch_idx < len(tag_str) else quote_px
-                          bits = self.FONT_4X6.get(ch, self.FONT_4X6[" "])[q_row]
+                          c_px_s = tag_px_s if ch_idx < len(tag_str) else quote_px_s
+                          bits = self.FONT_5X7.get(ch, self.FONT_5X7[" "])[q_row]
                           row_chunks.append(
-                              b"".join(c_px if (bits & (1 << (3 - bit))) else bg for bit in range(4)) + bg
+                              b"".join(c_px_s if (bits & (1 << (4 - bit))) else bg_s for bit in range(5)) + bg_s
                           )
                       row_bytes = b"".join(row_chunks)
                       if len(row_bytes) < self.card_w * 4:
                           row_bytes += bg * ((self.card_w * 4 - len(row_bytes)) // 4)
-                      active_rows.append((ry, row_bytes[: self.card_w * 4]))
+                      clipped_row = row_bytes[: self.card_w * 4]
+                      base_qy = self.banner_h + self.quote_gap + q_row * fs
+                      for dy in range(fs):
+                          active_rows.append((base_qy + dy, clipped_row))
 
                   self.sprite_cache[key] = (active_rows, trail1_rows, trail2_rows)
                   self.active_rows = active_rows
@@ -584,12 +603,12 @@ in
               def _spawn_sparks(self, hit_x: bool, hit_y: bool, corner: bool) -> None:
                   count = 54 if corner else 26
                   r, g, b = self.SCREENSAVER_COLORS[self.color_index % len(self.SCREENSAVER_COLORS)]
-                  cx = (0 if self.dx > 0 else self.w - 2) if hit_x else (self.x + self.banner_w // 2)
-                  cy = (0 if self.dy > 0 else self.h - 2) if hit_y else (self.y + self.banner_h // 2)
+                  cx = (4 if self.dx > 0 else self.w - 10) if hit_x else (self.x + self.card_w // 2)
+                  cy = (4 if self.dy > 0 else self.h - 10) if hit_y else (self.y + self.banner_h // 2)
 
                   for i in range(count):
                       angle = random.uniform(0.0, math.pi * 2.0)
-                      speed = random.uniform(1.8, 6.2 if corner else 4.4)
+                      speed = random.uniform(6.0, 22.0 if corner else 15.0)
                       vx = (
                           abs(math.cos(angle) * speed) * (1.0 if self.dx > 0 else -1.0)
                           if hit_x
@@ -610,7 +629,8 @@ in
 
               def step(self, mm: mmap.mmap) -> None:
                   stride = self.w * 4
-                  zero4 = b"\x00\x00\x00\x00"
+                  zero12 = b"\x00" * 12
+                  zero20 = b"\x00" * 20
 
                   for rx, ry, rw, rh in self.dirty_rects:
                       z_row = b"\x00" * (rw * 4)
@@ -621,15 +641,19 @@ in
                           mm[pos : pos + row_len] = z_row
                   self.dirty_rects.clear()
 
-                  for px, py in self.prev_star_px:
-                      pos = py * stride + px * 4
-                      mm[pos : pos + 4] = zero4
-                  self.prev_star_px.clear()
+                  for sx, sy, s_sz in self.prev_star_rects:
+                      z_star = zero12 if s_sz == 3 else zero20
+                      b_len = s_sz * 4
+                      for dy in range(s_sz):
+                          pos = (sy + dy) * stride + sx * 4
+                          mm[pos : pos + b_len] = z_star
+                  self.prev_star_rects.clear()
 
-                  for px, py in self.prev_spark_px:
-                      pos = py * stride + px * 4
-                      mm[pos : pos + 4] = zero4
-                  self.prev_spark_px.clear()
+                  for px, py in self.prev_spark_rects:
+                      for dy in range(4):
+                          pos = (py + dy) * stride + px * 4
+                          mm[pos : pos + 16] = b"\x00" * 16
+                  self.prev_spark_rects.clear()
 
                   self.history.append((self.x, self.y))
                   if len(self.history) > 6:
@@ -681,31 +705,30 @@ in
                       self._spawn_sparks(collided_x, collided_y, False)
 
                   self.tick_count += 1
-                  star_offsets = (
-                      ((0, 0),),
-                      ((-1, 0), (1, 0), (0, -1), (0, 1)),
-                      ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1), (-2, 0), (2, 0), (0, -2), (0, 2)),
-                      ((0, 0), (-1, -1), (1, -1), (-1, 1), (1, 1)),
-                      ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)),
-                  )
                   for st in self.stars:
                       if self.tick_count % 6 == 0:
                           st[2] = (st[2] + 1) % 5
                       spd = st[3]
-                      if spd == 3 or (spd == 2 and self.tick_count % 2 == 0) or (spd == 1 and self.tick_count % 3 == 0):
-                          st[0] += 1
-                          if st[0] >= self.w - 2:
-                              st[0] = 2
-                              st[1] = (st[1] + 29) % (self.h - 4) + 2
+                      st[0] += spd
+                      if st[0] >= self.w - 10:
+                          st[0] = 6
+                          st[1] = (st[1] + 113) % (self.h - 16) + 8
                       sr, sg, sb = self.STAR_COLORS[(st[2] + st[3]) % len(self.STAR_COLORS)]
                       s_px = self._pack_rgb(sr, sg, sb)
-                      for ox, oy in star_offsets[st[2]]:
-                          px = st[0] + ox
-                          py = st[1] + oy
-                          if 0 <= px < self.w and 0 <= py < self.h:
-                              pos = py * stride + px * 4
-                              mm[pos : pos + 4] = s_px
-                              self.prev_star_px.append((px, py))
+                      sx, sy, phase = st[0], st[1], st[2]
+                      if phase in (0, 1):
+                          s_row = s_px * 3
+                          for dy in range(3):
+                              pos = (sy + dy) * stride + sx * 4
+                              mm[pos : pos + 12] = s_row
+                          self.prev_star_rects.append((sx, sy, 3))
+                      else:
+                          mid_row = s_px * 5
+                          tip_row = b"\x00" * 8 + s_px + b"\x00" * 8
+                          for dy in range(5):
+                              pos = (sy + dy) * stride + sx * 4
+                              mm[pos : pos + 20] = mid_row if dy == 2 else tip_row
+                          self.prev_star_rects.append((sx, sy, 5))
 
                   row_bytes_len = self.card_w * 4
                   if len(self.history) >= 5:
@@ -740,14 +763,13 @@ in
                       if sp[4] > 0.0:
                           px = int(sp[0])
                           py = int(sp[1])
-                          if 0 <= px < self.w - 1 and 0 <= py < self.h - 1:
+                          if 0 <= px < self.w - 4 and 0 <= py < self.h - 4:
                               fade = min(1.0, sp[4] / 18.0)
-                              p_bytes = self._pack_rgb(int(sp[5] * fade), int(sp[6] * fade), int(sp[7] * fade))
-                              for ox, oy in ((0, 0), (1, 0), (0, 1), (1, 1)):
-                                  spx, spy = px + ox, py + oy
-                                  pos = spy * stride + spx * 4
-                                  mm[pos : pos + 4] = p_bytes
-                                  self.prev_spark_px.append((spx, spy))
+                              p_row = self._pack_rgb(int(sp[5] * fade), int(sp[6] * fade), int(sp[7] * fade)) * 4
+                              for dy in range(4):
+                                  pos = (py + dy) * stride + px * 4
+                                  mm[pos : pos + 16] = p_row
+                              self.prev_spark_rects.append((px, py))
                               alive_sparks.append(sp)
                   self.sparks = alive_sparks
 
@@ -854,21 +876,76 @@ in
                   keyboard_id = alloc_id()
                   send_msg(seat_id, 1, struct.pack("<I", keyboard_id))
 
-              # Render resolution scaled to each monitor via wp_viewport
-              if headless:
-                  buf_w, buf_h = 1, 1
-              elif style == "tars":
-                  buf_w, buf_h = 640, 360
-              else:
-                  buf_w, buf_h = 480, 270
-              stride = buf_w * 4
-              frame_bytes = stride * buf_h
-
               glyphs = build_glyphs() if (not headless and style == "matrix") else []
 
               screens: dict[int, dict] = {}
-              target_outputs = outputs[:1] if headless else outputs
-              for out_name, out_ver in target_outputs:
+              output_to_lsurf: dict[int, int] = {}
+
+              def cleanup_screen_shm(sc: dict) -> None:
+                  if sc.get("wl_buf_id"):
+                      send_msg(sc["wl_buf_id"], 0)
+                      sc["wl_buf_id"] = 0
+                  if sc.get("pool_id"):
+                      send_msg(sc["pool_id"], 1)
+                      sc["pool_id"] = 0
+                  if sc.get("mm") is not None:
+                      try:
+                          sc["mm"].close()
+                      except Exception:
+                          pass
+                      sc["mm"] = None
+                  if sc.get("fd", -1) >= 0:
+                      try:
+                          os.close(sc["fd"])
+                      except Exception:
+                          pass
+                      sc["fd"] = -1
+
+              def ensure_screen_buffer(sc: dict, target_w: int, target_h: int) -> None:
+                  if headless:
+                      bw, bh = 1, 1
+                  elif style == "tars":
+                      bw, bh = max(640, target_w), max(360, target_h)
+                  else:
+                      bw, bh = 480, 270
+
+                  if sc.get("mm") is not None and sc.get("buf_w") == bw and sc.get("buf_h") == bh:
+                      return
+
+                  cleanup_screen_shm(sc)
+                  stride = bw * 4
+                  frame_bytes = stride * bh
+                  fd = os.memfd_create("dont-sleep-shm", 0)
+                  os.ftruncate(fd, frame_bytes)
+                  mm = mmap.mmap(fd, frame_bytes, mmap.MAP_SHARED, mmap.PROT_READ | mmap.PROT_WRITE)
+                  pool_id = alloc_id()
+                  send_msg(shm_id, 0, struct.pack("<Ii", pool_id, frame_bytes), fds=[fd])
+                  wl_buf_id = alloc_id()
+                  shm_fmt = 0 if headless else 1
+                  send_msg(pool_id, 0, struct.pack("<iiiiii", wl_buf_id, 0, bw, bh, stride, shm_fmt))
+
+                  if headless:
+                      anim = None
+                  elif style == "tars":
+                      anim = TarsAnimator(bw, bh)
+                  elif style == "starfield":
+                      anim = StarfieldAnimator(bw, bh)
+                  elif style == "pipes":
+                      anim = PipesAnimator(bw, bh)
+                  else:
+                      anim = MatrixAnimator(bw, bh, glyphs)
+
+                  sc["fd"] = fd
+                  sc["mm"] = mm
+                  sc["pool_id"] = pool_id
+                  sc["wl_buf_id"] = wl_buf_id
+                  sc["buf_w"] = bw
+                  sc["buf_h"] = bh
+                  sc["anim"] = anim
+
+              def add_output(out_name: int, out_ver: int) -> None:
+                  if out_name in output_to_lsurf:
+                      return
                   out_id = alloc_id()
                   send_msg(
                       reg_id,
@@ -899,40 +976,40 @@ in
                       send_msg(lsurf_id, 1, struct.pack("<I", 15))  # top|bottom|left|right
                       send_msg(lsurf_id, 2, struct.pack("<i", -1))  # cover panel & dock
                       send_msg(lsurf_id, 4, struct.pack("<I", 1))  # exclusive keyboard
-                  send_msg(surf_id, 6)  # commit
-
-                  fd = os.memfd_create("dont-sleep-shm", 0)
-                  os.ftruncate(fd, frame_bytes)
-                  mm = mmap.mmap(fd, frame_bytes, mmap.MAP_SHARED, mmap.PROT_READ | mmap.PROT_WRITE)
-                  pool_id = alloc_id()
-                  send_msg(shm_id, 0, struct.pack("<Ii", pool_id, frame_bytes), fds=[fd])
-                  wl_buf_id = alloc_id()
-                  # Format 0 = ARGB8888 (transparent for headless), 1 = XRGB8888 (opaque black for screensaver)
-                  shm_fmt = 0 if headless else 1
-                  send_msg(pool_id, 0, struct.pack("<iiiiii", wl_buf_id, 0, buf_w, buf_h, stride, shm_fmt))
-
-                  if headless:
-                      anim = None
-                  elif style == "tars":
-                      anim = TarsAnimator(buf_w, buf_h)
-                  elif style == "starfield":
-                      anim = StarfieldAnimator(buf_w, buf_h)
-                  elif style == "pipes":
-                      anim = PipesAnimator(buf_w, buf_h)
-                  else:
-                      anim = MatrixAnimator(buf_w, buf_h, glyphs)
+                  send_msg(surf_id, 6)  # initial commit to trigger configure
 
                   screens[lsurf_id] = {
+                      "out_name": out_name,
                       "surf_id": surf_id,
+                      "inhib_id": inhib_id,
                       "vp_id": vp_id,
-                      "wl_buf_id": wl_buf_id,
-                      "fd": fd,
-                      "mm": mm,
+                      "pool_id": 0,
+                      "wl_buf_id": 0,
+                      "fd": -1,
+                      "mm": None,
                       "configured": False,
-                      "width": buf_w,
-                      "height": buf_h,
-                      "anim": anim,
+                      "width": 1920,
+                      "height": 1080,
+                      "buf_w": 0,
+                      "buf_h": 0,
+                      "anim": None,
                   }
+                  output_to_lsurf[out_name] = lsurf_id
+
+              def remove_screen(lsurf_id: int) -> None:
+                  sc = screens.pop(lsurf_id, None)
+                  if sc is None:
+                      return
+                  output_to_lsurf.pop(sc["out_name"], None)
+                  cleanup_screen_shm(sc)
+                  send_msg(sc["inhib_id"], 0)
+                  send_msg(sc["vp_id"], 0)
+                  send_msg(lsurf_id, 7)
+                  send_msg(sc["surf_id"], 0)
+
+              target_outputs = outputs[:1] if headless else outputs
+              for out_name, out_ver in target_outputs:
+                  add_output(out_name, out_ver)
 
               running = True
 
@@ -971,20 +1048,33 @@ in
                               payload = buf[8:size]
                               buf = buf[size:]
 
-                              if obj_id in screens and op == 0:  # zwlr_layer_surface_v1.configure
+                              if obj_id == reg_id and op == 0:  # wl_registry.global (hotplug)
+                                  name, slen = struct.unpack_from("<II", payload, 0)
+                                  iface = payload[8 : 8 + slen - 1].decode("utf-8", "replace")
+                                  ver = struct.unpack_from("<I", payload, 8 + ((slen + 3) & ~3))[0]
+                                  if iface == "wl_output" and (not headless or not screens):
+                                      add_output(name, ver)
+                              elif obj_id == reg_id and op == 1:  # wl_registry.global_remove (unplug)
+                                  (name,) = struct.unpack_from("<I", payload, 0)
+                                  if name in output_to_lsurf:
+                                      remove_screen(output_to_lsurf[name])
+                              elif obj_id in screens and op == 0:  # zwlr_layer_surface_v1.configure
                                   serial, w, h = struct.unpack_from("<III", payload, 0)
                                   sc = screens[obj_id]
                                   send_msg(obj_id, 6, struct.pack("<I", serial))
                                   if w > 0 and h > 0:
                                       sc["width"] = w
                                       sc["height"] = h
-                                      send_msg(sc["vp_id"], 2, struct.pack("<ii", w, h))
+                                  ensure_screen_buffer(sc, sc["width"], sc["height"])
+                                  send_msg(sc["vp_id"], 2, struct.pack("<ii", sc["width"], sc["height"]))
                                   sc["configured"] = True
                                   send_msg(sc["surf_id"], 1, struct.pack("<Iii", sc["wl_buf_id"], 0, 0))
                                   send_msg(sc["surf_id"], 2, struct.pack("<iiii", 0, 0, sc["width"], sc["height"]))
                                   send_msg(sc["surf_id"], 6)
-                              elif obj_id in screens and op == 1:  # closed
-                                  running = False
+                              elif obj_id in screens and op == 1:  # zwlr_layer_surface_v1.closed
+                                  remove_screen(obj_id)
+                                  if not screens and headless:
+                                      running = False
                               elif not headless and obj_id == pointer_id:
                                   if op == 0:  # enter(serial, surface, x, y)
                                       serial = struct.unpack_from("<I", payload, 0)[0]
@@ -1007,21 +1097,14 @@ in
 
                       if not headless and running:
                           for sc in screens.values():
-                              if sc["configured"] and sc["anim"] is not None:
+                              if sc["configured"] and sc["anim"] is not None and sc["mm"] is not None:
                                   sc["anim"].step(sc["mm"])
                                   send_msg(sc["surf_id"], 1, struct.pack("<Iii", sc["wl_buf_id"], 0, 0))
                                   send_msg(sc["surf_id"], 2, struct.pack("<iiii", 0, 0, sc["width"], sc["height"]))
                                   send_msg(sc["surf_id"], 6)
               finally:
-                  for sc in screens.values():
-                      try:
-                          sc["mm"].close()
-                      except Exception:
-                          pass
-                      try:
-                          os.close(sc["fd"])
-                      except Exception:
-                          pass
+                  for sc in list(screens.values()):
+                      cleanup_screen_shm(sc)
                   s.close()
                   print("[dont-sleep] Released all inhibitors.")
 
