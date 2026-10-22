@@ -5,7 +5,7 @@ let
       number = index + 1;
     in
     "github-runner-${if number < 10 then "0" else ""}${toString number}"
-  ) 25;
+  ) 50;
 in
 {
   inherit runnerNames;

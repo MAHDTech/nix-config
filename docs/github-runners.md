@@ -1,11 +1,11 @@
 # GitHub runner VMs
 
-All 25 dedicated runners are Beszel agents reporting to
+All 50 dedicated runners are Beszel agents reporting to
 `https://hub.slopageddon.app`. Their Opnix service accounts need the additional
 `fleet` references documented in the [hub setup](../nixos/hosts/hub/README.md).
 Monitoring uses outbound HTTPS; no additional inbound runner port is opened.
 
-The 25 `github-runner-01` through `github-runner-25` hosts share a common
+The 50 `github-runner-01` through `github-runner-50` hosts share a common
 base configuration and register in the enterprise `tars-cloud` runner group
 (token reference: `op://fleet/GitHub Runner/credential`).
 Jobs have Nix, devenv, Cachix, and Docker available. The shared runner configuration
@@ -133,34 +133,34 @@ hosts.github-runner.upgradeTime = "05:00";
 ```
 
 Daily upgrades are staggered hourly in Canberra time, without random delay.
-Runner numbers map to the hour modulo 24, so runners 01 and 25 share 01:00:
+Runner numbers map to the hour modulo 24, so runners 01, 25 and 49 share 01:00:
 
-| Runner | Upgrade time |
-| ------ | ------------ |
-| 01, 25 | 01:00        |
-| 02     | 02:00        |
-| 03     | 03:00        |
-| 04     | 04:00        |
-| 05     | 05:00        |
-| 06     | 06:00        |
-| 07     | 07:00        |
-| 08     | 08:00        |
-| 09     | 09:00        |
-| 10     | 10:00        |
-| 11     | 11:00        |
-| 12     | 12:00        |
-| 13     | 13:00        |
-| 14     | 14:00        |
-| 15     | 15:00        |
-| 16     | 16:00        |
-| 17     | 17:00        |
-| 18     | 18:00        |
-| 19     | 19:00        |
-| 20     | 20:00        |
-| 21     | 21:00        |
-| 22     | 22:00        |
-| 23     | 23:00        |
-| 24     | 00:00        |
+| Runner     | Upgrade time |
+| ---------- | ------------ |
+| 01, 25, 49 | 01:00        |
+| 02, 26, 50 | 02:00        |
+| 03, 27     | 03:00        |
+| 04, 28     | 04:00        |
+| 05, 29     | 05:00        |
+| 06, 30     | 06:00        |
+| 07, 31     | 07:00        |
+| 08, 32     | 08:00        |
+| 09, 33     | 09:00        |
+| 10, 34     | 10:00        |
+| 11, 35     | 11:00        |
+| 12, 36     | 12:00        |
+| 13, 37     | 13:00        |
+| 14, 38     | 14:00        |
+| 15, 39     | 15:00        |
+| 16, 40     | 16:00        |
+| 17, 41     | 17:00        |
+| 18, 42     | 18:00        |
+| 19, 43     | 19:00        |
+| 20, 44     | 20:00        |
+| 21, 45     | 21:00        |
+| 22, 46     | 22:00        |
+| 23, 47     | 23:00        |
+| 24, 48     | 00:00        |
 
 Missed runs are not caught up at boot, avoiding simultaneous upgrades after a
 fleet restart. These are scheduled start times, not a fleet-wide concurrency
