@@ -38,9 +38,10 @@
       };
     };
 
-    # Use delta for the pager
+    # Disabled: git-delta's binary (/bin/delta) collides with Zed's Delta
+    # (github:zed-industries/delta-nix); difftastic is used above instead.
     delta = {
-      enable = true;
+      enable = false;
       options = {
         features = "decorations";
         navigate = true;

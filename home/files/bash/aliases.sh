@@ -124,4 +124,16 @@ alias sleepIn30='caffeinate -t 1800 ; say "Sleeping now" ; pmset sleepnow'
 alias sleepIn60='caffeinate -t 3600 ; say "Sleeping now" ; pmset sleepnow'
 alias sleepIn90='caffeinate -t 5400 ; say "Sleeping now" ; pmset sleepnow'
 
+##################
+# Power / Screensaver
+##################
+
+# cspell:ignore caffiene tars
+alias dont-sleep='dont-sleep'
+alias no-sleep='dont-sleep'
+alias caffeine='dont-sleep'
+alias caffiene='dont-sleep'
+alias screensaver='dont-sleep'
+alias tars-screensaver='dont-sleep --tars'
+
 # EOF

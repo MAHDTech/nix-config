@@ -69,6 +69,10 @@
       url = "github:HeitorAugustoLN/cosmic-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    delta = {
+      url = "github:zed-industries/delta-nix/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

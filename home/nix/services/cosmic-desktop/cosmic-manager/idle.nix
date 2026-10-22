@@ -1,10 +1,10 @@
 {
   wayland.desktopManager.cosmic.idle = {
     # The time in milliseconds before the screen turns off.
-    # Active preference: Some(1800000) (30 minutes)
+    # Active preference: Some(900000) (15 minutes)
     screen_off_time = {
       __type = "optional";
-      value = 1800000;
+      value = 900000;
     };
 
     # The time in milliseconds before the system suspends when on AC power.

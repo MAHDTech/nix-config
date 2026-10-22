@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   pkgsUnstable,
   ...
@@ -178,6 +179,7 @@ in
       #trezor-agent
 
       # Development
+      inputs.delta.packages.${pkgs.stdenv.hostPlatform.system}.delta
       go
       golangci-lint
       gotools

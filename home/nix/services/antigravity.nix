@@ -104,7 +104,10 @@ let
         if [[ -n "''${USER_IDS[$uuid]:-}" ]]; then
           return 0
         fi
-        if [[ -f "''${app_dir}/annotations/''${uuid}.pbtxt" ]] || [[ -f "''${app_dir}/conversations-archive/''${uuid}/''${uuid}.pbtxt" ]]; then
+        if [[ -f "''${app_dir}/annotations/''${uuid}.pbtxt" ]] \
+          || [[ -f "''${app_dir}/conversations-archive/''${uuid}/''${uuid}.pbtxt" ]] \
+          || [[ -f "''${app_dir}/conversations/''${uuid}.meta" ]] \
+          || [[ -f "''${app_dir}/conversations-archive/''${uuid}/''${uuid}.meta" ]]; then
           USER_IDS["$uuid"]=1
           return 0
         fi
@@ -159,9 +162,9 @@ let
 
         mkdir -p "$bundle_dir"
 
-        for ext in "" "-wal" "-shm"; do
-          if [[ -e "''${conv_dir}/''${uuid}.db''${ext}" ]]; then
-            mv -f "''${conv_dir}/''${uuid}.db''${ext}" "''${bundle_dir}/" 2>/dev/null || true
+        for ext in ".db" ".db-wal" ".db-shm" ".meta"; do
+          if [[ -e "''${conv_dir}/''${uuid}''${ext}" ]]; then
+            mv -f "''${conv_dir}/''${uuid}''${ext}" "''${bundle_dir}/" 2>/dev/null || true
           fi
         done
 
@@ -193,9 +196,9 @@ let
         local bundle_dir="''${app_dir}/conversations-archive/''${uuid}"
 
         mkdir -p "$conv_dir"
-        for ext in "" "-wal" "-shm"; do
-          if [[ -e "''${bundle_dir}/''${uuid}.db''${ext}" ]]; then
-            mv -f "''${bundle_dir}/''${uuid}.db''${ext}" "''${conv_dir}/" 2>/dev/null || true
+        for ext in ".db" ".db-wal" ".db-shm" ".meta"; do
+          if [[ -e "''${bundle_dir}/''${uuid}''${ext}" ]]; then
+            mv -f "''${bundle_dir}/''${uuid}''${ext}" "''${conv_dir}/" 2>/dev/null || true
           fi
         done
 
@@ -265,9 +268,12 @@ let
           start_epoch="$(get_birth_or_mtime "$flat_db")"
           mkdir -p "$bundle_dir"
 
-          for ext in "" "-wal" "-shm"; do
-            if [[ -e "''${archive_dir}/''${uuid}.db''${ext}" ]]; then
-              mv -f "''${archive_dir}/''${uuid}.db''${ext}" "''${bundle_dir}/" 2>/dev/null || true
+          for ext in ".db" ".db-wal" ".db-shm" ".meta"; do
+            if [[ -e "''${archive_dir}/''${uuid}''${ext}" ]]; then
+              mv -f "''${archive_dir}/''${uuid}''${ext}" "''${bundle_dir}/" 2>/dev/null || true
+            fi
+            if [[ "$ext" == ".meta" ]] && [[ -e "''${conv_dir}/''${uuid}.meta" ]] && [[ ! -e "''${conv_dir}/''${uuid}.db" ]]; then
+              mv -f "''${conv_dir}/''${uuid}.meta" "''${bundle_dir}/" 2>/dev/null || true
             fi
           done
 
@@ -413,7 +419,59 @@ let
           rm -f "$evict_candidates"
         fi
 
-        # 5. Purge archived conversation folders older than 30 days from conversation start.
+        # 5. Reconcile orphaned brain/, annotations/, and presence/ entries whose active .db is gone.
+        local orphan_path
+        for orphan_path in "''${app_dir}/brain"/*; do
+          [[ -d "$orphan_path" ]] || continue
+          uuid="''${orphan_path##*/}"
+          # Skip shared non-UUID folders in brain/.
+          [[ "$uuid" =~ ^[0-9a-fA-F-]{36}$ ]] || continue
+          [[ ! -e "''${conv_dir}/''${uuid}.db" ]] || continue
+          if is_open_conversation "$app_dir" "$uuid" || has_live_open_handle "$uuid"; then
+            continue
+          fi
+          bundle_dir="''${archive_dir}/''${uuid}"
+          if [[ -d "$bundle_dir" ]]; then
+            if [[ ! -d "''${bundle_dir}/brain" ]]; then
+              mv -f "$orphan_path" "''${bundle_dir}/brain" 2>/dev/null || true
+            else
+              rm -rf "$orphan_path" 2>/dev/null || true
+            fi
+          fi
+        done
+
+        for orphan_path in "''${app_dir}/annotations"/*.pbtxt; do
+          filename="''${orphan_path##*/}"
+          uuid="''${filename%.pbtxt}"
+          [[ ! -e "''${conv_dir}/''${uuid}.db" ]] || continue
+          bundle_dir="''${archive_dir}/''${uuid}"
+          if [[ -d "$bundle_dir" ]]; then
+            mv -f "$orphan_path" "''${bundle_dir}/''${uuid}.pbtxt" 2>/dev/null || true
+          else
+            rm -f "$orphan_path" 2>/dev/null || true
+          fi
+        done
+
+        for orphan_path in "''${app_dir}/presence"/*.lock; do
+          filename="''${orphan_path##*/}"
+          uuid="''${filename%.lock}"
+          [[ ! -e "''${conv_dir}/''${uuid}.db" ]] || continue
+          rm -f "$orphan_path" 2>/dev/null || true
+        done
+
+        for orphan_path in "''${conv_dir}"/*.meta; do
+          filename="''${orphan_path##*/}"
+          uuid="''${filename%.meta}"
+          [[ ! -e "''${conv_dir}/''${uuid}.db" ]] || continue
+          bundle_dir="''${archive_dir}/''${uuid}"
+          if [[ -d "$bundle_dir" ]]; then
+            mv -f "$orphan_path" "''${bundle_dir}/" 2>/dev/null || true
+          else
+            rm -f "$orphan_path" 2>/dev/null || true
+          fi
+        done
+
+        # 6. Purge archived conversation folders older than 30 days from conversation start.
         while IFS= read -r -d ''' bundle_dir; do
           uuid="''${bundle_dir##*/}"
           if [[ -f "''${bundle_dir}/''${uuid}.db" ]]; then
@@ -421,7 +479,7 @@ let
           else
             start_epoch="$(stat -c %Y "$bundle_dir" 2>/dev/null || echo "$NOW")"
           fi
-          if (( NOW - start_epoch > ARCHIVE_RETENTION_SECS )); then
+          if (( NOW - start_epoch >= ARCHIVE_RETENTION_SECS )); then
             age_days=$(( (NOW - start_epoch) / 86400 ))
             rm -rf "$bundle_dir"
             purged_count=$((purged_count + 1))
@@ -436,7 +494,7 @@ let
       }
 
       log_info "Starting Antigravity conversation archival pass..."
-      for app_dir in "$HOME/.gemini/antigravity-cli" "$HOME/.gemini/antigravity" "$HOME/.gemini/antigravity-ide"; do
+      for app_dir in "$HOME/.gemini"/antigravity*; do
         if [[ -d "$app_dir" ]]; then
           process_app_dir "$app_dir"
         fi
