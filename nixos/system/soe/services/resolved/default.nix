@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 {
   imports = [ ];
 
@@ -6,6 +6,10 @@
   environment.etc."dnssec-trust-anchors.d/local.negative".text = ''
     slopageddon.app
   '';
+
+  systemd.services.systemd-resolved.reloadTriggers = [
+    config.environment.etc."dnssec-trust-anchors.d/local.negative".source
+  ];
 
   services.resolved = {
     enable = true;
