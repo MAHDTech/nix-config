@@ -2,6 +2,11 @@
 {
   imports = [ ];
 
+  # Slopageddon is served from AD without DNSSEC
+  environment.etc."dnssec-trust-anchors.d/local.negative".text = ''
+    slopageddon.app
+  '';
+
   services.resolved = {
     enable = true;
     settings = {
