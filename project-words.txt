@@ -2085,3 +2085,5 @@ unsnooze
 unsnoozed
 virusevent
 virusname
+SGID
+SUIDSGID
