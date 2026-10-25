@@ -25,29 +25,23 @@
 
   # Debugging: dump state to kmsg on failure so ramoops captures it
   boot.initrd.systemd.services.panic-dumper = {
-    description = "Dump initrd state and force panic on boot failure";
-    wantedBy = [ "emergency.target" ];
-    before = [ "emergency.service" ];
     path = [
       pkgs.coreutils
       config.boot.initrd.systemd.package.util-linux
     ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = lib.mkForce (
-        pkgs.writeShellScript "panic-dumper-installer" ''
-          echo "=== INITRD FAILED ===" > /dev/kmsg 2>/dev/null || true
-          echo "=== mount state ===" > /dev/kmsg 2>/dev/null || true
-          mount > /dev/kmsg 2>/dev/null || true
-          echo "=== block devices ===" > /dev/kmsg 2>/dev/null || true
-          ls -la /dev/disk/by-label/ > /dev/kmsg 2>/dev/null || true
-          echo "=== triggering panic for ramoops ===" > /dev/kmsg 2>/dev/null || true
-          sleep 5
-          echo 1 > /proc/sys/kernel/sysrq 2>/dev/null || true
-          echo c > /proc/sysrq-trigger 2>/dev/null || true
-        ''
-      );
-    };
+    serviceConfig.ExecStart = lib.mkForce (
+      pkgs.writeShellScript "panic-dumper-installer" ''
+        echo "=== INITRD FAILED ===" > /dev/kmsg 2>/dev/null || true
+        echo "=== mount state ===" > /dev/kmsg 2>/dev/null || true
+        mount > /dev/kmsg 2>/dev/null || true
+        echo "=== block devices ===" > /dev/kmsg 2>/dev/null || true
+        ls -la /dev/disk/by-label/ > /dev/kmsg 2>/dev/null || true
+        echo "=== triggering panic for ramoops ===" > /dev/kmsg 2>/dev/null || true
+        sleep 5
+        echo 1 > /proc/sys/kernel/sysrq 2>/dev/null || true
+        echo c > /proc/sysrq-trigger 2>/dev/null || true
+      ''
+    );
   };
 
   # Remove the hardcoded ext4 root from hardware-configuration.nix
