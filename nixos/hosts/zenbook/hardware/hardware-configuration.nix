@@ -24,9 +24,6 @@ in
     initrd = {
       includeDefaultModules = false;
       allowMissingModules = true;
-      # Use systemd-based initrd for proper ARM64 hardware initialization and
-      # device dependency resolution (proven critical for Snapdragon X Elite)
-      systemd.enable = true;
       availableKernelModules = [
         # NVMe / Storage & Bus Controllers
         "nvme"

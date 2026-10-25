@@ -19,10 +19,7 @@
     loader.grub.enable = false;
 
     initrd = {
-      # Disable systemd initrd to reduce initrd size (avoids 32MB LK boot limit)
-      systemd.enable = false;
-
-      # Android aboot/LK only understands gzip ramdisks; NixOS defaults to zstd
+      # Android aboot/LK only understands gzip/xz ramdisks; NixOS defaults to zstd
       compressor = "xz";
       compressorArgs = [
         "--check=crc32"

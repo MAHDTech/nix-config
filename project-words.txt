@@ -2087,3 +2087,4 @@ virusevent
 virusname
 SGID
 SUIDSGID
+fastmcp

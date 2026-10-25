@@ -23,50 +23,31 @@
     wireless.enable = lib.mkForce false;
   };
 
-  # ============================================================
-  # SCRIPTED INITRD
-  # ============================================================
-  # Switch to the scripted (bash) initrd to bypass all the systemd
-  # fstab-generator, ordering cycles, and duplicate mount unit
-  # issues that plague the systemd initrd with our Android bootloader.
-  #
-  # The scripted initrd mounts filesystems sequentially via shell
-  # commands — no generators, no targets, no daemon-reload.
-  #
-  # NOTE: The scripted initrd is deprecated in NixOS 26.05 but
-  # this is only used for the ONE-TIME installer boot.
-  # The final installed system will use systemd initrd with a
-  # simple root= mount (no ISO chain complexity).
-  boot.initrd = {
-    systemd.enable = lib.mkForce false;
-
-    # Prevent udev from trying to change the MAC address of the ASIX adapter,
-    # which causes the USB endpoint to reset and the hub to drop!
-    # The systemd.network.links option only works if systemd initrd is enabled,
-    # so we must manually write the .link file in the scripted initrd!
-    preDeviceCommands = ''
-      mkdir -p /etc/systemd/network
-      cat <<EOF > /etc/systemd/network/99-default.link
-      [Match]
-      OriginalName=*
-
-      [Link]
-      MACAddressPolicy=none
-      EOF
-    '';
-
-    # Debugging: dump state to kmsg on failure so ramoops captures it
-    preFailCommands = ''
-      echo "=== INITRD FAILED ===" > /dev/kmsg 2>/dev/null || true
-      echo "=== mount state ===" > /dev/kmsg 2>/dev/null || true
-      mount > /dev/kmsg 2>/dev/null || true
-      echo "=== block devices ===" > /dev/kmsg 2>/dev/null || true
-      ls -la /dev/disk/by-label/ > /dev/kmsg 2>/dev/null || true
-      echo "=== triggering panic for ramoops ===" > /dev/kmsg 2>/dev/null || true
-      sleep 5
-      echo 1 > /proc/sys/kernel/sysrq 2>/dev/null || true
-      echo c > /proc/sysrq-trigger 2>/dev/null || true
-    '';
+  # Debugging: dump state to kmsg on failure so ramoops captures it
+  boot.initrd.systemd.services.panic-dumper = {
+    description = "Dump initrd state and force panic on boot failure";
+    wantedBy = [ "emergency.target" ];
+    before = [ "emergency.service" ];
+    path = [
+      pkgs.coreutils
+      config.boot.initrd.systemd.package.util-linux
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = lib.mkForce (
+        pkgs.writeShellScript "panic-dumper-installer" ''
+          echo "=== INITRD FAILED ===" > /dev/kmsg 2>/dev/null || true
+          echo "=== mount state ===" > /dev/kmsg 2>/dev/null || true
+          mount > /dev/kmsg 2>/dev/null || true
+          echo "=== block devices ===" > /dev/kmsg 2>/dev/null || true
+          ls -la /dev/disk/by-label/ > /dev/kmsg 2>/dev/null || true
+          echo "=== triggering panic for ramoops ===" > /dev/kmsg 2>/dev/null || true
+          sleep 5
+          echo 1 > /proc/sys/kernel/sysrq 2>/dev/null || true
+          echo c > /proc/sysrq-trigger 2>/dev/null || true
+        ''
+      );
+    };
   };
 
   # Remove the hardcoded ext4 root from hardware-configuration.nix

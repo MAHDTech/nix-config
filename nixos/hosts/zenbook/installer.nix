@@ -22,9 +22,8 @@
   # Enable SSH inside the installer for NixOS Anywhere
   services.openssh.enable = true;
 
-  # Use systemd-based initrd for proper ARM64 hardware initialization
+  # Allow emergency shell access in systemd initrd
   boot.initrd.systemd = {
-    enable = true;
     emergencyAccess = true;
   };
 

@@ -42,4 +42,14 @@ final: _prev: {
   pulumi = _prev.pulumi.overrideAttrs (_old: {
     doCheck = false;
   });
+
+  # HACK: TODO: Fix this when the upstream mcp_2 is fixed.
+  # mcp v2 breaks fastmcp-slim; pin mcp-nixos's python scope to mcp_1.
+  mcp-nixos = _prev.mcp-nixos.override {
+    python3Packages = _prev.python3Packages.overrideScope (
+      pyFinal: _pyPrev: {
+        mcp = pyFinal.mcp_1;
+      }
+    );
+  };
 }

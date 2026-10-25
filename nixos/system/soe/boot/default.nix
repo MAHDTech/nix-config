@@ -42,9 +42,6 @@ in
 
     initrd = {
       enable = true;
-      systemd = {
-        enable = true;
-      };
       kernelModules = [ ];
     };
 
