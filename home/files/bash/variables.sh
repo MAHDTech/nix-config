@@ -208,7 +208,6 @@ export DOCKER_HOST=unix:///var/run/docker.sock
 # Docker (User Daemon)
 #export DOCKER_ROOTLESS=TRUE
 #export XDG_RUNTIME_DIR=/run/user/${UID}
-#export PATH=/usr/bin:$PATH
 #export DOCKER_HOST=unix:///run/user/${UID}/docker.sock
 
 ########################################

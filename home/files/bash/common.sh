@@ -435,7 +435,7 @@ function addPath() {
 	if [ -d "${FOLDER}" ]; then
 
 		# Don't duplicate folders already in the path
-		if ! grep -E "${FOLDER}:" <<<"${PATH}" >/dev/null; then
+		if [[ ":${PATH}:" != *":${FOLDER}:"* ]]; then
 
 			export PATH=${FOLDER}:$PATH
 			writeLog "DEBUG" "Added $FOLDER to the Path"

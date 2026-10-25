@@ -33,10 +33,6 @@ export LOG_LEVEL="INFO"
 
 # Folders to add in the PATH
 FOLDERS=(
-	"/usr/sbin"
-	"/usr/local/sbin"
-	"/usr/bin"
-	"/usr/local/bin"
 	"/snap/bin"
 	"${HOME}/.rvm/bin"
 	"${HOME}/.radicle/bin"
