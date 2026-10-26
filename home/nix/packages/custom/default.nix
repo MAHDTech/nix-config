@@ -4,19 +4,23 @@
   ...
 }:
 let
-  #claude-code = pkgs.callPackage ./claude-code { };
-
+  claude-code = pkgs.callPackage ./claude-code { };
   codex = pkgs.callPackage ./codex { };
 
-  # Tracks upstream releases faster than nixpkgs; bump with t3code/update.sh.
+  # Tracks upstream releases faster than nixpkgs;
+  # bump with t3code/update.sh.
   # The wrapper puts the enabled agent CLIs on t3code's PATH, so they must be
   # the same builds installed elsewhere in this config.
   t3code = pkgs.callPackage ./t3code {
-    #inherit claude-code codex;
+    # Inherit the custom pkgs
+    inherit claude-code codex;
+    # Inherit nixpkgs unstable
     inherit (pkgsUnstable) opencode grok-build;
-    enableClaude = false;
-    enableCodex = false;
-    enableOpencode = true;
+
+    # What to enable for access from inside t3code
+    enableClaude = true;
+    enableCodex = true;
+    enableOpencode = false;
     enableGrokBuild = true;
   };
 
