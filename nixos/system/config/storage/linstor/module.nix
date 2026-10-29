@@ -354,8 +354,7 @@ in
 
       boot = {
 
-        # HACK: Use the latest kernel packages to match the rest of the system.
-        kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+        kernelPackages = lib.mkForce pkgs.linuxPackages_7_2;
 
         # Load DRBD 9 out-of-tree kernel module from linuxKernel.packages
         extraModulePackages = with config.boot.kernelPackages; [ drbd ];

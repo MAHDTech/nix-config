@@ -10,7 +10,7 @@
   #
   # IMPORTANT: x86_64-linux ONLY. The proprietary DisplayLink userspace daemon
   # (DisplayLinkManager) is only available for x86_64. It does NOT support aarch64.
-  # Do NOT import this module on ARM64 hosts (Zenbook, Orion, etc.).
+  # Do NOT import this module on ARM64 hosts.
   #
   # Usage: import this module in your host configuration to enable DisplayLink
   # dock support. The dock's displays will appear as additional DRM outputs

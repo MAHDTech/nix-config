@@ -452,7 +452,6 @@ YUBIKEY
 YWNW
 Yubi
 Yubico
-ZENBOOK
 ZHOUYI
 ZYNQMP
 Zafiro
@@ -560,7 +559,6 @@ bogo
 bootcon
 bootimg
 bootstrapper
-bootycall
 borderangle
 borgbackup
 boto
@@ -638,7 +636,6 @@ clipperhouse
 clippy
 cloudflared
 cloudforge
-cloudkey
 cman
 cmax
 cmdhist

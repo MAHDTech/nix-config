@@ -15,10 +15,10 @@ Set these environment variables in your terminal before running any subsequent c
 
 ```bash
 # Name of the host configuration (uppercase, matches flake target)
-NIXOS_HOSTNAME="ZENBOOK"
+NIXOS_HOSTNAME="JONS"
 
 # Name of the installer configuration (from the list below)
-INSTALLER_NAME="installer-zenbook"
+INSTALLER_NAME="installer-jons"
 
 # USB device path to write the installer to (verify via: lsblk)
 USB_DRIVE="/dev/sdX"
@@ -39,12 +39,16 @@ OPNIX_TOKEN="ops_..."
 
 The installer images defined in this flake include host-specific kernels, utility tools, and SSH enabled with password authentication (`root`/`nixos`, password: `nixos`).
 
-| Flake target        | Host    | Architecture    |
-| :------------------ | :------ | :-------------- |
-| `installer-jons`    | JONS    | `x86_64-linux`  |
-| `installer-arc`     | ARC     | `x86_64-linux`  |
-| `installer-zenbook` | ZENBOOK | `aarch64-linux` |
-| `installer-orion`   | ORION   | `aarch64-linux` |
+| Flake target                                                      | Host                  | Architecture   |
+| :---------------------------------------------------------------- | :-------------------- | :------------- |
+| `installer-jons`                                                  | JONS                  | `x86_64-linux` |
+| `installer-hub`                                                   | hub                   | `x86_64-linux` |
+| `installer-s3`                                                    | s3                    | `x86_64-linux` |
+| `installer-nix-cache`                                             | nix-cache             | `x86_64-linux` |
+| `installer-mirror`                                                | mirror                | `x86_64-linux` |
+| `installer-test-nixos`                                            | test-nixos            | `x86_64-linux` |
+| `installer-github-runner`                                         | Generic GitHub runner | `x86_64-linux` |
+| `installer-github-runner-01` through `installer-github-runner-50` | GitHub runners        | `x86_64-linux` |
 
 > [!TIP]
 > To list all available installer targets in the repository, run:
@@ -94,6 +98,7 @@ sudo sgdisk -e ${USB_DRIVE}
    - **Directly**: Run `ip addr show` on the target machine.
    - **Indirectly**: Scan the local network using `nmap -sn 10.10.1.0/24`.
 5. Verify SSH connectivity from your deployment machine (default password is `nixos`):
+
    ```bash
    ssh root@${NIXOS_TARGET_IP}
    ```
@@ -173,9 +178,6 @@ env SSH_AUTH_SOCK="" nix run github:nix-community/nixos-anywhere -- \
   --ssh-option "IdentityAgent=none"
 ```
 
-> [!IMPORTANT]
-> `--phases disko,install` is mandatory for ARM64 targets (such as `ZENBOOK` and `ORION`) to avoid crashes during the `kexec` phase and prevent automatic reboot.
-
 ### Clean up Local Secrets Staging
 
 Once the deployment script finishes, clean up the temporary directory:
@@ -192,17 +194,17 @@ Once the deployment completes:
 
 1. Reboot the target host:
 
-```bash
-ssh root@${NIXOS_TARGET_IP} reboot
-```
+   ```bash
+   ssh root@${NIXOS_TARGET_IP} reboot
+   ```
 
 2. Unplug the USB drive when the host shuts down.
 
 3. Upon first boot of the new system, verify that the OpNix daemon is active and running:
 
-```bash
-systemctl status onepassword-secrets.service
-```
+   ```bash
+   systemctl status onepassword-secrets.service
+   ```
 
 ## 9. Upgrading
 
@@ -216,8 +218,8 @@ Or, push from another host:
 
 ```bash
 nixos-rebuild switch \
-	--flake $NIXOS_HOSTNAME \
-	--target-host ${NIXOS_TARGET_IP} \
-	--use-remote-sudo \
-	--build-host localhost
+  --flake $NIXOS_HOSTNAME \
+  --target-host ${NIXOS_TARGET_IP} \
+  --use-remote-sudo \
+  --build-host localhost
 ```

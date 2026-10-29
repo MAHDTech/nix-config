@@ -144,10 +144,15 @@ in
         # at normal priority there (see the comment in that file), so a host
         # override merges with them rather than replacing them.
         { nix.settings = nixSettings; }
-        {
-          boot.zfs.forceImportRoot = lib.mkDefault false;
-          boot.zfs.forceImportAll = lib.mkDefault false;
-        }
+        ({ pkgs, ... }: {
+          boot = {
+            kernelPackages = lib.mkDefault pkgs.linuxPackages_7_2;
+            zfs = {
+              forceImportRoot = lib.mkDefault false;
+              forceImportAll = lib.mkDefault false;
+            };
+          };
+        })
         inputs.opnix.nixosModules.default
         inputs.stylix.nixosModules.stylix
         inputs.flatpaks.nixosModules.default
@@ -174,10 +179,15 @@ in
       };
       modules = [
         { system.stateVersion = globalStateVersion; }
-        {
-          boot.zfs.forceImportRoot = lib.mkDefault false;
-          boot.zfs.forceImportAll = lib.mkDefault false;
-        }
+        ({ pkgs, ... }: {
+          boot = {
+            kernelPackages = lib.mkDefault pkgs.linuxPackages_7_2;
+            zfs = {
+              forceImportRoot = lib.mkDefault false;
+              forceImportAll = lib.mkDefault false;
+            };
+          };
+        })
         module
       ];
     };

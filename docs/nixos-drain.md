@@ -157,7 +157,7 @@ for these single-host services.
 
 All managed hosts use the shared upgrade module: `nixos-rebuild boot` stages the
 configuration, the `upgrade` profile drains applications, and a successful drain
-requests an automatic reboot. This includes BOOTYCALL and userspace-only updates.
+requests an automatic reboot. This includes userspace-only updates.
 No scheduled upgrade activates the configuration with `switch`.
 
 If the staged generation is already both booted and active, the job skips draining

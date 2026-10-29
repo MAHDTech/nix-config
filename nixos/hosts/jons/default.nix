@@ -144,7 +144,7 @@
     # Virtual Desktop
     ../../system/config/services/wayvnc
 
-    # Netconsole Receiver for remote BootyCall boot logs
+    # Netconsole Receiver for remote kernel boot logs
     ../../system/config/debug/netconsole/server.nix
   ];
 

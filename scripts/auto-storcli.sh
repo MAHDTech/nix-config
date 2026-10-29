@@ -14,7 +14,7 @@ set -euo pipefail
 #########################
 
 # Download bundle URL
-DOWNLOAD_BUNDLE_URL="http://bootycall.saltlabs.cloud/downloads/Firmware_9500-8i.tar.gz"
+: "${DOWNLOAD_BUNDLE_URL:?Set DOWNLOAD_BUNDLE_URL to the firmware bundle URL}"
 
 # AMD64 File Locations
 # shellcheck disable=SC2034

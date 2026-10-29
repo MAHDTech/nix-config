@@ -110,17 +110,6 @@
         PubkeyAuthentication = "yes";
       };
 
-      #########################
-      # Salt Labs
-      #########################
-
-      "bootycall" = {
-        HostName = "bootycall.saltlabs.cloud";
-        User = "root";
-        PasswordAuthentication = "no";
-        PubkeyAuthentication = "yes";
-      };
-
       ##################################################
       # TARS Cloud
       ##################################################

@@ -472,7 +472,7 @@ function dotfiles() {
 		done
 
 		# --no-build makes the store read-only, breaking evaluation of generated
-		# inputs (Stylix themes and the Zenbook kernel config) on a cold store.
+		# inputs (such as Stylix themes) on a cold store.
 		# When remote the URL is passed, otherwise the local flake is used.
 		nix flake check \
 			"${CHECK_ARGS[@]}" \

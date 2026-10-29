@@ -2,16 +2,15 @@
 
 ## 1. Current Kernel Tracking
 
-The `jons` host **does not** track the default NixOS stable kernel (`pkgs.linuxPackages`). Instead, it dynamically targets the latest compatible branch.
-In `../../system/soe/boot/default.nix`, the `kernelPackages` attribute is
-determined by filtering `pkgs.linuxKernel.packages` for the **latest
-available Linux kernel that has a working, non-broken ZFS module**.
+JONS uses the stock `pkgs.linuxPackages_7_2` package set from the locked
+nixpkgs input, matching the other managed hosts and installers. The shared
+selection is in `nixos/system/soe/boot/default.nix`.
 
 ## 2. Kernel Version and Configurations
 
-Because of the dynamic ZFS compatibility filter, the exact kernel version is
-whatever the latest ZFS-supported kernel in nixpkgs is at evaluation time
-(effectively `linuxPackages_latest`, bounded by ZFS support).
+The current lock resolves to Linux `7.2.13`. Updating nixpkgs tracks patch
+releases within the 7.2 series. The ZFS module comes from the same kernel
+package set; builds must still verify its compatibility after updates.
 
 **Configurations/Parameters applied:**
 
@@ -31,22 +30,14 @@ whatever the latest ZFS-supported kernel in nixpkgs is at evaluation time
 - **Secondary GPU (Offload/Compute):** Intel Arc B580 Battlemage (BMG G21) discrete GPU.
 - **Storage:** ZFS storage pools with NixOS booting from a Samsung USB Flash Drive (for `/boot/efi` and `/boot/nixos`).
 
-## 4. Linux Kernel 7.1.1 Impact & Changes
+## 4. Upgrade Validation
 
-### Improvements:
+Build the JONS system to verify the kernel, ZFS module, initrd, and system
+configuration together:
 
-- The continued maturation of the Intel `xe` driver in the 7.1 cycle will directly improve stability and performance for the Intel Arc B580 Battlemage GPU.
-- The new native NTFS driver will vastly improve I/O performance for external Windows drives.
+```bash
+nix build .#nixosConfigurations.JONS.config.system.build.toplevel --no-link
+```
 
-### What might break:
-
-- Because `jons` relies on ZFS, the transition to the 7.1.x kernel series
-  might be slightly delayed until OpenZFS officially tags support for it. If it
-  updates too early, there is a minor risk of ZFS regressions.
-
-### Nix Config Changes Needed:
-
-With the 7.1.1 kernel's updated `xe` driver and the host's move to Mesa 26.x, we should re-test Vulkan apps (like Zed) and consider:
-
-1. Dropping the `MESA_VK_WSI_PRESENT_MODE = "immediate"` workaround.
-2. Re-enabling `xe.enable_preemption=1` in `boot.kernelParams`.
+A successful build does not verify hardware behavior. After booting the new
+generation, check ZFS pool imports, AMD/Intel graphics, and Vulkan applications.
