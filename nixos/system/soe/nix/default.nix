@@ -5,6 +5,31 @@
   nixSettingsFlags ? [ ],
   ...
 }:
+let
+  # Nix logs a warning on SQLITE_CORRUPT in its HTTP/eval caches instead of
+  # recreating them, which silently disables binary cache substitution.
+  healNixCache = pkgs.writeShellApplication {
+    name = "heal-nix-http-cache";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.sqlite
+    ];
+    text = ''
+      shopt -s nullglob
+      for db in /root/.cache/nix/*.sqlite /root/.cache/nix/eval-cache-v*/*.sqlite; do
+        if out="$(sqlite3 -cmd ".timeout 5000" "file:''${db}?mode=ro" "PRAGMA integrity_check(1);" 2>&1)"; then
+          rc=0
+        else
+          rc=$?
+        fi
+        if [[ $rc -eq 0 && $out != "ok" ]] || [[ $out == *"malformed"* ]] || [[ $out == *"not a database"* ]] || [[ $out == *"corrupt"* ]]; then
+          echo "Removing corrupted Nix cache database: $db ($out)" >&2
+          rm -f -- "$db" "''${db}-wal" "''${db}-shm"
+        fi
+      done
+    '';
+  };
+in
 {
   nix = {
     enable = true;
@@ -71,14 +96,28 @@
     registry.nixpkgs.flake = inputs.nixpkgs;
   };
 
-  systemd.services.nixos-upgrade = {
-    environment = {
-      NIXPKGS_ALLOW_BROKEN = "0";
-      NIXPKGS_ALLOW_UNFREE = "1";
-      # NIXPKGS_ALLOW_INSECURE removed — use nixpkgs.config.permittedInsecurePackages instead
+  systemd.services = {
+    nix-daemon.serviceConfig.ExecStartPre = [
+      "+${healNixCache}/bin/heal-nix-http-cache"
+    ];
+
+    nixos-upgrade = {
+      after = [ "nix-daemon.socket" ];
+      wants = [ "nix-daemon.socket" ];
+      environment = {
+        NIX_REMOTE = "daemon";
+        NIXPKGS_ALLOW_BROKEN = "0";
+        NIXPKGS_ALLOW_UNFREE = "1";
+        # NIXPKGS_ALLOW_INSECURE removed — use nixpkgs.config.permittedInsecurePackages instead
+      };
+      # Prevent indefinite hangs during unattended upgrades
+      serviceConfig = {
+        ExecStartPre = [
+          "+${healNixCache}/bin/heal-nix-http-cache"
+        ];
+        TimeoutStartSec = "2h";
+      };
     };
-    # Prevent indefinite hangs during unattended upgrades
-    serviceConfig.TimeoutStartSec = "2h";
   };
 
   system = {
