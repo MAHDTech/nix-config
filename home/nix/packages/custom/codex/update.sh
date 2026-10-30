@@ -13,7 +13,6 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-HOST="${HOST_NAME:-$(hostname)}"
 
 gh_curl() {
 	curl ${GITHUB_TOKEN:+-u ":$GITHUB_TOKEN"} -fsSL "$@"
@@ -95,11 +94,19 @@ echo "codex: computing cargoHash (fake-hash build)"
 FAKE="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 sed -i -E "s|^  cargoHash = \"sha256-.*\";$|  cargoHash = \"$FAKE\";|" default.nix
 
+PKGS="let
+  lock = builtins.fromJSON (builtins.readFile \"$REPO_ROOT/flake.lock\");
+  nixpkgs = builtins.fetchTree (builtins.getAttr lock.nodes.root.inputs.nixpkgs lock.nodes).locked;
+in import nixpkgs {
+  system = builtins.currentSystem;
+  config.allowUnfree = true;
+  overlays = [ (import $REPO_ROOT/overlays) ];
+}"
+
 set +e
 BUILD_LOG=$(nix --extra-experimental-features 'nix-command flakes' build --no-link \
 	--accept-flake-config --impure --expr \
-	"let pkgs = (builtins.getFlake \"$REPO_ROOT\").nixosConfigurations.\"$HOST\".pkgs;
-	 in (pkgs.callPackage $PWD { }).cargoDeps" 2>&1)
+	"let pkgs = $PKGS; in (pkgs.callPackage $PWD { }).cargoDeps" 2>&1)
 set -e
 
 CARGO_HASH=$(echo "$BUILD_LOG" | sed -nE 's/^\s*got:\s*(sha256-\S+).*$/\1/p' | head -n1)

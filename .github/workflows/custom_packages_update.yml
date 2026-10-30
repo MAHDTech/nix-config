@@ -35,6 +35,24 @@ jobs:
           lfs: false
           submodules: recursive
 
+      - id: verify_pr_token
+        name: Verify PR Token
+        env:
+          GH_TOKEN: ${{ secrets.MAHDTECH_GITHUB_TOKEN }}
+        run: |
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::MAHDTECH_GITHUB_TOKEN secret is not set."
+            exit 1
+          fi
+          if ! push_perm=$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.permissions.push'); then
+            echo "::error::MAHDTECH_GITHUB_TOKEN authentication failed (expired or invalid token)."
+            exit 1
+          fi
+          if [[ "$push_perm" != "true" ]]; then
+            echo "::error::MAHDTECH_GITHUB_TOKEN lacks push permission on ${GITHUB_REPOSITORY}."
+            exit 1
+          fi
+
       - id: free_disk_space
         name: Free Disk Space
         uses: ./.github/actions/free-disk-space
@@ -44,12 +62,20 @@ jobs:
         uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          nix_path: nixpkgs=channel:nixos-unstable
 
       - id: run_update_scripts
         name: Run update scripts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
+
+          if ! NIXPKGS_PATH=$(nix eval --impure --raw --expr \
+            'let lock = builtins.fromJSON (builtins.readFile ./flake.lock); in (builtins.fetchTree (builtins.getAttr lock.nodes.root.inputs.nixpkgs lock.nodes).locked).outPath'); then
+            echo "::error::Failed to resolve pinned nixpkgs from flake.lock"
+            exit 1
+          fi
+          export NIX_PATH="nixpkgs=$NIXPKGS_PATH"
 
           UPDATED=()
           FAILED=()
@@ -59,16 +85,18 @@ jobs:
             git clean -fd -- "$1"
           }
 
+          pkg_expr() {
+            printf 'let pkgs = import <nixpkgs> { config.allowUnfree = true; overlays = [ (import ./overlays) ]; }; in pkgs.callPackage ./%s { }' "$1"
+          }
+
+          pkg_version() {
+            nix eval --impure --raw --expr "($(pkg_expr "$1")).version" 2>/dev/null || echo "unknown"
+          }
+
           for script in $(git ls-files 'home/nix/packages/custom/*/update.sh'); do
             dir=$(dirname "$script")
             name=$(basename "$dir")
-
-            # Both manifest.json (claude-code) and sources.json carry .version
-            version_file=""
-            for candidate in sources.json manifest.json; do
-              [[ -f "$dir/$candidate" ]] && version_file="$dir/$candidate"
-            done
-            old_version=$([[ -n $version_file ]] && jq -r '.version' "$version_file" || echo "unknown")
+            old_version=$(pkg_version "$dir")
 
             echo "::group::Updating $name (current: $old_version)"
 
@@ -81,10 +109,9 @@ jobs:
             fi
 
             if git status --porcelain -- "$dir" | grep -q .; then
-              new_version=$([[ -n $version_file ]] && jq -r '.version' "$version_file" || echo "unknown")
+              new_version=$(pkg_version "$dir")
               echo "Verifying $name $old_version -> $new_version builds..."
-              if nix build --impure --no-link \
-                --expr "with import <nixpkgs> { config.allowUnfree = true; }; callPackage ./$dir { }"; then
+              if nix build --impure --no-link --expr "$(pkg_expr "$dir")"; then
                 if [[ "$old_version" == "$new_version" ]]; then
                   UPDATED+=("$name: metadata refresh ($new_version)")
                 else
@@ -130,7 +157,7 @@ jobs:
         name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.MAHDTECH_TOKEN_CREATE_PR }}
+          token: ${{ secrets.MAHDTECH_GITHUB_TOKEN }}
           branch: update-custom-packages
           delete-branch: true
           add-paths: home/nix/packages/custom/**
@@ -150,7 +177,10 @@ jobs:
 
       - id: fail_on_errors
         name: Fail if any package failed
-        if: steps.run_update_scripts.outputs.failed_count != '0'
+        if: >-
+          always() &&
+          steps.run_update_scripts.outputs.failed_count != '' &&
+          steps.run_update_scripts.outputs.failed_count != '0'
         run: |
           echo "::error::${{ steps.run_update_scripts.outputs.failed_count }} package(s) failed to update; see job summary."
           exit 1

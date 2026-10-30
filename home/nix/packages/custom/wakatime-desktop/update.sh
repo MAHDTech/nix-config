@@ -18,7 +18,7 @@ else
 	LATEST_TAG="${REDIRECT_URL##*/}"
 
 	if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "latest" ]; then
-		LATEST_TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | jq -r .tag_name)
+		LATEST_TAG=$(curl ${GITHUB_TOKEN:+-u ":$GITHUB_TOKEN"} -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | jq -r .tag_name)
 	fi
 	TAG="$LATEST_TAG"
 fi

@@ -16,7 +16,6 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-HOST="${HOST_NAME:-$(hostname)}"
 
 gh_curl() {
 	curl ${GITHUB_TOKEN:+-u ":$GITHUB_TOKEN"} -fsSL "$@"
@@ -39,7 +38,14 @@ fi
 echo "t3code: $CURRENT -> $VERSION"
 
 FAKE="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-PKGS="(builtins.getFlake \"$REPO_ROOT\").nixosConfigurations.\"$HOST\".pkgs"
+PKGS="let
+  lock = builtins.fromJSON (builtins.readFile \"$REPO_ROOT/flake.lock\");
+  nixpkgs = builtins.fetchTree (builtins.getAttr lock.nodes.root.inputs.nixpkgs lock.nodes).locked;
+in import nixpkgs {
+  system = builtins.currentSystem;
+  config.allowUnfree = true;
+  overlays = [ (import $REPO_ROOT/overlays) ];
+}"
 
 # Build the given attribute of an expression with a fake hash and return the
 # hash Nix reports it actually got. Only the fetcher runs, not the full build.
