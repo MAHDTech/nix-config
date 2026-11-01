@@ -26,6 +26,8 @@ let
 
   devPackages = with pkgs; [
     figlet
+    cargo-edit
+    cargo-audit
   ];
 
 in
@@ -68,6 +70,11 @@ in
 
     go = {
       enable = true;
+    };
+
+    rust = {
+      enable = true;
+      toolchainFile = "./rustToolchain.toml";
     };
 
     opentofu = {
