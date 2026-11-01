@@ -251,20 +251,19 @@ impl InboxStore {
     fn expire_snoozes(&mut self, now: DateTime<Utc>) -> Vec<NotificationPopup> {
         let mut popups = Vec::new();
         for item in &mut self.items {
-            if item.status == AlertStatus::Snoozed {
-                if let Some(until) = item.snoozed_until {
-                    if until <= now {
-                        item.status = AlertStatus::Open;
-                        item.snoozed_until = None;
-                        popups.push(NotificationPopup {
-                            summary: format!("ClamAV Alert Resurfaced: {}", item.virus_name),
-                            body: format!(
-                                "Snooze expired for threat '{}' in:\n{}\n(Seen {} time(s))",
-                                item.virus_name, item.filename, item.hit_count
-                            ),
-                        });
-                    }
-                }
+            if item.status == AlertStatus::Snoozed
+                && let Some(until) = item.snoozed_until
+                && until <= now
+            {
+                item.status = AlertStatus::Open;
+                item.snoozed_until = None;
+                popups.push(NotificationPopup {
+                    summary: format!("ClamAV Alert Resurfaced: {}", item.virus_name),
+                    body: format!(
+                        "Snooze expired for threat '{}' in:\n{}\n(Seen {} time(s))",
+                        item.virus_name, item.filename, item.hit_count
+                    ),
+                });
             }
         }
         popups
@@ -287,10 +286,10 @@ impl InboxStore {
 
             match existing.status {
                 AlertStatus::Snoozed => {
-                    if let Some(until) = existing.snoozed_until {
-                        if until > now {
-                            return None;
-                        }
+                    if let Some(until) = existing.snoozed_until
+                        && until > now
+                    {
+                        return None;
                     }
                     existing.status = AlertStatus::Open;
                     existing.snoozed_until = None;
@@ -392,10 +391,10 @@ fn resolve_state_dir(override_dir: Option<PathBuf>) -> PathBuf {
     if let Some(dir) = override_dir {
         return dir;
     }
-    if let Ok(xdg) = env::var("XDG_STATE_HOME") {
-        if !xdg.trim().is_empty() {
-            return PathBuf::from(xdg).join("clamav-notify");
-        }
+    if let Ok(xdg) = env::var("XDG_STATE_HOME")
+        && !xdg.trim().is_empty()
+    {
+        return PathBuf::from(xdg).join("clamav-notify");
     }
     if let Ok(home) = env::var("HOME") {
         return PathBuf::from(home).join(".local/state/clamav-notify");
@@ -504,12 +503,11 @@ fn parse_journal_json_line(line: &str) -> Option<JournalRecord> {
     };
 
     let mut event = parse_wire_event_message(&message)?;
-    if event.timestamp.is_none() {
-        if let Some(ts_str) = value.get("__REALTIME_TIMESTAMP").and_then(|v| v.as_str()) {
-            if let Ok(micros) = ts_str.parse::<i64>() {
-                event.timestamp = DateTime::from_timestamp_micros(micros);
-            }
-        }
+    if event.timestamp.is_none()
+        && let Some(ts_str) = value.get("__REALTIME_TIMESTAMP").and_then(|v| v.as_str())
+        && let Ok(micros) = ts_str.parse::<i64>()
+    {
+        event.timestamp = DateTime::from_timestamp_micros(micros);
     }
 
     Some(JournalRecord {
@@ -522,15 +520,15 @@ fn send_desktop_notification(popup: &NotificationPopup) {
     let notify_bin =
         env::var("CLAMAV_NOTIFY_SEND_BIN").unwrap_or_else(|_| "notify-send".to_string());
     let mut cmd = Command::new(notify_bin);
-    if env::var_os("DBUS_SESSION_BUS_ADDRESS").is_none() {
-        if let Ok(runtime_dir) = env::var("XDG_RUNTIME_DIR") {
-            let bus_path = Path::new(&runtime_dir).join("bus");
-            if bus_path.exists() {
-                cmd.env(
-                    "DBUS_SESSION_BUS_ADDRESS",
-                    format!("unix:path={}", bus_path.display()),
-                );
-            }
+    if env::var_os("DBUS_SESSION_BUS_ADDRESS").is_none()
+        && let Ok(runtime_dir) = env::var("XDG_RUNTIME_DIR")
+    {
+        let bus_path = Path::new(&runtime_dir).join("bus");
+        if bus_path.exists() {
+            cmd.env(
+                "DBUS_SESSION_BUS_ADDRESS",
+                format!("unix:path={}", bus_path.display()),
+            );
         }
     }
     let _ = cmd
@@ -572,10 +570,10 @@ fn emit_event_to_journal(file: Option<String>, virus: Option<String>, source: St
         if let Some(mut stdin) = proc.stdin.take() {
             let _ = writeln!(stdin, "{line}");
         }
-        if let Ok(status) = proc.wait() {
-            if status.success() {
-                return Ok(());
-            }
+        if let Ok(status) = proc.wait()
+            && status.success()
+        {
+            return Ok(());
         }
     }
 
@@ -677,15 +675,16 @@ fn run_daemon(state_dir: &Path, once: bool, since: &str) -> io::Result<()> {
         .spawn()?;
 
     thread::sleep(Duration::from_millis(150));
-    if let Ok(Some(status)) = child.try_wait() {
-        if !status.success() && saved_cursor.is_some() {
-            args = build_journalctl_args(None, since, false);
-            child = Command::new(&journal_bin)
-                .args(&args)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::null())
-                .spawn()?;
-        }
+    if let Ok(Some(status)) = child.try_wait()
+        && !status.success()
+        && saved_cursor.is_some()
+    {
+        args = build_journalctl_args(None, since, false);
+        child = Command::new(&journal_bin)
+            .args(&args)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()?;
     }
 
     let stdout = child
@@ -852,11 +851,11 @@ impl TuiApp {
         self.last_mtime = current_mtime;
 
         let filtered = self.filtered_items();
-        if let Some(id) = selected_id {
-            if let Some(pos) = filtered.iter().position(|i| i.id == id) {
-                self.table_state.select(Some(pos));
-                return Ok(());
-            }
+        if let Some(id) = selected_id
+            && let Some(pos) = filtered.iter().position(|i| i.id == id)
+        {
+            self.table_state.select(Some(pos));
+            return Ok(());
         }
         self.clamp_selection();
         Ok(())
@@ -897,138 +896,138 @@ fn run_tui_loop(
         app.reload_if_changed(false)?;
         terminal.draw(|f| draw_tui(f, &mut app))?;
 
-        if event::poll(Duration::from_millis(500))? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind != KeyEventKind::Press {
-                    continue;
-                }
-                if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
-                    return Ok(());
-                }
+        if event::poll(Duration::from_millis(500))?
+            && let Event::Key(key) = event::read()?
+        {
+            if key.kind != KeyEventKind::Press {
+                continue;
+            }
+            if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
+                return Ok(());
+            }
 
-                if let Some(modal_idx) = app.snooze_modal {
-                    match key.code {
-                        KeyCode::Esc | KeyCode::Char('q') => {
-                            app.snooze_modal = None;
-                        }
-                        KeyCode::Down | KeyCode::Char('j') => {
-                            app.snooze_modal = Some((modal_idx + 1) % SNOOZE_PRESETS.len());
-                        }
-                        KeyCode::Up | KeyCode::Char('k') => {
-                            app.snooze_modal = Some(
-                                (modal_idx + SNOOZE_PRESETS.len() - 1) % SNOOZE_PRESETS.len(),
-                            );
-                        }
-                        KeyCode::Enter | KeyCode::Char(' ') => {
-                            if let Some(id) = app.selected_item_id() {
-                                let (code, label) = SNOOZE_PRESETS[modal_idx];
-                                if code == "unsnooze" {
-                                    app.store.reopen_item(id);
-                                    app.status_message = format!("Re-opened alert #{id}.");
-                                } else if let Ok(delta) = parse_duration_str(code) {
-                                    let until = Utc::now() + delta;
-                                    app.store.snooze_item(id, until);
-                                    app.status_message =
-                                        format!("Snoozed alert #{id} for {label}.");
-                                }
-                                app.save_store()?;
-                            }
-                            app.snooze_modal = None;
-                        }
-                        _ => {}
-                    }
-                    continue;
-                }
-
+            if let Some(modal_idx) = app.snooze_modal {
                 match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                    KeyCode::Tab => {
-                        app.filter = app.filter.next();
-                        app.clamp_selection();
-                    }
-                    KeyCode::BackTab => {
-                        app.filter = app.filter.previous();
-                        app.clamp_selection();
-                    }
-                    KeyCode::Char('1') => {
-                        app.filter = FilterTab::All;
-                        app.clamp_selection();
-                    }
-                    KeyCode::Char('2') => {
-                        app.filter = FilterTab::Open;
-                        app.clamp_selection();
-                    }
-                    KeyCode::Char('3') => {
-                        app.filter = FilterTab::Snoozed;
-                        app.clamp_selection();
-                    }
-                    KeyCode::Char('4') => {
-                        app.filter = FilterTab::Closed;
-                        app.clamp_selection();
+                    KeyCode::Esc | KeyCode::Char('q') => {
+                        app.snooze_modal = None;
                     }
                     KeyCode::Down | KeyCode::Char('j') => {
-                        let len = app.filtered_items().len();
-                        if len > 0 {
-                            let next = match app.table_state.selected() {
-                                Some(i) => (i + 1) % len,
-                                None => 0,
-                            };
-                            app.table_state.select(Some(next));
-                        }
+                        app.snooze_modal = Some((modal_idx + 1) % SNOOZE_PRESETS.len());
                     }
                     KeyCode::Up | KeyCode::Char('k') => {
-                        let len = app.filtered_items().len();
-                        if len > 0 {
-                            let prev = match app.table_state.selected() {
-                                Some(i) => (i + len - 1) % len,
-                                None => 0,
-                            };
-                            app.table_state.select(Some(prev));
-                        }
+                        app.snooze_modal = Some(
+                            (modal_idx + SNOOZE_PRESETS.len() - 1) % SNOOZE_PRESETS.len(),
+                        );
                     }
-                    KeyCode::Char(' ') | KeyCode::Enter => {
+                    KeyCode::Enter | KeyCode::Char(' ') => {
                         if let Some(id) = app.selected_item_id() {
-                            app.store.toggle_close(id);
+                            let (code, label) = SNOOZE_PRESETS[modal_idx];
+                            if code == "unsnooze" {
+                                app.store.reopen_item(id);
+                                app.status_message = format!("Re-opened alert #{id}.");
+                            } else if let Ok(delta) = parse_duration_str(code) {
+                                let until = Utc::now() + delta;
+                                app.store.snooze_item(id, until);
+                                app.status_message =
+                                    format!("Snoozed alert #{id} for {label}.");
+                            }
                             app.save_store()?;
-                            app.status_message = format!("Toggled status for alert #{id}.");
                         }
-                    }
-                    KeyCode::Char('s') => {
-                        if app.selected_item_id().is_some() {
-                            app.snooze_modal = Some(1);
-                        }
-                    }
-                    KeyCode::Char('u') => {
-                        if let Some(id) = app.selected_item_id() {
-                            app.store.reopen_item(id);
-                            app.save_store()?;
-                            app.status_message = format!("Unsnoozed/re-opened alert #{id}.");
-                        }
-                    }
-                    KeyCode::Char('c') => {
-                        let removed = app.store.clear_closed();
-                        app.save_store()?;
-                        app.status_message = format!("Cleared {removed} closed alert(s).");
-                    }
-                    KeyCode::Char('r') => {
-                        app.reload_if_changed(true)?;
-                        app.status_message = "Refreshed inbox.".to_string();
-                    }
-                    KeyCode::Char('t') => {
-                        let event = WireVirusEvent {
-                            filename: "/tmp/eicar-test-signature.txt".to_string(),
-                            virus_name: "Win.Test.EICAR_HDB-1".to_string(),
-                            source: "test-alert".to_string(),
-                            timestamp: Some(Utc::now()),
-                        };
-                        if let Some(popup) = app.store.ingest_event(event, Utc::now()) {
-                            send_desktop_notification(&popup);
-                        }
-                        app.save_store()?;
-                        app.status_message = "Triggered synthetic test alert.".to_string();
+                        app.snooze_modal = None;
                     }
                     _ => {}
                 }
+                continue;
+            }
+
+            match key.code {
+                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                KeyCode::Tab => {
+                    app.filter = app.filter.next();
+                    app.clamp_selection();
+                }
+                KeyCode::BackTab => {
+                    app.filter = app.filter.previous();
+                    app.clamp_selection();
+                }
+                KeyCode::Char('1') => {
+                    app.filter = FilterTab::All;
+                    app.clamp_selection();
+                }
+                KeyCode::Char('2') => {
+                    app.filter = FilterTab::Open;
+                    app.clamp_selection();
+                }
+                KeyCode::Char('3') => {
+                    app.filter = FilterTab::Snoozed;
+                    app.clamp_selection();
+                }
+                KeyCode::Char('4') => {
+                    app.filter = FilterTab::Closed;
+                    app.clamp_selection();
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    let len = app.filtered_items().len();
+                    if len > 0 {
+                        let next = match app.table_state.selected() {
+                            Some(i) => (i + 1) % len,
+                            None => 0,
+                        };
+                        app.table_state.select(Some(next));
+                    }
+                }
+                KeyCode::Up | KeyCode::Char('k') => {
+                    let len = app.filtered_items().len();
+                    if len > 0 {
+                        let prev = match app.table_state.selected() {
+                            Some(i) => (i + len - 1) % len,
+                            None => 0,
+                        };
+                        app.table_state.select(Some(prev));
+                    }
+                }
+                KeyCode::Char(' ') | KeyCode::Enter => {
+                    if let Some(id) = app.selected_item_id() {
+                        app.store.toggle_close(id);
+                        app.save_store()?;
+                        app.status_message = format!("Toggled status for alert #{id}.");
+                    }
+                }
+                KeyCode::Char('s') => {
+                    if app.selected_item_id().is_some() {
+                        app.snooze_modal = Some(1);
+                    }
+                }
+                KeyCode::Char('u') => {
+                    if let Some(id) = app.selected_item_id() {
+                        app.store.reopen_item(id);
+                        app.save_store()?;
+                        app.status_message = format!("Unsnoozed/re-opened alert #{id}.");
+                    }
+                }
+                KeyCode::Char('c') => {
+                    let removed = app.store.clear_closed();
+                    app.save_store()?;
+                    app.status_message = format!("Cleared {removed} closed alert(s).");
+                }
+                KeyCode::Char('r') => {
+                    app.reload_if_changed(true)?;
+                    app.status_message = "Refreshed inbox.".to_string();
+                }
+                KeyCode::Char('t') => {
+                    let event = WireVirusEvent {
+                        filename: "/tmp/eicar-test-signature.txt".to_string(),
+                        virus_name: "Win.Test.EICAR_HDB-1".to_string(),
+                        source: "test-alert".to_string(),
+                        timestamp: Some(Utc::now()),
+                    };
+                    if let Some(popup) = app.store.ingest_event(event, Utc::now()) {
+                        send_desktop_notification(&popup);
+                    }
+                    app.save_store()?;
+                    app.status_message = "Triggered synthetic test alert.".to_string();
+                }
+                _ => {}
             }
         }
     }
