@@ -74,7 +74,7 @@ in
 
     rust = {
       enable = true;
-      toolchainFile = "./rustToolchain.toml";
+      toolchainFile = ../rust-toolchain.toml;
     };
 
     opentofu = {

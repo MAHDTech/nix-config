@@ -40,11 +40,14 @@
   };
 
   inputs = {
-    #nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     systems.url = "github:nix-systems/default";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs = {
+      nixpkgs.follows = "nixpkgs";
+    };
 
     home-manager = {
       url = "github:nix-community/home-manager/master";
