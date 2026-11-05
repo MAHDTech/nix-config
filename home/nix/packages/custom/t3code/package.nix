@@ -3,6 +3,24 @@
   callPackage,
   symlinkJoin,
   makeBinaryWrapper,
+  stdenv,
+  glib,
+  nspr,
+  nss,
+  at-spi2-core,
+  dbus,
+  libx11,
+  libxcomposite,
+  libxdamage,
+  libxext,
+  libxfixes,
+  libxrandr,
+  libgbm,
+  expat,
+  libxcb,
+  libxkbcommon,
+  systemd,
+  alsa-lib,
   enableAzureDevOps ? false,
   azure-cli,
   azure-cli-extensions,
@@ -34,6 +52,27 @@
 }:
 
 let
+  # T3 downloads its headless browser at runtime, outside Nix's ELF fixup.
+  browserLibraries = [
+    glib
+    nspr
+    nss
+    at-spi2-core
+    dbus
+    libx11
+    libxcomposite
+    libxdamage
+    libxext
+    libxfixes
+    libxrandr
+    libgbm
+    expat
+    libxcb
+    libxkbcommon
+    systemd
+    alsa-lib
+  ];
+
   runtimePackages =
     lib.optionals enableAzureDevOps [
       (azure-cli.withExtensions [ azure-cli-extensions.azure-devops ])
@@ -60,6 +99,12 @@ let
       "PATH"
       ":"
       (lib.makeBinPath runtimePackages)
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
+      "--prefix"
+      "LD_LIBRARY_PATH"
+      ":"
+      (lib.makeLibraryPath browserLibraries)
     ]
     ++ lib.optionals enableResourceMonitor [
       "--set-default"
