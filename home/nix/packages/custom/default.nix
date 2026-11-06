@@ -20,7 +20,7 @@ let
     # What to enable for access from inside t3code
     enableClaude = true;
     enableCodex = true;
-    enableOpencode = false;
+    enableOpencode = true;
     enableGrokBuild = true;
   };
 
