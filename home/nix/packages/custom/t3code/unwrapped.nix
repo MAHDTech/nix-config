@@ -8,7 +8,7 @@
   libicns,
   libsecret,
   pkg-config,
-  makeBinaryWrapper,
+  makeWrapper,
   makeDesktopItem,
   node-gyp,
   nodejs,
@@ -64,7 +64,7 @@ stdenv.mkDerivation (
 
     nativeBuildInputs = [
       installShellFiles
-      makeBinaryWrapper
+      makeWrapper
       node-gyp
       nodejs
       python3
@@ -112,6 +112,9 @@ stdenv.mkDerivation (
     };
 
     preBuild = ''
+      # Upstream's public production configuration enables T3 Connect.
+      cp .env.example .env
+
       # The license plugin otherwise downloads missing templates inside the sandbox.
       mkdir -p .generated/third-party-licenses/spdx/v3.28.0
       cp ${spdxLicenseData}/json/details/*.json .generated/third-party-licenses/spdx/v3.28.0/
@@ -175,6 +178,7 @@ stdenv.mkDerivation (
 
       makeWrapper ${lib.getExe electron} "$out"/bin/t3code-desktop \
         --add-flags "$out"/libexec/t3code/apps/desktop \
+        --run 'export T3CODE_HOME="''${T3CODE_HOME:-$HOME/.t3-desktop}"' \
         --inherit-argv0 \
         ${lib.optionalString stdenv.hostPlatform.isLinux "--prefix LD_LIBRARY_PATH : ${
           lib.makeLibraryPath [ stdenv.cc.cc.lib ]
@@ -224,6 +228,7 @@ stdenv.mkDerivation (
         icon = "t3code";
         startupWMClass = "t3code";
         categories = [ "Development" ];
+        mimeTypes = [ "x-scheme-handler/t3code" ];
       })
     ];
 

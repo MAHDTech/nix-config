@@ -2,7 +2,7 @@
   lib,
   callPackage,
   symlinkJoin,
-  makeBinaryWrapper,
+  makeWrapper,
   stdenv,
   glib,
   nspr,
@@ -20,6 +20,8 @@
   libxcb,
   libxkbcommon,
   systemd,
+  cloudflared,
+  desktop-file-utils,
   alsa-lib,
   enableAzureDevOps ? false,
   azure-cli,
@@ -74,7 +76,9 @@ let
   ];
 
   runtimePackages =
-    lib.optionals enableAzureDevOps [
+    # T3 refreshes the user MIME cache when registering its OAuth callback.
+    lib.optionals stdenv.hostPlatform.isLinux [ desktop-file-utils ]
+    ++ lib.optionals enableAzureDevOps [
       (azure-cli.withExtensions [ azure-cli-extensions.azure-devops ])
     ]
     ++ lib.optionals enableBitbucket [ bitbucket-cli ]
@@ -93,24 +97,28 @@ let
   # builds in its electron-builder pipeline, not in `build:desktop`. The server
   # checks this variable before any bundled location, and the desktop app's
   # server child inherits it.
-  wrapperArgs =
-    lib.optionals (runtimePackages != [ ]) [
-      "--prefix"
-      "PATH"
-      ":"
-      (lib.makeBinPath runtimePackages)
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isLinux [
-      "--prefix"
-      "LD_LIBRARY_PATH"
-      ":"
-      (lib.makeLibraryPath browserLibraries)
-    ]
-    ++ lib.optionals enableResourceMonitor [
-      "--set-default"
-      "T3CODE_RESOURCE_MONITOR_PATH"
-      (lib.getExe t3code-resource-monitor)
-    ];
+  wrapperArgs = [
+    "--set-default"
+    "T3CODE_CLOUDFLARED_PATH"
+    (lib.getExe cloudflared)
+  ]
+  ++ lib.optionals (runtimePackages != [ ]) [
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath runtimePackages)
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    "--prefix"
+    "LD_LIBRARY_PATH"
+    ":"
+    (lib.makeLibraryPath browserLibraries)
+  ]
+  ++ lib.optionals enableResourceMonitor [
+    "--set-default"
+    "T3CODE_RESOURCE_MONITOR_PATH"
+    (lib.getExe t3code-resource-monitor)
+  ];
 
 in
 symlinkJoin {
@@ -121,11 +129,18 @@ symlinkJoin {
 
   paths = [ t3code-unwrapped ];
 
-  nativeBuildInputs = [ makeBinaryWrapper ];
+  nativeBuildInputs = [ makeWrapper ];
 
   postBuild = lib.optionalString (wrapperArgs != [ ]) ''
     for program in "$out/bin"/*; do
-      wrapProgram "$program" ${lib.escapeShellArgs wrapperArgs}
+      if [ "''${program##*/}" = t3code-desktop ]; then
+        # The desktop session can inherit the server's T3CODE_HOME.
+        wrapProgram "$program" ${lib.escapeShellArgs wrapperArgs} \
+          --run 'export T3CODE_HOME="$HOME/.t3-desktop"' \
+          --set T3CODE_DESKTOP_LAUNCHER_PATH "$out/bin/t3code-desktop"
+      else
+        wrapProgram "$program" ${lib.escapeShellArgs wrapperArgs}
+      fi
     done
   '';
 
