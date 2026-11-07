@@ -51,7 +51,27 @@ let
   #
   # Deliberately without globalOverlays: those packages target the stable set,
   # and duplicating them here would build them twice.
-  pkgsUnstableImport = importNixpkgs inputs.nixpkgs-unstable;
+  pkgsUnstableImport =
+    args:
+    importNixpkgs inputs.nixpkgs-unstable (
+      args
+      // {
+        overlays = [
+          (_final: prev: {
+            # Remove when the pinned OpenCode dependency hash is fixed upstream.
+            opencode = prev.opencode.overrideAttrs (
+              old:
+              lib.optionalAttrs (old.version == "2.2.5" && prev.stdenv.hostPlatform.system == "x86_64-linux") {
+                node_modules = old.node_modules.overrideAttrs {
+                  outputHash = "sha256-prx9dX7kUvs/E3zopkaPk5LXh3xJAy5sZeum/W8L7cA=";
+                };
+              }
+            );
+          })
+        ]
+        ++ (args.overlays or [ ]);
+      }
+    );
 
   # Backwards-compatible simple import (used by mkHome)
   pkgsImportSystem = system: pkgsImport { inherit system; };

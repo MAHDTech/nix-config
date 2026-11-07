@@ -26,6 +26,7 @@
       cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
       cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=
       devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+      nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
       tars-cloud.cachix.org-1:LYeXk9Ur0sYmP7uid5iwm3uqwBzwr93EyEdccoPxu7A=
       bingamon-lab.cachix.org-1:an+S3U4koN/ka4SUeKGuqR+wxLbCBe+0wF9ThdvqBtw=
       bingamon-lab-tf-modules.cachix.org-1:QEPNsUVgYDLYFYzKL6HD6SgbQ808yWcBdQ/Rcne1l9o=
