@@ -54,9 +54,17 @@ let
     else
       [ ];
 
-  # Disable the Video Encoder so Pipewire/Teams Screen Sharing works.
+  # Disable the Video Encoder so Pipewire/Teams Screen Sharing works, while
+  # enabling Vulkan (via ANGLE), zero-copy rasterization/decode, and WebGPU.
   brave_video_encoder_disabled = pkgs.brave.override {
-    commandLineArgs = "--disable-features=OutdatedBuildDetector,UseChromeOSDirectVideoDecoder,AcceleratedVideoEncoder";
+    enableVulkan = true;
+    commandLineArgs = builtins.concatStringsSep " " [
+      "--use-angle=vulkan"
+      "--enable-zero-copy"
+      "--enable-unsafe-webgpu"
+      "--enable-features=Vulkan,DefaultANGLEVulkan,VulkanFromANGLE,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,VaapiIgnoreDriverChecks,WaylandWindowDecorations"
+      "--disable-features=OutdatedBuildDetector,UseChromeOSDirectVideoDecoder,AcceleratedVideoEncoder"
+    ];
   };
 
 in
