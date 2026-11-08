@@ -21,6 +21,7 @@
 
   services.flatpak = {
     enable = true;
+    runWithoutGui = false;
 
     # <remote name>:<type>/<flatpak ref>/<arch>/<branch>:<commit>
     packages = [
