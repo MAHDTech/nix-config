@@ -354,7 +354,7 @@ in
 
       boot = {
 
-        kernelPackages = lib.mkForce pkgs.linuxPackages_7_2;
+        kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
 
         # Load DRBD 9 out-of-tree kernel module from linuxKernel.packages
         extraModulePackages = with config.boot.kernelPackages; [ drbd ];

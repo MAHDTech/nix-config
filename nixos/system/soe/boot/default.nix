@@ -43,7 +43,7 @@ in
       kernelModules = [ ];
     };
 
-    kernelPackages = pkgs.linuxPackages_7_2;
+    kernelPackages = pkgs.linuxPackages_latest;
 
     kernelParams = [
       "nohibernate"

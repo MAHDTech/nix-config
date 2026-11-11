@@ -166,7 +166,7 @@ in
         { nix.settings = nixSettings; }
         ({ pkgs, ... }: {
           boot = {
-            kernelPackages = lib.mkDefault pkgs.linuxPackages_7_2;
+            kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
             zfs = {
               forceImportRoot = lib.mkDefault false;
               forceImportAll = lib.mkDefault false;
@@ -201,7 +201,7 @@ in
         { system.stateVersion = globalStateVersion; }
         ({ pkgs, ... }: {
           boot = {
-            kernelPackages = lib.mkDefault pkgs.linuxPackages_7_2;
+            kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
             zfs = {
               forceImportRoot = lib.mkDefault false;
               forceImportAll = lib.mkDefault false;

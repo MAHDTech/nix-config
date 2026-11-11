@@ -2087,3 +2087,5 @@ SUIDSGID
 fastmcp
 oxalica
 webgpu
+openzfs
+taskq

@@ -2,14 +2,14 @@
 
 ## 1. Current Kernel Tracking
 
-JONS uses the stock `pkgs.linuxPackages_7_2` package set from the locked
+JONS uses the stock `pkgs.linuxPackages_latest` package set from the locked
 nixpkgs input, matching the other managed hosts and installers. The shared
 selection is in `nixos/system/soe/boot/default.nix`.
 
 ## 2. Kernel Version and Configurations
 
-The current lock resolves to Linux `7.2.13`. Updating nixpkgs tracks patch
-releases within the 7.2 series. The ZFS module comes from the same kernel
+The current lock resolves to Linux `7.3.3`. Updating nixpkgs tracks the
+latest stable kernel release. The ZFS module comes from the same kernel
 package set; builds must still verify its compatibility after updates.
 
 **Configurations/Parameters applied:**
