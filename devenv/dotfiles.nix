@@ -147,7 +147,7 @@ in
       golines.enable = true;
       gotest.enable = true;
       govet.enable = true;
-      gptcommit.enable = true;
+      gptcommit.enable = false;
       markdownlint = {
         enable = false;
         package = pkgs.markdownlint-cli;
