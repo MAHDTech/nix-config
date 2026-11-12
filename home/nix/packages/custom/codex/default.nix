@@ -5,6 +5,7 @@
   rustPlatform,
   fetchFromGitHub,
   installShellFiles,
+  aws-lc,
   bubblewrap,
   clang,
   cmake,
@@ -19,21 +20,24 @@
   },
   lld,
   makeBinaryWrapper,
+  oniguruma,
   pkg-config,
   openssl,
   ripgrep,
+  sqlite,
   versionCheckHook,
+  zstd,
   installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "codex";
-  version = "0.167.0";
+  version = "0.167.2";
 
   src = fetchFromGitHub {
     owner = "openai";
     repo = "codex";
     tag = "rust-v${finalAttrs.version}";
-    hash = "sha256-9BVM0mUQ+F9QpqvnG+7x4ZXYaNTclcGLtF5DzEU5Zzg=";
+    hash = "sha256-si822Nidf0AXpADOczhwz8sftOYwZ/zIQ7WKzyveiKM=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/codex-rs";
@@ -76,8 +80,12 @@ rustPlatform.buildRustPackage (finalAttrs: {
   ];
 
   buildInputs = [
+    aws-lc
     libclang
+    oniguruma
     openssl
+    sqlite
+    zstd
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     libcap

@@ -24,6 +24,7 @@
   fetchFromGitHub,
   libcosmicAppHook,
   just,
+  sqlite,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -58,6 +59,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
     # sets the COSMIC icon/theme search paths.
     libcosmicAppHook
     just
+  ];
+
+  buildInputs = [
+    sqlite
   ];
 
   # cargo does the building; just is only used for its install recipe.
