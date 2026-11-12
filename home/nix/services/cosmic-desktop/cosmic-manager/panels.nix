@@ -1,4 +1,24 @@
 {
+  osConfig ? { },
+  ...
+}:
+let
+  # Pin Panel and Dock to JONS's primary monitor (HP Z43 on HDMI-A-5) so Smart TV
+  # hotplugs on the Arc B580 (HDMI-A-3) do not spawn/kill duplicate applet instances.
+  panelOutput =
+    if (osConfig.networking.hostName or "") == "JONS" then
+      {
+        __type = "enum";
+        variant = "Name";
+        value = [ "HDMI-A-5" ];
+      }
+    else
+      {
+        __type = "enum";
+        variant = "All";
+      };
+in
+{
   wayland.desktopManager.cosmic.panels = [
     {
       name = "Panel";
@@ -32,10 +52,7 @@
       };
       margin = 0;
       opacity = 1.0;
-      output = {
-        __type = "enum";
-        variant = "All";
-      };
+      output = panelOutput;
       padding = 0;
       padding_overlap = 0.5;
       plugins_center = {
@@ -125,10 +142,7 @@
       };
       margin = 4;
       opacity = 1.0;
-      output = {
-        __type = "enum";
-        variant = "All";
-      };
+      output = panelOutput;
       padding = 4;
       plugins_center = {
         __type = "optional";

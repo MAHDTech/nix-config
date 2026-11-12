@@ -60,14 +60,11 @@
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0e:00.0", SYMLINK+="dri/amd-gpu"
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", SYMLINK+="dri/intel-gpu"
 
-    # Hide the Arc B580's DRM *card* node from logind's seat, so cosmic-comp
-    # never takes DRM master on it. No monitor is attached to the Arc, but the
-    # compositor was still opening card1, running a full multi-GPU session and
-    # polling seven permanently disconnected connectors every hotplug cycle.
-    #
-    # This only untags the card node. renderD128 keeps its uaccess tag, so
-    # OpenCL/Level Zero/ROCm-style compute, Vulkan and DRI_PRIME=1 offload all
-    # continue to work — the Arc stays fully available for LLM and gaming work.
+    # Keep card1 (Arc B580) in logind's seat while the Smart TV is connected to
+    # card1-HDMI-A-3 (the motherboard only has a single HDMI port, used by the
+    # HP Z43 on card2-HDMI-A-5). Battlemage runtime PM is disabled via xe.runpm=0
+    # in video/intel to prevent HDMI hotplug flap leaks across GPUs.
+    # Only uncomment if no display is attached to the Arc B580:
     # SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", TAG-="seat", TAG-="master-of-seat", ENV{ID_SEAT}=""
   '';
 

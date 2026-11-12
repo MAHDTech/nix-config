@@ -40,38 +40,102 @@ let
         }
       );
 
+  # Memoize default (buildSystem, system) package sets so all hosts and
+  # installers share one evaluated nixpkgs instance per platform pair.
+  supportedSystems = [
+    "x86_64-linux"
+    "aarch64-linux"
+  ];
+
+  unstableOverlays = [
+    (final: prev: {
+      # Remove when the pinned OpenCode dependency hash is fixed upstream.
+      opencode = prev.opencode.overrideAttrs (
+        old:
+        final.lib.optionalAttrs
+          (old.version == "2.2.5" && prev.stdenv.hostPlatform.system == "x86_64-linux")
+          {
+            node_modules = old.node_modules.overrideAttrs {
+              outputHash = "sha256-prx9dX7kUvs/E3zopkaPk5LXh3xJAy5sZeum/W8L7cA=";
+            };
+          }
+      );
+    })
+  ];
+
+  mkMemoizedPkgs =
+    source: overlays:
+    lib.genAttrs supportedSystems (
+      buildSystem:
+      lib.genAttrs supportedSystems (
+        system:
+        importNixpkgs source {
+          inherit system buildSystem overlays;
+        }
+      )
+    );
+
+  defaultPkgs = mkMemoizedPkgs inputs.nixpkgs globalOverlays;
+  unstableMatchesStable = inputs.nixpkgs.outPath == inputs.nixpkgs-unstable.outPath;
+  defaultUnstablePkgs =
+    if unstableMatchesStable then
+      defaultPkgs
+    else
+      mkMemoizedPkgs inputs.nixpkgs-unstable unstableOverlays;
+
   pkgsImport =
-    args:
-    importNixpkgs inputs.nixpkgs (args // { overlays = globalOverlays ++ (args.overlays or [ ]); });
+    {
+      system,
+      buildSystem ? system,
+      overlays ? [ ],
+      nixpkgsConfig ? { },
+    }:
+    if
+      overlays == [ ]
+      && nixpkgsConfig == { }
+      && builtins.elem buildSystem supportedSystems
+      && builtins.elem system supportedSystems
+    then
+      defaultPkgs.${buildSystem}.${system}
+    else
+      importNixpkgs inputs.nixpkgs {
+        inherit system buildSystem nixpkgsConfig;
+        overlays = globalOverlays ++ overlays;
+      };
 
   # The unstable channel, handed to every module as `pkgsUnstable` via
-  # specialArgs / extraSpecialArgs. Declare it here and nowhere else — modules
-  # should take it as an argument rather than re-importing nixpkgs-unstable,
-  # which historically drifted on both allowUnfree and cross-compilation.
-  #
-  # Deliberately without globalOverlays: those packages target the stable set,
-  # and duplicating them here would build them twice.
+  # specialArgs / extraSpecialArgs. When nixpkgs and nixpkgs-unstable resolve
+  # to the same revision, this reuses `defaultPkgs` so evaluation loads one
+  # nixpkgs tree instead of two; when nixpkgs tracks a stable release, it
+  # evaluates nixpkgs-unstable without globalOverlays.
   pkgsUnstableImport =
-    args:
-    importNixpkgs inputs.nixpkgs-unstable (
-      args
-      // {
-        overlays = [
-          (_final: prev: {
-            # Remove when the pinned OpenCode dependency hash is fixed upstream.
-            opencode = prev.opencode.overrideAttrs (
-              old:
-              lib.optionalAttrs (old.version == "2.2.5" && prev.stdenv.hostPlatform.system == "x86_64-linux") {
-                node_modules = old.node_modules.overrideAttrs {
-                  outputHash = "sha256-prx9dX7kUvs/E3zopkaPk5LXh3xJAy5sZeum/W8L7cA=";
-                };
-              }
-            );
-          })
-        ]
-        ++ (args.overlays or [ ]);
+    {
+      system,
+      buildSystem ? system,
+      overlays ? [ ],
+      nixpkgsConfig ? { },
+    }:
+    if
+      overlays == [ ]
+      && nixpkgsConfig == { }
+      && builtins.elem buildSystem supportedSystems
+      && builtins.elem system supportedSystems
+    then
+      defaultUnstablePkgs.${buildSystem}.${system}
+    else if unstableMatchesStable then
+      pkgsImport {
+        inherit
+          system
+          buildSystem
+          overlays
+          nixpkgsConfig
+          ;
       }
-    );
+    else
+      importNixpkgs inputs.nixpkgs-unstable {
+        inherit system buildSystem nixpkgsConfig;
+        overlays = unstableOverlays ++ overlays;
+      };
 
   # Backwards-compatible simple import (used by mkHome)
   pkgsImportSystem = system: pkgsImport { inherit system; };

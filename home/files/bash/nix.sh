@@ -299,6 +299,195 @@ function _dotfiles_actions() {
 
 }
 
+function _dotfiles_check() {
+
+	local FLAKE_LOCATION="$1"
+	local FLAKE_LOCATION_LOCAL="$2"
+	shift 2
+
+	local ALL_SYSTEMS="true"
+	local SHOULD_BUILD="true"
+	local FORWARD_ARGS=()
+
+	for arg in "$@"; do
+		case "$arg" in
+		--all-systems)
+			ALL_SYSTEMS="true"
+			;;
+		--local-only)
+			ALL_SYSTEMS="false"
+			;;
+		--build)
+			SHOULD_BUILD="true"
+			;;
+		--no-build)
+			SHOULD_BUILD="false"
+			;;
+		--keep-going | --accept-flake-config | --impure)
+			# Handled explicitly for nix-eval-jobs and nix-fast-build below.
+			;;
+		*)
+			FORWARD_ARGS+=("$arg")
+			;;
+		esac
+	done
+
+	local WORKERS="${DOTFILES_CHECK_WORKERS:-4}"
+	local MAX_MEMORY_MB="${DOTFILES_CHECK_MAX_MEMORY_MB:-4096}"
+	local INCLUDE_CHECKS="false"
+	if [[ ${SHOULD_BUILD} == "false" ]]; then
+		INCLUDE_CHECKS="true"
+	fi
+
+	local EVAL_JOBS_CMD=(nix run nixpkgs#nix-eval-jobs --)
+	if command -v nix-eval-jobs >/dev/null 2>&1; then
+		EVAL_JOBS_CMD=(nix-eval-jobs)
+	fi
+
+	local FAST_BUILD_CMD=(nix run nixpkgs#nix-fast-build --)
+	if command -v nix-fast-build >/dev/null 2>&1; then
+		FAST_BUILD_CMD=(nix-fast-build)
+	fi
+
+	local STATIX_CMD=(nix run nixpkgs#statix --)
+	if command -v statix >/dev/null 2>&1; then
+		STATIX_CMD=(statix)
+	fi
+
+	local SELECT_EXPR
+	SELECT_EXPR="$(
+		cat <<EOF
+flake:
+let
+  inherit (flake) outputs;
+  allSystems = ${ALL_SYSTEMS};
+  includeChecks = ${INCLUDE_CHECKS};
+  currentSystem = builtins.currentSystem;
+  aliasNames = [
+    "TEST-NIXOS"
+    "installer-hub"
+    "installer-mirror"
+    "installer-nix-cache"
+    "installer-s3"
+  ];
+  stripAliases = attrs: builtins.removeAttrs attrs aliasNames;
+  filterSystems =
+    bySystem:
+    if allSystems then
+      bySystem
+    else if builtins.hasAttr currentSystem bySystem then
+      { \${currentSystem} = bySystem.\${currentSystem}; }
+    else
+      { };
+  nixosRaw = stripAliases (outputs.nixosConfigurations or { });
+  nixosTargets =
+    if allSystems then
+      builtins.mapAttrs (_: cfg: cfg.config.system.build.toplevel) nixosRaw
+    else
+      builtins.listToAttrs (
+        builtins.filter (entry: entry.value != null) (
+          map (
+            name:
+            let
+              cfg = nixosRaw.\${name};
+            in
+            {
+              inherit name;
+              value =
+                if cfg.pkgs.stdenv.hostPlatform.system == currentSystem then
+                  cfg.config.system.build.toplevel
+                else
+                  null;
+            }
+          ) (builtins.attrNames nixosRaw)
+        )
+      );
+in
+{
+  nixosConfigurations = nixosTargets;
+  homeConfigurations = builtins.mapAttrs (
+    _: users: builtins.mapAttrs (_: hm: hm.activationPackage) users
+  ) (filterSystems (outputs.homeConfigurations or { }));
+  packages = builtins.mapAttrs (_: stripAliases) (filterSystems (outputs.packages or { }));
+  devShells = filterSystems (outputs.devShells or { });
+}
+// (if includeChecks then { checks = filterSystems (outputs.checks or { }); } else { })
+EOF
+	)"
+
+	# Run in a subshell so OOMScoreAdjust and aggressive Nix GC settings
+	# stay scoped to check workers and never kill the parent session.
+	(
+		if [[ -w /proc/self/oom_score_adj ]]; then
+			echo 950 >/proc/self/oom_score_adj
+		fi
+		export GC_FREE_SPACE_DIVISOR="${GC_FREE_SPACE_DIVISOR:-12}"
+		export GC_FORCE_UNMAP_ON_GCOLLECT="${GC_FORCE_UNMAP_ON_GCOLLECT:-1}" # cspell:ignore GCOLLECT
+
+		local EVAL_RESULTS
+		EVAL_RESULTS="$(mktemp)"
+
+		writeLog "INFO" "Evaluating flake outputs (${WORKERS} workers x ${MAX_MEMORY_MB} MiB cap)"
+		"${EVAL_JOBS_CMD[@]}" \
+			--flake "${FLAKE_LOCATION}" \
+			--force-recurse \
+			--impure \
+			--option accept-flake-config true \
+			--workers "${WORKERS}" \
+			--max-memory-size "${MAX_MEMORY_MB}" \
+			--select "${SELECT_EXPR}" \
+			"${FORWARD_ARGS[@]}" |
+			tee "${EVAL_RESULTS}" |
+			jq -r --unbuffered 'if .error then "FAIL \(.attrPath | join("."))" else "OK   \(.attrPath | join("."))" end'
+		local PIPE_RC=("${PIPESTATUS[@]}")
+
+		local FAILED_ATTRS
+		FAILED_ATTRS="$(jq -r 'select(.error != null) | .attrPath | join(".")' "${EVAL_RESULTS}")"
+		rm -f "${EVAL_RESULTS}"
+
+		if [[ ${PIPE_RC[0]} -ne 0 || -n ${FAILED_ATTRS} ]]; then
+			if [[ -n ${FAILED_ATTRS} ]]; then
+				writeLog "ERROR" "Failed evaluating attributes: ${FAILED_ATTRS//$'\n'/, }"
+			fi
+			exit 1
+		fi
+
+		if [[ ${SHOULD_BUILD} == "true" ]]; then
+			local NFB_SELECT_ARGS=()
+			if [[ ${ALL_SYSTEMS} == "false" ]]; then
+				NFB_SELECT_ARGS=(
+					--select
+					'checks: if builtins.hasAttr builtins.currentSystem checks then builtins.listToAttrs [ { name = builtins.currentSystem; value = builtins.getAttr builtins.currentSystem checks; } ] else { }'
+				)
+			fi
+
+			writeLog "INFO" "Building flake checks (--skip-cached)"
+			"${FAST_BUILD_CMD[@]}" \
+				--flake "${FLAKE_LOCATION}#checks" \
+				--impure \
+				--option accept-flake-config true \
+				--skip-cached \
+				--eval-workers "${WORKERS}" \
+				--eval-max-memory-size "${MAX_MEMORY_MB}" \
+				"${NFB_SELECT_ARGS[@]}" \
+				"${FORWARD_ARGS[@]}" || exit 1
+		fi
+
+		if [[ ${FLAKE_LOCATION_LOCAL} == "TRUE" ]]; then
+			"${STATIX_CMD[@]}" check || {
+				writeLog "WARN" "Failed to run statix!"
+				exit 1
+			}
+		fi
+	) || {
+		writeLog "WARN" "Failed flake check!"
+		return 1
+	}
+
+	return 0
+
+}
+
 function dotfiles() {
 
 	local ACTION="$1"
@@ -462,33 +651,9 @@ function dotfiles() {
 
 	check)
 
-		local CHECK_ARGS=(--keep-going --accept-flake-config --impure)
-		local NIX_ARGS=()
-		for arg in "${EXTRA_ARGS[@]}"; do
-			# Keep accepting the former opt-in flag; builds are now the default.
-			if [[ $arg != "--build" ]]; then
-				NIX_ARGS+=("$arg")
-			fi
-		done
-
-		# --no-build makes the store read-only, breaking evaluation of generated
-		# inputs (such as Stylix themes) on a cold store.
-		# When remote the URL is passed, otherwise the local flake is used.
-		nix flake check \
-			"${CHECK_ARGS[@]}" \
-			"${FLAKE_LOCATION}" \
-			"${NIX_ARGS[@]}" || {
-			writeLog "WARN" "Failed flake check!"
+		_dotfiles_check "${FLAKE_LOCATION}" "${FLAKE_LOCATION_LOCAL}" "${EXTRA_ARGS[@]}" || {
 			return 1
 		}
-
-		# Only works for local flakes
-		if [[ ${FLAKE_LOCATION_LOCAL} == "TRUE" ]]; then
-			nix run nixpkgs#statix -- check || {
-				writeLog "WARN" "Failed to run statix!"
-				return 1
-			}
-		fi
 
 		;;
 

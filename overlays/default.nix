@@ -52,4 +52,16 @@ final: _prev: {
       }
     );
   };
+
+  # Remove when the pinned OpenCode dependency hash is fixed upstream.
+  opencode = _prev.opencode.overrideAttrs (
+    old:
+    final.lib.optionalAttrs
+      (old.version == "2.2.5" && _prev.stdenv.hostPlatform.system == "x86_64-linux")
+      {
+        node_modules = old.node_modules.overrideAttrs {
+          outputHash = "sha256-prx9dX7kUvs/E3zopkaPk5LXh3xJAy5sZeum/W8L7cA=";
+        };
+      }
+  );
 }

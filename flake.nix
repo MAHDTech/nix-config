@@ -42,7 +42,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-unstable.follows = "nixpkgs";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     systems.url = "github:nix-systems/default";
     rust-overlay.url = "github:oxalica/rust-overlay";
@@ -91,27 +91,52 @@
         "aarch64-linux"
       ];
 
+      installerHosts = builtins.filter (
+        host: builtins.pathExists ./nixos/hosts/${lib.toLower host.name}/installer.nix
+      ) hosts.list;
+
+      rawQemuInstaller = mylib.mkInstaller {
+        system = "x86_64-linux";
+        module = ./nixos/hosts/github-runner/common/installer.nix;
+      };
+
+      # Hosts whose installer.nix is a compatibility alias for the generic raw
+      # base-qemu image; share one evaluation with installer-github-runner.
+      rawQemuAliasHosts = [
+        "hub"
+        "mirror"
+        "nix-cache"
+        "s3"
+      ];
+
       # Installer configurations generated dynamically
       installerConfigs =
         builtins.listToAttrs (
-          map (host: {
-            name = "installer-${lib.toLower host.name}";
-            value = mylib.mkInstaller {
-              inherit (host) system;
-              buildSystem = host.buildSystem or builtins.currentSystem or host.system;
-              module = ./nixos/hosts/${lib.toLower host.name}/installer.nix;
-            };
-          }) hosts.list
+          map (
+            host:
+            let
+              hostDir = lib.toLower host.name;
+            in
+            {
+              name = "installer-${hostDir}";
+              value =
+                if builtins.elem hostDir rawQemuAliasHosts then
+                  rawQemuInstaller
+                else
+                  mylib.mkInstaller {
+                    inherit (host) system;
+                    buildSystem = host.buildSystem or builtins.currentSystem or host.system;
+                    module = ./nixos/hosts/${hostDir}/installer.nix;
+                  };
+            }
+          ) installerHosts
         )
         // {
           base-qemu = mylib.mkInstaller {
             system = "x86_64-linux";
             module = ./nixos/hosts/base-qemu;
           };
-          installer-github-runner = mylib.mkInstaller {
-            system = "x86_64-linux";
-            module = ./nixos/hosts/github-runner/common/installer.nix;
-          };
+          installer-github-runner = rawQemuInstaller;
           github-runner-image = mylib.mkInstaller {
             system = "x86_64-linux";
             module = ./nixos/hosts/github-runner/common/image.nix;
@@ -171,7 +196,7 @@
           map (host: {
             name = "installer-${lib.toLower host.name}";
             value = self.nixosConfigurations."installer-${lib.toLower host.name}".config.system.build.image;
-          }) (builtins.filter (host: (host.buildSystem or host.system) == system) hosts.list)
+          }) (builtins.filter (host: (host.buildSystem or host.system) == system) installerHosts)
         )
       );
 

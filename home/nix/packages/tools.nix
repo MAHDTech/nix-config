@@ -81,7 +81,10 @@ in
       # Nix
       #nix-du
       nil
+      nix-eval-jobs
+      nix-fast-build
       nixfmt
+      statix
 
       # Shell
       nushell

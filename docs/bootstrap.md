@@ -39,16 +39,15 @@ OPNIX_TOKEN="ops_..."
 
 The installer images defined in this flake include host-specific kernels, utility tools, and SSH enabled with password authentication (`root`/`nixos`, password: `nixos`).
 
-| Flake target                                                      | Host                  | Architecture   |
-| :---------------------------------------------------------------- | :-------------------- | :------------- |
-| `installer-jons`                                                  | JONS                  | `x86_64-linux` |
-| `installer-hub`                                                   | hub                   | `x86_64-linux` |
-| `installer-s3`                                                    | s3                    | `x86_64-linux` |
-| `installer-nix-cache`                                             | nix-cache             | `x86_64-linux` |
-| `installer-mirror`                                                | mirror                | `x86_64-linux` |
-| `installer-test-nixos`                                            | test-nixos            | `x86_64-linux` |
-| `installer-github-runner`                                         | Generic GitHub runner | `x86_64-linux` |
-| `installer-github-runner-01` through `installer-github-runner-50` | GitHub runners        | `x86_64-linux` |
+| Flake target              | Host                  | Architecture   |
+| :------------------------ | :-------------------- | :------------- |
+| `installer-jons`          | JONS                  | `x86_64-linux` |
+| `installer-hub`           | hub                   | `x86_64-linux` |
+| `installer-s3`            | s3                    | `x86_64-linux` |
+| `installer-nix-cache`     | nix-cache             | `x86_64-linux` |
+| `installer-mirror`        | mirror                | `x86_64-linux` |
+| `installer-test-nixos`    | test-nixos            | `x86_64-linux` |
+| `installer-github-runner` | Generic GitHub runner | `x86_64-linux` |
 
 > [!TIP]
 > To list all available installer targets in the repository, run:
