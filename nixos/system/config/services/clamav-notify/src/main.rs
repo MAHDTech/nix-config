@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 use chrono::{DateTime, Local, TimeDelta, Utc};
 use clap::{Parser, Subcommand, ValueEnum};
@@ -51,6 +51,9 @@ enum Commands {
         /// Lookback window when no saved journal cursor exists
         #[arg(long, default_value = "-7 days", allow_hyphen_values = true)]
         since: String,
+        /// Interval to repeat summary notifications while OPEN alerts remain ("off" or "0" to disable)
+        #[arg(long, default_value = "4h")]
+        remind_interval: String,
     },
     /// List inbox notifications in the terminal
     List {
@@ -385,6 +388,45 @@ impl InboxStore {
         self.items.retain(|i| i.status != AlertStatus::Closed);
         before - self.items.len()
     }
+
+    fn open_summary_popup(&self) -> Option<NotificationPopup> {
+        let open_items: Vec<&AlertItem> = self
+            .items
+            .iter()
+            .filter(|i| i.status == AlertStatus::Open)
+            .collect();
+
+        if open_items.is_empty() {
+            return None;
+        }
+
+        if open_items.len() == 1 {
+            let item = open_items[0];
+            return Some(NotificationPopup {
+                summary: "ClamAV: 1 Open Alert in Inbox".to_string(),
+                body: format!(
+                    "#{} {}\n{}\nClick 'Open Inbox' to review, snooze, or close.",
+                    item.id, item.virus_name, item.filename
+                ),
+            });
+        }
+
+        let count = open_items.len();
+        let mut lines: Vec<String> = open_items
+            .iter()
+            .take(3)
+            .map(|i| format!("#{} {}", i.id, i.virus_name))
+            .collect();
+        if count > 3 {
+            lines.push(format!("(+{} more)", count - 3));
+        }
+        lines.push("Click 'Open Inbox' to review, snooze, or close.".to_string());
+
+        Some(NotificationPopup {
+            summary: format!("ClamAV: {count} Open Alerts in Inbox"),
+            body: lines.join("\n"),
+        })
+    }
 }
 
 fn resolve_state_dir(override_dir: Option<PathBuf>) -> PathBuf {
@@ -438,6 +480,18 @@ fn parse_duration_str(input: &str) -> Result<TimeDelta, String> {
             "Unsupported duration unit '{unit}' (use s, m, h, or d)"
         )),
     }
+}
+
+fn parse_optional_interval(input: &str) -> Result<Option<Duration>, String> {
+    let trimmed = input.trim().to_lowercase();
+    if matches!(trimmed.as_str(), "" | "0" | "off" | "none" | "disabled") {
+        return Ok(None);
+    }
+    let delta = parse_duration_str(&trimmed)?;
+    delta
+        .to_std()
+        .map(Some)
+        .map_err(|_| format!("Invalid interval duration in '{input}'"))
 }
 
 fn format_remaining(delta: TimeDelta) -> String {
@@ -516,33 +570,115 @@ fn parse_journal_json_line(line: &str) -> Option<JournalRecord> {
     })
 }
 
-fn send_desktop_notification(popup: &NotificationPopup) {
-    let notify_bin =
-        env::var("CLAMAV_NOTIFY_SEND_BIN").unwrap_or_else(|_| "notify-send".to_string());
-    let mut cmd = Command::new(notify_bin);
-    if env::var_os("DBUS_SESSION_BUS_ADDRESS").is_none()
-        && let Ok(runtime_dir) = env::var("XDG_RUNTIME_DIR")
+fn resolve_self_bin() -> PathBuf {
+    if let Ok(bin) = env::var("CLAMAV_NOTIFY_SELF_BIN")
+        && !bin.trim().is_empty()
     {
-        let bus_path = Path::new(&runtime_dir).join("bus");
-        if bus_path.exists() {
-            cmd.env(
-                "DBUS_SESSION_BUS_ADDRESS",
-                format!("unix:path={}", bus_path.display()),
-            );
+        return PathBuf::from(bin);
+    }
+    if let Ok(exe) = env::current_exe() {
+        if let Some(name) = exe.file_name().and_then(|n| n.to_str())
+            && let Some(unwrapped) = name
+                .strip_prefix('.')
+                .and_then(|s| s.strip_suffix("-wrapped"))
+            && let Some(parent) = exe.parent()
+        {
+            let wrapper = parent.join(unwrapped);
+            if wrapper.exists() {
+                return wrapper;
+            }
+        }
+        return exe;
+    }
+    PathBuf::from("clamav-notify")
+}
+
+fn apply_session_env_fallbacks(cmd: &mut Command) {
+    if let Ok(runtime_dir) = env::var("XDG_RUNTIME_DIR") {
+        let runtime_path = Path::new(&runtime_dir);
+        if env::var_os("DBUS_SESSION_BUS_ADDRESS").is_none() {
+            let bus_path = runtime_path.join("bus");
+            if bus_path.exists() {
+                cmd.env(
+                    "DBUS_SESSION_BUS_ADDRESS",
+                    format!("unix:path={}", bus_path.display()),
+                );
+            }
+        }
+        if env::var_os("WAYLAND_DISPLAY").is_none() {
+            for candidate in ["wayland-1", "wayland-0"] {
+                if runtime_path.join(candidate).exists() {
+                    cmd.env("WAYLAND_DISPLAY", candidate);
+                    break;
+                }
+            }
         }
     }
+}
+
+fn open_inbox_with_bins(terminal_bin: &str, self_bin: &Path) {
+    let mut cmd = Command::new(terminal_bin);
+    apply_session_env_fallbacks(&mut cmd);
     let _ = cmd
-        .args([
+        .arg("-e")
+        .arg(self_bin)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn();
+}
+
+fn send_desktop_notification_with_bins(
+    popup: &NotificationPopup,
+    notify_bin: &str,
+    terminal_bin: &str,
+    self_bin: &Path,
+) {
+    for attempt in 0..3 {
+        let mut cmd = Command::new(notify_bin);
+        apply_session_env_fallbacks(&mut cmd);
+        cmd.args([
             "-u",
             "critical",
             "-a",
             "ClamAV",
             "-i",
             "dialog-warning",
+            "-A",
+            "open=Open Inbox",
             &popup.summary,
             &popup.body,
-        ])
-        .status();
+        ]);
+
+        let Ok(output) = cmd.output() else {
+            return;
+        };
+
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if stdout.lines().any(|line| line.trim() == "open") {
+                open_inbox_with_bins(terminal_bin, self_bin);
+            }
+            return;
+        }
+
+        if attempt < 2 {
+            thread::sleep(Duration::from_secs(2));
+        }
+    }
+}
+
+fn send_desktop_notification_sync(popup: &NotificationPopup) {
+    let notify_bin =
+        env::var("CLAMAV_NOTIFY_SEND_BIN").unwrap_or_else(|_| "notify-send".to_string());
+    let terminal_bin =
+        env::var("CLAMAV_NOTIFY_TERMINAL_BIN").unwrap_or_else(|_| "cosmic-term".to_string());
+    let self_bin = resolve_self_bin();
+    send_desktop_notification_with_bins(popup, &notify_bin, &terminal_bin, &self_bin);
+}
+
+fn spawn_desktop_notification(popup: NotificationPopup) -> thread::JoinHandle<()> {
+    thread::spawn(move || send_desktop_notification_sync(&popup))
 }
 
 fn emit_event_to_journal(file: Option<String>, virus: Option<String>, source: String) -> io::Result<()> {
@@ -601,56 +737,59 @@ fn build_journalctl_args(saved_cursor: Option<&str>, since: &str, once: bool) ->
     args
 }
 
-fn process_expired_snoozes(state_dir: &Path) -> io::Result<()> {
+fn expire_snoozes_in_store(state_dir: &Path) -> io::Result<Vec<NotificationPopup>> {
     let path = inbox_path(state_dir);
     let mut store = InboxStore::load(&path)?;
     let popups = store.expire_snoozes(Utc::now());
     if !popups.is_empty() {
         store.save(&path)?;
-        for popup in &popups {
-            send_desktop_notification(popup);
-        }
     }
-    Ok(())
+    Ok(popups)
 }
 
-fn process_journal_line(state_dir: &Path, line: &str) -> io::Result<()> {
+fn process_journal_line(state_dir: &Path, line: &str) -> io::Result<Vec<NotificationPopup>> {
     let Some(record) = parse_journal_json_line(line) else {
-        return Ok(());
+        return Ok(Vec::new());
     };
+    let mut popups = Vec::new();
     if let Some(event) = record.event {
         let path = inbox_path(state_dir);
         let mut store = InboxStore::load(&path)?;
-        let expired_popups = store.expire_snoozes(Utc::now());
-        let event_popup = store.ingest_event(event, Utc::now());
+        popups.extend(store.expire_snoozes(Utc::now()));
+        if let Some(popup) = store.ingest_event(event, Utc::now()) {
+            popups.push(popup);
+        }
         store.save(&path)?;
-
-        for popup in &expired_popups {
-            send_desktop_notification(popup);
-        }
-        if let Some(popup) = event_popup {
-            send_desktop_notification(&popup);
-        }
     }
     if let Some(cursor) = record.cursor {
         fs::create_dir_all(state_dir)?;
         let _ = fs::write(cursor_path(state_dir), cursor);
     }
-    Ok(())
+    Ok(popups)
 }
 
-fn run_daemon(state_dir: &Path, once: bool, since: &str) -> io::Result<()> {
+fn run_daemon(
+    state_dir: &Path,
+    once: bool,
+    since: &str,
+    remind_interval: Option<Duration>,
+) -> io::Result<()> {
     fs::create_dir_all(state_dir)?;
-    process_expired_snoozes(state_dir)?;
 
     let saved_cursor = fs::read_to_string(cursor_path(state_dir))
         .ok()
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty());
 
-    let journal_bin = env::var("CLAMAV_NOTIFY_JOURNALCTL_BIN").unwrap_or_else(|_| "journalctl".to_string());
+    let journal_bin =
+        env::var("CLAMAV_NOTIFY_JOURNALCTL_BIN").unwrap_or_else(|_| "journalctl".to_string());
 
     if once {
+        let mut handles = Vec::new();
+        for popup in expire_snoozes_in_store(state_dir)? {
+            handles.push(spawn_desktop_notification(popup));
+        }
+
         let args = build_journalctl_args(saved_cursor.as_deref(), since, true);
         let output = Command::new(&journal_bin).args(&args).output()?;
         let lines_output = if !output.status.success() && saved_cursor.is_some() {
@@ -661,11 +800,20 @@ fn run_daemon(state_dir: &Path, once: bool, since: &str) -> io::Result<()> {
         };
         let stdout = String::from_utf8_lossy(&lines_output.stdout);
         for line in stdout.lines() {
-            process_journal_line(state_dir, line)?;
+            for popup in process_journal_line(state_dir, line)? {
+                handles.push(spawn_desktop_notification(popup));
+            }
         }
-        process_expired_snoozes(state_dir)?;
+        for popup in expire_snoozes_in_store(state_dir)? {
+            handles.push(spawn_desktop_notification(popup));
+        }
+        for handle in handles {
+            let _ = handle.join();
+        }
         return Ok(());
     }
+
+    let _ = expire_snoozes_in_store(state_dir)?;
 
     let mut args = build_journalctl_args(saved_cursor.as_deref(), since, false);
     let mut child = Command::new(&journal_bin)
@@ -702,13 +850,54 @@ fn run_daemon(state_dir: &Path, once: bool, since: &str) -> io::Result<()> {
         }
     });
 
+    // Ingest any backlog journal events queued at session startup before summarizing OPEN alerts
+    while let Ok(line) = rx.recv_timeout(Duration::from_millis(200)) {
+        let _ = process_journal_line(state_dir, &line)?;
+    }
+
+    let initial_store = InboxStore::load(&inbox_path(state_dir))?;
+    let mut last_reminder_at = if let Some(summary_popup) = initial_store.open_summary_popup() {
+        let _ = spawn_desktop_notification(summary_popup);
+        Some(Instant::now())
+    } else {
+        None
+    };
+
     loop {
         match rx.recv_timeout(Duration::from_secs(5)) {
             Ok(line) => {
-                process_journal_line(state_dir, &line)?;
+                let popups = process_journal_line(state_dir, &line)?;
+                if !popups.is_empty() {
+                    for popup in popups {
+                        let _ = spawn_desktop_notification(popup);
+                    }
+                    last_reminder_at = Some(Instant::now());
+                }
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
-                process_expired_snoozes(state_dir)?;
+                let expired_popups = expire_snoozes_in_store(state_dir)?;
+                if !expired_popups.is_empty() {
+                    for popup in expired_popups {
+                        let _ = spawn_desktop_notification(popup);
+                    }
+                    last_reminder_at = Some(Instant::now());
+                }
+
+                let store = InboxStore::load(&inbox_path(state_dir))?;
+                if let Some(summary_popup) = store.open_summary_popup() {
+                    match last_reminder_at {
+                        Some(last) if remind_interval.is_some_and(|iv| last.elapsed() >= iv) => {
+                            let _ = spawn_desktop_notification(summary_popup);
+                            last_reminder_at = Some(Instant::now());
+                        }
+                        None => {
+                            last_reminder_at = Some(Instant::now());
+                        }
+                        _ => {}
+                    }
+                } else {
+                    last_reminder_at = None;
+                }
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 return Err(io::Error::new(
@@ -721,7 +910,7 @@ fn run_daemon(state_dir: &Path, once: bool, since: &str) -> io::Result<()> {
 }
 
 fn run_list(state_dir: &Path, filter: FilterTab, as_json: bool) -> io::Result<()> {
-    process_expired_snoozes(state_dir)?;
+    let _ = expire_snoozes_in_store(state_dir)?;
     let store = InboxStore::load(&inbox_path(state_dir))?;
     let filtered: Vec<&AlertItem> = store
         .items
@@ -792,7 +981,7 @@ struct TuiApp {
 
 impl TuiApp {
     fn new(state_dir: PathBuf) -> io::Result<Self> {
-        let _ = process_expired_snoozes(&state_dir);
+        let _ = expire_snoozes_in_store(&state_dir);
         let path = inbox_path(&state_dir);
         let last_mtime = fs::metadata(&path).and_then(|m| m.modified()).ok();
         let store = InboxStore::load(&path)?;
@@ -840,7 +1029,7 @@ impl TuiApp {
     }
 
     fn reload_if_changed(&mut self, force: bool) -> io::Result<()> {
-        let _ = process_expired_snoozes(&self.state_dir);
+        let _ = expire_snoozes_in_store(&self.state_dir);
         let path = inbox_path(&self.state_dir);
         let current_mtime = fs::metadata(&path).and_then(|m| m.modified()).ok();
         if !force && current_mtime == self.last_mtime {
@@ -1021,10 +1210,11 @@ fn run_tui_loop(
                         source: "test-alert".to_string(),
                         timestamp: Some(Utc::now()),
                     };
-                    if let Some(popup) = app.store.ingest_event(event, Utc::now()) {
-                        send_desktop_notification(&popup);
-                    }
+                    let popup = app.store.ingest_event(event, Utc::now());
                     app.save_store()?;
+                    if let Some(popup) = popup {
+                        let _ = spawn_desktop_notification(popup);
+                    }
                     app.status_message = "Triggered synthetic test alert.".to_string();
                 }
                 _ => {}
@@ -1279,7 +1469,15 @@ fn main() -> io::Result<()> {
 
     match cli.command.unwrap_or(Commands::Tui) {
         Commands::Tui => run_tui(state_dir),
-        Commands::Daemon { once, since } => run_daemon(&state_dir, once, &since),
+        Commands::Daemon {
+            once,
+            since,
+            remind_interval,
+        } => {
+            let interval = parse_optional_interval(&remind_interval)
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+            run_daemon(&state_dir, once, &since, interval)
+        }
         Commands::List { status, json } => run_list(&state_dir, status, json),
         Commands::Snooze { id, duration } => {
             let delta = parse_duration_str(&duration)
@@ -1353,11 +1551,12 @@ fn main() -> io::Result<()> {
                     source: "test-alert".to_string(),
                     timestamp: Some(Utc::now()),
                 };
-                if let Some(popup) = store.ingest_event(event, Utc::now()) {
-                    send_desktop_notification(&popup);
-                }
+                let popup = store.ingest_event(event, Utc::now());
                 store.save(&path)?;
                 println!("Recorded test alert directly into inbox.");
+                if let Some(popup) = popup {
+                    send_desktop_notification_sync(&popup);
+                }
                 Ok(())
             } else {
                 emit_event_to_journal(Some(file), Some(virus), "test-alert".to_string())?;
@@ -1457,8 +1656,127 @@ mod tests {
     fn test_daemon_since_hyphen_value() {
         let cli = Cli::try_parse_from(["clamav-notify", "daemon", "--since", "-7 days"]).unwrap();
         match cli.command {
-            Some(Commands::Daemon { since, .. }) => assert_eq!(since, "-7 days"),
+            Some(Commands::Daemon {
+                since,
+                remind_interval,
+                ..
+            }) => {
+                assert_eq!(since, "-7 days");
+                assert_eq!(remind_interval, "4h");
+            }
             other => panic!("Expected Daemon command, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn test_parse_optional_interval() {
+        assert_eq!(
+            parse_optional_interval("4h").unwrap(),
+            Some(Duration::from_secs(4 * 3600))
+        );
+        assert_eq!(parse_optional_interval("off").unwrap(), None);
+        assert_eq!(parse_optional_interval("0").unwrap(), None);
+        assert!(parse_optional_interval("bad").is_err());
+    }
+
+    #[test]
+    fn test_open_summary_popup_lifecycle() {
+        let mut store = InboxStore::default();
+        let t0 = DateTime::from_timestamp(1_700_000_000, 0).unwrap();
+        assert!(store.open_summary_popup().is_none());
+
+        store.ingest_event(
+            WireVirusEvent {
+                filename: "/tmp/a.exe".to_string(),
+                virus_name: "Sig.A".to_string(),
+                source: "clamd".to_string(),
+                timestamp: Some(t0),
+            },
+            t0,
+        );
+        let single = store.open_summary_popup().unwrap();
+        assert_eq!(single.summary, "ClamAV: 1 Open Alert in Inbox");
+        assert!(single.body.contains("Sig.A"));
+        assert!(single.body.contains("/tmp/a.exe"));
+
+        for name in ["b", "c", "d", "e"] {
+            store.ingest_event(
+                WireVirusEvent {
+                    filename: format!("/tmp/{name}.exe"),
+                    virus_name: format!("Sig.{name}"),
+                    source: "clamd".to_string(),
+                    timestamp: Some(t0),
+                },
+                t0,
+            );
+        }
+        assert!(store.snooze_item(2, t0 + TimeDelta::hours(4)));
+
+        let multi = store.open_summary_popup().unwrap();
+        assert_eq!(multi.summary, "ClamAV: 4 Open Alerts in Inbox");
+        assert!(multi.body.contains("(+1 more)"));
+
+        for id in [1, 3, 4, 5] {
+            assert!(store.close_item(id));
+        }
+        assert!(store.open_summary_popup().is_none());
+    }
+
+    #[test]
+    fn test_notification_action_launches_terminal() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = env::temp_dir().join(format!("clamav-notify-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+
+        let notify_log = dir.join("notify.log");
+        let term_log = dir.join("term.log");
+        let notify_script = dir.join("fake-notify-send.sh");
+        let term_script = dir.join("fake-cosmic-term.sh");
+        let fake_self = PathBuf::from("/nix/store/fake/bin/clamav-notify");
+
+        fs::write(
+            &notify_script,
+            format!(
+                "#!/bin/sh\nprintf '%s\\n' \"$*\" > '{}'\nprintf 'open\\n'\n",
+                notify_log.display()
+            ),
+        )
+        .unwrap();
+        fs::set_permissions(&notify_script, fs::Permissions::from_mode(0o755)).unwrap();
+
+        fs::write(
+            &term_script,
+            format!("#!/bin/sh\nprintf '%s\\n' \"$*\" > '{}'\n", term_log.display()),
+        )
+        .unwrap();
+        fs::set_permissions(&term_script, fs::Permissions::from_mode(0o755)).unwrap();
+
+        let popup = NotificationPopup {
+            summary: "ClamAV: 1 Open Alert in Inbox".to_string(),
+            body: "Test body".to_string(),
+        };
+        send_desktop_notification_with_bins(
+            &popup,
+            notify_script.to_str().unwrap(),
+            term_script.to_str().unwrap(),
+            &fake_self,
+        );
+
+        for _ in 0..20 {
+            if term_log.exists() {
+                break;
+            }
+            thread::sleep(Duration::from_millis(25));
+        }
+
+        let notify_args = fs::read_to_string(&notify_log).unwrap();
+        assert!(notify_args.contains("-A open=Open Inbox"));
+
+        let term_args = fs::read_to_string(&term_log).unwrap();
+        assert_eq!(term_args.trim(), "-e /nix/store/fake/bin/clamav-notify");
+
+        let _ = fs::remove_dir_all(&dir);
     }
 }

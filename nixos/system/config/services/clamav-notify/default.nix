@@ -28,6 +28,18 @@ in
       default = "-7 days";
       description = "Initial journal lookback window when no saved cursor exists.";
     };
+
+    remindInterval = lib.mkOption {
+      type = lib.types.str;
+      default = "4h";
+      description = "Interval to repeat summary toast notifications while unresolved OPEN alerts remain (set to 'off' to disable).";
+    };
+
+    terminal = lib.mkOption {
+      type = lib.types.str;
+      default = "cosmic-term";
+      description = "Terminal emulator executable launched with '-e clamav-notify' when clicking 'Open Inbox' on a toast.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -41,10 +53,16 @@ in
 
     systemd.user.services.clamav-notify = {
       description = "ClamAV desktop notification and inbox daemon";
-      wantedBy = [ "default.target" ];
+      wantedBy = [ "graphical-session.target" ];
+      partOf = [ "graphical-session.target" ];
+      after = [ "graphical-session.target" ];
+      path = [ "/run/current-system/sw" ];
+      environment = {
+        CLAMAV_NOTIFY_TERMINAL_BIN = cfg.terminal;
+      };
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${cfg.package}/bin/clamav-notify daemon --since=${lib.escapeShellArg cfg.since}";
+        ExecStart = "${cfg.package}/bin/clamav-notify daemon --since=${lib.escapeShellArg cfg.since} --remind-interval=${lib.escapeShellArg cfg.remindInterval}";
         Restart = "always";
         RestartSec = 5;
       };

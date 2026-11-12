@@ -4,6 +4,13 @@ let
   fakeNotifySend = pkgs.writeShellScript "fake-notify-send" ''
     echo "$*" >> /tmp/notifications.log
   '';
+  fakeClickNotifySend = pkgs.writeShellScript "fake-click-notify-send" ''
+    echo "$*" >> /tmp/notifications.log
+    echo "open"
+  '';
+  fakeTerminal = pkgs.writeShellScript "fake-terminal" ''
+    echo "$*" >> /tmp/terminal.log
+  '';
 in
 pkgs.testers.runNixOSTest {
   name = "clamav-notify";
@@ -34,6 +41,12 @@ pkgs.testers.runNixOSTest {
 
     # Verify normal user was added to systemd-journal group
     machine.succeed("id -Gn alice | grep -qw systemd-journal")
+
+    # Verify user unit binds to graphical-session.target and passes remind-interval
+    machine.succeed("grep -q 'WantedBy=graphical-session.target' /etc/systemd/user/clamav-notify.service")
+    machine.succeed("grep -q 'PartOf=graphical-session.target' /etc/systemd/user/clamav-notify.service")
+    machine.succeed("grep -q 'After=graphical-session.target' /etc/systemd/user/clamav-notify.service")
+    machine.succeed("grep -q -- '--remind-interval=4h' /etc/systemd/user/clamav-notify.service")
 
     # Simulate clamd invoking VirusEvent as the unprivileged clamav user
     machine.succeed(
@@ -83,11 +96,14 @@ pkgs.testers.runNixOSTest {
     )
     machine.succeed(
         "su - alice -c '"
-        "CLAMAV_NOTIFY_SEND_BIN=${fakeNotifySend} "
+        "CLAMAV_NOTIFY_SEND_BIN=${fakeClickNotifySend} "
+        "CLAMAV_NOTIFY_TERMINAL_BIN=${fakeTerminal} "
         "clamav-notify daemon --once'"
     )
     machine.succeed("grep -q 'Win.Test.EICAR_HDB-1' /tmp/notifications.log")
-    machine.succeed("su - alice -c 'clamav-notify list --status open | grep -q OPEN'")
+    machine.succeed("grep -q 'open=Open Inbox' /tmp/notifications.log")
+    machine.wait_until_succeeds("grep -q -- '-e .*/bin/clamav-notify' /tmp/terminal.log")
+    machine.succeed("su - alice -c 'clamav-notify list --status open | grep -q \" OPEN\"'")
     machine.succeed("su - alice -c 'clamav-notify list --json | grep -q \"\\\"hit_count\\\": 3\"'")
 
     # Close and clear-closed
