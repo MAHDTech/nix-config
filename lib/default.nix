@@ -164,15 +164,25 @@ in
         # at normal priority there (see the comment in that file), so a host
         # override merges with them rather than replacing them.
         { nix.settings = nixSettings; }
-        ({ pkgs, ... }: {
-          boot = {
-            kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
-            zfs = {
-              forceImportRoot = lib.mkDefault false;
-              forceImportAll = lib.mkDefault false;
+        (
+          { config, pkgs, ... }:
+          {
+            boot = {
+              kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
+              zfs = {
+                forceImportRoot = lib.mkDefault false;
+                forceImportAll = lib.mkDefault false;
+              };
             };
-          };
-        })
+            # Swap on ZFS zvols/datasets risks kernel deadlocks under OOM (openzfs#7734).
+            zramSwap = lib.mkIf config.boot.zfs.enabled {
+              enable = lib.mkDefault true;
+              algorithm = lib.mkDefault "zstd";
+              memoryPercent = lib.mkDefault 50;
+              memoryMax = lib.mkDefault (32 * 1024 * 1024 * 1024);
+            };
+          }
+        )
         inputs.opnix.nixosModules.default
         inputs.stylix.nixosModules.stylix
         inputs.flatpaks.nixosModules.default
