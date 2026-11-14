@@ -49,7 +49,7 @@ in
     #(pkgs.callPackage ./litert-lm.nix {})
     (pkgs.callPackage ./antigravity-cli { })
     (pkgs.callPackage ./antigravity-hub { })
-    #claude-code
+    claude-code
     codex
     t3code
     #(pkgs.callPackage ./ls-colors.nix { })
