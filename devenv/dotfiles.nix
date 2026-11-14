@@ -103,7 +103,9 @@ in
           ".*\\.rs$"
         ];
       };
-      convco.enable = true;
+      # TODO: Re-enable once https://github.com/NixOS/nixpkgs/pull/585314 lands;
+      # convco currently fails to build (missing libgit2-experimental).
+      convco.enable = false;
       clippy = {
         enable = true;
         excludes = [ "^nixos/system/config/services/clamav-notify/" ];
