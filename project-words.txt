@@ -2089,3 +2089,4 @@ oxalica
 webgpu
 openzfs
 taskq
+libgit
