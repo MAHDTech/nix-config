@@ -19,6 +19,7 @@ let
     "terraform"
     "iso"
     "images"
+    "images/ova"
     "ubuntu"
     "redhat"
   ];
