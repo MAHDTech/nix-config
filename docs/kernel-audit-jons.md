@@ -16,7 +16,12 @@ package set; builds must still verify its compatibility after updates.
 
 - **General Params:** `mitigations=off`, `threadirqs`
 - **AMD GPU Params:** `amdgpu.gpu_recovery=1`, `amdgpu.si_support=1`, `amdgpu.cik_support=1`
-- **Intel Arc (Xe) Params:** `xe.enable_preemption=1` was explicitly removed/commented out due to Vulkan swapchain bugs on the Xe driver for BMG.
+- **Intel Arc (Xe) Params:**
+  - `xe.enable_dc=0`
+  - `xe.disable_power_well=0`
+  - This prevents DPMS sleep HDMI HPD flaps.
+  - PCIe runtime PM and `d3cold` are disabled via udev + systemd oneshot in `nixos/hosts/jons/default.nix`).
+  - `xe.enable_preemption=1` was explicitly removed/commented out due to Vulkan swapchain bugs on the Xe driver for BMG.
 - **Modules loaded:** `kvm-amd`, `xe` (Intel Xe), `amdgpu`, `dm-snapshot`, `zfs`.
 - **Blacklisted modules:** `nouveau`, `nvidia`, `nvidia_drm`, `nvidia_modeset`.
 - **Overrides:** The system forces `MESA_VK_WSI_PRESENT_MODE = "immediate"` and

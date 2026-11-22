@@ -33,9 +33,12 @@
       # failures on BMG G21 (Intel Arc B580 Battlemage). The xe driver's GPU
       # preemption implementation for BMG is still immature in Mesa 25.x.
 
-      # Disable Battlemage D3 runtime PM to stop PCIe PME / HDMI hotplug flap
-      # loops that leak cross-GPU buffers in cosmic-comp when displays sleep.
-      "xe.runpm=0"
+      # Disable display C-states (DC5/DC6) and power-well gating so DPMS sleep
+      # does not drop HDMI HPD and trigger cross-GPU buffer leaks in cosmic-comp.
+      # Note: xe has no `runpm` module param; PCIe runtime PM / D3cold is
+      # disabled via sysfs/udev in the host config.
+      "xe.enable_dc=0"
+      "xe.disable_power_well=0"
     ];
   };
 

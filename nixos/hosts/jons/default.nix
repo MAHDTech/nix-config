@@ -62,11 +62,41 @@
 
     # Keep card1 (Arc B580) in logind's seat while the Smart TV is connected to
     # card1-HDMI-A-3 (the motherboard only has a single HDMI port, used by the
-    # HP Z43 on card2-HDMI-A-5). Battlemage runtime PM is disabled via xe.runpm=0
-    # in video/intel to prevent HDMI hotplug flap leaks across GPUs.
+    # HP Z43 on card2-HDMI-A-5). Battlemage display C-states are disabled in
+    # video/intel and PCIe runtime PM / D3cold are disabled below.
     # Only uncomment if no display is attached to the Arc B580:
     # SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", TAG-="seat", TAG-="master-of-seat", ENV{ID_SEAT}=""
+
+    # Disable PCIe runtime PM and D3cold on the Arc B580 (GPU, HDMI audio, and
+    # internal PCIe switch ports). xe has no runpm module param; leaving these
+    # on "auto" lets DPMS screen-off drop the card into D3 and flap HDMI HPD,
+    # leaking cross-GPU TTM buffers in cosmic-comp until OOM.
+    ACTION=="add|bind", SUBSYSTEM=="pci", KERNEL=="0000:01:00.0|0000:02:01.0|0000:02:02.0|0000:03:00.0|0000:04:00.0", TEST=="power/control", ATTR{power/control}="on"
+    ACTION=="add|bind", SUBSYSTEM=="pci", KERNEL=="0000:01:00.0|0000:02:01.0|0000:02:02.0|0000:03:00.0|0000:04:00.0", TEST=="d3cold_allowed", ATTR{d3cold_allowed}="0"
   '';
+
+  # Backstop for the Arc B580 udev rules above: xe and snd_hda_intel can
+  # re-enable runtime PM ("auto") during late driver bind.
+  systemd.services.arc-b580-disable-runpm = {
+    description = "Disable PCIe runtime PM and D3cold on Intel Arc B580";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "systemd-udev-settle.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      for dev in 0000:01:00.0 0000:02:01.0 0000:02:02.0 0000:03:00.0 0000:04:00.0; do
+        sys="/sys/bus/pci/devices/$dev"
+        if [ -w "$sys/power/control" ]; then
+          printf 'on' > "$sys/power/control"
+        fi
+        if [ -w "$sys/d3cold_allowed" ]; then
+          printf '0' > "$sys/d3cold_allowed"
+        fi
+      done
+    '';
+  };
 
   imports = [
     # Load hardware specific configuration.
