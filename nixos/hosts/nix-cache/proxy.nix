@@ -26,7 +26,7 @@ let
       ]
       (builtins.readFile ./landing.html)
   );
-  proxySettings = host: ''
+  proxySettings = host: skipVar: ''
     proxy_set_header Host ${host};
     proxy_ssl_server_name on;
     proxy_ssl_name ${host};
@@ -38,7 +38,7 @@ let
     proxy_read_timeout 60s;
     proxy_cache nixpkgs;
     proxy_cache_key "${host}$request_uri";
-    proxy_no_cache $nix_cache_skip;
+    proxy_no_cache ${skipVar};
     proxy_cache_lock on;
     proxy_cache_lock_timeout 120s;
     proxy_cache_lock_age 120s;
@@ -57,7 +57,7 @@ let
           recommendedProxySettings = false;
           extraConfig = ''
             set $nix_cache_upstream ${cache.host};
-            ${proxySettings cache.host}
+            ${proxySettings cache.host "$nix_cache_skip"}
             proxy_cache_valid 200 ${ttl};
             ${extra}
           '';
@@ -181,6 +181,11 @@ in
           default 1;
           200 0;
         }
+        map $upstream_status $nix_tarballs_skip {
+          default 1;
+          200 0;
+          301 0;
+        }
         log_format nix_cache escape=json '{"time":"$time_iso8601","method":"$request_method",'
           '"uri":"$uri","status":$status,"bytes":$body_bytes_sent,'
           '"cache":"$upstream_cache_status","duration":$request_time}';
@@ -192,6 +197,19 @@ in
           deny all;
         '';
         locations = builtins.listToAttrs (lib.concatMap cacheLocations upstreams) // {
+          # Content-addressed hashed mirror for builtins.fetchurl / pkgs.fetchurl.
+          # tarballs.nixos.org redirects /sha256/<h> to /sha512/<h> via HTTP 301.
+          "~ \"^/tarballs(/(?:md5|sha1|sha256|sha512)/[0-9a-zA-Z]{32,128})$\"" = {
+            proxyPass = "https://$nix_cache_upstream$1$is_args$args";
+            recommendedProxySettings = false;
+            extraConfig = ''
+              set $nix_cache_upstream tarballs.nixos.org;
+              ${proxySettings "tarballs.nixos.org" "$nix_tarballs_skip"}
+              proxy_cache_valid 200 301 365d;
+              proxy_redirect https://tarballs.nixos.org/ /tarballs/;
+              proxy_redirect / /tarballs/;
+            '';
+          };
           "= /browse".return = "308 /browse/";
           "= /browse/" = {
             root = pkgs.linkFarm "nix-cache-catalog-page" [

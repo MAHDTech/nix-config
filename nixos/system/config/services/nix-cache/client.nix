@@ -12,6 +12,11 @@ in
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
     substituters = map (cache: "https://${cache.host}") upstreams;
+    hashed-mirrors = lib.mkDefault [
+      "https://nix-cache.slopageddon.app/tarballs"
+      "https://tarballs.nixos.org"
+    ];
     connect-timeout = lib.mkDefault 5;
   };
+  environment.variables.NIX_HASHED_MIRRORS = lib.mkDefault "https://nix-cache.slopageddon.app/tarballs https://tarballs.nixos.org";
 }

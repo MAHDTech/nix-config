@@ -105,7 +105,7 @@ def collect_traffic(log_path, previous, now):
                 counts["requests"] += 1
                 counts["errors"] += int(status >= 500)
                 counts["not_found"] += int(status == 404)
-                if "/nar/" in uri and status in (200, 206):
+                if ("/nar/" in uri or uri.startswith("/tarballs/")) and status in (200, 206):
                     counts["archive_bytes"] += size
                     if cache in ("HIT", "STALE", "UPDATING", "REVALIDATED"):
                         counts["hit_bytes"] += size

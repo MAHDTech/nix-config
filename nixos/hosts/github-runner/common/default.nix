@@ -103,7 +103,8 @@ in
       enable = true;
       autoPrune = {
         enable = true;
-        dates = "daily";
+        dates = "00:00";
+        randomizedDelaySec = "2h";
         flags = [ "--all" ];
       };
       logDriver = "journald";
@@ -146,12 +147,13 @@ in
         automatic = true;
         dates = lib.mkForce "02:00";
         options = lib.mkForce "--delete-older-than 3d";
-        randomizedDelaySec = lib.mkForce "15m";
+        randomizedDelaySec = lib.mkForce "2h";
       };
 
       optimise = {
         automatic = true;
-        dates = lib.mkForce [ "02:30" ];
+        dates = lib.mkForce [ "04:00" ];
+        randomizedDelaySec = lib.mkForce "2h";
       };
 
       settings = {
@@ -163,6 +165,12 @@ in
         max-free = lib.mkForce (35 * 1024 * 1024 * 1024); # 35 GiB
         keep-outputs = lib.mkForce false;
         keep-derivations = lib.mkForce false;
+        filetransfer-retry-attempts = lib.mkDefault 8;
+        filetransfer-retry-delay-rate-limited = lib.mkDefault 5000;
+        filetransfer-retry-max-delay = lib.mkDefault 60000;
+        filetransfer-retry-jitter = lib.mkDefault true;
+        tarball-ttl = lib.mkDefault 86400;
+        download-buffer-size = lib.mkDefault (64 * 1024 * 1024); # 64 MiB
       };
     };
 

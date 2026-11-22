@@ -180,7 +180,23 @@ the next registration adopts the new unit. This does not protect jobs from an
 explicit service restart or changes to dependencies such as Docker. Prefer the
 staged boot-and-drain update path.
 
-Nix garbage collection runs daily at 02:00 (retaining 3 days),
-store deduplication runs at 02:30, and dynamic GC triggers during builds if free
-space falls below 15 GiB (clearing up to 35 GiB). Docker prunes unused images
-daily, and the journal is capped at 1 GiB.
+Trusted runners persist `XDG_CACHE_HOME` under `/var/cache/github-runner/<name>`
+via systemd `CacheDirectory` (`0700`) so Nix's `tarball-cache-v2`,
+`fetcher-cache`, and `eval-cache` survive ephemeral runner restarts. Untrusted
+runners (`trusted = false`) remain stateless. On each trusted runner restart,
+`ExecStartPre` checks and heals corrupted SQLite cache files under the runner's
+Nix cache directory, and `github-runner-nix-cache-repack.timer` runs weekly
+(with up to 6 hours of random delay, idle I/O and nice 19) to repack
+`tarball-cache-v2` pack files once 20 or more accumulate.
+
+Runner Nix settings enable jittered rate-limit retries
+(`filetransfer-retry-attempts = 8`, `filetransfer-retry-delay-rate-limited = 5000`,
+`filetransfer-retry-max-delay = 60000`, `filetransfer-retry-jitter = true`), a
+24-hour `tarball-ttl`, and a 64 MiB `download-buffer-size`.
+
+Nightly maintenance timers use non-overlapping windows with 2-hour random delays
+across the fleet: Docker prunes unused images daily starting at 00:00, Nix
+garbage collection runs starting at 02:00 (retaining 3 days), and store
+deduplication runs starting at 04:00. Dynamic GC triggers during builds if free
+space falls below 15 GiB (clearing up to 35 GiB), and the journal is capped at
+1 GiB.

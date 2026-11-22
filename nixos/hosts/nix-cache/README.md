@@ -83,6 +83,14 @@ Each entry defines a name, upstream host, local URL prefix and upstream public s
 | `/herdr`                   | `https://herdr.cachix.org`                   |
 | `/cosmic`                  | `https://cosmic.cachix.org`                  |
 
+In addition to the Nix binary caches above, `/tarballs` proxies the NixOS
+content-addressed tarball mirror (`https://tarballs.nixos.org`) for
+`/(md5|sha1|sha256|sha512)/<hash>` paths. Immutable `200` payloads and rewritten
+`301` redirects (such as `/sha256/...` -> `/tarballs/sha512/...`) are cached for
+365 days and counted in archive traffic metrics. Because `/tarballs` is a hashed
+source mirror rather than a `.narinfo` binary cache, it is excluded from the
+`/browse/` package catalog.
+
 All upstreams share the 750 GiB cache limit and 100 GiB free-space threshold.
 Cache keys include the upstream host and request URI, keeping their contents separate.
 Only listed upstreams are exposed; this is not an arbitrary forward proxy.
@@ -90,7 +98,8 @@ When adding a public cache, update the catalog and the matching URLs and signing
 in `flake.nix`. Private upstreams require a separate credential and access-control design.
 Deploy the cache server before upgrading clients to use new endpoints.
 
-These routes cache Nix binary archives and metadata. GitHub source archives,
+These routes cache Nix binary archives, metadata, and NixOS hashed-mirror source
+tarballs. Direct GitHub source archives not mirrored on `tarballs.nixos.org`,
 Actions downloads, npm packages, Python wheels, Maven artifacts and container
 layers do not pass through this proxy. Cache those in their package managers,
 workflow caches or dedicated registry mirrors; adding their hosts here does not
@@ -180,6 +189,8 @@ Other connected NixOS hosts can import the same file.
 It prefers the local URLs with `priority=10`, retains every upstream URL for fallback, and sets a five-second connection timeout.
 The timeout applies per connection attempt, not to the total duration of retries or stalled transfers.
 Signature checks remain enabled, with the public signing keys of all listed upstreams; the proxy needs no signing key.
+It also configures `nix.settings.hashed-mirrors` and `NIX_HASHED_MIRRORS` to prefer
+`https://nix-cache.slopageddon.app/tarballs` with `https://tarballs.nixos.org` as fallback.
 
 The repository-wide `nixConfig` also prefers these endpoints and sets a five-second connection timeout.
 Commands accepting the flake configuration will try it, including on Googong and SaaS runners;
@@ -192,8 +203,9 @@ Cache-to-cache failover does not require enabling Nix's `fallback` setting, whic
 ## Validation and operations
 
 The landing-page regression fixture runs the generated nginx configuration with
-local upstreams. It checks the page and stylesheet, all twenty-seven cache routes,
-MISS/HIT responses, HEAD requests, uncached 404s and timestamped JSON logs:
+local upstreams. It checks the page and stylesheet, all binary-cache routes and
+`/tarballs` (including rewritten `301` redirects), MISS/HIT responses, HEAD
+requests, uncached 404s and timestamped JSON logs:
 
 ```sh
 NGINX_CONFIG=$(nix build --no-link --print-out-paths --impure --expr \

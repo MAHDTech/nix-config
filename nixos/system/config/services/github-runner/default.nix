@@ -163,6 +163,58 @@ let
       fi
     '';
 
+  healRunnerNixCacheScript =
+    name:
+    pkgs.writeShellApplication {
+      name = "heal-runner-nix-cache-${name}";
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.sqlite
+      ];
+      text = ''
+        shopt -s nullglob
+        cache_dir="/var/cache/github-runner/${name}/nix"
+        for db in "$cache_dir"/*.sqlite "$cache_dir"/eval-cache-v*/*.sqlite; do
+          if out="$(sqlite3 -cmd ".timeout 5000" "file:''${db}?mode=ro" "PRAGMA integrity_check(1);" 2>&1)"; then
+            rc=0
+          else
+            rc=$?
+          fi
+          if [[ $rc -eq 0 && $out != "ok" ]] || [[ $out == *"malformed"* ]] || [[ $out == *"not a database"* ]] || [[ $out == *"corrupt"* ]]; then
+            echo "Removing corrupted runner Nix cache database: $db ($out)" >&2
+            rm -f -- "$db" "''${db}-wal" "''${db}-shm"
+          fi
+        done
+      '';
+    };
+
+  repackTarballCacheScript = pkgs.writeShellApplication {
+    name = "repack-runner-nix-tarball-cache";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.git
+      pkgs.util-linux
+    ];
+    text = ''
+      shopt -s nullglob
+      for repo in /var/cache/github-runner/*/nix/tarball-cache-v2; do
+        [[ -d "$repo" && ! -L "$repo" ]] || continue
+        packs=("$repo"/objects/pack/*.pack)
+        (( ''${#packs[@]} >= 20 )) || continue
+        uid="$(stat -c %u "$repo")"
+        gid="$(stat -c %g "$repo")"
+        # Run as the cache owner so repacked files remain writable by the runner user.
+        # cspell:ignore setpriv reuid regid
+        setpriv --reuid="$uid" --regid="$gid" --clear-groups -- \
+          git --git-dir="$repo" multi-pack-index write
+        setpriv --reuid="$uid" --regid="$gid" --clear-groups -- \
+          git --git-dir="$repo" multi-pack-index repack --batch-size=0
+        setpriv --reuid="$uid" --regid="$gid" --clear-groups -- \
+          git --git-dir="$repo" multi-pack-index expire
+      done
+    '';
+  };
+
   runnerType = lib.types.submodule {
     options = {
       url = lib.mkOption {
@@ -292,11 +344,6 @@ in
         }
       ];
 
-    systemd.tmpfiles.rules = [
-      "d /var/lib/github-runner-work 0755 root root -"
-      "d /var/lib/github-runner-fleet 0755 root root -"
-    ];
-
     services.github-runners = lib.mapAttrs' (
       _: runner:
       let
@@ -329,6 +376,12 @@ in
         ]
         ++ runner.extraLabels;
 
+        extraEnvironment = lib.optionalAttrs runner.trusted {
+          # Keep Nix fetcher/tarball/eval caches outside ephemeral workDir so
+          # warm runners do not re-download locked inputs on every job.
+          XDG_CACHE_HOME = "/var/cache/github-runner/${name}";
+        };
+
         extraPackages =
           basePackages
           ++ lib.optional runner.bubblewrap pkgs.bubblewrap
@@ -341,6 +394,8 @@ in
             ];
           }
           // lib.optionalAttrs runner.trusted {
+            CacheDirectory = [ "github-runner/${name}" ];
+            CacheDirectoryMode = "0700";
             SupplementaryGroups = [ "docker" ];
           }
           // lib.optionalAttrs runner.bubblewrap {
@@ -384,25 +439,62 @@ in
       }
     ) cfg.runners;
 
-    systemd.services = lib.pipe cfg.runners [
-      (lib.filterAttrs (
-        _: runner:
-        let
-          scope = scopeOf runner.url;
-        in
-        runner.runnerGroup != null && scope != null && (scope.type == "enterprise" || scope.type == "org")
-      ))
-      (lib.mapAttrs' (
-        _: runner:
-        let
-          name = runnerName runner;
-        in
-        lib.nameValuePair "github-runner-${name}" {
-          serviceConfig.ExecStartPre = lib.mkAfter [
-            "+${syncRunnerGroupScript runner}"
-          ];
-        }
-      ))
-    ];
+    systemd = {
+      tmpfiles.rules = [
+        "d /var/lib/github-runner-work 0755 root root -"
+        "d /var/lib/github-runner-fleet 0755 root root -"
+        "d /var/cache/github-runner 0755 root root -"
+      ];
+
+      services =
+        lib.pipe cfg.runners [
+          (lib.mapAttrs' (
+            _: runner:
+            let
+              name = runnerName runner;
+              scope = scopeOf runner.url;
+              syncGroup =
+                runner.runnerGroup != null && scope != null && (scope.type == "enterprise" || scope.type == "org");
+              preScripts =
+                lib.optional runner.trusted "${healRunnerNixCacheScript name}/bin/heal-runner-nix-cache-${name}"
+                ++ lib.optional syncGroup "+${syncRunnerGroupScript runner}";
+            in
+            lib.nameValuePair "github-runner-${name}" (
+              lib.optionalAttrs (preScripts != [ ]) {
+                serviceConfig.ExecStartPre = lib.mkAfter preScripts;
+              }
+            )
+          ))
+          (lib.filterAttrs (_: value: value != { }))
+        ]
+        // lib.optionalAttrs (lib.any (r: r.trusted) (lib.attrValues cfg.runners)) {
+          github-runner-nix-cache-repack = {
+            description = "Repack Nix tarball-cache-v2 pack files for trusted GitHub runners";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${repackTarballCacheScript}/bin/repack-runner-nix-tarball-cache";
+              Nice = 19;
+              IOSchedulingClass = "idle";
+              ProtectSystem = "strict";
+              ProtectHome = true;
+              PrivateTmp = true;
+              PrivateDevices = true;
+              ReadWritePaths = [ "-/var/cache/github-runner" ];
+            };
+          };
+        };
+
+      timers = lib.optionalAttrs (lib.any (r: r.trusted) (lib.attrValues cfg.runners)) {
+        github-runner-nix-cache-repack = {
+          description = "Weekly repack of trusted GitHub runner Nix tarball caches";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "weekly";
+            RandomizedDelaySec = "6h";
+            Persistent = true;
+          };
+        };
+      };
+    };
   };
 }

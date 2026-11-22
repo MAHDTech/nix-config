@@ -23,6 +23,12 @@ source = pathlib.Path(os.environ['NGINX_CONFIG']).read_text()
 nginx = os.environ.get('NGINX_BIN', 'nginx')
 class Upstream(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
+        if self.headers['Host'] == 'tarballs.nixos.org' and self.path.startswith('/sha256/') and 'missing' not in self.path:
+            self.send_response(301)
+            self.send_header('Location', '/sha512/' + 'f' * 128)
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return
         body = (self.headers['Host'] + self.path).encode()
         self.send_response(404 if 'missing' in self.path else 200)
         self.send_header('Content-Length', str(len(body)))
@@ -30,6 +36,12 @@ class Upstream(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
     def log_message(self, *args):
         pass
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, new_url):
+        return None
+
+no_redirect_opener = urllib.request.build_opener(NoRedirect)
 
 upstream = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Upstream)
 threading.Thread(target=upstream.serve_forever, daemon=True).start()
@@ -56,9 +68,11 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     config = config.replace('https://$nix_cache_upstream', f'http://127.0.0.1:{upstream.server_port}')
     (root / 'nginx.conf').write_text(config)
     proc = subprocess.Popen([nginx, '-p', tmp, '-c', str(root / 'nginx.conf')], stderr=subprocess.PIPE)
-    def get(path, method='GET'):
+    def get(path, method='GET', follow=True):
+        request = urllib.request.Request(f'http://127.0.0.1:{port}' + path, method=method)
+        opener = urllib.request.urlopen if follow else no_redirect_opener.open
         try:
-            response = urllib.request.urlopen(urllib.request.Request(f'http://127.0.0.1:{port}' + path, method=method), timeout=3)
+            response = opener(request, timeout=3)
         except urllib.error.HTTPError as error:
             response = error
         with response:
@@ -125,6 +139,29 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
             for _ in range(2):
                 missing = get(prefix + '/nar/missing')
                 assert missing[0] == 404 and missing[1]['X-Cache-Status'] == 'MISS'
+        # Hashed mirror route: 301 redirect rewrite + cache, 200 payload MISS/HIT, uncached 404s.
+        sha256_path = '/tarballs/sha256/' + 'b' * 64
+        sha512_path = '/tarballs/sha512/' + 'f' * 128
+        first_redir = get(sha256_path, follow=False)
+        second_redir = get(sha256_path, follow=False)
+        assert first_redir[0] == second_redir[0] == 301, (first_redir, second_redir)
+        assert first_redir[1]['X-Cache-Status'] == 'MISS', first_redir
+        assert second_redir[1]['X-Cache-Status'] == 'HIT', second_redir
+        assert first_redir[1]['Location'].endswith(sha512_path), first_redir[1]['Location']
+        assert second_redir[1]['Location'].endswith(sha512_path), second_redir[1]['Location']
+        first_tarball = get(sha256_path)
+        second_tarball = get(sha512_path)
+        assert first_tarball[0] == second_tarball[0] == 200
+        assert first_tarball[1]['X-Cache-Status'] == 'MISS', first_tarball
+        assert second_tarball[1]['X-Cache-Status'] == 'HIT', second_tarball
+        assert first_tarball[2] == second_tarball[2] == ('tarballs.nixos.org/sha512/' + 'f' * 128).encode()
+        assert get(sha512_path, 'HEAD')[0] == 200
+        assert get(sha512_path, 'POST')[0] == 403
+        for _ in range(2):
+            missing_tarball = get('/tarballs/sha256/missing' + '0' * 57)
+            assert missing_tarball[0] == 404 and missing_tarball[1]['X-Cache-Status'] == 'MISS'
+        assert get('/tarballs/sha256/short')[0] == 404
+        assert get('/tarballs/unknown/' + 'a' * 64)[0] == 404
         get('/nix-cache-info?private=not-for-log')
         spec = importlib.util.spec_from_file_location('catalog', pathlib.Path(__file__).resolve().parents[1] / 'nixos/hosts/nix-cache/collect-catalog.py')
         catalog = importlib.util.module_from_spec(spec)
@@ -135,7 +172,7 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         for prefix in upstreams:
             assert prefix + '/nar/fixture.nar.xz' in urls, (prefix, entries)
             assert prefix + '/' + 'a' * 32 + '.narinfo' in urls, (prefix, entries)
-        assert all('missing' not in url and 'private' not in url for url in urls)
+        assert all('missing' not in url and 'private' not in url and not url.startswith('/tarballs/') for url in urls)
     finally:
         proc.terminate()
         _, errors = proc.communicate(timeout=10)
@@ -147,4 +184,4 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     assert all(entry['uri'] not in ['/', '/_landing.css', '/_landing.js', '/_dashboard/summary.json', '/browse/', '/_catalog.js', '/_browse.css', '/_dashboard/catalog.json'] for entry in logs)
     for entry in logs:
         datetime.datetime.fromisoformat(entry['time'])
-    print(f'PASS: landing, catalog, CSS, methods, all {len(upstreams) * 3} cache routes MISS/HIT/HEAD, uncached 404s, real cache catalog, timestamped JSON logs')
+    print(f'PASS: landing, catalog, CSS, methods, all {len(upstreams) * 3} cache routes + /tarballs MISS/HIT/HEAD/301, uncached 404s, real cache catalog, timestamped JSON logs')

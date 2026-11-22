@@ -16,16 +16,23 @@ let
     ];
     text = ''
       shopt -s nullglob
-      for db in /root/.cache/nix/*.sqlite /root/.cache/nix/eval-cache-v*/*.sqlite; do
-        if out="$(sqlite3 -cmd ".timeout 5000" "file:''${db}?mode=ro" "PRAGMA integrity_check(1);" 2>&1)"; then
-          rc=0
-        else
-          rc=$?
-        fi
-        if [[ $rc -eq 0 && $out != "ok" ]] || [[ $out == *"malformed"* ]] || [[ $out == *"not a database"* ]] || [[ $out == *"corrupt"* ]]; then
-          echo "Removing corrupted Nix cache database: $db ($out)" >&2
-          rm -f -- "$db" "''${db}-wal" "''${db}-shm"
-        fi
+      if [[ $# -gt 0 ]]; then
+        dirs=("$@")
+      else
+        dirs=(/root/.cache/nix /var/cache/github-runner/*/nix)
+      fi
+      for dir in "''${dirs[@]}"; do
+        for db in "$dir"/*.sqlite "$dir"/eval-cache-v*/*.sqlite; do
+          if out="$(sqlite3 -cmd ".timeout 5000" "file:''${db}?mode=ro" "PRAGMA integrity_check(1);" 2>&1)"; then
+            rc=0
+          else
+            rc=$?
+          fi
+          if [[ $rc -eq 0 && $out != "ok" ]] || [[ $out == *"malformed"* ]] || [[ $out == *"not a database"* ]] || [[ $out == *"corrupt"* ]]; then
+            echo "Removing corrupted Nix cache database: $db ($out)" >&2
+            rm -f -- "$db" "''${db}-wal" "''${db}-shm"
+          fi
+        done
       done
     '';
   };
