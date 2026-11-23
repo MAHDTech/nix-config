@@ -24,14 +24,14 @@ in
       systems = lib.mapAttrs (_: member: { inherit (member) host; }) fleet.members;
       opnix = {
         enable = true;
-        privateKeyReference = "op://fleet/Beszel Hub/private_key";
-        bootstrapReference = "op://fleet/Beszel Hub/bootstrap_environment";
+        privateKeyReference = "op://machines/Beszel Hub/private_key";
+        bootstrapReference = "op://machines/Beszel Hub/bootstrap_environment";
         tokenReferences = lib.mapAttrs (_: member: member.tokenReference) fleet.members;
       };
       frontend = {
         enable = true;
         domain = "hub.slopageddon.app";
-        cloudflareTokenReference = "op://fleet/Cloudflare ACME Slopageddon/token";
+        cloudflareTokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
       };
     };
   };

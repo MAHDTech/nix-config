@@ -62,11 +62,26 @@ let
       };
     };
   };
+  managedAgent = evaluate {
+    services.beszel.agent = {
+      enable = true;
+      opnix = {
+        enable = true;
+        publicKeyReference = "op://fixture/hub/public_key";
+        tokenReference = "op://fixture/agents/fixture";
+      };
+    };
+  };
 in
 assert !disabled.services.beszel.hub.enable && !disabled.services.beszel.agent.enable;
 assert !(disabled.systemd.services ? beszel-hub) && !(disabled.systemd.services ? beszel-agent);
 assert hub.services.beszel.hub.systems == null;
 assert builtins.stringLength managedHub.systemd.services.opnix-secrets.script > 0;
+assert
+  !(managedHub.systemd.services ? "beszel-hub.service") && (managedHub.systemd.services ? beszel-hub);
+assert
+  !(managedAgent.systemd.services ? "beszel-agent.service")
+  && (managedAgent.systemd.services ? beszel-agent);
 assert
   !(lib.any (
     assertion: !assertion.assertion && lib.hasPrefix "Beszel" assertion.message

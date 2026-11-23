@@ -7,7 +7,7 @@ let
     owner = "root";
     group = "root";
     mode = "0400";
-    services = [ "beszel-hub.service" ];
+    services = [ "beszel-hub" ];
   };
 in
 {

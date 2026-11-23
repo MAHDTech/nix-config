@@ -16,7 +16,7 @@ in
     cloudflare-acme = {
       enable = true;
       domains = [ domain ];
-      tokenReference = "op://fleet/Cloudflare ACME Slopageddon/token";
+      tokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
       inherit tokenPath;
     };
     nginx.virtualHosts.${domain} = {

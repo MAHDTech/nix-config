@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.services.cloudflare-acme;
-  renewals = map (domain: "acme-order-renew-${domain}.service") cfg.domains;
+  renewals = map (domain: "acme-order-renew-${domain}") cfg.domains;
 in
 {
   imports = [ ../../../soe/secrets/opnix.nix ];

@@ -148,8 +148,8 @@ must first be available from Opnix; an Opnix dependency failure needs separate r
 Use the same deployment flow as the GitHub runners:
 
 1. The deployment controller delivers the **1Password service-account token** to `/etc/opnix-token` outside cloud-init; cloud-init only lists it as a bootstrap prerequisite.
-2. Ensure that service account can read the `fleet` vault and the item below.
-3. Opnix reads `op://fleet/Cloudflare ACME Slopageddon/token`.
+2. Ensure that service account can read the `machines` vault and the item below.
+3. Opnix reads `op://machines/Cloudflare ACME Slopageddon/token`.
 4. Opnix writes the **Cloudflare API token** to `/run/secrets/cloudflare-acme-slopageddon`, owned by root with mode `0400`.
 5. `acme-order-renew-nix-cache.slopageddon.app.service` waits for opnix and receives that file through systemd credentials as `CF_DNS_API_TOKEN_FILE`.
 6. Nginx reloads after certificate issuance or renewal.

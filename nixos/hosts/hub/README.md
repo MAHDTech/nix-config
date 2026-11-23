@@ -33,7 +33,7 @@ Administrative SSH on port 22 retains its existing key-based policy.
 
 ## Required 1Password items
 
-Create these items in the `fleet` vault before deploying the agents. Values must
+Create these items in the `machines` vault before deploying the agents. Values must
 only be stored in 1Password and delivered by Opnix, never pasted into Nix files,
 Git, cloud-init user-data or command arguments used for builds.
 
@@ -73,7 +73,7 @@ declared systems to the bootstrap dashboard account on each hub start.
 The hub service account needs access to all these fields. Each agent's service
 account needs `Beszel Hub/public_key` and its own `Beszel Agents/<hostname>` field
 in addition to its existing secrets. In particular, the Bingamon runner service
-accounts must also be able to read the required `fleet` items. Opnix materializes
+accounts must also be able to read the required `machines` items. Opnix materializes
 only the fields referenced by that host. Vault-level access may be broader than
 these per-host references; configure 1Password permissions accordingly.
 

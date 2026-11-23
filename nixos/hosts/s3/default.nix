@@ -16,17 +16,17 @@
         enable = true;
         apiDomain = "s3.slopageddon.app";
         consoleDomain = "s3-console.slopageddon.app";
-        cloudflareTokenReference = "op://fleet/Cloudflare ACME Slopageddon/token";
+        cloudflareTokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
       };
       opnix = {
         enable = true;
-        adminItem = "op://fleet/RustFS S3 Admin";
+        adminItem = "op://machines/RustFS S3 Admin";
         writerItems = {
-          github-actions = "op://fleet/RustFS GitHub Actions Writer";
-          github-packages = "op://fleet/RustFS GitHub Packages Writer";
-          terraform-state-bingamon = "op://fleet/RustFS Terraform State Bingamon";
-          terraform-state-bingamon-nkp = "op://fleet/RustFS Terraform State Bingamon NKP";
-          terraform-state-big-stack-iac = "op://fleet/RustFS Terraform State Big Stack IAC";
+          github-actions = "op://machines/RustFS GitHub Actions Writer";
+          github-packages = "op://machines/RustFS GitHub Packages Writer";
+          terraform-state-bingamon = "op://machines/RustFS Terraform State Bingamon";
+          terraform-state-bingamon-nkp = "op://machines/RustFS Terraform State Bingamon NKP";
+          terraform-state-big-stack-iac = "op://machines/RustFS Terraform State Big Stack IAC";
         };
       };
       buckets = {

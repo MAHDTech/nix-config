@@ -13,7 +13,7 @@
     cloudflare-acme = {
       enable = true;
       domains = [ "mirror.slopageddon.app" ];
-      tokenReference = "op://fleet/Cloudflare ACME Slopageddon/token";
+      tokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
       certificateGroup = "caddy";
       reloadServices = [ "caddy.service" ];
     };

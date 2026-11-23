@@ -25,7 +25,7 @@
   virtualisation.docker.storageDriver = "zfs";
 
   # GitHub Actions runner, registered at the enterprise level. The PAT
-  # comes from 1Password via opnix (op://fleet/GitHub Runner/credential).
+  # comes from 1Password via opnix (op://machines/GitHub Runner/credential).
   services.github-runner-fleet = {
     enable = false;
     runners.enterprise = {

@@ -13,7 +13,7 @@ Monitoring uses outbound HTTPS and does not change S3 API or console routes.
 Use the existing generic QEMU image and guest-owned bootstrap process described in
 [cloud-images.md](../../../docs/cloud-images.md), selecting flake host `s3`.
 The bootstrap prerequisite is `/etc/opnix-token`, delivered outside cloud-init.
-The 1Password service account must be able to read the `fleet` items listed below.
+The 1Password service account must be able to read the `machines` items listed below.
 No secret value belongs in user-data, Git, a Nix expression, or the Nix store.
 
 The host imports the existing UEFI/QEMU guest configuration. Allocate a single virtual
@@ -36,7 +36,7 @@ administrator access key and secret key from 1Password.
 
 ## Credentials
 
-All items are in the `fleet` vault:
+All items are in the `machines` vault:
 
 | Item                                   | Fields                     | Purpose                                                   |
 | -------------------------------------- | -------------------------- | --------------------------------------------------------- |

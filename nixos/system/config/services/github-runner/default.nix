@@ -303,7 +303,7 @@ in
 
     tokenReference = lib.mkOption {
       type = lib.types.str;
-      default = "op://fleet/GitHub Runner/credential";
+      default = "op://machines/GitHub Runner/credential";
       description = "Default 1Password reference to the registration PAT.";
     };
 

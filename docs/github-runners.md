@@ -2,12 +2,12 @@
 
 All 50 dedicated runners are Beszel agents reporting to
 `https://hub.slopageddon.app`. Their Opnix service accounts need the additional
-`fleet` references documented in the [hub setup](../nixos/hosts/hub/README.md).
+`machines` references documented in the [hub setup](../nixos/hosts/hub/README.md).
 Monitoring uses outbound HTTPS; no additional inbound runner port is opened.
 
 The 50 `github-runner-01` through `github-runner-50` hosts share a common
 base configuration and register in the enterprise `tars-cloud` runner group
-(token reference: `op://fleet/GitHub Runner/credential`).
+(token reference: `op://machines/GitHub Runner/credential`).
 Jobs have Nix, devenv, Cachix, and Docker available. The shared runner configuration
 defines `ciTools` for both the host and runner job PATH, so workflow steps can use
 these commands without entering a Nix shell:

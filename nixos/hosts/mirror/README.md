@@ -21,11 +21,11 @@ redirect. Narrow `services.mirror.allowedNetworks` to client CIDRs if required;
 the defaults allow RFC1918 IPv4 and loopback. Supply routed IPv6 ranges explicitly.
 
 Certificates use the shared Cloudflare DNS-01 ACME module with the token at
-`op://fleet/Cloudflare ACME Slopageddon/token`. The certificate belongs to group
+`op://machines/Cloudflare ACME Slopageddon/token`. The certificate belongs to group
 `caddy`, and renewal reloads Caddy. No custom Caddy DNS plugin is needed.
 
 The fleet configuration also enrolls this host in Beszel. Prepare
-`op://fleet/Beszel Agents/mirror` and the existing Beszel hub public-key reference
+`op://machines/Beszel Agents/mirror` and the existing Beszel hub public-key reference
 using the same onboarding procedure as nix-cache.
 
 ## Web interface

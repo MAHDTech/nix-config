@@ -13,10 +13,10 @@ let
     name: suffix: "rustfs" + builtins.substring 0 16 (builtins.hashString "sha256" name) + suffix;
   writerSecrets = lib.concatMapAttrs (name: item: {
     ${secretName name "Access"} = secret "${item}/access_key" (secretPath "${name}-access") [
-      "rustfs-provision.service"
+      "rustfs-provision"
     ];
     ${secretName name "Secret"} = secret "${item}/secret_key" (secretPath "${name}-secret") [
-      "rustfs-provision.service"
+      "rustfs-provision"
     ];
   }) op.writerItems;
 in
@@ -48,12 +48,12 @@ in
     };
     services.onepassword-secrets.secrets = writerSecrets // {
       rustfsRootAccess = secret "${op.adminItem}/access_key" (secretPath "root-access") [
-        "rustfs.service"
-        "rustfs-provision.service"
+        "rustfs"
+        "rustfs-provision"
       ];
       rustfsRootSecret = secret "${op.adminItem}/secret_key" (secretPath "root-secret") [
-        "rustfs.service"
-        "rustfs-provision.service"
+        "rustfs"
+        "rustfs-provision"
       ];
     };
     systemd.services = {

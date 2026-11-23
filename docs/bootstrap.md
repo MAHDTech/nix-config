@@ -113,7 +113,7 @@ OpNix decrypts and mounts host secrets at runtime via a 1Password Service Accoun
 Make sure you are logged in to the `op` CLI locally, and then run:
 
 ```bash
-op service-account create "$NIXOS_HOSTNAME" --vault "fleet:read_items"
+op service-account create "$NIXOS_HOSTNAME" --vault "machines:read_items"
 ```
 
 > [!IMPORTANT]

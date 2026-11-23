@@ -11,14 +11,14 @@ in
   inherit runnerNames;
   beszel = {
     url = "https://hub.slopageddon.app";
-    publicKeyReference = "op://fleet/Beszel Hub/public_key";
+    publicKeyReference = "op://machines/Beszel Hub/public_key";
     members = builtins.listToAttrs (
       map
         (name: {
           inherit name;
           value = {
             host = "${name}.slopageddon.app";
-            tokenReference = "op://fleet/Beszel Agents/${name}";
+            tokenReference = "op://machines/Beszel Agents/${name}";
           };
         })
         (
