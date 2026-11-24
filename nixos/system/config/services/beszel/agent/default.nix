@@ -45,8 +45,6 @@ in
           TOKEN_FILE = lib.mkDefault "%d/agent-token";
         };
         systemd.services.beszel-agent = {
-          requires = [ "opnix-secrets.service" ];
-          after = [ "opnix-secrets.service" ];
           serviceConfig.LoadCredential = [
             "hub-public-key:/run/secrets/beszel-agent-key"
             "agent-token:/run/secrets/beszel-agent-token"

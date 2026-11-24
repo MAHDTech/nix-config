@@ -61,8 +61,6 @@ in
       );
     };
     systemd.services = lib.genAttrs renewals (_: {
-      requires = [ "opnix-secrets.service" ];
-      after = [ "opnix-secrets.service" ];
       unitConfig.StartLimitIntervalSec = 0;
       serviceConfig = {
         Restart = "on-failure";

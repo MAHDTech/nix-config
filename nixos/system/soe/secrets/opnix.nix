@@ -5,6 +5,17 @@
   ...
 }:
 let
+  normalizeService =
+    item: lib.removeSuffix ".service" (if builtins.isAttrs item then item.name else item);
+
+  secretServices = lib.concatMap (secret: map normalizeService (secret.services or [ ])) (
+    lib.attrValues config.services.onepassword-secrets.secrets
+  );
+
+  dependentServices = lib.unique (
+    secretServices ++ map normalizeService config.services.opnix.dependentServices
+  );
+
   # Every host shares one 1Password account limited to 1000 requests per day,
   # so failed resolutions must back off or the fleet exhausts the quota and
   # nothing can recover. Restart= alone cannot do this: dependents with
@@ -17,6 +28,10 @@ let
     # Keeps a persistently failing hub (33 references) to ~4 attempts per day.
     maxSeconds = 6 * 3600;
     path = lib.makeBinPath [ pkgs.coreutils ];
+    resetPath = lib.makeBinPath [
+      pkgs.coreutils
+      pkgs.systemd
+    ];
 
     # Sleeps out any pending backoff. Concurrent start requests merge into this
     # one activating job; a restart re-enters with the same persisted deadline.
@@ -36,9 +51,27 @@ let
       fi
     '';
 
-    # ExecStartPost: the run succeeded.
+    # ExecStartPost: the run succeeded. If an earlier failure dropped dependent
+    # boot jobs (result=dependency), start any inactive or failed dependents
+    # without disrupting already-active services or drained ExecCondition gates.
     reset = pkgs.writeShellScript "opnix-backoff-reset" ''
+      export PATH=${resetPath}
+      had_failures=0
+      if [ -e ${stateDir}/failures ]; then
+        had_failures=1
+      fi
       rm -f ${stateDir}/failures ${stateDir}/next ${stateDir}/generation
+      if [ "$had_failures" -eq 1 ]; then
+        for unit in ${lib.escapeShellArgs (map (name: "${name}.service") dependentServices)}; do
+          state=$(systemctl show -p ActiveState --value "$unit" 2>/dev/null || true)
+          case "$state" in
+            inactive | failed)
+              echo "OpNix recovered; starting $unit"
+              systemctl start --no-block "$unit" || true
+              ;;
+          esac
+        done
+      fi
     '';
 
     # ExecStopPost: count real failures only. Manual stops and restarts that
@@ -76,89 +109,116 @@ let
   '';
 in
 {
-  services.onepassword-secrets = {
-    enable = lib.mkDefault (
-      config.services.onepassword-secrets.secrets != { }
-      || config.services.onepassword-secrets.configFiles != [ ]
-    );
-    tokenFile = "/etc/opnix-token";
-    secrets = { };
+  options.services.opnix.dependentServices = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [ ];
+    description = ''
+      Additional systemd service names (with or without .service) that require
+      opnix-secrets.service before starting and should be started automatically
+      when opnix-secrets.service recovers from a transient failure. Services
+      listed under services.onepassword-secrets.secrets.<name>.services are
+      included automatically.
+    '';
   };
 
-  # Ensure the group and token permissions exist even when only Home Manager
-  # consumes /etc/opnix-token and no system-level secrets are configured.
-  users.groups.onepassword-secrets = { };
-
-  system.activationScripts.opnixTokenPermissions = lib.stringAfter [ "users" ] ''
-    if [ -f ${lib.escapeShellArg tokenFile} ]; then
-      chown root:onepassword-secrets ${lib.escapeShellArg tokenFile}
-      chmod 0640 ${lib.escapeShellArg tokenFile}
-    fi
-  '';
-
-  # Tasks atomically install tokens and leave this marker, including while a
-  # guest is adopting its final OS. Refresh does not need a controller watcher.
-  systemd = {
-    tmpfiles.rules = [
-      "z ${tokenFile} 0640 root onepassword-secrets -"
-    ]
-    ++ lib.optionals config.services.onepassword-secrets.enable [
-      "d /var/lib/nixos-bootstrap 0700 root root -"
-      "d ${backoff.stateDir} 0700 root root -"
-    ];
-    services = lib.mkIf config.services.onepassword-secrets.enable {
-      opnix-secrets = {
-        # The gate owns retry pacing; a start limit would wedge the unit failed
-        # and stop it ever recovering once 1Password is fixed.
-        unitConfig.StartLimitIntervalSec = lib.mkForce 0;
-        serviceConfig = {
-          Restart = lib.mkForce "on-failure";
-          RestartSec = lib.mkForce "10s";
-          # Retry missing references too, so fixing 1Password self-heals.
-          RestartPreventExitStatus = lib.mkForce [ ];
-          # The token may take arbitrarily long to arrive on a fresh guest.
-          TimeoutStartSec = lib.mkDefault "infinity";
-          ExecStartPre = lib.mkBefore [
-            "${tokenWait}"
-            "${backoff.gate}"
-          ];
-          ExecStartPost = [ "${backoff.reset}" ];
-          ExecStopPost = [ "${backoff.record}" ];
-        };
-      };
-      # Re-resolves every reference itself, so it must honour the same backoff.
-      opnix-secrets-restart =
-        lib.mkIf config.services.onepassword-secrets.systemdIntegration.changeDetection.enable
-          {
-            serviceConfig.ExecStartPre = [ "${backoff.gate}" ];
-          };
-      opnix-pending-refresh = {
-        description = "Reconcile pending OpNix credentials after adoption";
-        after = [ "opnix-secrets.service" ];
-        path = with pkgs; [
-          coreutils
-          util-linux
-          systemd
-        ];
-        serviceConfig = {
-          Type = "oneshot";
-          UMask = "0077";
-        };
-        script = ''
-          exec 9>/var/lib/nixos-bootstrap/opnix.lock
-          flock -n 9 || exit 0
-          if test -e /var/lib/nixos-bootstrap/opnix-pending && test -s /etc/opnix-token; then
-            systemctl restart opnix-secrets.service
-            rm -f /var/lib/nixos-bootstrap/opnix-pending
-          fi
-        '';
-      };
+  config = {
+    services.onepassword-secrets = {
+      enable = lib.mkDefault (
+        config.services.onepassword-secrets.secrets != { }
+        || config.services.onepassword-secrets.configFiles != [ ]
+      );
+      tokenFile = "/etc/opnix-token";
+      secrets = { };
     };
-    timers.opnix-pending-refresh = lib.mkIf config.services.onepassword-secrets.enable {
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "1min";
-        OnUnitInactiveSec = "1min";
+
+    # Ensure the group and token permissions exist even when only Home Manager
+    # consumes /etc/opnix-token and no system-level secrets are configured.
+    users.groups.onepassword-secrets = { };
+
+    system.activationScripts.opnixTokenPermissions = lib.stringAfter [ "users" ] ''
+      if [ -f ${lib.escapeShellArg tokenFile} ]; then
+        chown root:onepassword-secrets ${lib.escapeShellArg tokenFile}
+        chmod 0640 ${lib.escapeShellArg tokenFile}
+      fi
+    '';
+
+    # Tasks atomically install tokens and leave this marker, including while a
+    # guest is adopting its final OS. Refresh does not need a controller watcher.
+    systemd = {
+      tmpfiles.rules = [
+        "z ${tokenFile} 0640 root onepassword-secrets -"
+      ]
+      ++ lib.optionals config.services.onepassword-secrets.enable [
+        "d /var/lib/nixos-bootstrap 0700 root root -"
+        "d ${backoff.stateDir} 0700 root root -"
+      ];
+      services = lib.mkMerge [
+        (lib.genAttrs dependentServices (_: {
+          # Wait for opnix-secrets without Requires= stop/restart propagation,
+          # so restarting opnix-secrets never kills a live service or CI job.
+          # ExecCondition cleanly skips starting when opnix-secrets failed,
+          # avoiding crash-loops until opnix-backoff-reset starts it on recovery.
+          wants = [ "opnix-secrets.service" ];
+          after = [ "opnix-secrets.service" ];
+          serviceConfig.ExecCondition = [
+            "+${pkgs.systemd}/bin/systemctl is-active --quiet opnix-secrets.service"
+          ];
+        }))
+        (lib.mkIf config.services.onepassword-secrets.enable {
+          opnix-secrets = {
+            # The gate owns retry pacing; a start limit would wedge the unit failed
+            # and stop it ever recovering once 1Password is fixed.
+            unitConfig.StartLimitIntervalSec = lib.mkForce 0;
+            serviceConfig = {
+              Restart = lib.mkForce "on-failure";
+              RestartSec = lib.mkForce "10s";
+              # Retry missing references too, so fixing 1Password self-heals.
+              RestartPreventExitStatus = lib.mkForce [ ];
+              # The token may take arbitrarily long to arrive on a fresh guest.
+              TimeoutStartSec = lib.mkDefault "infinity";
+              ExecStartPre = lib.mkBefore [
+                "${tokenWait}"
+                "${backoff.gate}"
+              ];
+              ExecStartPost = [ "${backoff.reset}" ];
+              ExecStopPost = [ "${backoff.record}" ];
+            };
+          };
+          # Re-resolves every reference itself, so it must honour the same backoff.
+          opnix-secrets-restart =
+            lib.mkIf config.services.onepassword-secrets.systemdIntegration.changeDetection.enable
+              {
+                serviceConfig.ExecStartPre = [ "${backoff.gate}" ];
+              };
+          opnix-pending-refresh = {
+            description = "Reconcile pending OpNix credentials after adoption";
+            after = [ "opnix-secrets.service" ];
+            path = with pkgs; [
+              coreutils
+              util-linux
+              systemd
+            ];
+            serviceConfig = {
+              Type = "oneshot";
+              UMask = "0077";
+            };
+            script = ''
+              exec 9>/var/lib/nixos-bootstrap/opnix.lock
+              flock -n 9 || exit 0
+              if test -e /var/lib/nixos-bootstrap/opnix-pending && test -s /etc/opnix-token; then
+                systemctl restart opnix-secrets.service
+                rm -f /var/lib/nixos-bootstrap/opnix-pending
+              fi
+            '';
+          };
+        })
+      ];
+      timers.opnix-pending-refresh = lib.mkIf config.services.onepassword-secrets.enable {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "1min";
+          OnUnitInactiveSec = "1min";
+        };
       };
     };
   };

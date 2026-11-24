@@ -46,9 +46,5 @@ in
         secret reference "/run/secrets/beszel-hub-token-${name}"
       )
     ) op.tokenReferences;
-    systemd.services.beszel-hub = {
-      requires = [ "opnix-secrets.service" ];
-      after = [ "opnix-secrets.service" ];
-    };
   };
 }

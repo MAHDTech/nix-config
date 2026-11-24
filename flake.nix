@@ -162,6 +162,10 @@
           pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
           opnixModule = inputs.opnix.nixosModules.default;
         };
+        opnix-recovery = import ./tests/opnix-recovery.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          opnixModule = inputs.opnix.nixosModules.default;
+        };
         beszel = import ./tests/beszel.nix {
           pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
           opnixModule = inputs.opnix.nixosModules.default;

@@ -56,15 +56,5 @@ in
         "rustfs-provision"
       ];
     };
-    systemd.services = {
-      rustfs = {
-        requires = [ "opnix-secrets.service" ];
-        after = [ "opnix-secrets.service" ];
-      };
-      rustfs-provision = {
-        requires = [ "opnix-secrets.service" ];
-        after = [ "opnix-secrets.service" ];
-      };
-    };
   };
 }

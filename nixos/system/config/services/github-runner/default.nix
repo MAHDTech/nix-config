@@ -292,6 +292,8 @@ let
   };
 in
 {
+  imports = [ ../../../soe/secrets/opnix.nix ];
+
   options.services.github-runner-fleet = {
     enable = lib.mkEnableOption "GitHub Actions self-hosted runners on this host";
 
@@ -344,100 +346,108 @@ in
         }
       ];
 
-    services.github-runners = lib.mapAttrs' (
-      _: runner:
-      let
-        name = runnerName runner;
-        workDir = if runner.workDir != null then runner.workDir else "/var/lib/github-runner-work/${name}";
-      in
-      lib.nameValuePair name {
-        enable = true;
+    services = {
+      github-runners = lib.mapAttrs' (
+        _: runner:
+        let
+          name = runnerName runner;
+          workDir = if runner.workDir != null then runner.workDir else "/var/lib/github-runner-work/${name}";
+        in
+        lib.nameValuePair name {
+          enable = true;
 
-        inherit (runner) url runnerGroup;
-        inherit name workDir;
+          inherit (runner) url runnerGroup;
+          inherit name workDir;
 
-        nodeRuntimes = [ "node24" ];
+          nodeRuntimes = [ "node24" ];
 
-        package = pkgs.github-runner.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ ./runner-drain.patch ];
-        });
+          package = pkgs.github-runner.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [ ./runner-drain.patch ];
+          });
 
-        # Untrusted runners must never carry state between jobs.
-        ephemeral = runner.ephemeral || !runner.trusted;
+          # Untrusted runners must never carry state between jobs.
+          ephemeral = runner.ephemeral || !runner.trusted;
 
-        # Reclaim the name when a rebuilt host re-registers.
-        replace = true;
+          # Reclaim the name when a rebuilt host re-registers.
+          replace = true;
 
-        tokenFile = secretPath name;
+          tokenFile = secretPath name;
 
-        extraLabels = [
-          "nixos"
-          hostName
-        ]
-        ++ runner.extraLabels;
+          extraLabels = [
+            "nixos"
+            hostName
+          ]
+          ++ runner.extraLabels;
 
-        extraEnvironment = lib.optionalAttrs runner.trusted {
-          # Keep Nix fetcher/tarball/eval caches outside ephemeral workDir so
-          # warm runners do not re-download locked inputs on every job.
-          XDG_CACHE_HOME = "/var/cache/github-runner/${name}";
-        };
-
-        extraPackages =
-          basePackages
-          ++ lib.optional runner.bubblewrap pkgs.bubblewrap
-          ++ lib.optionals runner.trusted ([ pkgs.docker ] ++ runner.extraPackages);
-
-        serviceOverrides =
-          lib.optionalAttrs (runner.workDir == null) {
-            StateDirectory = [
-              "github-runner-work/${name}"
-            ];
-          }
-          // lib.optionalAttrs runner.trusted {
-            CacheDirectory = [ "github-runner/${name}" ];
-            CacheDirectoryMode = "0700";
-            SupplementaryGroups = [ "docker" ];
-          }
-          // lib.optionalAttrs runner.bubblewrap {
-            # --unshare-all uses these namespaces; time namespaces remain denied.
-            RestrictNamespaces = "user mnt pid net ipc uts cgroup";
-            # These mask /proc entries, preventing an unprivileged child PID
-            # namespace from mounting a fresh procfs (Bubblewrap --proc /proc).
-            ProtectHostname = false;
-            ProtectKernelLogs = false;
-            ProtectKernelTunables = false;
-            # Replace the upstream mkBefore list, allowing @mount and capset.
-            # Keep the remaining syscall denials, including hostname changes.
-            SystemCallFilter = lib.mkForce [
-              "~@clock"
-              "~@cpu-emulation"
-              "~@module"
-              "~@obsolete"
-              "~@raw-io"
-              "~@reboot"
-              "~setdomainname"
-              "~sethostname"
-            ];
+          extraEnvironment = lib.optionalAttrs runner.trusted {
+            # Keep Nix fetcher/tarball/eval caches outside ephemeral workDir so
+            # warm runners do not re-download locked inputs on every job.
+            XDG_CACHE_HOME = "/var/cache/github-runner/${name}";
           };
-      }
-    ) cfg.runners;
 
-    # Deliver each runner's PAT via opnix and bounce the runner when the
-    # token rotates (a token change triggers re-registration on start).
-    services.onepassword-secrets.secrets = lib.mapAttrs' (
-      _: runner:
-      let
-        name = runnerName runner;
-      in
-      lib.nameValuePair "githubRunner${camelize name}" {
-        reference = runner.tokenReference;
-        path = secretPath name;
-        owner = "root";
-        group = "root";
-        mode = "0400";
-        services = lib.optional cfg.restartOnTokenChange "github-runner-${name}";
-      }
-    ) cfg.runners;
+          extraPackages =
+            basePackages
+            ++ lib.optional runner.bubblewrap pkgs.bubblewrap
+            ++ lib.optionals runner.trusted ([ pkgs.docker ] ++ runner.extraPackages);
+
+          serviceOverrides =
+            lib.optionalAttrs (runner.workDir == null) {
+              StateDirectory = [
+                "github-runner-work/${name}"
+              ];
+            }
+            // lib.optionalAttrs runner.trusted {
+              CacheDirectory = [ "github-runner/${name}" ];
+              CacheDirectoryMode = "0700";
+              SupplementaryGroups = [ "docker" ];
+            }
+            // lib.optionalAttrs runner.bubblewrap {
+              # --unshare-all uses these namespaces; time namespaces remain denied.
+              RestrictNamespaces = "user mnt pid net ipc uts cgroup";
+              # These mask /proc entries, preventing an unprivileged child PID
+              # namespace from mounting a fresh procfs (Bubblewrap --proc /proc).
+              ProtectHostname = false;
+              ProtectKernelLogs = false;
+              ProtectKernelTunables = false;
+              # Replace the upstream mkBefore list, allowing @mount and capset.
+              # Keep the remaining syscall denials, including hostname changes.
+              SystemCallFilter = lib.mkForce [
+                "~@clock"
+                "~@cpu-emulation"
+                "~@module"
+                "~@obsolete"
+                "~@raw-io"
+                "~@reboot"
+                "~setdomainname"
+                "~sethostname"
+              ];
+            };
+        }
+      ) cfg.runners;
+
+      # Deliver each runner's PAT via opnix and bounce the runner when the
+      # token rotates (a token change triggers re-registration on start).
+      onepassword-secrets.secrets = lib.mapAttrs' (
+        _: runner:
+        let
+          name = runnerName runner;
+        in
+        lib.nameValuePair "githubRunner${camelize name}" {
+          reference = runner.tokenReference;
+          path = secretPath name;
+          owner = "root";
+          group = "root";
+          mode = "0400";
+          services = lib.optional cfg.restartOnTokenChange "github-runner-${name}";
+        }
+      ) cfg.runners;
+
+      # Always wait for opnix-secrets and recover on transient failure, even when
+      # restartOnTokenChange is disabled for ephemeral draining.
+      opnix.dependentServices = map (runner: "github-runner-${runnerName runner}") (
+        lib.attrValues cfg.runners
+      );
+    };
 
     systemd = {
       tmpfiles.rules = [
