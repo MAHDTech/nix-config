@@ -7,7 +7,7 @@ let
     {
       domain,
       port,
-      extraLocations ? { },
+      redirectRoot ? false,
     }:
     {
       onlySSL = true;
@@ -18,12 +18,17 @@ let
         # Large multipart uploads must stream without a second disk-backed copy.
         client_max_body_size 0;
       '';
-      locations = extraLocations // {
+      locations = {
         "/" = {
           proxyPass = "http://127.0.0.1:${toString port}";
           recommendedProxySettings = false;
           proxyWebsockets = true;
           extraConfig = ''
+            ${lib.optionalString redirectRoot ''
+              # Redirect unauthenticated browser visits to / while preserving
+              # signed S3/STS requests (e.g. console login POST / and ListBuckets GET /).
+              if ($rustfs_console_root_redirect) { return 302 /rustfs/console/; }
+            ''}
             ${httpsLib.nginxBaselineHeaders}
             # Preserve the signed Host, URI and query string for S3 Signature V4.
             proxy_set_header Host $rustfs_host_${toString port};
@@ -97,7 +102,15 @@ in
                 domain = front.consoleDomain;
                 port = cfg.consolePort;
               }
-            ];
+            ]
+          + ''
+
+            map "$request_method:$uri:$http_authorization:$http_x_amz_date:$args" $rustfs_console_root_redirect {
+              default 0;
+              "GET:/:::" 1;
+              "HEAD:/:::" 1;
+            }
+          '';
         virtualHosts = {
           ${front.apiDomain} = virtualHost {
             domain = front.apiDomain;
@@ -106,7 +119,7 @@ in
           ${front.consoleDomain} = virtualHost {
             domain = front.consoleDomain;
             port = cfg.consolePort;
-            extraLocations."= /".return = "308 /rustfs/console/";
+            redirectRoot = true;
           };
         };
       };

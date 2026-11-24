@@ -190,11 +190,25 @@ def main():
             assert admin.get_object(Bucket="github-actions", Key="hello.txt")["Body"].read() == b"cache fixture"
             print("PASS: access-key rotation, removed writer disabled, removed bucket retained")
             if proxy is not None:
-                root_redir = http.get(f"https://127.0.0.1:{tls_port}/", allow_redirects=False)
-                assert root_redir.status_code == 308 and root_redir.headers.get("Location", "").endswith("/rustfs/console/")
+                console_endpoint = f"https://127.0.0.1:{tls_port}"
+                root_redir = http.get(f"{console_endpoint}/", allow_redirects=False)
+                assert root_redir.status_code == 302 and root_redir.headers.get("Location", "").endswith("/rustfs/console/")
+                # Console login (STS AssumeRole POST /) and bucket listing (S3 GET /) share / on the console host.
+                console_sts = boto3.client("sts", endpoint_url=console_endpoint, region_name="us-east-1", verify=verify,
+                                           aws_access_key_id=(creds / "root-access").read_text(),
+                                           aws_secret_access_key=(creds / "root-secret").read_text(),
+                                           config=Config(retries={"max_attempts": 0}))
+                assumed = console_sts.assume_role(RoleArn="arn:aws:iam::123456789012:role/console",
+                                                  RoleSessionName="console-test")
+                assert "Credentials" in assumed
+                console_s3 = boto3.client("s3", endpoint_url=console_endpoint, region_name="us-east-1", verify=verify,
+                                          aws_access_key_id=(creds / "root-access").read_text(),
+                                          aws_secret_access_key=(creds / "root-secret").read_text(),
+                                          config=Config(s3={"addressing_style": "path"}, retries={"max_attempts": 0}))
+                assert "Buckets" in console_s3.list_buckets()
             response = http.get(console_url)
             assert response.status_code == 200 and "text/html" in response.headers.get("Content-Type", "")
-            print("PASS: bundled console serves HTML and root redirects")
+            print("PASS: bundled console serves HTML, redirects unauthenticated /, and proxies signed S3/STS")
         except Exception:
             # Fixture credentials are disposable, but don't print the server's request log.
             print("FAIL: RustFS integration check", file=sys.stderr)
