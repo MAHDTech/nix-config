@@ -1,8 +1,11 @@
-# Internal S3 cache
+# Internal S3 storage
 
 This host runs RustFS with an internal S3 API at `https://s3.slopageddon.app`
-and the authenticated web console at `https://s3-console.slopageddon.app`.
-It stores disposable CI caches, not durable release artifacts or backups.
+and the authenticated web console at `https://s3-console.slopageddon.app` (root `/`
+redirects to `/rustfs/console/`). It stores both disposable CI caches (30-day
+expiration) and durable Terraform state buckets (no expiration, S3 versioning enabled).
+Back up the Terraform state buckets separately; single-node RustFS does not provide
+multi-node replication.
 
 The host also runs a Beszel agent reporting to `https://hub.slopageddon.app`.
 Its additional Opnix references are listed in the [hub setup](../hub/README.md).
@@ -65,28 +68,31 @@ can still be identified and revoked.
 
 ## Buckets and retention
 
-Both initial buckets allow anonymous **object reads**, but no anonymous listing,
-write, delete or administrative operations. This means any client with network
-access and an object URL can read the content. Writer identities are independent
-and restricted to their own buckets, including multipart operations.
+The two CI cache buckets (`github-actions` and `github-packages`) allow anonymous
+**object reads**, but no anonymous listing, write, delete or administrative operations.
+This means any client with network access and an object URL can read the content.
+The three Terraform state buckets are private, non-expiring, and have S3 object
+versioning enabled. Writer identities are independent and restricted to their own
+buckets, including multipart operations.
 
-| Bucket                          | Object expiration | Abandoned multipart uploads |
-| ------------------------------- | ----------------- | --------------------------- |
-| `github-actions`                | 30 days           | 1 day                       |
-| `github-packages`               | 30 days           | 1 day                       |
-| `terraform-state-bingamon`      | Never             | 1 day                       |
-| `terraform-state-bingamon-nkp`  | Never             | 1 day                       |
-| `terraform-state-big-stack-iac` | Never             | 1 day                       |
+| Bucket                          | Access      | Versioning | Object expiration | Abandoned multipart uploads |
+| ------------------------------- | ----------- | ---------- | ----------------- | --------------------------- |
+| `github-actions`                | Public read | Off        | 30 days           | 1 day                       |
+| `github-packages`               | Public read | Off        | 30 days           | 1 day                       |
+| `terraform-state-bingamon`      | Private     | Enabled    | Never             | 1 day                       |
+| `terraform-state-bingamon-nkp`  | Private     | Enabled    | Never             | 1 day                       |
+| `terraform-state-big-stack-iac` | Private     | Enabled    | Never             | 1 day                       |
 
 The three Terraform state buckets are private, each with a separate writer.
 Their `retentionDays = null` disables expiration of both current and noncurrent
-objects; abandoned multipart uploads are still cleaned up. Environment names
-map to bucket names by adding the `terraform-state-` prefix. Writer permissions
-also cover Terraform's `.tflock` objects. Versioning is not enabled by this module.
+objects, while `versioning = true` retains prior object versions against accidental
+overwrites or deletes; abandoned multipart uploads are still cleaned up. Environment
+names map to bucket names by adding the `terraform-state-` prefix. Writer permissions
+also cover Terraform's `.tflock` objects.
 
 Lifecycle expiration is based on object age, not last read time, and runs
-asynchronously. Noncurrent versions also expire if versioning is enabled later.
-Versioning is not enabled by this module. Thirty days is **not a disk-size limit**:
+asynchronously. Noncurrent versions also expire on buckets with a numeric
+`retentionDays`. Thirty days is **not a disk-size limit**:
 monitor root free space and shorten retention or enlarge the disk before it fills.
 RustFS has no Nginx-style `min_free` configuration supplied by this module.
 
@@ -172,6 +178,6 @@ The test does not contact 1Password or request real certificates, and does not w
 
 A disposable UEFI/QEMU VM also bootstrapped from the generic image into this host
 configuration with fixture credential delivery and external integrations disabled.
-RustFS started with systemd credentials, both buckets and writers reconciled,
+RustFS started with systemd credentials, all declared buckets and writers reconciled,
 no units failed, and the root filesystem grew to the allocated 24 GB disk.
 Production DNS, 1Password access and ACME issuance still need deployment validation.

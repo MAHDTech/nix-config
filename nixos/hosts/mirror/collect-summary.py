@@ -2,28 +2,23 @@
 
 import argparse
 import datetime
-import json
-import os
 from pathlib import Path
-import shutil
-import subprocess
-import tempfile
+import sys
+
+_COLLECTOR_DIR = Path(__file__).resolve().parents[2] / "system/config/services/collector"
+if str(_COLLECTOR_DIR) not in sys.path and _COLLECTOR_DIR.is_dir():
+    sys.path.insert(0, str(_COLLECTOR_DIR))
+
+from common import collect_disk_usage, write_json_atomic  # noqa: E402
 
 
 def collect_storage(root):
-    total, used, available = shutil.disk_usage(root)
-    content_bytes = None
-    try:
-        result = subprocess.run(
-            ["du", "--summarize", "--block-size=1", "--", str(root)],
-            capture_output=True, text=True, check=True, timeout=30,
-        )
-        content_bytes = int(result.stdout.split()[0])
-    except (OSError, subprocess.SubprocessError, ValueError, IndexError):
-        pass
+    total, used, available, content_bytes = collect_disk_usage(root)
     return {
-        "total_bytes": total, "used_bytes": used,
-        "available_bytes": available, "content_bytes": content_bytes,
+        "total_bytes": total,
+        "used_bytes": used,
+        "available_bytes": available,
+        "content_bytes": content_bytes,
     }
 
 
@@ -36,11 +31,7 @@ def main():
         "checked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "storage": collect_storage(args.root),
     }
-    with tempfile.NamedTemporaryFile(mode="w", dir=args.destination.parent, delete=False) as file:
-        json.dump(snapshot, file)
-        temporary = file.name
-    os.chmod(temporary, 0o644)
-    os.replace(temporary, args.destination)
+    write_json_atomic(args.destination, snapshot, 0o644)
 
 
 if __name__ == "__main__":

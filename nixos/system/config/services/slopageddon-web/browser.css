@@ -1,0 +1,203 @@
+/* cspell:ignore nums */
+@layer components {
+  .breadcrumbs {
+    margin: 1rem 0 1.5rem;
+    overflow-wrap: anywhere;
+    color: var(--muted);
+  }
+
+  .breadcrumbs a,
+  .file-table a,
+  .collection-links a {
+    color: var(--cyan);
+  }
+
+  .breadcrumbs a:hover,
+  .file-table a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+  }
+
+  .file-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+
+  .file-table th,
+  .file-table td {
+    padding: 0.85rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+
+  .file-table th {
+    color: var(--muted);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .file-table tbody tr {
+    transition: background-color 150ms ease;
+  }
+
+  .file-table tbody tr:hover {
+    background: var(--surface-hover);
+  }
+
+  .file-table td:first-child {
+    overflow-wrap: anywhere;
+    min-width: 12rem;
+  }
+
+  .file-table td:not(:first-child) {
+    white-space: nowrap;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .entry-dir::after {
+    content: "/";
+    color: var(--pink);
+  }
+
+  .sort-links {
+    display: inline-flex;
+    gap: 0.2rem;
+    margin-left: 0.35rem;
+  }
+
+  .sort-link {
+    display: inline-block;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid transparent;
+    color: var(--muted);
+    line-height: 1;
+    transition:
+      border-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .sort-link:hover {
+    color: var(--cyan);
+    border-color: var(--line);
+    text-decoration: none;
+  }
+
+  .sort-link[aria-current="true"] {
+    color: var(--cyan);
+    border-color: var(--line-accent);
+    background: var(--surface-card-a);
+  }
+
+  .collection-links {
+    list-style: none;
+    margin: 0.5rem 0 1rem;
+    padding: 0;
+  }
+
+  .collection-links li {
+    border-top: 1px solid var(--line);
+  }
+
+  .collection-links a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.95rem 0.5rem;
+    transition: background-color 150ms ease;
+  }
+
+  .collection-links a:hover {
+    background: var(--surface-hover);
+  }
+
+  .collection-links span {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .catalog-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .catalog-controls label {
+    display: grid;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .catalog-controls .search-field {
+    flex: 1 1 16rem;
+  }
+
+  .catalog-controls input,
+  .catalog-controls select,
+  .catalog-controls button {
+    min-height: 2.75rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--cyan);
+    font: inherit;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease;
+  }
+
+  .catalog-controls input::placeholder {
+    color: var(--muted);
+  }
+
+  .catalog-controls button {
+    cursor: pointer;
+  }
+
+  .catalog-controls button:hover:not(:disabled),
+  .catalog-controls input:hover,
+  .catalog-controls select:hover {
+    border-color: var(--line-accent);
+  }
+
+  .catalog-controls button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--line);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--fg-soft);
+  }
+
+  .badge--archive {
+    border-color: var(--line-accent);
+    color: var(--cyan);
+  }
+
+  .badge--metadata {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+}
+
+@media (max-width: 650px) {
+  .collection-links a {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+}

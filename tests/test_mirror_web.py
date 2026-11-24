@@ -19,6 +19,7 @@ import urllib.request
 
 def main():
     source = Path(os.environ["CADDY_CONFIG"]).read_text()
+    assert "grace_period 5m" in source, "mirror Caddyfile must set grace_period for drain"
     caddy = os.environ.get("CADDY_BIN", "caddy")
     with tempfile.TemporaryDirectory(prefix="mirror-check-") as temporary:
         root = Path(temporary)
@@ -71,23 +72,39 @@ def main():
                     time.sleep(0.1)
             assert status == 200 and b"One mirror." in body and b'href="/browse/"' in body
             assert b"@hostname@" not in body and b"MIRROR STATISTICS" in body
+            assert b"Disk capacity" in body and b"RPM packages" in body and b"DEB packages" in body
+            assert b"https://nix-cache.slopageddon.app" in body
+            assert headers["X-Content-Type-Options"] == "nosniff"
+            assert headers["Referrer-Policy"] == "no-referrer"
+            assert headers["X-Frame-Options"] == "DENY"
+            assert "default-src 'none'" in headers["Content-Security-Policy"]
+            assert headers["Cache-Control"] == "no-cache"
             assert get("/", "HEAD")[0] == 200
             assert get("/", "POST")[0] == 405
-            for asset in ["/_landing.css", "/_browse.css", "/_landing.js"]:
-                assert get(asset)[0] == 200, asset
+            for asset in ["/_landing.css", "/_browse.css", "/_common.js", "/_landing.js", "/_favicon.svg"]:
+                a_status, a_headers, _ = get(asset)
+                assert a_status == 200, asset
+                assert a_headers["Cache-Control"] == "no-cache", asset
+            assert get("/favicon.ico")[0] == 200
             assert get("/_dashboard/summary.json")[0] == 200
             assert get("/_dashboard/stats-state.json")[0] == 404
             status, _, body = get("/browse/")
             assert status == 200 and b'href="/nutanix/"' in body, (status, body)
+            assert b'class="entry-dir"' in body
             assert b'href="/browse/nutanix/"' not in body
             assert get("/browse/nutanix/")[0] == 404
             assert get("/nutanix")[0] == 200
+            status, _, nutanix_body = get("/nutanix/")
+            assert status == 200 and b'href="/browse/"' in nutanix_body
+            assert b'href=".."' not in nutanix_body, nutanix_body
             for directory in ["/nutanix/", "/nutanix/lcm/release/", "/ubuntu/"]:
                 status, _, body = get(directory)
                 assert status == 200 and b"FILE BROWSER" in body, (directory, body)
             assert b"This directory is empty." in body
             status, _, body = get("/nutanix/lcm/release/?sort=size&order=desc")
             assert status == 200 and b"master_manifest.tgz" in body
+            assert b'href=".."' in body
+            assert b'aria-current="true"' in body
             assert b"&lt;unsafe&amp;name&gt;.txt" in body and b"<unsafe&name>" not in body
             url = "/nutanix/lcm/release/master_manifest.tgz"
             assert get(url)[2] == payload

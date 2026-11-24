@@ -8,8 +8,10 @@ class Element {
   constructor() {
     this.children = []
     this.listeners = {}
+    this.dataset = {}
     this.value = ""
     this.textContent = ""
+    this.className = ""
   }
   append(...children) {
     this.children.push(...children)
@@ -56,8 +58,16 @@ entries.push({
   kind: "archive",
 })
 let fail = false
+let lastReplacedUrl = ""
 const snapshot = { checked_at: new Date().toISOString(), entries, truncated: false }
 const context = vm.createContext({
+  URLSearchParams,
+  location: { pathname: "/browse/", search: "" },
+  history: {
+    replaceState: (_state, _title, url) => {
+      lastReplacedUrl = url
+    },
+  },
   document: { getElementById: element, createElement: () => new Element() },
   Option: class extends Element {
     constructor(text, value) {
@@ -70,6 +80,13 @@ const context = vm.createContext({
   setInterval: (_, interval) => assert.equal(interval, 15 * 60 * 1000),
 })
 vm.runInContext(
+  fs.readFileSync(
+    path.join(__dirname, "../nixos/system/config/services/slopageddon-web/common.js"),
+    "utf8"
+  ),
+  context
+)
+vm.runInContext(
   fs.readFileSync(path.join(__dirname, "../nixos/hosts/nix-cache/catalog.js"), "utf8"),
   context
 )
@@ -81,14 +98,17 @@ async function main() {
     element("catalog-rows").children[0].children[0].children[0].textContent,
     "<img src=x>"
   )
+  assert.equal(element("catalog-rows").children[0].children[3].children[0].textContent, "Archive")
   assert.match(element("catalog-page").textContent, /106 files.*Page 1 of 2/)
   element("catalog-next").listeners.click()
   assert.equal(element("catalog-rows").children.length, 6)
   assert.equal(element("catalog-next").disabled, true)
+  assert.equal(lastReplacedUrl, "/browse/?page=2")
   element("catalog-search").value = "package-104"
   element("catalog-search").listeners.input()
   assert.equal(element("catalog-rows").children.length, 1)
-  assert.match(element("catalog-page").textContent, /1 files.*Page 1 of 1/)
+  assert.match(element("catalog-page").textContent, /^1 file · Page 1 of 1$/)
+  assert.equal(lastReplacedUrl, "/browse/?q=package-104")
   element("catalog-search").value = ""
   element("catalog-upstream").value = "devenv"
   element("catalog-upstream").listeners.input()
@@ -100,17 +120,21 @@ async function main() {
   element("catalog-kind").value = "metadata"
   element("catalog-kind").listeners.input()
   assert.equal(element("catalog-rows").children.length, 1)
-  snapshot.checked_at = "2020-01-01T00:00:00Z"
+  assert.equal(element("catalog-rows").children[0].children[3].children[0].textContent, "Metadata")
+  snapshot.checked_at = "not-a-timestamp"
   snapshot.truncated = true
   await context.loadCatalog()
-  assert.match(element("catalog-status").textContent, /Snapshot stale/)
+  assert.match(element("catalog-status").textContent, /^Stale · /)
+  assert.doesNotMatch(element("catalog-status").textContent, /Invalid Date/)
   assert.match(element("catalog-status").textContent, /Partial catalog/)
+  assert.equal(element("catalog-status").dataset.state, "warning")
   fail = true
   await context.loadCatalog()
-  assert.match(element("catalog-status").textContent, /Catalog unavailable/)
+  assert.match(element("catalog-status").textContent, /Couldn't refresh catalog/)
+  assert.equal(element("catalog-status").dataset.state, "warning")
   assert.equal(element("catalog-rows").children.length, 1)
   console.log(
-    "PASS: safe catalog rendering, URL validation, pagination, filters, stale and failed snapshots"
+    "PASS: safe catalog rendering, URL validation & sync, pluralization, badges, filters, stale and failed snapshots"
   )
 }
 main().catch((error) => {

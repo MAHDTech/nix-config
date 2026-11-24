@@ -150,6 +150,12 @@ def reconcile(config, credentials, state_directory):
             lifecycle["Expiration"] = {"Days": spec["retentionDays"]}
             lifecycle["NoncurrentVersionExpiration"] = {"NoncurrentDays": spec["retentionDays"]}
         client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration={"Rules": [lifecycle]})
+        desired_versioning = bool(spec.get("versioning", False))
+        current_versioning = client.get_bucket_versioning(Bucket=name).get("Status")
+        if desired_versioning and current_versioning != "Enabled":
+            client.put_bucket_versioning(Bucket=name, VersioningConfiguration={"Status": "Enabled"})
+        elif not desired_versioning and current_versioning == "Enabled":
+            client.put_bucket_versioning(Bucket=name, VersioningConfiguration={"Status": "Suspended"})
         print(f"Reconciled bucket: {name}", flush=True)
 
     updated = {}

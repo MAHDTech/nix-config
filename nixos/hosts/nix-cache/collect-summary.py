@@ -7,10 +7,15 @@ import datetime
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
-import tempfile
+import sys
 import time
+
+_COLLECTOR_DIR = Path(__file__).resolve().parents[2] / "system/config/services/collector"
+if str(_COLLECTOR_DIR) not in sys.path and _COLLECTOR_DIR.is_dir():
+    sys.path.insert(0, str(_COLLECTOR_DIR))
+
+from common import collect_disk_usage, write_json_atomic  # noqa: E402
 
 
 def probe(upstream):
@@ -45,19 +50,12 @@ def probe(upstream):
 
 
 def collect_storage(cache_path):
-    total, used, available = shutil.disk_usage(cache_path)
-    cache_bytes = None
-    try:
-        result = subprocess.run(
-            ["du", "--summarize", "--block-size=1", "--", str(cache_path)],
-            capture_output=True, text=True, check=True, timeout=30,
-        )
-        cache_bytes = int(result.stdout.split()[0])
-    except (OSError, subprocess.SubprocessError, ValueError, IndexError):
-        pass
+    total, used, available, cache_bytes = collect_disk_usage(cache_path)
     return {
-        "total_bytes": total, "used_bytes": used,
-        "available_bytes": available, "cache_bytes": cache_bytes,
+        "total_bytes": total,
+        "used_bytes": used,
+        "available_bytes": available,
+        "cache_bytes": cache_bytes,
     }
 
 
@@ -121,13 +119,7 @@ def collect_traffic(log_path, previous, now):
     return dict(totals), {"buckets": buckets, "cursors": cursors}
 
 
-def write_json(destination, value, mode):
-    # Rename within the same directory so readers never see a partial snapshot.
-    with tempfile.NamedTemporaryFile(mode="w", dir=destination.parent, delete=False) as file:
-        json.dump(value, file)
-        temporary = file.name
-    os.chmod(temporary, mode)
-    os.replace(temporary, destination)
+write_json = write_json_atomic
 
 
 def main():

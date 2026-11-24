@@ -1,109 +1,64 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
-    <title>Nix Cache // Slopageddon</title>
-    <link rel="stylesheet" href="/_landing.css" />
-    <script src="/_landing.js" defer></script>
-  </head>
-  <body>
-    <main>
-      <header class="masthead">
-        <span class="brand">SLOPAGEDDON<span class="brand-mark" aria-hidden="true">_</span></span>
-        <a class="header-link" href="/browse/">Browse files <span aria-hidden="true">→</span></a>
-      </header>
-      <section class="hero" aria-labelledby="title">
-        <h1 id="title">Build less.<br /><span>Ship more.</span></h1>
-        <p class="intro">Shared Nix packages for the Slopageddon fleet.</p>
-      </section>
-      <a class="panel hub-card" href="@hub@">
-        <div>
-          <h2 class="panel-title">OBSERVABILITY</h2>
-          <h3>Open the hub <span aria-hidden="true">↗</span></h3>
-          <p>Host metrics, service status and fleet history in Beszel.</p>
-        </div>
-        <span class="button-label">VIEW FLEET <span aria-hidden="true">→</span></span>
-      </a>
-      <section class="panel" aria-labelledby="statistics-title">
-        <h2 class="panel-title" id="statistics-title">CACHE STATISTICS</h2>
-        <h3>Space and traffic</h3>
-        <p class="muted" id="statistics-updated" role="status">
-          Statistics not loaded. Updated every 15 minutes.
-        </p>
-        <dl class="statistics">
-          <div>
-            <dt>FREE DISK SPACE</dt>
-            <dd id="disk-free">—</dd>
-            <p class="muted" id="disk-detail">Available space on the cache filesystem.</p>
-            <meter
-              id="disk-meter"
-              min="0"
-              max="100"
-              value="0"
-              aria-label="Disk space used"
-              hidden
-            ></meter>
-          </div>
-          <div>
-            <dt>CACHE ON DISK</dt>
-            <dd id="cache-size">—</dd>
-            <p class="muted" id="cache-detail">Waiting for a size measurement.</p>
-          </div>
-          <div>
-            <dt>ARCHIVE HIT RATE</dt>
-            <dd id="cache-hit-rate">—</dd>
-            <p class="muted" id="hit-detail">Measured by bytes, over the last 24 hours.</p>
-          </div>
-          <div>
-            <dt>ARCHIVES SERVED</dt>
-            <dd id="archive-bytes">—</dd>
-            <p class="muted">Bytes delivered over the last 24 hours.</p>
-          </div>
-          <div>
-            <dt>REQUESTS</dt>
-            <dd id="cache-requests">—</dd>
-            <p class="muted" id="requests-detail">
-              Cache endpoint requests over the last 24 hours.
-            </p>
-          </div>
-          <div>
-            <dt>SERVER ERRORS</dt>
-            <dd id="cache-errors">—</dd>
-            <p class="muted" id="errors-detail">HTTP 5xx responses over the last 24 hours.</p>
-          </div>
-        </dl>
-        <p class="muted" id="cache-growth">Cache growth appears after two size measurements.</p>
-      </section>
-      <section class="panel" aria-labelledby="upstreams-title">
-        <h2 class="panel-title" id="upstreams-title">UPSTREAMS</h2>
-        <h3>Cache endpoints</h3>
-        <p class="muted" id="summary-updated" role="status">
-          Summary not loaded. Checks run every 15 minutes.
-        </p>
-        <ul class="upstreams">
-          @upstreams@
-        </ul>
-      </section>
-      <section class="panel" aria-labelledby="summary-title">
-        <h2 class="panel-title" id="summary-title">SYSTEM SUMMARY</h2>
-        <dl>
-          <div>
-            <dt>HOST</dt>
-            <dd>@hostname@</dd>
-          </div>
-          <div>
-            <dt>CONFIGURATION</dt>
-            <dd>NixOS @version@</dd>
-          </div>
-          <div>
-            <dt>ARCHITECTURE</dt>
-            <dd>@system@</dd>
-          </div>
-        </dl>
-        <p class="muted">Declared configuration. Live status is available in the hub.</p>
-      </section>
-    </main>
-  </body>
-</html>
+<section class="panel" aria-labelledby="statistics-title">
+  <h2 class="panel-title" id="statistics-title">CACHE STATISTICS</h2>
+  <h3>Space and traffic</h3>
+  <noscript><p>JavaScript is required to load live cache statistics.</p></noscript>
+  <p class="muted" id="statistics-updated" role="status">
+    Loading statistics… Updated every 15 minutes.
+  </p>
+  <dl class="statistics">
+    <div>
+      <dt>FREE DISK SPACE</dt>
+      <dd class="stat-value" id="disk-free">—</dd>
+      <dd class="stat-detail" id="disk-detail">Available space on the cache filesystem.</dd>
+      <dd class="stat-meter">
+        <meter
+          id="disk-meter"
+          min="0"
+          max="100"
+          value="0"
+          aria-label="Disk space used"
+          hidden
+        ></meter>
+      </dd>
+    </div>
+    <div>
+      <dt>CACHE ON DISK</dt>
+      <dd class="stat-value" id="cache-size">—</dd>
+      <dd class="stat-detail" id="cache-detail">Waiting for a size measurement.</dd>
+    </div>
+    <div>
+      <dt>ARCHIVE HIT RATE</dt>
+      <dd class="stat-value" id="cache-hit-rate">—</dd>
+      <dd class="stat-detail" id="hit-detail">Measured by bytes, over the last 24 hours.</dd>
+    </div>
+    <div>
+      <dt>ARCHIVES SERVED</dt>
+      <dd class="stat-value" id="archive-bytes">—</dd>
+      <dd class="stat-detail">Bytes delivered over the last 24 hours.</dd>
+    </div>
+    <div>
+      <dt>REQUESTS</dt>
+      <dd class="stat-value" id="cache-requests">—</dd>
+      <dd class="stat-detail" id="requests-detail">
+        Cache endpoint requests over the last 24 hours.
+      </dd>
+    </div>
+    <div>
+      <dt>SERVER ERRORS</dt>
+      <dd class="stat-value" id="cache-errors">—</dd>
+      <dd class="stat-detail" id="errors-detail">HTTP 5xx responses over the last 24 hours.</dd>
+    </div>
+  </dl>
+  <p class="muted" id="cache-growth">Cache growth appears after two size measurements.</p>
+</section>
+<section class="panel" aria-labelledby="upstreams-title">
+  <h2 class="panel-title" id="upstreams-title">UPSTREAMS</h2>
+  <h3>Cache endpoints</h3>
+  <noscript><p>JavaScript is required to load upstream status.</p></noscript>
+  <p class="muted" id="summary-updated" role="status">
+    Loading upstream status… Checks run every 15 minutes.
+  </p>
+  <ul class="upstreams">
+    @upstreams@
+  </ul>
+</section>

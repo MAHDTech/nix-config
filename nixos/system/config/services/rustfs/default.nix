@@ -72,6 +72,11 @@ in
               type = types.ints.positive;
               default = 1;
             };
+            versioning = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Enable S3 object versioning for this bucket. Recommended for durable state such as Terraform state.";
+            };
           };
         }
       );

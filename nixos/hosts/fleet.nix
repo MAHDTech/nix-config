@@ -1,4 +1,5 @@
 let
+  domain = "slopageddon.app";
   runnerNames = builtins.genList (
     index:
     let
@@ -8,16 +9,26 @@ let
   ) 50;
 in
 {
-  inherit runnerNames;
+  inherit domain runnerNames;
+  acme = {
+    tokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
+    email = "cloudflare@mahdtech.com";
+  };
+  web = {
+    nixCache = "https://nix-cache.${domain}";
+    mirror = "https://mirror.${domain}";
+    hub = "https://hub.${domain}";
+    s3Console = "https://s3-console.${domain}/rustfs/console/";
+  };
   beszel = {
-    url = "https://hub.slopageddon.app";
+    url = "https://hub.${domain}";
     publicKeyReference = "op://machines/Beszel Hub/public_key";
     members = builtins.listToAttrs (
       map
         (name: {
           inherit name;
           value = {
-            host = "${name}.slopageddon.app";
+            host = "${name}.${domain}";
             tokenReference = "op://machines/Beszel Agents/${name}";
           };
         })

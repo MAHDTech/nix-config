@@ -13,7 +13,7 @@
       https://nix-cache.slopageddon.app/herdr?priority=10
       https://nix-cache.slopageddon.app/cosmic?priority=10
       https://cache.nixos.org
-      https://cosmic.cachix.org/
+      https://cosmic.cachix.org
       https://devenv.cachix.org
       https://tars-cloud.cachix.org
       https://bingamon-lab.cachix.org
@@ -91,16 +91,7 @@
         "aarch64-linux"
       ];
 
-      installerHosts = builtins.filter (
-        host: builtins.pathExists ./nixos/hosts/${lib.toLower host.name}/installer.nix
-      ) hosts.list;
-
-      rawQemuInstaller = mylib.mkInstaller {
-        system = "x86_64-linux";
-        module = ./nixos/hosts/github-runner/common/installer.nix;
-      };
-
-      # Hosts whose installer.nix is a compatibility alias for the generic raw
+      # Hosts whose installer output is a compatibility alias for the generic raw
       # base-qemu image; share one evaluation with installer-github-runner.
       rawQemuAliasHosts = [
         "hub"
@@ -108,6 +99,20 @@
         "nix-cache"
         "s3"
       ];
+
+      installerHosts = builtins.filter (
+        host:
+        let
+          hostDir = lib.toLower host.name;
+        in
+        builtins.elem hostDir rawQemuAliasHosts
+        || builtins.pathExists ./nixos/hosts/${hostDir}/installer.nix
+      ) hosts.list;
+
+      rawQemuInstaller = mylib.mkInstaller {
+        system = "x86_64-linux";
+        module = ./nixos/hosts/github-runner/common/installer.nix;
+      };
 
       # Installer configurations generated dynamically
       installerConfigs =
@@ -168,6 +173,68 @@
         clamav-notify = import ./tests/clamav-notify.nix {
           pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
         };
+        web-unit-tests =
+          let
+            pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          in
+          pkgs.runCommand "web-unit-tests"
+            {
+              nativeBuildInputs = [
+                pkgs.python3
+                pkgs.nodejs
+              ];
+            }
+            ''
+              cd ${./.}
+              python3 -m unittest \
+                tests/test_nix_cache_summary.py \
+                tests/test_nix_cache_catalog.py \
+                tests/test_mirror_summary.py \
+                tests/test_upstreams_parity.py
+              node tests/test_nix_cache_dashboard.js
+              node tests/test_nix_cache_catalog.js
+              node tests/test_mirror_dashboard.js
+              touch $out
+            '';
+        nix-cache-web =
+          let
+            pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          in
+          pkgs.runCommand "nix-cache-web"
+            {
+              nativeBuildInputs = [
+                pkgs.python3
+                pkgs.nginx
+              ];
+            }
+            ''
+              cd ${./.}
+              NGINX_CONFIG=${
+                self.nixosConfigurations.nix-cache.config.environment.etc."nginx/nginx.conf".source
+              } \
+                NGINX_BIN=${pkgs.nginx}/bin/nginx \
+                python3 tests/test_nix_cache.py
+              touch $out
+            '';
+        mirror-web =
+          let
+            pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          in
+          pkgs.runCommand "mirror-web"
+            {
+              nativeBuildInputs = [
+                pkgs.python3
+                pkgs.caddy
+                pkgs.openssl
+              ];
+            }
+            ''
+              cd ${./.}
+              CADDY_CONFIG=${self.nixosConfigurations.mirror.config.services.caddy.configFile} \
+                CADDY_BIN=${pkgs.caddy}/bin/caddy \
+                python3 tests/test_mirror_web.py
+              touch $out
+            '';
       };
       homeConfigurations = forEachSystem (system: {
         ${mylib.globalUsername} = mylib.mkHome { inherit system; };

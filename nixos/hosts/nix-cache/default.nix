@@ -1,35 +1,29 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 let
-  domain = "nix-cache.slopageddon.app";
-  tokenPath = "/run/secrets/cloudflare-acme-slopageddon";
+  fleet = import ../fleet.nix;
+  domain = "nix-cache.${fleet.domain}";
 in
 {
   imports = [
-    ./base.nix
-    ../../system/soe/nix
-    ../../system/config/services/cloudflare-acme
+    ../common/appliance.nix
+    ../../system/config/services/internal-https
     ./proxy.nix
     ./drain.nix
   ];
 
   services = {
-    cloudflare-acme = {
+    internal-https = {
       enable = true;
       domains = [ domain ];
-      tokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
-      inherit tokenPath;
+      cloudflareTokenReference = fleet.acme.tokenReference;
+      cloudflareEmail = fleet.acme.email;
     };
     nginx.virtualHosts.${domain} = {
-      forceSSL = true;
+      onlySSL = true;
       useACMEHost = domain;
     };
   };
 
-  # Keep host upgrades independent of the cache service itself.
-  system.autoUpgrade = {
-    flake = lib.mkForce "github:MAHDTech/nix-config#nix-cache";
-  };
-  nix.settings.trusted-users = lib.mkForce [ "root" ];
   environment.systemPackages = [
     pkgs.curl
     pkgs.jq

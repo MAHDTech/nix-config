@@ -52,7 +52,15 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
-    config = re.sub(r'    server \{\n        listen 0.0.0.0:80;.*?\n    \}\n', '', source, flags=re.S)
+    assert ':80' not in source, 'onlySSL must not open port 80'
+    assert 'ssl_reject_handshake on;' in source, 'default catch-all must reject unknown SNI'
+    assert 'gzip on;' in source, 'recommendedGzipSettings must enable gzip'
+    config = re.sub(
+        r'    server \{\n(?:(?!    server \{).)*?server_name _;(?:(?!    server \{).)*?\n    \}\n',
+        '',
+        source,
+        flags=re.S,
+    )
     config = re.sub(r'        listen .*?443 ssl;', f'        listen 127.0.0.1:{port};', config, count=1)
     config = re.sub(r'        listen \[::0\]:443 ssl;\n', '', config)
     config = re.sub(r'^        (ssl_certificate|ssl_certificate_key|ssl_trusted_certificate) .*?;\n', '', config, flags=re.M)
@@ -60,6 +68,13 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     config = config.replace('/var/cache/nginx/nixpkgs', str(root / 'cache'))
     config = config.replace('min_free=100g', 'min_free=0').replace('keys_zone=nixpkgs:128m', 'keys_zone=nixpkgs:1m')
     config = config.replace('/var/log/nginx/nix-cache-access.log', str(root / 'access.log'))
+    config = config.replace('/var/log/nginx/access.log', str(root / 'global-access.log'))
+    config = config.replace('/var/log/nginx/error.log', str(root / 'error.log'))
+    temp_paths = ' '.join(
+        f'{name}_temp_path {root / name};'
+        for name in ['client_body', 'proxy', 'fastcgi', 'uwsgi', 'scgi']
+    )
+    config = config.replace('http {', f'http {{\n    access_log off;\n    {temp_paths}', 1)
     snapshot = b'{"checked_at":"2026-09-25T00:00:00+00:00","endpoints":[]}'
     (root / 'summary.json').write_bytes(snapshot)
     config = config.replace('/var/lib/nix-cache-summary/summary.json', str(root / 'summary.json'))
@@ -67,7 +82,7 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
     config = config.replace('/var/lib/nix-cache-catalog/catalog.json', str(root / 'catalog.json'))
     config = config.replace('https://$nix_cache_upstream', f'http://127.0.0.1:{upstream.server_port}')
     (root / 'nginx.conf').write_text(config)
-    proc = subprocess.Popen([nginx, '-p', tmp, '-c', str(root / 'nginx.conf')], stderr=subprocess.PIPE)
+    proc = subprocess.Popen([nginx, '-e', str(root / 'error.log'), '-p', tmp, '-c', str(root / 'nginx.conf')], stderr=subprocess.PIPE)
     def get(path, method='GET', follow=True):
         request = urllib.request.Request(f'http://127.0.0.1:{port}' + path, method=method)
         opener = urllib.request.urlopen if follow else no_redirect_opener.open
@@ -85,7 +100,13 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
             except urllib.error.URLError:
                 time.sleep(.1)
         assert status == 200 and b'https://hub.slopageddon.app' in body
+        assert b'https://mirror.slopageddon.app' in body
         assert headers['Content-Type'] == 'text/html'
+        assert headers['X-Content-Type-Options'] == 'nosniff'
+        assert headers['Referrer-Policy'] == 'no-referrer'
+        assert headers['X-Frame-Options'] == 'DENY'
+        assert "default-src 'none'" in headers['Content-Security-Policy']
+        assert headers['Cache-Control'] == 'no-cache'
         assert b'@hostname@' not in body
         assert b'Endpoint links open' not in body
         assert b'href="/devenv/nix-cache-info"' not in body
@@ -94,10 +115,20 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         assert b'id="disk-free"' in body
         assert b'id="cache-hit-rate"' in body
         assert b'href="/browse/"' in body
+        assert b'href="/_favicon.svg"' in body
         assert get('/', 'HEAD')[0] == 200
         assert get('/', 'POST')[0] == 403
+        favicon_redir = get('/favicon.ico', follow=False)
+        assert favicon_redir[0] == 308 and favicon_redir[1]['Location'].endswith('/_favicon.svg')
+        status, headers, body = get('/_favicon.svg')
+        assert status == 200 and headers['Content-Type'] == 'image/svg+xml'
+        assert headers['Cache-Control'] == 'no-cache'
         status, headers, body = get('/_landing.css')
         assert status == 200 and headers['Content-Type'] == 'text/css'
+        assert headers['Cache-Control'] == 'no-cache'
+        status, headers, body = get('/_common.js')
+        assert status == 200 and headers['Content-Type'] == 'application/javascript'
+        assert headers['Cache-Control'] == 'no-cache'
         status, headers, body = get('/_landing.js')
         assert status == 200 and headers['Content-Type'] == 'application/javascript'
         status, headers, body = get('/_dashboard/summary.json')
@@ -107,10 +138,15 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         assert get('/_dashboard/summary.json', 'POST')[0] == 403
         status, headers, body = get('/browse/')
         assert status == 200 and b'CACHED DOWNLOADS' in body, (status, body)
+        assert headers['X-Content-Type-Options'] == 'nosniff'
+        assert headers['X-Frame-Options'] == 'DENY'
+        assert "default-src 'none'" in headers['Content-Security-Policy']
         assert get('/browse/', 'HEAD')[0] == 200
         assert get('/browse/', 'POST')[0] == 403
-        assert get('/_catalog.js')[0] == 200
-        assert get('/_browse.css')[0] == 200
+        status, headers, _ = get('/_catalog.js')
+        assert status == 200 and headers['X-Content-Type-Options'] == 'nosniff'
+        status, headers, _ = get('/_browse.css')
+        assert status == 200 and headers['X-Content-Type-Options'] == 'nosniff'
         assert get('/_dashboard/catalog.json')[0] == 200
         assert get('/_dashboard/catalog.json', 'POST')[0] == 403
         assert get('/unknown')[0] == 404
@@ -181,7 +217,20 @@ with tempfile.TemporaryDirectory(prefix='cache-check-') as tmp:
         upstream.shutdown()
     logs = [json.loads(line) for line in (root / 'access.log').read_text().splitlines()]
     assert logs and all('private' not in entry['uri'] for entry in logs)
-    assert all(entry['uri'] not in ['/', '/_landing.css', '/_landing.js', '/_dashboard/summary.json', '/browse/', '/_catalog.js', '/_browse.css', '/_dashboard/catalog.json'] for entry in logs)
+    excluded_uris = {
+        '/',
+        '/favicon.ico',
+        '/_favicon.svg',
+        '/_landing.css',
+        '/_common.js',
+        '/_landing.js',
+        '/_dashboard/summary.json',
+        '/browse/',
+        '/_catalog.js',
+        '/_browse.css',
+        '/_dashboard/catalog.json',
+    }
+    assert all(entry['uri'] not in excluded_uris for entry in logs)
     for entry in logs:
         datetime.datetime.fromisoformat(entry['time'])
     print(f'PASS: landing, catalog, CSS, methods, all {len(upstreams) * 3} cache routes + /tarballs MISS/HIT/HEAD/301, uncached 404s, real cache catalog, timestamped JSON logs')

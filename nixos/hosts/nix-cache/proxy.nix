@@ -7,25 +7,144 @@
 }:
 let
   cfg = config.services.nix-cache-proxy;
+  fleet = import ../fleet.nix;
+  httpsLib = import ../../system/config/services/internal-https/lib.nix { inherit lib; };
+  web = import ../../system/config/services/slopageddon-web { inherit lib pkgs; };
+  mkCollector = import ../../system/config/services/collector/mk-collector.nix;
+
   cacheLimitGiB = 750;
   cacheReserveGiB = 100;
   upstreams = builtins.fromJSON (
     builtins.readFile ../../system/config/services/nix-cache/upstreams.json
   );
+  upstreamsHtml = lib.concatMapStringsSep "\n" (upstream: ''
+    <li data-endpoint="${lib.escapeXML upstream.name}">
+      <div>
+        <span>${lib.escapeXML upstream.name}</span>
+        <span class="origin">${lib.escapeXML upstream.host}</span>
+      </div>
+      <div class="endpoint-summary">
+        <span class="endpoint-status">Not checked</span>
+        <span class="endpoint-metrics">—</span>
+      </div>
+    </li>
+  '') upstreams;
+
   landingPage = pkgs.writeText "nix-cache-index.html" (
-    builtins.replaceStrings
-      [ "@hostname@" "@system@" "@version@" "@hub@" "@upstreams@" ]
-      [
-        (lib.escapeXML config.networking.hostName)
-        (lib.escapeXML pkgs.stdenv.hostPlatform.system)
-        (lib.escapeXML config.system.nixos.release)
-        (lib.escapeXML (import ../fleet.nix).beszel.url)
-        (lib.concatMapStringsSep "\n" (upstream: ''
-          <li data-endpoint="${lib.escapeXML upstream.name}"><div><span>${lib.escapeXML upstream.name}</span><span class="origin">${lib.escapeXML upstream.host}</span></div><div class="endpoint-summary"><span class="endpoint-status">Not checked</span><span class="endpoint-metrics">—</span></div></li>
-        '') upstreams)
-      ]
-      (builtins.readFile ./landing.html)
+    web.mkPage {
+      title = "Nix Cache // Slopageddon";
+      activeNav = "nix-cache";
+      headerLinkHref = "/browse/";
+      headerLinkLabel = "Browse files";
+      extraScripts = [ "/_landing.js" ];
+      heroHtml = ''
+        <h1 id="title">Build less.<br /><span>Ship more.</span></h1>
+        <p class="intro">Shared Nix packages for the Slopageddon fleet.</p>
+      '';
+      hubUrl = fleet.beszel.url;
+      bodyHtml = builtins.replaceStrings [ "@upstreams@" ] [ upstreamsHtml ] (
+        builtins.readFile ./landing.html
+      );
+      systemSummary = {
+        hostname = config.networking.hostName;
+        version = config.system.nixos.release;
+        system = pkgs.stdenv.hostPlatform.system;
+      };
+    }
   );
+
+  catalogPage = pkgs.writeText "nix-cache-catalog.html" (
+    web.mkPage {
+      title = "Browse Nix Cache // Slopageddon";
+      activeNav = "nix-cache";
+      brandIsLink = true;
+      headerLinkHref = "/";
+      headerLinkLabel = "Back to home";
+      headerLinkBack = true;
+      includeBrowserCss = true;
+      extraScripts = [ "/_catalog.js" ];
+      compactHero = true;
+      heroHtml = ''
+        <h1 id="title">Already here.<br /><span>Ready to build.</span></h1>
+        <p class="intro">Cached Nix packages and archives on this host.</p>
+      '';
+      bodyHtml = builtins.readFile ./catalog.html;
+    }
+  );
+
+  staticAsset =
+    {
+      path,
+      mimeType,
+      noTypes ? false,
+      cacheControl ? "no-cache",
+    }:
+    {
+      alias = "${path}";
+      extraConfig = ''
+        ${lib.optionalString noTypes "types { }"}
+        default_type ${mimeType};
+        access_log off;
+        limit_except GET { deny all; }
+        add_header Cache-Control "${cacheControl}" always;
+        ${httpsLib.nginxBaselineHeaders}
+      '';
+    };
+
+  htmlLocation = name: file: {
+    root = pkgs.linkFarm name [
+      {
+        name = "index.html";
+        path = file;
+      }
+    ];
+    tryFiles = "/index.html =404";
+    extraConfig = ''
+      default_type text/html;
+      access_log off;
+      limit_except GET { deny all; }
+      add_header Cache-Control "no-cache" always;
+      ${httpsLib.nginxHtmlHeaders web.cspHeader}
+    '';
+  };
+
+  summaryCollector = mkCollector {
+    description = "Collect cache health, capacity and traffic statistics";
+    user = config.services.nginx.user;
+    group = config.services.nginx.group;
+    stateDirectory = "nix-cache-summary";
+    after = [
+      "network-online.target"
+      "nginx.service"
+    ];
+    wants = [ "network-online.target" ];
+    path = [
+      pkgs.curl
+      pkgs.coreutils
+    ];
+    execStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-summary/summary.json --limit-gib ${toString cacheLimitGiB} --reserve-gib ${toString cacheReserveGiB}";
+    timeoutStartSec = "2min";
+    memoryMax = "128M";
+    onBootSec = "1min";
+    onCalendar = "*:0/15";
+    needsNetwork = true;
+  };
+
+  catalogCollector = mkCollector {
+    description = "Index cached Nix downloads for the file browser";
+    user = config.services.nginx.user;
+    group = config.services.nginx.group;
+    stateDirectory = "nix-cache-catalog";
+    after = [ "nginx.service" ];
+    execStart = "${pkgs.python3}/bin/python3 ${./collect-catalog.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-catalog/catalog.json";
+    timeoutStartSec = "2min";
+    memoryMax = "256M";
+    onBootSec = "2min";
+    # Stagger away from nix-cache-summary (*:0/15) to avoid concurrent cache-tree scans.
+    onCalendar = "*:07/15";
+    needsNetwork = false;
+  };
+
   proxySettings = host: skipVar: ''
     proxy_set_header Host ${host};
     proxy_ssl_server_name on;
@@ -47,6 +166,7 @@ let
     add_header X-Cache-Status $upstream_cache_status always;
     limit_except GET { deny all; }
   '';
+
   cacheLocations =
     cache:
     let
@@ -69,102 +189,27 @@ let
       (location "/[0-9a-z]{32}\\.narinfo" "1h" "proxy_ignore_headers Cache-Control Expires;")
       (location "/nar/.*" "365d" "")
     ];
-
 in
 {
-  options.services.nix-cache-proxy.allowedNetworks = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [
-      "10.0.0.0/8"
-      "172.16.0.0/12"
-      "192.168.0.0/16"
-      "127.0.0.1/32"
-      "::1/128"
-    ];
-    description = "Client CIDRs allowed to read the cache; narrow to routed environment networks as needed.";
-  };
+  options.services.nix-cache-proxy.allowedNetworks = httpsLib.mkAllowedNetworksOption "Client CIDRs allowed to read the cache; narrow to routed environment networks as needed.";
 
   config = {
     systemd = {
       services = {
-        nix-cache-summary = {
-          description = "Collect cache health, capacity and traffic statistics";
-          after = [
-            "network-online.target"
-            "nginx.service"
-          ];
-          wants = [ "network-online.target" ];
-          path = [
-            pkgs.curl
-            pkgs.coreutils
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            # Nginx cache directories are private to its service user (0700).
-            User = config.services.nginx.user;
-            Group = config.services.nginx.group;
-            StateDirectory = "nix-cache-summary";
-            StateDirectoryMode = "0755";
-            ExecStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-summary/summary.json --limit-gib ${toString cacheLimitGiB} --reserve-gib ${toString cacheReserveGiB}";
-            TimeoutStartSec = "2min";
-            NoNewPrivileges = true;
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            PrivateDevices = true;
-            CapabilityBoundingSet = "";
-            Nice = 10;
-            IOSchedulingClass = "idle";
-            MemoryMax = "128M";
-          };
-        };
-        nix-cache-catalog = {
-          description = "Index cached Nix downloads for the file browser";
-          after = [ "nginx.service" ];
-          serviceConfig = {
-            Type = "oneshot";
-            User = config.services.nginx.user;
-            Group = config.services.nginx.group;
-            StateDirectory = "nix-cache-catalog";
-            StateDirectoryMode = "0755";
-            ExecStart = "${pkgs.python3}/bin/python3 ${./collect-catalog.py} ${../../system/config/services/nix-cache/upstreams.json} /var/lib/nix-cache-catalog/catalog.json";
-            TimeoutStartSec = "2min";
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            PrivateDevices = true;
-            NoNewPrivileges = true;
-            CapabilityBoundingSet = "";
-            Nice = 10;
-            IOSchedulingClass = "idle";
-            MemoryMax = "256M";
-          };
-        };
+        nix-cache-summary = summaryCollector.service;
+        nix-cache-catalog = catalogCollector.service;
       };
       timers = {
-        nix-cache-summary = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "1min";
-            OnCalendar = "*:0/15";
-            Persistent = true;
-          };
-        };
-        nix-cache-catalog = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "2min";
-            OnCalendar = "*:0/15";
-            Persistent = true;
-          };
-        };
+        nix-cache-summary = summaryCollector.timer;
+        nix-cache-catalog = catalogCollector.timer;
       };
     };
-    networking.firewall.allowedTCPPorts = [ 443 ];
+
     services.nginx = {
       enable = true;
       recommendedTlsSettings = true;
       recommendedOptimisation = true;
+      recommendedGzipSettings = true;
       resolver = {
         addresses = [
           "1.1.1.1"
@@ -190,11 +235,10 @@ in
           '"uri":"$uri","status":$status,"bytes":$body_bytes_sent,'
           '"cache":"$upstream_cache_status","duration":$request_time}';
       '';
-      virtualHosts."nix-cache.slopageddon.app" = {
+      virtualHosts."nix-cache.${fleet.domain}" = {
         extraConfig = ''
           access_log /var/log/nginx/nix-cache-access.log nix_cache;
-          ${lib.concatMapStringsSep "\n" (network: "allow ${network};") cfg.allowedNetworks}
-          deny all;
+          ${httpsLib.nginxAllowDirectives cfg.allowedNetworks}
         '';
         locations = builtins.listToAttrs (lib.concatMap cacheLocations upstreams) // {
           # Content-addressed hashed mirror for builtins.fetchurl / pkgs.fetchurl.
@@ -210,94 +254,55 @@ in
               proxy_redirect / /tarballs/;
             '';
           };
-          "= /browse".return = "308 /browse/";
-          "= /browse/" = {
-            root = pkgs.linkFarm "nix-cache-catalog-page" [
-              {
-                name = "index.html";
-                path = ./catalog.html;
-              }
-            ];
-            tryFiles = "/index.html =404";
+          "= /favicon.ico" = {
+            return = "308 /_favicon.svg";
             extraConfig = ''
-              default_type text/html;
               access_log off;
-              limit_except GET { deny all; }
-              add_header Cache-Control "no-cache";
             '';
           };
-          "= /_catalog.js" = {
-            alias = "${./catalog.js}";
-            extraConfig = ''
-              types { }
-              default_type application/javascript;
-              access_log off;
-              limit_except GET { deny all; }
-            '';
+          "= /_favicon.svg" = staticAsset {
+            path = "${web.assets}/favicon.svg";
+            mimeType = "image/svg+xml";
           };
-          "= /_browse.css" = {
-            alias = "${../../system/config/services/file-browser/browser.css}";
-            extraConfig = ''
-              default_type text/css;
-              access_log off;
-              limit_except GET { deny all; }
-            '';
+          "= /browse" = {
+            return = "308 /browse/";
+            extraConfig = "access_log off;";
           };
-          "= /_dashboard/catalog.json" = {
-            alias = "/var/lib/nix-cache-catalog/catalog.json";
-            extraConfig = ''
-              default_type application/json;
-              access_log off;
-              limit_except GET { deny all; }
-              add_header Cache-Control "no-store" always;
-              add_header X-Content-Type-Options "nosniff" always;
-            '';
+          "= /browse/" = htmlLocation "nix-cache-catalog-page" catalogPage;
+          "= /_common.js" = staticAsset {
+            path = "${web.assets}/common.js";
+            mimeType = "application/javascript";
+            noTypes = true;
           };
-          "= /_dashboard/summary.json" = {
-            alias = "/var/lib/nix-cache-summary/summary.json";
-            extraConfig = ''
-              default_type application/json;
-              access_log off;
-              limit_except GET { deny all; }
-              add_header Cache-Control "no-store" always;
-              add_header X-Content-Type-Options "nosniff" always;
-            '';
+          "= /_catalog.js" = staticAsset {
+            path = ./catalog.js;
+            mimeType = "application/javascript";
+            noTypes = true;
           };
-          "= /_landing.js" = {
-            alias = "${./landing.js}";
-            extraConfig = ''
-              types { }
-              default_type application/javascript;
-              access_log off;
-              limit_except GET { deny all; }
-              add_header X-Content-Type-Options "nosniff" always;
-            '';
+          "= /_browse.css" = staticAsset {
+            path = "${web.assets}/browser.css";
+            mimeType = "text/css";
           };
-          "= /_landing.css" = {
-            alias = "${./landing.css}";
-            extraConfig = ''
-              default_type text/css;
-              access_log off;
-              limit_except GET { deny all; }
-              add_header X-Content-Type-Options "nosniff" always;
-            '';
+          "= /_dashboard/catalog.json" = staticAsset {
+            path = "/var/lib/nix-cache-catalog/catalog.json";
+            mimeType = "application/json";
+            cacheControl = "no-store";
           };
-          "= /" = {
-            root = pkgs.linkFarm "nix-cache-landing" [
-              {
-                name = "index.html";
-                path = landingPage;
-              }
-            ];
-            tryFiles = "/index.html =404";
-            extraConfig = ''
-              default_type text/html;
-              access_log off;
-              limit_except GET { deny all; }
-              add_header X-Content-Type-Options "nosniff" always;
-              add_header Cache-Control "no-cache";
-            '';
+          "= /_dashboard/summary.json" = staticAsset {
+            path = "/var/lib/nix-cache-summary/summary.json";
+            mimeType = "application/json";
+            cacheControl = "no-store";
           };
+          "= /_landing.js" = staticAsset {
+            path = ./landing.js;
+            mimeType = "application/javascript";
+            noTypes = true;
+          };
+          "= /_landing.css" = staticAsset {
+            path = "${web.assets}/landing.css";
+            mimeType = "text/css";
+          };
+          "= /" = htmlLocation "nix-cache-landing" landingPage;
           "/".return = "404";
         };
       };

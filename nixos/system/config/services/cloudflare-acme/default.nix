@@ -12,6 +12,11 @@ in
       default = [ ];
     };
     tokenReference = lib.mkOption { type = lib.types.str; };
+    email = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Contact email registered with Let's Encrypt for expiry and revocation notices.";
+    };
     retryIntervalSeconds = lib.mkOption {
       type = lib.types.ints.positive;
       default = 900;
@@ -43,15 +48,19 @@ in
     };
     security.acme = {
       acceptTerms = true;
-      certs = lib.genAttrs cfg.domains (_: {
-        dnsProvider = "cloudflare";
-        dnsResolver = "1.1.1.1:53";
-        credentialFiles.CF_DNS_API_TOKEN_FILE = cfg.tokenPath;
-        group = cfg.certificateGroup;
-        inherit (cfg) reloadServices;
-      });
+      certs = lib.genAttrs cfg.domains (
+        _:
+        {
+          dnsProvider = "cloudflare";
+          dnsResolver = "1.1.1.1:53";
+          credentialFiles.CF_DNS_API_TOKEN_FILE = cfg.tokenPath;
+          group = cfg.certificateGroup;
+          inherit (cfg) reloadServices;
+        }
+        // lib.optionalAttrs (cfg.email != null) { inherit (cfg) email; }
+      );
     };
-    systemd.services = lib.genAttrs (map (domain: "acme-order-renew-${domain}") cfg.domains) (_: {
+    systemd.services = lib.genAttrs renewals (_: {
       requires = [ "opnix-secrets.service" ];
       after = [ "opnix-secrets.service" ];
       unitConfig.StartLimitIntervalSec = 0;

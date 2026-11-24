@@ -2,45 +2,40 @@
 let
   cfg = config.services.beszel.hub;
   front = cfg.frontend;
+  httpsLib = import ../../internal-https/lib.nix { inherit lib; };
 in
 {
-  imports = [ ../../cloudflare-acme ];
+  imports = [ ../../internal-https ];
   options.services.beszel.hub.frontend = {
     enable = lib.mkEnableOption "Beszel HTTPS frontend with Cloudflare DNS-01";
     domain = lib.mkOption { type = lib.types.str; };
     cloudflareTokenReference = lib.mkOption { type = lib.types.str; };
-    allowedNetworks = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [
-        "10.0.0.0/8"
-        "172.16.0.0/12"
-        "192.168.0.0/16"
-        "127.0.0.1/32"
-        "::1/128"
-      ];
+    cloudflareEmail = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
     };
+    allowedNetworks = httpsLib.mkAllowedNetworksOption "Client CIDRs allowed to access the Beszel hub frontend.";
   };
   config = lib.mkIf (cfg.enable && front.enable) {
-    networking.firewall.allowedTCPPorts = [ 443 ];
     services = {
       beszel.hub = {
         host = lib.mkDefault "127.0.0.1";
         environment.APP_URL = lib.mkDefault "https://${front.domain}";
       };
-      cloudflare-acme = {
+      internal-https = {
         enable = true;
         domains = [ front.domain ];
-        tokenReference = front.cloudflareTokenReference;
+        inherit (front) cloudflareTokenReference cloudflareEmail;
       };
       nginx = {
         enable = true;
         recommendedTlsSettings = true;
+        recommendedOptimisation = true;
         virtualHosts.${front.domain} = {
-          forceSSL = true;
+          onlySSL = true;
           useACMEHost = front.domain;
           extraConfig = ''
-            ${lib.concatMapStringsSep "\n" (network: "allow ${network};") front.allowedNetworks}
-            deny all;
+            ${httpsLib.nginxAllowDirectives front.allowedNetworks}
             client_max_body_size 10m;
           '';
           locations."/" = {
@@ -49,6 +44,7 @@ in
             }:${toString cfg.port}";
             proxyWebsockets = true;
             extraConfig = ''
+              ${httpsLib.nginxBaselineHeaders}
               proxy_read_timeout 360s;
               proxy_send_timeout 360s;
               proxy_buffering off;

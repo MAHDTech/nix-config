@@ -1,7 +1,7 @@
 # Beszel monitoring hub
 
 `https://hub.slopageddon.app` provides Beszel metrics and history for the 50
-dedicated GitHub runners, `nix-cache`, `s3`, and `hub` itself. There are 53 agents.
+dedicated GitHub runners, `nix-cache`, `s3`, `mirror`, and `hub` itself. There are 54 agents.
 Cockpit and GoAccess are not installed. Dashboard users are Beszel accounts;
 there is no additional Linux login account.
 
@@ -42,11 +42,11 @@ Git, cloud-init user-data or command arguments used for builds.
 | `Beszel Hub`                  | `private_key`           | An unencrypted OpenSSH Ed25519 private key, preserving line breaks and the final newline |
 | `Beszel Hub`                  | `public_key`            | Its matching OpenSSH public key                                                          |
 | `Beszel Hub`                  | `bootstrap_environment` | Multiline systemd environment file described below                                       |
-| `Beszel Agents`               | One field per host      | A different random registration token for each of the 53 hosts                           |
+| `Beszel Agents`               | One field per host      | A different random registration token for each of the 54 hosts                           |
 | `Cloudflare ACME Slopageddon` | `token`                 | Existing DNS-01 token; reuse the current item                                            |
 
 The agent field names are `github-runner-01` through `github-runner-50`,
-`nix-cache`, `s3` and `hub`. Generate each token independently with your password
+`nix-cache`, `s3`, `mirror` and `hub`. Generate each token independently with your password
 manager, using at least 32 random URL-safe characters without whitespace.
 
 Generate the key pair on a trusted administrator machine, then store both files
@@ -173,4 +173,4 @@ nix build .#checks.x86_64-linux.beszel
 `tests/test_beszel.py` additionally exercises password login and viewer API access
 against the actual Beszel binary. No test contacts production 1Password or issues
 a real certificate. After deployment, verify trusted certificate issuance and
-renewal, all 23 systems online, viewer permissions and the backup/restore process.
+renewal, all 54 systems online, viewer permissions and the backup/restore process.

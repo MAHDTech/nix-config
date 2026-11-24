@@ -7,105 +7,175 @@
 }:
 let
   cfg = config.services.mirror;
+  fleet = import ../fleet.nix;
+  httpsLib = import ../../system/config/services/internal-https/lib.nix { inherit lib; };
+  web = import ../../system/config/services/slopageddon-web { inherit lib pkgs; };
+  mkCollector = import ../../system/config/services/collector/mk-collector.nix;
+
   collections = [
-    "nutanix/lcm/release"
-    "nutanix/nkp"
-    "nutanix/bundles"
-    "nutanix/images"
-    "nutanix/ova"
-    "f5/packages"
-    "f5/images"
-    "f5/ova"
-    "terraform"
-    "iso"
-    "images"
-    "images/ova"
-    "ubuntu"
-    "redhat"
+    {
+      root = "nutanix";
+      label = "Nutanix";
+      description = "LCM, NKP, bundles and appliances";
+      subdirectories = [
+        "lcm/release"
+        "nkp"
+        "bundles"
+        "images"
+        "ova"
+      ];
+    }
+    {
+      root = "f5";
+      label = "F5";
+      description = "Packages, disk images and appliances";
+      subdirectories = [
+        "packages"
+        "images"
+        "ova"
+      ];
+    }
+    {
+      root = "terraform";
+      label = "OpenTofu / Terraform";
+      description = "Provider mirror";
+      subdirectories = [ ];
+    }
+    {
+      root = "iso";
+      label = "Installation media";
+      description = "ISO files";
+      subdirectories = [ ];
+    }
+    {
+      root = "images";
+      label = "Disk images";
+      description = "Generic VM images";
+      subdirectories = [ "ova" ];
+    }
+    {
+      root = "ubuntu";
+      label = "Ubuntu";
+      description = "DEB packages";
+      subdirectories = [ ];
+    }
+    {
+      root = "redhat";
+      label = "Red Hat";
+      description = "RPM packages";
+      subdirectories = [ ];
+    }
   ];
+
+  collectionDirs = lib.concatMap (
+    entry: [ entry.root ] ++ map (sub: "${entry.root}/${sub}") entry.subdirectories
+  ) collections;
+
+  collectionPaths = lib.concatMapStringsSep " " (
+    entry: "/${entry.root} /${entry.root}/*"
+  ) collections;
+
+  collectionsHtml = lib.concatMapStringsSep "\n" (entry: ''
+    <li>
+      <a href="/${lib.escapeXML entry.root}/">${lib.escapeXML entry.label} <span>${lib.escapeXML entry.description} <span aria-hidden="true">→</span></span></a>
+    </li>
+  '') collections;
+
   landing = pkgs.writeTextDir "index.html" (
-    builtins.replaceStrings
-      [ "@hostname@" "@version@" "@system@" "@hub@" ]
-      [
-        (lib.escapeXML config.networking.hostName)
-        (lib.escapeXML config.system.nixos.release)
-        (lib.escapeXML pkgs.stdenv.hostPlatform.system)
-        (lib.escapeXML (import ../fleet.nix).beszel.url)
-      ]
-      (builtins.readFile ./landing.html)
+    web.mkPage {
+      title = "Mirror // Slopageddon";
+      activeNav = "mirror";
+      headerLinkHref = "/browse/";
+      headerLinkLabel = "Browse files";
+      includeBrowserCss = true;
+      extraScripts = [ "/_landing.js" ];
+      heroHtml = ''
+        <h1 id="title">One mirror.<br /><span>Many sources.</span></h1>
+        <p class="intro">Software, images and dark-site bundles for the Slopageddon fleet.</p>
+      '';
+      hubUrl = fleet.beszel.url;
+      bodyHtml = builtins.replaceStrings [ "@collections@" ] [ collectionsHtml ] (
+        builtins.readFile ./landing.html
+      );
+      systemSummary = {
+        hostname = config.networking.hostName;
+        version = config.system.nixos.release;
+        system = pkgs.stdenv.hostPlatform.system;
+      };
+    }
   );
+
+  browseTemplate = pkgs.writeText "mirror-browse.html" (
+    web.mkPage {
+      title = "{{html .Name}} // Slopageddon Mirror";
+      activeNav = "mirror";
+      brandIsLink = true;
+      headerLinkHref = "/";
+      headerLinkLabel = "Back to home";
+      headerLinkBack = true;
+      includeBrowserCss = true;
+      includeCommonJs = false;
+      compactHero = true;
+      heroHtml = ''
+        <h1 id="title">Mirror files.<br /><span>Direct downloads.</span></h1>
+        <p class="intro">Static packages, images and bundles served from this host.</p>
+      '';
+      bodyHtml = builtins.readFile ./browse.html;
+    }
+  );
+
+  mirrorAssets = pkgs.linkFarm "mirror-web-assets" [
+    {
+      name = "landing.js";
+      path = ./landing.js;
+    }
+  ];
+
+  summaryCollector = mkCollector {
+    description = "Collect mirror disk statistics";
+    user = "caddy";
+    group = "caddy";
+    stateDirectory = "mirror-summary";
+    execStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} /srv/mirror /var/lib/mirror-summary/summary.json";
+    path = [ pkgs.coreutils ];
+    timeoutStartSec = "45s";
+    memoryMax = "128M";
+    onBootSec = "1min";
+    onCalendar = "*:0/15";
+    needsNetwork = false;
+  };
+
   fileServer = ''
     root * /srv/mirror
     file_server {
       index __no_index_files__
-      browse ${./browse.html} {
+      browse ${browseTemplate} {
         sort namedirfirst
       }
     }
   '';
 in
 {
-  options.services.mirror.allowedNetworks = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [
-      "10.0.0.0/8"
-      "172.16.0.0/12"
-      "192.168.0.0/16"
-      "127.0.0.1/32"
-      "::1/128"
-    ];
-    description = "Client CIDRs allowed to browse and download mirror content.";
-  };
+  options.services.mirror.allowedNetworks = httpsLib.mkAllowedNetworksOption "Client CIDRs allowed to browse and download mirror content.";
+
   config = {
     systemd = {
       tmpfiles.rules = [
         "d /srv/mirror 0755 root root -"
       ]
-      ++ map (path: "d /srv/mirror/${path} 0755 root root -") collections;
-      services = {
-        mirror-summary = {
-          description = "Collect mirror disk statistics";
-          serviceConfig = {
-            Type = "oneshot";
-            User = "caddy";
-            Group = "caddy";
-            StateDirectory = "mirror-summary";
-            StateDirectoryMode = "0755";
-            ExecStart = "${pkgs.python3}/bin/python3 ${./collect-summary.py} /srv/mirror /var/lib/mirror-summary/summary.json";
-            TimeoutStartSec = "45s";
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            PrivateDevices = true;
-            NoNewPrivileges = true;
-            CapabilityBoundingSet = "";
-            Nice = 10;
-            IOSchedulingClass = "idle";
-            MemoryMax = "128M";
-          };
-          path = [ pkgs.coreutils ];
-        };
-      };
-      timers = {
-        mirror-summary = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "1min";
-            OnCalendar = "*:0/15";
-            Persistent = true;
-          };
-        };
-      };
+      ++ map (path: "d /srv/mirror/${path} 0755 root root -") collectionDirs;
+      services.mirror-summary = summaryCollector.service;
+      timers.mirror-summary = summaryCollector.timer;
     };
-    networking.firewall.allowedTCPPorts = [ 443 ];
+
     services.caddy = {
       enable = true;
       enableReload = true;
       globalConfig = ''
         auto_https disable_redirects
       '';
-      virtualHosts."https://mirror.slopageddon.app" = {
-        useACMEHost = "mirror.slopageddon.app";
+      virtualHosts."https://mirror.${fleet.domain}" = {
+        useACMEHost = "mirror.${fleet.domain}";
         logFormat = "output stderr";
         extraConfig = ''
           @outside not remote_ip ${lib.concatStringsSep " " cfg.allowedNetworks}
@@ -113,24 +183,46 @@ in
           route {
             respond @outside 403
             respond @write 405
-            header X-Content-Type-Options nosniff
+            header {
+              X-Content-Type-Options nosniff
+              Referrer-Policy no-referrer
+            }
+            redir /favicon.ico /_favicon.svg 308
             handle / {
               root * ${landing}
+              header Cache-Control no-cache
+              header X-Frame-Options DENY
+              header Content-Security-Policy "${web.cspHeader}"
+              file_server
+            }
+            handle /_favicon.svg {
+              rewrite * /favicon.svg
+              root * ${web.assets}
+              header Cache-Control no-cache
               file_server
             }
             handle /_landing.css {
               rewrite * /landing.css
-              root * ${../nix-cache}
+              root * ${web.assets}
+              header Cache-Control no-cache
               file_server
             }
             handle /_browse.css {
               rewrite * /browser.css
-              root * ${../../system/config/services/file-browser}
+              root * ${web.assets}
+              header Cache-Control no-cache
+              file_server
+            }
+            handle /_common.js {
+              rewrite * /common.js
+              root * ${web.assets}
+              header Cache-Control no-cache
               file_server
             }
             handle /_landing.js {
               rewrite * /landing.js
-              root * ${./.}
+              root * ${mirrorAssets}
+              header Cache-Control no-cache
               file_server
             }
             handle /_dashboard/summary.json {
@@ -142,10 +234,15 @@ in
             redir /browse /browse/ 308
             handle /browse/ {
               rewrite * /
+              header Cache-Control no-cache
+              header X-Frame-Options DENY
+              header Content-Security-Policy "${web.cspHeader}"
               ${fileServer}
             }
-            @collection path /nutanix /nutanix/* /f5 /f5/* /terraform /terraform/* /iso /iso/* /images /images/* /ubuntu /ubuntu/* /redhat /redhat/*
+            @collection path ${collectionPaths}
             handle @collection {
+              header X-Frame-Options DENY
+              header Content-Security-Policy "${web.cspHeader}"
               ${fileServer}
             }
             handle {

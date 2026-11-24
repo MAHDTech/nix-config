@@ -71,7 +71,7 @@ def main():
         verify = True
         console_url = f"http://127.0.0.1:{console}/rustfs/console/"
         if len(sys.argv) > 2:
-            tls_port, http_port = port(), port()
+            tls_port = port()
             certificates = root / "certificates"
             certificates.mkdir()
             cert = certificates / "fullchain.pem"
@@ -81,11 +81,18 @@ def main():
                            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             (certificates / "chain.pem").write_bytes(cert.read_bytes())
             text = Path(sys.argv[2]).read_text()
+            assert ":80" not in text, "onlySSL must not open port 80"
+            assert "ssl_reject_handshake on;" in text, "default catch-all must reject unknown SNI"
+            text = re.sub(
+                r"    server \{\n(?:(?!    server \{).)*?server_name _;(?:(?!    server \{).)*?\n    \}\n",
+                "",
+                text,
+                flags=re.S,
+            )
             text = text.replace("/var/lib/acme/s3.slopageddon.app", str(certificates))
             text = text.replace("/var/lib/acme/s3-console.slopageddon.app", str(certificates))
             text = text.replace("s3-console.slopageddon.app", "127.0.0.1").replace("s3.slopageddon.app", "localhost")
             text = text.replace(":443", f":{tls_port}")
-            text = text.replace("listen 0.0.0.0:80;", f"listen 127.0.0.1:{http_port};")
             text = text.replace(f"listen 0.0.0.0:{tls_port}", f"listen 127.0.0.1:{tls_port}")
             text = re.sub(r"listen \[::0\]:[^;]+;", "", text)
             text = text.replace("127.0.0.1:9000", f"127.0.0.1:{api}").replace("127.0.0.1:9001", f"127.0.0.1:{console}")
@@ -112,7 +119,12 @@ def main():
                                               request_checksum_calculation="when_required"))
 
         config = {"endpoint": f"http://127.0.0.1:{api}", "region": "us-east-1", "buckets": {
-            name: {"publicRead": name != "private-test", "retentionDays": 30, "abortMultipartDays": 1}
+            name: {
+                "publicRead": name != "private-test",
+                "retentionDays": 30,
+                "abortMultipartDays": 1,
+                "versioning": name == "private-test",
+            }
             for name in ["github-actions", "github-packages", "private-test"]}, "writers": {
             "actions": {"buckets": ["github-actions", "private-test"]},
             "packages": {"buckets": ["github-packages"]}}}
@@ -127,6 +139,8 @@ def main():
                 lifecycle = admin.get_bucket_lifecycle_configuration(Bucket=bucket)["Rules"][0]
                 assert lifecycle["Expiration"]["Days"] == 30
                 assert lifecycle["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"] == 1
+            assert admin.get_bucket_versioning(Bucket="private-test").get("Status") == "Enabled"
+            assert admin.get_bucket_versioning(Bucket="github-actions").get("Status") != "Enabled"
             http = requests.Session()
             http.trust_env = False
             http.verify = verify
@@ -149,6 +163,7 @@ def main():
             config["buckets"]["github-actions"]["publicRead"] = False
             config["buckets"]["github-actions"]["retentionDays"] = 7
             config["buckets"]["private-test"]["retentionDays"] = None
+            config["buckets"]["private-test"]["versioning"] = False
             config["writers"]["actions"]["buckets"] = ["github-actions"]
             (creds / "actions-secret").write_text(secrets.token_hex(32))
             reconciler.reconcile(config, creds, root / "state")
@@ -161,7 +176,8 @@ def main():
             permanent = admin.get_bucket_lifecycle_configuration(Bucket="private-test")["Rules"][0]
             assert "Expiration" not in permanent and "NoncurrentVersionExpiration" not in permanent
             assert permanent["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"] == 1
-            print("PASS: secret rotation, reduced grants, public-to-private, retention changes")
+            assert admin.get_bucket_versioning(Bucket="private-test").get("Status") == "Suspended"
+            print("PASS: secret rotation, reduced grants, public-to-private, retention and versioning changes")
             (creds / "actions-access").write_text(secrets.token_hex(16))
             reconciler.reconcile(config, creds, root / "state")
             assert_denied(lambda: actions.get_object(Bucket="github-actions", Key="hello.txt"))
@@ -173,9 +189,12 @@ def main():
             assert_denied(lambda: actions.get_object(Bucket="github-actions", Key="hello.txt"))
             assert admin.get_object(Bucket="github-actions", Key="hello.txt")["Body"].read() == b"cache fixture"
             print("PASS: access-key rotation, removed writer disabled, removed bucket retained")
+            if proxy is not None:
+                root_redir = http.get(f"https://127.0.0.1:{tls_port}/", allow_redirects=False)
+                assert root_redir.status_code == 308 and root_redir.headers.get("Location", "").endswith("/rustfs/console/")
             response = http.get(console_url)
             assert response.status_code == 200 and "text/html" in response.headers.get("Content-Type", "")
-            print("PASS: bundled console serves HTML")
+            print("PASS: bundled console serves HTML and root redirects")
         except Exception:
             # Fixture credentials are disposable, but don't print the server's request log.
             print("FAIL: RustFS integration check", file=sys.stderr)

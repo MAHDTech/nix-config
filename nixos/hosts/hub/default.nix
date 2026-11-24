@@ -1,42 +1,34 @@
 { lib, ... }:
 let
-  fleet = (import ../fleet.nix).beszel;
+  fleet = import ../fleet.nix;
+  inherit (fleet) beszel;
 in
 {
   imports = [
-    ../../system/virtualisation/qemu-guest.nix
-    ../../system/soe/nix
+    ../common/appliance.nix
     ../../system/config/services/beszel/hub
   ];
-  networking.hostName = "hub";
-  services = {
-    cloud-init.settings.preserve_hostname = true;
-    journald.settings.Journal.SystemMaxUse = "1G";
-    beszel.hub = {
+  services.beszel.hub = {
+    enable = true;
+    environment = {
+      DISABLE_PASSWORD_AUTH = "true";
+      USER_CREATION = "true";
+      SHARE_ALL_SYSTEMS = "true";
+      CHECK_UPDATES = "false";
+      CONTAINER_DETAILS = "false";
+    };
+    systems = lib.mapAttrs (_: member: { inherit (member) host; }) beszel.members;
+    opnix = {
       enable = true;
-      environment = {
-        DISABLE_PASSWORD_AUTH = "true";
-        USER_CREATION = "true";
-        SHARE_ALL_SYSTEMS = "true";
-        CHECK_UPDATES = "false";
-        CONTAINER_DETAILS = "false";
-      };
-      systems = lib.mapAttrs (_: member: { inherit (member) host; }) fleet.members;
-      opnix = {
-        enable = true;
-        privateKeyReference = "op://machines/Beszel Hub/private_key";
-        bootstrapReference = "op://machines/Beszel Hub/bootstrap_environment";
-        tokenReferences = lib.mapAttrs (_: member: member.tokenReference) fleet.members;
-      };
-      frontend = {
-        enable = true;
-        domain = "hub.slopageddon.app";
-        cloudflareTokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
-      };
+      privateKeyReference = "op://machines/Beszel Hub/private_key";
+      bootstrapReference = "op://machines/Beszel Hub/bootstrap_environment";
+      tokenReferences = lib.mapAttrs (_: member: member.tokenReference) beszel.members;
+    };
+    frontend = {
+      enable = true;
+      domain = "hub.${fleet.domain}";
+      cloudflareTokenReference = fleet.acme.tokenReference;
+      cloudflareEmail = fleet.acme.email;
     };
   };
-  system.autoUpgrade = {
-    flake = lib.mkForce "github:MAHDTech/nix-config#hub";
-  };
-  nix.settings.trusted-users = lib.mkForce [ "root" ];
 }

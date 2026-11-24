@@ -9,8 +9,14 @@ import os
 from pathlib import Path
 import re
 import stat
-import tempfile
+import sys
 import time
+
+_COLLECTOR_DIR = Path(__file__).resolve().parents[2] / "system/config/services/collector"
+if str(_COLLECTOR_DIR) not in sys.path and _COLLECTOR_DIR.is_dir():
+    sys.path.insert(0, str(_COLLECTOR_DIR))
+
+from common import write_json_atomic  # noqa: E402
 
 
 def read_entry(path, upstreams):
@@ -126,11 +132,7 @@ def main():
     parser.add_argument("--cache-path", type=Path, default=Path("/var/cache/nginx/nixpkgs"))
     args = parser.parse_args()
     snapshot = collect_catalog(args.cache_path, json.loads(args.upstreams.read_text()))
-    with tempfile.NamedTemporaryFile(mode="w", dir=args.destination.parent, delete=False) as file:
-        json.dump(snapshot, file)
-        temporary = file.name
-    os.chmod(temporary, 0o644)
-    os.replace(temporary, args.destination)
+    write_json_atomic(args.destination, snapshot, 0o644)
 
 
 if __name__ == "__main__":

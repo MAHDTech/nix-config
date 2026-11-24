@@ -27,17 +27,28 @@ let fail = false
 const context = vm.createContext({
   document: { getElementById: element, querySelectorAll: () => [] },
   fetch: async () => ({ ok: !fail, json: async () => snapshot }),
-  setInterval: (callback, interval) => assert.equal(interval, 15 * 60 * 1000),
+  setInterval: (_callback, interval) => assert.equal(interval, 15 * 60 * 1000),
 })
+vm.runInContext(
+  fs.readFileSync(
+    path.join(__dirname, "../nixos/system/config/services/slopageddon-web/common.js"),
+    "utf8"
+  ),
+  context
+)
 vm.runInContext(
   fs.readFileSync(path.join(__dirname, "../nixos/hosts/nix-cache/landing.js"), "utf8"),
   context
 )
 
 async function main() {
+  assert.equal(context.Slopageddon.formatBytes(-2048), "−2 KiB")
+  assert.equal(context.Slopageddon.formatBytes(null), "Unavailable")
+
   await context.loadSummary()
   assert.equal(element("disk-free").textContent, "200 GiB")
   assert.equal(element("disk-meter").value, 75)
+  assert.equal(element("disk-meter").dataset.state, "")
   assert.equal(element("cache-hit-rate").textContent, "80.0%")
   assert.equal(element("cache-errors").textContent, "1")
   assert.match(element("requests-detail").textContent, /4 not-found/)
@@ -48,6 +59,7 @@ async function main() {
   snapshot.storage.previous_checked_at = new Date().toISOString()
   await context.loadSummary()
   assert.equal(element("disk-free").dataset.state, "warning")
+  assert.equal(element("disk-meter").dataset.state, "warning")
   assert.match(element("disk-detail").textContent, /Below reserve/)
   assert.match(element("cache-growth").textContent, /−1 KiB/)
 
@@ -56,7 +68,7 @@ async function main() {
   snapshot.checked_at = "2020-01-01T00:00:00Z"
   await context.loadSummary()
   assert.equal(element("cache-hit-rate").textContent, "No traffic")
-  assert.match(element("statistics-updated").textContent, /Snapshot stale/)
+  assert.match(element("statistics-updated").textContent, /^Stale · /)
 
   snapshot.storage = null
   snapshot.traffic = null
@@ -67,7 +79,7 @@ async function main() {
 
   fail = true
   await context.loadSummary()
-  assert.match(element("statistics-updated").textContent, /Could not refresh/)
+  assert.match(element("statistics-updated").textContent, /Couldn't refresh statistics/)
   assert.equal(element("statistics-updated").dataset.state, "warning")
   console.log(
     "PASS: dashboard metrics, empty traffic, low disk, eviction, stale and failed snapshots"

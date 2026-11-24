@@ -52,10 +52,10 @@ archive filename is shown. Downloads use the existing cache URLs, never the
 internal nginx cache files. Evicted downloads may be fetched upstream again.
 
 `nix-cache-catalog.timer` publishes `/_dashboard/catalog.json` every 15 minutes
-and shortly after boot. Its collector reads bounded headers and small metadata
-bodies, validates cache keys against their hashed filenames, and skips incomplete
-files, query-bearing URLs and unknown upstreams. It runs as nginx with read-only
-cache access. A scan is limited to 100,000 files and 90 seconds; partial catalogs
+(staggered at `*:07/15` away from `nix-cache-summary.timer`) and shortly after boot.
+Its collector reads bounded headers and small metadata bodies, validates cache keys
+against their hashed filenames, and skips incomplete files, query-bearing URLs and
+unknown upstreams. It runs as nginx with read-only cache access and `PrivateNetwork=true`. A scan is limited to 100,000 files and 90 seconds; partial catalogs
 are marked explicitly. Failed runs retain the last snapshot, which the browser
 marks stale after 30 minutes. This is a cache snapshot, not an upstream package
 inventory or a guarantee that an entry remains cached.
@@ -136,7 +136,7 @@ Certificate validation and Nginx upstream resolution use Cloudflare's public DNS
 The Cloudflare token needs `Zone:Read` and `DNS:Edit` restricted to the `slopageddon.app` zone.
 The configuration requests only `nix-cache.slopageddon.app`, but the token's DNS permission is zone-wide.
 There is no wildcard certificate or `.lab` SAN.
-An ACME contact email has not yet been selected; NixOS supports registration without one, or set `security.acme.certs."nix-cache.slopageddon.app".email`.
+The Let's Encrypt contact email is configured centrally via `fleet.nix` (`services.cloudflare-acme.email`).
 
 The shared `services.cloudflare-acme` module retries failed certificate requests
 every 15 minutes until success, then returns to daily renewal checks. Override
@@ -150,7 +150,7 @@ Use the same deployment flow as the GitHub runners:
 1. The deployment controller delivers the **1Password service-account token** to `/etc/opnix-token` outside cloud-init; cloud-init only lists it as a bootstrap prerequisite.
 2. Ensure that service account can read the `machines` vault and the item below.
 3. Opnix reads `op://machines/Cloudflare ACME Slopageddon/token`.
-4. Opnix writes the **Cloudflare API token** to `/run/secrets/cloudflare-acme-slopageddon`, owned by root with mode `0400`.
+4. Opnix writes the **Cloudflare API token** to `/run/secrets/cloudflare-acme-token`, owned by root with mode `0400`.
 5. `acme-order-renew-nix-cache.slopageddon.app.service` waits for opnix and receives that file through systemd credentials as `CF_DNS_API_TOKEN_FILE`.
 6. Nginx reloads after certificate issuance or renewal.
 
@@ -225,9 +225,9 @@ python3 -m unittest discover -s tests -p test_nix_cache_summary.py
 node tests/test_nix_cache_dashboard.js
 ```
 
-Local validation completed on 2026-09-21:
+Local validation history (originally 2026-09-21; fleet has since scaled to 50 dedicated runners):
 
-- All 20 dedicated runners, JONS, the cache host and installer evaluated with no failed assertions; the cache image derivation also evaluated.
+- All dedicated runners, JONS, the cache host and installer evaluated with no failed assertions; the cache image derivation also evaluated.
 - Generated Nginx configuration built successfully and passed `nginx -t` with local fixture certificates and paths.
 - Changed-file pre-commit hooks passed.
 - Evaluated ACME renewal dependencies and systemd credential delivery match the opnix secret reference.
@@ -235,7 +235,7 @@ Local validation completed on 2026-09-21:
 - Nix 2.34.8 downloaded a signed store path through the proxy and rejected an incorrect signing key.
 - Separate client stores used a second HTTPS substituter after DNS failure, connection refusal, an unresponsive TLS endpoint and an interrupted archive download.
 - Source-build fallback remained disabled during these failover tests.
-- Both runner groups have 10 members, all dedicated runners have the cache and Bubblewrap enabled, and JONS's runner remains disabled.
+- All dedicated runners have the cache and Bubblewrap enabled, and JONS's runner remains disabled.
 
 The runtime fixture used local ports and a test CA; it did not request a real certificate or contact 1Password.
 The deployed VM has booted and expanded its root filesystem to 1 TiB.

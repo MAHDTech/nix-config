@@ -16,6 +16,8 @@ spec = importlib.util.spec_from_file_location(
 summary = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(summary)
 
+import common as collector_common  # noqa: E402
+
 
 class CacheSummaryTest(unittest.TestCase):
     def setUp(self):
@@ -85,13 +87,13 @@ class CacheSummaryTest(unittest.TestCase):
         self.assertEqual(traffic['archive_bytes'], 400)
 
     def test_storage_reports_available_space_and_measurement_failure(self):
-        with mock.patch.object(summary.shutil, 'disk_usage', return_value=(1000, 700, 200)):
-            with mock.patch.object(summary.subprocess, 'run') as run:
+        with mock.patch.object(collector_common.shutil, 'disk_usage', return_value=(1000, 700, 200)):
+            with mock.patch.object(collector_common.subprocess, 'run') as run:
                 run.return_value.stdout = '512\t/cache\n'
                 storage = summary.collect_storage(Path(self.tmp.name))
             self.assertEqual(storage['available_bytes'], 200)
             self.assertEqual(storage['cache_bytes'], 512)
-            with mock.patch.object(summary.subprocess, 'run', side_effect=OSError):
+            with mock.patch.object(collector_common.subprocess, 'run', side_effect=OSError):
                 storage = summary.collect_storage(Path(self.tmp.name))
             self.assertIsNone(storage['cache_bytes'])
             self.assertEqual(storage['available_bytes'], 200)

@@ -30,17 +30,21 @@ using the same onboarding procedure as nix-cache.
 
 ## Web interface
 
-The landing page at `/` shares nix-cache's CSS, fonts and colors. The top-right
-**Browse files** link opens `/browse/`, a Caddy listing of the collections.
-Listings use the same CSS and a custom Caddy template. Root-listing links point
-to canonical collection paths; `/browse/` does not introduce another download
-namespace. The hub card remains available for host monitoring.
+The landing page at `/` uses the shared `slopageddon-web` theme module (CSS, fonts,
+colors, fleet navigation, and SVG favicon). The top-right **Browse files** link opens
+`/browse/`, a Caddy listing of the collections. Listings use the same CSS and a custom
+Caddy template. Root-listing links point to canonical collection paths; `/browse/` does
+not introduce another download namespace. The hub card remains available for host monitoring.
 
 Disk statistics are sampled by `mirror-summary.timer` every 15 minutes and
-shortly after boot. The collector runs as Caddy with read-only content access.
-Filesystem capacity is measured directly; the content-size scan has a 30-second
-timeout. Unavailable values and stale snapshots are identified on the page.
-Mirror files are not automatically evicted to free space.
+shortly after boot. The collector runs as Caddy with read-only content access
+and `PrivateNetwork=true`. Filesystem capacity is measured directly; the content-size
+scan has a 30-second timeout. Unavailable values and stale snapshots are identified on
+the page. Mirror files are not automatically evicted to free space.
+
+Nightly upgrades drain `mirror-summary` and stop Caddy with a 5-minute grace period
+(`grace_period 5m`) before rebooting so active downloads can complete cleanly. See
+[host draining](../../../docs/nixos-drain.md) for timeouts and cancellation.
 
 ## Content layout and migration
 

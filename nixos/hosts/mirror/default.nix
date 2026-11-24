@@ -1,24 +1,25 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
+let
+  fleet = import ../fleet.nix;
+  domain = "mirror.${fleet.domain}";
+in
 {
   imports = [
-    ../../system/virtualisation/qemu-guest.nix
-    ../../system/soe/nix
-    ../../system/config/services/cloudflare-acme
+    ../common/appliance.nix
+    ../../system/config/services/internal-https
     ./web.nix
+    ./drain.nix
   ];
-  networking.hostName = "mirror";
-  services = {
-    cloud-init.settings.preserve_hostname = true;
-    journald.settings.Journal.SystemMaxUse = "1G";
-    cloudflare-acme = {
-      enable = true;
-      domains = [ "mirror.slopageddon.app" ];
-      tokenReference = "op://machines/Cloudflare ACME Slopageddon/token";
-      certificateGroup = "caddy";
-      reloadServices = [ "caddy.service" ];
-    };
+
+  services.internal-https = {
+    enable = true;
+    domains = [ domain ];
+    cloudflareTokenReference = fleet.acme.tokenReference;
+    cloudflareEmail = fleet.acme.email;
+    certificateGroup = "caddy";
+    reloadServices = [ "caddy.service" ];
+    enableNginxCatchAll = false;
   };
-  system.autoUpgrade.flake = lib.mkForce "github:MAHDTech/nix-config#mirror";
-  nix.settings.trusted-users = lib.mkForce [ "root" ];
+
   environment.systemPackages = [ pkgs.rsync ];
 }
