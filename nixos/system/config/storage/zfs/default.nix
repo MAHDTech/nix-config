@@ -57,13 +57,13 @@ in
 {
   boot = {
     kernelParams = [
-      "zfs.zfs_arc_max=12884901888"
+      # 32 GiB ARC cap (32 * 1024^3 bytes).
+      "zfs.zfs_arc_max=34359738368"
 
-      # arc_dnode_limit derives from 10% of arc_max by default, which the
-      # 12 GiB cap above shrinks to ~1.2 GB - well under this pool's ~2.1 GB
-      # dnode working set. arc_prune then spins permanently trying to evict
-      # pinned inodes it can never free. 50% gives a 6 GiB dnode budget
-      # without growing total ARC.
+      # arc_dnode_limit defaults to 10% of arc_max (~3.2 GiB at 32 GiB ARC),
+      # which stays close to this pool's ~2.1 GB+ dnode working set and can
+      # cause arc_prune to spin trying to evict pinned inodes. 50% raises the
+      # dnode ceiling without growing total ARC.
       "zfs.zfs_arc_dnode_limit_percent=50"
     ];
     zfs = {

@@ -43,6 +43,11 @@ in
 
     package = pkgs.nixVersions.stable;
 
+    # Keep interactive sessions and host services responsive while builds use
+    # idle CPU and disk bandwidth; dedicated CI runners override this.
+    daemonCPUSchedPolicy = lib.mkDefault "idle";
+    daemonIOSchedClass = lib.mkDefault "idle";
+
     gc = {
       automatic = true;
       dates = "Sun 19:00";
@@ -66,9 +71,13 @@ in
         require-sigs = true;
         sandbox = true;
         sandbox-fallback = false;
-        auto-optimise-store = true;
+        # Rely on scheduled nix.optimise.automatic instead of inline hard-linking.
+        auto-optimise-store = false;
         auto-allocate-uids = true;
         use-cgroups = true;
+        # 256 MiB curl download buffer to avoid stalling binary cache fetches.
+        download-buffer-size = 256 * 1024 * 1024;
+        http-connections = 50;
         keep-outputs = true;
         keep-derivations = true;
         experimental-features = [

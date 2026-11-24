@@ -143,6 +143,10 @@ in
     };
 
     nix = {
+      # CI runners exist primarily to run Nix builds; keep normal scheduling priority.
+      daemonCPUSchedPolicy = "other";
+      daemonIOSchedClass = "best-effort";
+
       gc = {
         automatic = true;
         dates = lib.mkForce "02:00";
@@ -170,7 +174,6 @@ in
         filetransfer-retry-max-delay = lib.mkDefault 60000;
         filetransfer-retry-jitter = lib.mkDefault true;
         tarball-ttl = lib.mkDefault 86400;
-        download-buffer-size = lib.mkDefault (64 * 1024 * 1024); # 64 MiB
       };
     };
 

@@ -10,7 +10,8 @@
   };
 
   # Created with: zfs create -o mountpoint=/var/lib/nix-build
-  #   -o utf8only=off -o normalization=none -o atime=off zpool/nix-build
+  #   -o utf8only=off -o normalization=none -o atime=off
+  #   -o compression=off -o sync=disabled zpool/nix-build
   fileSystems."/var/lib/nix-build" = {
     device = "zpool/nix-build";
     fsType = "zfs";
