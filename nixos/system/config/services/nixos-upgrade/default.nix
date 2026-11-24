@@ -34,11 +34,11 @@ in
     script = lib.mkForce (
       if cfg.allowReboot then
         ''
-          exec ${pkgs.bash}/bin/bash ${./upgrade.sh} --flake ${lib.escapeShellArg cfg.flake} ${lib.escapeShellArgs flags}
+          exec ${pkgs.bash}/bin/bash ${./upgrade.sh} --flake ${lib.escapeShellArg cfg.flake} ${lib.escapeShellArgs flags} --option tarball-ttl 60
         ''
       else
         ''
-          exec ${config.system.build.nixos-rebuild}/bin/nixos-rebuild ${cfg.operation} --flake ${lib.escapeShellArg cfg.flake} ${lib.escapeShellArgs flags}
+          exec ${config.system.build.nixos-rebuild}/bin/nixos-rebuild ${cfg.operation} --flake ${lib.escapeShellArg cfg.flake} ${lib.escapeShellArgs flags} --option tarball-ttl 60
         ''
     );
   };

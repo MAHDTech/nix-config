@@ -23,7 +23,7 @@ drain)
 	for unit in "${units[@]}"; do
 		echo "Draining $unit"
 		systemctl stop "$unit"
-		if [[ $unit == *.service ]]; then
+		if [[ $unit == *.service ]] && grep -Fxq -- "$unit" "$state/restore"; then
 			result=$(systemctl show "$unit" --property=Result --value)
 			if [[ $result != success ]]; then
 				echo "$unit did not stop cleanly: $result" >&2

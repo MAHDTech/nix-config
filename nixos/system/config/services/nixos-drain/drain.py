@@ -214,9 +214,38 @@ def worker(attempt, phase, unit):
         raise
 
 
+def system_stopping():
+    try:
+        result = subprocess.run(
+            ["systemctl", "is-system-running"],
+            check=False, text=True, capture_output=True,
+        )
+    except OSError:
+        return False
+    return result.stdout.strip() == "stopping"
+
+
+def unit_active(unit):
+    if not unit:
+        return False
+    try:
+        result = subprocess.run(
+            ["systemctl", "show", unit, "--property=LoadState,ActiveState"],
+            check=True, text=True, capture_output=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return True
+    properties = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
+    return properties.get("LoadState") != "not-found" and properties.get("ActiveState") in (
+        "activating", "active", "deactivating", "reloading",
+    )
+
+
 def wait(attempt, success):
     if attempt is None:
         return 0
+    started_waiting = time.monotonic()
+    last_liveness_check = started_waiting
     while True:
         state = read()
         if state.get("attempt") != attempt:
@@ -226,6 +255,28 @@ def wait(attempt, success):
         if state["state"] not in ("draining", "cancelling"):
             print(state["progress"], file=sys.stderr)
             return 1
+        now = time.monotonic()
+        timeout = state.get("settings", {}).get("timeoutSeconds", 3600)
+        if now - started_waiting > timeout + 60:
+            print("Timed out waiting for drain worker", file=sys.stderr)
+            return 1
+        if now - last_liveness_check >= 5.0:
+            last_liveness_check = now
+            if system_stopping():
+                print("System is stopping; aborting drain wait", file=sys.stderr)
+                return 1
+            if not unit_active(state.get("unit")):
+                time.sleep(0.2)
+                state = read()
+                if state.get("attempt") != attempt:
+                    raise RuntimeError("Drain attempt was replaced")
+                if state["state"] == success:
+                    return 0
+                if state["state"] not in ("draining", "cancelling"):
+                    print(state["progress"], file=sys.stderr)
+                    return 1
+                print("Drain worker unit is no longer active", file=sys.stderr)
+                return 1
         time.sleep(0.2)
 
 
@@ -299,6 +350,8 @@ def main():
             return wait(attempt, "drained")
         except KeyboardInterrupt:
             if args.owned and attempt is not None:
+                if system_stopping():
+                    return 130
                 wait(cancel(attempt), "cancelled")
                 print("Owned drain cancelled after interruption.", file=sys.stderr)
                 return 130
@@ -307,6 +360,8 @@ def main():
             if old_handler is not None:
                 signal.signal(signal.SIGTERM, old_handler)
     if args.command == "cancel":
+        if system_stopping():
+            return 0
         return wait(cancel(args.attempt), "cancelled")
     if args.command == "_worker":
         worker(args.attempt, args.phase, args.unit)

@@ -370,6 +370,74 @@ class DrainTest(unittest.TestCase):
             "All runner registrations have retired"
         ])
 
+    def test_runner_drain_stops_queued_auto_restart_without_live_process(self):
+        for sub_state in ("auto-restart-queued", "auto-restart"):
+            results = [
+                subprocess.CompletedProcess(
+                    [], 0,
+                    f"LoadState=loaded\nActiveState=activating\nSubState={sub_state}\nMainPID=0\nControlPID=0\n",
+                ),
+                subprocess.CompletedProcess([], 0, ""),
+            ]
+            with patch.object(runner.subprocess, "run", side_effect=results) as commands:
+                runner.drain(["runner.service"])
+            calls = [call.args[0] for call in commands.call_args_list]
+            self.assertIn(["systemctl", "stop", "runner.service"], calls)
+
+    def test_runner_drain_does_not_stop_auto_restart_with_live_pid(self):
+        results = [
+            subprocess.CompletedProcess(
+                [], 0,
+                "LoadState=loaded\nActiveState=activating\nSubState=auto-restart-queued\nMainPID=4242\nControlPID=0\n",
+            ),
+            subprocess.CompletedProcess(
+                [], 0,
+                "LoadState=loaded\nActiveState=inactive\nSubState=dead\nMainPID=0\nControlPID=0\n",
+            ),
+        ]
+        with patch.object(runner.subprocess, "run", side_effect=results) as commands, \
+             patch.object(runner.time, "sleep"):
+            runner.drain(["runner.service"])
+        calls = [call.args[0] for call in commands.call_args_list]
+        self.assertFalse(any("stop" in call for call in calls))
+
+    def test_runner_failed_unit_drains_for_upgrade_only(self):
+        failed = subprocess.CompletedProcess([], 0, "LoadState=loaded\nActiveState=failed\nSubState=failed\nMainPID=0\nControlPID=0\n")
+        with patch.dict(os.environ, {"NIXOS_DRAIN_PROFILE": "upgrade"}), \
+             patch.object(runner.subprocess, "run", return_value=failed):
+            runner.drain(["runner.service"])
+        with patch.dict(os.environ, {"NIXOS_DRAIN_PROFILE": "destroy"}), \
+             patch.object(runner.subprocess, "run", return_value=failed):
+            with self.assertRaises(RuntimeError):
+                runner.drain(["runner.service"])
+
+    def test_owned_cli_interruption_skips_cancel_while_system_stopping(self):
+        output = io.StringIO()
+        with patch("sys.argv", ["nixos-drain", "drain", "--profile", "upgrade", "--owned"]), \
+             patch.object(drain.os, "geteuid", return_value=0), \
+             patch("sys.stdout", output), \
+             patch.object(drain, "system_stopping", return_value=True), \
+             patch.object(drain, "wait", side_effect=KeyboardInterrupt):
+            self.assertEqual(drain.main(), 130)
+        self.assertEqual(drain.read()["state"], "draining")
+
+    def test_wait_aborts_when_worker_unit_disappears(self):
+        attempt = drain.request("upgrade")
+        clock = iter([0.0, 0.0, 6.0])
+        with patch.object(drain.time, "monotonic", side_effect=lambda: next(clock, 6.0)), \
+             patch.object(drain.time, "sleep"), \
+             patch.object(drain, "system_stopping", return_value=False), \
+             patch.object(drain, "unit_active", return_value=False):
+            self.assertEqual(drain.wait(attempt, "drained"), 1)
+
+    def test_wait_aborts_when_system_is_stopping(self):
+        attempt = drain.request("upgrade")
+        clock = iter([0.0, 0.0, 6.0])
+        with patch.object(drain.time, "monotonic", side_effect=lambda: next(clock, 6.0)), \
+             patch.object(drain.time, "sleep"), \
+             patch.object(drain, "system_stopping", return_value=True):
+            self.assertEqual(drain.wait(attempt, "drained"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

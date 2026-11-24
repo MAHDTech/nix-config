@@ -69,6 +69,13 @@ esac
         self.assertEqual(self.run_handler("cancel").returncode, 0)
         self.assertFalse(self.state.exists())
 
+    def test_preexisting_failed_service_does_not_block_drain(self):
+        result = self.run_handler("drain", INACTIVE_UNIT="backend.service", FAILED_UNIT="backend.service")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.state / "blocked").exists())
+        self.assertEqual(self.run_handler("cancel").returncode, 0)
+        self.assertNotIn("start backend.service", self.mutations())
+
 
 if __name__ == "__main__":
     unittest.main()

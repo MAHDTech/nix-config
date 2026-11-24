@@ -77,23 +77,46 @@ def busy(units):
 def drain(units):
     with locked():
         (ROOT / "maintenance").touch()
+    profile = os.environ.get("NIXOS_DRAIN_PROFILE", "")
     last_waiting = None
     last_logged = 0.0
     while True:
         waiting = []
         for unit in units:
             result = subprocess.run(
-                ["systemctl", "show", unit, "--property=LoadState,ActiveState,SubState"],
+                [
+                    "systemctl",
+                    "show",
+                    unit,
+                    "--property=LoadState,ActiveState,SubState,MainPID,ControlPID",
+                ],
                 check=True, text=True, capture_output=True,
             )
-            properties = dict(line.split("=", 1) for line in result.stdout.splitlines())
+            properties = dict(
+                line.split("=", 1) for line in result.stdout.splitlines() if "=" in line
+            )
             if properties.get("LoadState") != "loaded":
                 raise RuntimeError(f"Cannot inspect {unit}; refusing to report drained")
             active = properties.get("ActiveState")
+            sub_state = properties.get("SubState", active)
+            main_pid = properties.get("MainPID", "0")
+            control_pid = properties.get("ControlPID", "0")
             if active == "failed":
+                if profile == "upgrade":
+                    continue
                 raise RuntimeError(f"{unit} failed; inspect the runner journal before retrying")
+            if (
+                active == "activating"
+                and sub_state in ("auto-restart", "auto-restart-queued")
+                and main_pid in ("0", "")
+                and control_pid in ("0", "")
+            ):
+                # No runner process is alive; clear the queued restart so a blocked
+                # dependency (e.g. opnix backoff) cannot deadlock upgrades.
+                subprocess.run(["systemctl", "stop", unit], check=True)
+                continue
             if active != "inactive":
-                waiting.append(f"{unit} ({properties.get('SubState', active)})")
+                waiting.append(f"{unit} ({sub_state})")
         if not waiting:
             print("All runner registrations have retired", flush=True)
             return
