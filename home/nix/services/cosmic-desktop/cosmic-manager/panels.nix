@@ -3,14 +3,14 @@
   ...
 }:
 let
-  # Pin Panel and Dock to JONS's primary monitor (HP Z43 on HDMI-A-5) so Smart TV
-  # hotplugs on the Arc B580 (HDMI-A-3) do not spawn/kill duplicate applet instances.
+  # Pin Panel and Dock to JONS's primary monitor (HP Z43 on HDMI-A-3) so Smart TV
+  # hotplugs on the Arc B580 (HDMI-A-2) do not spawn/kill duplicate applet instances.
   panelOutput =
     if (osConfig.networking.hostName or "") == "JONS" then
       {
         __type = "enum";
         variant = "Name";
-        value = [ "HDMI-A-5" ];
+        value = [ "HDMI-A-3" ];
       }
     else
       {
