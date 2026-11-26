@@ -11,6 +11,7 @@ let
     # Tools
     prettier
     jq
+    wakatime-cli
   ];
 
 in
@@ -202,7 +203,6 @@ in
           # Utilities
           gotools
           uv
-          wakatime-cli
         ]
         ++ extraPackagesUnstable;
 

@@ -54,7 +54,7 @@ function checkWakaTime() {
 
 			include_only_with_project_file = false
 
-			exclude_unknown_project = true
+			exclude_unknown_project = false
 
 			status_bar_enabled = true
 			status_bar_coding_activity = true
