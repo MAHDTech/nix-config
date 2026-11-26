@@ -399,7 +399,20 @@ in
             // lib.optionalAttrs runner.trusted {
               CacheDirectory = [ "github-runner/${name}" ];
               CacheDirectoryMode = "0700";
-              SupplementaryGroups = [ "docker" ];
+              SupplementaryGroups = [
+                "docker"
+                "kvm"
+              ];
+              # Expose virtualisation and rootless-sandbox devices while keeping
+              # all other host devices blocked via the cgroup v2 device filter.
+              PrivateDevices = false;
+              DevicePolicy = "closed";
+              DeviceAllow = [
+                "/dev/kvm rw"
+                "/dev/vhost-net rw"
+                "/dev/net/tun rw"
+                "/dev/fuse rw"
+              ];
             }
             // lib.optionalAttrs runner.bubblewrap {
               # --unshare-all uses these namespaces; time namespaces remain denied.

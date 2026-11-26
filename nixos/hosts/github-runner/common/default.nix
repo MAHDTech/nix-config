@@ -137,6 +137,7 @@ in
         group = "github-runner";
         extraGroups = [
           "docker"
+          "kvm"
           "nix-runners"
         ];
       };
