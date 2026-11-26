@@ -99,6 +99,19 @@ in
     networking.hostName = name;
     environment.systemPackages = ciTools;
 
+    zramSwap = {
+      enable = true;
+      algorithm = "zstd";
+      memoryPercent = 25; # 4 GiB on 16 GiB VMs (2 GiB while still on 8 GiB)
+    };
+
+    boot.kernel.sysctl = {
+      # Prefer compressing anonymous pages over dropping Nix/git page cache,
+      # and avoid read-ahead overhead on RAM-backed zram.
+      "vm.swappiness" = 100;
+      "vm.page-cluster" = 0;
+    };
+
     virtualisation.docker = {
       enable = true;
       autoPrune = {
