@@ -35,43 +35,26 @@
     };
   };
 
-  environment.variables = {
-    # Set AMD GPU as default for display/decoding; games can override with DRI_PRIME=1.
-    # Must be set explicitly here: video/amd and video/intel each mkDefault this
-    # to a different value, so the host has to break the tie.
-    #
-    # Decode deliberately stays on the AMD APU rather than being offloaded to the
-    # Arc B580 — the Arc's 12GB is reserved for LLM inference and gaming, and
-    # routing browser video through it would pin VRAM and keep xe resident.
-    # Trade-off: Cezanne exposes no VP9/AV1 decode (H.264/HEVC/MPEG2/VC1/JPEG
-    # only), so VP9 and AV1 streams still decode on the CPU. See the note on
-    # forcing H.264 in browsers if YouTube remains heavy.
-    LIBVA_DRIVER_NAME = "radeonsi";
-  };
-
   environment.sessionVariables = {
-    # Use the AMD APU as the primary display renderer, offloading to Intel Arc B580.
+    # Use the Intel Arc B580 as the sole display renderer (both the HP Z43 on
+    # HDMI-A-3 and the Smart TV on HDMI-A-2 are connected to it).
     # cosmic-comp resolves a bare value against /dev/dri (see determine_primary_gpu
     # / try_parse_dev_from_str in cosmic-comp), so this must NOT be an absolute
     # path. The udev symlink below gives us a stable name to point at.
-    COSMIC_RENDER_DEVICE = "amd-gpu";
+    COSMIC_RENDER_DEVICE = "intel-gpu";
   };
 
   services.udev.extraRules = ''
-    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0e:00.0", SYMLINK+="dri/amd-gpu"
     SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", SYMLINK+="dri/intel-gpu"
 
-    # Keep card1 (Arc B580) in logind's seat while the Smart TV is connected to
-    # card1-HDMI-A-3 (the motherboard only has a single HDMI port, used by the
-    # HP Z43 on card2-HDMI-A-5). Battlemage display C-states are disabled in
-    # video/intel and PCIe runtime PM / D3cold are disabled below.
-    # Only uncomment if no display is attached to the Arc B580:
-    # SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:03:00.0", TAG-="seat", TAG-="master-of-seat", ENV{ID_SEAT}=""
+    # Both displays (HP Z43 on HDMI-A-3, Smart TV on HDMI-A-2) are connected to
+    # the Arc B580. Keep the AMD Cezanne iGPU out of logind's seat so cosmic-comp
+    # never opens it or allocates cross-GPU buffers.
+    SUBSYSTEM=="drm", KERNEL=="card*", KERNELS=="0000:0e:00.0", TAG-="seat", TAG-="master-of-seat", ENV{ID_SEAT}=""
 
     # Disable PCIe runtime PM and D3cold on the Arc B580 (GPU, HDMI audio, and
     # internal PCIe switch ports). xe has no runpm module param; leaving these
-    # on "auto" lets DPMS screen-off drop the card into D3 and flap HDMI HPD,
-    # leaking cross-GPU TTM buffers in cosmic-comp until OOM.
+    # on "auto" lets DPMS screen-off drop the card into D3 and flap HDMI HPD.
     ACTION=="add|bind", SUBSYSTEM=="pci", KERNEL=="0000:01:00.0|0000:02:01.0|0000:02:02.0|0000:03:00.0|0000:04:00.0", TEST=="power/control", ATTR{power/control}="on"
     ACTION=="add|bind", SUBSYSTEM=="pci", KERNEL=="0000:01:00.0|0000:02:01.0|0000:02:02.0|0000:03:00.0|0000:04:00.0", TEST=="d3cold_allowed", ATTR{d3cold_allowed}="0"
   '';
@@ -109,8 +92,7 @@
     # CPU specific configuration.
     ../../system/config/virtualisation/cpu/amd.nix
 
-    # GPU specific configuration.
-    ../../system/config/video/amd
+    # GPU specific configuration (Intel Arc B580 only; AMD iGPU untagged from seat).
     ../../system/config/video/intel
 
     # Enable DisplayLink USB dock support (EVDI + dlm service)
