@@ -10,6 +10,10 @@
   services.system76-scheduler.enable = true;
 
   environment = {
+    cosmic.excludePackages = [
+      pkgs.networkmanagerapplet
+    ];
+
     systemPackages =
       with pkgs;
       [

@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   username,
   globalUsername,
@@ -50,5 +51,14 @@
         inputs.cosmic-manager.homeManagerModules.default
       ];
     };
+  };
+
+  systemd.services."home-manager-${username}" = {
+    # With linger enabled, systemd-logind can start user@<uid>.service in
+    # parallel with home-manager activation at boot. Order activation first so
+    # user services (e.g. t3code.service) launch with the new generation's unit
+    # files instead of starting the previous boot's binary while sd-switch skips
+    # reload because the user manager is still in state "starting".
+    before = [ "user@${toString config.users.users.${username}.uid}.service" ];
   };
 }
