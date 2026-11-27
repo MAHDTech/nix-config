@@ -5,9 +5,6 @@
   ...
 }:
 let
-  normalUsers = lib.filterAttrs (_: u: u.isNormalUser) config.users.users;
-  downloadsPaths = map (u: "${u.home}/Downloads") (lib.attrValues normalUsers);
-
   # Third-party signatures causing false positives (without .UNOFFICIAL suffix)
   # cspell:ignore Sanesecurity Porcupine wsdl sgen ign2
   ignoredSignatures = [
@@ -27,10 +24,7 @@ in
       daemon = {
         enable = true;
         # https://linux.die.net/man/5/clamd.conf
-        settings = {
-          OnAccessPrevention = true;
-          OnAccessIncludePath = [ "/tmp" ] ++ downloadsPaths;
-        };
+        settings = { };
       };
 
       # ClamAV Updater
@@ -48,12 +42,12 @@ in
         enable = true;
       };
 
-      # ClamAV On-Access Real-time Scanner
+      # ClamAV On-Access Real-time Scanner (disabled due to heavy overhead on Rust cargo builds)
       clamonacc = {
-        enable = true;
+        enable = false;
       };
 
-      # ClamAV Scanner
+      # ClamAV Scanner (weekly scheduled scan)
       scanner = {
         enable = true;
         interval = "Sat *-*-* 04:00:00";
@@ -80,5 +74,7 @@ in
         ExecStart = lib.mkForce "${pkgs.bash}/bin/bash -c '${config.services.clamav.package}/bin/clamdscan --multiscan --fdpass --infected --allmatch ${lib.concatStringsSep " " config.services.clamav.scanner.scanDirectories} 2> >(${pkgs.gnugrep}/bin/grep -v \"cli_realpath: Invalid arguments\" >&2); EXIT_CODE=$?; wait; exit $EXIT_CODE'";
       };
     };
+
+    timers.clamdscan.timerConfig.Persistent = true;
   };
 }
