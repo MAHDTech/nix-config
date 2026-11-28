@@ -6,9 +6,11 @@
 # Bumps unwrapped.nix to the latest stable upstream release (or the version
 # given as $1, e.g. "0.0.39" or "0.0.40-nightly.20260907.1346"), then
 # refreshes every pinned hash:
-#   - src hash        (fetchFromGitHub, unwrapped.nix)
-#   - pnpmDeps hash   (fetchPnpmDeps, unwrapped.nix)
-#   - cargoHash       (resource-monitor.nix)
+#   - src hash             (fetchFromGitHub, unwrapped.nix)
+#   - spdxLicenseData hash (fetchFromGitHub, unwrapped.nix)
+#   - pnpmDeps hash        (fetchPnpmDeps, unwrapped.nix)
+#   - cargoHash            (resource-monitor.nix)
+# Set FORCE=1 to recompute all hashes even when already on the target version.
 # The last two are harvested from fake-hash builds against this repo's
 # pinned nixpkgs, so they match what the real build will see.
 
@@ -31,7 +33,7 @@ fi
 TAG="v$VERSION"
 
 CURRENT=$(sed -nE 's/^    version = "(.*)";$/\1/p' unwrapped.nix)
-if [ "$CURRENT" == "$VERSION" ]; then
+if [ "${FORCE:-0}" != "1" ] && [ "$CURRENT" == "$VERSION" ]; then
 	echo "t3code: already at $VERSION"
 	exit 0
 fi
@@ -77,6 +79,31 @@ sed -i -E \
 	-e "/pnpmDeps = fetchPnpmDeps \{/,/\};/ s|hash = \"sha256-.*\";|hash = \"$FAKE\";|" \
 	unwrapped.nix
 
+# --- spdxLicenseData --------------------------------------------------------
+SPDX_SCRIPT=$(gh_curl "https://raw.githubusercontent.com/pingdotgg/t3code/$TAG/scripts/lib/third-party-licenses.ts")
+SPDX_VER=$(echo "$SPDX_SCRIPT" | sed -nE 's/^const SPDX_LICENSE_LIST_VERSION = "([^"]+)";$/\1/p' | head -n1)
+SPDX_REV=$(echo "$SPDX_SCRIPT" | sed -nE 's/^const SPDX_LICENSE_LIST_REVISION = "([0-9a-f]+)";$/\1/p' | head -n1)
+if [ -z "$SPDX_VER" ] || [ -z "$SPDX_REV" ]; then
+	echo "t3code: failed to parse SPDX_LICENSE_LIST_{VERSION,REVISION} from scripts/lib/third-party-licenses.ts" >&2
+	exit 1
+fi
+
+CURRENT_SPDX_REV=$(sed -nE '/spdxLicenseData = fetchFromGitHub \{/,/\};/ s/^\s*rev = "([^"]+)";$/\1/p' unwrapped.nix)
+CURRENT_SPDX_HASH=$(sed -nE '/spdxLicenseData = fetchFromGitHub \{/,/\};/ s/^\s*hash = "(sha256-[^"]+)";$/\1/p' unwrapped.nix)
+if [ "${FORCE:-0}" = "1" ] || [ "$CURRENT_SPDX_REV" != "$SPDX_REV" ]; then
+	echo "t3code: prefetching spdx/license-list-data ($SPDX_VER @ $SPDX_REV)"
+	SPDX_HASH=$(nix-prefetch-url --unpack --type sha256 \
+		"https://github.com/spdx/license-list-data/archive/$SPDX_REV.tar.gz" 2>/dev/null |
+		xargs nix-hash --to-sri --type sha256)
+	sed -i -E \
+		-e "/spdxLicenseData = fetchFromGitHub \{/,/\};/ s|rev = \"[^\"]+\";|rev = \"$SPDX_REV\";|" \
+		-e "/spdxLicenseData = fetchFromGitHub \{/,/\};/ s|hash = \"sha256-.*\";|hash = \"$SPDX_HASH\";|" \
+		-e "s|\.generated/third-party-licenses/spdx/v[0-9]+\.[0-9]+(\.[0-9]+)?|.generated/third-party-licenses/spdx/$SPDX_VER|g" \
+		unwrapped.nix
+else
+	SPDX_HASH="$CURRENT_SPDX_HASH"
+fi
+
 # --- pnpmDeps hash ------------------------------------------------------------
 echo "t3code: computing pnpmDeps hash (fake-hash build)"
 PNPM_HASH=$(harvest_hash "let pkgs = $PKGS; in (pkgs.callPackage $PWD/unwrapped.nix { }).pnpmDeps")
@@ -93,5 +120,6 @@ sed -i -E "s|^  cargoHash = \"sha256-.*\";$|  cargoHash = \"$CARGO_HASH\";|" res
 
 echo "t3code: updated to $VERSION"
 echo "  src hash:   $SRC_HASH"
+echo "  spdxData:   $SPDX_HASH ($SPDX_VER @ ${SPDX_REV:0:12})"
 echo "  pnpmDeps:   $PNPM_HASH"
 echo "  cargoHash:  $CARGO_HASH"

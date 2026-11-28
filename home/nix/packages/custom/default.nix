@@ -142,7 +142,7 @@ let
         connect_enabled="$(printf '%s' "$status_json" | jq -r '.connect.enabled // false')"
 
         if [ "$connect_revoked" = "true" ]; then
-          alert "T3 Connect credential revoked. Re-link with: t3 connect logout --base-dir ${t3Home} && t3 connect --base-dir ${t3Home}"
+          alert "T3 Connect credential revoked. Re-link with: t3-bootstrap --force (or t3 connect logout --base-dir ${t3Home} && t3 connect link --base-dir ${t3Home} && systemctl --user restart t3code.service)"
           exit 1
         fi
 
@@ -271,7 +271,7 @@ let
 
       mkdir -p "$(dirname "$desktop_settings")"
       if [ -f "$desktop_settings" ] && [ -s "$desktop_settings" ] && jq -e 'type == "object"' "$desktop_settings" >/dev/null 2>&1; then
-        tmp_settings="$(mktemp)"
+        tmp_settings="$(mktemp "$(dirname "$desktop_settings")/.desktop-settings.XXXXXX")"
         jq '.localEnvironmentEnabled = false' "$desktop_settings" > "$tmp_settings"
         mv --force "$tmp_settings" "$desktop_settings"
       else
@@ -279,6 +279,13 @@ let
       fi
       chmod 600 "$desktop_settings"
       echo "t3-bootstrap: configured T3 Desktop client-only mode ($desktop_settings)"
+
+      unit_file="${config.xdg.configHome}/systemd/user/t3code.service"
+      if [ ! -L "$unit_file" ] || [[ "$(readlink -f "$unit_file")" != /nix/store/* ]]; then
+        echo "t3-bootstrap: $unit_file is not managed by Home Manager (likely overwritten by 't3 up' or 't3 connect')." >&2
+        echo "Remove it (rm -f \"$unit_file\") and rebuild NixOS/Home Manager, then re-run t3-bootstrap." >&2
+        exit 1
+      fi
 
       need_link=false
       if [ "$connect_revoked" = "true" ]; then
@@ -380,6 +387,12 @@ in
         Restart = "on-failure";
         RestartSec = 5;
         KillMode = "mixed";
+        # Keep the server alive if an agent child process hits OOM.
+        OOMPolicy = "continue";
+        CPUWeight = 1000;
+        IOWeight = 1000;
+        MemoryLow = "1536M";
+        ManagedOOMPreference = "avoid";
         TimeoutStartSec = 45;
         TimeoutStopSec = 30;
         # t3 serve exits with 130 (SIGINT) / 143 (SIGTERM) on clean shutdown.
